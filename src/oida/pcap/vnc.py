@@ -723,10 +723,17 @@ class VNCPassiveListener(PySharkListenerBase):
             key = f"vnc-server:{cred.server_ip}"
             desktop_name = session.desktop_name if session else ""
             num_sec_types = session.num_security_types if session else 0
+            # The RFB display index is (port - 5900) only for the canonical
+            # 5900-5963 range; a non-590x server port (e.g. 5800 for the Java
+            # viewer) must not yield a bogus negative index like ":-100".
+            if 5900 <= cred.server_port < 5964:
+                server_name = f"VNC Server :{cred.server_port - 5900}"
+            else:
+                server_name = f"VNC Server :{cred.server_port}"
             device, is_new = self._ensure_device(
                 key,
                 cred.server_ip,
-                name=f"VNC Server :{cred.server_port - 5900}",
+                name=server_name,
                 device_type="VNC Server",
             )
             if is_new:

@@ -84,3 +84,56 @@ def test_non_phi_tag_not_flagged():
 
     assert "phi_exposed" not in ix.details
     assert "phi_tag" not in ix.details
+
+
+# --- multi-tag P-DATA-TF (dicom.py:604 finding) --------------------------------
+
+SOP_INSTANCE_UID_TAG = 0x00080018  # decimal 524312 -- non-PHI leading element
+
+
+def test_phi_detected_when_not_the_first_tag():
+    """A P-DATA-TF PDV carries many elements; get_field() comma-joins them in
+    EK mode. PHI on a trailing tag (not the leading metadata tag) must still be
+    detected -- the pre-fix code inspected only the first occurrence."""
+    ix = _run(
+        _Layer(
+            tag=f"{SOP_INSTANCE_UID_TAG},{PATIENT_NAME_TAG}",
+            tag_value_str="1.2.3,DOE^JOHN",
+        )
+    )
+
+    assert ix.details.get("phi_exposed") is True
+    assert ix.details.get("phi_tag") == "PatientName"
+
+
+# --- DIMSE command qualification (dicom.py:650 finding) ------------------------
+
+
+def test_command_field_identifies_c_store_rq():
+    """When the command-field tag (0000,0100) is present, its US value names
+    the DIMSE command and drives direction via the 0x8000 RSP bit."""
+    ix = _run(_Layer(tag=0x00000100, tag_value_16u=0x0001))
+
+    assert ix.details.get("dimse_command") == "C-STORE-RQ"
+    assert ix.details.get("command_field") == 0x0001
+    assert ix.direction == "request"
+
+
+def test_command_field_rsp_bit_sets_response_direction():
+    ix = _run(_Layer(tag=0x00000100, tag_value_16u=0x8001))
+
+    assert ix.details.get("dimse_command") == "C-STORE-RSP"
+    assert ix.direction == "response"
+
+
+def test_unqualified_16u_value_is_not_a_command():
+    """A data PDV with no command-field tag but a US value that collides with a
+    command code (0x0020 == C-FIND-RQ, e.g. a Message ID / count) must NOT be
+    labelled a command, and direction must fall back to the flow heuristic --
+    not flip to a spurious request/response from the bare 16u value."""
+    ix = _run(_Layer(tag=SOP_INSTANCE_UID_TAG, tag_value_16u=0x0020))
+
+    assert "dimse_command" not in ix.details
+    assert "command_field" not in ix.details
+    # No command field -> no spurious "DICOM WRITE" fodder in get_write_operations.
+    assert ix.details.get("command_field") is None

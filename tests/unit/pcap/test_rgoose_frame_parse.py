@@ -91,8 +91,8 @@ def test_first_frame_creates_publisher_and_interaction():
                 "stNum": "5",
                 "sqNum": "0",
                 "confRev": "1",
-                "appid": "0x0001",
-                "spdu_num": "100",
+                "rgoose_appid": "0x0001",
+                "rgoose_spdu_num": "100",
                 "timeAllowedtoLive": "2000",
                 "numDatSetEntries": "3",
             },
@@ -126,7 +126,7 @@ def test_state_change_detected_after_first_frame():
     """SqNum==0 on a frame after the first marks a state change; StNum increase
     bumps the state_changes counter."""
     listener = _make_listener()
-    base = {"gocbRef": GOCB, "appid": "0x0001"}
+    base = {"gocbRef": GOCB, "rgoose_appid": "0x0001"}
 
     # Frame 1: heartbeat baseline (StNum=1, SqNum=3)
     listener.process_packet(_FakePacket(PUB_IP, SUB_IP, {**base, "stNum": "1", "sqNum": "3"}))
@@ -162,7 +162,7 @@ def test_st_num_rollback_flagged_as_replay():
 def test_fallback_publisher_key_when_no_gocbref():
     """Without a GoCBRef the publisher is keyed by src_ip:appid."""
     listener = _make_listener()
-    listener.process_packet(_FakePacket(PUB_IP, SUB_IP, {"appid": "0x00ab", "stNum": "1"}))
+    listener.process_packet(_FakePacket(PUB_IP, SUB_IP, {"rgoose_appid": "0x00ab", "stNum": "1"}))
 
     expected_key = f"{PUB_IP}:0x00ab"
     assert expected_key in listener.publishers
@@ -180,7 +180,7 @@ def test_hmac_present_marks_authenticated_frame():
         _FakePacket(
             PUB_IP,
             SUB_IP,
-            {"gocbRef": GOCB, "stNum": "1", "hmac": "0a:1b:2c:3d", "key_id": "7"},
+            {"gocbRef": GOCB, "stNum": "1", "rgoose_hmac": "0a:1b:2c:3d", "rgoose_key_id": "7"},
         )
     )
     pub = listener.publishers[GOCB]
@@ -208,10 +208,45 @@ def test_empty_hmac_string_is_treated_as_absent():
     authenticated."""
     listener = _make_listener()
     listener.process_packet(
-        _FakePacket(PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1", "hmac": ""})
+        _FakePacket(PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1", "rgoose_hmac": ""})
     )
     assert listener.publishers[GOCB].hmac_absent == 1
     assert listener.publishers[GOCB].hmac_present == 0
+
+
+def test_hmac_read_under_rgoose_prefix_flips_no_auth_verdict():
+    """Regression for CODE_REVIEW R-GOOSE HIGH: the HMAC lives under the
+    ``rgoose.`` abbreviation (reachable as ``rgoose_hmac``), NOT as a bare
+    ``hmac`` on the goose layer. Reading the bare name returned the default, so
+    ``has_hmac`` was always False and a bogus ``rgoose_no_auth`` verdict fired
+    even on IEC 62351-6-authenticated R-GOOSE."""
+    listener = _make_listener()
+    for _ in range(3):
+        listener.process_packet(
+            _FakePacket(
+                PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1", "rgoose_hmac": "de:ad:be:ef"}
+            )
+        )
+    pub = listener.publishers[GOCB]
+    assert pub.hmac_present == 3 and pub.hmac_absent == 0
+    cats = _categories(listener.harvest())
+    assert "rgoose_no_auth" not in cats, "authenticated R-GOOSE must not raise a no-auth alert"
+    # device data reflects the authenticated verdict
+    device = listener.discovered_devices[f"rgoose-ied:{PUB_IP}"]
+    assert device.rgoose_passive_data["hmac_authenticated"] is True
+
+
+def test_bare_hmac_on_goose_layer_is_ignored():
+    """A ``hmac`` attribute under the *bare* name (the wrong layer the old code
+    read) must be ignored -- only ``rgoose_hmac`` counts as authentication."""
+    listener = _make_listener()
+    listener.process_packet(
+        _FakePacket(PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1", "hmac": "aa:bb:cc"})
+    )
+    pub = listener.publishers[GOCB]
+    assert pub.hmac_present == 0, "bare goose.hmac must not be treated as R-GOOSE HMAC"
+    assert pub.hmac_absent == 1
+    assert "rgoose_no_auth" in _categories(listener.harvest())
 
 
 # ---------------------------------------------------------------------------
@@ -285,12 +320,12 @@ def test_session_header_optional_fields_recorded():
             {
                 "gocbRef": GOCB,
                 "stNum": "1",
-                "curr_key_t": "1000",
-                "next_key_t": "2000",
-                "init_v_len": "16",
-                "payload_len": "128",
-                "spdu_len": "200",
-                "version": "1",
+                "rgoose_curr_key_t": "1000",
+                "rgoose_next_key_t": "2000",
+                "rgoose_init_v_len": "16",
+                "rgoose_payload_len": "128",
+                "rgoose_spdu_len": "200",
+                "rgoose_version": "1",
             },
         )
     )
@@ -345,9 +380,9 @@ def test_device_entry_built_with_publisher_data():
                 "goID": "GID1",
                 "stNum": "1",
                 "confRev": "1",
-                "appid": "0x0001",
-                "hmac": "ab:cd",
-                "key_id": "5",
+                "rgoose_appid": "0x0001",
+                "rgoose_hmac": "ab:cd",
+                "rgoose_key_id": "5",
             },
         )
     )
@@ -390,8 +425,8 @@ def test_format_protocol_columns():
                 "stNum": "7",
                 "sqNum": "2",
                 "simulation": "True",
-                "hmac": "aa:bb",
-                "spdu_num": "55",
+                "rgoose_hmac": "aa:bb",
+                "rgoose_spdu_num": "55",
             },
         )
     )
@@ -454,7 +489,7 @@ def test_harvest_replay_alert():
 def test_harvest_mixed_auth_alert():
     listener = _make_listener()
     listener.process_packet(
-        _FakePacket(PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1", "hmac": "aa:bb"})
+        _FakePacket(PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1", "rgoose_hmac": "aa:bb"})
     )
     listener.process_packet(_FakePacket(PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1"}))
     cats = _categories(listener.harvest())
@@ -466,7 +501,9 @@ def test_harvest_mixed_auth_alert():
 def test_harvest_commissioning_alert():
     listener = _make_listener()
     listener.process_packet(
-        _FakePacket(PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1", "ndsCom": "True", "hmac": "aa"})
+        _FakePacket(
+            PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1", "ndsCom": "True", "rgoose_hmac": "aa"}
+        )
     )
     cats = _categories(listener.harvest())
     assert "rgoose_commissioning" in cats
@@ -477,10 +514,14 @@ def test_harvest_confrev_mismatch_alert():
     a config-mismatch alert."""
     listener = _make_listener()
     listener.process_packet(
-        _FakePacket(PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1", "confRev": "1", "hmac": "aa"})
+        _FakePacket(
+            PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1", "confRev": "1", "rgoose_hmac": "aa"}
+        )
     )
     listener.process_packet(
-        _FakePacket(PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1", "confRev": "2", "hmac": "aa"})
+        _FakePacket(
+            PUB_IP, SUB_IP, {"gocbRef": GOCB, "stNum": "1", "confRev": "2", "rgoose_hmac": "aa"}
+        )
     )
     result = listener.harvest()
     cats = _categories(result)

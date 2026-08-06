@@ -95,7 +95,13 @@ class SMTPPassiveListener(PySharkListenerBase):
 
     PROTOCOL_NAME = "smtp"
     DISPLAY_FILTER = "smtp"
-    REQUIRED_LAYERS = ("smtp",)
+    # NOTE: deliberately NOT gated on REQUIRED_LAYERS = ("smtp",). The
+    # DISPLAY_FILTER already limits the capture to smtp-matching frames, and
+    # gating on a pyshark ``smtp`` *layer* would drop ICMP-encapsulated SMTP
+    # (category 4 below) -- tshark counts those under the smtp filter but
+    # pyshark exposes no ``.smtp`` attribute for them, so the encapsulated
+    # handler would be dead code and the packets silently dropped.
+    REQUIRED_LAYERS: tuple[str, ...] = ()
     PROTOCOL_COLUMNS = (
         "command",
         "parameter",
@@ -104,8 +110,8 @@ class SMTPPassiveListener(PySharkListenerBase):
     SMTP_PORTS = (25, 587, 465)
 
     # Well-known Base64 prompts
-    USERNAME_PROMPT_B64 = "VXNlcm5hbWU6"  # "Username:" in Base64
-    PASSWORD_PROMPT_B64 = "UGFzc3dvcmQ6"  # "Password:" in Base64
+    USERNAME_PROMPT_B64 = "VXNlcm5hbWU6"  # Base64 of the AUTH LOGIN Username prompt
+    PASSWORD_PROMPT_B64 = "UGFzc3dvcmQ6"  # Base64 of the AUTH LOGIN Password prompt
 
     # Regex patterns (from BruteShark)
     # AUTH LOGIN: Base64 username and password with server prompts
@@ -206,6 +212,7 @@ class SMTPPassiveListener(PySharkListenerBase):
         # returns (0, 0).  tshark still counts them under the "smtp" filter
         # because the ICMP payload contains the original SMTP TCP segment.
         if not hasattr(packet, "smtp"):
+            self.logger.debug(f"SMTP frame with no smtp layer (encapsulated?) {src_ip} -> {dst_ip}")
             # Determine best-effort direction from ports (may both be 0)
             direction = "request"
             if src_port in self.SMTP_PORTS:

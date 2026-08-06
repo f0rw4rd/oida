@@ -583,13 +583,22 @@ class TACACSPassiveListener(PySharkListenerBase):
             return
         self._seen_hashes = getattr(self, "_seen_hashes", set())
         self._seen_hashes.add(key)
-        # BMC/server is the AUTHEN reply sender; record ip/port best-effort.
+        # Assign roles from the sequence number: the client sends odd seq_no
+        # (1, 3, ...) and the server replies with even seq_no (2, 4, ...).  An
+        # AUTHEN REPLY flows server->client, so keying purely off src/dst would
+        # swap the endpoints for reply-triggered hashes.
+        if seq & 1:  # odd -> client-originated request (src=client, dst=server)
+            client_ip, server_ip = src_ip, dst_ip
+            server_port = dst_port or 49
+        else:  # even -> server-originated reply (src=server, dst=client)
+            client_ip, server_ip = dst_ip, src_ip
+            server_port = src_port or 49
         cred = TACACSCredential(
             username="",
             credential_type="hash",
-            server_ip=dst_ip,
-            server_port=dst_port or 49,
-            client_ip=src_ip,
+            server_ip=server_ip,
+            server_port=server_port,
+            client_ip=client_ip,
             timestamp=datetime.now().isoformat(),
             session_id=session_hex,
             tacacs_session_hex=session_hex,

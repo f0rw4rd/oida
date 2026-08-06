@@ -16,14 +16,15 @@ iSCSI is security-relevant because:
 - CHAP credentials may be weak or reused
 - Data operations reveal what is being accessed
 
-tshark fields used (packet.iscsi.*):
+tshark fields used (packet.iscsi.* unless noted):
 - iscsi.opcode: iSCSI opcode (login, text, SCSI command, etc.)
-- iscsi.login.target_name: Target IQN (in login/text key-value data)
-- iscsi.login.initiator_name: Initiator IQN
-- iscsi.login.auth_method: Authentication method
-- iscsi.login.session_type: Session type (Normal, Discovery)
+- iscsi.keyvalue: login/text ``key=value`` pairs (RFC 7143 text). The
+  dissector has NO dedicated iscsi.login.target_name / initiator_name /
+  auth_method / session_type fields -- TargetName, InitiatorName,
+  AuthMethod and SessionType are parsed out of these keyvalue pairs.
 - iscsi.login.status: Login response status
 - iscsi.isid: Initiator Session ID
+- scsi.lun: LUN being accessed -- lives on the SCSI layer, NOT iscsi.lun
 - iscsi.datasegmentlength: Data payload length
 - iscsi.scsicommand.R / .W: Read/Write flags
 - iscsi.scsicommand.expecteddatatransferlength: Transfer size
@@ -320,27 +321,26 @@ class ISCSIPassiveListener(PySharkListenerBase):
         is_response = opcode_str in RESPONSE_OPCODES or opcode_name in RESPONSE_OPCODES
         direction = "response" if is_response else "request"
 
-        # Extract target and initiator names from login/text key-value data
-        # tshark exposes these as iscsi.login.target_name and iscsi.login.initiator_name
-        target_name = str(self.get_field(iscsi, "login_target_name", "") or "")
-        if not target_name:
-            target_name = str(self.get_field(iscsi, "login.target_name", "") or "")
-        initiator_name = str(self.get_field(iscsi, "login_initiator_name", "") or "")
-        if not initiator_name:
-            initiator_name = str(self.get_field(iscsi, "login.initiator_name", "") or "")
+        # Target/initiator IQN, auth method and session type are carried as
+        # RFC 7143 login/text ``key=value`` text, which Wireshark exposes as
+        # repeated ``iscsi.keyvalue`` fields -- there are NO dedicated
+        # iscsi.login.target_name / initiator_name / auth_method / session_type
+        # fields, so we parse them out of the keyvalue pairs.
+        login_kv = self._parse_login_keyvalues(self._collect_keyvalues(iscsi))
+        target_name = login_kv.get("TargetName", "")
+        initiator_name = login_kv.get("InitiatorName", "")
+        auth_method = login_kv.get("AuthMethod", "")
+        session_type = login_kv.get("SessionType", "")
 
-        # Extract LUN from SCSI command
-        lun = self.get_field(iscsi, "lun", None)
-        lun_str = str(lun) if lun is not None else ""
+        # LUN is carried on the SCSI layer as scsi.lun (there is no iscsi.lun).
+        lun_str = ""
+        if hasattr(packet, "scsi"):
+            lun = self.get_field(packet.scsi, "lun", None)
+            lun_str = str(lun) if lun is not None else ""
 
         # Extract session ID
         isid = self.get_field(iscsi, "isid", None)
         isid_str = str(isid) if isid is not None else ""
-
-        # Authentication method from login key-value pairs
-        auth_method = str(self.get_field(iscsi, "login_auth_method", "") or "")
-        if not auth_method:
-            auth_method = str(self.get_field(iscsi, "login.auth_method", "") or "")
 
         # Login status
         login_status = self.get_field(iscsi, "login_status", None)
@@ -348,11 +348,6 @@ class ISCSIPassiveListener(PySharkListenerBase):
             login_status = self.get_field(iscsi, "login.status", None)
         login_status_str = str(login_status) if login_status is not None else ""
         login_status_name = LOGIN_STATUS.get(login_status_str, "")
-
-        # Session type
-        session_type = str(self.get_field(iscsi, "login_session_type", "") or "")
-        if not session_type:
-            session_type = str(self.get_field(iscsi, "login.session_type", "") or "")
 
         # Data segment length
         data_seg_len = self.get_field(iscsi, "datasegmentlength", None)
@@ -508,6 +503,53 @@ class ISCSIPassiveListener(PySharkListenerBase):
             f"iSCSI: {opcode_name} {src_ip} -> {dst_ip}"
             + (f" target={target_name}" if target_name else "")
         )
+
+    # -------------------------------------------------------------------------
+    # Login/text key=value parsing
+    # -------------------------------------------------------------------------
+
+    def _collect_keyvalues(self, iscsi: Any) -> List[str]:
+        """Return every ``iscsi.keyvalue`` login/text pair as a string.
+
+        Wireshark emits one ``iscsi.keyvalue`` field per RFC 7143 ``key=value``
+        login/text pair.  EK mode delivers repeats as a Python list; XML mode
+        exposes them via ``.all_fields``.  Both are flattened to a list of plain
+        ``"Key=Value"`` strings.  Read via raw ``getattr`` (not ``get_field``)
+        so multi-value pairs stay separate rather than being comma-joined --
+        an ``AuthMethod=CHAP,None`` value would otherwise be indistinguishable
+        from two separate pairs.
+        """
+        raw = getattr(iscsi, "keyvalue", None)
+        if raw is None:
+            return []
+        pairs: List[str] = []
+        if isinstance(raw, list):
+            for item in raw:
+                item = self._resolve_value(item, "")
+                if item not in (None, ""):
+                    pairs.append(str(item))
+            return pairs
+        # XML mode: repeated same-named fields are reachable via .all_fields.
+        try:
+            for fld in raw.all_fields:
+                val = str(getattr(fld, "show", "") or "")
+                if val:
+                    pairs.append(val)
+        except Exception:
+            val = self._resolve_value(raw, "")
+            if val not in (None, ""):
+                pairs.append(str(val))
+        return pairs
+
+    @staticmethod
+    def _parse_login_keyvalues(pairs: List[str]) -> Dict[str, str]:
+        """Split ``Key=Value`` login/text pairs into a dict (last value wins)."""
+        out: Dict[str, str] = {}
+        for kv in pairs:
+            key, sep, value = kv.partition("=")
+            if sep and key:
+                out[key.strip()] = value.strip()
+        return out
 
     # -------------------------------------------------------------------------
     # CHAP credential extraction

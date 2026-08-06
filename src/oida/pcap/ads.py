@@ -220,7 +220,12 @@ class ADSPassiveListener(PySharkListenerBase):
         # Determine client/server roles:
         # Request: sender=client, target=server
         # Response: sender=server, target=client
-        if is_response:
+        # DeviceNotification (cmd 0x0008) is an unsolicited server->client push
+        # with the response bit NOT set, so the sender is the server (PLC)
+        # regardless of the response bit -- otherwise the PLC is mislabeled as
+        # the client and the conversation is split into two role-reversed halves.
+        sender_is_server = is_response or cmd_id == 0x0008
+        if sender_is_server:
             client_ip = dst_ip
             server_ip = src_ip
             client_mac = dst_mac

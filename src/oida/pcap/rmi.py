@@ -122,6 +122,9 @@ class RMIPassiveListener(PySharkListenerBase):
 
         src_ip, dst_ip = self.get_ip_info(packet)
         if not src_ip or not dst_ip:
+            self.logger.debug(
+                f"Dropping RMI packet with missing IP (src={src_ip!r} dst={dst_ip!r})"
+            )
             return
 
         rmi = packet.rmi

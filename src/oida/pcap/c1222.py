@@ -186,6 +186,11 @@ class C1222Session:
     security_count: int = 0
     registration_count: int = 0
     user_ids_seen: Set[int] = field(default_factory=set)
+    # Association-level authentication: the C12.22 calling authentication value
+    # (and any LOGON password) is presented once per association at ACSE setup,
+    # not on every EPSEM data PDU.  Once observed, later data PDUs of the same
+    # association are authenticated even though they carry no per-PDU auth value.
+    authenticated: bool = False
     first_seen: str = ""
     last_seen: str = ""
 
@@ -414,6 +419,13 @@ class C1222PassiveListener(PySharkListenerBase):
             now,
         )
 
+        # Remember association-level authentication.  A calling authentication
+        # value or LOGON password seen on any PDU authenticates the whole
+        # association, so subsequent data PDUs carrying no per-PDU auth value
+        # must not each be flagged as unauthenticated.
+        if auth_value or password:
+            self.sessions[session_key].authenticated = True
+
         # Generate security alerts
         self._check_security(
             cmd_code,
@@ -426,6 +438,7 @@ class C1222PassiveListener(PySharkListenerBase):
             username,
             user_id,
             is_response,
+            self.sessions[session_key].authenticated,
         )
 
         # Surface LOGON credentials to the scanner credential table.
@@ -525,6 +538,7 @@ class C1222PassiveListener(PySharkListenerBase):
         username: str,
         user_id: Optional[int],
         is_response: bool,
+        session_authenticated: bool = False,
     ) -> None:
         """Generate security alerts for suspicious activity."""
         if cmd_code is None or is_response:
@@ -610,8 +624,15 @@ class C1222PassiveListener(PySharkListenerBase):
                     }
                 )
 
-        # Unauthenticated request (no auth_value and no password)
-        if not auth_value and not password and cmd_code in (READ_SERVICES | WRITE_SERVICES):
+        # Unauthenticated request (no auth_value and no password).  Auth is
+        # carried once at association setup, so only flag when the association
+        # itself has never presented an authentication value or password.
+        if (
+            not auth_value
+            and not password
+            and not session_authenticated
+            and cmd_code in (READ_SERVICES | WRITE_SERVICES)
+        ):
             self._alerts.append(
                 {
                     "level": "highlight",

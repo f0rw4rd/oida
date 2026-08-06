@@ -186,26 +186,32 @@ class RGOOSEPassiveListener(PySharkListenerBase):
         flow_id = self.get_flow_id(packet)
         stream_id = self.get_stream_id(packet)
 
-        # -- R-GOOSE session header fields (rgoose.* prefix) --
-        # These are in the goose layer since tshark shares the dissector
-        spdu_num = self._parse_int(self.get_field(goose_layer, "spdu_num"), 0)
-        spdu_len = self._parse_int(self.get_field(goose_layer, "spdu_len"), 0)
-        rgoose_version = self._parse_int(self.get_field(goose_layer, "version"), 0)
-        key_id = self._parse_int(self.get_field(goose_layer, "key_id"), 0)
-        curr_key_t = self._parse_int(self.get_field(goose_layer, "curr_key_t"), 0)
-        next_key_t = self._parse_int(self.get_field(goose_layer, "next_key_t"), 0)
-        init_v_len = self._parse_int(self.get_field(goose_layer, "init_v_len"), 0)
-        payload_len = self._parse_int(self.get_field(goose_layer, "payload_len"), 0)
+        # -- R-GOOSE session header fields --
+        # tshark registers these under the ``rgoose.`` abbreviation even though
+        # they live on the shared ``goose`` layer, so at runtime they are
+        # reachable as ``rgoose_<name>`` (EK mode) / ``rgoose.<name>`` (XML mode)
+        # -- NOT as bare names off the goose layer. Reading the bare name
+        # returned the default for every field, so has_hmac was always False and
+        # a bogus rgoose_no_auth verdict fired even on authenticated R-GOOSE.
+        spdu_num = self._parse_int(self.get_field(goose_layer, "rgoose_spdu_num"), 0)
+        spdu_len = self._parse_int(self.get_field(goose_layer, "rgoose_spdu_len"), 0)
+        rgoose_version = self._parse_int(self.get_field(goose_layer, "rgoose_version"), 0)
+        key_id = self._parse_int(self.get_field(goose_layer, "rgoose_key_id"), 0)
+        curr_key_t = self._parse_int(self.get_field(goose_layer, "rgoose_curr_key_t"), 0)
+        next_key_t = self._parse_int(self.get_field(goose_layer, "rgoose_next_key_t"), 0)
+        init_v_len = self._parse_int(self.get_field(goose_layer, "rgoose_init_v_len"), 0)
+        payload_len = self._parse_int(self.get_field(goose_layer, "rgoose_payload_len"), 0)
 
         # HMAC -- presence indicates authentication is enabled
-        hmac_raw = self.get_field(goose_layer, "hmac")
+        hmac_raw = self.get_field(goose_layer, "rgoose_hmac")
         has_hmac = hmac_raw is not None and str(hmac_raw).strip() not in ("", "None")
 
-        # R-GOOSE APPID (from rgoose header, not goose header)
-        rgoose_appid = self._parse_int(self.get_field(goose_layer, "appid"), 0)
+        # R-GOOSE APPID (rgoose session header -- distinct from the L2 goose.appid)
+        rgoose_appid = self._parse_int(self.get_field(goose_layer, "rgoose_appid"), 0)
 
-        # R-GOOSE simulation flag (from rgoose header)
-        rgoose_sim = self._parse_int(self.get_field(goose_layer, "simulation"), 0)
+        # R-GOOSE session-level simulation flag (rgoose.simulation -- distinct
+        # from the GOOSE PDU goose.simulation read below)
+        rgoose_sim = self._parse_int(self.get_field(goose_layer, "rgoose_simulation"), 0)
 
         # -- GOOSE PDU fields (standard goose.* prefix) --
         gocb_ref = str(self.get_field(goose_layer, "gocbRef") or "")

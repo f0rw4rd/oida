@@ -118,6 +118,7 @@ class TFTPPassiveListener(PySharkListenerBase):
 
         opcode_raw = self.get_field(tftp, "opcode")
         if opcode_raw is None:
+            self.logger.debug(f"TFTP: no opcode field {src_ip} -> {dst_ip}; skipping")
             return
 
         try:

@@ -219,6 +219,7 @@ class LDAPPassiveListener(PySharkListenerBase):
         stream_id = self.get_stream_id(packet)
 
         if not src_ip or not dst_ip:
+            self.logger.debug("LDAP: packet without src/dst IP layer; skipping")
             return
 
         flow_id = self.get_flow_id(packet)
@@ -445,6 +446,14 @@ class LDAPPassiveListener(PySharkListenerBase):
                 dst_port=dst_port,
                 stream_id=stream_id,
             )
+        else:
+            # protocolOps we don't yet model (compareRequest, abandonRequest,
+            # searchResRef, intermediateResponse, …). Don't drop silently.
+            op = next(
+                (k for k in fields if k.startswith("ldap.") and k.endswith("_element")),
+                "unknown",
+            )
+            self.logger.debug(f"LDAP: unhandled protocolOp {op} {src_ip} -> {dst_ip}")
 
     def _is_sasl_encrypted(self, fields: Dict[str, str]) -> bool:
         """SASL/GSSAPI-wrapped LDAP message (e.g. after a successful Kerberos bind).

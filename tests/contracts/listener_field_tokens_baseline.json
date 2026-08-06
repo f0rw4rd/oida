@@ -24,16 +24,6 @@
     "tf_attr_key_length": "broken",
     "tf_attr_life_type": "broken"
   },
-  "iscsi.py": {
-    "login.auth_method": "broken",
-    "login.initiator_name": "broken",
-    "login.session_type": "broken",
-    "login.target_name": "broken",
-    "login_auth_method": "broken",
-    "login_initiator_name": "broken",
-    "login_session_type": "broken",
-    "login_target_name": "broken"
-  },
   "modbus.py": {
     "regval16": "synthetic"
   },

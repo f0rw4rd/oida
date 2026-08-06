@@ -161,6 +161,9 @@ class HTTPPassiveListener(PySharkListenerBase):
         src_port, dst_port = self.get_port_info(packet)
 
         if not src_ip or not dst_ip:
+            self.logger.debug(
+                f"Dropping HTTP packet with missing IP (src={src_ip!r} dst={dst_ip!r})"
+            )
             return
 
         flow_id = self.get_flow_id(packet)
@@ -271,11 +274,25 @@ class HTTPPassiveListener(PySharkListenerBase):
             elif content_length:
                 summary_parts.append(f"(content-length {content_length})")
 
+            # Continuation segments carry body data in *either* direction --
+            # a large POST/PUT request body split across TCP segments is
+            # client->server, not a response. There's no request/response
+            # signal in a bare continuation, so defer to the port/heuristic
+            # cascade (native=None) instead of hardcoding "response".
+            d = self.resolve_direction(
+                packet,
+                native=None,
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                src_port=src_port,
+                dst_port=dst_port,
+                flow_id=flow_id,
+            )
             self._record_interaction(
                 now,
                 src_ip,
                 dst_ip,
-                "response",  # continuations are server->client body data
+                d.direction,
                 "HTTP Data",
                 {
                     "data_length": data_len or content_length or "?",

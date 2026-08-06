@@ -56,6 +56,7 @@ from .iec104 import (
     _ERROR_COTS,
     _TYPE_CATEGORIES,
     _DPI_VALUES,
+    _DCO_VALUES,
     _RCO_VALUES,
 )
 
@@ -644,13 +645,13 @@ class IEC101PassiveListener(PySharkListenerBase):
                 except Exception:
                     pass
             for i, f in enumerate(on_fields):
-                val = _DPI_VALUES.get(int(f.show), str(f.show))
+                val = _DCO_VALUES.get(int(f.show), str(f.show))
                 if i < len(se_fields) and str(se_fields[i].show) == "True":
                     val += "(S)"
                 result.append(val)
         except Exception:
             try:
-                val = _DPI_VALUES.get(int(on_raw), str(on_raw))
+                val = _DCO_VALUES.get(int(on_raw), str(on_raw))
             except (ValueError, TypeError):
                 val = str(on_raw)
             if se_raw is not None and str(se_raw) == "True":

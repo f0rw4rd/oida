@@ -204,15 +204,24 @@ class SmartInstallPassiveListener(PySharkListenerBase):
             stream_id=stream_id,
         )
 
-        # Only assert CVE-2018-0171 exposure when there is evidence that a
-        # Smart Install service actually exists, not merely a client
+        # Only assert CVE-2018-0171 exposure when there is positive evidence
+        # that a Smart Install service actually exists, not merely a client
         # connection attempt to port 4786. Real evidence is either:
         #   - a parsed SMI protocol header (smi_info present), or
-        #   - a packet originating FROM port 4786 (the switch responded).
-        # A bare client SYN / ACK / RST to a closed-or-filtered 4786 (an
-        # nmap scan probe) carries neither and must not mint a switch device
-        # or a CVE alert for the destination IP.
-        service_confirmed = smi_info is not None or is_from_server
+        #   - a NON-RST packet originating FROM port 4786 (the switch is
+        #     listening and responded: SYN-ACK / ACK / data).
+        # A bare RST FROM 4786 means the port is CLOSED (a common nmap scan
+        # result): it originates from the server side but proves the service is
+        # absent, so it must NOT mint a switch device or a CVE alert. Likewise a
+        # client SYN / ACK / RST toward a closed-or-filtered 4786 carries no
+        # evidence.
+        tcp_flags_val = 0
+        try:
+            tcp_flags_val = int(str(self.get_field(packet.tcp, "flags", "0") or "0"), 16)
+        except (ValueError, TypeError):
+            tcp_flags_val = 0
+        is_rst = bool(tcp_flags_val & 0x04)
+        service_confirmed = smi_info is not None or (is_from_server and not is_rst)
 
         # Update device tracking.  Roles come from the resolved direction:
         # the client (director) sends to the switch (server listening on 4786).

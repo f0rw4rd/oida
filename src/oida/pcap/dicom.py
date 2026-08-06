@@ -259,6 +259,11 @@ class DICOMPassiveListener(PySharkListenerBase):
         pdu_type = self._parse_int(pdu_type_raw, None, base=16)
 
         if pdu_type is None:
+            self.logger.debug(
+                "DICOM: packet without a dicom.pdu.type field skipped (%s -> %s)",
+                src_ip,
+                dst_ip,
+            )
             return
 
         pdu_name = DICOM_PDU_TYPES.get(pdu_type, f"PDU 0x{pdu_type:02x}")
@@ -338,6 +343,14 @@ class DICOMPassiveListener(PySharkListenerBase):
                 dst_port,
                 stream_id,
                 now,
+            )
+        else:
+            self.logger.debug(
+                "DICOM: unhandled PDU type 0x%02x (%s); no interaction recorded (%s -> %s)",
+                pdu_type,
+                pdu_name,
+                src_ip,
+                dst_ip,
             )
 
     def _process_associate_rq(
@@ -580,6 +593,31 @@ class DICOMPassiveListener(PySharkListenerBase):
             stream_id=stream_id,
         )
 
+    def _all_field_ints(self, dicom, *names: str) -> List[int]:
+        """Return every occurrence of a repeated integer field as ints.
+
+        get_field() comma-joins repeated occurrences in EK mode and yields only
+        the first in XML mode; splitting the joined value recovers each element
+        so a multi-tag P-DATA-TF PDV is fully inspected instead of just the
+        leading tag.  base-10 default parsing matches EK's decimal FT_UINT
+        normalisation, while _parse_int still auto-detects XML-mode "0x" hex.
+        """
+        for name in names:
+            raw = self.get_field(dicom, name, None)
+            if raw is None:
+                continue
+            out: List[int] = []
+            for part in str(raw).split(","):
+                part = part.strip()
+                if not part:
+                    continue
+                val = self._parse_int(part, None)
+                if val is not None:
+                    out.append(val)
+            if out:
+                return out
+        return []
+
     def _process_data(
         self,
         dicom,
@@ -600,14 +638,15 @@ class DICOMPassiveListener(PySharkListenerBase):
         if pdv_flags is None:
             pdv_flags = self._parse_int(self.get_field(dicom, "pdv.flags", None), None, base=16)
 
-        # Extract DICOM tags for command identification and PHI detection
-        tag_raw = self.get_field(dicom, "tag", None)
+        # Extract DICOM tags for command identification and PHI detection.
+        # A single P-DATA-TF PDV carries many elements, so every tag / US value
+        # occurrence must be inspected: get_field() comma-joins repeated fields
+        # in EK mode and yields only the first in XML mode, hence _all_field_ints.
+        tags = self._all_field_ints(dicom, "tag")
+        values_16u = self._all_field_ints(dicom, "tag_value_16u", "tag.value.16u")
         tag_value_str = str(self.get_field(dicom, "tag_value_str", "") or "").strip()
         if not tag_value_str:
             tag_value_str = str(self.get_field(dicom, "tag.value.str", "") or "").strip()
-        tag_value_16u = self._parse_int(self.get_field(dicom, "tag_value_16u", None), None)
-        if tag_value_16u is None:
-            tag_value_16u = self._parse_int(self.get_field(dicom, "tag.value.16u", None), None)
 
         details: Dict[str, Any] = {"pdu_type": pdu_name}
         if pdv_ctx is not None:
@@ -615,21 +654,28 @@ class DICOMPassiveListener(PySharkListenerBase):
         if pdv_flags is not None:
             details["pdv_flags"] = pdv_flags
 
-        # Try to identify DIMSE command from tag (0000,0100)
+        # Identify the DIMSE command only from the Command Field element
+        # (0000,0100).  A command dataset also carries other US elements
+        # (Message ID, Priority, Status, counts) whose values overlap
+        # DICOM_COMMANDS codes, so an unqualified 16u value must not be treated
+        # as a command unless the command-field tag is present in this PDV.
         command_name = ""
-        if tag_value_16u is not None:
-            command_name = DICOM_COMMANDS.get(tag_value_16u, "")
-            if command_name:
-                details["dimse_command"] = command_name
-                details["command_field"] = tag_value_16u
+        command_field = None
+        if 0x00000100 in tags:
+            for value in values_16u:
+                if value in DICOM_COMMANDS:
+                    command_field = value
+                    command_name = DICOM_COMMANDS[value]
+                    break
+        if command_name:
+            details["dimse_command"] = command_name
+            details["command_field"] = command_field
 
-        # Check for PHI exposure in tag values
-        if tag_raw is not None:
-            # base 10 default: EK mode normalizes the FT_UINT32 dicom.tag to a
-            # decimal string (e.g. 0x00100010 -> "1048592"); XML-mode "0x"-prefixed
-            # hex is still auto-detected by _parse_int.
-            tag_int = self._parse_int(tag_raw, None)
-            if tag_int is not None and tag_int in PHI_TAGS:
+        # Check for PHI exposure across every tag in the packet (not just the
+        # first): base-10 default parsing resolves EK-mode decimal tags while
+        # _parse_int still auto-detects XML-mode "0x"-prefixed hex.
+        for tag_int in tags:
+            if tag_int in PHI_TAGS:
                 details["phi_tag"] = PHI_TAGS[tag_int]
                 details["phi_exposed"] = True
                 if tag_value_str:
@@ -640,15 +686,16 @@ class DICOMPassiveListener(PySharkListenerBase):
                         assoc.client_ip == dst_ip and assoc.server_ip == src_ip
                     ):
                         assoc.phi_exposed = True
+                break
 
         # Determine request/response direction.  The PDV command/data bit is
         # orthogonal to RQ/RSP -- both a C-STORE-RQ and a C-STORE-RSP carry a
-        # command PDV -- so it cannot decide direction.  When a DIMSE command
+        # command PDV -- so it cannot decide direction.  When the DIMSE command
         # field (0000,0100) is present, bit 0x8000 marks the RSP variant
         # (e.g. C-STORE-RQ 0x0001 vs C-STORE-RSP 0x8001).  Otherwise (data
         # PDV, no command field) fall back to the port/flow heuristic.
-        if tag_value_16u is not None:
-            direction = "response" if (tag_value_16u & 0x8000) else "request"
+        if command_field is not None:
+            direction = "response" if (command_field & 0x8000) else "request"
         else:
             direction = self.resolve_direction(
                 None,

@@ -232,7 +232,15 @@ class CIPSafetyPassiveListener(PySharkListenerBase):
     def process_packet(self, packet) -> None:
         """Process CIP Safety packet and extract safety data."""
         src_ip, dst_ip = self.get_ip_info(packet)
+        # CIP Safety may ride DeviceNet (CAN) with no IP layer; fall back to
+        # MAC-based endpoints as opensafety/devicenet do, rather than dropping.
+        src_mac, dst_mac = self.get_mac_info(packet)
+        if not src_ip:
+            src_ip = f"MAC:{src_mac}" if src_mac else ""
+        if not dst_ip:
+            dst_ip = f"MAC:{dst_mac}" if dst_mac else ""
         if not src_ip or not dst_ip:
+            self.logger.debug("CIP Safety: packet with no IP or MAC endpoints; skipping")
             return
 
         src_port, dst_port = self.get_port_info(packet)

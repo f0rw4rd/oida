@@ -299,6 +299,35 @@ class SIPPassiveListener(PySharkListenerBase):
                 dst_port=dst_port,
                 stream_id=self.get_stream_id(packet),
             )
+        else:
+            # SIP frame with neither Method nor Status-Code -- e.g. an
+            # EK-collapsed dissection or a body-only continuation segment.
+            # Record a catch-all interaction (with whatever fields we did
+            # extract) so it isn't silently dropped. No request/response
+            # signal here, so defer to the port/heuristic cascade.
+            self.logger.debug(f"SIP frame with no Method/Status-Code from {src_ip} -> {dst_ip}")
+            d = self.resolve_direction(
+                packet,
+                native=None,
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                src_port=src_port,
+                dst_port=dst_port,
+                flow_id=flow_id,
+            )
+            self._record_interaction(
+                now,
+                src_ip,
+                dst_ip,
+                d.direction,
+                "SIP",
+                details,
+                "SIP (no request line / status)",
+                flow_id=flow_id,
+                src_port=src_port,
+                dst_port=dst_port,
+                stream_id=self.get_stream_id(packet),
+            )
 
         # Extract SIP Digest authentication from any packet with auth headers.
         # Prefer the CSeq method (reflects the request method the digest was

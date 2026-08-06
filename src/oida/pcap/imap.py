@@ -240,6 +240,7 @@ class IMAPPassiveListener(PySharkListenerBase):
         # Get port info
         src_port, dst_port = self.get_port_info(packet)
         if src_port == 0 and dst_port == 0:
+            self.logger.debug(f"Dropping IMAP packet with no port info (src={src_ip} dst={dst_ip})")
             return
 
         # Check if we have IMAP layer

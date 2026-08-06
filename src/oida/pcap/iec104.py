@@ -204,8 +204,13 @@ UTYPE_STOPDT_CON = 0x08
 UTYPE_TESTFR_ACT = 0x10
 UTYPE_TESTFR_CON = 0x20
 
-# Double-point interpretation (DPI field values)
+# Double-point interpretation (DPI field values) -- monitoring direction
 _DPI_VALUES = {0: "INTERMEDIATE", 1: "OFF", 2: "ON", 3: "INDETERMINATE"}
+
+# Double-command state (DCS field values) -- control direction (C_DC_NA_1 /
+# C_DC_TA_1). Unlike the monitoring DPI table, values 0 and 3 are NOT_PERMITTED,
+# not INTERMEDIATE/INDETERMINATE (per IEC 60870-5-101/104, as iec103 uses).
+_DCO_VALUES = {0: "NOT_PERMITTED", 1: "OFF", 2: "ON", 3: "NOT_PERMITTED"}
 
 # Regulating step command interpretation (RCO.up field values)
 _RCO_VALUES = {0: "NOT_PERMITTED", 1: "LOWER", 2: "HIGHER", 3: "NOT_PERMITTED"}
@@ -971,6 +976,28 @@ class IEC104PassiveListener(PySharkListenerBase):
                 )
             except (ValueError, TypeError) as e:
                 self.logger.debug(f"Operation failed: {e}")
+        else:
+            # Truncated/malformed U-APDU: tshark emitted no utype. Record a
+            # generic interaction and debug-log so a filter-matching packet is
+            # never silently dropped (mirrors the ASDU/S-frame/I-frame paths).
+            self.logger.debug(
+                f"IEC104 U-frame with no utype field {src_ip} -> {dst_ip} (malformed U-APDU)"
+            )
+            now = datetime.now().isoformat()
+            _sp, _dp = self.get_port_info(packet)
+            self._record_interaction(
+                now,
+                src_ip,
+                dst_ip,
+                "request",
+                "U-frame (malformed)",
+                {},
+                "U-frame (malformed)",
+                flow_id=flow_id,
+                src_port=_sp,
+                dst_port=_dp,
+                stream_id=self.get_stream_id(packet),
+            )
 
     # ------------------------------------------------------------------
     # EK array helper (multi-APDU support)
@@ -1201,13 +1228,13 @@ class IEC104PassiveListener(PySharkListenerBase):
                 except Exception as e:
                     self.logger.debug(f"Failed to get se_fields: {e}")
             for i, f in enumerate(on_fields):
-                val = _DPI_VALUES.get(int(f.show), str(f.show))
+                val = _DCO_VALUES.get(int(f.show), str(f.show))
                 if i < len(se_fields) and str(se_fields[i].show) == "True":
                     val += "(S)"
                 result.append(val)
         except Exception:
             try:
-                val = _DPI_VALUES.get(int(on_raw), str(on_raw))
+                val = _DCO_VALUES.get(int(on_raw), str(on_raw))
             except (ValueError, TypeError):
                 val = str(on_raw)
             if se_raw is not None and str(se_raw) == "True":

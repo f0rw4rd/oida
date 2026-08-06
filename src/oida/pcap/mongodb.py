@@ -69,6 +69,13 @@ OPCODE_NAMES = {
 # Operations that modify data (security-relevant)
 WRITE_OPCODES = {"OP_UPDATE", "OP_INSERT", "OP_DELETE"}
 
+# Legacy opcodes that are always client->server requests.  Setting native=True
+# for these keeps role resolution port-independent so that, on a non-standard
+# server port, resolve_direction cannot swap client/server and reverse WRITE
+# alerts.  (OP_MSG can flow either way, so it is excluded and decided by
+# response_to; OP_REPLY is server->client.)
+CLIENT_OPCODES = {"OP_QUERY", "OP_INSERT", "OP_UPDATE", "OP_DELETE", "OP_GET_MORE"}
+
 
 class MongoDBPassiveListener(PySharkListenerBase):
     """Passive MongoDB traffic listener for database activity extraction.
@@ -162,7 +169,13 @@ class MongoDBPassiveListener(PySharkListenerBase):
         # any user --decode-as / OVERRIDE_PREFS override) and then the
         # lower-port / first-seen heuristic -- never dropping the packet.
         is_reply = opcode_name == "OP_REPLY" or (opcode_name == "OP_MSG" and responds_to_request)
-        native = False if is_reply else None
+        if is_reply:
+            native = False
+        elif opcode_name in CLIENT_OPCODES:
+            # Legacy client-only opcodes are authoritatively client->server.
+            native = True
+        else:
+            native = None
 
         # Preserve the learned-server hint: when one endpoint is already known to
         # be a server, fold that into the native signal so it outranks the port

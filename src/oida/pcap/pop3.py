@@ -179,7 +179,12 @@ class POP3PassiveListener(PySharkListenerBase):
 
         # Get port info
         src_port, dst_port = self.get_port_info(packet)
-        if src_port == 0 or dst_port == 0:
+        # Only drop when *both* ports are absent (matches the IMAP listener).
+        # The previous `or` dropped any packet where a single side was 0 --
+        # e.g. an ICMP-quoted POP segment that only preserved one port --
+        # which discarded recoverable packets invisibly.
+        if src_port == 0 and dst_port == 0:
+            self.logger.debug(f"Dropping POP3 packet with no port info (src={src_ip} dst={dst_ip})")
             return
 
         # Check if we have a POP layer

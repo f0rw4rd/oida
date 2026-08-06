@@ -263,6 +263,10 @@ class OPCUASession:
     endpoint_url: str = ""
     security_policy: str = ""
     security_mode: str = ""
+    # True once an OPN/GetEndpoints actually carried a security policy or mode.
+    # Distinguishes an observed "None" (genuinely insecure) from the empty-string
+    # default (never observed — e.g. a mid-stream or already-encrypted capture).
+    security_observed: bool = False
     encryption_algorithm: str = ""
     user_authentications: List[OPCUAUserAuth] = field(default_factory=list)
     current_user: str = ""
@@ -1438,6 +1442,9 @@ class OPCUAPassiveListener(PySharkListenerBase):
             if "," in endpoint_url:
                 endpoint_url = endpoint_url.split(",")[0].strip()
             session.endpoint_url = endpoint_url
+        if security_policy or security_mode:
+            # A security policy/mode field was actually present on the wire.
+            session.security_observed = True
         if security_policy:
             simplified = self._simplify_security_policy(security_policy)
             if simplified and simplified != "None":
@@ -1977,6 +1984,12 @@ class OPCUAPassiveListener(PySharkListenerBase):
         """Get sessions using insecure configurations."""
         insecure = []
         for session in self.sessions.values():
+            # Only judge sessions whose security config was actually observed.
+            # An empty-string default means no OPN/GetEndpoints was captured
+            # (mid-stream / already-encrypted flow) — "not observed" is not
+            # evidence of "insecure", so don't emit a false-unsafe verdict.
+            if not session.security_observed:
+                continue
             issues = []
             if session.security_policy in ("None", ""):
                 issues.append("No security policy")

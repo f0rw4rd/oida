@@ -214,19 +214,22 @@ class NetBIOSPassiveListener(PySharkListenerBase):
         flags_raw = self.get_field(nbns, "flags", "")
         flags_str = str(flags_raw)
 
-        # Check answer count to determine direction
+        # Determine direction. The NBNS header R flag (bit 15) is the
+        # authoritative request/response signal, so consult it whenever the
+        # flags are present -- a response with zero answer RRs (negative query,
+        # WACK, registration response) would otherwise be mislabeled a request.
+        # Only fall back to the answer count when flags are unparseable.
         answers = self.get_field(nbns, "count_answers", "0")
 
         is_response = False
         try:
-            is_response = int(str(answers)) > 0
+            flags_int = int(flags_str, 0)
+            is_response = bool(flags_int & 0x8000)
         except (ValueError, TypeError):
-            # Try flag-based detection
             try:
-                flags_int = int(flags_str, 0)
-                is_response = bool(flags_int & 0x8000)
+                is_response = int(str(answers)) > 0
             except (ValueError, TypeError) as e:
-                self.logger.debug(f"Failed to get flags_int: {e}")
+                self.logger.debug(f"Failed to parse NBNS flags/answers: {e}")
 
         # Extract address from response
         addr = str(self.get_field(nbns, "addr", "") or "")

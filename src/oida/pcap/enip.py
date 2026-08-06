@@ -457,6 +457,7 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
 
         # Only count if we actually found CPF data
         if not any(k in details for k in ("cpf_typeid", "cpf_sai_connid")):
+            self.logger.debug(f"ENIP I/O: no CPF item on packet {src_ip} -> {dst_ip}; skipping")
             return
 
         # Extract sequence number for summary
@@ -503,6 +504,26 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
         # Get service code (lower 7 bits)
         svc_raw = self.get_field(cip, "sc", None)
         if svc_raw is None:
+            # A CIP layer with no service code (e.g. a fragment/continuation).
+            # Don't drop it silently: debug-log and record a generic interaction
+            # so a filter-matching packet is still visible in coverage.
+            self.logger.debug(
+                f"ENIP/CIP: no service code (sc) on packet {src_ip} -> {dst_ip}; "
+                f"recording generic interaction"
+            )
+            self._record_interaction(
+                now,
+                src_ip,
+                dst_ip,
+                "request",
+                "CIP",
+                {"command_name": "CIP"},
+                f"CIP {src_ip} -> {dst_ip}",
+                flow_id=flow_id,
+                src_port=src_port,
+                dst_port=dst_port,
+                stream_id=stream_id,
+            )
             return
 
         try:

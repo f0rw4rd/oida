@@ -179,6 +179,63 @@ class TestISCSIPassiveEK:
             f"Expected both request and response; got: {directions}"
         )
 
+    def test_iscsi_target_name_extracted_from_keyvalue(self):
+        """Target IQN is parsed from iscsi.keyvalue (TargetName=...), not the
+        non-existent iscsi.login.target_name field."""
+        listener, devices, result = _run_listener_test(
+            "iscsi",
+            "ISCSIPassiveListener",
+            "iscsi",
+            "iscsi/generated_iscsi.pcap",
+            min_devices=2,
+        )
+        names = {ix.details.get("target_name", "") for ix in listener.interactions}
+        names.discard("")
+        assert names, "No TargetName IQN extracted from iscsi.keyvalue pairs"
+        assert any(n.startswith("iqn.") for n in names), f"IQNs look wrong: {names}"
+
+    def test_iscsi_auth_and_session_type_extracted(self):
+        """AuthMethod and SessionType come from iscsi.keyvalue login text."""
+        listener, devices, result = _run_listener_test(
+            "iscsi",
+            "ISCSIPassiveListener",
+            "iscsi",
+            "iscsi/generated_iscsi.pcap",
+            min_devices=2,
+        )
+        auths = {ix.details.get("auth_method", "") for ix in listener.interactions}
+        sessions = {ix.details.get("session_type", "") for ix in listener.interactions}
+        assert auths - {""}, "No AuthMethod extracted from keyvalue pairs"
+        assert sessions - {""}, "No SessionType extracted from keyvalue pairs"
+
+    def test_iscsi_lun_extracted_from_scsi_layer(self):
+        """LUN is read from the SCSI layer (scsi.lun), not the missing iscsi.lun."""
+        listener, devices, result = _run_listener_test(
+            "iscsi",
+            "ISCSIPassiveListener",
+            "iscsi",
+            "iscsi/generated_iscsi.pcap",
+            min_devices=2,
+        )
+        luns = {ix.details.get("lun", "") for ix in listener.interactions}
+        assert luns - {""}, f"No LUN extracted from scsi.lun; luns seen: {luns}"
+
+    def test_iscsi_targets_harvest_table(self):
+        """The harvested 'iSCSI Targets Discovered' table lists real IQNs."""
+        listener, devices, result = _run_listener_test(
+            "iscsi",
+            "ISCSIPassiveListener",
+            "iscsi",
+            "iscsi/generated_iscsi.pcap",
+            min_devices=2,
+        )
+        target_tables = [
+            t for t in result.get("tables", []) if t.get("title") == "iSCSI Targets Discovered"
+        ]
+        assert target_tables, "No 'iSCSI Targets Discovered' table in harvest output"
+        cells = [str(c) for t in target_tables for row in t["rows"] for c in row]
+        assert any(c.startswith("iqn.") for c in cells), f"Target table has no IQNs: {cells}"
+
     def test_iscsi_isid_extraction(self):
         """Initiator Session ID (ISID) is extracted."""
         listener, devices, result = _run_listener_test(

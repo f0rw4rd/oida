@@ -365,11 +365,33 @@ class TLSPassiveListener(PySharkListenerBase):
                 except Exception as e:
                     self.logger.debug(f"Failed to get cert_str: {e}")
 
+        # Direction: "1" in hs_types (ClientHello) is a poor proxy -- it
+        # mislabels client-originated messages that are NOT ClientHello
+        # (ClientKeyExchange 16, CertificateVerify 15, client Certificate 11,
+        # client Finished 20) as "response". Feed a native request/response
+        # signal for the unambiguously client- or server-originated handshake
+        # types and let resolve_direction() fall back to the known-server-port
+        # cascade for the ambiguous ones (Certificate, Finished).
+        if hs_types & {"1", "15", "16"}:  # ClientHello / CertificateVerify / ClientKeyExchange
+            hs_native: Optional[bool] = True
+        elif hs_types & {"2", "4", "13", "14"}:  # ServerHello / NewSessionTicket / CertReq / SHD
+            hs_native = False
+        else:
+            hs_native = None
+        d = self.resolve_direction(
+            packet,
+            native=hs_native,
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_port=src_port,
+            dst_port=dst_port,
+            flow_id=flow_id,
+        )
         self._record_interaction(
             now,
             src_ip,
             dst_ip,
-            "request" if "1" in hs_types else "response",
+            d.direction,
             f"TLS {hs_label}",
             details,
             f"TLS {hs_label}",
@@ -681,9 +703,11 @@ class TLSPassiveListener(PySharkListenerBase):
         trusts for client authentication.
         """
         try:
-            # Server sends CertificateRequest, so src_ip is the server
-            # Determine direction from port
-            if server_port in self._SERVER_PORTS:
+            # Server sends CertificateRequest, so src_ip (passed as server_ip)
+            # is the server. Use the two-sided port test so a server on a
+            # non-standard port doesn't get swapped with the client (mirrors
+            # _process_certificate and the ClientKeyExchange path).
+            if server_port in self._SERVER_PORTS or client_port not in self._SERVER_PORTS:
                 s_ip, c_ip, s_port = server_ip, client_ip, server_port
             else:
                 s_ip, c_ip, s_port = client_ip, server_ip, client_port

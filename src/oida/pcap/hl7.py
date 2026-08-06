@@ -344,8 +344,19 @@ class HL7PassiveListener(PySharkListenerBase):
             now,
         )
 
-        # Update devices
-        self._update_devices(src_ip, dst_ip, src_mac, dst_mac, sending_app, receiving_app)
+        # Update devices using the *resolved* client/server roles.  On an ACK
+        # (server->client) the raw src is the server, so swap MACs and apps to
+        # avoid registering the interface engine as an hl7-client (and vice
+        # versa), mirroring the _track_interface fix above.
+        if d.client_ip == src_ip:
+            client_mac, server_mac = src_mac, dst_mac
+            client_app, server_app = sending_app, receiving_app
+        else:
+            client_mac, server_mac = dst_mac, src_mac
+            client_app, server_app = receiving_app, sending_app
+        self._update_devices(
+            d.client_ip, d.server_ip, client_mac, server_mac, client_app, server_app
+        )
 
     @staticmethod
     def _parse_msh(raw: str) -> Dict[str, str]:

@@ -308,24 +308,12 @@ class MemcachedPassiveListener(PySharkListenerBase):
         bin_type = self.get_field(memcache, "magic", None)
 
         if command_raw is not None:
-            # Text protocol command
+            # Text protocol command.  A command lives in memcache.command and is
+            # always client-originated; stats are a positive server signal
+            # (memcache.name) handled by the elif branch below.  Never route a
+            # command-shaped packet (list / comma) to the stats-response path --
+            # that hardcodes the client as the server and poisons _known_servers.
             command_str = str(command_raw).strip().lower()
-
-            # Handle multiple commands in one packet (stats responses)
-            if isinstance(command_raw, list) or "," in str(command_raw):
-                self._process_stats_response(
-                    now,
-                    src_ip,
-                    src_port,
-                    dst_ip,
-                    dst_port,
-                    src_mac,
-                    dst_mac,
-                    memcache,
-                    flow_id,
-                    stream_id,
-                )
-                return
 
             self._process_text_command(
                 now,

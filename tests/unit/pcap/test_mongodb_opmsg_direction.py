@@ -89,6 +89,57 @@ def test_opmsg_response_on_nonstandard_port_is_a_response():
     )
 
 
+def test_legacy_opquery_on_nonstandard_port_is_a_request():
+    """A legacy OP_QUERY (2004) is always client -> server. On a non-standard
+    server port with the server not yet learned, native=True must keep it a
+    ``request`` -- otherwise resolve_direction's port/heuristic tier could swap
+    the roles and reverse the alert direction."""
+    listener = _make_listener()
+
+    listener.process_packet(
+        _FakePacket(
+            src_ip=CLIENT,
+            dst_ip=SERVER,
+            src_port=49000,
+            dst_port=NONSTD_PORT,
+            mongo_fields={"opcode": 2004, "request_id": 1},
+        )
+    )
+
+    ix = listener.interactions[-1]
+    assert ix.details.get("opcode") == "OP_QUERY"
+    assert ix.direction == "request", (
+        f"legacy OP_QUERY on a non-standard port was misclassified: {ix.direction}"
+    )
+
+    roles = _roles(listener)
+    assert roles.get(SERVER) == "MongoDB Server", f"server mislabeled: {roles}"
+    assert roles.get(CLIENT) == "MongoDB Client", f"client mislabeled: {roles}"
+
+
+def test_legacy_opinsert_write_direction_on_nonstandard_port():
+    """A legacy OP_INSERT (2002) write on a non-standard port stays a client ->
+    server request so the WRITE alert is attributed to the right endpoints."""
+    listener = _make_listener()
+
+    listener.process_packet(
+        _FakePacket(
+            src_ip=CLIENT,
+            dst_ip=SERVER,
+            src_port=49001,
+            dst_port=NONSTD_PORT,
+            mongo_fields={"opcode": 2002, "request_id": 2},
+        )
+    )
+
+    ix = listener.interactions[-1]
+    assert ix.details.get("opcode") == "OP_INSERT"
+    assert ix.direction == "request"
+    roles = _roles(listener)
+    assert roles.get(SERVER) == "MongoDB Server", f"server mislabeled: {roles}"
+    assert roles.get(CLIENT) == "MongoDB Client", f"client mislabeled: {roles}"
+
+
 def test_opmsg_command_is_a_request():
     """An OP_MSG client command (response_to == 0) stays a ``request``."""
     listener = _make_listener()
