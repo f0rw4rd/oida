@@ -482,8 +482,8 @@ class TestStatelessProtocolsHaveNoStateRequirements:
 
     @pytest.mark.parametrize(
         "protocol_name",
-        ["ipv4", "ipv6", "icmp", "icmpv6", "ethernet"],
-        ids=["ipv4", "ipv6", "icmp", "icmpv6", "ethernet"],
+        ["ipv4", "icmp", "icmpv6"],
+        ids=["ipv4", "icmp", "icmpv6"],
     )
     def test_stateless_no_requires_state(self, protocol_name):
         """Stateless layer 3/4 protocols should not require specific states."""

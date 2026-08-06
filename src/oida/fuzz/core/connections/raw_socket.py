@@ -98,12 +98,10 @@ class RawSocketConnection:
             raise ConnectionError("Socket not open")
 
         try:
-            if self._sock_type == "ethernet":
-                # For AF_PACKET, just send the raw frame
-                return self._sock.send(data)
-            else:
-                # For raw IP socket, send to destination
-                return self._sock.sendto(data, (self.host, 0))
+            # Raw IP socket: send to destination. (There is no AF_PACKET/
+            # ethernet path here -- the L2 ethernet fuzzer that would have
+            # needed one was removed as non-functional.)
+            return self._sock.sendto(data, (self.host, 0))
         except Exception as e:
             raise ConnectionError(f"Failed to send data: {e}")
 

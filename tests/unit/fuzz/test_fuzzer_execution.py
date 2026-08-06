@@ -24,8 +24,6 @@ SKIP_PROTOCOLS = {
     "icmp",
     "icmpv6",
     "ipv4",
-    "ipv6",
-    "ethernet",
     "profinet_dcp",
     # Serial port
     "modbus_rtu",

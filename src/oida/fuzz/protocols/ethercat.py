@@ -2,8 +2,8 @@
 
 Raw-L2 fuzzer for the EtherCAT wire protocol. EtherCAT rides directly on top
 of an Ethernet II frame (EtherType 0x88A4); it is NOT IP/UDP based on a real
-segment, so this mirrors the raw-socket approach of ethernet.py
-(ProtocolType.RAW, MAC helpers, gated connects).
+segment, so it uses the raw-L2 socket approach (ProtocolType.RAW, MAC
+helpers, gated connects).
 
 Wire framing (EtherCAT is LITTLE-ENDIAN for its own fields; the Ethernet
 EtherType stays network byte order):
@@ -148,7 +148,7 @@ class EtherCATFuzzer(BaseFuzzer):
             self.src_mac = self._get_interface_mac()
 
     # ------------------------------------------------------------------ #
-    # MAC / socket helpers (mirror ethernet.py raw connection)
+    # MAC / socket helpers (raw-L2 ProtocolType.RAW connection)
     # ------------------------------------------------------------------ #
     def _get_interface_mac(self) -> str:
         """Get MAC address of the network interface (fallback on failure)."""

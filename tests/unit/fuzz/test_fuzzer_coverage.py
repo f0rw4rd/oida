@@ -54,8 +54,6 @@ ALL_PROTOCOL_TIERS = {
     "icmp": ("P3", 3),
     "icmpv6": ("P3", 3),
     "ipv4": ("P3", 3),
-    "ipv6": ("P3", 3),
-    "ethernet": ("P3", 3),
     "tcp": ("P3", 3),
     # Special
     "mutation": ("N/A", 1),
@@ -92,10 +90,8 @@ NETWORK_IT_TIERS = {
 TRANSPORT_LAYER_TIERS = {
     "tcp": ("P3", 3),
     "ipv4": ("P3", 3),
-    "ipv6": ("P3", 3),
     "icmp": ("P3", 3),
     "icmpv6": ("P3", 3),
-    "ethernet": ("P3", 3),
 }
 
 # Exact request counts from audit (used for regression checks)
@@ -119,10 +115,8 @@ AUDIT_REQUEST_COUNTS = {
     # Transport/network layer (audited 2026-02-14)
     "tcp": 20,
     "ipv4": 17,
-    "ipv6": 20,
     "icmp": 15,
     "icmpv6": 36,
-    "ethernet": 11,
 }
 
 # ICS/SCADA protocols covered by ICS audit (2026-02-14)
@@ -320,12 +314,10 @@ def test_transport_minimum_request_count(protocol_name, tier_info):
     [
         ("tcp", 20),
         ("ipv4", 17),
-        ("ipv6", 20),
         ("icmp", 15),
         ("icmpv6", 36),
-        ("ethernet", 11),
     ],
-    ids=["tcp", "ipv4", "ipv6", "icmp", "icmpv6", "ethernet"],
+    ids=["tcp", "ipv4", "icmp", "icmpv6"],
 )
 def test_transport_request_count_no_regression(protocol_name, expected_count):
     """Transport/network fuzzer request counts should not decrease.

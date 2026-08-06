@@ -28,7 +28,6 @@ from .snmpv3 import SNMPv3Fuzzer
 from .mms import MMSFuzzer
 from .coap import CoAPFuzzer
 from .ipv4 import IPv4Fuzzer
-from .ipv6 import IPv6Fuzzer
 from .icmp import ICMPFuzzer
 from .icmpv6 import ICMPv6Fuzzer
 from .mqtt import MQTTFuzzer
@@ -54,7 +53,6 @@ try:
 except ImportError:
     HTTP2Fuzzer = None
     _HTTP2_AVAILABLE = False
-from .ethernet import EthernetFuzzer
 from .echo import EchoFuzzer
 from .daytime import DaytimeFuzzer
 from .opcua import OPCUAFuzzer
@@ -88,7 +86,6 @@ PROTOCOL_FUZZERS = {
     "snmpv3": SNMPv3Fuzzer,
     "mms": MMSFuzzer,
     "ipv4": IPv4Fuzzer,
-    "ipv6": IPv6Fuzzer,
     "icmp": ICMPFuzzer,
     "icmpv6": ICMPv6Fuzzer,
     "mqtt": MQTTFuzzer,
@@ -107,7 +104,6 @@ PROTOCOL_FUZZERS = {
     "can": CANFuzzer,
     "dicom": DICOMFuzzer,
     "astm": ASTMFuzzer,
-    "ethernet": EthernetFuzzer,
     "echo": EchoFuzzer,
     "daytime": DaytimeFuzzer,
     "opcua": OPCUAFuzzer,

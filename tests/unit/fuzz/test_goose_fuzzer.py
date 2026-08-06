@@ -2,7 +2,7 @@
 
 GOOSEFuzzer publishes crafted GOOSE frames (EtherType 0x88B8) whose goosePdu
 lies about BER lengths, dataset-entry counts, and Data-element value tags.
-Like the ethernet/ipv6 raw-L2 fuzzers it wraps every session.connect() in
+Like the other raw-L2 fuzzers it wraps every session.connect() in
 `self.is_request_enabled("<RegisteredName>")`, so --enable / --disable take
 effect. These tests build the boofuzz session offline (MockConnectionFactory)
 and inspect session.nodes -- no network I/O.
@@ -94,7 +94,7 @@ def test_default_run_advertised_equals_connected():
 
 
 def test_protocol_type_is_raw():
-    """GOOSE is a raw Layer-2 fuzzer (mirrors ethernet.py)."""
+    """GOOSE is a raw Layer-2 fuzzer (ProtocolType.RAW)."""
     fuzzer = _build(_make_config())
     assert fuzzer.config.protocol_type == ProtocolType.RAW
 

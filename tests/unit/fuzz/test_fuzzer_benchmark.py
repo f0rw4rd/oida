@@ -35,8 +35,6 @@ SKIP_PROTOCOLS = {
     "icmp",
     "icmpv6",
     "ipv4",
-    "ipv6",
-    "ethernet",
     "industrial_ethernet",
     "profinet_dcp",
     "modbus_rtu",

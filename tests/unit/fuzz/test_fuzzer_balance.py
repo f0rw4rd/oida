@@ -256,14 +256,12 @@ def test_overflow_or_boundary_category(protocol_name):
 TRANSPORT_REQUIRED_CATEGORIES = {
     "tcp": {"handshake", "cve", "options"},
     "ipv4": {"baseline", "exploit", "boundary"},
-    "ipv6": {"standard", "extension", "cve"},
     "icmp": {"baseline", "high_crash", "comprehensive"},
     "icmpv6": {"baseline", "overflow", "cve", "ndp"},
-    "ethernet": {"baseline", "overflow", "injection"},
 }
 
 # Transport protocols with overflow/boundary expected
-TRANSPORT_OVERFLOW_EXPECTED = {"tcp", "ipv4", "ipv6", "icmp", "icmpv6", "ethernet"}
+TRANSPORT_OVERFLOW_EXPECTED = {"tcp", "ipv4", "icmp", "icmpv6"}
 
 
 @pytest.mark.parametrize(

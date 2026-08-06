@@ -654,23 +654,6 @@ IPV4_CVE_COVERAGE = {
     ],
 }
 
-IPV6_CVE_COVERAGE = {
-    "CVE-2024-38063 (fragment integer underflow, CVSS 9.8)": [
-        "Fragment",
-        "fragment",
-        "Recursive_Fragmentation",
-    ],
-    "CVE-2021-24086 (fragment reassembly DoS)": [
-        "Fragment",
-        "fragment",
-    ],
-    "CVE-2021-24074 (extension header RCE)": [
-        "Extension_Chain",
-        "extension",
-        "Chain_Overflow",
-    ],
-}
-
 ICMP_CVE_COVERAGE = {
     "CVE-2018-4407 (ICMP/TCP options heap overflow)": [
         "Overflow",
@@ -704,27 +687,6 @@ ICMPV6_CVE_COVERAGE = {
     ],
 }
 
-ETHERNET_CVE_COVERAGE = {
-    "CVE-2020-11896 (malformed Ethernet frame RCE)": [
-        "Overflow",
-        "Malformed",
-        "overflow",
-        "malformed",
-    ],
-    "CVE-2020-11897 (OOB write IPv6 over Ethernet)": [
-        "Nested",
-        "nested",
-        "Malformed",
-        "Overflow",
-    ],
-    "CVE-2021-3031 (Etherleak padding info disclosure)": [
-        "Malformed",
-        "malformed",
-        "Boundary",
-        "boundary",
-    ],
-}
-
 TCP_CVE_COVERAGE = {
     "CVE-2020-13987 (Checksum OOB read)": [
         "CVE_2020_13987",
@@ -742,10 +704,8 @@ TCP_CVE_COVERAGE = {
 
 TRANSPORT_CVE_MAPS = {
     "ipv4": IPV4_CVE_COVERAGE,
-    "ipv6": IPV6_CVE_COVERAGE,
     "icmp": ICMP_CVE_COVERAGE,
     "icmpv6": ICMPV6_CVE_COVERAGE,
-    "ethernet": ETHERNET_CVE_COVERAGE,
     "tcp": TCP_CVE_COVERAGE,
 }
 

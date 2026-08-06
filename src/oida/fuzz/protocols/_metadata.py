@@ -72,12 +72,12 @@ PROTOCOL_CATEGORIES = {
     "layer3": {
         "name": "Network Layer (Layer 3)",
         "description": "IP, ICMP, and IP-multicast protocols",
-        "protocols": ["ipv4", "ipv6", "icmp", "icmpv6", "igmp"],
+        "protocols": ["ipv4", "icmp", "icmpv6", "igmp"],
     },
     "layer2": {
         "name": "Data Link Layer (Layer 2)",
-        "description": "Ethernet, PPPoE, and link/adaptation-layer protocols",
-        "protocols": ["ethernet", "pppoe", "6lowpan"],
+        "description": "PPPoE and link/adaptation-layer protocols",
+        "protocols": ["pppoe", "6lowpan"],
     },
     "application": {
         "name": "Application Protocols",

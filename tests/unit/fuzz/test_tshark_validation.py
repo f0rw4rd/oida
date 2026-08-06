@@ -90,13 +90,6 @@ TSHARK_PROTOCOLS: Dict[str, dict] = {
         "expected_layers": ["dhcpv6"],
         "decode_as": [],
     },
-    "ethernet": {
-        "port": 0,
-        "transport": "raw_eth",
-        "tshark_filter": "eth",
-        "expected_layers": ["eth"],
-        "decode_as": [],
-    },
     "ipv4": {
         "port": 0,
         "transport": "raw_ipv4",
@@ -244,9 +237,6 @@ TSHARK_PROTOCOLS: Dict[str, dict] = {
 
 # Protocols that can't instantiate in test environment (raw socket, serial, etc.)
 SKIP_INSTANTIATE = {
-    # ipv6: baseline sets payload_length for a TCP next-header but ships <20
-    # bytes, so tshark flags the inner TCP malformed (tracked separately).
-    "ipv6",
     # mutation: generic mutation engine, not a wire protocol.
     "mutation",
     # modbus_rtu: serial framing has no standard pcap encapsulation for tshark;

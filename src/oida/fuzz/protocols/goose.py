@@ -33,7 +33,7 @@ Framing:
              numDatSetEntries[10]  integer       (0x8a)
              allData[11]           SEQUENCE OF Data (0xab, constructed)
 
-Mirrors the raw-L2 connection model of ethernet.py (ProtocolType.RAW).
+Uses the raw-L2 connection model (ProtocolType.RAW).
 """
 
 import socket
@@ -163,7 +163,7 @@ class GOOSEFuzzer(BaseFuzzer):
             self.src_mac = self._get_interface_mac()
 
     # ------------------------------------------------------------------
-    # Ethernet / MAC helpers (mirrors ethernet.py)
+    # Ethernet / MAC helpers (raw-L2 ProtocolType.RAW connection)
     # ------------------------------------------------------------------
     def _get_interface_mac(self) -> str:
         """Get MAC address of the network interface."""
