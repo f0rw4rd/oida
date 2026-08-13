@@ -1,0 +1,16 @@
+# Build-context excludes for repo-root Docker builds (e.g. docker/agent-test).
+# Keeps `COPY . .` from pulling multi-GB local state into the image layer.
+.git
+.venv
+venv
+nuitka-build
+**/__pycache__
+*.py[cod]
+.pytest_cache
+.mypy_cache
+.ruff_cache
+.coverage
+htmlcov
+build
+dist
+*.egg-info

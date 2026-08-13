@@ -31,6 +31,20 @@ def _agent_src() -> Path:
 AGENT_SRC = _agent_src()
 SRC_FILES = ["fuzzing_agent.c", "config.c", "platform_posix.c", "platform_win.c"]
 
+# On a bare checkout the agent source / C compiler are absent and these tests
+# skip -- friendly locally. But the Docker/CI gate (docker/agent-test/) exists
+# precisely to guarantee they run against the real binary, so there OIDA_AGENT_REQUIRE=1
+# turns a missing source / compiler / failed build into a hard failure instead of a
+# silent skip (a skipped gate tests nothing).
+_REQUIRE_AGENT = os.environ.get("OIDA_AGENT_REQUIRE") == "1"
+
+
+def _skip_or_fail(reason: str):
+    if _REQUIRE_AGENT:
+        pytest.fail(reason, pytrace=False)
+    pytest.skip(reason)
+
+
 if os.name != "posix":
     pytest.skip("oida-fuzzing-agent integration test is POSIX-only", allow_module_level=True)
 
@@ -38,19 +52,19 @@ if os.name != "posix":
 @pytest.fixture(scope="module")
 def agent_bin(tmp_path_factory):
     if not all((AGENT_SRC / f).exists() for f in SRC_FILES):
-        pytest.skip(
+        _skip_or_fail(
             f"oida-fuzzing-agent source not found at {AGENT_SRC} "
             "(set OIDA_FUZZING_AGENT_SRC or check out f0rw4rd/oida-fuzzing-agent beside oida)"
         )
     cc = shutil.which("cc") or shutil.which("gcc") or shutil.which("clang")
     if cc is None:
-        pytest.skip("no C compiler available to build oida-fuzzing-agent")
+        _skip_or_fail("no C compiler available to build oida-fuzzing-agent")
     out = tmp_path_factory.mktemp("agent") / "oida-fuzzing-agent"
     cmd = [cc, "-std=c11", "-D_GNU_SOURCE", "-O2", "-o", str(out)]
     cmd += [str(AGENT_SRC / f) for f in SRC_FILES]
     proc = subprocess.run(cmd, capture_output=True, text=True)
     if proc.returncode != 0:
-        pytest.skip(f"oida-fuzzing-agent failed to compile:\n{proc.stderr}")
+        _skip_or_fail(f"oida-fuzzing-agent failed to compile:\n{proc.stderr}")
     return out
 
 
