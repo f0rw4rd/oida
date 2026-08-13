@@ -1,25 +1,18 @@
-"""Reproduction for the credential-log-leak gap class (TEST_GAP_AUDIT.md).
+"""PAP passive listener logs harvested credentials -- INTENDED behavior.
 
-The passive PAP listener writes the harvested cleartext ``username:password`` to
-its INFO log stream (``pap.py``). The whole class was invisible to the test suite
-because NO test inspects what a listener logs -- and the obvious tool, pytest's
-``caplog``, is silently defeated: ``get_module_logger()`` sets
-``propagate=False`` (``ics_logger.py``), so records never reach the root logger
-``caplog`` listens on, and a caplog-based leak assertion passes falsely.
+OIDA is a credential-harvesting pentest tool: surfacing the ``username:password``
+it recovers from a passive capture is a feature, not a leak. TEST_GAP_AUDIT.md
+flagged this as a "credential-log-leak" class; the maintainer decision is that it
+is intended (see the memory note ``credential-logging-is-intended``), so these
+tests pin the harvest-display behavior rather than forbid it.
 
-This file proves both halves against real behavior:
-  * ``capture_module_log`` attaches a handler DIRECTLY to the module logger and
-    sees the emitted secret (the leak is real);
-  * ``caplog`` does NOT see it (the trap that hid the class).
-
-``capture_module_log`` is the seed of the reusable fixture the audit recommends
-for a parametrized ``tests/contracts/test_no_credential_log_leak.py`` sweep.
-
-NOTE ON INTENT: OIDA is a credential-harvesting pentest tool, so *displaying*
-harvested creds may be intended. These are CHARACTERIZATION tests -- they pin
-what the listener does today, not a policy that it must never log a secret. Flip
-the ``assert secret in ...`` to ``assert secret not in ...`` only once a
-redaction/masking behavior is decided.
+They ALSO document a real testing pitfall that the audit surfaced: oida's module
+loggers set ``propagate=False`` (``ics_logger.py``), so pytest's ``caplog`` --
+which listens on the root logger via propagation -- captures NOTHING from a
+listener. Any future test that needs to inspect what a listener logs (for any
+reason) must attach a handler DIRECTLY to the module logger, as
+``capture_module_log`` does here; a ``caplog``-based assertion would pass without
+testing anything.
 """
 
 import logging
@@ -65,8 +58,7 @@ def capture_module_log(logger, level=logging.INFO):
 
     Do NOT use pytest ``caplog`` for oida module loggers: they set
     ``propagate=False``, so their records never reach the root logger caplog
-    hooks -- caplog would capture nothing and any ``secret not in caplog.text``
-    assertion would pass without testing anything.
+    hooks -- caplog would capture nothing and the assertion would be vacuous.
     """
     handler = _ListHandler()
     handler.setLevel(level)
@@ -86,8 +78,8 @@ def _messages(records, min_level=logging.INFO):
     return "\n".join(r.getMessage() for r in records if r.levelno >= min_level)
 
 
-def test_pap_listener_emits_cleartext_password_at_info():
-    """The listener writes the harvested cleartext password to INFO."""
+def test_pap_listener_surfaces_harvested_password_at_info():
+    """The listener surfaces the harvested cleartext credential at INFO (feature)."""
     listener = PAPPassiveListener(interface="lo", timeout=1)
     secret = "s3cr3t-pap-pw"
     pkt = _FakePAPPacket(peer_id="admin", password=secret)
@@ -96,27 +88,23 @@ def test_pap_listener_emits_cleartext_password_at_info():
         listener.process_packet(pkt)
 
     logged = _messages(records)
-    assert secret in logged, f"expected cleartext password in INFO log; got: {logged!r}"
+    assert secret in logged, f"expected harvested password in INFO log; got: {logged!r}"
     assert "admin" in logged
     # Sanity: the credential was actually harvested (not a false-positive path).
     assert any(c.password == secret for c in listener.credentials)
 
 
 def test_module_logger_does_not_propagate():
-    """The mechanism that defeats caplog: module loggers do not propagate.
-
-    This is why a naive ``caplog``-based leak test passes falsely and the whole
-    credential-log-leak class stayed invisible.
-    """
+    """Module loggers set propagate=False -- the reason caplog can't see them."""
     listener = PAPPassiveListener(interface="lo", timeout=1)
     assert listener.logger.propagate is False
 
 
-def test_caplog_silently_misses_the_leak(caplog):
-    """Demonstration of the trap: caplog sees nothing even though a secret leaks.
+def test_caplog_cannot_capture_a_module_logger(caplog):
+    """caplog captures nothing from a listener (propagate=False) -- the pitfall.
 
-    Characterization only -- asserts the CURRENT (broken-for-testing) behavior so
-    a future reader understands why direct-attach capture is mandatory here.
+    Guards future test authors: inspecting listener output requires a
+    direct-attach handler (capture_module_log), never caplog.
     """
     listener = PAPPassiveListener(interface="lo", timeout=1)
     secret = "caplog-blind-pw"
@@ -125,5 +113,5 @@ def test_caplog_silently_misses_the_leak(caplog):
     with caplog.at_level(logging.INFO):
         listener.process_packet(pkt)
 
-    # Proven leaking via direct attach in the test above; caplog cannot see it.
+    # Emitted (proven via direct attach above) but invisible to caplog.
     assert secret not in caplog.text
