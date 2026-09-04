@@ -16,6 +16,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from .conftest import fake_clock, recv_queue
+
 from oida.protocols.discovery import netmanage as nm
 from oida.protocols.discovery.netmanage import (
     NetManageDataBlock,
@@ -356,17 +358,14 @@ class TestNetManageScannerScanLoop:
         encoded = build_response_publish()
 
         mock_sock = MagicMock()
-        mock_sock.recvfrom.side_effect = [
-            (encoded, ("192.168.10.20", 27127)),
-            TimeoutError(),
-        ]
+        mock_sock.recvfrom.side_effect = recv_queue((encoded, ("192.168.10.20", 27127)))
 
         with (
             patch("oida.protocols.discovery.netmanage.socket.socket", return_value=mock_sock),
             patch("oida.protocols.discovery.netmanage.sendto") as mock_sendto,
             patch(
                 "oida.protocols.discovery.netmanage.time.time",
-                side_effect=[0, 0, 0.5, 2.0],
+                side_effect=fake_clock(),
             ),
         ):
             devices = scanner.scan()
@@ -383,12 +382,12 @@ class TestNetManageScannerScanLoop:
     def test_scan_passive_does_not_send(self):
         scanner = NetManageScanner("eth0", timeout=1, active=False)
         mock_sock = MagicMock()
-        mock_sock.recvfrom.side_effect = [TimeoutError()]
+        mock_sock.recvfrom.side_effect = recv_queue()
 
         with (
             patch("oida.protocols.discovery.netmanage.socket.socket", return_value=mock_sock),
             patch("oida.protocols.discovery.netmanage.sendto") as mock_sendto,
-            patch("oida.protocols.discovery.netmanage.time.time", side_effect=[0, 0, 2.0]),
+            patch("oida.protocols.discovery.netmanage.time.time", side_effect=fake_clock()),
         ):
             devices = scanner.scan()
 
@@ -400,18 +399,17 @@ class TestNetManageScannerScanLoop:
         encoded = build_response_publish()
 
         mock_sock = MagicMock()
-        mock_sock.recvfrom.side_effect = [
+        mock_sock.recvfrom.side_effect = recv_queue(
             (encoded, ("192.168.10.20", 27127)),
             (encoded, ("192.168.10.20", 27127)),
-            TimeoutError(),
-        ]
+        )
 
         with (
             patch("oida.protocols.discovery.netmanage.socket.socket", return_value=mock_sock),
             patch("oida.protocols.discovery.netmanage.sendto"),
             patch(
                 "oida.protocols.discovery.netmanage.time.time",
-                side_effect=[0, 0, 0.3, 0.6, 2.0],
+                side_effect=fake_clock(),
             ),
         ):
             devices = scanner.scan()

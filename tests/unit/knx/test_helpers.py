@@ -31,23 +31,52 @@ _MUTATED_SYS_MODULES = (
 )
 
 
+# Parent-package attributes load_helpers_module() overwrites. `import a.b as c`
+# binds getattr(a, "b") before it looks at sys.modules, so a Mock left on the
+# real `oida.utils` package hands later test files (e.g. test_cli_dispatch's
+# monkeypatch of ics_logger) a Mock that nothing else sees.
+_MUTATED_ATTRS = (
+    ("oida.utils", "lazy_import"),
+    ("oida.utils", "ics_logger"),
+    ("oida.utils", "module"),
+    ("oida.protocols.knx", "constants"),
+)
+
+
 def _snapshot_sys_modules():
     """Capture sys.modules entries we're about to mutate, for later restoration."""
-    return {k: sys.modules.get(k, _MISSING) for k in _MUTATED_SYS_MODULES}
+    mods = {k: sys.modules.get(k, _MISSING) for k in _MUTATED_SYS_MODULES}
+    attrs = {}
+    for parent, attr in _MUTATED_ATTRS:
+        mod = sys.modules.get(parent)
+        attrs[(parent, attr)] = getattr(mod, attr, _MISSING) if mod is not None else _MISSING
+    return mods, attrs
 
 
 def _restore_sys_modules(snapshot):
-    """Restore (or remove) sys.modules entries from a snapshot.
+    """Restore (or remove) sys.modules entries and parent attrs from a snapshot.
 
     Critical to avoid leaking Mock-replaced modules into later test files —
     leaving a MagicMock at sys.modules['oida.utils.ics_logger'] breaks any
     later isinstance(x, ICSLogger) check across the whole session.
     """
-    for k, v in snapshot.items():
+    mods, attrs = snapshot
+    for k, v in mods.items():
         if v is _MISSING:
             sys.modules.pop(k, None)
         else:
             sys.modules[k] = v
+    for (parent, attr), v in attrs.items():
+        mod = sys.modules.get(parent)
+        if mod is None:
+            continue
+        if v is _MISSING:
+            try:
+                delattr(mod, attr)
+            except AttributeError:
+                pass
+        else:
+            setattr(mod, attr, v)
 
 
 _MISSING = object()
