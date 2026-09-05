@@ -12,7 +12,7 @@ the fuzz unit suite is green; the only skips are environmental
 ## Findings and fixes
 
 ### F1 (systemic) -- `from src.oida...` double-imports the package
-37 fuzz test files imported the code under test as `src.oida.*` instead of
+28 fuzz test files (all under `tests/unit/fuzz`) imported the code under test as `src.oida.*` instead of
 `oida.*`. Python treats `src.oida.fuzz.X` and `oida.fuzz.X` as *distinct
 module objects with distinct class identities* even though they load the same
 source file. Consequences: `isinstance()` / registry / enum-identity checks
