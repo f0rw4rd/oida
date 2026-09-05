@@ -25,12 +25,12 @@ know `oida modbus`.
 
 ## What it does
 
-- **Scan** — 26 protocol scanners for identification, enumeration, and
+- **Scan** — protocol scanners for identification, enumeration, and
   security assessment, all behind one consistent CLI.
-- **Fuzz** — 35 protocol fuzzers (boofuzz-backed) with stateful sequencing,
+- **Fuzz** — boofuzz-backed protocol fuzzers with stateful sequencing,
   crash detection, and session replay.
-- **Listen** — a passive PCAP pipeline with 100+ protocol listeners that
-  extract devices, credentials, and interactions off the wire, no packets sent.
+- **Listen** — a passive PCAP pipeline whose protocol listeners extract
+  devices, credentials, and interactions off the wire, no packets sent.
 
 Read-only by default. Anything that writes or changes device state needs an
 explicit `--confirm`.
