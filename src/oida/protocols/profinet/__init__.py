@@ -81,7 +81,7 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
         """Main protocol execution flow."""
 
         if not _profinet.is_available:
-            self.logger.fail("profinet-py not installed (pip install oida[profinet])")
+            self.logger.fail("profinet-py not installed (pip install oida-ics[profinet])")
             return
 
         if self.rpc_only:

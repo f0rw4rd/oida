@@ -320,13 +320,13 @@ DEFAULT_CREDENTIALS = [
 # Lazy imports for paho-mqtt dependency
 from ...utils.lazy_import import lazy_import
 
-paho_client = lazy_import("paho.mqtt.client", "MQTT", install_hint="pip install oida[mqtt]")
-paho_enums = lazy_import("paho.mqtt.enums", "MQTT", install_hint="pip install oida[mqtt]")
+paho_client = lazy_import("paho.mqtt.client", "MQTT", install_hint="pip install oida-ics[mqtt]")
+paho_enums = lazy_import("paho.mqtt.enums", "MQTT", install_hint="pip install oida-ics[mqtt]")
 paho_properties = lazy_import(
-    "paho.mqtt.properties", "MQTT", install_hint="pip install oida[mqtt]"
+    "paho.mqtt.properties", "MQTT", install_hint="pip install oida-ics[mqtt]"
 )
 paho_packettypes = lazy_import(
-    "paho.mqtt.packettypes", "MQTT", install_hint="pip install oida[mqtt]"
+    "paho.mqtt.packettypes", "MQTT", install_hint="pip install oida-ics[mqtt]"
 )
 
 # Backward compatibility flag
@@ -610,7 +610,7 @@ class MQTTScanner(
     def check_dependencies(self) -> bool:
         if not paho_client.is_available:
             self.logger.fail(
-                "paho-mqtt library required. Install with: pip install oida[mqtt]"
+                "paho-mqtt library required. Install with: pip install oida-ics[mqtt]"
             )
             return False
         return True

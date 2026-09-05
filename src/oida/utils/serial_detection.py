@@ -155,7 +155,7 @@ class SerialDetector:
         """Check if pyserial is available."""
         if not PYSERIAL_AVAILABLE:
             raise ImportError(
-                "pyserial is required for serial detection. Install with: pip install oida[serial]"
+                "pyserial is required for serial detection. Install with: pip install oida-ics[serial]"
             )
 
     def _log(self, message: str) -> None:

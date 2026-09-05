@@ -8,7 +8,7 @@ identity, discovery, reads and FC-aware writes.
 Requires pyiec61850-ng >= 1.6.1.4 (FC-aware ``write_value`` and a working
 ``get_server_identity``; with the ``pyiec61850.mms`` submodule).
 
-Requires: pip install oida[mms]
+Requires: pip install oida-ics[mms]
 """
 
 import time
@@ -29,8 +29,8 @@ from ...utils.lazy_import import lazy_import
 from .fingerprint import FingerprintMatcher, FingerprintMatch
 
 # Lazy imports for pyiec61850-ng (only loaded when actually used)
-_pyiec61850 = lazy_import("pyiec61850", "MMS", install_hint="pip install oida[mms]")
-_pyiec61850_mms = lazy_import("pyiec61850.mms", "MMS", install_hint="pip install oida[mms]")
+_pyiec61850 = lazy_import("pyiec61850", "MMS", install_hint="pip install oida-ics[mms]")
+_pyiec61850_mms = lazy_import("pyiec61850.mms", "MMS", install_hint="pip install oida-ics[mms]")
 
 
 class _Lib:

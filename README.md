@@ -26,11 +26,11 @@ know `oida modbus`.
 ## Install
 
 ```bash
-pip install 'oida[all]'
+pip install 'oida-ics[all]'
 ```
 
 Protocol stacks ship as extras, so you can install only what you need, like
-`pip install 'oida[modbus,opcua]'`. A bare `pip install oida` has no protocol
+`pip install 'oida-ics[modbus,opcua]'`. A bare `pip install oida-ics` has no protocol
 stacks at all. The full install guide is at
 [getoida.dev/getting-started/installation](https://getoida.dev/getting-started/installation/).
 

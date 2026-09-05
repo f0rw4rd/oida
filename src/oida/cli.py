@@ -882,7 +882,7 @@ def _list_serial_ports(for_iec101: bool = False) -> int:
                 print(f"  {port.device}  - {desc} ({hwid})")
         return 0
     except ImportError:
-        logger.error("pyserial not available. Install with: pip install oida[serial]")
+        logger.error("pyserial not available. Install with: pip install oida-ics[serial]")
         return 1
 
 

@@ -163,7 +163,7 @@ class PySharkListenerBase(ABC):
             import pyshark  # noqa: F401
         except ImportError:
             raise ImportError(
-                f"{self.PROTOCOL_NAME} requires pyshark: pip install oida[pcap]\n"
+                f"{self.PROTOCOL_NAME} requires pyshark: pip install oida-ics[pcap]\n"
                 "Also requires tshark (Wireshark CLI) to be installed."
             )
 

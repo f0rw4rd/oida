@@ -510,7 +510,7 @@ class VNCFuzzer(BaseFuzzer):
         except ImportError:
             self.log.warning(
                 "cryptography library not installed -- VNC auth will fail. "
-                "Install with: pip install oida[fuzz]"
+                "Install with: pip install oida-ics[fuzz]"
             )
             return b"\x00" * 16
 
