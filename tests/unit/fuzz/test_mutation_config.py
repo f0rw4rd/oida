@@ -21,7 +21,7 @@ class TestMutationStrategyCreation:
 
     def test_default_creation(self):
         """MutationStrategy defaults."""
-        from src.oida.fuzz.core.mutation.config import MutationStrategy
+        from oida.fuzz.core.mutation.config import MutationStrategy
 
         ms = MutationStrategy()
         assert ms.use_radamsa is False
@@ -29,7 +29,7 @@ class TestMutationStrategyCreation:
 
     def test_custom_creation(self):
         """MutationStrategy with custom values."""
-        from src.oida.fuzz.core.mutation.config import MutationStrategy
+        from oida.fuzz.core.mutation.config import MutationStrategy
 
         ms = MutationStrategy(use_radamsa=True, mutation_count=500)
         assert ms.use_radamsa is True
@@ -37,7 +37,7 @@ class TestMutationStrategyCreation:
 
     def test_invalid_mutation_count(self):
         """Mutation count < 1 raises ValueError."""
-        from src.oida.fuzz.core.mutation.config import MutationStrategy
+        from oida.fuzz.core.mutation.config import MutationStrategy
 
         with pytest.raises(ValueError, match="Mutation count must be >= 1"):
             MutationStrategy(mutation_count=0)
@@ -46,7 +46,7 @@ class TestMutationStrategyCreation:
 
     def test_is_radamsa_available(self):
         """is_radamsa_available always returns True (native impl)."""
-        from src.oida.fuzz.core.mutation.config import MutationStrategy
+        from oida.fuzz.core.mutation.config import MutationStrategy
 
         ms = MutationStrategy()
         assert ms.is_radamsa_available() is True
@@ -57,7 +57,7 @@ class TestMutationStrategyFromConfig:
 
     def test_from_config_defaults(self):
         """from_config with no options uses defaults."""
-        from src.oida.fuzz.core.mutation.config import MutationStrategy
+        from oida.fuzz.core.mutation.config import MutationStrategy
 
         config = Mock()
         config.get_option = Mock(side_effect=lambda key, default: default)
@@ -67,7 +67,7 @@ class TestMutationStrategyFromConfig:
 
     def test_from_config_radamsa_enabled(self):
         """from_config with radamsa enabled."""
-        from src.oida.fuzz.core.mutation.config import MutationStrategy
+        from oida.fuzz.core.mutation.config import MutationStrategy
 
         config = Mock()
         config.get_option = Mock(
@@ -92,7 +92,7 @@ class TestMutationConfig:
 
     def test_singleton_pattern(self):
         """MutationConfig is a singleton."""
-        from src.oida.fuzz.core.mutation.config import MutationConfig
+        from oida.fuzz.core.mutation.config import MutationConfig
 
         c1 = MutationConfig()
         c2 = MutationConfig()
@@ -100,7 +100,7 @@ class TestMutationConfig:
 
     def test_default_values(self):
         """MutationConfig has expected defaults."""
-        from src.oida.fuzz.core.mutation.config import MutationConfig
+        from oida.fuzz.core.mutation.config import MutationConfig
 
         config = MutationConfig()
         config.reset()
@@ -110,7 +110,7 @@ class TestMutationConfig:
 
     def test_set_use_radamsa(self):
         """Set use_radamsa property."""
-        from src.oida.fuzz.core.mutation.config import MutationConfig
+        from oida.fuzz.core.mutation.config import MutationConfig
 
         config = MutationConfig()
         config.use_radamsa = True
@@ -119,7 +119,7 @@ class TestMutationConfig:
 
     def test_set_mutation_count(self):
         """Set radamsa_mutation_count property."""
-        from src.oida.fuzz.core.mutation.config import MutationConfig
+        from oida.fuzz.core.mutation.config import MutationConfig
 
         config = MutationConfig()
         config.radamsa_mutation_count = 300
@@ -128,7 +128,7 @@ class TestMutationConfig:
 
     def test_invalid_mutation_count(self):
         """Invalid mutation count raises ValueError."""
-        from src.oida.fuzz.core.mutation.config import MutationConfig
+        from oida.fuzz.core.mutation.config import MutationConfig
 
         config = MutationConfig()
         with pytest.raises(ValueError):
@@ -137,7 +137,7 @@ class TestMutationConfig:
 
     def test_set_seed(self):
         """Set seed property."""
-        from src.oida.fuzz.core.mutation.config import MutationConfig
+        from oida.fuzz.core.mutation.config import MutationConfig
 
         config = MutationConfig()
         config.seed = 42
@@ -146,7 +146,7 @@ class TestMutationConfig:
 
     def test_reset(self):
         """Reset restores defaults."""
-        from src.oida.fuzz.core.mutation.config import MutationConfig
+        from oida.fuzz.core.mutation.config import MutationConfig
 
         config = MutationConfig()
         config.use_radamsa = True
@@ -159,7 +159,7 @@ class TestMutationConfig:
 
     def test_is_radamsa_available(self):
         """is_radamsa_available always returns True."""
-        from src.oida.fuzz.core.mutation.config import MutationConfig
+        from oida.fuzz.core.mutation.config import MutationConfig
 
         config = MutationConfig()
         assert config.is_radamsa_available() is True
@@ -176,19 +176,19 @@ class TestGlobalMutationFunctions:
 
     def setup_method(self):
         """Reset global config before each test."""
-        from src.oida.fuzz.core.mutation.config import get_mutation_config
+        from oida.fuzz.core.mutation.config import get_mutation_config
 
         get_mutation_config().reset()
 
     def teardown_method(self):
         """Reset global config after each test."""
-        from src.oida.fuzz.core.mutation.config import get_mutation_config
+        from oida.fuzz.core.mutation.config import get_mutation_config
 
         get_mutation_config().reset()
 
     def test_enable_radamsa(self):
         """enable_radamsa enables global radamsa."""
-        from src.oida.fuzz.core.mutation.config import (
+        from oida.fuzz.core.mutation.config import (
             enable_radamsa,
             is_radamsa_enabled,
             get_radamsa_mutation_count,
@@ -200,7 +200,7 @@ class TestGlobalMutationFunctions:
 
     def test_disable_radamsa(self):
         """disable_radamsa disables global radamsa."""
-        from src.oida.fuzz.core.mutation.config import (
+        from oida.fuzz.core.mutation.config import (
             enable_radamsa,
             disable_radamsa,
             is_radamsa_enabled,
@@ -212,14 +212,14 @@ class TestGlobalMutationFunctions:
 
     def test_set_mutation_seed(self):
         """set_mutation_seed updates global seed."""
-        from src.oida.fuzz.core.mutation.config import set_mutation_seed, get_mutation_seed
+        from oida.fuzz.core.mutation.config import set_mutation_seed, get_mutation_seed
 
         set_mutation_seed(42)
         assert get_mutation_seed() == 42
 
     def test_get_mutation_config(self):
         """get_mutation_config returns the singleton."""
-        from src.oida.fuzz.core.mutation.config import get_mutation_config, MutationConfig
+        from oida.fuzz.core.mutation.config import get_mutation_config, MutationConfig
 
         config = get_mutation_config()
         assert isinstance(config, MutationConfig)

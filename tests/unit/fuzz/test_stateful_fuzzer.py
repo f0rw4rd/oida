@@ -21,7 +21,7 @@ class TestStateReachabilityResult:
 
     def test_default_creation(self):
         """StateReachabilityResult with defaults."""
-        from src.oida.fuzz.core.stateful_fuzzer import StateReachabilityResult
+        from oida.fuzz.core.stateful_fuzzer import StateReachabilityResult
 
         result = StateReachabilityResult(state_name="AUTHENTICATED", reachable=True)
         assert result.state_name == "AUTHENTICATED"
@@ -33,7 +33,7 @@ class TestStateReachabilityResult:
 
     def test_unreachable_with_error(self):
         """StateReachabilityResult for unreachable state."""
-        from src.oida.fuzz.core.stateful_fuzzer import StateReachabilityResult
+        from oida.fuzz.core.stateful_fuzzer import StateReachabilityResult
 
         result = StateReachabilityResult(
             state_name="AUTHENTICATED",
@@ -46,7 +46,7 @@ class TestStateReachabilityResult:
 
     def test_skipped_state(self):
         """StateReachabilityResult for skipped state."""
-        from src.oida.fuzz.core.stateful_fuzzer import StateReachabilityResult
+        from oida.fuzz.core.stateful_fuzzer import StateReachabilityResult
 
         result = StateReachabilityResult(
             state_name="TLS_UPGRADED",
@@ -68,14 +68,14 @@ class TestCommonState:
 
     def test_connection_states(self):
         """Connection states exist."""
-        from src.oida.fuzz.core.base_fuzzer import CommonState
+        from oida.fuzz.core.base_fuzzer import CommonState
 
         assert CommonState.DISCONNECTED.value == "DISCONNECTED"
         assert CommonState.CONNECTED.value == "CONNECTED"
 
     def test_authentication_states(self):
         """Authentication states exist."""
-        from src.oida.fuzz.core.base_fuzzer import CommonState
+        from oida.fuzz.core.base_fuzzer import CommonState
 
         assert CommonState.PRE_AUTH.value == "PRE_AUTH"
         assert CommonState.AUTHENTICATING.value == "AUTHENTICATING"
@@ -84,21 +84,21 @@ class TestCommonState:
 
     def test_session_states(self):
         """Session states exist."""
-        from src.oida.fuzz.core.base_fuzzer import CommonState
+        from oida.fuzz.core.base_fuzzer import CommonState
 
         assert CommonState.IDLE.value == "IDLE"
         assert CommonState.BUSY.value == "BUSY"
 
     def test_data_transfer_states(self):
         """Data transfer states exist."""
-        from src.oida.fuzz.core.base_fuzzer import CommonState
+        from oida.fuzz.core.base_fuzzer import CommonState
 
         assert CommonState.DATA_CHANNEL_SETUP.value == "DATA_CHANNEL_SETUP"
         assert CommonState.DATA_TRANSFER_ACTIVE.value == "DATA_TRANSFER_ACTIVE"
 
     def test_special_states(self):
         """Special states exist."""
-        from src.oida.fuzz.core.base_fuzzer import CommonState
+        from oida.fuzz.core.base_fuzzer import CommonState
 
         assert CommonState.ANY.value == "ANY"
         assert CommonState.ERROR.value == "ERROR"
@@ -114,7 +114,7 @@ class TestRequestInfo:
 
     def test_basic_creation(self):
         """RequestInfo with minimal fields."""
-        from src.oida.fuzz.core.base_fuzzer import RequestInfo
+        from oida.fuzz.core.base_fuzzer import RequestInfo
 
         ri = RequestInfo(name="Test_Request", description="A test")
         assert ri.name == "Test_Request"
@@ -125,7 +125,7 @@ class TestRequestInfo:
 
     def test_with_state_requirement(self):
         """RequestInfo with state requirement."""
-        from src.oida.fuzz.core.base_fuzzer import RequestInfo, CommonState
+        from oida.fuzz.core.base_fuzzer import RequestInfo, CommonState
 
         ri = RequestInfo(
             name="Auth_Fuzz", description="Auth fuzzing", requires_state=CommonState.PRE_AUTH
@@ -134,7 +134,7 @@ class TestRequestInfo:
 
     def test_with_list_requirement(self):
         """RequestInfo with multiple acceptable states."""
-        from src.oida.fuzz.core.base_fuzzer import RequestInfo, CommonState
+        from oida.fuzz.core.base_fuzzer import RequestInfo, CommonState
 
         ri = RequestInfo(
             name="Flexible_Fuzz",
@@ -146,7 +146,7 @@ class TestRequestInfo:
 
     def test_with_category_and_slow(self):
         """RequestInfo with category and slow flag."""
-        from src.oida.fuzz.core.base_fuzzer import RequestInfo
+        from oida.fuzz.core.base_fuzzer import RequestInfo
 
         ri = RequestInfo(
             name="Heavy_Test", description="Slow test", category="performance", slow=True
@@ -170,7 +170,7 @@ class TestStatefulFuzzerStateMatching:
 
     def test_any_state_always_matches(self):
         """CommonState.ANY always matches regardless of current state."""
-        from src.oida.fuzz.core.base_fuzzer import CommonState, RequestInfo
+        from oida.fuzz.core.base_fuzzer import CommonState, RequestInfo
 
         # ANY should match any state
         ri = RequestInfo("test", "desc", requires_state=CommonState.ANY)
@@ -182,7 +182,7 @@ class TestStatefulFuzzerStateMatching:
 
     def test_none_requirement_uses_default(self):
         """None requires_state should fall back to fuzzer default."""
-        from src.oida.fuzz.core.base_fuzzer import RequestInfo
+        from oida.fuzz.core.base_fuzzer import RequestInfo
 
         ri = RequestInfo("test", "desc", requires_state=None)
         assert ri.requires_state is None
@@ -190,7 +190,7 @@ class TestStatefulFuzzerStateMatching:
 
     def test_single_state_requirement(self):
         """Single state requirement matches when current == required."""
-        from src.oida.fuzz.core.base_fuzzer import CommonState, RequestInfo
+        from oida.fuzz.core.base_fuzzer import CommonState, RequestInfo
 
         ri = RequestInfo("auth_test", "desc", requires_state=CommonState.AUTHENTICATED)
         # The requires_state is AUTHENTICATED
@@ -199,7 +199,7 @@ class TestStatefulFuzzerStateMatching:
 
     def test_list_state_requirement(self):
         """List of states - any match in the list satisfies requirement."""
-        from src.oida.fuzz.core.base_fuzzer import CommonState, RequestInfo
+        from oida.fuzz.core.base_fuzzer import CommonState, RequestInfo
 
         ri = RequestInfo(
             "flexible",
@@ -225,7 +225,7 @@ class TestStatefulFuzzerSocketTimeouts:
     def _build_fuzzer(self, recv_timeout, send_timeout):
         import logging
 
-        from src.oida.fuzz.core.stateful_fuzzer import StatefulFuzzer
+        from oida.fuzz.core.stateful_fuzzer import StatefulFuzzer
 
         captured = {}
 
@@ -296,7 +296,7 @@ class TestStatefulFuzzerNodeRegistration:
 
     def test_state_matching_algorithm(self):
         """Test the core state matching algorithm directly."""
-        from src.oida.fuzz.core.base_fuzzer import CommonState
+        from oida.fuzz.core.base_fuzzer import CommonState
 
         def state_matches(current_state, required, default_state=CommonState.AUTHENTICATED):
             """Simplified version of _request_state_matches logic."""

@@ -24,14 +24,14 @@ class TestPingMonitorCreation:
 
     def test_basic_creation(self):
         """PingMonitor can be created."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
 
         monitor = PingMonitor("192.168.1.1")
         assert monitor.host == "192.168.1.1"
 
     def test_creation_with_options(self):
         """PingMonitor accepts optional parameters."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
 
         monitor = PingMonitor("10.0.0.1", retry_count=5, ping_count=3, failure_threshold=3)
         assert monitor.retry_count == 5
@@ -40,7 +40,7 @@ class TestPingMonitorCreation:
 
     def test_initial_failure_count_zero(self):
         """Initial consecutive failures is zero."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
 
         monitor = PingMonitor("192.168.1.1")
         assert monitor.consecutive_failures == 0
@@ -51,7 +51,7 @@ class TestPingMonitorCheckAlive:
 
     def test_check_alive_success_resets_failures(self):
         """Successful ping resets failure counter."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
 
         mock_runner = Mock()
         mock_runner.run.return_value = Mock(returncode=0)
@@ -66,7 +66,7 @@ class TestPingMonitorCheckAlive:
 
     def test_check_alive_failure_increments_counter(self):
         """Failed ping increments failure counter."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
 
         mock_runner = Mock()
         mock_runner.run.return_value = Mock(returncode=1)
@@ -82,7 +82,7 @@ class TestPingMonitorCheckAlive:
 
     def test_check_alive_exceeds_threshold(self):
         """Raises BoofuzzFailure when threshold exceeded and recovery fails."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
         from boofuzz.exception import BoofuzzFailure
 
         mock_runner = Mock()
@@ -100,7 +100,7 @@ class TestPingMonitorCheckAlive:
 
     def test_check_alive_retries_on_failure(self):
         """Ping is retried on failure."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
 
         mock_runner = Mock()
         # First fails, second succeeds
@@ -119,7 +119,7 @@ class TestPingMonitorPrePostSend:
 
     def test_pre_send_calls_check_alive(self):
         """pre_send triggers health check."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
 
         mock_runner = Mock()
         mock_runner.run.return_value = Mock(returncode=0)
@@ -132,7 +132,7 @@ class TestPingMonitorPrePostSend:
 
     def test_post_send_calls_check_alive(self):
         """post_send triggers health check."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
 
         mock_runner = Mock()
         mock_runner.run.return_value = Mock(returncode=0)
@@ -148,14 +148,14 @@ class TestPingMonitorRepr:
 
     def test_repr(self):
         """repr shows monitor state."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
 
         monitor = PingMonitor("192.168.1.1")
         assert "192.168.1.1" in repr(monitor)
 
     def test_str(self):
         """str shows friendly description."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
 
         monitor = PingMonitor("192.168.1.1")
         assert "192.168.1.1" in str(monitor)
@@ -171,7 +171,7 @@ class TestSocketHealthMonitorCreation:
 
     def test_basic_creation(self):
         """SocketHealthMonitor can be created."""
-        from src.oida.fuzz.monitors.network import SocketHealthMonitor
+        from oida.fuzz.monitors.network import SocketHealthMonitor
 
         monitor = SocketHealthMonitor("192.168.1.1", 80)
         assert monitor.host == "192.168.1.1"
@@ -179,7 +179,7 @@ class TestSocketHealthMonitorCreation:
 
     def test_creation_with_options(self):
         """SocketHealthMonitor accepts optional parameters."""
-        from src.oida.fuzz.monitors.network import SocketHealthMonitor
+        from oida.fuzz.monitors.network import SocketHealthMonitor
 
         monitor = SocketHealthMonitor(
             "10.0.0.1", 8080, retry_count=5, timeout=5, failure_threshold=3
@@ -194,7 +194,7 @@ class TestSocketHealthMonitorCheckAlive:
 
     def test_check_alive_success(self):
         """Successful socket connection returns True."""
-        from src.oida.fuzz.monitors.network import SocketHealthMonitor
+        from oida.fuzz.monitors.network import SocketHealthMonitor
 
         with patch("socket.socket") as mock_socket_class:
             mock_socket = MagicMock()
@@ -209,7 +209,7 @@ class TestSocketHealthMonitorCheckAlive:
 
     def test_check_alive_failure(self):
         """Failed socket connection increments failures."""
-        from src.oida.fuzz.monitors.network import SocketHealthMonitor
+        from oida.fuzz.monitors.network import SocketHealthMonitor
 
         with patch("socket.socket") as mock_socket_class:
             mock_socket = MagicMock()
@@ -234,7 +234,7 @@ class TestModbusMonitorCreation:
 
     def test_basic_creation(self):
         """ModbusMonitor can be created."""
-        from src.oida.fuzz.monitors.industrial import ModbusMonitor
+        from oida.fuzz.monitors.industrial import ModbusMonitor
 
         monitor = ModbusMonitor("192.168.1.1")
         assert monitor.host == "192.168.1.1"
@@ -242,7 +242,7 @@ class TestModbusMonitorCreation:
 
     def test_creation_with_options(self):
         """ModbusMonitor accepts optional parameters."""
-        from src.oida.fuzz.monitors.industrial import ModbusMonitor
+        from oida.fuzz.monitors.industrial import ModbusMonitor
 
         monitor = ModbusMonitor(
             "10.0.0.1",
@@ -262,7 +262,7 @@ class TestModbusMonitorCreateRequest:
 
     def test_create_read_request_format(self):
         """Read request has correct Modbus TCP format."""
-        from src.oida.fuzz.monitors.industrial import ModbusMonitor
+        from oida.fuzz.monitors.industrial import ModbusMonitor
 
         monitor = ModbusMonitor("192.168.1.1")
         request = monitor._create_read_request()
@@ -285,7 +285,7 @@ class TestModbusMonitorBaseline:
 
     def test_store_baseline(self):
         """Baseline is stored on first success."""
-        from src.oida.fuzz.monitors.industrial import ModbusMonitor
+        from oida.fuzz.monitors.industrial import ModbusMonitor
 
         monitor = ModbusMonitor("192.168.1.1")
 
@@ -301,7 +301,7 @@ class TestModbusMonitorBaseline:
 
     def test_compare_responses_same(self):
         """Same function code passes comparison."""
-        from src.oida.fuzz.monitors.industrial import ModbusMonitor
+        from oida.fuzz.monitors.industrial import ModbusMonitor
 
         monitor = ModbusMonitor("192.168.1.1")
         monitor.baseline_function_code = 0x03
@@ -314,7 +314,7 @@ class TestModbusMonitorBaseline:
 
     def test_compare_responses_error_code(self):
         """Error function code fails comparison."""
-        from src.oida.fuzz.monitors.industrial import ModbusMonitor
+        from oida.fuzz.monitors.industrial import ModbusMonitor
 
         monitor = ModbusMonitor("192.168.1.1")
         monitor.baseline_function_code = 0x03
@@ -333,7 +333,7 @@ class TestModbusMonitorCheckAlive:
 
     def test_check_alive_success(self):
         """Successful Modbus read returns True."""
-        from src.oida.fuzz.monitors.industrial import ModbusMonitor
+        from oida.fuzz.monitors.industrial import ModbusMonitor
 
         with patch("socket.socket") as mock_socket_class:
             mock_socket = MagicMock()
@@ -350,7 +350,7 @@ class TestModbusMonitorCheckAlive:
 
     def test_check_alive_timeout(self):
         """Socket timeout increments failures."""
-        from src.oida.fuzz.monitors.industrial import ModbusMonitor
+        from oida.fuzz.monitors.industrial import ModbusMonitor
 
         with patch("socket.socket") as mock_socket_class:
             mock_socket = MagicMock()
@@ -371,7 +371,7 @@ class TestModbusMonitorPrePostSend:
 
     def test_pre_send_rate_limiting(self):
         """pre_send respects check_interval."""
-        from src.oida.fuzz.monitors.industrial import ModbusMonitor
+        from oida.fuzz.monitors.industrial import ModbusMonitor
 
         monitor = ModbusMonitor("192.168.1.1", check_interval=10)
 
@@ -395,7 +395,7 @@ class TestIEC104MonitorCreation:
 
     def test_basic_creation(self):
         """IEC104Monitor can be created."""
-        from src.oida.fuzz.monitors.industrial import IEC104Monitor
+        from oida.fuzz.monitors.industrial import IEC104Monitor
 
         monitor = IEC104Monitor("192.168.1.1")
         assert monitor.host == "192.168.1.1"
@@ -403,7 +403,7 @@ class TestIEC104MonitorCreation:
 
     def test_initial_state_disconnected(self):
         """Initial state is DISCONNECTED."""
-        from src.oida.fuzz.monitors.industrial import IEC104Monitor, IEC104States
+        from oida.fuzz.monitors.industrial import IEC104Monitor, IEC104States
 
         monitor = IEC104Monitor("192.168.1.1")
         assert monitor.state == IEC104States.DISCONNECTED
@@ -414,7 +414,7 @@ class TestIEC104MonitorTESTFR:
 
     def test_create_testfr_format(self):
         """TESTFR request has correct format."""
-        from src.oida.fuzz.monitors.industrial import IEC104Monitor
+        from oida.fuzz.monitors.industrial import IEC104Monitor
 
         monitor = IEC104Monitor("192.168.1.1")
         testfr = monitor._create_testfr()
@@ -430,7 +430,7 @@ class TestIEC104MonitorCheckAlive:
 
     def test_check_alive_success(self):
         """Successful TESTFR ACK returns True."""
-        from src.oida.fuzz.monitors.industrial import IEC104Monitor
+        from oida.fuzz.monitors.industrial import IEC104Monitor
 
         mock_socket = MagicMock()
         # TESTFR ACK response
@@ -446,7 +446,7 @@ class TestIEC104MonitorCheckAlive:
 
     def test_check_alive_invalid_response(self):
         """Invalid TESTFR response returns False."""
-        from src.oida.fuzz.monitors.industrial import IEC104Monitor
+        from oida.fuzz.monitors.industrial import IEC104Monitor
 
         mock_socket = MagicMock()
         # Invalid response (wrong byte 2)
@@ -461,7 +461,7 @@ class TestIEC104MonitorCheckAlive:
 
     def test_check_alive_no_socket(self):
         """Returns False when no socket and reconnect fails."""
-        from src.oida.fuzz.monitors.industrial import IEC104Monitor
+        from oida.fuzz.monitors.industrial import IEC104Monitor
 
         monitor = IEC104Monitor("192.168.1.1")
         monitor.socket = None
@@ -485,8 +485,8 @@ class TestIEC104MonitorCrashDetection:
 
     def _make_down_monitor(self):
         """IEC104Monitor whose connect always fails (target is down)."""
-        from src.oida.fuzz.monitors.industrial import IEC104Monitor
-        from src.oida.fuzz.monitors.base import CrashTracker
+        from oida.fuzz.monitors.industrial import IEC104Monitor
+        from oida.fuzz.monitors.base import CrashTracker
 
         tracker = CrashTracker(target="192.168.1.1:2404")
         monitor = IEC104Monitor(
@@ -545,8 +545,8 @@ class TestIEC104MonitorCrashDetection:
 
     def test_no_bespoke_pre_send_override(self):
         """IEC104Monitor must inherit pre_send/post_send from ProtocolMonitor."""
-        from src.oida.fuzz.monitors.industrial import IEC104Monitor
-        from src.oida.fuzz.monitors.base import ProtocolMonitor
+        from oida.fuzz.monitors.industrial import IEC104Monitor
+        from oida.fuzz.monitors.base import ProtocolMonitor
 
         assert IEC104Monitor.pre_send is ProtocolMonitor.pre_send
         assert IEC104Monitor.post_send is ProtocolMonitor.post_send
@@ -562,7 +562,7 @@ class TestMMSMonitorCreation:
 
     def test_basic_creation(self):
         """MMSMonitor can be created."""
-        from src.oida.fuzz.monitors.industrial import MMSMonitor
+        from oida.fuzz.monitors.industrial import MMSMonitor
 
         monitor = MMSMonitor("192.168.1.1")
         assert monitor.host == "192.168.1.1"
@@ -570,7 +570,7 @@ class TestMMSMonitorCreation:
 
     def test_initial_state(self):
         """Initial state is not connected."""
-        from src.oida.fuzz.monitors.industrial import MMSMonitor
+        from oida.fuzz.monitors.industrial import MMSMonitor
 
         monitor = MMSMonitor("192.168.1.1")
         assert monitor.connected is False
@@ -581,7 +581,7 @@ class TestMMSMonitorTPKT:
 
     def test_build_tpkt_header(self):
         """TPKT header is correct."""
-        from src.oida.fuzz.monitors.industrial import MMSMonitor
+        from oida.fuzz.monitors.industrial import MMSMonitor
 
         monitor = MMSMonitor("192.168.1.1")
 
@@ -600,7 +600,7 @@ class TestMMSMonitorConnect:
 
     def test_connect_success(self):
         """Successful connection returns True."""
-        from src.oida.fuzz.monitors.industrial import MMSMonitor
+        from oida.fuzz.monitors.industrial import MMSMonitor
 
         with patch("socket.socket") as mock_socket_class:
             mock_socket = MagicMock()
@@ -619,7 +619,7 @@ class TestMMSMonitorConnect:
 
     def test_connect_cotp_failure(self):
         """Connection fails on COTP rejection."""
-        from src.oida.fuzz.monitors.industrial import MMSMonitor
+        from oida.fuzz.monitors.industrial import MMSMonitor
 
         with patch("socket.socket") as mock_socket_class:
             mock_socket = MagicMock()
@@ -638,7 +638,7 @@ class TestMMSMonitorCheckAlive:
 
     def test_check_alive_success(self):
         """Successful Identify returns True."""
-        from src.oida.fuzz.monitors.industrial import MMSMonitor
+        from oida.fuzz.monitors.industrial import MMSMonitor
 
         with patch.object(MMSMonitor, "_connect", return_value=True):
             with patch.object(MMSMonitor, "_build_mms_identify", return_value=b"\xa0\x00"):
@@ -660,7 +660,7 @@ class TestMMSMonitorClose:
 
     def test_close_socket(self):
         """close() closes socket and resets state."""
-        from src.oida.fuzz.monitors.industrial import MMSMonitor
+        from oida.fuzz.monitors.industrial import MMSMonitor
 
         mock_socket = MagicMock()
         monitor = MMSMonitor("192.168.1.1")
@@ -684,7 +684,7 @@ class TestFailureThresholdBehavior:
 
     def test_ping_monitor_threshold(self):
         """PingMonitor respects failure threshold."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
 
         mock_runner = Mock()
         mock_runner.run.return_value = Mock(returncode=1)
@@ -710,7 +710,7 @@ class TestFailureThresholdBehavior:
 
     def test_modbus_monitor_threshold(self):
         """ModbusMonitor respects failure threshold."""
-        from src.oida.fuzz.monitors.industrial import ModbusMonitor
+        from oida.fuzz.monitors.industrial import ModbusMonitor
         from boofuzz.exception import BoofuzzFailure
 
         with patch("socket.socket") as mock_socket_class:
@@ -746,7 +746,7 @@ class TestBaseMonitorInterface:
 
     def test_ping_monitor_is_base_monitor(self):
         """PingMonitor inherits from BaseMonitor."""
-        from src.oida.fuzz.monitors.network import PingMonitor
+        from oida.fuzz.monitors.network import PingMonitor
         from boofuzz.monitors import BaseMonitor
 
         monitor = PingMonitor("192.168.1.1")
@@ -754,7 +754,7 @@ class TestBaseMonitorInterface:
 
     def test_socket_health_monitor_is_base_monitor(self):
         """SocketHealthMonitor inherits from BaseMonitor."""
-        from src.oida.fuzz.monitors.network import SocketHealthMonitor
+        from oida.fuzz.monitors.network import SocketHealthMonitor
         from boofuzz.monitors import BaseMonitor
 
         monitor = SocketHealthMonitor("192.168.1.1", 80)
@@ -762,7 +762,7 @@ class TestBaseMonitorInterface:
 
     def test_modbus_monitor_is_base_monitor(self):
         """ModbusMonitor inherits from BaseMonitor."""
-        from src.oida.fuzz.monitors.industrial import ModbusMonitor
+        from oida.fuzz.monitors.industrial import ModbusMonitor
         from boofuzz.monitors import BaseMonitor
 
         monitor = ModbusMonitor("192.168.1.1")
@@ -770,7 +770,7 @@ class TestBaseMonitorInterface:
 
     def test_iec104_monitor_is_base_monitor(self):
         """IEC104Monitor inherits from BaseMonitor."""
-        from src.oida.fuzz.monitors.industrial import IEC104Monitor
+        from oida.fuzz.monitors.industrial import IEC104Monitor
         from boofuzz.monitors import BaseMonitor
 
         monitor = IEC104Monitor("192.168.1.1")
@@ -778,7 +778,7 @@ class TestBaseMonitorInterface:
 
     def test_mms_monitor_is_base_monitor(self):
         """MMSMonitor inherits from BaseMonitor."""
-        from src.oida.fuzz.monitors.industrial import MMSMonitor
+        from oida.fuzz.monitors.industrial import MMSMonitor
         from boofuzz.monitors import BaseMonitor
 
         monitor = MMSMonitor("192.168.1.1")
@@ -796,8 +796,8 @@ def _make_ssl_monitor(target_ip="192.168.1.1", target_port=8443, **overrides):
     retry_count / failure_threshold are monitor (not config) attributes, so they
     are applied to the instance after construction.
     """
-    from src.oida.fuzz.monitors.network import CustomSSLSocketMonitor
-    from src.oida.fuzz.core.config import FuzzerConfig
+    from oida.fuzz.monitors.network import CustomSSLSocketMonitor
+    from oida.fuzz.core.config import FuzzerConfig
 
     config = FuzzerConfig(target_ip=target_ip, target_port=target_port)
     monitor = CustomSSLSocketMonitor(config)
@@ -818,7 +818,7 @@ class TestCustomSSLSocketMonitorCreation:
 
     def test_is_protocol_monitor(self):
         """Migrated to ProtocolMonitor so it inherits shared crash detection."""
-        from src.oida.fuzz.monitors.base import ProtocolMonitor
+        from oida.fuzz.monitors.base import ProtocolMonitor
 
         monitor = _make_ssl_monitor()
         assert isinstance(monitor, ProtocolMonitor)

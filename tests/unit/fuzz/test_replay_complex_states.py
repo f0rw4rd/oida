@@ -22,7 +22,7 @@ import pytest
 
 def _setup_logging_context():
     """Set up logging context needed by ORM operations."""
-    from src.oida.utils.ics_logger import set_context
+    from oida.utils.ics_logger import set_context
 
     try:
         set_context("TEST", "localhost", 0)
@@ -37,7 +37,7 @@ def _setup_logging_context():
 
 def _make_state_context():
     """Create a StateContext with full state for testing."""
-    from src.oida.fuzz.core.session.state_context import StateContext, ResponseData
+    from oida.fuzz.core.session.state_context import StateContext, ResponseData
 
     ctx = StateContext()
     ctx.set("channel_id", 42)
@@ -66,7 +66,7 @@ def _make_multi_step_state_machine():
 
     States: DISCONNECTED -> CONNECTED -> TLS_ESTABLISHED -> AUTHENTICATED -> READY
     """
-    from src.oida.fuzz.core.session.state_machine import (
+    from oida.fuzz.core.session.state_machine import (
         ProtocolState,
         StateMachine,
         StateType,
@@ -110,7 +110,7 @@ def _make_multi_step_state_machine():
 
 def _make_crypto_state_with_session_data():
     """Create a CryptoStateManager populated with realistic session crypto data."""
-    from src.oida.fuzz.core.session.crypto_state import (
+    from oida.fuzz.core.session.crypto_state import (
         CryptoStateManager,
         TokenState,
         NonceStrategy,
@@ -141,7 +141,7 @@ def _make_crypto_state_with_session_data():
 
 def _make_sequence_manager_with_state():
     """Create a SequenceManager advanced past initial values."""
-    from src.oida.fuzz.core.session.sequence import (
+    from oida.fuzz.core.session.sequence import (
         SequenceManager,
         SequenceConfig,
         SequenceDirection,
@@ -292,8 +292,8 @@ class TestStateMachineContextReplay:
 
     def test_context_data_survives_full_traversal(self):
         """Data set in context during traversal is available in final state."""
-        from src.oida.fuzz.core.session.state_context import StateContext
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             StateType,
@@ -342,7 +342,7 @@ class TestStateMachineContextReplay:
 
     def test_context_reset_for_replay_iteration(self):
         """Context can be cleared between replay iterations while preserving config."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         ctx.set("config_protocol", "opcua")
@@ -358,7 +358,7 @@ class TestStateMachineContextReplay:
 
     def test_child_context_for_nested_replay(self):
         """Child context provides isolation for nested replay sequences."""
-        from src.oida.fuzz.core.session.state_context import StateContext, ResponseData
+        from oida.fuzz.core.session.state_context import StateContext, ResponseData
 
         parent = StateContext()
         parent.set("global_channel_id", 1)
@@ -394,8 +394,8 @@ class TestStateMachineContextReplay:
 
     def test_context_callbacks_fire_during_replay_transitions(self):
         """Context callbacks fire during state transition replay."""
-        from src.oida.fuzz.core.session.state_context import StateContext
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
         )
@@ -440,7 +440,7 @@ class TestCryptoStateReplay:
 
     def test_nonce_values_preserved_after_generation(self):
         """Generated nonces are stored and retrievable for replay."""
-        from src.oida.fuzz.core.session.crypto_state import (
+        from oida.fuzz.core.session.crypto_state import (
             CryptoStateManager,
             NonceStrategy,
         )
@@ -474,7 +474,7 @@ class TestCryptoStateReplay:
 
     def test_key_derivation_reproducible_for_replay(self):
         """Key derivation from stored keys produces identical results."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager
         import hashlib
 
         crypto = CryptoStateManager()
@@ -496,7 +496,7 @@ class TestCryptoStateReplay:
 
     def test_fuzz_override_preserved_for_replay(self):
         """Nonce fuzz overrides are preserved and applied consistently."""
-        from src.oida.fuzz.core.session.crypto_state import (
+        from oida.fuzz.core.session.crypto_state import (
             CryptoStateManager,
             NonceStrategy,
         )
@@ -522,7 +522,7 @@ class TestCryptoStateReplay:
 
     def test_token_expiry_check_during_replay(self):
         """Token expiry is correctly evaluated during replay."""
-        from src.oida.fuzz.core.session.crypto_state import (
+        from oida.fuzz.core.session.crypto_state import (
             CryptoStateManager,
             TokenState,
         )
@@ -557,12 +557,12 @@ class TestCryptoStateReplay:
 
     def test_crypto_state_in_context_survives_transitions(self):
         """Crypto state attached to StateContext survives state machine transitions."""
-        from src.oida.fuzz.core.session.state_context import StateContext
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
         )
-        from src.oida.fuzz.core.session.crypto_state import (
+        from oida.fuzz.core.session.crypto_state import (
             NonceStrategy,
         )
 
@@ -637,7 +637,7 @@ class TestSequenceReplay:
 
     def test_sequence_replay_produces_identical_values(self):
         """Replaying the same increment pattern produces identical sequence values."""
-        from src.oida.fuzz.core.session.sequence import SequenceManager, SequenceConfig
+        from oida.fuzz.core.session.sequence import SequenceManager, SequenceConfig
 
         def run_sequence_pattern(mgr):
             """Run a specific pattern of sequence operations."""
@@ -664,7 +664,7 @@ class TestSequenceReplay:
 
     def test_sequence_wrapping_during_replay(self):
         """Sequence wrapping behaves identically during replay."""
-        from src.oida.fuzz.core.session.sequence import SequenceManager, SequenceConfig
+        from oida.fuzz.core.session.sequence import SequenceManager, SequenceConfig
 
         def run_wrap_scenario(mgr):
             values = []
@@ -691,12 +691,12 @@ class TestSequenceReplay:
 
     def test_sequence_manager_in_context_survives_state_transitions(self):
         """Sequence manager attached to context survives state transitions."""
-        from src.oida.fuzz.core.session.state_context import StateContext
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
         )
-        from src.oida.fuzz.core.session.sequence import SequenceConfig
+        from oida.fuzz.core.session.sequence import SequenceConfig
 
         ctx = StateContext()
 
@@ -738,7 +738,7 @@ class TestDatabaseReplay:
 
     def test_rolling_buffer_captures_crash_context(self):
         """Rolling buffer correctly captures test case history for crash context."""
-        from src.oida.fuzz.core.session.manager import RollingBuffer
+        from oida.fuzz.core.session.manager import RollingBuffer
 
         buffer = RollingBuffer(maxsize=50)
 
@@ -760,7 +760,7 @@ class TestDatabaseReplay:
 
     def test_rolling_buffer_evicts_old_entries(self):
         """Rolling buffer correctly evicts oldest entries when full."""
-        from src.oida.fuzz.core.session.manager import RollingBuffer
+        from oida.fuzz.core.session.manager import RollingBuffer
 
         buffer = RollingBuffer(maxsize=10)
 
@@ -780,7 +780,7 @@ class TestDatabaseReplay:
 
     def test_rolling_buffer_clear_and_refill(self):
         """Rolling buffer can be cleared and refilled for replay."""
-        from src.oida.fuzz.core.session.manager import RollingBuffer
+        from oida.fuzz.core.session.manager import RollingBuffer
 
         buffer = RollingBuffer(maxsize=20)
 
@@ -807,8 +807,8 @@ class TestDatabaseReplay:
     def test_database_store_and_retrieve_crash_payload(self):
         """Database correctly stores and retrieves crash payloads for replay."""
         _setup_logging_context()
-        from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
-        from src.oida.fuzz.core.database.interface import TestCase, Crash
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.interface import TestCase, Crash
 
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
@@ -854,7 +854,7 @@ class TestDatabaseReplay:
     def test_database_metadata_for_replay_validation(self):
         """Session metadata is stored correctly for replay validation."""
         _setup_logging_context()
-        from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
@@ -886,8 +886,8 @@ class TestDatabaseReplay:
     def test_database_multiple_crashes_with_context(self):
         """Database handles multiple crashes with overlapping buffer contexts."""
         _setup_logging_context()
-        from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
-        from src.oida.fuzz.core.database.interface import TestCase, Crash
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.interface import TestCase, Crash
 
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "test.db")
@@ -963,7 +963,7 @@ class TestReplayEdgeCases:
 
     def test_interrupted_session_partial_buffer(self):
         """Interrupted session with partially filled buffer is handled."""
-        from src.oida.fuzz.core.session.manager import RollingBuffer
+        from oida.fuzz.core.session.manager import RollingBuffer
 
         buffer = RollingBuffer(maxsize=100)
 
@@ -980,7 +980,7 @@ class TestReplayEdgeCases:
 
     def test_empty_buffer_crash(self):
         """Empty buffer at crash time returns empty context."""
-        from src.oida.fuzz.core.session.manager import RollingBuffer
+        from oida.fuzz.core.session.manager import RollingBuffer
 
         buffer = RollingBuffer(maxsize=100)
         assert buffer.buffer_size == 0
@@ -988,7 +988,7 @@ class TestReplayEdgeCases:
 
     def test_state_machine_reset_after_error_state(self):
         """State machine can reset from error state for replay."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             StateType,
@@ -1022,7 +1022,7 @@ class TestReplayEdgeCases:
 
     def test_state_rollback_on_transition_failure(self):
         """State machine stays in current state if transition setup fails."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             StateTransitionError,
@@ -1060,7 +1060,7 @@ class TestReplayEdgeCases:
 
     def test_replay_with_timeout_state(self):
         """States with timeouts can be replayed without timing issues."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             StateType,
@@ -1114,7 +1114,7 @@ class TestReplayEdgeCases:
 
     def test_on_enter_on_exit_callbacks_during_replay(self):
         """on_enter and on_exit callbacks fire during replay transitions."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
         )
@@ -1153,7 +1153,7 @@ class TestReplayEdgeCases:
 
     def test_state_validation_during_replay(self):
         """State validation callbacks work during replay."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
         )
@@ -1199,13 +1199,13 @@ class TestFullReplayScenario:
         Simulates: IDLE -> CONNECTED -> TLS -> AUTHENTICATED -> COMMAND_SENT
         with crypto nonces, sequence numbers, and response data.
         """
-        from src.oida.fuzz.core.session.state_context import StateContext, ResponseData
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_context import StateContext, ResponseData
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
         )
-        from src.oida.fuzz.core.session.sequence import SequenceConfig
-        from src.oida.fuzz.core.session.crypto_state import NonceStrategy
+        from oida.fuzz.core.session.sequence import SequenceConfig
+        from oida.fuzz.core.session.crypto_state import NonceStrategy
 
         # Set up context with sequence manager
         ctx = StateContext()
@@ -1322,9 +1322,9 @@ class TestFullReplayScenario:
     def test_replay_with_database_crash_context(self):
         """Simulate recording a crash and replaying it from database."""
         _setup_logging_context()
-        from src.oida.fuzz.core.session.manager import RollingBuffer
-        from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
-        from src.oida.fuzz.core.database.interface import TestCase, Crash
+        from oida.fuzz.core.session.manager import RollingBuffer
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.interface import TestCase, Crash
 
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "replay_test.db")
@@ -1404,7 +1404,7 @@ class TestFullReplayScenario:
 
     def test_transition_rules_with_conditions_during_replay(self):
         """Transition rules with conditions are evaluated during replay."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             TransitionRule,
@@ -1457,7 +1457,7 @@ class TestFullReplayScenario:
 
     def test_hierarchical_states_during_replay(self):
         """Hierarchical (parent/child) protocol states work during replay."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateType,
         )
@@ -1492,8 +1492,8 @@ class TestFullReplayScenario:
 
     def test_context_to_dict_captures_replay_state(self):
         """StateContext serialization captures all state needed for replay debugging."""
-        from src.oida.fuzz.core.session.state_context import StateContext, ResponseData
-        from src.oida.fuzz.core.session.sequence import SequenceConfig
+        from oida.fuzz.core.session.state_context import StateContext, ResponseData
+        from oida.fuzz.core.session.sequence import SequenceConfig
 
         ctx = StateContext()
         ctx.set("channel_id", 42)
@@ -1521,7 +1521,7 @@ class TestFullReplayScenario:
     def test_crash_event_storage_and_retrieval(self):
         """CrashEvent with context is stored and retrievable for analysis."""
         _setup_logging_context()
-        from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
         with tempfile.TemporaryDirectory() as tmpdir:
             db_path = os.path.join(tmpdir, "crash_events.db")

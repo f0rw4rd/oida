@@ -9,7 +9,7 @@ Tests cover:
 """
 
 import pytest
-from src.oida.fuzz.core.mutation.radamsa_native import (
+from oida.fuzz.core.mutation.radamsa_native import (
     NativeRadamsaMutator,
     get_native_mutator,
     INTERESTING_8,

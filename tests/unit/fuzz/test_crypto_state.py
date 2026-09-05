@@ -28,7 +28,7 @@ class TestNonceStrategy:
 
     def test_all_strategies_exist(self):
         """All expected nonce strategies are defined."""
-        from src.oida.fuzz.core.session.crypto_state import NonceStrategy
+        from oida.fuzz.core.session.crypto_state import NonceStrategy
 
         assert NonceStrategy.RANDOM
         assert NonceStrategy.INCREMENT
@@ -39,7 +39,7 @@ class TestNonceStrategy:
 
     def test_strategies_unique(self):
         """Strategy values are unique."""
-        from src.oida.fuzz.core.session.crypto_state import NonceStrategy
+        from oida.fuzz.core.session.crypto_state import NonceStrategy
 
         values = [s.value for s in NonceStrategy]
         assert len(values) == len(set(values))
@@ -55,35 +55,35 @@ class TestTokenState:
 
     def test_not_expired_when_no_expiry(self):
         """Token without expiry is never expired."""
-        from src.oida.fuzz.core.session.crypto_state import TokenState
+        from oida.fuzz.core.session.crypto_state import TokenState
 
         ts = TokenState(name="test", value="abc", expires_at=None)
         assert ts.is_expired() is False
 
     def test_not_expired_when_future(self):
         """Token with future expiry is not expired."""
-        from src.oida.fuzz.core.session.crypto_state import TokenState
+        from oida.fuzz.core.session.crypto_state import TokenState
 
         ts = TokenState(name="test", value="abc", expires_at=datetime.now() + timedelta(hours=1))
         assert ts.is_expired() is False
 
     def test_expired_when_past(self):
         """Token with past expiry is expired."""
-        from src.oida.fuzz.core.session.crypto_state import TokenState
+        from oida.fuzz.core.session.crypto_state import TokenState
 
         ts = TokenState(name="test", value="abc", expires_at=datetime.now() - timedelta(hours=1))
         assert ts.is_expired() is True
 
     def test_time_until_expiry_none(self):
         """time_until_expiry returns None when no expiry."""
-        from src.oida.fuzz.core.session.crypto_state import TokenState
+        from oida.fuzz.core.session.crypto_state import TokenState
 
         ts = TokenState(name="test")
         assert ts.time_until_expiry() is None
 
     def test_time_until_expiry_positive(self):
         """time_until_expiry returns positive timedelta for future expiry."""
-        from src.oida.fuzz.core.session.crypto_state import TokenState
+        from oida.fuzz.core.session.crypto_state import TokenState
 
         ts = TokenState(name="test", expires_at=datetime.now() + timedelta(hours=1))
         remaining = ts.time_until_expiry()
@@ -101,7 +101,7 @@ class TestCryptoNonceGeneration:
 
     def test_generate_random_nonce(self):
         """Generate random nonce."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         nonce = crypto.generate_nonce("client_nonce", length=32, strategy=NonceStrategy.RANDOM)
@@ -110,7 +110,7 @@ class TestCryptoNonceGeneration:
 
     def test_generate_zero_nonce(self):
         """Generate all-zeros nonce."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         nonce = crypto.generate_nonce("test", length=16, strategy=NonceStrategy.ZERO)
@@ -118,7 +118,7 @@ class TestCryptoNonceGeneration:
 
     def test_generate_max_nonce(self):
         """Generate all-0xFF nonce."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         nonce = crypto.generate_nonce("test", length=16, strategy=NonceStrategy.MAX)
@@ -126,7 +126,7 @@ class TestCryptoNonceGeneration:
 
     def test_generate_increment_nonce_first_time(self):
         """First increment nonce starts at 1."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         nonce = crypto.generate_nonce("counter", length=4, strategy=NonceStrategy.INCREMENT)
@@ -134,7 +134,7 @@ class TestCryptoNonceGeneration:
 
     def test_generate_increment_nonce_subsequent(self):
         """Subsequent increment nonce increments value."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         nonce1 = crypto.generate_nonce("counter", length=4, strategy=NonceStrategy.INCREMENT)
@@ -145,7 +145,7 @@ class TestCryptoNonceGeneration:
 
     def test_generate_timestamp_nonce(self):
         """Generate timestamp-based nonce."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         nonce = crypto.generate_nonce("ts_nonce", length=32, strategy=NonceStrategy.TIMESTAMP)
@@ -153,7 +153,7 @@ class TestCryptoNonceGeneration:
 
     def test_generate_timestamp_nonce_short(self):
         """Generate short timestamp nonce (< 8 bytes)."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         nonce = crypto.generate_nonce("ts_short", length=4, strategy=NonceStrategy.TIMESTAMP)
@@ -161,7 +161,7 @@ class TestCryptoNonceGeneration:
 
     def test_generate_nonce_with_fuzz_override(self):
         """Fuzz override replaces generated nonce."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         # Generate first to have a nonce to override
@@ -179,7 +179,7 @@ class TestCryptoNonceSetGet:
 
     def test_set_and_get_nonce(self):
         """Store and retrieve a nonce."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager
 
         crypto = CryptoStateManager()
         crypto.set_nonce("server_nonce", b"\x01\x02\x03\x04")
@@ -187,14 +187,14 @@ class TestCryptoNonceSetGet:
 
     def test_get_missing_nonce_returns_none(self):
         """Get missing nonce returns None."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager
 
         crypto = CryptoStateManager()
         assert crypto.get_nonce("missing") is None
 
     def test_get_nonce_with_fuzz_override(self):
         """Get nonce returns fuzz override when set."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager
 
         crypto = CryptoStateManager()
         crypto.set_nonce("test", b"\x01\x02")
@@ -207,7 +207,7 @@ class TestCryptoNonceFuzzing:
 
     def test_fuzz_nonce_zero(self):
         """Fuzz nonce with ZERO strategy."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         crypto.set_nonce("test", b"\x01\x02\x03\x04")
@@ -216,7 +216,7 @@ class TestCryptoNonceFuzzing:
 
     def test_fuzz_nonce_max(self):
         """Fuzz nonce with MAX strategy."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         crypto.set_nonce("test", b"\x01\x02\x03\x04")
@@ -225,7 +225,7 @@ class TestCryptoNonceFuzzing:
 
     def test_fuzz_nonce_replay(self):
         """Fuzz nonce with REPLAY strategy keeps current value."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         crypto.set_nonce("test", b"\xab\xcd")
@@ -234,14 +234,14 @@ class TestCryptoNonceFuzzing:
 
     def test_fuzz_unknown_nonce_no_error(self):
         """Fuzzing unknown nonce does nothing."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         crypto.fuzz_nonce("missing", NonceStrategy.ZERO)  # Should not raise
 
     def test_clear_fuzz_override(self):
         """Clear fuzz override restores original nonce value."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, NonceStrategy
 
         crypto = CryptoStateManager()
         crypto.set_nonce("test", b"\x01\x02\x03\x04")
@@ -261,7 +261,7 @@ class TestCryptoTokenManagement:
 
     def test_set_and_get_token(self):
         """Store and retrieve a token."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
 
         crypto = CryptoStateManager()
         token = TokenState(name="security_token", value=b"\x01\x02")
@@ -272,14 +272,14 @@ class TestCryptoTokenManagement:
 
     def test_get_missing_token_returns_none(self):
         """Get missing token returns None."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager
 
         crypto = CryptoStateManager()
         assert crypto.get_token("missing") is None
 
     def test_get_token_value(self):
         """get_token_value returns token value directly."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
 
         crypto = CryptoStateManager()
         crypto.set_token("t", TokenState(name="t", value="hello"))
@@ -287,14 +287,14 @@ class TestCryptoTokenManagement:
 
     def test_get_token_value_missing(self):
         """get_token_value returns None for missing token."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager
 
         crypto = CryptoStateManager()
         assert crypto.get_token_value("missing") is None
 
     def test_expired_token_with_refresh(self):
         """Expired token triggers refresh callback."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
 
         crypto = CryptoStateManager()
         callback = Mock(return_value="new_value")
@@ -311,7 +311,7 @@ class TestCryptoTokenManagement:
 
     def test_expired_token_refresh_failure_keeps_old(self):
         """Failed refresh keeps expired token."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
 
         crypto = CryptoStateManager()
         callback = Mock(side_effect=RuntimeError("refresh failed"))
@@ -327,7 +327,7 @@ class TestCryptoTokenManagement:
 
     def test_non_expired_token_no_refresh(self):
         """Non-expired token does not trigger refresh."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
 
         crypto = CryptoStateManager()
         callback = Mock(return_value="new_value")
@@ -353,7 +353,7 @@ class TestCryptoKeyManagement:
 
     def test_set_and_get_key(self):
         """Store and retrieve a key."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager
 
         crypto = CryptoStateManager()
         crypto.set_key("master", b"\x00" * 32, algorithm="AES-256-CBC")
@@ -361,14 +361,14 @@ class TestCryptoKeyManagement:
 
     def test_get_missing_key_returns_none(self):
         """Get missing key returns None."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager
 
         crypto = CryptoStateManager()
         assert crypto.get_key("missing") is None
 
     def test_derive_key(self):
         """Derive a new key from an existing key."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager
 
         crypto = CryptoStateManager()
         crypto.set_key("master", b"\x01\x02\x03\x04")
@@ -382,7 +382,7 @@ class TestCryptoKeyManagement:
 
     def test_derive_from_missing_key_raises(self):
         """Derive from missing key raises KeyError."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager
 
         crypto = CryptoStateManager()
         with pytest.raises(KeyError, match="Source key not found"):
@@ -390,7 +390,7 @@ class TestCryptoKeyManagement:
 
     def test_key_metadata(self):
         """Key stores metadata correctly."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager
 
         crypto = CryptoStateManager()
         crypto.set_key("k", b"\x00" * 16, algorithm="AES-128", derived_from="parent_key")
@@ -410,7 +410,7 @@ class TestCryptoUtility:
 
     def test_reset_clears_all(self):
         """Reset clears all crypto state."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
 
         crypto = CryptoStateManager()
         crypto.generate_nonce("n1", 8)
@@ -426,7 +426,7 @@ class TestCryptoUtility:
 
     def test_to_dict(self):
         """to_dict returns expected structure without sensitive values."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
 
         crypto = CryptoStateManager("test")
         crypto.generate_nonce("n1", 8)
@@ -444,7 +444,7 @@ class TestCryptoUtility:
 
     def test_repr(self):
         """repr shows useful info."""
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager, TokenState
 
         crypto = CryptoStateManager("test")
         crypto.generate_nonce("n", 8)

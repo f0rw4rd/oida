@@ -22,7 +22,7 @@ import pytest
 @pytest.fixture
 def mms_config():
     """Create a basic MMS FuzzerConfig."""
-    from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+    from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 
     config = FuzzerConfig(
         target_ip="192.168.1.100",
@@ -35,8 +35,8 @@ def mms_config():
 @pytest.fixture
 def mms_fuzzer(mms_config):
     """Create an MMSFuzzer instance with mocked connection."""
-    from src.oida.fuzz.protocols.mms import MMSFuzzer
-    from src.oida.fuzz.core.connections.base import MockConnectionFactory
+    from oida.fuzz.protocols.mms import MMSFuzzer
+    from oida.fuzz.core.connections.base import MockConnectionFactory
 
     factory = MockConnectionFactory()
     fuzzer = MMSFuzzer(mms_config, connection_factory=factory)
@@ -53,16 +53,16 @@ class TestMMSFuzzerCreation:
 
     def test_basic_creation(self, mms_config):
         """MMSFuzzer can be created."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         fuzzer = MMSFuzzer(mms_config, connection_factory=MockConnectionFactory())
         assert fuzzer is not None
 
     def test_default_port(self, mms_config):
         """Default port is 102 (ISO-TSAP)."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         mms_config.target_port = None
         fuzzer = MMSFuzzer(mms_config, connection_factory=MockConnectionFactory())
@@ -83,7 +83,7 @@ class TestMMSFuzzerOptions:
 
     def test_protocol_options_defined(self):
         """Protocol options are defined."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         assert "invoke_id_start" in MMSFuzzer.PROTOCOL_OPTIONS
         assert "max_pdu_size" in MMSFuzzer.PROTOCOL_OPTIONS
@@ -94,8 +94,8 @@ class TestMMSFuzzerOptions:
 
     def test_invoke_id_option(self, mms_config):
         """Custom invoke_id_start is respected."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         mms_config.protocol_options = {"invoke_id_start": 100}
         fuzzer = MMSFuzzer(mms_config, connection_factory=MockConnectionFactory())
@@ -103,8 +103,8 @@ class TestMMSFuzzerOptions:
 
     def test_domain_name_option(self, mms_config):
         """Custom domain_name is used."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         mms_config.protocol_options = {"domain_name": "CTRL01"}
         fuzzer = MMSFuzzer(mms_config, connection_factory=MockConnectionFactory())
@@ -113,8 +113,8 @@ class TestMMSFuzzerOptions:
 
     def test_legacy_mode_disables_osi_stack(self, mms_config):
         """Legacy mode disables OSI stack."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         mms_config.protocol_options = {"legacy_mode": True}
         fuzzer = MMSFuzzer(mms_config, connection_factory=MockConnectionFactory())
@@ -131,22 +131,22 @@ class TestMMSRequestDefinitions:
 
     def test_get_request_definitions_returns_list(self):
         """get_request_definitions() returns a list."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
         assert isinstance(definitions, list)
 
     def test_request_definitions_not_empty(self):
         """Request definitions are not empty."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
         assert len(definitions) > 0
 
     def test_request_definitions_have_required_fields(self):
         """Each request definition has required fields."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
-        from src.oida.fuzz.core.base_fuzzer import RequestInfo
+        from oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.core.base_fuzzer import RequestInfo
 
         definitions = MMSFuzzer.get_request_definitions()
         for defn in definitions:
@@ -157,7 +157,7 @@ class TestMMSRequestDefinitions:
 
     def test_cve_targeted_requests_exist(self):
         """CVE-targeted requests are defined."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
         names = [d.name for d in definitions]
@@ -169,7 +169,7 @@ class TestMMSRequestDefinitions:
 
     def test_request_categories_cover_all_phases(self):
         """Request categories cover all optimization phases."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
         categories = {d.category for d in definitions}
@@ -192,7 +192,7 @@ class TestMMSPDUConstants:
 
     def test_pdu_types_defined(self):
         """PDU type constants are defined."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         assert MMSFuzzer.PDU_CONFIRMED_REQUEST == 0xA0
         assert MMSFuzzer.PDU_CONFIRMED_RESPONSE == 0xA1
@@ -202,7 +202,7 @@ class TestMMSPDUConstants:
 
     def test_service_ids_defined(self):
         """Service ID constants match ISO 9506-2 ASN.1 context tags."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         assert MMSFuzzer.SERVICE_READ == b"\xa4"  # [4] constructed
         assert MMSFuzzer.SERVICE_WRITE == b"\xa5"  # [5] constructed
@@ -439,13 +439,13 @@ class TestIEC61850References:
 
     def test_valid_references_defined(self):
         """Valid IEC 61850 references are defined."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         assert len(MMSFuzzer.VALID_REFERENCES) > 0
 
     def test_valid_references_follow_naming_convention(self):
         """Valid references follow IEC 61850 naming convention."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         for ref in MMSFuzzer.VALID_REFERENCES:
             # Should contain $ separator
@@ -456,14 +456,14 @@ class TestIEC61850References:
 
     def test_status_references_exist(self):
         """Status (ST) references exist."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         st_refs = [r for r in MMSFuzzer.VALID_REFERENCES if "$ST$" in r]
         assert len(st_refs) > 0
 
     def test_measurement_references_exist(self):
         """Measurement (MX) references exist."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         mx_refs = [r for r in MMSFuzzer.VALID_REFERENCES if "$MX$" in r]
         assert len(mx_refs) > 0
@@ -511,7 +511,7 @@ class TestMMSMonitorSetup:
 
     def test_monitor_uses_correct_port(self, mms_fuzzer):
         """Monitor uses port 102 (ISO-TSAP)."""
-        from src.oida.fuzz.monitors import SocketHealthMonitor
+        from oida.fuzz.monitors import SocketHealthMonitor
 
         monitors = mms_fuzzer.setup_custom_monitors()
         assert len(monitors) > 0
@@ -528,16 +528,16 @@ class TestMMSOSIStack:
 
     def test_osi_stack_builder_initialized(self, mms_config):
         """OSI stack builder is initialized when enabled."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         fuzzer = MMSFuzzer(mms_config, connection_factory=MockConnectionFactory())
         assert hasattr(fuzzer, "osi_stack")
 
     def test_osi_stack_not_initialized_in_legacy_mode(self, mms_config):
         """OSI stack builder not initialized in legacy mode."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         mms_config.protocol_options = {"legacy_mode": True}
         fuzzer = MMSFuzzer(mms_config, connection_factory=MockConnectionFactory())
@@ -553,8 +553,26 @@ class TestMMSASN1Encoding:
     """Tests for ASN.1 BER encoding in MMS."""
 
     def test_ber_encoding_imports(self):
-        """BER encoding functions are imported."""
-        # Should not raise ImportError
+        """The BER encoding helpers the MMS fuzzer relies on are importable
+        and produce the expected DER byte shapes."""
+        from oida.fuzz.primitives.asn1 import (
+            encode_ber_context_tag,
+            encode_ber_integer,
+            encode_ber_length,
+            encode_ber_visible_string,
+        )
+
+        # Short-form length: values < 128 encode as a single byte.
+        assert encode_ber_length(5) == b"\x05"
+        # Long-form length: 200 -> 0x81 0xC8 (one length octet follows).
+        assert encode_ber_length(200) == b"\x81\xc8"
+        # INTEGER 0 is a single content octet.
+        assert encode_ber_integer(0) == b"\x02\x01\x00"
+        # VisibleString: tag 0x1a, length, then the ASCII bytes verbatim.
+        assert encode_ber_visible_string("AB") == b"\x1a\x02AB"
+        # Context tag [0] primitive -> 0x80; constructed sets bit 5 -> 0xa0.
+        assert encode_ber_context_tag(0, b"\x00")[0] == 0x80
+        assert encode_ber_context_tag(0, b"\x00", constructed=True)[0] == 0xA0
 
     def test_read_request_uses_valid_asn1(self, mms_fuzzer):
         """Read request uses valid ASN.1 encoding."""
@@ -567,14 +585,18 @@ class TestMMSASN1Encoding:
         # First byte is context tag (0xa0)
         assert result[0] == 0xA0
 
-        # Second byte is length (or length indicator for long form)
+        # Second byte is length (or length indicator for long form). The
+        # declared length must match the actual remaining content — a dropped
+        # assertion here previously let a mis-encoded length field pass.
         length_byte = result[1]
         if length_byte < 0x80:
-            # Short form length
-            len(result) - 2
+            # Short form: the length octet equals the byte count that follows.
+            assert length_byte == len(result) - 2
         else:
-            # Long form length (not expected for small requests)
-            pass
+            # Long form: low 7 bits give the number of subsequent length octets.
+            num_len_octets = length_byte & 0x7F
+            declared = int.from_bytes(result[2 : 2 + num_len_octets], "big")
+            assert declared == len(result) - 2 - num_len_octets
 
 
 # =============================================================================
@@ -653,7 +675,7 @@ class TestMMSRequestStateRequirements:
 
     def test_all_requests_have_requires_state(self):
         """All request definitions have requires_state set."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
         for defn in definitions:
@@ -661,7 +683,7 @@ class TestMMSRequestStateRequirements:
 
     def test_connected_state_requests(self):
         """Requests requiring CONNECTED state are correct."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
         connected_names = {d.name for d in definitions if d.requires_state == "CONNECTED"}
@@ -673,7 +695,7 @@ class TestMMSRequestStateRequirements:
 
     def test_cotp_established_state_requests(self):
         """Requests requiring COTP_ESTABLISHED state are correct."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
         cotp_names = {d.name for d in definitions if d.requires_state == "COTP_ESTABLISHED"}
@@ -683,7 +705,7 @@ class TestMMSRequestStateRequirements:
 
     def test_mms_associated_state_requests(self):
         """Requests requiring MMS_ASSOCIATED state are correct."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
         assoc_names = {d.name for d in definitions if d.requires_state == "MMS_ASSOCIATED"}
@@ -695,7 +717,7 @@ class TestMMSRequestStateRequirements:
 
     def test_valid_state_names(self):
         """All requires_state values are valid MMS state names."""
-        from src.oida.fuzz.protocols.mms import MMSFuzzer
+        from oida.fuzz.protocols.mms import MMSFuzzer
 
         valid_states = {"CONNECTED", "COTP_ESTABLISHED", "MMS_ASSOCIATED"}
         definitions = MMSFuzzer.get_request_definitions()
