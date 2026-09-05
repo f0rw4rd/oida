@@ -276,7 +276,3 @@ def by_name(name: str) -> Optional[ServiceSpec]:
         if s.name == name:
             return s
     return None
-
-
-def callable_services() -> List[ServiceSpec]:
-    return [s for s in SERVICES if s.callable]
