@@ -12,7 +12,7 @@ services:
     build:
       context: ./services/smtp/mock
       dockerfile: Dockerfile.smtp
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-smtp-mock:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-smtp-mock:latest
     container_name: smtp-mock-server
     hostname: smtp-mock
     profiles: ["vuln-services", "vuln-smtp", "fuzz-test"]
@@ -39,7 +39,7 @@ services:
     build:
       context: ./services/dns/cve
       dockerfile: Dockerfile.dnsmasq-cve-2020-25681
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dns-dnsmasq-2-85:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-dns-dnsmasq-2-85:latest
     container_name: dns-cve-2020-25681
     hostname: dns-dnspooq
     profiles: ["vuln-services", "vuln-dns"]
@@ -65,7 +65,7 @@ services:
     build:
       context: ./services/dns/cve
       dockerfile: Dockerfile.dnsmasq-cve-2020-25682
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dns-dnsmasq-2-83:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-dns-dnsmasq-2-83:latest
     container_name: dns-cve-2020-25682
     hostname: dns-dnspooq-2
     profiles: ["vuln-services", "vuln-dns"]
@@ -95,7 +95,7 @@ services:
     build:
       context: ./services/ftp/cve
       dockerfile: Dockerfile.vsftpd-cve-2021-3618
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ftp-vsftpd-3-0-3:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ftp-vsftpd-3-0-3:latest
     container_name: ftp-cve-2021-3618
     hostname: vsftpd-alpaca
     profiles: ["vuln-services", "vuln-ftp"]
@@ -120,7 +120,7 @@ services:
     build:
       context: ./services/ftp/cve
       dockerfile: Dockerfile.proftpd-cve-2015-3306
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ftp-proftpd-1-3-5:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ftp-proftpd-1-3-5:latest
     container_name: ftp-cve-2015-3306
     hostname: proftpd-modcopy
     profiles: ["vuln-services", "vuln-ftp"]
@@ -145,7 +145,7 @@ services:
     build:
       context: ./services/ftp/cve
       dockerfile: Dockerfile.proftpd-cve-2019-12815
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ftp-proftpd-1-3-5a:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ftp-proftpd-1-3-5a:latest
     container_name: ftp-cve-2019-12815
     hostname: proftpd-filecopy
     profiles: ["vuln-services", "vuln-ftp"]
@@ -170,7 +170,7 @@ services:
     build:
       context: ./services/ftp/cve
       dockerfile: Dockerfile.ftp-proftpd-cve-2010-4221-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ftp-proftpd-cve-2010-4221:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ftp-proftpd-cve-2010-4221:latest
     container_name: ftp-cve-2010-4221
     hostname: proftpd-telnet-iac
     profiles: ["vuln-services", "vuln-ftp"]
@@ -196,7 +196,7 @@ services:
     build:
       context: ./services/ftp/cve
       dockerfile: Dockerfile.ftp-proftpd-cve-2006-5815-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ftp-proftpd-cve-2006-5815:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ftp-proftpd-cve-2006-5815:latest
     container_name: ftp-cve-2006-5815
     hostname: proftpd-sreplace
     profiles: ["vuln-services", "vuln-ftp"]
@@ -223,7 +223,7 @@ services:
     build:
       context: ./services/ftp/cve
       dockerfile: Dockerfile.ftp-wuftpd-cve-2001-0550-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ftp-wuftpd-cve-2001-0550:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ftp-wuftpd-cve-2001-0550:latest
     container_name: ftp-cve-2001-0550
     hostname: wuftpd-ftpglob
     profiles: ["vuln-services", "vuln-ftp"]
@@ -253,7 +253,7 @@ services:
     build:
       context: ./services/modbus/cve
       dockerfile: Dockerfile.modbus-cve-2024-10918-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-modbus-cve-2024-10918:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-modbus-cve-2024-10918:latest
     container_name: modbus-cve-2024-10918-server
     hostname: modbus-cve-2024-10918
     profiles: ["vuln-services", "vuln-modbus"]
@@ -283,7 +283,7 @@ services:
     build:
       context: ./services/modbus/cve
       dockerfile: Dockerfile.modbus-cve-2022-0367-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-modbus-cve-2022-0367:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-modbus-cve-2022-0367:latest
     container_name: modbus-cve-2022-0367-server
     hostname: modbus-cve-2022-0367
     profiles: ["vuln-services", "vuln-modbus"]
@@ -313,7 +313,7 @@ services:
     build:
       context: ./services/modbus/cve
       dockerfile: Dockerfile.modbus-cve-2019-14462-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-modbus-cve-2019-14462:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-modbus-cve-2019-14462:latest
     container_name: modbus-cve-2019-14462-server
     hostname: modbus-cve-2019-14462
     profiles: ["vuln-services", "vuln-modbus"]
@@ -334,7 +334,7 @@ services:
     build:
       context: ./services/modbus/cve
       dockerfile: Dockerfile.modbus-cve-2019-14463-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-modbus-cve-2019-14463:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-modbus-cve-2019-14463:latest
     container_name: modbus-cve-2019-14463-server
     hostname: modbus-cve-2019-14463
     profiles: ["vuln-services", "vuln-modbus"]
@@ -359,7 +359,7 @@ services:
     build:
       context: ./services/coap/cve
       dockerfile: Dockerfile.coap-cve-2023-35862-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-coap-cve-2023-35862-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-coap-cve-2023-35862-real:latest
     container_name: coap-cve-2023-35862-real
     profiles: ["vuln-services", "vuln-coap"]
     ports:
@@ -379,7 +379,7 @@ services:
     build:
       context: ./services/coap/cve
       dockerfile: Dockerfile.coap-cve-2024-0962-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-coap-cve-2024-0962-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-coap-cve-2024-0962-real:latest
     container_name: coap-cve-2024-0962-real
     profiles: ["vuln-services", "vuln-coap"]
     ports:
@@ -399,7 +399,7 @@ services:
     build:
       context: ./services/coap/cve
       dockerfile: Dockerfile.coap-cve-2026-29013-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-coap-cve-2026-29013-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-coap-cve-2026-29013-real:latest
     container_name: coap-cve-2026-29013-real
     profiles: ["vuln-services", "vuln-coap"]
     ports:
@@ -423,7 +423,7 @@ services:
     build:
       context: ./services/bacnet/cve
       dockerfile: Dockerfile.bacnet-cve-2019-12480-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnet-cve-2019-12480-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-bacnet-cve-2019-12480-real:latest
     container_name: bacnet-cve-2019-12480-real
     profiles: ["vuln-services", "vuln-bacnet"]
     ports:
@@ -445,7 +445,7 @@ services:
     build:
       context: ./services/bacnet/cve
       dockerfile: Dockerfile.bacnet-cve-2026-41502-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnet-cve-2026-41502-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-bacnet-cve-2026-41502-real:latest
     container_name: bacnet-cve-2026-41502-real
     profiles: ["vuln-services", "vuln-bacnet"]
     ports:
@@ -467,7 +467,7 @@ services:
     build:
       context: ./services/bacnet/cve
       dockerfile: Dockerfile.bacnet-cve-2026-41503-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnet-cve-2026-41503-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-bacnet-cve-2026-41503-real:latest
     container_name: bacnet-cve-2026-41503-real
     profiles: ["vuln-services", "vuln-bacnet"]
     ports:
@@ -493,7 +493,7 @@ services:
     build:
       context: ./services/snmp/cve
       dockerfile: Dockerfile.snmp-cve-2018-18066-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-snmp-cve-2018-18066-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-snmp-cve-2018-18066-real:latest
     container_name: snmp-cve-2018-18066
     profiles: ["vuln-services", "vuln-snmp"]
     ports:
@@ -513,7 +513,7 @@ services:
     build:
       context: ./services/snmp/cve
       dockerfile: Dockerfile.snmp-cve-2019-20892-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-snmp-cve-2019-20892-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-snmp-cve-2019-20892-real:latest
     container_name: snmp-cve-2019-20892
     profiles: ["vuln-services", "vuln-snmp"]
     ports:
@@ -533,7 +533,7 @@ services:
     build:
       context: ./services/snmp/cve
       dockerfile: Dockerfile.snmp-cve-2022-24809-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-snmp-cve-2022-24807-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-snmp-cve-2022-24807-real:latest
     container_name: snmp-cve-2022-24807
     profiles: ["vuln-services", "vuln-snmp"]
     ports:
@@ -557,7 +557,7 @@ services:
     build:
       context: ./services/iec104/cve
       dockerfile: Dockerfile.iec104-cve-ghsa-75pr-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-iec104-ghsa-75pr-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-iec104-ghsa-75pr-real:latest
     container_name: iec104-ghsa-75pr
     profiles: ["vuln-services", "vuln-iec104"]
     ports:
@@ -579,7 +579,7 @@ services:
     build:
       context: ./services/iec104/cve
       dockerfile: Dockerfile.iec104-cve-ghsa-7v97-asdu-oob-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-iec104-asdu-oob-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-iec104-asdu-oob-real:latest
     container_name: iec104-asdu-oob
     profiles: ["vuln-services", "vuln-iec104"]
     ports:
@@ -601,7 +601,7 @@ services:
     build:
       context: ./services/iec104/cve
       dockerfile: Dockerfile.iec104-handleasdu-null-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-iec104-handleasdu-null-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-iec104-handleasdu-null-real:latest
     container_name: iec104-handleasdu-null
     profiles: ["vuln-services", "vuln-iec104"]
     ports:
@@ -627,7 +627,7 @@ services:
     build:
       context: ./services/mms/cve
       dockerfile: Dockerfile.mms-cve-2020-7054-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mms-cve-2020-7054-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-mms-cve-2020-7054-real:latest
     container_name: mms-cve-2020-7054-real
     profiles: ["vuln-services", "vuln-mms"]
     ports:
@@ -647,7 +647,7 @@ services:
     build:
       context: ./services/mms/cve
       dockerfile: Dockerfile.mms-cve-2019-19931-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mms-cve-2019-19931-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-mms-cve-2019-19931-real:latest
     container_name: mms-cve-2019-19931-real
     profiles: ["vuln-services", "vuln-mms"]
     ports:
@@ -667,7 +667,7 @@ services:
     build:
       context: ./services/mms/cve
       dockerfile: Dockerfile.mms-cve-2020-15158-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mms-cve-2020-15158-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-mms-cve-2020-15158-real:latest
     container_name: mms-cve-2020-15158-real
     profiles: ["vuln-services", "vuln-mms"]
     ports:
@@ -692,7 +692,7 @@ services:
     build:
       context: ./services/ethernetip/cve
       dockerfile: Dockerfile.opener-cve-2022-43604-getattrlist-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ethernetip-cve-2022-43604-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ethernetip-cve-2022-43604-real:latest
     container_name: ethernetip-cve-2022-43604-real
     profiles: ["vuln-services", "vuln-ethernetip"]
     ports:
@@ -715,7 +715,7 @@ services:
     build:
       context: ./services/ethernetip/cve
       dockerfile: Dockerfile.opener-cve-2022-43605-setattrlist-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ethernetip-cve-2022-43605-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ethernetip-cve-2022-43605-real:latest
     container_name: ethernetip-cve-2022-43605-real
     profiles: ["vuln-services", "vuln-ethernetip"]
     ports:
@@ -738,7 +738,7 @@ services:
     build:
       context: ./services/ethernetip/cve
       dockerfile: Dockerfile.opener-cve-2022-43606-largeforwardopen-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ethernetip-cve-2022-43606-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ethernetip-cve-2022-43606-real:latest
     container_name: ethernetip-cve-2022-43606-real
     profiles: ["vuln-services", "vuln-ethernetip"]
     ports:
@@ -761,31 +761,11 @@ services:
   # DNP3 CVE (real -real builds)
   # ============================================================================
 
-  dnp3-cve-2020-28875-real:
-    build:
-      context: ./services/dnp3/cve
-      dockerfile: Dockerfile.dnp3-cve-2020-28875-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3-cve-2020-28875-real:latest
-    container_name: dnp3-cve-2020-28875-real
-    profiles: ["vuln-services", "vuln-dnp3"]
-    ports:
-      - "20008:20000"
-    restart: "no"
-    networks:
-      - ics-network
-    labels:
-      - "oida.group=dnp3"
-      - "oida.ports=20008"
-      - "oida.cve=CVE-2020-28875"
-      - "oida.protocol=dnp3"
-      - "oida.severity=high"
-      - "oida.description=opendnp3 CVE-2020-28875 (real, crash-verified)"
-
   dnp3-cve-2019-18996-real:
     build:
       context: ./services/dnp3/cve
       dockerfile: Dockerfile.dnp3-cve-2019-18996-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3-cve-2019-18996-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-dnp3-cve-2019-18996-real:latest
     container_name: dnp3-cve-2019-18996-real
     profiles: ["vuln-services", "vuln-dnp3"]
     ports:
@@ -805,7 +785,7 @@ services:
     build:
       context: ./services/dnp3/cve
       dockerfile: Dockerfile.dnp3-cve-2017-7938-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3-cve-2017-7938-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-dnp3-cve-2017-7938-real:latest
     container_name: dnp3-cve-2017-7938-real
     profiles: ["vuln-services", "vuln-dnp3"]
     ports:
@@ -829,7 +809,7 @@ services:
     build:
       context: ./services/opcua/cve
       dockerfile: Dockerfile.open62541-cve-2026-1301-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua-cve-2026-1301-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-opcua-cve-2026-1301-real:latest
     container_name: opcua-cve-2026-1301-real
     hostname: opcua-pubsub-json-oob
     profiles: ["vuln-services", "vuln-opcua"]
@@ -853,7 +833,7 @@ services:
     build:
       context: ./services/opcua/cve
       dockerfile: Dockerfile.open62541-cve-2020-36429-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua-cve-2020-36429-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-opcua-cve-2020-36429-real:latest
     container_name: opcua-cve-2020-36429-real
     profiles: ["vuln-services", "vuln-opcua"]
     ports:
@@ -880,7 +860,7 @@ services:
     build:
       context: ./services/mqtt/cve
       dockerfile: Dockerfile.mqtt-cve-2021-34432-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt-cve-2021-34432-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-mqtt-cve-2021-34432-real:latest
     container_name: mqtt-cve-2021-34432-real
     profiles: ["vuln-services", "vuln-mqtt"]
     ports:
@@ -902,7 +882,7 @@ services:
     build:
       context: ./services/mqtt/cve
       dockerfile: Dockerfile.mqtt-cve-2019-11779-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt-cve-2019-11779-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-mqtt-cve-2019-11779-real:latest
     container_name: mqtt-cve-2019-11779-real
     profiles: ["vuln-services", "vuln-mqtt"]
     ports:
@@ -924,7 +904,7 @@ services:
     build:
       context: ./services/mqtt/cve
       dockerfile: Dockerfile.mqtt-cve-2024-8376-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt-cve-2024-8376-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-mqtt-cve-2024-8376-real:latest
     container_name: mqtt-cve-2024-8376-real
     profiles: ["vuln-services", "vuln-mqtt"]
     ports:
@@ -950,7 +930,7 @@ services:
     build:
       context: ./services/dicom/cve
       dockerfile: Dockerfile.dcmtk-cve-2024-34508-getstring-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dicom-cve-2024-34508-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-dicom-cve-2024-34508-real:latest
     container_name: dicom-cve-2024-34508
     profiles: ["vuln-services", "vuln-dicom"]
     ports:
@@ -975,7 +955,7 @@ services:
     build:
       context: ./services/dicom/cve
       dockerfile: Dockerfile.dcmtk-cve-2019-1010228-rledecoder-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dicom-cve-2019-1010228-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-dicom-cve-2019-1010228-real:latest
     container_name: dicom-cve-2019-1010228
     profiles: ["vuln-services", "vuln-dicom"]
     ports:
@@ -1000,7 +980,7 @@ services:
     build:
       context: ./services/dicom/cve
       dockerfile: Dockerfile.dcmtk-cve-2024-47796-nowindow-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dicom-cve-2024-47796-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-dicom-cve-2024-47796-real:latest
     container_name: dicom-cve-2024-47796
     profiles: ["vuln-services", "vuln-dicom"]
     ports:
@@ -1029,7 +1009,7 @@ services:
     build:
       context: ./services/http/cve
       dockerfile: Dockerfile.nginx-cve-2013-2028-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-http-nginx-cve-2013-2028-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-http-nginx-cve-2013-2028-real:latest
     container_name: http-nginx-cve-2013-2028-real
     profiles: ["vuln-services", "vuln-http"]
     ports:
@@ -1049,7 +1029,7 @@ services:
     build:
       context: ./services/http/cve
       dockerfile: Dockerfile.nginx-cve-2021-23017-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-http-nginx-cve-2021-23017-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-http-nginx-cve-2021-23017-real:latest
     container_name: http-nginx-cve-2021-23017-real
     profiles: ["vuln-services", "vuln-http"]
     ports:
@@ -1069,7 +1049,7 @@ services:
     build:
       context: ./services/http/cve
       dockerfile: Dockerfile.nginx-cve-2017-7529-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-http-nginx-cve-2017-7529-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-http-nginx-cve-2017-7529-real:latest
     container_name: http-nginx-cve-2017-7529-real
     profiles: ["vuln-services", "vuln-http"]
     ports:
@@ -1093,7 +1073,7 @@ services:
     build:
       context: ./services/http2/cve
       dockerfile: Dockerfile.nghttp2-1.5.0-cve-2015-8659-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-nghttp2-cve-2015-8659-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-nghttp2-cve-2015-8659-real:latest
     container_name: nghttp2-cve-2015-8659
     profiles: ["vuln-services", "vuln-http2"]
     ports:
@@ -1116,7 +1096,7 @@ services:
     build:
       context: ./services/smtp/cve
       dockerfile: Dockerfile.exim-cve-2019-16928-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-smtp-exim-cve-2019-16928-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-smtp-exim-cve-2019-16928-real:latest
     container_name: smtp-cve-2019-16928-real
     profiles: ["vuln-services", "vuln-smtp"]
     ports:
@@ -1136,7 +1116,7 @@ services:
     build:
       context: ./services/smtp/cve
       dockerfile: Dockerfile.exim-cve-2020-28023-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-smtp-exim-cve-2020-28023-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-smtp-exim-cve-2020-28023-real:latest
     container_name: smtp-cve-2020-28023-real
     profiles: ["vuln-services", "vuln-smtp"]
     ports:
@@ -1156,7 +1136,7 @@ services:
     build:
       context: ./services/smtp/cve
       dockerfile: Dockerfile.exim-cve-2020-28024-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-smtp-exim-cve-2020-28024-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-smtp-exim-cve-2020-28024-real:latest
     container_name: smtp-cve-2020-28024-real
     profiles: ["vuln-services", "vuln-smtp"]
     ports:
@@ -1180,7 +1160,7 @@ services:
     build:
       context: ./services/vnc/cve
       dockerfile: Dockerfile.libvncserver-cve-2018-15127-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-vnc-cve-2018-15127-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-vnc-cve-2018-15127-real:latest
     container_name: vnc-cve-2018-15127-real
     profiles: ["vuln-services", "vuln-vnc"]
     ports:
@@ -1203,7 +1183,7 @@ services:
     build:
       context: ./services/vnc/cve
       dockerfile: Dockerfile.libvncserver-cve-2018-20748-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-vnc-cve-2018-20748-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-vnc-cve-2018-20748-real:latest
     container_name: vnc-cve-2018-20748-real
     profiles: ["vuln-services", "vuln-vnc"]
     ports:
@@ -1226,7 +1206,7 @@ services:
     build:
       context: ./services/vnc/cve
       dockerfile: Dockerfile.libvncserver-cve-2018-7225-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-vnc-cve-2018-7225-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-vnc-cve-2018-7225-real:latest
     container_name: vnc-cve-2018-7225-real
     profiles: ["vuln-services", "vuln-vnc"]
     ports:
@@ -1253,7 +1233,7 @@ services:
     build:
       context: ./services/dhcp/cve
       dockerfile: Dockerfile.dnsmasq-cve-2017-14493-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dhcp-cve-2017-14493-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-dhcp-cve-2017-14493-real:latest
     container_name: dhcp-cve-2017-14493-real
     profiles: ["vuln-services", "vuln-dhcp"]
     ports:
@@ -1276,7 +1256,7 @@ services:
     build:
       context: ./services/dhcp/cve
       dockerfile: Dockerfile.busybox-cve-2018-20679-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dhcp-cve-2018-20679-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-dhcp-cve-2018-20679-real:latest
     container_name: dhcp-cve-2018-20679-real
     profiles: ["vuln-services", "vuln-dhcp"]
     ports:
@@ -1299,7 +1279,7 @@ services:
     build:
       context: ./services/mdns/cve
       dockerfile: Dockerfile.avahi-cve-2023-38469-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-avahi-cve-2023-38469-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-avahi-cve-2023-38469-real:latest
     container_name: avahi-cve-2023-38469-real
     profiles: ["vuln-services", "vuln-mdns"]
     ports:
@@ -1319,7 +1299,7 @@ services:
     build:
       context: ./services/mdns/cve
       dockerfile: Dockerfile.avahi-cve-2023-38471-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-avahi-cve-2023-38471-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-avahi-cve-2023-38471-real:latest
     container_name: avahi-cve-2023-38471-real
     profiles: ["vuln-services", "vuln-mdns"]
     ports:
@@ -1339,7 +1319,7 @@ services:
     build:
       context: ./services/mdns/cve
       dockerfile: Dockerfile.avahi-cve-2023-38473-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-avahi-cve-2023-38473-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-avahi-cve-2023-38473-real:latest
     container_name: avahi-cve-2023-38473-real
     profiles: ["vuln-services", "vuln-mdns"]
     ports:
@@ -1363,7 +1343,7 @@ services:
     build:
       context: ./services/ntp/cve
       dockerfile: Dockerfile.ntpd-4.2.8p3-cve-2015-7855-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ntp-cve-2015-7855-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ntp-cve-2015-7855-real:latest
     container_name: ntp-cve-2015-7855
     profiles: ["vuln-services", "vuln-ntp"]
     ports:
@@ -1383,7 +1363,7 @@ services:
     build:
       context: ./services/ntp/cve
       dockerfile: Dockerfile.ntpd-4.2.8p8-cve-2016-7434-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ntp-cve-2016-7434-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ntp-cve-2016-7434-real:latest
     container_name: ntp-cve-2016-7434
     profiles: ["vuln-services", "vuln-ntp"]
     ports:
@@ -1403,7 +1383,7 @@ services:
     build:
       context: ./services/ntp/cve
       dockerfile: Dockerfile.ntpd-4.2.8p8-cve-2016-9311-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ntp-cve-2016-9311-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ntp-cve-2016-9311-real:latest
     container_name: ntp-cve-2016-9311
     profiles: ["vuln-services", "vuln-ntp"]
     ports:
@@ -1427,7 +1407,7 @@ services:
     build:
       context: ./services/tftp/cve
       dockerfile: Dockerfile.atftpd-0.7.1-cve-2019-11365-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-tftp-cve-2019-11365-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-tftp-cve-2019-11365-real:latest
     container_name: tftp-atftpd-cve-2019-11365
     profiles: ["vuln-services", "vuln-tftp"]
     ports:
@@ -1447,7 +1427,7 @@ services:
     build:
       context: ./services/tftp/cve
       dockerfile: Dockerfile.atftpd-0.7.1-cve-2020-6097-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-tftp-cve-2020-6097-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-tftp-cve-2020-6097-real:latest
     container_name: tftp-atftpd-cve-2020-6097
     profiles: ["vuln-services", "vuln-tftp"]
     ports:
@@ -1467,7 +1447,7 @@ services:
     build:
       context: ./services/tftp/cve
       dockerfile: Dockerfile.atftpd-0.7.1-cve-2021-46671-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-tftp-cve-2021-46671-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-tftp-cve-2021-46671-real:latest
     container_name: tftp-atftpd-cve-2021-46671
     profiles: ["vuln-services", "vuln-tftp"]
     ports:
@@ -1491,7 +1471,7 @@ services:
     build:
       context: ./services/dns/cve
       dockerfile: Dockerfile.dnsmasq-cve-2017-14491-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dns-dnsmasq-cve-2017-14491-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-dns-dnsmasq-cve-2017-14491-real:latest
     container_name: dns-dnsmasq-cve-2017-14491-real
     profiles: ["vuln-services", "vuln-dns"]
     ports:
@@ -1512,7 +1492,7 @@ services:
     build:
       context: ./services/dns/cve
       dockerfile: Dockerfile.dnsmasq-cve-2017-14493-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dns-dnsmasq-cve-2017-14493-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-dns-dnsmasq-cve-2017-14493-real:latest
     container_name: dns-dnsmasq-cve-2017-14493-real
     profiles: ["vuln-services", "vuln-dns"]
     ports:
@@ -1534,7 +1514,7 @@ services:
     build:
       context: ./services/dns/cve
       dockerfile: Dockerfile.bind9-cve-2018-5740-real
-    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dns-bind-cve-2018-5740-real:latest
+    image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-dns-bind-cve-2018-5740-real:latest
     container_name: dns-bind-cve-2018-5740-real
     profiles: ["vuln-services", "vuln-dns"]
     ports:

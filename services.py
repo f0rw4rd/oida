@@ -42,6 +42,10 @@ COMPOSE_DIR = PROJECT_ROOT / "docker" / "mocks"
 COMPOSE_CORE = str(COMPOSE_DIR / "compose.yml")
 COMPOSE_CVE = str(COMPOSE_DIR / "compose.cve.yml")
 MOCK_HOST = os.environ.get("MOCK_HOST", "127.0.0.1")
+# Public home for the pre-built mock images. Used as the fallback when
+# OIDA_REGISTRY is unset so a fresh clone can `up`/`pull` with zero config;
+# override via docker/mocks/.env to push/pull your own registry.
+DEFAULT_REGISTRY = "ghcr.io/f0rw4rd"
 
 WAIT_HEALTHY_TIMEOUT = 90
 WAIT_HEALTHY_INTERVAL = 3
@@ -108,6 +112,7 @@ def _load_dotenv() -> None:
     """
     env_file = COMPOSE_DIR / ".env"
     if not env_file.exists():
+        os.environ.setdefault("OIDA_REGISTRY", DEFAULT_REGISTRY)
         return
     for raw in env_file.read_text().splitlines():
         line = raw.strip()
@@ -115,6 +120,7 @@ def _load_dotenv() -> None:
             continue
         key, _, val = line.partition("=")
         os.environ.setdefault(key.strip(), val.strip())
+    os.environ.setdefault("OIDA_REGISTRY", DEFAULT_REGISTRY)
 
 
 def _buildable_contexts(config: dict) -> dict[str, str]:
