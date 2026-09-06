@@ -90,10 +90,9 @@ The full list and the per-protocol guides live at
 
 - **Docs and demo:** [getoida.dev](https://getoida.dev)
 - **Discussion:** [GitHub Discussions](https://github.com/f0rw4rd/oida/discussions)
-- **Contact:** [contact@getoida.dev](mailto:contact@getoida.dev)
 - **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md)
 - **Security:** report it through [getoida.dev/contact](https://getoida.dev/contact); see [SECURITY.md](SECURITY.md) for what to include
-- **Support:** [ko-fi.com/f0rw4rd](https://ko-fi.com/f0rw4rd)
+- **Contact || Sponsoring:** [getoida.dev/contact](https://getoida.dev/contact)
 
 ## Legal
 
