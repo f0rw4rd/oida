@@ -225,9 +225,15 @@ def _image_specs(config: dict) -> dict[str, dict]:
 def _content_tag(spec: dict) -> str:
     """Deterministic 12-hex content tag for one image build spec.
 
-    Uses the git tree SHA of the build context (changes iff tracked files in
-    that context change), folded with the dockerfile name + build args. Falls
-    back to an on-disk digest when the context isn't tracked in HEAD.
+    Uses the git tree SHA of the build context **at HEAD** (changes iff
+    *committed* tracked files in that context change), folded with the
+    dockerfile name + build args.
+
+    NB: an uncommitted working-tree change to a tracked file does NOT move the
+    tag, so ``push`` treats the image as unchanged and skips it — commit the
+    change first (see ``_context_is_dirty``, which warns about exactly this).
+    Falls back to an on-disk digest only when the context isn't tracked in HEAD
+    at all (a brand-new, never-committed directory).
     """
     ctx = spec["context"]
     relpath = os.path.relpath(ctx, PROJECT_ROOT)
@@ -244,6 +250,20 @@ def _content_tag(spec: dict) -> str:
 def _image_tags(config: dict) -> dict[str, str]:
     """Map image base ref -> computed content tag for every buildable image."""
     return {base: _content_tag(spec) for base, spec in _image_specs(config).items()}
+
+
+def _context_is_dirty(ctx: str) -> bool:
+    """True if the build context has uncommitted changes to tracked files.
+
+    ``_content_tag`` hashes HEAD, so a dirty context means ``push`` computes the
+    same (already-published) tag and SKIPS the image even though its source has
+    actually changed. Used to warn about that footgun so a fix isn't silently
+    left unpushed. Untracked files are ignored (they can't affect a HEAD-based
+    tag until added + committed anyway).
+    """
+    relpath = os.path.relpath(ctx, PROJECT_ROOT)
+    res = _run(["git", "status", "--porcelain", "-uno", "--", relpath], check=False, capture=True)
+    return res.returncode == 0 and bool(res.stdout.strip())
 
 
 def _registry_has(ref: str) -> bool:
@@ -835,9 +855,15 @@ def cmd_push(args: argparse.Namespace) -> int:
 
     to_build: dict[str, dict] = {}  # target name -> spec (tags rewritten to :hash + :latest)
     present = 0
+    dirty_skipped: list[str] = []
     for base, tname, spec, tag in candidates:
         if base in present_bases:
             present += 1
+            # Skipped because the HEAD-based content tag is already published --
+            # but if the context has uncommitted edits, that "unchanged" image
+            # actually has changed source that WON'T be pushed. Flag it.
+            if _context_is_dirty(spec["context"]):
+                dirty_skipped.append(base.rsplit("/", 1)[-1])
             continue
         spec = dict(spec)
         spec["tags"] = [f"{base}:{tag}", f"{base}:latest"]
@@ -847,6 +873,11 @@ def cmd_push(args: argparse.Namespace) -> int:
         f"{BLUE}=== {len(rep)} distinct images: {present} already published, "
         f"{len(to_build)} to build/push ==={RST}"
     )
+    if dirty_skipped:
+        print(
+            f"{YELLOW}[~~]{RST} {len(dirty_skipped)} skipped image(s) have UNCOMMITTED context "
+            f"changes and will NOT be re-pushed until committed: {', '.join(sorted(dirty_skipped))}"
+        )
     if not to_build:
         print(f"{GREEN}[OK]{RST} Registry already up to date — nothing to build.")
         return 0
@@ -932,7 +963,12 @@ def cmd_clean(args: argparse.Namespace) -> int:
 
 def cmd_list(args: argparse.Namespace) -> int:
     """List all available services from compose labels."""
-    _ = args
+    filt = (getattr(args, "filter", None) or "").lower()
+
+    def _match(row: dict) -> bool:
+        if not filt:
+            return True
+        return filt in row.get("group", "").lower() or filt in row.get("service", "").lower()
 
     def _render_services(rows: list[dict], show_cve: bool = False) -> None:
         prev_group = ""
@@ -1002,17 +1038,25 @@ def cmd_list(args: argparse.Namespace) -> int:
                 }
             )
     cve_rows.sort(key=lambda r: r["group"])
+    cve_rows = [r for r in cve_rows if _match(r)]
 
-    print(f"{BOLD}{CYAN}=== CVE Services ==={RST}  {DIM}python services.py up cve{RST}")
-    hdr_cve = (
-        f"  {BOLD}{CYAN}{'GROUP':<16} {'SERVICE':<32} {'PORT(S)':<14} {'CVE':<20}"
-        f" {'DESCRIPTION'}{RST}"
-    )
-    sep_cve = f"  {DIM}{'---':<16} {'---':<32} {'---':<14} {'---':<20} {'---'}{RST}"
-    print(hdr_cve)
-    print(sep_cve)
-    _render_services(cve_rows, show_cve=True)
-    print()
+    if cve_rows or not filt:
+        print(f"{BOLD}{CYAN}=== CVE Services ==={RST}  {DIM}python services.py up cve{RST}")
+        hdr_cve = (
+            f"  {BOLD}{CYAN}{'GROUP':<16} {'SERVICE':<32} {'PORT(S)':<14} {'CVE':<20}"
+            f" {'DESCRIPTION'}{RST}"
+        )
+        sep_cve = f"  {DIM}{'---':<16} {'---':<32} {'---':<14} {'---':<20} {'---'}{RST}"
+        print(hdr_cve)
+        print(sep_cve)
+        _render_services(cve_rows, show_cve=True)
+        print()
+
+    if filt and not core_rows and not cve_rows:
+        print(
+            f"{YELLOW}[~~]{RST} No services match '{filt}'. "
+            f"Try: python services.py groups"
+        )
     return 0
 
 
