@@ -87,8 +87,13 @@ class opcua(
         self._client = None
         self._original_url = None
 
-        # Parse OPC UA URL - supports opc.tcp://host:port/path or just host:port
-        self._original_url = _normalize_opcua_url(host, self.default_port)
+        # Parse OPC UA URL - supports opc.tcp://host:port/path or just host:port.
+        # A port in the target URL wins; otherwise honour -p/--port (args.port),
+        # falling back to the OPC UA default. Previously this hardcoded 4840, so
+        # `-p <port>` on a bare host (e.g. `oida opcua host -p 4841`) was ignored
+        # AND then clobbered by `args.port = port` below.
+        port_default = getattr(args, "port", None) or self.default_port
+        self._original_url = _normalize_opcua_url(host, port_default)
         parsed_host, port, path = _parse_opcua_url(self._original_url)
 
         # Update args with parsed port. self.logger does not exist yet at this
