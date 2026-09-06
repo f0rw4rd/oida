@@ -16,6 +16,7 @@ import csv
 import json
 import os
 import shutil
+import sys
 from pathlib import Path
 from typing import List, Any, Optional, Dict, Union
 from xml.etree import ElementTree as ET
@@ -546,6 +547,12 @@ def print_table(
 
         # Determine if truncation is needed
         full_width = _config.get("full_width", False)
+        # Only truncate to terminal width for an interactive terminal. When
+        # stdout is piped or redirected, get_terminal_size() returns a
+        # meaningless fallback (80/120) and truncation silently cuts off the
+        # Details column mid-value -- breaking `oida pcap ... | grep`. Emit full
+        # rows in that case (same as --full-width).
+        piped = not sys.stdout.isatty()
         term_width = shutil.get_terminal_size((120, 24)).columns
         # Subtract logger prefix width — when output() calls logger.display(),
         # the logger prepends "PROTO  host:port  [*] " before our line.
@@ -559,7 +566,7 @@ def print_table(
         def maybe_truncate(line: str) -> str:
             """Truncate line to available width if not in full-width mode."""
             nonlocal truncated
-            if full_width or avail_width <= 0 or len(line) <= avail_width:
+            if full_width or piped or avail_width <= 0 or len(line) <= avail_width:
                 return line
             truncated = True
             # Leave room for "..." suffix
