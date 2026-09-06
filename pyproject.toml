@@ -40,7 +40,7 @@ requires-python = ">=3.10"
 # from-source `uv sync`, never a `pip install` from PyPI — hence the pins here.
 # Bump deliberately: edit the version, re-run `uv lock`, then re-release.
 dependencies = [
-    "tqdm==4.67.3",
+    "tqdm==4.70.0",
     "manuf2==2.0.2",
     "pyserial==3.5",
     "termcolor==3.3.0",
