@@ -1,5 +1,5 @@
 # ============================================================================
-# Release Pipeline — oida
+# Release Pipeline — oida-ics (PyPI dist; import package + CLI stay `oida`)
 # ============================================================================
 #
 # Security hardening applied:
@@ -21,7 +21,7 @@
 #      (Settings → Environments → New environment → pypi → add reviewers).
 #      This is what blocks auto-publish: a tag push pauses the publish job
 #      for manual approval.
-#   2. Configure the PyPI trusted publisher for project `oida`:
+#   2. Configure the PyPI trusted publisher for project `oida-ics`:
 #        - Owner:       f0rw4rd
 #        - Repository:  oida
 #        - Workflow:    release.yml
@@ -170,7 +170,7 @@ jobs:
       contents: read
     environment:
       name: pypi  # Requires approval — configure reviewers in GitHub settings
-      url: https://pypi.org/project/oida/
+      url: https://pypi.org/project/oida-ics/
     steps:
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
         with:

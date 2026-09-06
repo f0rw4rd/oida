@@ -23,7 +23,7 @@ import pytest
 @pytest.fixture
 def iec104_config():
     """Create a basic IEC 104 FuzzerConfig."""
-    from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+    from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 
     config = FuzzerConfig(
         target_ip="192.168.1.100",
@@ -36,8 +36,8 @@ def iec104_config():
 @pytest.fixture
 def iec104_fuzzer(iec104_config):
     """Create an IEC104Fuzzer instance with mocked connection."""
-    from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
-    from src.oida.fuzz.core.connections.base import MockConnectionFactory
+    from oida.fuzz.protocols.iec104 import IEC104Fuzzer
+    from oida.fuzz.core.connections.base import MockConnectionFactory
 
     factory = MockConnectionFactory()
     fuzzer = IEC104Fuzzer(iec104_config, connection_factory=factory)
@@ -54,7 +54,7 @@ class TestAPCITypes:
 
     def test_apci_types_defined(self):
         """APCI type constants are defined."""
-        from src.oida.fuzz.protocols.iec104 import APCI_Types
+        from oida.fuzz.protocols.iec104 import APCI_Types
 
         assert APCI_Types.I_FORMAT == 0x00
         assert APCI_Types.S_FORMAT == 0x01
@@ -66,7 +66,7 @@ class TestUFormatFunctions:
 
     def test_u_format_functions_defined(self):
         """U-format function constants are defined."""
-        from src.oida.fuzz.protocols.iec104 import UFormat_Functions
+        from oida.fuzz.protocols.iec104 import UFormat_Functions
 
         assert UFormat_Functions.STARTDT_ACT == 0x07
         assert UFormat_Functions.STARTDT_CON == 0x0B
@@ -81,7 +81,7 @@ class TestASDUTypes:
 
     def test_monitoring_asdu_types_defined(self):
         """Monitoring ASDU types are defined."""
-        from src.oida.fuzz.protocols.iec104 import ASDU_Types
+        from oida.fuzz.protocols.iec104 import ASDU_Types
 
         # Single/double point
         assert ASDU_Types.M_SP_NA_1 == 1
@@ -92,7 +92,7 @@ class TestASDUTypes:
 
     def test_control_asdu_types_defined(self):
         """Control ASDU types are defined."""
-        from src.oida.fuzz.protocols.iec104 import ASDU_Types
+        from oida.fuzz.protocols.iec104 import ASDU_Types
 
         assert ASDU_Types.C_SC_NA_1 == 45
         assert ASDU_Types.C_DC_NA_1 == 46
@@ -100,7 +100,7 @@ class TestASDUTypes:
 
     def test_system_command_types_defined(self):
         """System command ASDU types are defined."""
-        from src.oida.fuzz.protocols.iec104 import ASDU_Types
+        from oida.fuzz.protocols.iec104 import ASDU_Types
 
         assert ASDU_Types.C_IC_NA_1 == 100  # Interrogation
         assert ASDU_Types.C_CS_NA_1 == 103  # Clock sync
@@ -112,7 +112,7 @@ class TestCauseOfTransmission:
 
     def test_cot_values_defined(self):
         """Cause of Transmission values are defined."""
-        from src.oida.fuzz.protocols.iec104 import CauseOfTransmission
+        from oida.fuzz.protocols.iec104 import CauseOfTransmission
 
         assert CauseOfTransmission.PERIODIC == 1
         assert CauseOfTransmission.SPONTANEOUS == 3
@@ -130,14 +130,14 @@ class TestIEC104StateMachine:
 
     def test_initial_state(self):
         """Initial state is DISCONNECTED."""
-        from src.oida.fuzz.protocols.iec104 import IEC104StateMachine
+        from oida.fuzz.protocols.iec104 import IEC104StateMachine
 
         sm = IEC104StateMachine()
         assert sm.state == "DISCONNECTED"
 
     def test_start_data_transfer(self):
         """start_data_transfer() transitions to DATA_TRANSFER."""
-        from src.oida.fuzz.protocols.iec104 import IEC104StateMachine
+        from oida.fuzz.protocols.iec104 import IEC104StateMachine
 
         sm = IEC104StateMachine()
         sm.start_data_transfer()
@@ -145,7 +145,7 @@ class TestIEC104StateMachine:
 
     def test_stop_data_transfer(self):
         """stop_data_transfer() transitions to CONNECTED."""
-        from src.oida.fuzz.protocols.iec104 import IEC104StateMachine
+        from oida.fuzz.protocols.iec104 import IEC104StateMachine
 
         sm = IEC104StateMachine()
         sm.start_data_transfer()
@@ -154,7 +154,7 @@ class TestIEC104StateMachine:
 
     def test_disconnect(self):
         """disconnect() transitions to DISCONNECTED."""
-        from src.oida.fuzz.protocols.iec104 import IEC104StateMachine
+        from oida.fuzz.protocols.iec104 import IEC104StateMachine
 
         sm = IEC104StateMachine()
         sm.start_data_transfer()
@@ -163,14 +163,14 @@ class TestIEC104StateMachine:
 
     def test_get_current_state_name(self):
         """get_current_state_name() returns state name."""
-        from src.oida.fuzz.protocols.iec104 import IEC104StateMachine
+        from oida.fuzz.protocols.iec104 import IEC104StateMachine
 
         sm = IEC104StateMachine()
         assert sm.get_current_state_name() == "DISCONNECTED"
 
     def test_validate_current_state(self):
         """validate_current_state() returns True."""
-        from src.oida.fuzz.protocols.iec104 import IEC104StateMachine
+        from oida.fuzz.protocols.iec104 import IEC104StateMachine
 
         sm = IEC104StateMachine()
         assert sm.validate_current_state() is True
@@ -180,7 +180,7 @@ class TestIEC104StateMachine:
         permitted by can_transition() — i.e. modelled in the rule table — not
         merely tolerated because allow_invalid_transitions is True. Regression
         for the missing IEC 104 transition table."""
-        from src.oida.fuzz.protocols.iec104 import IEC104StateMachine
+        from oida.fuzz.protocols.iec104 import IEC104StateMachine
 
         sm = IEC104StateMachine()
         inner = sm.state_machine
@@ -206,7 +206,7 @@ class TestCreateAPCIUFormat:
 
     def test_create_apci_u_format_returns_block(self):
         """create_apci_u_format() returns a Block."""
-        from src.oida.fuzz.protocols.iec104 import create_apci_u_format, UFormat_Functions
+        from oida.fuzz.protocols.iec104 import create_apci_u_format, UFormat_Functions
         from boofuzz import Block
 
         result = create_apci_u_format("test", UFormat_Functions.TESTFR_ACT)
@@ -214,14 +214,14 @@ class TestCreateAPCIUFormat:
 
     def test_create_startdt_act(self):
         """STARTDT_ACT frame is created correctly."""
-        from src.oida.fuzz.protocols.iec104 import create_apci_u_format, UFormat_Functions
+        from oida.fuzz.protocols.iec104 import create_apci_u_format, UFormat_Functions
 
         block = create_apci_u_format("startdt", UFormat_Functions.STARTDT_ACT)
         assert block is not None
 
     def test_create_testfr_act(self):
         """TESTFR_ACT frame is created correctly."""
-        from src.oida.fuzz.protocols.iec104 import create_apci_u_format, UFormat_Functions
+        from oida.fuzz.protocols.iec104 import create_apci_u_format, UFormat_Functions
 
         block = create_apci_u_format("testfr", UFormat_Functions.TESTFR_ACT)
         assert block is not None
@@ -232,7 +232,7 @@ class TestCreateAPCIIFormat:
 
     def test_create_apci_i_format_header_returns_block(self):
         """create_apci_i_format_header() returns a Block."""
-        from src.oida.fuzz.protocols.iec104 import create_apci_i_format_header
+        from oida.fuzz.protocols.iec104 import create_apci_i_format_header
         from boofuzz import Block
 
         result = create_apci_i_format_header()
@@ -244,7 +244,7 @@ class TestCreateASDUHeader:
 
     def test_create_asdu_header_returns_block(self):
         """create_asdu_header() returns a Block."""
-        from src.oida.fuzz.protocols.iec104 import create_asdu_header, ASDU_Types
+        from oida.fuzz.protocols.iec104 import create_asdu_header, ASDU_Types
         from boofuzz import Block
 
         result = create_asdu_header(ASDU_Types.M_SP_NA_1)
@@ -252,7 +252,7 @@ class TestCreateASDUHeader:
 
     def test_create_asdu_header_with_cot(self):
         """ASDU header with custom COT."""
-        from src.oida.fuzz.protocols.iec104 import (
+        from oida.fuzz.protocols.iec104 import (
             create_asdu_header,
             ASDU_Types,
             CauseOfTransmission,
@@ -267,7 +267,7 @@ class TestCreateCP56Time2a:
 
     def test_create_cp56time2a_returns_block(self):
         """create_cp56time2a() returns a Block."""
-        from src.oida.fuzz.protocols.iec104 import create_cp56time2a
+        from oida.fuzz.protocols.iec104 import create_cp56time2a
         from boofuzz import Block
 
         result = create_cp56time2a()
@@ -284,7 +284,7 @@ class TestInfoObjectHelpers:
 
     def test_create_single_point_info_object(self):
         """Single point information object is created."""
-        from src.oida.fuzz.protocols.iec104 import create_info_object_single_point
+        from oida.fuzz.protocols.iec104 import create_info_object_single_point
         from boofuzz import Block
 
         result = create_info_object_single_point(ioa=100, value=1)
@@ -292,7 +292,7 @@ class TestInfoObjectHelpers:
 
     def test_create_double_point_info_object(self):
         """Double point information object is created."""
-        from src.oida.fuzz.protocols.iec104 import create_info_object_double_point
+        from oida.fuzz.protocols.iec104 import create_info_object_double_point
         from boofuzz import Block
 
         result = create_info_object_double_point(ioa=100, value=2)
@@ -300,7 +300,7 @@ class TestInfoObjectHelpers:
 
     def test_create_measured_normalized_info_object(self):
         """Measured value normalized info object is created."""
-        from src.oida.fuzz.protocols.iec104 import create_info_object_measured_normalized
+        from oida.fuzz.protocols.iec104 import create_info_object_measured_normalized
         from boofuzz import Block
 
         result = create_info_object_measured_normalized(ioa=100, value=1000, quality=0)
@@ -308,7 +308,7 @@ class TestInfoObjectHelpers:
 
     def test_create_measured_float_info_object(self):
         """Measured value float info object is created."""
-        from src.oida.fuzz.protocols.iec104 import create_info_object_measured_float
+        from oida.fuzz.protocols.iec104 import create_info_object_measured_float
         from boofuzz import Block
 
         result = create_info_object_measured_float(ioa=100, value=3.14, quality=0)
@@ -316,7 +316,7 @@ class TestInfoObjectHelpers:
 
     def test_create_single_command_info_object(self):
         """Single command info object is created."""
-        from src.oida.fuzz.protocols.iec104 import create_info_object_single_command
+        from oida.fuzz.protocols.iec104 import create_info_object_single_command
         from boofuzz import Block
 
         result = create_info_object_single_command(ioa=100, sco=0x01)
@@ -324,7 +324,7 @@ class TestInfoObjectHelpers:
 
     def test_create_double_command_info_object(self):
         """Double command info object is created."""
-        from src.oida.fuzz.protocols.iec104 import create_info_object_double_command
+        from oida.fuzz.protocols.iec104 import create_info_object_double_command
         from boofuzz import Block
 
         result = create_info_object_double_command(ioa=100, dco=0x02)
@@ -332,7 +332,7 @@ class TestInfoObjectHelpers:
 
     def test_create_setpoint_normalized_info_object(self):
         """Setpoint normalized info object is created."""
-        from src.oida.fuzz.protocols.iec104 import create_info_object_setpoint_normalized
+        from oida.fuzz.protocols.iec104 import create_info_object_setpoint_normalized
         from boofuzz import Block
 
         result = create_info_object_setpoint_normalized(ioa=100, value=500, ql=0, se=0)
@@ -340,7 +340,7 @@ class TestInfoObjectHelpers:
 
     def test_create_interrogation_info_object(self):
         """Interrogation command info object is created."""
-        from src.oida.fuzz.protocols.iec104 import create_info_object_interrogation
+        from oida.fuzz.protocols.iec104 import create_info_object_interrogation
         from boofuzz import Block
 
         result = create_info_object_interrogation(ioa=0, qoi=20)
@@ -348,7 +348,7 @@ class TestInfoObjectHelpers:
 
     def test_create_clock_sync_info_object(self):
         """Clock sync info object is created."""
-        from src.oida.fuzz.protocols.iec104 import create_info_object_clock_sync
+        from oida.fuzz.protocols.iec104 import create_info_object_clock_sync
         from boofuzz import Block
 
         result = create_info_object_clock_sync(ioa=0)
@@ -360,7 +360,7 @@ class TestCreateCompleteASDUMessage:
 
     def test_create_complete_asdu_message(self):
         """Complete ASDU message is created."""
-        from src.oida.fuzz.protocols.iec104 import (
+        from oida.fuzz.protocols.iec104 import (
             create_complete_asdu_message,
             create_info_object_single_point,
             ASDU_Types,
@@ -382,15 +382,15 @@ class TestIEC104FuzzerCreation:
 
     def test_basic_creation(self, iec104_config):
         """IEC104Fuzzer can be created."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         fuzzer = IEC104Fuzzer(iec104_config, connection_factory=MockConnectionFactory())
         assert fuzzer is not None
 
     def test_state_machine_initialized(self, iec104_fuzzer):
         """State machine is initialized."""
-        from src.oida.fuzz.protocols.iec104 import IEC104StateMachine
+        from oida.fuzz.protocols.iec104 import IEC104StateMachine
 
         assert isinstance(iec104_fuzzer.state_machine, IEC104StateMachine)
 
@@ -405,7 +405,7 @@ class TestIEC104FuzzerOptions:
 
     def test_protocol_options_defined(self):
         """Protocol options are defined."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         assert "common_address" in IEC104Fuzzer.PROTOCOL_OPTIONS
         assert "enable_file_transfer" in IEC104Fuzzer.PROTOCOL_OPTIONS
@@ -413,19 +413,19 @@ class TestIEC104FuzzerOptions:
 
     def test_common_address_default(self):
         """Default common address is 1."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         assert IEC104Fuzzer.PROTOCOL_OPTIONS["common_address"]["default"] == 1
 
     def test_file_transfer_disabled_by_default(self):
         """File transfer is disabled by default."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         assert IEC104Fuzzer.PROTOCOL_OPTIONS["enable_file_transfer"]["default"] is False
 
     def test_attack_intensity_choices(self):
         """Attack intensity has valid choices."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         choices = IEC104Fuzzer.PROTOCOL_OPTIONS["attack_intensity"]["choices"]
         assert "low" in choices
@@ -443,21 +443,21 @@ class TestIEC104RequestDefinitions:
 
     def test_get_request_definitions_returns_list(self):
         """get_request_definitions() returns a list."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         definitions = IEC104Fuzzer.get_request_definitions()
         assert isinstance(definitions, list)
 
     def test_request_definitions_not_empty(self):
         """Request definitions are not empty."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         definitions = IEC104Fuzzer.get_request_definitions()
         assert len(definitions) > 0
 
     def test_connection_requests_defined(self):
         """Connection establishment requests are defined."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         definitions = IEC104Fuzzer.get_request_definitions()
         names = [d.name for d in definitions]
@@ -467,7 +467,7 @@ class TestIEC104RequestDefinitions:
 
     def test_monitoring_requests_defined(self):
         """Monitoring ASDU requests are defined."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         definitions = IEC104Fuzzer.get_request_definitions()
         names = [d.name for d in definitions]
@@ -477,7 +477,7 @@ class TestIEC104RequestDefinitions:
 
     def test_control_requests_defined(self):
         """Control ASDU requests are defined."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         definitions = IEC104Fuzzer.get_request_definitions()
         names = [d.name for d in definitions]
@@ -487,7 +487,7 @@ class TestIEC104RequestDefinitions:
 
     def test_attack_requests_defined(self):
         """Attack pattern requests are defined."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         definitions = IEC104Fuzzer.get_request_definitions()
         names = [d.name for d in definitions]
@@ -497,7 +497,7 @@ class TestIEC104RequestDefinitions:
 
     def test_request_categories_cover_all_types(self):
         """Request categories cover all test types."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         definitions = IEC104Fuzzer.get_request_definitions()
         categories = {d.category for d in definitions}
@@ -520,9 +520,9 @@ class TestIEC104RequestGroupGating:
 
     @staticmethod
     def _connected_names(**config_kwargs):
-        from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         config = FuzzerConfig(
             target_ip="192.168.1.100",
@@ -604,7 +604,7 @@ class TestIEC104MonitorSetup:
 
     def test_uses_iec104_monitor(self, iec104_fuzzer):
         """Uses IEC104Monitor for protocol-level health checking."""
-        from src.oida.fuzz.monitors import IEC104Monitor
+        from oida.fuzz.monitors import IEC104Monitor
 
         monitors = iec104_fuzzer.setup_custom_monitors()
         assert isinstance(monitors[0], IEC104Monitor)
@@ -620,7 +620,7 @@ class TestASDUTypeCoverage:
 
     def test_all_monitoring_types_have_helpers(self):
         """All essential monitoring types have helper functions."""
-        from src.oida.fuzz.protocols import iec104
+        from oida.fuzz.protocols import iec104
 
         # Essential monitoring types
         assert hasattr(iec104, "create_info_object_single_point")
@@ -631,7 +631,7 @@ class TestASDUTypeCoverage:
 
     def test_all_control_types_have_helpers(self):
         """All essential control types have helper functions."""
-        from src.oida.fuzz.protocols import iec104
+        from oida.fuzz.protocols import iec104
 
         # Essential control types
         assert hasattr(iec104, "create_info_object_single_command")
@@ -640,7 +640,7 @@ class TestASDUTypeCoverage:
 
     def test_system_command_helpers_exist(self):
         """System command helper functions exist."""
-        from src.oida.fuzz.protocols import iec104
+        from oida.fuzz.protocols import iec104
 
         assert hasattr(iec104, "create_info_object_interrogation")
         assert hasattr(iec104, "create_info_object_clock_sync")
@@ -661,19 +661,19 @@ class TestIEC104SecurityFeatures:
 
     def test_file_transfer_option_exists(self):
         """File transfer option exists for directory traversal testing."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         assert "enable_file_transfer" in IEC104Fuzzer.PROTOCOL_OPTIONS
 
     def test_vendor_attacks_option_exists(self):
         """Vendor-specific attacks option exists."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         assert "enable_vendor_attacks" in IEC104Fuzzer.PROTOCOL_OPTIONS
 
     def test_default_monitors_use_iec104(self):
         """Default monitors use IEC104-specific monitoring."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
 
         assert "iec104" in IEC104Fuzzer.DEFAULT_MONITORS
 
@@ -688,8 +688,8 @@ class TestIEC104CustomConfiguration:
 
     def test_custom_common_address(self, iec104_config):
         """Custom common address is used."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         iec104_config.protocol_options = {"common_address": 65535}
         fuzzer = IEC104Fuzzer(iec104_config, connection_factory=MockConnectionFactory())
@@ -698,8 +698,8 @@ class TestIEC104CustomConfiguration:
 
     def test_high_attack_intensity(self, iec104_config):
         """High attack intensity can be set."""
-        from src.oida.fuzz.protocols.iec104 import IEC104Fuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.iec104 import IEC104Fuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         iec104_config.protocol_options = {"attack_intensity": "high"}
         fuzzer = IEC104Fuzzer(iec104_config, connection_factory=MockConnectionFactory())

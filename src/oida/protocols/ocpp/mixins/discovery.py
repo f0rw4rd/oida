@@ -22,7 +22,7 @@ from ..constants import (
 _security_findings = lazy_import(
     "oida.utils.security_findings",
     "ocpp",
-    install_hint="pip install oida[ocpp]",
+    install_hint="pip install oida-ics[ocpp]",
 )
 
 

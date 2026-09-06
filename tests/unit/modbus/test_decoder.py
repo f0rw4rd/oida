@@ -663,6 +663,30 @@ class TestDecodeString:
         assert result[0]["value"] == "AB"
         assert result[0]["type"] == "str"
 
+    def test_little_byte_order_unswaps_characters(self, decoder_little):
+        """byte_order='little' must apply to strings, not just numerics.
+
+        A device that stores the low byte of each register first puts "He"
+        on the wire as 0x6548; decoding it byte-for-byte yields "eH".
+        """
+        result = decoder_little.decode([0x6548, 0x6C6C, 0x006F], "str")
+        assert result[0]["value"] == "Hello"
+
+    def test_byte_order_round_trips_with_encoder(self):
+        """Encoder and decoder must agree on byte order for strings."""
+        for byte_order in ("big", "little"):
+            encoder = ModbusEncoder(byte_order=byte_order)
+            decoder = ModbusDecoder(byte_order=byte_order)
+            regs = encoder.encode("Hello", "str", length=6)
+            assert decoder.decode(regs, "str")[0]["value"] == "Hello"
+
+    def test_little_byte_order_encodes_low_byte_first(self):
+        assert ModbusEncoder(byte_order="little").encode("Hello", "str", length=6) == [
+            0x6548,
+            0x6C6C,
+            0x006F,
+        ]
+
 
 # =============================================================================
 # Test HEX Decoding

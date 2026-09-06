@@ -27,9 +27,9 @@ _SOURCE_AMS_PORT = 40000
 
 def _build_requests(target_ams_port, source_ams_port):
     """Run _define_protocol with custom AMS ports, capturing connected requests."""
-    from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
-    from src.oida.fuzz.core.connections.base import MockConnectionFactory
-    from src.oida.fuzz.protocols.ads import ADSFuzzer
+    from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+    from oida.fuzz.core.connections.base import MockConnectionFactory
+    from oida.fuzz.protocols.ads import ADSFuzzer
 
     config = FuzzerConfig(
         target_ip="192.0.2.10",

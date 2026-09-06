@@ -55,7 +55,7 @@ def parse_targets(target_spec: str) -> List[str]:
         ['2001:db8::1']
 
         >>> parse_targets('2001:db8::/126')
-        ['2001:db8::1', '2001:db8::2']
+        ['2001:db8::1', '2001:db8::2', '2001:db8::3']
     """
     targets = []
 
@@ -175,6 +175,19 @@ def parse_ipv6_range(ipv6_range: str) -> List[str]:
         raise ValueError(f"Invalid IPv6 address in range '{ipv6_range}': {e}")
 
 
+def cidr_host_count(network) -> int:
+    """Number of addresses ``network.hosts()`` yields.
+
+    IPv4 drops the network and broadcast address; IPv6 has no broadcast
+    address so ``hosts()`` only drops the subnet-router anycast address.
+    Keeping this in one place stops :func:`count_targets` from disagreeing
+    with :func:`parse_cidr` / :func:`expand_targets_lazy`.
+    """
+    if network.num_addresses <= 2:
+        return network.num_addresses
+    return network.num_addresses - (2 if network.version == 4 else 1)
+
+
 def parse_cidr(cidr: str) -> List[str]:
     """
     Parse CIDR notation into list of IP addresses
@@ -183,7 +196,8 @@ def parse_cidr(cidr: str) -> List[str]:
         cidr: CIDR notation (e.g., '192.168.1.0/24')
 
     Returns:
-        list: List of IP address strings (excluding network and broadcast)
+        list: List of IP address strings (IPv4: excluding network and
+        broadcast; IPv6: excluding the subnet-router anycast address)
 
     Raises:
         ValueError: If CIDR notation is invalid
@@ -198,7 +212,7 @@ def parse_cidr(cidr: str) -> List[str]:
         return [str(ip) for ip in network]
 
     max_hosts = 65536
-    host_count = network.num_addresses - 2
+    host_count = cidr_host_count(network)
     if host_count > max_hosts:
         raise ValueError(
             f"CIDR {cidr} contains {host_count} hosts, exceeding the "
@@ -217,7 +231,9 @@ def parse_ip_range(ip_range: str) -> List[str]:
     Supports formats:
     - 192.168.1.1-254 (last octet range)
     - 192.168.1.1-192.168.1.254 (full IP range)
-    - 10.0.0-2.1 (third octet range)
+
+    Note: nmap-style octet ranges in a non-final position (``10.0.0-2.1``)
+    are NOT supported — the start must be a complete IPv4 address.
 
     Args:
         ip_range: IP range string
@@ -420,7 +436,7 @@ def expand_targets_lazy(target_spec: str) -> Iterator[str]:
         yield target_spec.strip("[]")
 
 
-def count_targets(target_spec: str) -> int:
+def count_targets(target_spec: str, _visited_files: set = None) -> int:
     """
     Count total number of targets without expanding them all
 
@@ -429,13 +445,14 @@ def count_targets(target_spec: str) -> int:
 
     Args:
         target_spec: Target specification string
+        _visited_files: Internal set to track visited files and prevent circular inclusion
 
     Returns:
         int: Number of targets
     """
     # Handle comma-separated (be careful with IPv6)
     if "," in target_spec and not is_ipv6_range(target_spec):
-        return sum(count_targets(t.strip()) for t in target_spec.split(","))
+        return sum(count_targets(t.strip(), _visited_files) for t in target_spec.split(","))
 
     # Protocol URLs are single targets
     if "://" in target_spec:
@@ -443,25 +460,30 @@ def count_targets(target_spec: str) -> int:
 
     # File
     if os.path.isfile(target_spec):
+        # Mirror parse_target_file(): a targets file that includes itself
+        # (directly or through a cycle) must not recurse forever.
+        if _visited_files is None:
+            _visited_files = set()
+        real_path = os.path.realpath(target_spec)
+        if real_path in _visited_files:
+            logger.warning(f"Circular file inclusion detected, skipping: {target_spec}")
+            return 0
+        _visited_files.add(real_path)
+
         # Count without full expansion
         count = 0
         with open(target_spec, "r") as f:
             for line in f:
                 line = line.strip()
                 if line and not line.startswith("#"):
-                    count += count_targets(line)
+                    count += count_targets(line, _visited_files)
         return count
 
     # CIDR (IPv4 or IPv6)
     if "/" in target_spec:
         try:
             network = ipaddress.ip_network(target_spec, strict=False)
-            if network.num_addresses <= 2:
-                return network.num_addresses
-            elif network.version == 6:
-                return network.num_addresses
-            else:
-                return network.num_addresses - 2  # Exclude network/broadcast (IPv4 only)
+            return cidr_host_count(network)
         except ValueError as e:
             logger.debug(f"Failed to get network: {e}")
             return 1

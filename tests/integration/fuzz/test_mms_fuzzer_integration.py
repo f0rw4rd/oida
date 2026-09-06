@@ -527,8 +527,11 @@ class TestMMSServerInteraction:
             # Should not raise - just logs warning and continues
             fuzzer._define_state_machine()
 
-            # State flags should remain False on connection failure
-            # (unless the fuzzer continues anyway for testing)
+        # Graceful degradation: the handshake failed, so no connection state
+        # is claimed, but the state machine is still built so fuzzing can run.
+        assert fuzzer.cotp_connection_established is False
+        assert fuzzer.association_established is False
+        assert fuzzer.state_machine is not None
 
     def test_fuzzer_handles_timeout(self, mms_fuzzer_config, mock_connection_factory):
         """Graceful handling of connection timeouts."""
@@ -546,6 +549,10 @@ class TestMMSServerInteraction:
 
             # Should not raise - just logs warning and continues
             fuzzer._define_state_machine()
+
+        assert fuzzer.cotp_connection_established is False
+        assert fuzzer.association_established is False
+        assert fuzzer.state_machine is not None
 
 
 # =============================================================================

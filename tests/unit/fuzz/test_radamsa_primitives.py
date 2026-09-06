@@ -30,17 +30,17 @@ def mock_pyradamsa():
 
     # Store original if it exists
     original_pyradamsa = sys.modules.get("pyradamsa")
-    sys.modules.get("src.oida.fuzz.core.mutation.radamsa")
-    sys.modules.get("src.oida.fuzz.primitives.radamsa_primitives")
+    sys.modules.get("oida.fuzz.core.mutation.radamsa")
+    sys.modules.get("oida.fuzz.primitives.radamsa_primitives")
 
     # Inject mock
     sys.modules["pyradamsa"] = mock_module
 
     # Clear any cached imports
-    if "src.oida.fuzz.core.mutation.radamsa" in sys.modules:
-        del sys.modules["src.oida.fuzz.core.mutation.radamsa"]
-    if "src.oida.fuzz.primitives.radamsa_primitives" in sys.modules:
-        del sys.modules["src.oida.fuzz.primitives.radamsa_primitives"]
+    if "oida.fuzz.core.mutation.radamsa" in sys.modules:
+        del sys.modules["oida.fuzz.core.mutation.radamsa"]
+    if "oida.fuzz.primitives.radamsa_primitives" in sys.modules:
+        del sys.modules["oida.fuzz.primitives.radamsa_primitives"]
 
     yield mock_module, mock_radamsa_instance
 
@@ -51,10 +51,10 @@ def mock_pyradamsa():
         del sys.modules["pyradamsa"]
 
     # Clear cached imports for cleanup
-    if "src.oida.fuzz.core.mutation.radamsa" in sys.modules:
-        del sys.modules["src.oida.fuzz.core.mutation.radamsa"]
-    if "src.oida.fuzz.primitives.radamsa_primitives" in sys.modules:
-        del sys.modules["src.oida.fuzz.primitives.radamsa_primitives"]
+    if "oida.fuzz.core.mutation.radamsa" in sys.modules:
+        del sys.modules["oida.fuzz.core.mutation.radamsa"]
+    if "oida.fuzz.primitives.radamsa_primitives" in sys.modules:
+        del sys.modules["oida.fuzz.primitives.radamsa_primitives"]
 
 
 # =============================================================================
@@ -67,7 +67,7 @@ class TestRadamsaStringCreation:
 
     def test_creation_with_string(self, mock_pyradamsa):
         """RadamsaString accepts string default value."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
 
         field = RadamsaString("test_field", "test_value")
         assert field is not None
@@ -75,21 +75,21 @@ class TestRadamsaStringCreation:
 
     def test_creation_with_bytes(self, mock_pyradamsa):
         """RadamsaString accepts bytes default value."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
 
         field = RadamsaString("test_field", b"test_value")
         assert field is not None
 
     def test_custom_mutation_count(self, mock_pyradamsa):
         """Custom mutation count is respected."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
 
         field = RadamsaString("test_field", "test", mutation_count=500)
         assert field.mutation_count == 500
 
     def test_custom_encoding(self, mock_pyradamsa):
         """Custom encoding is stored."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
 
         field = RadamsaString("test_field", "test", encoding="latin-1")
         assert field.encoding == "latin-1"
@@ -100,7 +100,7 @@ class TestRadamsaStringMutations:
 
     def test_num_mutations_matches_count(self, mock_pyradamsa):
         """num_mutations returns configured mutation count."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
 
         field = RadamsaString("test_field", "test", mutation_count=50)
         assert field.num_mutations(b"test") == 50
@@ -110,7 +110,7 @@ class TestRadamsaStringMutations:
         mock_module, mock_instance = mock_pyradamsa
         mock_instance.fuzz.return_value = b"mutated"
 
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
 
         field = RadamsaString("test_field", "test", mutation_count=10)
         mutations = list(field.mutations(b"test"))
@@ -118,7 +118,7 @@ class TestRadamsaStringMutations:
 
     def test_mutations_are_deterministic(self, mock_pyradamsa):
         """Mutations with same seed produce consistent results."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
 
         # Create field and generate mutations
         field = RadamsaString("test_field", "test", mutation_count=5)
@@ -135,7 +135,7 @@ class TestRadamsaStringEncode:
 
     def test_encode_passes_through(self, mock_pyradamsa):
         """encode() returns the value unchanged."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
 
         field = RadamsaString("test_field", "test")
         result = field.encode(b"data", None)
@@ -152,7 +152,7 @@ class TestRadamsaBytesCreation:
 
     def test_creation_with_bytes(self, mock_pyradamsa):
         """RadamsaBytes accepts bytes default value."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
 
         field = RadamsaBytes("test_field", b"\x00\x01\x02\x03")
         assert field is not None
@@ -160,14 +160,14 @@ class TestRadamsaBytesCreation:
 
     def test_custom_mutation_count(self, mock_pyradamsa):
         """Custom mutation count is respected."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
 
         field = RadamsaBytes("test_field", b"test", mutation_count=200)
         assert field.mutation_count == 200
 
     def test_max_len_attribute(self, mock_pyradamsa):
         """max_len attribute is stored."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
 
         field = RadamsaBytes("test_field", b"test", max_len=50)
         assert field.max_len == 50
@@ -178,7 +178,7 @@ class TestRadamsaBytesMutations:
 
     def test_num_mutations_matches_count(self, mock_pyradamsa):
         """num_mutations returns configured mutation count."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
 
         field = RadamsaBytes("test_field", b"test", mutation_count=75)
         assert field.num_mutations(b"test") == 75
@@ -188,7 +188,7 @@ class TestRadamsaBytesMutations:
         mock_module, mock_instance = mock_pyradamsa
         mock_instance.fuzz.return_value = b"mutated"
 
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
 
         field = RadamsaBytes("test_field", b"test", mutation_count=15)
         mutations = list(field.mutations(b"test"))
@@ -199,7 +199,7 @@ class TestRadamsaBytesMutations:
         mock_module, mock_instance = mock_pyradamsa
         mock_instance.fuzz.return_value = b"A" * 100  # 100 bytes
 
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
 
         field = RadamsaBytes("test_field", b"test", mutation_count=1, max_len=10)
         mutations = list(field.mutations(b"test"))
@@ -209,7 +209,7 @@ class TestRadamsaBytesMutations:
 
     def test_mutations_not_truncated_when_under_max_len(self, mock_pyradamsa):
         """Mutations are not truncated if under max_len."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
 
         field = RadamsaBytes("test_field", b"test", mutation_count=10, max_len=1000)
         mutations = list(field.mutations(b"test"))
@@ -224,7 +224,7 @@ class TestRadamsaBytesEncode:
 
     def test_encode_passes_through(self, mock_pyradamsa):
         """encode() returns the value unchanged."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
 
         field = RadamsaBytes("test_field", b"test")
         result = field.encode(b"\x00\x01\x02", None)
@@ -241,7 +241,7 @@ class TestRadamsaBlockCreation:
 
     def test_creation_with_bytes(self, mock_pyradamsa):
         """RadamsaBlock accepts bytes default value."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
 
         field = RadamsaBlock("test_block", b"block data")
         assert field is not None
@@ -249,7 +249,7 @@ class TestRadamsaBlockCreation:
 
     def test_custom_mutation_count(self, mock_pyradamsa):
         """Custom mutation count is respected."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
 
         field = RadamsaBlock("test_block", b"data", mutation_count=1000)
         assert field.mutation_count == 1000
@@ -260,7 +260,7 @@ class TestRadamsaBlockMutations:
 
     def test_num_mutations_matches_count(self, mock_pyradamsa):
         """num_mutations returns configured mutation count."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
 
         field = RadamsaBlock("test_block", b"test", mutation_count=300)
         assert field.num_mutations(b"test") == 300
@@ -270,7 +270,7 @@ class TestRadamsaBlockMutations:
         mock_module, mock_instance = mock_pyradamsa
         mock_instance.fuzz.return_value = b"mutated_block"
 
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
 
         field = RadamsaBlock("test_block", b"test", mutation_count=20)
         mutations = list(field.mutations(b"test"))
@@ -282,7 +282,7 @@ class TestRadamsaBlockEncode:
 
     def test_encode_passes_through(self, mock_pyradamsa):
         """encode() returns the value unchanged."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
 
         field = RadamsaBlock("test_block", b"test")
         result = field.encode(b"block_data", None)
@@ -302,7 +302,7 @@ class TestProtocolIntegration:
         mock_module, mock_instance = mock_pyradamsa
         mock_instance.fuzz.return_value = b"GET /mutated HTTP/1.1\r\n\r\n"
 
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
 
         http_request = b"GET / HTTP/1.1\r\nHost: test.com\r\n\r\n"
         field = RadamsaBlock("http_request", http_request, mutation_count=10)
@@ -315,7 +315,7 @@ class TestProtocolIntegration:
         mock_module, mock_instance = mock_pyradamsa
         mock_instance.fuzz.return_value = b"\x01\x03\xff\xff\x00\x01"
 
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
 
         modbus_pdu = b"\x01\x03\x00\x00\x00\x01"
         field = RadamsaBytes("modbus_pdu", modbus_pdu, mutation_count=100)
@@ -336,7 +336,7 @@ class TestProtocolIntegration:
 
         mock_instance.fuzz.side_effect = varied_fuzz
 
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
 
         field = RadamsaString("username", "admin", mutation_count=5)
         mutations = list(field.mutations(b"admin"))
@@ -359,7 +359,7 @@ class TestEdgeCases:
         mock_module, mock_instance = mock_pyradamsa
         mock_instance.fuzz.return_value = b"generated"
 
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
 
         field = RadamsaString("empty_field", "", mutation_count=5)
         mutations = list(field.mutations(b""))
@@ -368,7 +368,7 @@ class TestEdgeCases:
 
     def test_zero_mutations(self, mock_pyradamsa):
         """Zero mutation count produces no mutations."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
 
         field = RadamsaString("test", "value", mutation_count=0)
         mutations = list(field.mutations(b"value"))
@@ -377,7 +377,7 @@ class TestEdgeCases:
 
     def test_binary_data_all_bytes(self, mock_pyradamsa):
         """All byte values are handled in mutations."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
 
         all_bytes = bytes(range(256))
         field = RadamsaBytes("binary", all_bytes, mutation_count=5)
@@ -393,7 +393,7 @@ class TestEdgeCases:
         mock_module, mock_instance = mock_pyradamsa
         mock_instance.fuzz.return_value = "mutated_Ã©".encode("utf-8")
 
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
 
         field = RadamsaString("unicode_field", "CafÃ©", encoding="utf-8", mutation_count=1)
         assert field is not None
@@ -411,7 +411,7 @@ class TestFuzzableInterface:
 
     def test_radamsa_string_is_fuzzable(self, mock_pyradamsa):
         """RadamsaString inherits from Fuzzable."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaString
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaString
         from boofuzz.fuzzable import Fuzzable
 
         field = RadamsaString("test", "value")
@@ -419,7 +419,7 @@ class TestFuzzableInterface:
 
     def test_radamsa_bytes_is_fuzzable(self, mock_pyradamsa):
         """RadamsaBytes inherits from Fuzzable."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
         from boofuzz.fuzzable import Fuzzable
 
         field = RadamsaBytes("test", b"value")
@@ -427,7 +427,7 @@ class TestFuzzableInterface:
 
     def test_radamsa_block_is_fuzzable(self, mock_pyradamsa):
         """RadamsaBlock inherits from Fuzzable."""
-        from src.oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBlock
         from boofuzz.fuzzable import Fuzzable
 
         field = RadamsaBlock("test", b"value")

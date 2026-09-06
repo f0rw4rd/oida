@@ -31,7 +31,7 @@ from ...utils.ics_logger import get_module_logger
 logger = get_module_logger(__name__)
 
 # Lazy import for pymodbus - only loads when actually used
-_pymodbus = lazy_import("pymodbus", "Modbus", "pip install oida[modbus]")
+_pymodbus = lazy_import("pymodbus", "Modbus", "pip install oida-ics[modbus]")
 
 
 def _get_modbus_mixin():
@@ -315,9 +315,14 @@ class ModbusDecoder:
         self, registers: List[int], max_length: Optional[int] = None
     ) -> List[Dict[str, Any]]:
         """Decode registers as ASCII string"""
+        # Honour the configured byte order: a device that stores the low
+        # byte first puts "He" in the wire register as 0x6548, so the
+        # register has to be un-swapped before the characters are read.
+        source = _byte_swap_registers(registers) if self._swap_bytes else registers
+
         # Convert registers to bytes
         byte_data = b""
-        for reg in registers:
+        for reg in source:
             byte_data += reg.to_bytes(2, byteorder="big")
 
         # Decode as string
@@ -576,6 +581,11 @@ class ModbusEncoder:
             high = ord(value[i])
             low = ord(value[i + 1]) if i + 1 < len(value) else 0
             registers.append((high << 8) | low)
+
+        # Mirror ModbusDecoder._decode_string: a little byte order means the
+        # device expects the low byte of each register first.
+        if self._swap_bytes:
+            registers = _byte_swap_registers(registers)
 
         return registers
 
@@ -983,10 +993,13 @@ def list_register_maps() -> List[Dict[str, str]]:
     """
     maps = []
 
+    # Same roots load_register_map() resolves against, so --list-maps can
+    # never omit a map that --register-map would happily load.
+    from ...utils.platform_compat import get_config_search_paths
+
     search_paths = [
         Path(__file__).parent / "register_maps",
-        Path.home() / ".oida" / "modbus" / "register_maps",
-    ]
+    ] + get_config_search_paths("modbus/register_maps")
 
     for search_path in search_paths:
         if not search_path.exists():

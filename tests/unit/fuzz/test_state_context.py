@@ -26,7 +26,7 @@ class TestResponseDataCreation:
 
     def test_default_creation(self):
         """ResponseData can be created with defaults."""
-        from src.oida.fuzz.core.session.state_context import ResponseData
+        from oida.fuzz.core.session.state_context import ResponseData
 
         rd = ResponseData()
         assert rd.raw == b""
@@ -36,7 +36,7 @@ class TestResponseDataCreation:
 
     def test_creation_with_values(self):
         """ResponseData can be created with specific values."""
-        from src.oida.fuzz.core.session.state_context import ResponseData
+        from oida.fuzz.core.session.state_context import ResponseData
 
         rd = ResponseData(
             raw=b"\x01\x02\x03",
@@ -51,7 +51,7 @@ class TestResponseDataCreation:
 
     def test_timestamp_auto_set(self):
         """ResponseData timestamp is set automatically."""
-        from src.oida.fuzz.core.session.state_context import ResponseData
+        from oida.fuzz.core.session.state_context import ResponseData
 
         before = datetime.now()
         rd = ResponseData()
@@ -64,14 +64,14 @@ class TestResponseDataGet:
 
     def test_get_existing_key(self):
         """Get existing parsed value."""
-        from src.oida.fuzz.core.session.state_context import ResponseData
+        from oida.fuzz.core.session.state_context import ResponseData
 
         rd = ResponseData(parsed={"channel_id": 123})
         assert rd.get("channel_id") == 123
 
     def test_get_missing_key_returns_default(self):
         """Get missing key returns default."""
-        from src.oida.fuzz.core.session.state_context import ResponseData
+        from oida.fuzz.core.session.state_context import ResponseData
 
         rd = ResponseData(parsed={"channel_id": 123})
         assert rd.get("missing") is None
@@ -83,14 +83,14 @@ class TestResponseDataHasError:
 
     def test_no_error_when_code_none(self):
         """No error when response_code is None."""
-        from src.oida.fuzz.core.session.state_context import ResponseData
+        from oida.fuzz.core.session.state_context import ResponseData
 
         rd = ResponseData(response_code=None)
         assert rd.has_error() is False
 
     def test_no_error_for_success_codes(self):
         """No error for success response codes."""
-        from src.oida.fuzz.core.session.state_context import ResponseData
+        from oida.fuzz.core.session.state_context import ResponseData
 
         for code in [0, 200, 399]:
             rd = ResponseData(response_code=code)
@@ -98,7 +98,7 @@ class TestResponseDataHasError:
 
     def test_error_for_400_and_above(self):
         """Error for response codes >= 400."""
-        from src.oida.fuzz.core.session.state_context import ResponseData
+        from oida.fuzz.core.session.state_context import ResponseData
 
         for code in [400, 404, 500]:
             rd = ResponseData(response_code=code)
@@ -106,7 +106,7 @@ class TestResponseDataHasError:
 
     def test_error_for_negative_codes(self):
         """Error for negative response codes."""
-        from src.oida.fuzz.core.session.state_context import ResponseData
+        from oida.fuzz.core.session.state_context import ResponseData
 
         rd = ResponseData(response_code=-1)
         assert rd.has_error() is True
@@ -117,7 +117,7 @@ class TestResponseDataRepr:
 
     def test_repr_without_code(self):
         """Repr without response code."""
-        from src.oida.fuzz.core.session.state_context import ResponseData
+        from oida.fuzz.core.session.state_context import ResponseData
 
         rd = ResponseData(raw=b"\x01\x02", parsed={"key": "val"})
         r = repr(rd)
@@ -127,7 +127,7 @@ class TestResponseDataRepr:
 
     def test_repr_with_code(self):
         """Repr with response code."""
-        from src.oida.fuzz.core.session.state_context import ResponseData
+        from oida.fuzz.core.session.state_context import ResponseData
 
         rd = ResponseData(raw=b"abc", response_code=200)
         r = repr(rd)
@@ -144,7 +144,7 @@ class TestStateContextDataAccess:
 
     def test_set_and_get(self):
         """Set and get a value."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         ctx.set("key1", "value1")
@@ -152,7 +152,7 @@ class TestStateContextDataAccess:
 
     def test_get_missing_key_returns_default(self):
         """Get missing key returns default value."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         assert ctx.get("missing") is None
@@ -160,7 +160,7 @@ class TestStateContextDataAccess:
 
     def test_has_existing_key(self):
         """Has returns True for existing key."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         ctx.set("key1", "value1")
@@ -168,14 +168,14 @@ class TestStateContextDataAccess:
 
     def test_has_missing_key(self):
         """Has returns False for missing key."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         assert ctx.has("missing") is False
 
     def test_remove_existing_key(self):
         """Remove existing key."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         ctx.set("key1", "value1")
@@ -184,14 +184,14 @@ class TestStateContextDataAccess:
 
     def test_remove_missing_key_no_error(self):
         """Removing missing key does not raise error."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         ctx.remove("missing")  # Should not raise
 
     def test_clear_all(self):
         """Clear all data."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         ctx.set("a", 1)
@@ -201,7 +201,7 @@ class TestStateContextDataAccess:
 
     def test_clear_with_preserve(self):
         """Clear with preserved keys."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         ctx.set("a", 1)
@@ -214,7 +214,7 @@ class TestStateContextDataAccess:
 
     def test_keys(self):
         """Keys returns list of keys in this context."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         ctx.set("x", 1)
@@ -223,7 +223,7 @@ class TestStateContextDataAccess:
 
     def test_overwrite_value(self):
         """Setting same key overwrites previous value."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         ctx.set("key", "old")
@@ -232,7 +232,7 @@ class TestStateContextDataAccess:
 
     def test_set_various_types(self):
         """Can store various data types."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         ctx.set("int", 42)
@@ -257,7 +257,7 @@ class TestStateContextResponseStorage:
 
     def test_set_and_get_response(self):
         """Store and retrieve response."""
-        from src.oida.fuzz.core.session.state_context import StateContext, ResponseData
+        from oida.fuzz.core.session.state_context import StateContext, ResponseData
 
         ctx = StateContext()
         rd = ResponseData(raw=b"\x01", parsed={"id": 123})
@@ -268,14 +268,14 @@ class TestStateContextResponseStorage:
 
     def test_get_missing_response_returns_none(self):
         """Get missing response returns None."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         assert ctx.get_response("MISSING") is None
 
     def test_response_keys(self):
         """Response keys returns stored operation names."""
-        from src.oida.fuzz.core.session.state_context import StateContext, ResponseData
+        from oida.fuzz.core.session.state_context import StateContext, ResponseData
 
         ctx = StateContext()
         ctx.set_response("HELLO", ResponseData())
@@ -284,7 +284,7 @@ class TestStateContextResponseStorage:
 
     def test_get_last_response(self):
         """Get last response returns most recent by timestamp."""
-        from src.oida.fuzz.core.session.state_context import StateContext, ResponseData
+        from oida.fuzz.core.session.state_context import StateContext, ResponseData
 
         ctx = StateContext()
         earlier = ResponseData(raw=b"first")
@@ -297,7 +297,7 @@ class TestStateContextResponseStorage:
 
     def test_get_last_response_empty_returns_none(self):
         """Get last response when empty returns None."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         assert ctx.get_last_response() is None
@@ -313,7 +313,7 @@ class TestStateContextHierarchy:
 
     def test_create_child(self):
         """Create child context."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         parent = StateContext()
         child = parent.create_child()
@@ -321,7 +321,7 @@ class TestStateContextHierarchy:
 
     def test_child_inherits_parent_values(self):
         """Child inherits values from parent."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         parent = StateContext()
         parent.set("channel_id", 123)
@@ -330,7 +330,7 @@ class TestStateContextHierarchy:
 
     def test_child_can_override_parent(self):
         """Child can override parent values."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         parent = StateContext()
         parent.set("mode", "parent")
@@ -341,7 +341,7 @@ class TestStateContextHierarchy:
 
     def test_child_has_checks_parent(self):
         """Has checks parent context."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         parent = StateContext()
         parent.set("parent_key", True)
@@ -350,7 +350,7 @@ class TestStateContextHierarchy:
 
     def test_child_response_inherits_from_parent(self):
         """Child can access parent responses."""
-        from src.oida.fuzz.core.session.state_context import StateContext, ResponseData
+        from oida.fuzz.core.session.state_context import StateContext, ResponseData
 
         parent = StateContext()
         parent.set_response("HELLO", ResponseData(raw=b"hello"))
@@ -360,14 +360,14 @@ class TestStateContextHierarchy:
 
     def test_get_depth_root(self):
         """Root context depth is 0."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         assert ctx.get_depth() == 0
 
     def test_get_depth_nested(self):
         """Nested contexts have correct depth."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         root = StateContext()
         child1 = root.create_child()
@@ -377,7 +377,7 @@ class TestStateContextHierarchy:
 
     def test_all_keys_includes_parent(self):
         """all_keys includes parent keys."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         parent = StateContext()
         parent.set("parent_key", 1)
@@ -389,7 +389,7 @@ class TestStateContextHierarchy:
 
     def test_remove_in_child_does_not_affect_parent(self):
         """Remove in child does not affect parent."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         parent = StateContext()
         parent.set("key", "value")
@@ -402,7 +402,7 @@ class TestStateContextHierarchy:
 
     def test_get_last_response_falls_back_to_parent(self):
         """get_last_response falls back to parent when child has no responses."""
-        from src.oida.fuzz.core.session.state_context import StateContext, ResponseData
+        from oida.fuzz.core.session.state_context import StateContext, ResponseData
 
         parent = StateContext()
         parent.set_response("X", ResponseData(raw=b"from_parent"))
@@ -421,7 +421,7 @@ class TestStateContextCallbacks:
 
     def test_set_callback_fires(self):
         """Callback fires on set."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         calls = []
@@ -432,7 +432,7 @@ class TestStateContextCallbacks:
 
     def test_response_callback_fires(self):
         """Callback fires on set_response."""
-        from src.oida.fuzz.core.session.state_context import StateContext, ResponseData
+        from oida.fuzz.core.session.state_context import StateContext, ResponseData
 
         ctx = StateContext()
         calls = []
@@ -443,7 +443,7 @@ class TestStateContextCallbacks:
 
     def test_callback_error_does_not_break_set(self):
         """Callback error does not prevent set from working."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
 
@@ -456,7 +456,7 @@ class TestStateContextCallbacks:
 
     def test_multiple_callbacks(self):
         """Multiple callbacks are all invoked."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         calls1 = []
@@ -478,7 +478,7 @@ class TestStateContextSequenceManager:
 
     def test_get_creates_default_manager(self):
         """get_sequence_manager creates a default manager if not exists."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         mgr = ctx.get_sequence_manager()
@@ -487,7 +487,7 @@ class TestStateContextSequenceManager:
 
     def test_get_named_manager(self):
         """Get named sequence manager."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         mgr = ctx.get_sequence_manager("iec104")
@@ -495,8 +495,8 @@ class TestStateContextSequenceManager:
 
     def test_register_manager(self):
         """Register a pre-configured sequence manager."""
-        from src.oida.fuzz.core.session.state_context import StateContext
-        from src.oida.fuzz.core.session.sequence import SequenceManager
+        from oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.sequence import SequenceManager
 
         ctx = StateContext()
         custom_mgr = SequenceManager("custom")
@@ -505,7 +505,7 @@ class TestStateContextSequenceManager:
 
     def test_has_sequence_manager(self):
         """has_sequence_manager checks existence."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         assert ctx.has_sequence_manager("default") is False
@@ -523,7 +523,7 @@ class TestStateContextCryptoState:
 
     def test_crypto_creates_default(self):
         """crypto property creates CryptoStateManager on first access."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         crypto = ctx.crypto
@@ -532,7 +532,7 @@ class TestStateContextCryptoState:
 
     def test_crypto_is_cached(self):
         """crypto returns same instance on repeated access."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         c1 = ctx.crypto
@@ -541,8 +541,8 @@ class TestStateContextCryptoState:
 
     def test_set_crypto_state(self):
         """set_crypto_state replaces crypto manager."""
-        from src.oida.fuzz.core.session.state_context import StateContext
-        from src.oida.fuzz.core.session.crypto_state import CryptoStateManager
+        from oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.crypto_state import CryptoStateManager
 
         ctx = StateContext()
         custom = CryptoStateManager("custom")
@@ -551,14 +551,14 @@ class TestStateContextCryptoState:
 
     def test_has_crypto_state_before_access(self):
         """has_crypto_state returns False before first access."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         assert ctx.has_crypto_state() is False
 
     def test_has_crypto_state_after_access(self):
         """has_crypto_state returns True after access."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         _ = ctx.crypto
@@ -575,7 +575,7 @@ class TestStateContextSerialization:
 
     def test_to_dict_basic(self):
         """to_dict returns expected structure."""
-        from src.oida.fuzz.core.session.state_context import StateContext, ResponseData
+        from oida.fuzz.core.session.state_context import StateContext, ResponseData
 
         ctx = StateContext()
         ctx.set("key1", "value1")
@@ -595,7 +595,7 @@ class TestStateContextSerialization:
 
     def test_to_dict_truncates_long_values(self):
         """to_dict truncates long values."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         ctx.set("long_key", "x" * 200)
@@ -604,7 +604,7 @@ class TestStateContextSerialization:
 
     def test_repr(self):
         """repr shows useful info."""
-        from src.oida.fuzz.core.session.state_context import StateContext
+        from oida.fuzz.core.session.state_context import StateContext
 
         ctx = StateContext()
         ctx.set("a", 1)

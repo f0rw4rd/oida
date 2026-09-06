@@ -286,7 +286,7 @@ class SCMixin:
 
     async def _probe_mutual_auth(self, uri, use_hub):
         """A device/hub that accepts a missing or rogue client cert is broken."""
-        from ...utils.common_types import Category
+        from ....utils.common_types import Category
         from .. import sc_tls
 
         timeout = getattr(self.args, "timeout", 6.0) or 6.0
@@ -331,7 +331,7 @@ class SCMixin:
         """A device that completes a TLS 1.2 handshake violates the SC mandate."""
         import ssl as _ssl
 
-        from ...utils.common_types import Category
+        from ....utils.common_types import Category
         from .. import sc_tls
 
         timeout = getattr(self.args, "timeout", 6.0) or 6.0

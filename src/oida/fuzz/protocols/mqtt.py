@@ -67,28 +67,6 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class MQTTPacketTypes:
-    """MQTT Control Packet Types (4-bit values)"""
-
-    CONNECT = 0x10  # Client -> Server: Connection request
-    CONNACK = 0x20  # Server -> Client: Connection acknowledgment
-    PUBLISH = 0x30  # Both: Publish message (QoS 0)
-    PUBLISH_QOS1 = 0x32  # Both: Publish message (QoS 1, DUP=0)
-    PUBLISH_QOS2 = 0x34  # Both: Publish message (QoS 2, DUP=0)
-    PUBACK = 0x40  # Both: Publish acknowledgment (QoS 1)
-    PUBREC = 0x50  # Both: Publish received (QoS 2, step 1)
-    PUBREL = 0x62  # Both: Publish release (QoS 2, step 2)
-    PUBCOMP = 0x70  # Both: Publish complete (QoS 2, step 3)
-    SUBSCRIBE = 0x82  # Client -> Server: Subscribe request
-    SUBACK = 0x90  # Server -> Client: Subscribe acknowledgment
-    UNSUBSCRIBE = 0xA2  # Client -> Server: Unsubscribe request
-    UNSUBACK = 0xB0  # Server -> Client: Unsubscribe acknowledgment
-    PINGREQ = 0xC0  # Client -> Server: Ping request
-    PINGRESP = 0xD0  # Server -> Client: Ping response
-    DISCONNECT = 0xE0  # Both: Disconnect notification
-    AUTH = 0xF0  # MQTT 5.0: Authentication exchange
-
-
 class MQTTFuzzer(StatefulFuzzer):
     """MQTT Protocol Fuzzer for IoT/IIoT messaging protocol testing.
 

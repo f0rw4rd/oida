@@ -116,6 +116,6 @@ class goose(SerialConnection):
         from ...utils.lazy_import import lazy_import
 
         _pyiec61850_goose = lazy_import(
-            "pyiec61850.goose", "GOOSE", install_hint="pip install oida[goose]"
+            "pyiec61850.goose", "GOOSE", install_hint="pip install oida-ics[goose]"
         )
         return _pyiec61850_goose.is_available

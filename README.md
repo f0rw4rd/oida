@@ -23,35 +23,68 @@ Every protocol uses the same `oida <protocol> <target>` syntax. It is the
 NetExec model for industrial control systems: if you know `nxc smb`, you already
 know `oida modbus`.
 
+## What it does
+
+- **Scan** — protocol scanners for identification, enumeration, and
+  security assessment, all behind one consistent CLI.
+- **Fuzz** — boofuzz-backed protocol fuzzers with stateful sequencing,
+  crash detection, and session replay.
+- **Listen** — a passive PCAP pipeline whose protocol listeners extract
+  devices, credentials, and interactions off the wire, no packets sent.
+
+Read-only by default. Anything that writes or changes device state needs an
+explicit `--confirm`.
+
 ## Install
 
 ```bash
-pip install 'oida[all]'
+pip install 'oida-ics[all]'
 ```
 
 Protocol stacks ship as extras, so you can install only what you need, like
-`pip install 'oida[modbus,opcua]'`. A bare `pip install oida` has no protocol
-stacks at all. The full install guide is at
+`pip install 'oida-ics[modbus,opcua]'`. A bare `pip install oida-ics` has no
+protocol stacks at all. Standalone single-file binaries (no Python required)
+and the full install guide are at
 [getoida.dev/getting-started/installation](https://getoida.dev/getting-started/installation/).
 
-## Usage
+## Quickstart
 
 ```bash
-oida modbus 10.0.0.5                  # scan a host
-oida modbus 10.0.0.0/24 -t 20         # scan a subnet
-oida opcua opc.tcp://10.0.0.5:4840    # OPC UA
-oida discovery eth0                   # find ICS devices on the wire
+oida modbus 10.0.0.5                  # scan a single host
+oida modbus 10.0.0.0/24 -t 20        # scan a subnet, 20 threads
+oida opcua opc.tcp://10.0.0.5:4840   # OPC UA endpoint
+oida s7 10.0.0.5                     # Siemens S7 (snap7)
+oida discovery eth0                  # find ICS devices on the wire
+oida pcap capture.pcap               # passively analyze a capture
 ```
 
-Defaults are read-only. Writes and state changes need an explicit `--confirm`.
-Run `oida <protocol> -h` for a protocol's full flag set.
+Every scan can export structured results:
+
+```bash
+oida modbus 10.0.0.5 -o results --format json   # also: csv, xml, or all
+```
+
+Run `oida` with no arguments for the live protocol list, or `oida <protocol> -h`
+for a protocol's full flag set.
 
 ## Protocols
 
-OIDA ships scanners for Modbus, OPC UA, Siemens S7, DNP3, IEC 60870-5-104,
-BACnet, EtherNet/IP, PROFINET, HL7, DICOM, MQTT, SNMP, and many more. The full
-list and the per-protocol guides live at
+| Domain | Protocols |
+|---|---|
+| **OT / industrial** | Modbus, OPC UA, Siemens S7, DNP3, IEC 60870-5-104, BACnet, EtherNet/IP, PROFINET, EtherCAT, MMS, TASE.2, GOOSE, ADS, HART, KNX, CAN |
+| **IoT / application** | MQTT, CoAP, OCPP, SNMP |
+| **Healthcare** | HL7, FHIR, DICOM, ASTM |
+| **Discovery / passive** | `discovery` (active sweep), `pcap` (passive listener pipeline) |
+
+The full list and the per-protocol guides live at
 [getoida.dev/protocols](https://getoida.dev/protocols/modbus/).
+
+## Safety
+
+- Read-only by default; writes and state changes require `--confirm`.
+- The tool can crash devices, trigger actuator writes, and extract
+  credentials. These are features, not bugs.
+- Run it only against systems you own or are authorized to test.
 
 ## Links
 

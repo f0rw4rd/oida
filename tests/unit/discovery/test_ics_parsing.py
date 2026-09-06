@@ -16,6 +16,8 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
+from .conftest import fake_clock, recv_queue
+
 from oida.protocols.discovery.ics import (
     ADSScanner,
     BACnetScanner,
@@ -437,17 +439,13 @@ class TestKNXScanLoop:
 
         mock_sock = MagicMock()
         mock_sock.getsockname.return_value = ("192.168.1.100", 5000)
-        mock_sock.recvfrom.side_effect = [
-            (response, ("192.168.1.200", 3671)),
-            TimeoutError(),
-            TimeoutError(),
-        ]
+        mock_sock.recvfrom.side_effect = recv_queue((response, ("192.168.1.200", 3671)))
 
         with (
             patch("oida.protocols.discovery.ics.create_udp_socket", return_value=mock_sock),
             patch("oida.protocols.discovery.ics.get_interface_ip", return_value="192.168.1.100"),
             patch("oida.protocols.discovery.ics.sendto") as mock_sendto,
-            patch("oida.protocols.discovery.ics.time.time", side_effect=[0, 0, 0.5, 2.0]),
+            patch("oida.protocols.discovery.ics.time.time", side_effect=fake_clock()),
         ):
             devices = scanner.scan()
 
@@ -467,10 +465,7 @@ class TestBACnetScanLoop:
         response = build_bacnet_i_am(device_instance=7777, vendor_id=15)
 
         mock_sock = MagicMock()
-        mock_sock.recvfrom.side_effect = [
-            (response, ("192.168.1.210", 47808)),
-            TimeoutError(),
-        ]
+        mock_sock.recvfrom.side_effect = recv_queue((response, ("192.168.1.210", 47808)))
 
         with (
             patch("oida.protocols.discovery.ics.create_udp_socket", return_value=mock_sock),
@@ -479,7 +474,7 @@ class TestBACnetScanLoop:
                 return_value=["192.168.1.255"],
             ),
             patch("oida.protocols.discovery.ics.sendto") as mock_sendto,
-            patch("oida.protocols.discovery.ics.time.time", side_effect=[0, 0, 0.5, 2.0]),
+            patch("oida.protocols.discovery.ics.time.time", side_effect=fake_clock()),
         ):
             devices = scanner.scan()
 
@@ -494,11 +489,10 @@ class TestADSScanLoop:
         response = build_ads_response(hostname="ADS-Live")
 
         mock_sock = MagicMock()
-        mock_sock.recvfrom.side_effect = [
+        mock_sock.recvfrom.side_effect = recv_queue(
             (response, ("10.1.1.1", 48899)),
             (response, ("10.1.1.1", 48899)),  # duplicate IP -> ignored
-            TimeoutError(),
-        ]
+        )
 
         with (
             patch("oida.protocols.discovery.ics.create_udp_socket", return_value=mock_sock),
@@ -507,7 +501,7 @@ class TestADSScanLoop:
                 return_value=["10.1.1.255"],
             ),
             patch("oida.protocols.discovery.ics.sendto"),
-            patch("oida.protocols.discovery.ics.time.time", side_effect=[0, 0, 0.3, 0.6, 2.0]),
+            patch("oida.protocols.discovery.ics.time.time", side_effect=fake_clock()),
         ):
             devices = scanner.scan()
 
@@ -529,10 +523,7 @@ class TestCODESYSScanLoop:
         response = build_codesys_response(device_name="CODESYS Control Win V3")
 
         mock_sock = MagicMock()
-        mock_sock.recvfrom.side_effect = [
-            (response, ("10.2.2.2", 1740)),
-            TimeoutError(),
-        ]
+        mock_sock.recvfrom.side_effect = recv_queue((response, ("10.2.2.2", 1740)))
 
         with (
             patch("oida.protocols.discovery.ics.create_udp_socket", return_value=mock_sock),
@@ -542,7 +533,7 @@ class TestCODESYSScanLoop:
             ),
             patch("oida.protocols.discovery.ics.sendto"),
             patch("oida.protocols.discovery.ics.time.sleep"),
-            patch("oida.protocols.discovery.ics.time.time", side_effect=[0, 0, 0.5, 2.0]),
+            patch("oida.protocols.discovery.ics.time.time", side_effect=fake_clock()),
         ):
             devices = scanner.scan()
 

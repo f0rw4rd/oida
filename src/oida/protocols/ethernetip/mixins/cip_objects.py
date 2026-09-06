@@ -19,7 +19,7 @@ from ....utils import ProgressTracker
 from ....utils.lazy_import import lazy_import
 
 _port_segment_mod = lazy_import(
-    "pycomm3.cip.data_types", "EtherNet/IP", install_hint="pip install oida[ethernetip]"
+    "pycomm3.cip.data_types", "EtherNet/IP", install_hint="pip install oida-ics[ethernetip]"
 )
 from ....utils.vendor_maps import ethernetip_vendor_ids as vendor_ids
 from ....utils.vendor_maps import ethernetip_wellknown_class_types as wellknown_class_types

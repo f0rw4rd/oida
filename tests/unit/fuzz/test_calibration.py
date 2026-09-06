@@ -10,7 +10,7 @@ Covers:
 - override gating on the BaseFuzzer hook (recv_timeout hard-set wins)
 """
 
-from src.oida.fuzz.core.calibration import (
+from oida.fuzz.core.calibration import (
     DriftDetector,
     RobustStats,
     RtoEstimator,
@@ -259,8 +259,8 @@ class TestOverrideGating:
     """The BaseFuzzer hook must honor a hard-set --recv-timeout but still set the oracle."""
 
     def _make_fuzzer(self, recv_timeout):
-        from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer
+        from oida.fuzz.core.config import FuzzerConfig
 
         class _ConcreteFuzzer(BaseFuzzer):
             def _define_protocol(self):  # satisfy the ABC
@@ -274,7 +274,7 @@ class TestOverrideGating:
         return f
 
     def test_hard_set_recv_timeout_preserved(self):
-        from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer
 
         f = self._make_fuzzer(recv_timeout=3.0)
         BaseFuzzer._calibrate_timeouts(f, f.log)
@@ -282,14 +282,14 @@ class TestOverrideGating:
         assert f.monitor.timeout != 0.1  # monitor oracle still calibrated
 
     def test_unset_recv_timeout_is_calibrated(self):
-        from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer
 
         f = self._make_fuzzer(recv_timeout=None)
         BaseFuzzer._calibrate_timeouts(f, f.log)
         assert f.config.recv_timeout is not None  # filled in by calibration
 
     def test_no_calibrate_is_a_noop(self):
-        from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer
 
         f = self._make_fuzzer(recv_timeout=None)
         f.config.calibrate = False

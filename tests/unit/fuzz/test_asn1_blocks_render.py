@@ -7,7 +7,7 @@ property made render()/get_value() raise
 ``TypeError: 'bytes' object is not callable``.
 """
 
-from src.oida.fuzz.primitives.asn1_blocks import (
+from oida.fuzz.primitives.asn1_blocks import (
     ASN1Integer,
     ASN1OctetString,
     ASN1Sequence,

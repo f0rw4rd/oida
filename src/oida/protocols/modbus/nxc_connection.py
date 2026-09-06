@@ -846,7 +846,7 @@ class modbus(
         if not _pymodbus.is_available:
             raise DependencyError(
                 "pymodbus library required for Modbus protocol.\n"
-                "Install with: pip install oida[modbus]",
+                "Install with: pip install oida-ics[modbus]",
                 protocol="Modbus",
             )
 

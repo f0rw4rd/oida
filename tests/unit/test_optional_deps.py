@@ -2,7 +2,7 @@
 still run.
 
 Regression guard for the bug where `oida fuzz` hard-imported ``boofuzz`` (the
-optional ``fuzz`` extra) at CLI-build time, so a plain ``pip install oida``
+optional ``fuzz`` extra) at CLI-build time, so a plain ``pip install oida-ics``
 crashed with ``ModuleNotFoundError: No module named 'boofuzz'`` on *every*
 command — even ``oida --version`` or ``oida modbus``.
 

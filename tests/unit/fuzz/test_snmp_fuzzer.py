@@ -22,7 +22,7 @@ import pytest
 @pytest.fixture
 def snmpv1_config():
     """Create a basic SNMPv1 FuzzerConfig."""
-    from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+    from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 
     config = FuzzerConfig(
         target_ip="192.168.1.100",
@@ -35,7 +35,7 @@ def snmpv1_config():
 @pytest.fixture
 def snmpv2_config():
     """Create a basic SNMPv2c FuzzerConfig."""
-    from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+    from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 
     config = FuzzerConfig(
         target_ip="192.168.1.100",
@@ -48,8 +48,8 @@ def snmpv2_config():
 @pytest.fixture
 def snmpv1_fuzzer(snmpv1_config):
     """Create an SNMPv1Fuzzer instance with mocked connection."""
-    from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
-    from src.oida.fuzz.core.connections.base import MockConnectionFactory
+    from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+    from oida.fuzz.core.connections.base import MockConnectionFactory
 
     factory = MockConnectionFactory()
     fuzzer = SNMPv1Fuzzer(snmpv1_config, connection_factory=factory)
@@ -59,8 +59,8 @@ def snmpv1_fuzzer(snmpv1_config):
 @pytest.fixture
 def snmpv2_fuzzer(snmpv2_config):
     """Create an SNMPv2cFuzzer instance with mocked connection."""
-    from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
-    from src.oida.fuzz.core.connections.base import MockConnectionFactory
+    from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+    from oida.fuzz.core.connections.base import MockConnectionFactory
 
     factory = MockConnectionFactory()
     fuzzer = SNMPv2cFuzzer(snmpv2_config, connection_factory=factory)
@@ -77,7 +77,7 @@ class TestSNMPCommonEncodeOID:
 
     def test_encode_oid_basic(self):
         """Basic OID encoding works."""
-        from src.oida.fuzz.protocols.snmp_common import encode_oid
+        from oida.fuzz.protocols.snmp_common import encode_oid
 
         result = encode_oid("1.3.6.1.2.1")
         assert isinstance(result, bytes)
@@ -85,14 +85,14 @@ class TestSNMPCommonEncodeOID:
 
     def test_encode_oid_mib2(self):
         """MIB-2 OID prefix encodes correctly."""
-        from src.oida.fuzz.protocols.snmp_common import encode_oid
+        from oida.fuzz.protocols.snmp_common import encode_oid
 
         result = encode_oid("1.3.6.1.2.1.1.1.0")  # sysDescr
         assert isinstance(result, bytes)
 
     def test_encode_oid_enterprise(self):
         """Enterprise OID encodes correctly."""
-        from src.oida.fuzz.protocols.snmp_common import encode_oid
+        from oida.fuzz.protocols.snmp_common import encode_oid
 
         result = encode_oid("1.3.6.1.4.1.12345.1.2.3")
         assert isinstance(result, bytes)
@@ -103,35 +103,35 @@ class TestSNMPCommonIPToBytes:
 
     def test_ip_to_bytes_valid(self):
         """Valid IP converts to bytes."""
-        from src.oida.fuzz.protocols.snmp_common import ip_to_bytes
+        from oida.fuzz.protocols.snmp_common import ip_to_bytes
 
         result = ip_to_bytes("192.168.1.1")
         assert result == bytes([192, 168, 1, 1])
 
     def test_ip_to_bytes_zeros(self):
         """Zero IP converts correctly."""
-        from src.oida.fuzz.protocols.snmp_common import ip_to_bytes
+        from oida.fuzz.protocols.snmp_common import ip_to_bytes
 
         result = ip_to_bytes("0.0.0.0")
         assert result == bytes([0, 0, 0, 0])
 
     def test_ip_to_bytes_max(self):
         """Max IP converts correctly."""
-        from src.oida.fuzz.protocols.snmp_common import ip_to_bytes
+        from oida.fuzz.protocols.snmp_common import ip_to_bytes
 
         result = ip_to_bytes("255.255.255.255")
         assert result == bytes([255, 255, 255, 255])
 
     def test_ip_to_bytes_invalid_format(self):
         """Invalid IP format raises ValueError."""
-        from src.oida.fuzz.protocols.snmp_common import ip_to_bytes
+        from oida.fuzz.protocols.snmp_common import ip_to_bytes
 
         with pytest.raises(ValueError, match="4 octets"):
             ip_to_bytes("192.168.1")
 
     def test_ip_to_bytes_invalid_octet(self):
         """Invalid octet value raises ValueError."""
-        from src.oida.fuzz.protocols.snmp_common import ip_to_bytes
+        from oida.fuzz.protocols.snmp_common import ip_to_bytes
 
         with pytest.raises(ValueError, match="out of range"):
             ip_to_bytes("192.168.1.256")
@@ -142,7 +142,7 @@ class TestSNMPCommonHexToBytes:
 
     def test_hex_to_bytes_valid(self):
         """Valid hex string converts to bytes."""
-        from src.oida.fuzz.protocols.snmp_common import hex_to_bytes
+        from oida.fuzz.protocols.snmp_common import hex_to_bytes
 
         result = hex_to_bytes("8000000001020304")
         assert isinstance(result, bytes)
@@ -159,17 +159,17 @@ class TestSNMPv1FuzzerCreation:
 
     def test_basic_creation(self, snmpv1_config):
         """SNMPv1Fuzzer can be created."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         fuzzer = SNMPv1Fuzzer(snmpv1_config, connection_factory=MockConnectionFactory())
         assert fuzzer is not None
 
     def test_protocol_type_is_udp(self, snmpv1_config):
         """Protocol type is set to UDP."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
-        from src.oida.fuzz.core.config import ProtocolType
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.core.config import ProtocolType
 
         fuzzer = SNMPv1Fuzzer(snmpv1_config, connection_factory=MockConnectionFactory())
         assert fuzzer.config.protocol_type == ProtocolType.UDP
@@ -180,7 +180,7 @@ class TestSNMPv1FuzzerOptions:
 
     def test_protocol_options_defined(self):
         """Protocol options are defined."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert "community" in SNMPv1Fuzzer.PROTOCOL_OPTIONS
         assert "request_id" in SNMPv1Fuzzer.PROTOCOL_OPTIONS
@@ -189,13 +189,13 @@ class TestSNMPv1FuzzerOptions:
 
     def test_community_option_default(self):
         """Default community string is 'public'."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert SNMPv1Fuzzer.PROTOCOL_OPTIONS["community"]["default"] == "public"
 
     def test_trap_options_defined(self):
         """Trap-related options are defined."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert "enterprise_oid" in SNMPv1Fuzzer.PROTOCOL_OPTIONS
         assert "trap_type" in SNMPv1Fuzzer.PROTOCOL_OPTIONS
@@ -212,21 +212,21 @@ class TestSNMPv1RequestDefinitions:
 
     def test_get_request_definitions_returns_list(self):
         """get_request_definitions() returns a list."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         definitions = SNMPv1Fuzzer.get_request_definitions()
         assert isinstance(definitions, list)
 
     def test_request_definitions_not_empty(self):
         """Request definitions are not empty."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         definitions = SNMPv1Fuzzer.get_request_definitions()
         assert len(definitions) > 0
 
     def test_standard_pdu_requests_exist(self):
         """Standard SNMP PDU requests are defined."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         definitions = SNMPv1Fuzzer.get_request_definitions()
         names = [d.name for d in definitions]
@@ -237,7 +237,7 @@ class TestSNMPv1RequestDefinitions:
 
     def test_trap_request_exists(self):
         """Trap PDU request is defined."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         definitions = SNMPv1Fuzzer.get_request_definitions()
         names = [d.name for d in definitions]
@@ -246,7 +246,7 @@ class TestSNMPv1RequestDefinitions:
 
     def test_attack_patterns_exist(self):
         """Attack pattern requests are defined."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         definitions = SNMPv1Fuzzer.get_request_definitions()
         names = [d.name for d in definitions]
@@ -286,17 +286,17 @@ class TestSNMPv2cFuzzerCreation:
 
     def test_basic_creation(self, snmpv2_config):
         """SNMPv2cFuzzer can be created."""
-        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         fuzzer = SNMPv2cFuzzer(snmpv2_config, connection_factory=MockConnectionFactory())
         assert fuzzer is not None
 
     def test_protocol_type_is_udp(self, snmpv2_config):
         """Protocol type is set to UDP."""
-        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
-        from src.oida.fuzz.core.config import ProtocolType
+        from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.core.config import ProtocolType
 
         fuzzer = SNMPv2cFuzzer(snmpv2_config, connection_factory=MockConnectionFactory())
         assert fuzzer.config.protocol_type == ProtocolType.UDP
@@ -307,7 +307,7 @@ class TestSNMPv2cFuzzerOptions:
 
     def test_protocol_options_defined(self):
         """Protocol options are defined."""
-        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+        from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
 
         assert "community" in SNMPv2cFuzzer.PROTOCOL_OPTIONS
         assert "request_id" in SNMPv2cFuzzer.PROTOCOL_OPTIONS
@@ -324,14 +324,14 @@ class TestSNMPv2cRequestDefinitions:
 
     def test_get_request_definitions_returns_list(self):
         """get_request_definitions() returns a list."""
-        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+        from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
 
         definitions = SNMPv2cFuzzer.get_request_definitions()
         assert isinstance(definitions, list)
 
     def test_bulk_request_exists(self):
         """GetBulkRequest is defined (v2c specific)."""
-        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+        from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
 
         definitions = SNMPv2cFuzzer.get_request_definitions()
         names = [d.name for d in definitions]
@@ -340,7 +340,7 @@ class TestSNMPv2cRequestDefinitions:
 
     def test_inform_request_exists(self):
         """InformRequest is defined (v2c specific)."""
-        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+        from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
 
         definitions = SNMPv2cFuzzer.get_request_definitions()
         names = [d.name for d in definitions]
@@ -349,7 +349,7 @@ class TestSNMPv2cRequestDefinitions:
 
     def test_boundary_tests_exist(self):
         """Boundary tests are defined."""
-        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+        from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
 
         definitions = SNMPv2cFuzzer.get_request_definitions()
         names = [d.name for d in definitions]
@@ -379,7 +379,7 @@ class TestSNMPMonitorSetup:
 
     def test_monitor_uses_correct_port(self, snmpv1_fuzzer):
         """Monitor uses port 161 (SNMP)."""
-        from src.oida.fuzz.monitors import SocketHealthMonitor
+        from oida.fuzz.monitors import SocketHealthMonitor
 
         monitors = snmpv1_fuzzer.setup_custom_monitors()
         assert isinstance(monitors[0], SocketHealthMonitor)
@@ -395,7 +395,7 @@ class TestSNMPSecurityFeatures:
 
     def test_community_string_is_fuzzable(self):
         """Community string field should be fuzzable."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         # The community option exists and can be customized
         assert "community" in SNMPv1Fuzzer.PROTOCOL_OPTIONS
@@ -403,13 +403,13 @@ class TestSNMPSecurityFeatures:
 
     def test_set_requests_disabled_by_default(self):
         """SET requests are disabled by default (safety)."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert SNMPv1Fuzzer.PROTOCOL_OPTIONS["enable_set"]["default"] is False
 
     def test_request_id_is_fuzzable(self):
         """Request ID can be customized for fuzzing."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert "request_id" in SNMPv1Fuzzer.PROTOCOL_OPTIONS
         assert SNMPv1Fuzzer.PROTOCOL_OPTIONS["request_id"]["type"] == int
@@ -425,7 +425,7 @@ class TestSNMPAmplification:
 
     def test_getbulk_max_rep_extreme_defined(self):
         """MaxRepExtreme request covers amplification testing."""
-        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+        from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
 
         definitions = SNMPv2cFuzzer.get_request_definitions()
         boundary_req = [d for d in definitions if d.name == "SNMPv2c_GetBulk_MaxRepExtreme"]
@@ -433,7 +433,7 @@ class TestSNMPAmplification:
 
     def test_snmpv2c_has_boundary_category(self):
         """SNMPv2c has boundary category for amplification tests."""
-        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+        from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
 
         definitions = SNMPv2cFuzzer.get_request_definitions()
         categories = {d.category for d in definitions}
@@ -451,7 +451,7 @@ class TestSNMPErrorResponses:
 
     def test_error_responses_defined(self):
         """Error response PDUs are defined."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         definitions = SNMPv1Fuzzer.get_request_definitions()
         names = [d.name for d in definitions]
@@ -472,7 +472,7 @@ class TestSNMPRequestCategories:
 
     def test_snmpv1_has_multiple_categories(self):
         """SNMPv1 requests have multiple categories."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         definitions = SNMPv1Fuzzer.get_request_definitions()
         categories = {d.category for d in definitions}
@@ -482,7 +482,7 @@ class TestSNMPRequestCategories:
 
     def test_high_crash_requests_exist(self):
         """High-crash category requests exist."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         definitions = SNMPv1Fuzzer.get_request_definitions()
         high_crash = [d for d in definitions if d.category == "high_crash"]
@@ -500,7 +500,7 @@ class TestOIDEncodingCorrectness:
 
     def test_oid_encoding_starts_with_tag(self):
         """Encoded OID starts with OID tag (0x06)."""
-        from src.oida.fuzz.protocols.snmp_common import encode_oid
+        from oida.fuzz.protocols.snmp_common import encode_oid
 
         result = encode_oid("1.3.6.1.2.1")
         # OID tag is 0x06
@@ -508,7 +508,7 @@ class TestOIDEncodingCorrectness:
 
     def test_oid_first_two_components_encoded(self):
         """First two OID components are encoded as (40*first + second)."""
-        from src.oida.fuzz.protocols.snmp_common import encode_oid
+        from oida.fuzz.protocols.snmp_common import encode_oid
 
         # 1.3 encodes as 40*1 + 3 = 43 = 0x2b
         result = encode_oid("1.3")
@@ -517,7 +517,7 @@ class TestOIDEncodingCorrectness:
 
     def test_oid_length_correct(self):
         """OID length field is correct."""
-        from src.oida.fuzz.protocols.snmp_common import encode_oid
+        from oida.fuzz.protocols.snmp_common import encode_oid
 
         result = encode_oid("1.3.6.1")
         # Tag + Length + Content
@@ -539,8 +539,8 @@ class TestSNMPCustomConfiguration:
 
     def test_custom_community_string(self, snmpv1_config):
         """Custom community string is used."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         snmpv1_config.protocol_options = {"community": "private"}
         fuzzer = SNMPv1Fuzzer(snmpv1_config, connection_factory=MockConnectionFactory())
@@ -549,8 +549,8 @@ class TestSNMPCustomConfiguration:
 
     def test_custom_oid_prefix(self, snmpv1_config):
         """Custom OID prefix is used."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         snmpv1_config.protocol_options = {"oid_prefix": "1.3.6.1.4.1"}
         fuzzer = SNMPv1Fuzzer(snmpv1_config, connection_factory=MockConnectionFactory())
@@ -559,8 +559,8 @@ class TestSNMPCustomConfiguration:
 
     def test_enable_set_option(self, snmpv1_config):
         """Enable SET option can be set."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         snmpv1_config.protocol_options = {"enable_set": True}
         fuzzer = SNMPv1Fuzzer(snmpv1_config, connection_factory=MockConnectionFactory())
@@ -585,8 +585,8 @@ class _RecordingSession:
 
 def _connected_request_names(snmpv2_config, *, enabled=None, disabled=None, enable_set=True):
     """Run SNMPv2cFuzzer._define_protocol() with a recording session, no network."""
-    from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
-    from src.oida.fuzz.core.connections.base import MockConnectionFactory
+    from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+    from oida.fuzz.core.connections.base import MockConnectionFactory
 
     snmpv2_config.protocol_options = {"enable_set": enable_set}
     if enabled is not None:
@@ -607,7 +607,7 @@ class TestSNMPv2cRequestGating:
 
     def test_gate_keys_match_advertised_names(self, snmpv2_config):
         """Default run (no enable/disable, enable_set) connects exactly the advertised names."""
-        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+        from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
 
         advertised = {r.name for r in SNMPv2cFuzzer.get_request_definitions()}
         connected = set(_connected_request_names(snmpv2_config, enable_set=True))
@@ -620,7 +620,7 @@ class TestSNMPv2cRequestGating:
         connected = _connected_request_names(snmpv2_config, enable_set=False)
         assert "SNMPv2c_SetRequest" not in connected
         # All other advertised requests still connect.
-        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+        from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
 
         advertised = {r.name for r in SNMPv2cFuzzer.get_request_definitions()}
         assert set(connected) == advertised - {"SNMPv2c_SetRequest"}
@@ -637,7 +637,7 @@ class TestSNMPv2cRequestGating:
         connected = _connected_request_names(
             snmpv2_config, disabled=["SNMPv2c_Malformed"], enable_set=True
         )
-        from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+        from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
 
         advertised = {r.name for r in SNMPv2cFuzzer.get_request_definitions()}
         assert "SNMPv2c_Malformed" not in connected
@@ -651,9 +651,9 @@ class TestSNMPv2cRequestGating:
 
 def _connected_snmpv3_request_names(*, enabled=None, disabled=None, enable_set=True):
     """Run SNMPv3Fuzzer._define_protocol() with a recording session, no network."""
-    from src.oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
-    from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
-    from src.oida.fuzz.core.connections.base import MockConnectionFactory
+    from oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
+    from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+    from oida.fuzz.core.connections.base import MockConnectionFactory
 
     config = FuzzerConfig(
         target_ip="192.168.1.100",
@@ -679,7 +679,7 @@ class TestSNMPv3RequestGating:
 
     def test_gate_keys_match_advertised_names(self):
         """Default run (no enable/disable, enable_set) connects exactly the advertised names."""
-        from src.oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
+        from oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
 
         advertised = {r.name for r in SNMPv3Fuzzer.get_request_definitions()}
         connected = set(_connected_snmpv3_request_names(enable_set=True))
@@ -692,7 +692,7 @@ class TestSNMPv3RequestGating:
         connected = _connected_snmpv3_request_names(enable_set=False)
         assert "SNMPv3_SetRequest" not in connected
         # All other advertised requests still connect.
-        from src.oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
+        from oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
 
         advertised = {r.name for r in SNMPv3Fuzzer.get_request_definitions()}
         assert set(connected) == advertised - {"SNMPv3_SetRequest"}
@@ -705,7 +705,7 @@ class TestSNMPv3RequestGating:
     def test_disable_single_request_drops_only_that_request(self):
         """--disable SNMPv3_Malformed drops exactly that request (was: no effect)."""
         connected = _connected_snmpv3_request_names(disabled=["SNMPv3_Malformed"], enable_set=True)
-        from src.oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
+        from oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
 
         advertised = {r.name for r in SNMPv3Fuzzer.get_request_definitions()}
         assert "SNMPv3_Malformed" not in connected
@@ -726,9 +726,9 @@ class TestSNMPv3RequestGating:
 
 def _rendered_snmpv3_requests(enable_set=True):
     """Render every connected SNMPv3 request to bytes, no network."""
-    from src.oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
-    from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
-    from src.oida.fuzz.core.connections.base import MockConnectionFactory
+    from oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
+    from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+    from oida.fuzz.core.connections.base import MockConnectionFactory
 
     config = FuzzerConfig(
         target_ip="192.168.1.100",
@@ -769,7 +769,7 @@ class TestSNMPv3VarBindOIDEncoding:
 
     def test_no_double_encoded_oid_in_any_request(self):
         """No rendered request contains the double-encoded form 06 <len> 06 ...."""
-        from src.oida.fuzz.protocols.snmp_common import encode_oid
+        from oida.fuzz.protocols.snmp_common import encode_oid
 
         renders = _rendered_snmpv3_requests()
         assert renders, "no SNMPv3 requests were connected"
@@ -782,7 +782,7 @@ class TestSNMPv3VarBindOIDEncoding:
 
     def test_baseline_requests_carry_single_oid_tlv(self):
         """Baseline requests embed the correct single OBJECT IDENTIFIER TLV."""
-        from src.oida.fuzz.protocols.snmp_common import encode_oid
+        from oida.fuzz.protocols.snmp_common import encode_oid
 
         renders = _rendered_snmpv3_requests()
         sysdescr = encode_oid("1.3.6.1.2.1.1.1.0")
@@ -795,7 +795,7 @@ class TestSNMPv3VarBindOIDEncoding:
         """The embedded OID bytes decode as a single pyasn1 ObjectIdentifier."""
         from pyasn1.codec.ber import decoder
         from pyasn1.type import univ
-        from src.oida.fuzz.protocols.snmp_common import encode_oid
+        from oida.fuzz.protocols.snmp_common import encode_oid
 
         renders = _rendered_snmpv3_requests()
         sysdescr = encode_oid("1.3.6.1.2.1.1.1.0")

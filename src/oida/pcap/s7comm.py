@@ -15,7 +15,7 @@ tshark fields used:
 - s7comm.header.rosctr: ROSCTR (1=Job, 2=Ack, 3=AckData, 7=Userdata)
 - s7comm.param.func: Function code (0x04=Read, 0x05=Write, 0x1a=Setup,
   0x28=PI, 0x29=PLC Stop, etc.)
-- s7comm.param.item.area: Memory area (0x81=DI, 0x82=DB, 0x83=M, 0x84=E, 0x85=A)
+- s7comm.param.item.area: Memory area (0x81=I, 0x82=Q, 0x83=M, 0x84=DB, 0x85=DI)
 - s7comm.param.item.db: DB number
 - s7comm.param.item.address.byte: Byte address within the area
 - s7comm.param.item.length: Data length
@@ -318,22 +318,24 @@ class S7commPassiveListener(PySharkListenerBase):
 
         func_name = S7_FUNCTIONS.get(func_code, f"Func 0x{func_code:02x}")
 
-        # Handle Read/Write Var (requests AND AckData responses)
-        if func_code in (0x04, 0x05):
-            if is_request or rosctr == 0x03:
-                self._process_read_write(
-                    s7comm,
-                    src_ip,
-                    dst_ip,
-                    func_code,
-                    func_name,
-                    now,
-                    flow_id,
-                    is_request=is_request,
-                    src_port=src_port,
-                    dst_port=dst_port,
-                    stream_id=stream_id,
-                )
+        # Handle Read/Write Var (requests AND AckData responses).  A bare Ack
+        # (ROSCTR=2) that still carries func 0x04/0x05 has no item list to
+        # parse, so it must fall through to the catch-all rather than being
+        # dropped — every s7comm packet produces at least one interaction.
+        if func_code in (0x04, 0x05) and (is_request or rosctr == 0x03):
+            self._process_read_write(
+                s7comm,
+                src_ip,
+                dst_ip,
+                func_code,
+                func_name,
+                now,
+                flow_id,
+                is_request=is_request,
+                src_port=src_port,
+                dst_port=dst_port,
+                stream_id=stream_id,
+            )
 
         # Handle Userdata (SZL, diagnostics, security)
         elif rosctr == 0x07:

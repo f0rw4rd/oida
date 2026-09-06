@@ -22,14 +22,14 @@ class TestBaseConnectionInterface:
 
     def test_cannot_instantiate_base_connection(self):
         """BaseConnection cannot be instantiated directly."""
-        from src.oida.fuzz.core.connections.base import BaseConnection
+        from oida.fuzz.core.connections.base import BaseConnection
 
         with pytest.raises(TypeError):
             BaseConnection()
 
     def test_base_connection_requires_send(self):
         """Subclass must implement send."""
-        from src.oida.fuzz.core.connections.base import BaseConnection
+        from oida.fuzz.core.connections.base import BaseConnection
 
         class IncompleteConnection(BaseConnection):
             def recv(self, max_bytes):
@@ -43,7 +43,7 @@ class TestBaseConnectionInterface:
 
     def test_base_connection_requires_recv(self):
         """Subclass must implement recv."""
-        from src.oida.fuzz.core.connections.base import BaseConnection
+        from oida.fuzz.core.connections.base import BaseConnection
 
         class IncompleteConnection(BaseConnection):
             def send(self, data):
@@ -66,14 +66,14 @@ class TestMockConnectionCreation:
 
     def test_basic_creation(self):
         """MockConnection can be created."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         assert conn is not None
 
     def test_initial_state(self):
         """MockConnection starts in open state."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         assert conn.is_open is True
@@ -85,7 +85,7 @@ class TestMockConnectionOpenClose:
 
     def test_open(self):
         """open() sets is_open to True."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         conn.is_open = False
@@ -94,7 +94,7 @@ class TestMockConnectionOpenClose:
 
     def test_close(self):
         """close() sets is_open to False."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         conn.close()
@@ -106,7 +106,7 @@ class TestMockConnectionSend:
 
     def test_send_records_data(self):
         """send() records sent data."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         conn.send(b"test data")
@@ -114,7 +114,7 @@ class TestMockConnectionSend:
 
     def test_send_returns_length(self):
         """send() returns number of bytes sent."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         result = conn.send(b"12345")
@@ -122,7 +122,7 @@ class TestMockConnectionSend:
 
     def test_send_multiple_records_all(self):
         """Multiple sends record all data."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         conn.send(b"first")
@@ -132,7 +132,7 @@ class TestMockConnectionSend:
 
     def test_send_when_closed_raises(self):
         """send() raises when connection closed."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         conn.close()
@@ -145,7 +145,7 @@ class TestMockConnectionRecv:
 
     def test_recv_default_empty(self):
         """recv() returns empty by default."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         result = conn.recv(1024)
@@ -153,7 +153,7 @@ class TestMockConnectionRecv:
 
     def test_recv_returns_configured_data(self):
         """recv() returns configured recv_data."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         conn.recv_data = b"configured response"
@@ -162,7 +162,7 @@ class TestMockConnectionRecv:
 
     def test_recv_when_closed_raises(self):
         """recv() raises when connection closed."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         conn.close()
@@ -175,7 +175,7 @@ class TestMockConnectionResponseQueue:
 
     def test_add_response(self):
         """add_response() adds to queue."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         conn.add_response(b"response1")
@@ -183,7 +183,7 @@ class TestMockConnectionResponseQueue:
 
     def test_recv_uses_queue_fifo(self):
         """recv() uses queue in FIFO order."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         conn.add_response(b"first")
@@ -196,7 +196,7 @@ class TestMockConnectionResponseQueue:
 
     def test_recv_falls_back_to_recv_data(self):
         """recv() falls back to recv_data when queue empty."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         conn.add_response(b"queued")
@@ -216,7 +216,7 @@ class TestMockConnectionFactoryCreation:
 
     def test_basic_creation(self):
         """MockConnectionFactory can be created."""
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         factory = MockConnectionFactory()
         assert factory is not None
@@ -228,8 +228,8 @@ class TestMockConnectionFactoryCreateConnection:
 
     def test_create_connection_from_config(self):
         """create_connection() accepts FuzzerConfig."""
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory, MockConnection
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.connections.base import MockConnectionFactory, MockConnection
+        from oida.fuzz.core.config import FuzzerConfig
 
         factory = MockConnectionFactory()
         config = FuzzerConfig(target_ip="192.168.1.1", target_port=80)
@@ -241,7 +241,7 @@ class TestMockConnectionFactoryCreateConnection:
 
     def test_create_connection_from_string(self):
         """create_connection() accepts host/port strings."""
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory, MockConnection
+        from oida.fuzz.core.connections.base import MockConnectionFactory, MockConnection
 
         factory = MockConnectionFactory()
         conn = factory.create_connection("10.0.0.1", 8080)
@@ -252,7 +252,7 @@ class TestMockConnectionFactoryCreateConnection:
 
     def test_create_connection_tracks_created(self):
         """Factory tracks created connections."""
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         factory = MockConnectionFactory()
         factory.create_connection("host1", 80)
@@ -262,7 +262,7 @@ class TestMockConnectionFactoryCreateConnection:
 
     def test_should_fail_returns_none(self):
         """Factory returns None when should_fail is True."""
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         factory = MockConnectionFactory()
         factory.should_fail = True
@@ -272,7 +272,7 @@ class TestMockConnectionFactoryCreateConnection:
 
     def test_get_last_connection(self):
         """get_last_connection() returns most recent."""
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         factory = MockConnectionFactory()
         factory.create_connection("first", 1)
@@ -285,7 +285,7 @@ class TestMockConnectionFactoryCreateConnection:
 
     def test_get_last_connection_empty(self):
         """get_last_connection() returns None when empty."""
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         factory = MockConnectionFactory()
         assert factory.get_last_connection() is None
@@ -301,7 +301,7 @@ class TestConnectionFactoryInterface:
 
     def test_cannot_instantiate_connection_factory(self):
         """ConnectionFactory cannot be instantiated directly."""
-        from src.oida.fuzz.core.connections.base import ConnectionFactory
+        from oida.fuzz.core.connections.base import ConnectionFactory
 
         with pytest.raises(TypeError):
             ConnectionFactory()
@@ -317,7 +317,7 @@ class TestRealConnectionFactoryCreation:
 
     def test_basic_creation(self):
         """RealConnectionFactory can be created."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
 
         factory = RealConnectionFactory()
         assert factory is not None
@@ -328,7 +328,7 @@ class TestRealConnectionFactoryTCP:
 
     def test_create_tcp_connection_from_string(self):
         """create_connection() creates TCPSocketConnection."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
         from boofuzz import TCPSocketConnection
 
         factory = RealConnectionFactory()
@@ -338,7 +338,7 @@ class TestRealConnectionFactoryTCP:
 
     def test_create_tcp_connection_default(self):
         """TCP is the default protocol."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
         from boofuzz import TCPSocketConnection
 
         factory = RealConnectionFactory()
@@ -352,11 +352,11 @@ class TestRealConnectionFactoryTimeouts:
 
     def test_overrides_applied_to_resilient_connection(self):
         """CLI overrides reach the reused (resilient) TCP connection."""
-        from src.oida.fuzz.core.connections.tcp import (
+        from oida.fuzz.core.connections.tcp import (
             RealConnectionFactory,
             ResilientTCPConnection,
         )
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(
             target_ip="127.0.0.1",
@@ -377,8 +377,8 @@ class TestRealConnectionFactoryTimeouts:
 
     def test_defaults_retained_when_unset(self):
         """With no overrides (all None), the built-in defaults are kept."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(target_ip="127.0.0.1", target_port=502, reuse_target_connection=True)
         conn = RealConnectionFactory().create_connection(config)
@@ -390,8 +390,8 @@ class TestRealConnectionFactoryTimeouts:
 
     def test_overrides_applied_to_plain_tcp(self):
         """Overrides reach the non-reused plain TCP connection too."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(
             target_ip="127.0.0.1",
@@ -407,11 +407,11 @@ class TestRealConnectionFactoryTimeouts:
 
     def test_overrides_forwarded_to_iec104(self):
         """Regression: IEC104SocketConnection must forward socket timeouts to its base."""
-        from src.oida.fuzz.core.connections.tcp import (
+        from oida.fuzz.core.connections.tcp import (
             RealConnectionFactory,
             IEC104SocketConnection,
         )
-        from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+        from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 
         config = FuzzerConfig(
             target_ip="127.0.0.1",
@@ -437,7 +437,7 @@ class TestRealConnectionFactoryUDP:
 
     def test_create_udp_connection(self):
         """create_connection() creates UDPSocketConnection."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
         from boofuzz import UDPSocketConnection
 
         factory = RealConnectionFactory()
@@ -451,7 +451,7 @@ class TestRealConnectionFactorySSL:
 
     def test_create_ssl_connection(self):
         """create_connection() creates SSLSocketConnection."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
         from boofuzz import SSLSocketConnection
 
         factory = RealConnectionFactory()
@@ -461,7 +461,7 @@ class TestRealConnectionFactorySSL:
 
     def test_create_tls_connection(self):
         """'tls' proto also creates SSLSocketConnection."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
         from boofuzz import SSLSocketConnection
 
         factory = RealConnectionFactory()
@@ -475,8 +475,8 @@ class TestRealConnectionFactoryFromConfig:
 
     def test_create_from_config_tcp(self):
         """create_connection() accepts FuzzerConfig for TCP."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
-        from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.config import FuzzerConfig, ProtocolType
         from boofuzz import TCPSocketConnection
 
         factory = RealConnectionFactory()
@@ -489,8 +489,8 @@ class TestRealConnectionFactoryFromConfig:
 
     def test_create_from_config_ssl(self):
         """create_connection() accepts FuzzerConfig for SSL."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
-        from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.config import FuzzerConfig, ProtocolType
         from boofuzz import SSLSocketConnection
 
         factory = RealConnectionFactory()
@@ -503,8 +503,8 @@ class TestRealConnectionFactoryFromConfig:
 
     def test_create_from_config_udp(self):
         """create_connection() accepts FuzzerConfig for UDP."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
-        from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.config import FuzzerConfig, ProtocolType
         from boofuzz import UDPSocketConnection
 
         factory = RealConnectionFactory()
@@ -517,8 +517,8 @@ class TestRealConnectionFactoryFromConfig:
 
     def test_create_from_config_tls_enabled_flag(self):
         """tls_enabled flag takes precedence."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
-        from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.config import FuzzerConfig, ProtocolType
         from boofuzz import SSLSocketConnection
 
         factory = RealConnectionFactory()
@@ -544,7 +544,7 @@ class TestConnectionLifecycle:
 
     def test_mock_connection_full_lifecycle(self):
         """Mock connection supports full lifecycle."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         conn.add_response(b"HTTP/1.1 200 OK\r\n\r\n")
@@ -567,7 +567,7 @@ class TestConnectionLifecycle:
 
     def test_factory_connection_creation_pattern(self):
         """Factory follows common creation pattern."""
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         factory = MockConnectionFactory()
 
@@ -594,7 +594,7 @@ class TestConnectionEdgeCases:
 
     def test_empty_send(self):
         """send() handles empty data."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         result = conn.send(b"")
@@ -603,7 +603,7 @@ class TestConnectionEdgeCases:
 
     def test_large_send(self):
         """send() handles large data."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
         large_data = b"A" * 1000000  # 1MB
@@ -612,7 +612,7 @@ class TestConnectionEdgeCases:
 
     def test_multiple_open_close(self):
         """Connection handles multiple open/close cycles."""
-        from src.oida.fuzz.core.connections.base import MockConnection
+        from oida.fuzz.core.connections.base import MockConnection
 
         conn = MockConnection()
 
@@ -625,7 +625,7 @@ class TestConnectionEdgeCases:
 
     def test_host_port_attributes(self):
         """Connection stores host and port attributes."""
-        from src.oida.fuzz.core.connections.base import MockConnectionFactory
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         factory = MockConnectionFactory()
         conn = factory.create_connection("example.com", 8443)

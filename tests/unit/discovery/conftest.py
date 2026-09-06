@@ -5,8 +5,39 @@ Mocks netifaces and interface capabilities so tests don't require
 real network interfaces (e.g., eth0).
 """
 
+import itertools
+
 import pytest
 from unittest.mock import patch, MagicMock
+
+
+def fake_clock(step=0.02, start=0.0):
+    """Build a non-exhausting, monotonically advancing ``time.time`` stand-in.
+
+    Patching ``<module>.time.time`` patches the *stdlib* ``time`` module, so
+    every ``time.time()`` the logging machinery makes while the patch is
+    active also draws from the mock. A scripted ``side_effect=[0, 0, 0.5, 2.0]``
+    list therefore breaks in two ways depending on the active log level (i.e.
+    on test ordering): it raises ``StopIteration`` once the values run out, or
+    it hands the scan loop the "timed out" value several calls too early.
+
+    A clock that simply advances by ``step`` per call is immune to both: the
+    loop always runs ``timeout / step`` iterations regardless of how many
+    extra calls logging makes. Pair it with an endlessly repeating
+    ``recvfrom`` side effect (see :func:`recv_queue`).
+    """
+    state = {"now": start - step}
+
+    def _now():
+        state["now"] += step
+        return state["now"]
+
+    return _now
+
+
+def recv_queue(*results):
+    """``recvfrom`` side effect: ``results`` then ``TimeoutError`` forever."""
+    return itertools.chain(results, itertools.repeat(TimeoutError()))
 
 
 # Known test interfaces and their addresses
