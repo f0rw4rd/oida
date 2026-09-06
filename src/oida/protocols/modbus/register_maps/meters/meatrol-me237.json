@@ -1,0 +1,355 @@
+{
+  "vendor": "Meatrol",
+  "model": "ME 237",
+  "description": "Meatrol ME 237 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "voltage_value_of_phase_a": {
+      "address": 1000,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage value of phase A",
+      "unit": "V"
+    },
+    "voltage_value_of_phase_b": {
+      "address": 1002,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage value of phase B",
+      "unit": "V"
+    },
+    "voltage_value_of_phase_c": {
+      "address": 1004,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage value of phase C",
+      "unit": "V"
+    },
+    "average_phase_voltage_value": {
+      "address": 1006,
+      "type": "f32",
+      "access": "r",
+      "description": "Average phase voltage value",
+      "unit": "V"
+    },
+    "voltage_value_of_line_a_b": {
+      "address": 1008,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage value of line A B",
+      "unit": "V"
+    },
+    "voltage_value_of_line_b_c": {
+      "address": 1010,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage value of line B C",
+      "unit": "V"
+    },
+    "voltage_value_of_line_c_a": {
+      "address": 1012,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage value of line C A",
+      "unit": "V"
+    },
+    "average_line_voltage_value": {
+      "address": 1014,
+      "type": "f32",
+      "access": "r",
+      "description": "Average line voltage value",
+      "unit": "V"
+    },
+    "current_value_of_phase_a": {
+      "address": 1016,
+      "type": "f32",
+      "access": "r",
+      "description": "Current value of phase A",
+      "unit": "A"
+    },
+    "current_value_of_phase_b": {
+      "address": 1018,
+      "type": "f32",
+      "access": "r",
+      "description": "Current value of phase B",
+      "unit": "A"
+    },
+    "current_value_of_phase_c": {
+      "address": 1020,
+      "type": "f32",
+      "access": "r",
+      "description": "Current value of phase C",
+      "unit": "A"
+    },
+    "average_value_of_three_phase_current": {
+      "address": 1022,
+      "type": "f32",
+      "access": "r",
+      "description": "Average value of three phase current",
+      "unit": "A"
+    },
+    "active_power_of_phase_a": {
+      "address": 1026,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power of phase A",
+      "unit": "W"
+    },
+    "active_power_of_phase_b": {
+      "address": 1028,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power of phase B",
+      "unit": "W"
+    },
+    "active_power_of_phase_c": {
+      "address": 1030,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power of phase C",
+      "unit": "W"
+    },
+    "sum_of_three_phase_active_power": {
+      "address": 1032,
+      "type": "f32",
+      "access": "r",
+      "description": "Sum of three phase active power",
+      "unit": "W"
+    },
+    "reactive_power_of_phase_a": {
+      "address": 1034,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power of phase A",
+      "unit": "Var"
+    },
+    "reactive_power_of_phase_b": {
+      "address": 1036,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power of phase B",
+      "unit": "Var"
+    },
+    "reactive_power_of_phase_c": {
+      "address": 1038,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power of phase C",
+      "unit": "Var"
+    },
+    "sum_of_three_phase_reactive_power": {
+      "address": 1040,
+      "type": "f32",
+      "access": "r",
+      "description": "Sum of three phase reactive power",
+      "unit": "Var"
+    },
+    "apparent_power_of_phase_a": {
+      "address": 1042,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power of phase A",
+      "unit": "Va"
+    },
+    "apparent_power_of_phase_b": {
+      "address": 1044,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power of phase B",
+      "unit": "Va"
+    },
+    "apparent_power_of_phase_a_1046": {
+      "address": 1046,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power of phase A",
+      "unit": "Va"
+    },
+    "sum_of_three_phase_apparent_power": {
+      "address": 1048,
+      "type": "f32",
+      "access": "r",
+      "description": "Sum of three phase apparent power",
+      "unit": "Va"
+    },
+    "power_factor_of_phase_a": {
+      "address": 1050,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor of phase A"
+    },
+    "power_factor_of_phase_b": {
+      "address": 1052,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor of phase B"
+    },
+    "power_factor_of_phase_c": {
+      "address": 1054,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor of phase C"
+    },
+    "average_power_factor": {
+      "address": 1056,
+      "type": "f32",
+      "access": "r",
+      "description": "Average power factor"
+    },
+    "fundamental_power_factor_of_phase_a": {
+      "address": 1058,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamental power factor of phase A"
+    },
+    "fundamental_power_factor_of_phase_b": {
+      "address": 1060,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamental power factor of phase B"
+    },
+    "fundamental_power_factor_of_phase_c": {
+      "address": 1062,
+      "type": "f32",
+      "access": "r",
+      "description": "Fundamental power factor of phase C"
+    },
+    "average_fundamental_power_factor": {
+      "address": 1064,
+      "type": "f32",
+      "access": "r",
+      "description": "Average fundamental power factor"
+    },
+    "grid_frequency": {
+      "address": 1066,
+      "type": "f32",
+      "access": "r",
+      "description": "Grid frequency",
+      "unit": "Hz"
+    },
+    "percentage_of_total_harmonic_of_voltage_of_phase_a": {
+      "address": 2000,
+      "type": "f32",
+      "access": "r",
+      "description": "Percentage of total harmonic of voltage of phase A",
+      "unit": "%"
+    },
+    "percentage_of_total_harmonic_of_voltage_of_phase_b": {
+      "address": 2002,
+      "type": "f32",
+      "access": "r",
+      "description": "Percentage of total harmonic of voltage of phase B",
+      "unit": "%"
+    },
+    "percentage_of_total_harmonic_of_voltage_of_phase_a_2004": {
+      "address": 2004,
+      "type": "f32",
+      "access": "r",
+      "description": "Percentage of total harmonic of voltage of phase A",
+      "unit": "%"
+    },
+    "three_phase_voltage_total_harmonic_percentage_average": {
+      "address": 2006,
+      "type": "f32",
+      "access": "r",
+      "description": "Three phase voltage total harmonic percentage average",
+      "unit": "%"
+    },
+    "percentage_of_total_harmonic_current_of_phase_a": {
+      "address": 2008,
+      "type": "f32",
+      "access": "r",
+      "description": "Percentage of total harmonic current of phase A",
+      "unit": "%"
+    },
+    "percentage_of_total_harmonic_current_of_phase_b": {
+      "address": 2010,
+      "type": "f32",
+      "access": "r",
+      "description": "Percentage of total harmonic current of phase B",
+      "unit": "%"
+    },
+    "percentage_of_total_harmonic_current_of_phase_c": {
+      "address": 2012,
+      "type": "f32",
+      "access": "r",
+      "description": "Percentage of total harmonic current of phase C",
+      "unit": "%"
+    },
+    "percentage_average_value_of_total_harmonic_of_three_phase_current": {
+      "address": 2014,
+      "type": "f32",
+      "access": "r",
+      "description": "Percentage average value of total harmonic of three phase current",
+      "unit": "%"
+    },
+    "positive_active_energy_of_phase_a": {
+      "address": 4000,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive active energy of phase A",
+      "unit": "0.1kWh"
+    },
+    "positive_active_energy_of_phase_b": {
+      "address": 4002,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive active energy of phase B",
+      "unit": "0.1kWh"
+    },
+    "positive_active_energy_of_phase_c": {
+      "address": 4004,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive active energy of phase C",
+      "unit": "0.1kWh"
+    },
+    "sum_of_three_phase_positive_active_energy": {
+      "address": 4006,
+      "type": "u32",
+      "access": "r",
+      "description": "Sum of three phase positive active energy",
+      "unit": "0.1kWh"
+    },
+    "reverse_active_electric_energy_of_phase_a": {
+      "address": 4008,
+      "type": "u32",
+      "access": "r",
+      "description": "Reverse active electric energy of phase A",
+      "unit": "0.1kWh"
+    },
+    "reverse_active_electric_energy_of_phase_b": {
+      "address": 4010,
+      "type": "u32",
+      "access": "r",
+      "description": "Reverse active electric energy of phase B",
+      "unit": "0.1kWh"
+    },
+    "reverse_active_electric_energy_of_phase_c": {
+      "address": 4012,
+      "type": "u32",
+      "access": "r",
+      "description": "Reverse active electric energy of phase C",
+      "unit": "0.1kWh"
+    },
+    "sum_of_three_phase_reverse_active_energy": {
+      "address": 4014,
+      "type": "u32",
+      "access": "r",
+      "description": "Sum of three phase reverse active energy",
+      "unit": "0.1kWh"
+    },
+    "positive_reactive_energy_of_phase_a": {
+      "address": 4024,
+      "type": "u32",
+      "access": "r",
+      "description": "Positive reactive energy of phase A",
+      "unit": "0.1kVarh"
+    }
+  }
+}

@@ -1,0 +1,355 @@
+{
+  "vendor": "Eaton",
+  "model": "PXM 2000",
+  "description": "Eaton PXM 2000 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "vendor_name": {
+      "address": 1032,
+      "type": "str",
+      "access": "r",
+      "description": "Vendor name"
+    },
+    "model_name": {
+      "address": 1064,
+      "type": "str",
+      "access": "r",
+      "description": "Model name"
+    },
+    "display_name": {
+      "address": 1096,
+      "type": "str",
+      "access": "r",
+      "description": "Display name"
+    },
+    "serial_number": {
+      "address": 1276,
+      "type": "str",
+      "access": "r",
+      "description": "Serial number"
+    },
+    "software_version": {
+      "address": 2108,
+      "type": "str",
+      "access": "r",
+      "description": "Software version"
+    },
+    "nominal_voltage": {
+      "address": 1355,
+      "type": "u16",
+      "access": "r",
+      "description": "Nominal voltage",
+      "unit": "volts"
+    },
+    "phases_to_display_on_meter_front": {
+      "address": 1361,
+      "type": "u16",
+      "access": "r",
+      "description": "Phases to display on meter front"
+    },
+    "field_replaceable_unit": {
+      "address": 1605,
+      "type": "u16",
+      "access": "r",
+      "description": "Field replaceable unit"
+    },
+    "nominal_frequency": {
+      "address": 1668,
+      "type": "u16",
+      "access": "r",
+      "description": "Nominal frequency",
+      "unit": "hertz"
+    },
+    "output_current_rating": {
+      "address": 1810,
+      "type": "u16",
+      "access": "r",
+      "description": "Output current rating",
+      "unit": "amperes"
+    },
+    "status": {
+      "address": 3000,
+      "type": "u16",
+      "access": "r",
+      "description": "Status"
+    },
+    "vab": {
+      "address": 4002,
+      "type": "f32",
+      "access": "r",
+      "description": "Vab",
+      "unit": "volts"
+    },
+    "vbc": {
+      "address": 4004,
+      "type": "f32",
+      "access": "r",
+      "description": "Vbc",
+      "unit": "volts"
+    },
+    "vca": {
+      "address": 4006,
+      "type": "f32",
+      "access": "r",
+      "description": "Vca",
+      "unit": "volts"
+    },
+    "v_l_l_average": {
+      "address": 4008,
+      "type": "f32",
+      "access": "r",
+      "description": "V (L l) average",
+      "unit": "volts"
+    },
+    "van": {
+      "address": 4010,
+      "type": "f32",
+      "access": "r",
+      "description": "Van",
+      "unit": "volts"
+    },
+    "vbn": {
+      "address": 4012,
+      "type": "f32",
+      "access": "r",
+      "description": "Vbn",
+      "unit": "volts"
+    },
+    "vcn": {
+      "address": 4014,
+      "type": "f32",
+      "access": "r",
+      "description": "Vcn",
+      "unit": "volts"
+    },
+    "v_l_n_average": {
+      "address": 4016,
+      "type": "f32",
+      "access": "r",
+      "description": "V (L n) average",
+      "unit": "volts"
+    },
+    "phase_angle_vab": {
+      "address": 4497,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle vab",
+      "unit": "degrees-phase"
+    },
+    "phase_angle_vbc": {
+      "address": 4499,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle vbc",
+      "unit": "degrees-phase"
+    },
+    "phase_angle_vca": {
+      "address": 4501,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle vca",
+      "unit": "degrees-phase"
+    },
+    "v_l_l_average_long_term_average": {
+      "address": 4525,
+      "type": "f32",
+      "access": "r",
+      "description": "V (L l) average long term average",
+      "unit": "volts"
+    },
+    "v_l_n_average_long_term_average": {
+      "address": 4527,
+      "type": "f32",
+      "access": "r",
+      "description": "V (L n) average long term average",
+      "unit": "volts"
+    },
+    "ia": {
+      "address": 5002,
+      "type": "f32",
+      "access": "r",
+      "description": "Ia",
+      "unit": "amperes"
+    },
+    "ib": {
+      "address": 5004,
+      "type": "f32",
+      "access": "r",
+      "description": "Ib",
+      "unit": "amperes"
+    },
+    "ic": {
+      "address": 5006,
+      "type": "f32",
+      "access": "r",
+      "description": "Ic",
+      "unit": "amperes"
+    },
+    "in": {
+      "address": 5010,
+      "type": "f32",
+      "access": "r",
+      "description": "In",
+      "unit": "amperes"
+    },
+    "iavg": {
+      "address": 5012,
+      "type": "f32",
+      "access": "r",
+      "description": "Iavg",
+      "unit": "amperes"
+    },
+    "demand_ia_peak": {
+      "address": 5014,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand ia peak",
+      "unit": "amperes"
+    },
+    "demand_ib_peak": {
+      "address": 5016,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand ib peak",
+      "unit": "amperes"
+    },
+    "demand_ic_peak": {
+      "address": 5018,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand ic peak",
+      "unit": "amperes"
+    },
+    "demand_ia": {
+      "address": 5250,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand ia",
+      "unit": "amperes"
+    },
+    "demand_ib": {
+      "address": 5252,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand ib",
+      "unit": "amperes"
+    },
+    "demand_ic": {
+      "address": 5254,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand ic",
+      "unit": "amperes"
+    },
+    "demand_in": {
+      "address": 5258,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand in",
+      "unit": "amperes"
+    },
+    "demand_in_peak": {
+      "address": 5262,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand in peak",
+      "unit": "amperes"
+    },
+    "phase_angle_ia": {
+      "address": 5338,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle ia",
+      "unit": "degrees-phase"
+    },
+    "phase_angle_ib": {
+      "address": 5340,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle ib",
+      "unit": "degrees-phase"
+    },
+    "phase_angle_ic": {
+      "address": 5342,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase angle ic",
+      "unit": "degrees-phase"
+    },
+    "ia_long_term_average": {
+      "address": 5448,
+      "type": "f32",
+      "access": "r",
+      "description": "Ia long term average",
+      "unit": "amperes"
+    },
+    "ib_long_term_average": {
+      "address": 5450,
+      "type": "f32",
+      "access": "r",
+      "description": "Ib long term average",
+      "unit": "amperes"
+    },
+    "ic_long_term_average": {
+      "address": 5452,
+      "type": "f32",
+      "access": "r",
+      "description": "Ic long term average",
+      "unit": "amperes"
+    },
+    "in_long_term_average": {
+      "address": 5454,
+      "type": "f32",
+      "access": "r",
+      "description": "In long term average",
+      "unit": "amperes"
+    },
+    "real_power_phase_a": {
+      "address": 6000,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power phase A",
+      "unit": "watts"
+    },
+    "real_power_phase_b": {
+      "address": 6002,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power phase B",
+      "unit": "watts"
+    },
+    "real_power_phase_c": {
+      "address": 6004,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power phase C",
+      "unit": "watts"
+    },
+    "real_power": {
+      "address": 6006,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power",
+      "unit": "watts"
+    },
+    "apparent_power_phase_a": {
+      "address": 6064,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power phase A",
+      "unit": "volt-amperes"
+    },
+    "apparent_power_phase_b": {
+      "address": 6066,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power phase B",
+      "unit": "volt-amperes"
+    }
+  }
+}

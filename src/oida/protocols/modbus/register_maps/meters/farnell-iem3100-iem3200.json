@@ -1,0 +1,333 @@
+{
+  "vendor": "Farnell",
+  "model": "IEM 3100 IEM 3200",
+  "description": "Farnell IEM 3100 IEM 3200 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "serial_number": {
+      "address": 130,
+      "type": "u32",
+      "access": "r",
+      "description": "Serial Number"
+    },
+    "present_firmware_version_dlf_format_x_y_ztt": {
+      "address": 1637,
+      "type": "u16",
+      "access": "r",
+      "description": "Present Firmware Version (DLF format): X.Y.ZTT"
+    },
+    "meter_operation_timer": {
+      "address": 2004,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter Operation Timer",
+      "unit": "Secon"
+    },
+    "number_of_phases": {
+      "address": 2014,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of Phases"
+    },
+    "number_of_wires": {
+      "address": 2015,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of Wires"
+    },
+    "power_system": {
+      "address": 2016,
+      "type": "u16",
+      "access": "r",
+      "description": "Power System"
+    },
+    "nominal_frequency": {
+      "address": 2017,
+      "type": "u16",
+      "access": "r",
+      "description": "Nominal Frequency",
+      "unit": "Hz"
+    },
+    "number_vts": {
+      "address": 2025,
+      "type": "u16",
+      "access": "r",
+      "description": "Number VTs"
+    },
+    "vt_primary": {
+      "address": 2026,
+      "type": "f32",
+      "access": "r",
+      "description": "VT Primary",
+      "unit": "V"
+    },
+    "vt_secondary": {
+      "address": 2028,
+      "type": "u16",
+      "access": "r",
+      "description": "VT Secondary",
+      "unit": "V"
+    },
+    "number_cts": {
+      "address": 2029,
+      "type": "u16",
+      "access": "r",
+      "description": "Number CTs"
+    },
+    "ct_primary": {
+      "address": 2030,
+      "type": "u16",
+      "access": "r",
+      "description": "CT Primary",
+      "unit": "A"
+    },
+    "ct_secondary": {
+      "address": 2031,
+      "type": "u16",
+      "access": "r",
+      "description": "CT Secondary",
+      "unit": "A"
+    },
+    "vt_connection_type": {
+      "address": 2036,
+      "type": "u16",
+      "access": "r",
+      "description": "VT Connection Type"
+    },
+    "energy_pulse_duration": {
+      "address": 2129,
+      "type": "u16",
+      "access": "r",
+      "description": "Energy Pulse Duration",
+      "unit": "Millisecond"
+    },
+    "digital_output_association": {
+      "address": 2131,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital Output Association"
+    },
+    "pulse_weight": {
+      "address": 2132,
+      "type": "f32",
+      "access": "r",
+      "description": "Pulse Weight",
+      "unit": "pulse/kWh"
+    },
+    "requested_command": {
+      "address": 5250,
+      "type": "u16",
+      "access": "r",
+      "description": "Requested Command"
+    },
+    "command_parameter_001": {
+      "address": 5252,
+      "type": "u16",
+      "access": "r",
+      "description": "Command Parameter 001"
+    },
+    "command_parameter_123": {
+      "address": 5374,
+      "type": "u16",
+      "access": "r",
+      "description": "Command Parameter 123"
+    },
+    "command_status": {
+      "address": 5375,
+      "type": "u16",
+      "access": "r",
+      "description": "Command Status"
+    },
+    "command_result_codes": {
+      "address": 5376,
+      "type": "u16",
+      "access": "r",
+      "description": "Command Result codes:"
+    },
+    "command_data_001": {
+      "address": 5377,
+      "type": "u16",
+      "access": "r",
+      "description": "Command Data 001"
+    },
+    "command_data_123": {
+      "address": 5499,
+      "type": "u16",
+      "access": "r",
+      "description": "Command Data 123"
+    },
+    "protocol": {
+      "address": 6500,
+      "type": "u16",
+      "access": "r",
+      "description": "Protocol"
+    },
+    "address": {
+      "address": 6501,
+      "type": "u16",
+      "access": "r",
+      "description": "Address"
+    },
+    "baud_rate": {
+      "address": 6502,
+      "type": "u16",
+      "access": "r",
+      "description": "Baud Rate:"
+    },
+    "parity": {
+      "address": 6503,
+      "type": "u16",
+      "access": "r",
+      "description": "Parity:"
+    },
+    "pulse_constant": {
+      "address": 7052,
+      "type": "f32",
+      "access": "r",
+      "description": "Pulse Constant",
+      "unit": "pulse/unit"
+    },
+    "digital_input_association": {
+      "address": 7055,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital Input Association"
+    },
+    "digital_input_control_mode": {
+      "address": 7274,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital Input Control Mode:"
+    },
+    "digital_output_control_mode_status": {
+      "address": 9673,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital Output Control Mode Status:"
+    },
+    "i1_phase_1_current": {
+      "address": 3000,
+      "type": "f32",
+      "access": "r",
+      "description": "I1: phase 1 current",
+      "unit": "A"
+    },
+    "i2_phase_2_current": {
+      "address": 3002,
+      "type": "f32",
+      "access": "r",
+      "description": "I2: phase 2 current",
+      "unit": "A"
+    },
+    "i3_phase_3_current": {
+      "address": 3004,
+      "type": "f32",
+      "access": "r",
+      "description": "I3: phase 3 current",
+      "unit": "A"
+    },
+    "current_avg_voltage": {
+      "address": 3010,
+      "type": "f32",
+      "access": "r",
+      "description": "Current Avg Voltage",
+      "unit": "A"
+    },
+    "voltage_l1_l2": {
+      "address": 3020,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L1 L2",
+      "unit": "V"
+    },
+    "voltage_l2_l3": {
+      "address": 3022,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L2 L3",
+      "unit": "V"
+    },
+    "voltage_l3_l1": {
+      "address": 3024,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L3 L1",
+      "unit": "V"
+    },
+    "voltage_l_l_avg": {
+      "address": 3026,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L L Avg",
+      "unit": "V"
+    },
+    "voltage_l1_n": {
+      "address": 3028,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L1 N",
+      "unit": "V"
+    },
+    "voltage_l2_n": {
+      "address": 3030,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L2 N",
+      "unit": "V"
+    },
+    "voltage_l3_n": {
+      "address": 3032,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L3 N",
+      "unit": "V"
+    },
+    "voltage_l_n_avg_power": {
+      "address": 3036,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L N Avg Power",
+      "unit": "V"
+    },
+    "active_power_phase_1": {
+      "address": 3054,
+      "type": "f32",
+      "access": "r",
+      "description": "Active Power Phase 1",
+      "unit": "kW"
+    },
+    "active_power_phase_2": {
+      "address": 3056,
+      "type": "f32",
+      "access": "r",
+      "description": "Active Power Phase 2",
+      "unit": "kW"
+    },
+    "active_power_phase_3": {
+      "address": 3058,
+      "type": "f32",
+      "access": "r",
+      "description": "Active Power Phase 3",
+      "unit": "kW"
+    },
+    "total_active_power": {
+      "address": 3060,
+      "type": "f32",
+      "access": "r",
+      "description": "Total Active Power",
+      "unit": "kW"
+    },
+    "total_reactive_power": {
+      "address": 3068,
+      "type": "f32",
+      "access": "r",
+      "description": "Total Reactive Power",
+      "unit": "kVAR"
+    }
+  }
+}

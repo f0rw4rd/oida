@@ -1,0 +1,335 @@
+{
+  "vendor": "SolarEdge",
+  "model": "SE5000H/SE6000H/SE7600H+",
+  "description": "SolarEdge SunSpec-compliant residential and commercial inverters",
+  "version": "1.0",
+  "standard": "sunspec",
+  "sunspec_model_id": 103,
+  "base_address": 40069,
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "SolarEdge uses little-endian word order (low word first). Scale factors are signed integers representing 10^x. Status codes: 0=Off, 1=Sleep, 2=Grid Mon, 3=Producing, 4=Throttled, 5=Shutdown, 6=Fault, 7=Standby",
+  "source": "https://github.com/nmakel/solaredge_modbus, SolarEdge SunSpec Implementation Tech Note",
+  "registers": {
+    "c_sunspec_id": {
+      "address": 40000,
+      "type": "u32",
+      "access": "r",
+      "description": "SunSpec ID marker (0x53756E53 = 'SunS')"
+    },
+    "c_sunspec_did": {
+      "address": 40002,
+      "type": "u16",
+      "access": "r",
+      "description": "SunSpec Common Model DID (should be 1)"
+    },
+    "c_sunspec_length": {
+      "address": 40003,
+      "type": "u16",
+      "access": "r",
+      "description": "Common model length (65 or 66)"
+    },
+    "c_manufacturer": {
+      "address": 40004,
+      "type": "string",
+      "length": 32,
+      "access": "r",
+      "description": "Manufacturer name"
+    },
+    "c_model": {
+      "address": 40020,
+      "type": "string",
+      "length": 32,
+      "access": "r",
+      "description": "Model name"
+    },
+    "c_version": {
+      "address": 40044,
+      "type": "string",
+      "length": 16,
+      "access": "r",
+      "description": "Firmware version"
+    },
+    "c_serialnumber": {
+      "address": 40052,
+      "type": "string",
+      "length": 32,
+      "access": "r",
+      "description": "Serial number"
+    },
+    "c_deviceaddress": {
+      "address": 40068,
+      "type": "u16",
+      "access": "r",
+      "description": "Modbus device address"
+    },
+    "i_sunspec_did": {
+      "address": 40069,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter model DID (101=single, 102=split, 103=three-phase)"
+    },
+    "i_sunspec_length": {
+      "address": 40070,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter model length"
+    },
+    "i_ac_current": {
+      "address": 40071,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40075,
+      "unit": "A",
+      "description": "AC total current"
+    },
+    "i_ac_current_a": {
+      "address": 40072,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40075,
+      "unit": "A",
+      "description": "Phase A current"
+    },
+    "i_ac_current_b": {
+      "address": 40073,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40075,
+      "unit": "A",
+      "description": "Phase B current"
+    },
+    "i_ac_current_c": {
+      "address": 40074,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40075,
+      "unit": "A",
+      "description": "Phase C current"
+    },
+    "i_ac_current_sf": {
+      "address": 40075,
+      "type": "i16",
+      "access": "r",
+      "description": "AC current scale factor (10^x)"
+    },
+    "i_ac_voltage_ab": {
+      "address": 40076,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40082,
+      "unit": "V",
+      "description": "Phase AB voltage"
+    },
+    "i_ac_voltage_bc": {
+      "address": 40077,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40082,
+      "unit": "V",
+      "description": "Phase BC voltage"
+    },
+    "i_ac_voltage_ca": {
+      "address": 40078,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40082,
+      "unit": "V",
+      "description": "Phase CA voltage"
+    },
+    "i_ac_voltage_an": {
+      "address": 40079,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40082,
+      "unit": "V",
+      "description": "Phase A-N voltage"
+    },
+    "i_ac_voltage_bn": {
+      "address": 40080,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40082,
+      "unit": "V",
+      "description": "Phase B-N voltage"
+    },
+    "i_ac_voltage_cn": {
+      "address": 40081,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40082,
+      "unit": "V",
+      "description": "Phase C-N voltage"
+    },
+    "i_ac_voltage_sf": {
+      "address": 40082,
+      "type": "i16",
+      "access": "r",
+      "description": "AC voltage scale factor (10^x)"
+    },
+    "i_ac_power": {
+      "address": 40083,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 40084,
+      "unit": "W",
+      "description": "AC power output"
+    },
+    "i_ac_power_sf": {
+      "address": 40084,
+      "type": "i16",
+      "access": "r",
+      "description": "AC power scale factor (10^x)"
+    },
+    "i_ac_frequency": {
+      "address": 40085,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40086,
+      "unit": "Hz",
+      "description": "AC frequency"
+    },
+    "i_ac_frequency_sf": {
+      "address": 40086,
+      "type": "i16",
+      "access": "r",
+      "description": "AC frequency scale factor (10^x)"
+    },
+    "i_ac_va": {
+      "address": 40087,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 40088,
+      "unit": "VA",
+      "description": "Apparent power"
+    },
+    "i_ac_va_sf": {
+      "address": 40088,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent power scale factor"
+    },
+    "i_ac_var": {
+      "address": 40089,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 40090,
+      "unit": "var",
+      "description": "Reactive power"
+    },
+    "i_ac_var_sf": {
+      "address": 40090,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power scale factor"
+    },
+    "i_ac_pf": {
+      "address": 40091,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 40092,
+      "unit": "%",
+      "description": "Power factor"
+    },
+    "i_ac_pf_sf": {
+      "address": 40092,
+      "type": "i16",
+      "access": "r",
+      "description": "Power factor scale factor"
+    },
+    "i_ac_energy_wh": {
+      "address": 40093,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 40095,
+      "unit": "Wh",
+      "description": "Lifetime AC energy production"
+    },
+    "i_ac_energy_wh_sf": {
+      "address": 40095,
+      "type": "i16",
+      "access": "r",
+      "description": "Energy scale factor (10^x)"
+    },
+    "i_dc_current": {
+      "address": 40096,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40097,
+      "unit": "A",
+      "description": "DC current"
+    },
+    "i_dc_current_sf": {
+      "address": 40097,
+      "type": "i16",
+      "access": "r",
+      "description": "DC current scale factor"
+    },
+    "i_dc_voltage": {
+      "address": 40098,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40099,
+      "unit": "V",
+      "description": "DC voltage"
+    },
+    "i_dc_voltage_sf": {
+      "address": 40099,
+      "type": "i16",
+      "access": "r",
+      "description": "DC voltage scale factor"
+    },
+    "i_dc_power": {
+      "address": 40100,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 40101,
+      "unit": "W",
+      "description": "DC power"
+    },
+    "i_dc_power_sf": {
+      "address": 40101,
+      "type": "i16",
+      "access": "r",
+      "description": "DC power scale factor"
+    },
+    "i_temp_sink": {
+      "address": 40103,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 40106,
+      "unit": "C",
+      "description": "Heat sink temperature"
+    },
+    "i_temp_sf": {
+      "address": 40106,
+      "type": "i16",
+      "access": "r",
+      "description": "Temperature scale factor"
+    },
+    "i_status": {
+      "address": 40107,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter operating status",
+      "enum": {
+        "1": "I_STATUS_OFF",
+        "2": "I_STATUS_SLEEPING",
+        "3": "I_STATUS_STARTING",
+        "4": "I_STATUS_MPPT",
+        "5": "I_STATUS_THROTTLED",
+        "6": "I_STATUS_SHUTTING_DOWN",
+        "7": "I_STATUS_FAULT",
+        "8": "I_STATUS_STANDBY"
+      }
+    },
+    "i_status_vendor": {
+      "address": 40108,
+      "type": "u16",
+      "access": "r",
+      "description": "Vendor-specific status code"
+    }
+  },
+  "_source_verified": "Verified: Registers confirmed against official SolarEdge SunSpec Implementation Technical Note; github.com/nmakel/solaredge_modbus"
+}

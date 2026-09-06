@@ -1,0 +1,23 @@
+# SunSpec Mock Server
+# Simulates a 10kW three-phase PV inverter with battery storage
+# Model chain: 1 -> 103 -> 120 -> 123 -> 124 -> 160 -> 802 -> END
+FROM python:3.11-slim
+
+LABEL maintainer="oida"
+LABEL description="SunSpec Modbus TCP mock server for testing oida --sunspec-assess"
+
+RUN pip install --no-cache-dir "pymodbus>=3.5.0,<3.11"
+
+COPY sunspec_server.py /app/
+
+WORKDIR /app
+
+EXPOSE 5502
+
+ENV SUNSPEC_PORT=5502
+ENV PYTHONUNBUFFERED=1
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=10s --retries=3 \
+    CMD python3 -c "import socket; socket.create_connection(('localhost', 5502), timeout=2).close()" || exit 1
+
+CMD ["python3", "-u", "sunspec_server.py"]

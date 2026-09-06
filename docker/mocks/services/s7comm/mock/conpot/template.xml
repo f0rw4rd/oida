@@ -1,0 +1,40 @@
+<core>
+    <template>
+        <entity name="unit">S7-300</entity>
+        <entity name="vendor">Siemens</entity>
+        <entity name="description">Siemens S7-300 CPU 315-2 PN/DP with PROFINET interface</entity>
+        <entity name="protocols">s7comm</entity>
+        <entity name="creator">OIDA ICS Testing Framework</entity>
+    </template>
+    <databus>
+        <key_value_mappings>
+            <key name="FacilityName">
+                <value type="value">"OIDA Test Plant"</value>
+            </key>
+            <key name="SystemName">
+                <value type="value">"SIMATIC 300 station_1"</value>
+            </key>
+            <key name="SystemDescription">
+                <value type="value">"Siemens, SIMATIC S7, CPU 315-2 PN/DP"</value>
+            </key>
+            <key name="Copyright">
+                <value type="value">"Original Siemens Equipment"</value>
+            </key>
+            <key name="s7_id">
+                <value type="value">"S C-C2UR28922012"</value>
+            </key>
+            <key name="s7_module_type">
+                <value type="value">"CPU 315-2 PN/DP"</value>
+            </key>
+            <key name="s7_hw_order_code">
+                <value type="value">"6ES7 315-2EH14-0AB0"</value>
+            </key>
+            <key name="s7_firmware">
+                <value type="value">"V3.2.16"</value>
+            </key>
+            <key name="empty">
+                <value type="value">""</value>
+            </key>
+        </key_value_mappings>
+    </databus>
+</core>

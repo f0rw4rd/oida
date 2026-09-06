@@ -1,0 +1,534 @@
+{
+  "vendor": "GE",
+  "model": "EPM 5100",
+  "description": "GE EPM 5100 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "initialize_meter": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Initialize meter"
+    },
+    "clear_energy_var_hour": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Clear energy (var hour)"
+    },
+    "clear_meter_errors": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Clear meter errors"
+    },
+    "serial_number": {
+      "address": 4,
+      "type": "i32",
+      "access": "r",
+      "description": "Serial number"
+    },
+    "firmware_revision": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Firmware revision"
+    },
+    "coc_software_revision": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "COC software revision"
+    },
+    "hour": {
+      "address": 3000,
+      "type": "i16",
+      "access": "r",
+      "description": "Hour"
+    },
+    "minute": {
+      "address": 3001,
+      "type": "i16",
+      "access": "r",
+      "description": "Minute"
+    },
+    "seconds": {
+      "address": 3002,
+      "type": "i16",
+      "access": "r",
+      "description": "Seconds"
+    },
+    "password": {
+      "address": 3003,
+      "type": "i16",
+      "access": "r",
+      "description": "Password"
+    },
+    "pulse_value_interval_time_for_pulse_kyz_output_1": {
+      "address": 3005,
+      "type": "f32",
+      "access": "r",
+      "description": "Pulse value interval time for pulse KYZ output 1"
+    },
+    "pulse_value_interval_time_for_pulse_kyz_output_2": {
+      "address": 3007,
+      "type": "f32",
+      "access": "r",
+      "description": "Pulse value interval time for pulse KYZ output 2"
+    },
+    "pulse_units_for_kyz_output_1": {
+      "address": 3009,
+      "type": "u16",
+      "access": "r",
+      "description": "Pulse units for KYZ output 1"
+    },
+    "pulse_units_for_kyz_output_2": {
+      "address": 3010,
+      "type": "u16",
+      "access": "r",
+      "description": "Pulse units for KYZ output 2"
+    },
+    "programming_flags": {
+      "address": 3011,
+      "type": "u16",
+      "access": "r",
+      "description": "Programming flags"
+    },
+    "demand_interval_length_in_minutes": {
+      "address": 3013,
+      "type": "i16",
+      "access": "r",
+      "description": "Demand interval length (in minutes)"
+    },
+    "number_of_sub_intervals": {
+      "address": 3014,
+      "type": "i16",
+      "access": "r",
+      "description": "Number of sub intervals"
+    },
+    "display_scroll_time": {
+      "address": 3015,
+      "type": "i16",
+      "access": "r",
+      "description": "Display scroll time"
+    },
+    "meter_configuration": {
+      "address": 3016,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter configuration"
+    },
+    "potential_transformer_ratio": {
+      "address": 3017,
+      "type": "f32",
+      "access": "r",
+      "description": "Potential transformer ratio"
+    },
+    "current_transformer_ratio": {
+      "address": 3019,
+      "type": "f32",
+      "access": "r",
+      "description": "Current transformer ratio"
+    },
+    "energy_display_format": {
+      "address": 3021,
+      "type": "u16",
+      "access": "r",
+      "description": "Energy display format"
+    },
+    "demand_display_format": {
+      "address": 3022,
+      "type": "u16",
+      "access": "r",
+      "description": "Demand display format"
+    },
+    "voltage_display_format": {
+      "address": 3023,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage display format"
+    },
+    "amps_display_format": {
+      "address": 3024,
+      "type": "u16",
+      "access": "r",
+      "description": "Amps display format"
+    },
+    "energy_display_scale_kwh_mwh": {
+      "address": 3025,
+      "type": "u16",
+      "access": "r",
+      "description": "Energy display scale (kWh, MWh)"
+    },
+    "demand_display_scale_w_kw_mw": {
+      "address": 3026,
+      "type": "u16",
+      "access": "r",
+      "description": "Demand display scale (W, kW, MW)"
+    },
+    "voltage_display_scale_v_kv": {
+      "address": 3027,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage display scale (V, kV)"
+    },
+    "amps_display_scale_a_ka": {
+      "address": 3028,
+      "type": "u16",
+      "access": "r",
+      "description": "Amps display scale (A, kA)"
+    },
+    "local_faceplate_password": {
+      "address": 3029,
+      "type": "u16",
+      "access": "r",
+      "description": "Local faceplate password"
+    },
+    "number_of_pending_event_messages": {
+      "address": 1000,
+      "type": "i16",
+      "access": "r",
+      "description": "Number of pending event messages"
+    },
+    "kva_max_total_of_all_phases": {
+      "address": 1002,
+      "type": "f32",
+      "access": "r",
+      "description": "kVA max, total of all phases",
+      "unit": "kVA"
+    },
+    "kw_max_total_of_all_phases": {
+      "address": 1004,
+      "type": "f32",
+      "access": "r",
+      "description": "kW max, total of all phases",
+      "unit": "kW"
+    },
+    "kvar_lag_max_total_of_all_phases": {
+      "address": 1006,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar lag max, total of all phases",
+      "unit": "kvar"
+    },
+    "kvar_lead_max_total_of_all_phases": {
+      "address": 1008,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar lead max, total of all phases",
+      "unit": "kvar"
+    },
+    "current_max_phase_a": {
+      "address": 1010,
+      "type": "f32",
+      "access": "r",
+      "description": "Current max phase A",
+      "unit": "amps"
+    },
+    "current_max_phase_b": {
+      "address": 1012,
+      "type": "f32",
+      "access": "r",
+      "description": "Current max phase B",
+      "unit": "amps"
+    },
+    "current_max_phase_c": {
+      "address": 1014,
+      "type": "f32",
+      "access": "r",
+      "description": "Current max phase C",
+      "unit": "amps"
+    },
+    "kvarh_lag_total_of_all_phases": {
+      "address": 1016,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarh lag, total of all phases",
+      "unit": "kVAR"
+    },
+    "kvarh_lead_total_of_all_phases": {
+      "address": 1018,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarh lead, total of all phases",
+      "unit": "kVAR"
+    },
+    "kwh_total_of_all_phases": {
+      "address": 1020,
+      "type": "f32",
+      "access": "r",
+      "description": "kWh, total of all phases",
+      "unit": "kW"
+    },
+    "kqh_total_of_all_phases": {
+      "address": 1022,
+      "type": "f32",
+      "access": "r",
+      "description": "kQh, total of all phases"
+    },
+    "kvah_total_of_all_phases": {
+      "address": 1024,
+      "type": "f32",
+      "access": "r",
+      "description": "kVAh, total of all phases",
+      "unit": "kVA"
+    },
+    "average_power_factor_since_last_reset_all_phases": {
+      "address": 1026,
+      "type": "f32",
+      "access": "r",
+      "description": "Average power factor since last reset, all phases"
+    },
+    "power_factor_total_of_all_phases_at_maximum_kva": {
+      "address": 1028,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, total of all phases, at maximum kVA"
+    },
+    "apparent_power_demand_kva_total_of_all_phases": {
+      "address": 1030,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power demand (kVA), total of all phases",
+      "unit": "kVA"
+    },
+    "real_power_demand_kw_total_of_all_phases": {
+      "address": 1032,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power demand (kW) total of all phases",
+      "unit": "kW"
+    },
+    "reactive_power_demand_kvar_lag_total_of_all_phases": {
+      "address": 1034,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power demand (kvar lag), total of all phases",
+      "unit": "kvar"
+    },
+    "reactive_power_demand_kvar_lead_total_of_all_phases": {
+      "address": 1036,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power demand (kvar lead), total of all phases",
+      "unit": "kvar"
+    },
+    "current_demand_phase_a": {
+      "address": 1038,
+      "type": "f32",
+      "access": "r",
+      "description": "Current demand, phase A",
+      "unit": "amps"
+    },
+    "current_demand_phase_b": {
+      "address": 1040,
+      "type": "f32",
+      "access": "r",
+      "description": "Current demand, phase B",
+      "unit": "amps"
+    },
+    "current_demand_phase_c": {
+      "address": 1042,
+      "type": "f32",
+      "access": "r",
+      "description": "Current demand, phase C",
+      "unit": "amps"
+    },
+    "power_factor_all_phases_over_last_demand_interval": {
+      "address": 1044,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, all phases (over last demand interval)"
+    },
+    "real_power_kw_phase_a": {
+      "address": 1046,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power (kW), phase A",
+      "unit": "kW"
+    },
+    "real_power_kw_phase_b": {
+      "address": 1048,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power (kW), phase B",
+      "unit": "kW"
+    },
+    "real_power_kw_phase_c": {
+      "address": 1050,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power (kW), phase C",
+      "unit": "kW"
+    },
+    "reactive_power_kvar_phase_a": {
+      "address": 1052,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power (kvar), phase A",
+      "unit": "kvar"
+    },
+    "reactive_power_kvar_phase_b": {
+      "address": 1054,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power (kvar), phase B",
+      "unit": "kvar"
+    },
+    "reactive_power_kvar_phase_c": {
+      "address": 1056,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power (kvar), phase C",
+      "unit": "kvar"
+    },
+    "apparent_power_kva_phase_a": {
+      "address": 1058,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power (kVA), phase A",
+      "unit": "kVA"
+    },
+    "apparent_power_kva_phase_b": {
+      "address": 1060,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power (kVA), phase B",
+      "unit": "kVA"
+    },
+    "apparent_power_kva_phase_c": {
+      "address": 1062,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power (kVA), phase C",
+      "unit": "kVA"
+    },
+    "power_factor_phase_a": {
+      "address": 1064,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase A"
+    },
+    "power_factor_phase_b": {
+      "address": 1066,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase B"
+    },
+    "power_factor_phase_c": {
+      "address": 1068,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase C"
+    },
+    "apparent_power_kva_total_of_all_phases": {
+      "address": 1070,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power (kVA), total of all phases",
+      "unit": "kVA"
+    },
+    "real_power_kw_total_of_all_phases": {
+      "address": 1072,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power (kW), total of all phases",
+      "unit": "kW"
+    },
+    "reactive_power_kvar_total_of_all_phases": {
+      "address": 1074,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power (kvar), total of all phases",
+      "unit": "kVAR"
+    },
+    "l_n_voltage_phase_a_n": {
+      "address": 1076,
+      "type": "f32",
+      "access": "r",
+      "description": "L N voltage, phase A N",
+      "unit": "volts"
+    },
+    "l_n_voltage_phase_b_n": {
+      "address": 1078,
+      "type": "f32",
+      "access": "r",
+      "description": "L N voltage, phase B N",
+      "unit": "volts"
+    },
+    "l_n_voltage_phase_c_n": {
+      "address": 1080,
+      "type": "f32",
+      "access": "r",
+      "description": "L N voltage, phase C N",
+      "unit": "volts"
+    },
+    "l_l_voltage_phase_a_b": {
+      "address": 1082,
+      "type": "f32",
+      "access": "r",
+      "description": "L L voltage, phase A B",
+      "unit": "volts"
+    },
+    "l_l_voltage_phase_b_c": {
+      "address": 1084,
+      "type": "f32",
+      "access": "r",
+      "description": "L L voltage, phase B C",
+      "unit": "volts"
+    },
+    "l_l_voltage_phase_c_a": {
+      "address": 1086,
+      "type": "f32",
+      "access": "r",
+      "description": "L L voltage, phase C A",
+      "unit": "volts"
+    },
+    "total_power_factor_of_all_phases": {
+      "address": 1088,
+      "type": "f32",
+      "access": "r",
+      "description": "Total power factor of all phases"
+    },
+    "real_power_kw_total_of_all_phases_at_maximum_kva": {
+      "address": 1090,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power (KW), total of all phases at maximum kVA",
+      "unit": "kW"
+    },
+    "current_phase_a": {
+      "address": 1092,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase A",
+      "unit": "amps"
+    },
+    "current_phase_b": {
+      "address": 1094,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase B",
+      "unit": "amps"
+    },
+    "current_phase_c": {
+      "address": 1096,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase C",
+      "unit": "amps"
+    },
+    "neutral_current": {
+      "address": 1098,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "amps"
+    }
+  }
+}

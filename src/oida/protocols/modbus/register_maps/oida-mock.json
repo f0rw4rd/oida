@@ -1,0 +1,184 @@
+{
+  "vendor": "OIDA Mock Devices",
+  "model": "OIDA-MOCK-001",
+  "description": "OIDA Mock Modbus Server for fuzz testing",
+  "version": "2.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Mock server with various data types for testing type-aware fuzzing",
+  "source": "docker/mocks/services/modbus_server.py",
+  "mei_expected": {
+    "vendor_name": "OIDA Mock Devices",
+    "product_code": "OIDA-MOCK-001",
+    "major_minor_revision": "2.0.0"
+  },
+  "registers": {
+    "system_status": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "System status: 0=off, 1=on, 2=fault",
+      "values": {
+        "0": "off",
+        "1": "on",
+        "2": "fault"
+      }
+    },
+    "operation_mode": {
+      "address": 1,
+      "type": "u16",
+      "access": "rw",
+      "description": "Operation mode: 0=manual, 1=auto, 2=maintenance",
+      "values": {
+        "0": "manual",
+        "1": "auto",
+        "2": "maintenance"
+      }
+    },
+    "error_code": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Current error code (0=no error)"
+    },
+    "uptime_hours": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "unit": "hours",
+      "description": "System uptime in hours"
+    },
+    "temperature_setpoint": {
+      "address": 10,
+      "type": "f32",
+      "access": "rw",
+      "unit": "\u00b0C",
+      "description": "Temperature setpoint",
+      "range": {
+        "min": -40.0,
+        "max": 120.0
+      }
+    },
+    "pressure_setpoint": {
+      "address": 12,
+      "type": "f32",
+      "access": "rw",
+      "unit": "bar",
+      "description": "Pressure setpoint",
+      "range": {
+        "min": 0.0,
+        "max": 10.0
+      }
+    },
+    "flow_rate_setpoint": {
+      "address": 14,
+      "type": "f32",
+      "access": "rw",
+      "unit": "L/min",
+      "description": "Flow rate setpoint",
+      "range": {
+        "min": 0.0,
+        "max": 500.0
+      }
+    },
+    "current_temperature": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "unit": "\u00b0C",
+      "description": "Current temperature reading"
+    },
+    "current_pressure": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "unit": "bar",
+      "description": "Current pressure reading"
+    },
+    "current_flow_rate": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "unit": "L/min",
+      "description": "Current flow rate reading"
+    },
+    "total_runtime": {
+      "address": 30,
+      "type": "u32",
+      "access": "r",
+      "unit": "seconds",
+      "description": "Total runtime in seconds"
+    },
+    "cycle_count": {
+      "address": 32,
+      "type": "u32",
+      "access": "rw",
+      "description": "Process cycle counter"
+    },
+    "motor_speed_pct": {
+      "address": 40,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "description": "Motor speed percentage",
+      "range": {
+        "min": 0,
+        "max": 100
+      }
+    },
+    "valve_position_pct": {
+      "address": 41,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "description": "Valve position percentage",
+      "range": {
+        "min": 0,
+        "max": 100
+      }
+    },
+    "pump_enabled": {
+      "address": 42,
+      "type": "u16",
+      "access": "rw",
+      "description": "Pump enable: 0=off, 1=on",
+      "values": {
+        "0": "off",
+        "1": "on"
+      }
+    },
+    "alarm_threshold_high": {
+      "address": 50,
+      "type": "f32",
+      "access": "rw",
+      "unit": "\u00b0C",
+      "description": "High alarm threshold"
+    },
+    "alarm_threshold_low": {
+      "address": 52,
+      "type": "f32",
+      "access": "rw",
+      "unit": "\u00b0C",
+      "description": "Low alarm threshold"
+    },
+    "pid_kp": {
+      "address": 60,
+      "type": "f32",
+      "access": "rw",
+      "description": "PID proportional gain (Kp)"
+    },
+    "pid_ki": {
+      "address": 62,
+      "type": "f32",
+      "access": "rw",
+      "description": "PID integral gain (Ki)"
+    },
+    "pid_kd": {
+      "address": 64,
+      "type": "f32",
+      "access": "rw",
+      "description": "PID derivative gain (Kd)"
+    }
+  }
+}

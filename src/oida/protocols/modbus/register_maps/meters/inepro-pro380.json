@@ -1,0 +1,451 @@
+{
+  "vendor": "Inepro",
+  "model": "PRO380",
+  "description": "Imported from mbmd (inepro)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/inepro.go",
+  "registers": {
+    "voltage": {
+      "address": 20480,
+      "type": "f32",
+      "access": "ro",
+      "description": "Average voltage",
+      "function_code": 3
+    },
+    "voltage_l1": {
+      "address": 20482,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 line to neutral volts",
+      "function_code": 3
+    },
+    "voltage_l2": {
+      "address": 20484,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 line to neutral volts",
+      "function_code": 3
+    },
+    "voltage_l3": {
+      "address": 20486,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 line to neutral volts",
+      "function_code": 3
+    },
+    "frequency": {
+      "address": 20488,
+      "type": "f32",
+      "access": "ro",
+      "description": "Frequency of supply voltages",
+      "function_code": 3
+    },
+    "current": {
+      "address": 20490,
+      "type": "f32",
+      "access": "ro",
+      "description": "Average current",
+      "function_code": 3
+    },
+    "current_l1": {
+      "address": 20492,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 current",
+      "function_code": 3
+    },
+    "current_l2": {
+      "address": 20494,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 current",
+      "function_code": 3
+    },
+    "current_l3": {
+      "address": 20496,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 current",
+      "function_code": 3
+    },
+    "power": {
+      "address": 20498,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system power (kW)",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "power_l1": {
+      "address": 20500,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 active power (kW)",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "power_l2": {
+      "address": 20502,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 active power (kW)",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "power_l3": {
+      "address": 20504,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 active power (kW)",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "reactive_power": {
+      "address": 20506,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system VAr (kVAr)",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "reactive_power_l1": {
+      "address": 20508,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 reactive power (kVAr)",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "reactive_power_l2": {
+      "address": 20510,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 reactive power (kVAr)",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "reactive_power_l3": {
+      "address": 20512,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 reactive power (kVAr)",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "apparent_power": {
+      "address": 20514,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system volt amps (kVA)",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "apparent_power_l1": {
+      "address": 20516,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 apparent power (kVA)",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "apparent_power_l2": {
+      "address": 20518,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 apparent power (kVA)",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "apparent_power_l3": {
+      "address": 20520,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 apparent power (kVA)",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "cosphi": {
+      "address": 20522,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system power factor",
+      "function_code": 3
+    },
+    "cosphi_l1": {
+      "address": 20524,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 power factor",
+      "function_code": 3
+    },
+    "cosphi_l2": {
+      "address": 20526,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 power factor",
+      "function_code": 3
+    },
+    "cosphi_l3": {
+      "address": 20528,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 power factor",
+      "function_code": 3
+    },
+    "sum": {
+      "address": 24576,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kWh",
+      "function_code": 3
+    },
+    "sum_t1": {
+      "address": 24578,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kWh Tariff 1",
+      "function_code": 3
+    },
+    "sum_t2": {
+      "address": 24580,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kWh Tariff 2",
+      "function_code": 3
+    },
+    "sum_l1": {
+      "address": 24582,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 total kWh",
+      "function_code": 3
+    },
+    "sum_l2": {
+      "address": 24584,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 total kWh",
+      "function_code": 3
+    },
+    "sum_l3": {
+      "address": 24586,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 total kWh",
+      "function_code": 3
+    },
+    "import": {
+      "address": 24588,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Import kWh",
+      "function_code": 3
+    },
+    "import_t1": {
+      "address": 24590,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Import kWh Tariff 1",
+      "function_code": 3
+    },
+    "import_t2": {
+      "address": 24592,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Import kWh Tariff 2",
+      "function_code": 3
+    },
+    "import_l1": {
+      "address": 24594,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 import kWh",
+      "function_code": 3
+    },
+    "import_l2": {
+      "address": 24596,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 import kWh",
+      "function_code": 3
+    },
+    "import_l3": {
+      "address": 24598,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 import kWh",
+      "function_code": 3
+    },
+    "export": {
+      "address": 24600,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Export kWh",
+      "function_code": 3
+    },
+    "export_t1": {
+      "address": 24602,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Export kWh Tariff 1",
+      "function_code": 3
+    },
+    "export_t2": {
+      "address": 24604,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Export kWh Tariff 2",
+      "function_code": 3
+    },
+    "export_l1": {
+      "address": 24606,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 export kWh",
+      "function_code": 3
+    },
+    "export_l2": {
+      "address": 24608,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 export kWh",
+      "function_code": 3
+    },
+    "export_l3": {
+      "address": 24610,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 export kWh",
+      "function_code": 3
+    },
+    "reactive_sum": {
+      "address": 24612,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kVArh",
+      "function_code": 3
+    },
+    "reactive_sum_t1": {
+      "address": 24614,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kVArh Tariff 1",
+      "function_code": 3
+    },
+    "reactive_sum_t2": {
+      "address": 24616,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kVArh Tariff 2",
+      "function_code": 3
+    },
+    "reactive_sum_l1": {
+      "address": 24618,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 total kVArh",
+      "function_code": 3
+    },
+    "reactive_sum_l2": {
+      "address": 24620,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 total kVArh",
+      "function_code": 3
+    },
+    "reactive_sum_l3": {
+      "address": 24622,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 total kVArh",
+      "function_code": 3
+    },
+    "reactive_import": {
+      "address": 24624,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Import kVArh",
+      "function_code": 3
+    },
+    "reactive_import_t1": {
+      "address": 24626,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Import kVArh Tariff 1",
+      "function_code": 3
+    },
+    "reactive_import_t2": {
+      "address": 24628,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Import kVArh Tariff 2",
+      "function_code": 3
+    },
+    "reactive_import_l1": {
+      "address": 24630,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 import kVArh",
+      "function_code": 3
+    },
+    "reactive_import_l2": {
+      "address": 24632,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 import kVArh",
+      "function_code": 3
+    },
+    "reactive_import_l3": {
+      "address": 24634,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 import kVArh",
+      "function_code": 3
+    },
+    "reactive_export": {
+      "address": 24636,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Export kVArh",
+      "function_code": 3
+    },
+    "reactive_export_t1": {
+      "address": 24638,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Export kVArh Tariff 1",
+      "function_code": 3
+    },
+    "reactive_export_t2": {
+      "address": 24640,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Export kVArh Tariff 2",
+      "function_code": 3
+    },
+    "reactive_export_l1": {
+      "address": 24642,
+      "type": "f32",
+      "access": "ro",
+      "description": "L1 export kVArh",
+      "function_code": 3
+    },
+    "reactive_export_l2": {
+      "address": 24644,
+      "type": "f32",
+      "access": "ro",
+      "description": "L2 export kVArh",
+      "function_code": 3
+    },
+    "reactive_export_l3": {
+      "address": 24646,
+      "type": "f32",
+      "access": "ro",
+      "description": "L3 export kVArh",
+      "function_code": 3
+    }
+  },
+  "_source_verified": "Verified: PRO380-Mod registers at 0x5000 confirmed; mbmd/meters/rs485/inepro.go source verified"
+}

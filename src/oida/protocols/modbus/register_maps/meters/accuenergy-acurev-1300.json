@@ -1,0 +1,313 @@
+{
+  "vendor": "Accuenergy",
+  "model": "ACUREV 1300",
+  "description": "Accuenergy ACUREV 1300 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "options": {
+      "address": 4132,
+      "type": "str",
+      "access": "r",
+      "description": "Options"
+    },
+    "version": {
+      "address": 4140,
+      "type": "str",
+      "access": "r",
+      "description": "Version"
+    },
+    "serial_number": {
+      "address": 4148,
+      "type": "str",
+      "access": "r",
+      "description": "Serial number"
+    },
+    "device_address": {
+      "address": 4164,
+      "type": "u16",
+      "access": "r",
+      "description": "Device address"
+    },
+    "id": {
+      "address": 4165,
+      "type": "u16",
+      "access": "r",
+      "description": "Id"
+    },
+    "lenth": {
+      "address": 4166,
+      "type": "u16",
+      "access": "r",
+      "description": "Lenth"
+    },
+    "amps_total_sunspec_total_current_acurev_1300": {
+      "address": 4167,
+      "type": "i16",
+      "access": "r",
+      "description": "Amps (total): sunspec; total current: acurev 1300"
+    },
+    "amps_phase_a_sunspec_phase_a_current_acurev_1300": {
+      "address": 4168,
+      "type": "i16",
+      "access": "r",
+      "description": "Amps phase a: sunspec; phase A current: acurev 1300"
+    },
+    "amps_phase_b_sunspec_phase_b_current_acurev_1300": {
+      "address": 4169,
+      "type": "i16",
+      "access": "r",
+      "description": "Amps phase b: sunspec; phase B current: acurev 1300"
+    },
+    "amps_phase_c_sunspec_phase_c_current_acurev_1300": {
+      "address": 4170,
+      "type": "i16",
+      "access": "r",
+      "description": "Amps phase c: sunspec; phase C current: acurev 1300"
+    },
+    "voltage_ln_average_sunspec_phase_average_voltage_acurev_1300": {
+      "address": 4172,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage ln (average): sunspec; phase average voltage: acurev 1300"
+    },
+    "phase_voltage_an_sunspec_phase_a_voltage_acurev_1300": {
+      "address": 4173,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase voltage an: sunspec; phase A voltage: acurev 1300"
+    },
+    "phase_voltage_bn_sunspec_phase_b_voltage_acurev_1300": {
+      "address": 4174,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase voltage bn: sunspec; phase B voltage: acurev 1300"
+    },
+    "phase_voltage_cn_sunspec_phase_c_voltage_acurev_1300": {
+      "address": 4175,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase voltage cn: sunspec; phase C voltage: acurev 1300"
+    },
+    "voltage_ll_average_sunspec_line_average_voltage_acurev_1300": {
+      "address": 4176,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage ll (average): sunspec; line average voltage: acurev 1300"
+    },
+    "phase_voltage_ab_sunspec_line_ab_voltage_acurev_1300": {
+      "address": 4177,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase voltage ab: sunspec; line ab voltage: acurev 1300"
+    },
+    "phase_voltage_bc_sunspec_line_bc_voltage_acurev_1300": {
+      "address": 4178,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase voltage bc: sunspec; line bc voltage: acurev 1300"
+    },
+    "phase_voltage_ca_sunspec_line_ca_voltage_acurev_1300": {
+      "address": 4179,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase voltage ca: sunspec; line ca voltage: acurev 1300"
+    },
+    "frequency": {
+      "address": 4181,
+      "type": "i16",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "total_real_power_sunspec_total_active_power_acurev_1300": {
+      "address": 4183,
+      "type": "i16",
+      "access": "r",
+      "description": "Total real power: sunspec; total active power: acurev 1300"
+    },
+    "watts_phase_a_sunspec_phase_a_active_power_acurev_1300": {
+      "address": 4184,
+      "type": "i16",
+      "access": "r",
+      "description": "Watts phase a: sunspec; phase A active power: acurev 1300"
+    },
+    "watts_phase_b_sunspec_phase_b_active_power_acurev_1300": {
+      "address": 4185,
+      "type": "i16",
+      "access": "r",
+      "description": "Watts phase b: sunspec; phase B active power: acurev 1300"
+    },
+    "watts_phase_c_sunspec_phase_c_active_power_acurev_1300": {
+      "address": 4186,
+      "type": "i16",
+      "access": "r",
+      "description": "Watts phase c: sunspec; phase C active power: acurev 1300"
+    },
+    "ac_apparent_power_va_sunspec_total_apparent_power_acurev_1300": {
+      "address": 4188,
+      "type": "i16",
+      "access": "r",
+      "description": "Ac apparent power va: sunspec; total apparent power: acurev 1300"
+    },
+    "va_phase_a_sunspec_phase_a_apparent_power_acurev_1300": {
+      "address": 4189,
+      "type": "i16",
+      "access": "r",
+      "description": "Va phase a: sunspec; phase A apparent power: acurev 1300"
+    },
+    "va_phase_b_sunspec_phase_b_apparent_power_acurev_1300": {
+      "address": 4190,
+      "type": "i16",
+      "access": "r",
+      "description": "Va phase b: sunspec; phase B apparent power: acurev 1300"
+    },
+    "va_phaseca_sunspec_phase_c_apparent_power_acurev_1300": {
+      "address": 4191,
+      "type": "i16",
+      "access": "r",
+      "description": "Va phaseca: sunspec; phase C apparent power: acurev 1300"
+    },
+    "reactive_power_var_sunspec_total_reactive_power_acurev_1300": {
+      "address": 4193,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power var: sunspec; total reactive power: acurev 1300"
+    },
+    "var_phase_a_sunspec_phase_a_reactive_power_acurev_1300": {
+      "address": 4194,
+      "type": "i16",
+      "access": "r",
+      "description": "Var phase a: sunspec; phase A reactive power: acurev 1300"
+    },
+    "4195_var_phase_b_sunspec_phase_b_reactive_power_acurev_1300": {
+      "address": 4195,
+      "type": "i16",
+      "access": "r",
+      "description": "4195 var phase b: sunspec; phase B reactive power: acurev 1300"
+    },
+    "var_phase_c_sunspec_phase_c_reactive_power_acurev_1300": {
+      "address": 4196,
+      "type": "i16",
+      "access": "r",
+      "description": "Var phase c: sunspec; phase C reactive power: acurev 1300"
+    },
+    "power_factor": {
+      "address": 4198,
+      "type": "i16",
+      "access": "r",
+      "description": "Power factor"
+    },
+    "pf_phase_a": {
+      "address": 4199,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf phase A"
+    },
+    "pf_phase_b": {
+      "address": 4200,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf phase B"
+    },
+    "pf_phase_c": {
+      "address": 4201,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf phase C"
+    },
+    "total_real_energy_exported_sunspec_total_active_energy_exported_acurev_1300": {
+      "address": 4203,
+      "type": "f32",
+      "access": "r",
+      "description": "Total real energy exported: sunspec total active energy exported: acurev 1300"
+    },
+    "total_watt_hours_exported_in_phase_a_sunspec_total_active_energy_exported_in_phase_a_acurev_1300": {
+      "address": 4205,
+      "type": "f32",
+      "access": "r",
+      "description": "Total watt hours exported in phase a: sunspec; total active energy exported in phase a: acurev 1300"
+    },
+    "total_watt_hours_exported_in_phase_b_sunspec_total_active_energy_exported_in_phase_b_acurev_1300": {
+      "address": 4207,
+      "type": "f32",
+      "access": "r",
+      "description": "Total watt hours exported in phase b: sunspec; total active energy exported in phase b: acurev 1300"
+    },
+    "total_watt_hours_exported_in_phase_c_sunspec_total_active_energy_exported_in_phase_c_acurev_1300": {
+      "address": 4209,
+      "type": "f32",
+      "access": "r",
+      "description": "Total watt hours exported in phase c: sunspec; total active energy exported in phase c: acurev 1300"
+    },
+    "total_real_energy_imported_sunspec_total_active_energy_imported_acurev_1300": {
+      "address": 4211,
+      "type": "f32",
+      "access": "r",
+      "description": "Total real energy imported: sunspec; total active energy imported: acurev 1300"
+    },
+    "total_watt_hours_imported_phase_a_sunspec_total_active_energy_imported_in_phase_a_acurev_1300": {
+      "address": 4213,
+      "type": "f32",
+      "access": "r",
+      "description": "Total watt hours imported phase a: sunspec; total active energy imported in phase a: acurev 1300"
+    },
+    "total_watt_hours_imported_phase_b_sunspec_total_active_energy_imported_in_phase_b_acurev_1300": {
+      "address": 4215,
+      "type": "f32",
+      "access": "r",
+      "description": "Total watt hours imported phase b: sunspec; total active energy imported in phase b: acurev 1300"
+    },
+    "total_watt_hours_imported_phase_c_sunspec_total_active_energy_imported_in_phase_c_acurev_1300": {
+      "address": 4217,
+      "type": "f32",
+      "access": "r",
+      "description": "Total watt hours imported phase c: sunspec; total active energy imported in phase c: acurev 1300"
+    },
+    "total_va_hours_exported_sunspec_total_apparent_power_exported_acurev_1300": {
+      "address": 4220,
+      "type": "f32",
+      "access": "r",
+      "description": "Total va hours exported: sunspec; total apparent power exported: acurev 1300"
+    },
+    "total_va_hours_exported_phase_a_sunspec_total_apparent_power_exported_in_phase_a_acurev_1300": {
+      "address": 4222,
+      "type": "f32",
+      "access": "r",
+      "description": "Total va hours exported phase a: sunspec; total apparent power exported in phase a: acurev 1300"
+    },
+    "total_va_hours_exported_phase_b_sunspec_total_apparent_power_exported_in_phase_b_acurev_1300": {
+      "address": 4224,
+      "type": "f32",
+      "access": "r",
+      "description": "Total va hours exported phase b: sunspec; total apparent power exported in phase b: acurev 1300"
+    },
+    "total_va_hours_exported_phase_c_sunspec_total_apparent_power_exported_in_phase_c_acurev_1300": {
+      "address": 4226,
+      "type": "f32",
+      "access": "r",
+      "description": "Total va hours exported phase c: sunspec; total apparent power exported in phase c: acurev 1300"
+    },
+    "total_va_hours_imported_sunspec_total_apparent_power_imported_acurev_1300": {
+      "address": 4228,
+      "type": "f32",
+      "access": "r",
+      "description": "Total va hours imported: sunspec; total apparent power imported: acurev 1300"
+    },
+    "total_va_hours_imported_phase_a_sunspec_total_apparent_power_imported_in_phase_a_acurev_1300": {
+      "address": 4230,
+      "type": "f32",
+      "access": "r",
+      "description": "Total va hours imported phase a: sunspec; total apparent power imported in phase a: acurev 1300"
+    },
+    "total_va_hours_imported_phase_b_sunspec_total_apparent_power_imported_in_phase_b_acurev_1300": {
+      "address": 4232,
+      "type": "f32",
+      "access": "r",
+      "description": "Total va hours imported phase b: sunspec; total apparent power imported in phase b: acurev 1300"
+    }
+  }
+}

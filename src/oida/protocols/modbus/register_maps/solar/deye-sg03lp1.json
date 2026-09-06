@@ -1,0 +1,237 @@
+{
+  "vendor": "Deye",
+  "model": "SG03LP1 Single-Phase Grid-Tie Inverter",
+  "description": "Deye SG03LP1 series single-phase grid-tie inverter with 2 MPPT inputs (no battery)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Converted from deye-inverter-mqtt project. Holding registers (FC03). Grid-tie only, no battery support.",
+  "source": "https://github.com/kbialek/deye-inverter-mqtt",
+  "registers": {
+    "pv1_power": {
+      "address": 186,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "PV1 Power"
+    },
+    "pv2_power": {
+      "address": 187,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "PV2 Power"
+    },
+    "pv1_voltage": {
+      "address": 109,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV1 Voltage"
+    },
+    "pv2_voltage": {
+      "address": 111,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV2 Voltage"
+    },
+    "pv1_current": {
+      "address": 110,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "PV1 Current"
+    },
+    "pv2_current": {
+      "address": 112,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "PV2 Current"
+    },
+    "daily_production": {
+      "address": 108,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily Production"
+    },
+    "total_production": {
+      "address": 96,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total Production"
+    },
+    "micro_inverter_power": {
+      "address": 166,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "Micro-inverter Power"
+    },
+    "total_grid_power": {
+      "address": 169,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Total Grid Power"
+    },
+    "grid_voltage_l1": {
+      "address": 150,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid Voltage L1"
+    },
+    "grid_voltage_l2": {
+      "address": 151,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid Voltage L2"
+    },
+    "internal_ct_l1_power": {
+      "address": 167,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Internal CT L1 Power"
+    },
+    "internal_ct_l2_power": {
+      "address": 168,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Internal CT L2 Power"
+    },
+    "external_ct_l1_power": {
+      "address": 170,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "External CT L1 Power"
+    },
+    "external_ct_l2_power": {
+      "address": 171,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "External CT L2 Power"
+    },
+    "daily_energy_bought": {
+      "address": 76,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily Energy Bought"
+    },
+    "daily_energy_sold": {
+      "address": 77,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily Energy Sold"
+    },
+    "total_energy_bought": {
+      "address": 78,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total Energy Bought"
+    },
+    "grid_frequency": {
+      "address": 79,
+      "type": "u16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Grid Frequency"
+    },
+    "total_energy_sold": {
+      "address": 81,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total Energy Sold"
+    },
+    "total_power": {
+      "address": 175,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Total Power"
+    },
+    "current_l1": {
+      "address": 164,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Current L1"
+    },
+    "current_l2": {
+      "address": 165,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Current L2"
+    },
+    "inverter_l1_power": {
+      "address": 173,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Inverter L1 Power"
+    },
+    "inverter_l2_power": {
+      "address": 174,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Inverter L2 Power"
+    },
+    "load_frequency": {
+      "address": 192,
+      "type": "u16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Load Frequency"
+    },
+    "dc_temperature": {
+      "address": 90,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "offset": -100,
+      "description": "DC Temperature"
+    },
+    "ac_temperature": {
+      "address": 91,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "offset": -100,
+      "description": "AC Temperature"
+    }
+  },
+  "_source_verified": "Verified: SG03LP1 single-phase grid-tie confirmed in deye-inverter-mqtt"
+}

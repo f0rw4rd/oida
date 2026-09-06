@@ -1,0 +1,3316 @@
+# Core ICS + Network Mock Services
+# Start with: just up (or docker compose -f compose.yml up -d)
+
+services:
+  modbus-mock:
+    build:
+      context: ./services/modbus/mock
+      dockerfile: Dockerfile.modbus
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-modbus:latest
+    container_name: modbus-mock-server
+    hostname: modbus-server
+    ports:
+      - "502:502"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 502), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "modbus"
+      oida.description: "Modbus TCP server, unit IDs 1-10, coils/registers/input, no auth"
+      oida.ports: "502"
+
+  modbus-tls:
+    build:
+      context: ./services/modbus/mock
+      dockerfile: Dockerfile.modbus-tls
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-modbus-tls:latest
+    container_name: modbus-tls-server
+    hostname: modbus-tls
+    ports:
+      - "802:802"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - MODBUS_TLS_PORT=802
+      - MODBUS_MTLS=1
+    volumes:
+      - ./certs/ca.pem:/certs/ca.pem:ro
+      - ./certs/modbus-tls/server.pem:/certs/server.pem:ro
+      - ./certs/modbus-tls/server.key:/certs/server.key:ro
+      - ./certs/client.pem:/certs/client.pem:ro
+      - ./certs/client.key:/certs/client.key:ro
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 802), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "modbus"
+      oida.description: "Modbus TLS with mTLS client auth"
+      oida.ports: "802"
+
+  modbus-rtu-tcp:
+    build:
+      context: ./services/modbus/mock
+      dockerfile: Dockerfile.modbus-rtu-tcp
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-modbus-rtu-tcp:latest
+    container_name: modbus-rtu-tcp-server
+    hostname: modbus-rtu-tcp
+    ports:
+      - "5030:5030"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - MODBUS_RTU_TCP_PORT=5030
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 5030), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "modbus"
+      oida.description: "Modbus RTU-over-TCP gateway (3 slave units)"
+      oida.ports: "5030"
+
+  # Conpot Modbus TCP Honeypot (Honeynet Project)
+  modbus-conpot:
+    build:
+      context: ./services/modbus/mock/conpot
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-conpot-modbus:latest
+    container_name: modbus-conpot-server
+    hostname: modbus-conpot
+    ports:
+      - "5503:5020"
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 5020), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      oida.protocol: "modbus"
+      oida.group: "modbus"
+      oida.description: "Conpot Modbus TCP honeypot, Schneider M340 sim, FC 1-4 + MEI device ID"
+      oida.ports: "5503"
+
+  opcua-mock:
+    build:
+      context: ./services/opcua/mock
+      dockerfile: Dockerfile.opcua
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua:latest
+    container_name: opcua-mock-server
+    hostname: opcua-server
+    ports:
+      - "4840:4840"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 4840), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "opcua"
+      oida.description: "OPC UA server, anonymous access, no encryption, standard namespace"
+      oida.ports: "4840"
+
+  ads-mock:
+    build:
+      context: ./services/ads/mock
+      dockerfile: Dockerfile.ads
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ads:latest
+    container_name: ads-mock-server
+    hostname: ads-server
+    ports:
+      - "48898:48898"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 48898), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "ads"
+      oida.description: "Beckhoff ADS/TwinCAT simulation (Python sim, no auth)"
+      oida.ports: "48898"
+
+  ads-twincat-motor:
+    build:
+      context: ./services/ads/mock
+      dockerfile: Dockerfile.ads-twincat
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ads-twincat:latest
+    container_name: ads-twincat-motor
+    hostname: ads-twincat-motor
+    ports:
+      - "48901:48898"
+    environment:
+      # NetId and loopback subnet are derived at startup from the container's
+      # own interface (<ip>.1.1 / <network>), so no static IP pin, hardcoded
+      # NetId, or pinned subnet is needed.
+      - AmsRouter__Name=OIDA-TwinCAT-Motor
+      # Symbol-server profile (motor controller).
+      - OIDA_DEVICE_NAME=OIDA-Motor
+      - OIDA_DEVICE_VERSION=3.1.4024
+      - OIDA_ADS_STATE=Run
+      - OIDA_DEVICE_STATE=0
+      - OIDA_SYMBOLS=GVL.MotorSpeed:REAL:1480.5,GVL.Current:REAL:12.7,GVL.Running:BOOL:1,GVL.Temperature:INT:42
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "dotnet", "OidaTwinCatMock.dll", "--healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    labels:
+      oida.group: "ads"
+      oida.description: "REAL Beckhoff TwinCAT ADS server (official TwinCAT.Ads .NET, MIT) - motor controller profile, AmsNetId derived from container IP, AMS port 851, state RUN"
+      oida.ports: "48901"
+
+  ads-twincat-hvac:
+    build:
+      context: ./services/ads/mock
+      dockerfile: Dockerfile.ads-twincat
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ads-twincat:latest
+    container_name: ads-twincat-hvac
+    hostname: ads-twincat-hvac
+    ports:
+      - "48902:48898"
+    environment:
+      # NetId and loopback subnet are derived at startup from the container's
+      # own interface (<ip>.1.1 / <network>), so no static IP pin, hardcoded
+      # NetId, or pinned subnet is needed.
+      - AmsRouter__Name=OIDA-TwinCAT-HVAC
+      # Symbol-server profile (HVAC controller).
+      - OIDA_DEVICE_NAME=OIDA-HVAC
+      - OIDA_DEVICE_VERSION=2.11.2305
+      - OIDA_ADS_STATE=Config
+      - OIDA_DEVICE_STATE=0
+      - OIDA_SYMBOLS=GVL.RoomTemp:REAL:21.5,GVL.Setpoint:REAL:22.0,GVL.FanSpeed:INT:60,GVL.HeatCall:BOOL:0
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "dotnet", "OidaTwinCatMock.dll", "--healthcheck"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s
+    labels:
+      oida.group: "ads"
+      oida.description: "REAL Beckhoff TwinCAT ADS server (official TwinCAT.Ads .NET, MIT) - HVAC controller profile, AmsNetId derived from container IP, AMS port 851, state CONFIG"
+      oida.ports: "48902"
+
+  ethernetip-mock:
+    build:
+      context: ./services/ethernetip/mock
+      dockerfile: Dockerfile.ethernetip
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ethernetip:latest
+    container_name: ethernetip-mock-server
+    hostname: ethernetip-server
+    ports:
+      - "44818:44818"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 44818), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "ethernetip"
+      oida.description: "EtherNet/IP CIP server, identity + ListServices, no auth"
+      oida.ports: "44818"
+
+  bacnet-mock:
+    build:
+      context: ./services/bacnet/mock
+      dockerfile: Dockerfile.bacnet
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnet:latest
+    container_name: bacnet-mock-server
+    hostname: bacnet-server
+    ports:
+      - "47808:47808/udp"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.settimeout(2); s.sendto(b'\\x81\\x0a\\x00\\x04', ('localhost', 47808)); s.close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "bacnet"
+      oida.description: "BACnet/IP server, device 1234, analog/binary/multi-state objects, no auth"
+      oida.ports: "47808/udp"
+
+  # Conpot BACnet/IP Honeypot (Honeynet Project)
+  bacnet-conpot:
+    build:
+      context: ./services/bacnet/mock/conpot
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-conpot-bacnet:latest
+    container_name: bacnet-conpot-server
+    hostname: bacnet-conpot
+    ports:
+      - "47812:47808/udp"
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.settimeout(2); s.sendto(b'\\x81\\x0a\\x00\\x04', ('localhost', 47808)); s.close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      oida.protocol: "bacnet"
+      oida.group: "bacnet"
+      oida.description: "Conpot BACnet/IP honeypot, Alerton VAV-DD controller sim, device 36113, WhoIs/ReadProperty"
+      oida.ports: "47812/udp"
+
+  # Real bacnet-stack (Steve Karg) bacserv server - genuine BACnet/IP software,
+  # built from source at tag bacnet-stack-1.4.4 (no binaries committed).
+  # Three profiles (rtu/building/vav) share one image, differ by device
+  # instance, name, vendor id, model, and object inventory.
+  # NOTE: bacpypes3 Who-Is auto-discovery is broadcast-based and does not
+  # traverse Docker's UDP port-map; scan with `--device-id <instance>`.
+  bacnet-realstack-rtu:
+    build:
+      context: ./services/bacnet/mock/realstack
+      dockerfile: Dockerfile.bacnet-realstack
+      args:
+        BACNET_TAG: bacnet-stack-1.4.4
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnet-realstack:latest
+    container_name: bacnet-realstack-rtu
+    hostname: bacnet-rtu
+    ports:
+      - "47820:47808/udp"
+    environment:
+      - TZ=UTC
+      - BACNET_PROFILE=rtu
+      - BACNET_DEVICE_INSTANCE=11001
+      - BACNET_DEVICE_NAME=RTU-Compact-A
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "-u", "localhost", "47808"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "bacnet"
+      oida.group: "bacnet"
+      oida.description: "Real bacnet-stack 1.4.4 bacserv, RTU profile, device 11001, vendor 260, small AI/AO/BI/BO point set"
+      oida.ports: "47820/udp"
+
+  bacnet-realstack-building:
+    build:
+      context: ./services/bacnet/mock/realstack
+      dockerfile: Dockerfile.bacnet-realstack
+      args:
+        BACNET_TAG: bacnet-stack-1.4.4
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnet-realstack:latest
+    container_name: bacnet-realstack-building
+    hostname: bacnet-building
+    ports:
+      - "47821:47808/udp"
+    environment:
+      - TZ=UTC
+      - BACNET_PROFILE=building
+      - BACNET_DEVICE_INSTANCE=22002
+      - BACNET_DEVICE_NAME=Building-Supervisor
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "-u", "localhost", "47808"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "bacnet"
+      oida.group: "bacnet"
+      oida.description: "Real bacnet-stack 1.4.4 bacserv, large building-controller profile, device 22002, vendor 15, 12 AI / 8 AO / 10 BI / 6 BO + setpoints"
+      oida.ports: "47821/udp"
+
+  bacnet-realstack-vav:
+    build:
+      context: ./services/bacnet/mock/realstack
+      dockerfile: Dockerfile.bacnet-realstack
+      args:
+        BACNET_TAG: bacnet-stack-1.4.4
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnet-realstack:latest
+    container_name: bacnet-realstack-vav
+    hostname: bacnet-vav
+    ports:
+      - "47822:47808/udp"
+    environment:
+      - TZ=UTC
+      - BACNET_PROFILE=vav
+      - BACNET_DEVICE_INSTANCE=33003
+      - BACNET_DEVICE_NAME=VAV-Box-12
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "-u", "localhost", "47808"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "bacnet"
+      oida.group: "bacnet"
+      oida.description: "Real bacnet-stack 1.4.4 bacserv, VAV terminal-unit profile, device 33003, vendor 5, COV-friendly AV/MSV present-values"
+      oida.ports: "47822/udp"
+
+  # --- BACnet/SC (Secure Connect) real-stack mocks --------------------------
+  # Genuine bacnet-stack BSC server (BACDL=bsc) in direct-connect accept mode
+  # over WSS/TLS. The SECURE image is built STRICT=1 (mutual-auth required +
+  # TLS 1.3 floor); the WEAK image is the stock binary (accepts anonymous/rogue
+  # clients + TLS 1.2) — used to validate OIDA's automatic TLS findings fire.
+  # The container mints its own PKI on first boot into /certs (a named volume),
+  # which the integration tests read to present a client cert.
+  bacnetsc-realstack-secure:
+    build:
+      context: ./services/bacnetsc/mock/realstack
+      dockerfile: Dockerfile.bacnetsc-realstack
+      args:
+        BACNET_TAG: bacnet-stack-1.4.4
+        STRICT: "1"
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnetsc-realstack-secure:latest
+    container_name: bacnetsc-realstack-secure
+    hostname: bacnetsc-secure
+    ports:
+      - "47830:47800/tcp"
+    environment:
+      - TZ=UTC
+      - BACNET_PROFILE=building
+      - BACNET_DEVICE_INSTANCE=44004
+      - BACNET_DEVICE_NAME=BACnetSC-Secure-Supervisor
+      - BACNET_SC_DIRECT_PORT=47800
+    volumes:
+      - bacnetsc-secure-certs:/certs
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "47800"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "bacnetsc"
+      oida.group: "bacnetsc"
+      oida.description: "Real bacnet-stack 1.4.4 BSC device over WSS/TLS, STRICT posture (mutual auth required, TLS 1.3), direct-connect on 47830, device 44004"
+      oida.ports: "47830/tcp"
+
+  bacnetsc-realstack-weak:
+    build:
+      context: ./services/bacnetsc/mock/realstack
+      dockerfile: Dockerfile.bacnetsc-realstack
+      args:
+        BACNET_TAG: bacnet-stack-1.4.4
+        STRICT: "0"
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-bacnetsc-realstack-weak:latest
+    container_name: bacnetsc-realstack-weak
+    hostname: bacnetsc-weak
+    ports:
+      - "47831:47800/tcp"
+    environment:
+      - TZ=UTC
+      - BACNET_PROFILE=building
+      - BACNET_DEVICE_INSTANCE=44005
+      - BACNET_DEVICE_NAME=BACnetSC-Weak-Supervisor
+      - BACNET_SC_DIRECT_PORT=47800
+      - BACNET_SC_WEAK=1
+    volumes:
+      - bacnetsc-weak-certs:/certs
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "47800"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "bacnetsc"
+      oida.group: "bacnetsc"
+      oida.description: "Real bacnet-stack 1.4.4 BSC device over WSS/TLS, WEAK posture (accepts anonymous/rogue client + TLS 1.2), direct-connect on 47831, device 44005"
+      oida.ports: "47831/tcp"
+
+  # ============================================================================
+  # CoAP Mock Server
+  # ============================================================================
+  coap-mock:
+    build:
+      context: ./services/coap/mock
+      dockerfile: Dockerfile.coap
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-coap:latest
+    container_name: coap-mock-server
+    hostname: coap-server
+    ports:
+      - "5683:5683/udp"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.settimeout(2); s.sendto(b'\\x40\\x01\\x00\\x01', ('localhost', 5683)); data=s.recv(64); s.close(); assert len(data)>0"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "coap"
+      oida.description: "CoAP server (aiocoap), /.well-known/core, LwM2M /3/0 device object, observable sensors, writable actuators, NoSec mode"
+      oida.ports: "5683/udp"
+
+  coap-libcoap:
+    build:
+      context: ./services/coap/mock
+      dockerfile: Dockerfile.coap-libcoap
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-coap-libcoap:latest
+    container_name: coap-libcoap-server
+    hostname: coap-libcoap
+    ports:
+      - "5685:5685/udp"
+    environment:
+      - TZ=UTC
+      - COAP_PORT=5685
+      - COAP_VERBOSITY=5
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.settimeout(2); s.sendto(b'\\x40\\x01\\x00\\x01', ('localhost', 5685)); data=s.recv(64); s.close(); assert len(data)>0"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "coap"
+      oida.description: "CoAP server (libcoap/C), interop testing, dynamic resources, no auth"
+      oida.ports: "5685/udp"
+
+  coap-dtls:
+    build:
+      context: ./services/coap/mock
+      dockerfile: Dockerfile.coap-libcoap
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-coap-libcoap:latest
+    container_name: coap-dtls-server
+    hostname: coap-dtls
+    ports:
+      - "5684:5684/udp"
+    environment:
+      - TZ=UTC
+      - COAP_PORT=5683
+      - COAP_PSK_KEY=secretPSK123
+      - COAP_PSK_HINT=oida-client
+      - COAP_VERBOSITY=5
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.settimeout(2); s.sendto(b'\\x40\\x01\\x00\\x01', ('localhost', 5683)); data=s.recv(64); s.close(); assert len(data)>0"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "coap"
+      oida.description: "CoAP server (libcoap/C) with DTLS-PSK encryption, PSK=secretPSK123, hint=oida-client"
+      oida.ports: "5684/udp"
+
+  coap-dtls-cert:
+    build:
+      context: ./services/coap/mock
+      dockerfile: Dockerfile.coap-dtls-cert
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-coap-dtls-cert:latest
+    container_name: coap-dtls-cert-server
+    hostname: coap-dtls-cert
+    ports:
+      - "5686:5684/udp"
+    environment:
+      - TZ=UTC
+      - COAP_PORT=5683
+      - COAP_VERBOSITY=5
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.settimeout(2); s.sendto(b'\\x40\\x01\\x00\\x01', ('localhost', 5683)); data=s.recv(64); s.close(); assert len(data)>0"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "coap"
+      oida.description: "CoAP server (libcoap/C) with DTLS certificate auth, certs in /app/certs/"
+      oida.ports: "5686/udp"
+
+  # ============================================================================
+  # MMS / IEC 61850
+  # ============================================================================
+
+  mms-libiec61850:
+    build:
+      context: ./services/mms/mock
+      dockerfile: Dockerfile.mms
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mms:latest
+    container_name: mms-libiec61850-server
+    hostname: mms-server
+    ports:
+      - "102:102"       # MMS/IEC 61850 (libiec61850-based)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "timeout", "2", "bash", "-c", "</dev/tcp/localhost/102"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      oida.group: "mms"
+      oida.description: "MMS/IEC 61850 server (libiec61850), logical devices + data sets, no auth"
+      oida.ports: "102"
+
+  mms-goose:
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mms:latest
+    command: ["/usr/local/bin/server_example_goose"]
+    container_name: mms-goose-server
+    hostname: mms-goose
+    ports:
+      - "10106:102"     # MMS for GoCB enumeration (offset to avoid conflict with mms-libiec61850)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "timeout", "2", "bash", "-c", "</dev/tcp/localhost/102"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      oida.protocol: "goose"
+      oida.group: "mms"
+      oida.description: "MMS/IEC 61850 server with GOOSE publisher, multicast L2 frames"
+      oida.ports: "10106"
+
+  mms-control:
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mms:latest
+    command: ["/usr/local/bin/server_example_control"]
+    container_name: mms-control-server
+    hostname: mms-control
+    ports:
+      - "10107:102"     # MMS with control model (offset to avoid conflict)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "timeout", "2", "bash", "-c", "</dev/tcp/localhost/102"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      oida.protocol: "mms"
+      oida.group: "mms"
+      oida.description: "MMS/IEC 61850 server with IEC 61850 control model (SBO/direct operate)"
+      oida.ports: "10107"
+
+  mms-authentication:
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mms:latest
+    command: ["/usr/local/bin/mms_tls_auth_server"]
+    container_name: mms-authentication-server
+    hostname: mms-authentication
+    ports:
+      - "10108:102"
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "timeout", "2", "bash", "-c", "</dev/tcp/localhost/102"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      oida.protocol: "mms"
+      oida.group: "mms"
+      oida.description: "MMS with TLS + password auth (admin:admin@mms, operator:operator@mms)"
+      oida.ports: "10108"
+
+  # ============================================================================
+  # IEC 60870-5-104
+  # ============================================================================
+
+  iec104-lib60870:
+    build:
+      context: ./services/iec104/mock
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-iec104:latest
+    container_name: iec104-lib60870-server
+    hostname: iec104-server
+    ports:
+      - "2404:2404"     # IEC 60870-5-104 (lib60870-based)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "timeout", "2", "bash", "-c", "</dev/tcp/localhost/2404"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      oida.group: "iec104"
+      oida.description: "IEC 60870-5-104 server (lib60870), monitored + command points, no auth"
+      oida.ports: "2404"
+
+  iec104-tls:
+    build:
+      context: ./services/iec104/mock
+      dockerfile: Dockerfile.tls
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-iec104-tls:latest
+    container_name: iec104-tls-server
+    hostname: iec104-tls
+    ports:
+      - "19998:19998"     # IEC 62351-3 TLS
+    environment:
+      - TZ=UTC
+    volumes:
+      - ./certs/ca.pem:/certs/ca.pem:ro
+      - ./certs/iec104-tls/server.pem:/certs/server.pem:ro
+      - ./certs/iec104-tls/server.key:/certs/server.key:ro
+      - ./certs/client.pem:/certs/client.pem:ro
+      - ./certs/client.key:/certs/client.key:ro
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "timeout", "2", "bash", "-c", "</dev/tcp/localhost/19998"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      oida.group: "iec104"
+      oida.description: "IEC 60870-5-104 TLS server (IEC 62351-3), self-signed cert, no client auth"
+      oida.ports: "19998"
+
+  # Python-based IEC104 server with custom Type ID support (for testing --probe-custom-types)
+  iec104-custom-types:
+    build:
+      context: ./services/iec104/mock
+      dockerfile: Dockerfile.python
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-iec104-python:latest
+    container_name: iec104-custom-types-server
+    hostname: iec104-custom
+    ports:
+      - "2405:2404"     # IEC 60870-5-104 with custom types (port 2405)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "timeout", "2", "bash", "-c", "</dev/tcp/localhost/2404"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "iec104"
+      oida.description: "IEC 60870-5-104 server with custom/private Type IDs for fuzzing"
+      oida.ports: "2405"
+
+  # Conpot IEC 104 Honeypot (Honeynet Project)
+  # Custom template: 8 data categories (Type 1/3/11/13/45/46/49/50), COA=1
+  iec104-conpot:
+    build:
+      context: ./services/iec104/mock/conpot
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-conpot-iec104:latest
+    container_name: iec104-conpot-server
+    hostname: iec104-conpot
+    ports:
+      - "2409:2404"     # IEC 104 (Conpot, mapped to 2409 to avoid conflict)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 2404), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      oida.protocol: "iec104"
+      oida.group: "iec104"
+      oida.description: "Conpot IEC 104 honeypot, Siemens S7-300 CP 343-1 sim, 8 data categories"
+      oida.ports: "2409"
+
+  # ============================================================================
+  # Siemens S7 / Snap7
+  # ============================================================================
+
+  s7comm-snap7:
+    build:
+      context: ./services/s7comm/mock
+      dockerfile: Dockerfile.snap7
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-snap7:latest
+    container_name: s7comm-snap7-server
+    hostname: s7comm-snap7
+    ports:
+      - "10102:102"     # Siemens S7 (mapped to 10102 to avoid MMS conflict)
+    environment:
+      - TZ=UTC
+      - SNAP7_CPU_TYPE=1200
+      - SNAP7_DB_COUNT=10
+      - SNAP7_PASSWORD=1234
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "102"]
+      interval: 10s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "s7comm"
+      oida.description: "Siemens S7comm server (Snap7), CPU 1200 sim, 10 data blocks, password=1234"
+      oida.ports: "10102"
+
+  # Conpot S7comm Honeypot (Honeynet Project)
+  s7comm-conpot:
+    build:
+      context: ./services/s7comm/mock/conpot
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-conpot-s7:latest
+    container_name: s7comm-conpot-server
+    hostname: s7comm-conpot
+    ports:
+      - "10109:10201"    # S7comm (Conpot internal port 10201, mapped to 10109)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 10201), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      oida.protocol: "s7comm"
+      oida.group: "s7comm"
+      oida.description: "Conpot S7comm honeypot, Siemens S7-300 CPU 315-2 PN/DP sim, SZL responses"
+      oida.ports: "10109"
+
+  # SoftPlc S7 Simulator (fbarresi/softplc)
+  # .NET-based S7comm server with REST API for data block management
+  # https://github.com/fbarresi/SoftPlc
+  s7comm-softplc:
+    image: fbarresi/softplc:latest-linux
+    container_name: s7comm-softplc-server
+    hostname: s7comm-softplc
+    ports:
+      - "10110:102"     # S7comm TPKT/COTP (mapped to 10110 to avoid MMS/Snap7 conflict)
+      - "8082:8080"     # REST API (Swagger UI for data block management)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "timeout 2 bash -c '</dev/tcp/localhost/102' 2>/dev/null"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "s7comm"
+      oida.description: "SoftPlc S7comm simulator (.NET), REST API :8082 for data block management, no auth"
+      oida.ports: "10110, 8082"
+
+  # ============================================================================
+  # KNX
+  # ============================================================================
+
+  knx-calimero:
+    image: calimeroproject/knxserver:latest
+    container_name: knx-calimero-server
+    hostname: knx-server
+    stdin_open: true
+    tty: true
+    ports:
+      - "3671:3671/udp"   # KNXnet/IP UDP (standard)
+      - "3671:3671/tcp"   # KNXnet/IP TCP tunneling
+    volumes:
+      - ./services/knx/server-config.xml:/config/server-config.xml:ro
+      - ./services/knx/datapoints.xml:/config/datapoints.xml:ro
+    environment:
+      - TZ=UTC
+    command: ["/config/server-config.xml"]
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "knx-server", "3671"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      oida.group: "knx"
+      oida.description: "KNXnet/IP gateway (Calimero) with emulated subnet, tunnelling + routing"
+      oida.ports: "3671"
+
+  knx-devices:
+    build:
+      context: ./services/knx/mock
+      dockerfile: Dockerfile.knx-devices
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-knx-devices:latest
+    container_name: knx-bcu-emulator
+    hostname: knx-devices
+    depends_on:
+      knx-calimero:
+        condition: service_healthy
+    environment:
+      - TZ=UTC
+      - KNX_GATEWAY_HOST=knx-server
+      - KNX_GATEWAY_PORT=3671
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "java", "-version"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 45s
+    labels:
+      oida.group: "knx"
+      oida.description: "KNX BCU device emulator, 5 devices (1.1.1-1.1.5), management services, auth testing"
+      oida.ports: ""
+
+  # ============================================================================
+  # MQTT
+  # ============================================================================
+
+  mqtt-insecure:
+    build:
+      context: ./services/mqtt/mock
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt:latest
+    container_name: mqtt-insecure-broker
+    hostname: mqtt-insecure
+    command: ["python3", "mqtt_broker_insecure.py"]
+    ports:
+      - "1883:1883"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 1883), timeout=2).close()"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "mqtt"
+      oida.description: "MQTT broker, anonymous access, no TLS, no ACLs, open subscribe/publish"
+      oida.ports: "1883"
+
+  mqtt-auth:
+    build:
+      context: ./services/mqtt/mock
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt:latest
+    container_name: mqtt-auth-broker
+    hostname: mqtt-auth
+    command: ["python3", "mqtt_broker_auth.py"]
+    ports:
+      - "1884:1884"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./services/mqtt/wordlists:/app/wordlists:ro
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 1884), timeout=2).close()"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "mqtt"
+      oida.description: "MQTT broker with weak credentials, no TLS (admin:admin, user:password)"
+      oida.ports: "1884"
+
+  mqtt-sparkplug:
+    build:
+      context: ./services/mqtt/mock
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt:latest
+    container_name: mqtt-sparkplug-broker
+    hostname: mqtt-sparkplug
+    command: ["python3", "mqtt_broker_sparkplug.py"]
+    ports:
+      - "1885:1885"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 1885), timeout=2).close()"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "mqtt"
+      oida.description: "MQTT Sparkplug B ICS/SCADA simulation, PLC + sensor nodes, anonymous"
+      oida.ports: "1885"
+
+  mqtt-busy:
+    build:
+      context: ./services/mqtt/mock
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt:latest
+    container_name: mqtt-busy-broker
+    hostname: mqtt-busy
+    command: ["python3", "mqtt_broker_busy.py"]
+    ports:
+      - "1886:1886"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 1886), timeout=2).close()"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "mqtt"
+      oida.description: "MQTT broker, high-activity traffic sim, wildcard subscribe blocked (admin:admin123)"
+      oida.ports: "1886"
+
+  mqtt-tls:
+    build:
+      context: ./services/mqtt/mock
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt:latest
+    container_name: mqtt-tls-broker
+    hostname: mqtt-tls
+    command: ["python3", "mqtt_broker_tls.py"]
+    ports:
+      - "8883:8883"     # TLS, optional client cert
+      - "8884:8884"     # Mutual TLS, client cert required
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./services/mqtt/certs:/app/certs:rw
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 8883), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "mqtt"
+      oida.description: "MQTT broker with TLS + mutual TLS client certs (admin:admin, user:password)"
+      oida.ports: "8883, 8884"
+
+  mqtt-busy-tls:
+    build:
+      context: ./services/mqtt/mock
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-mqtt:latest
+    container_name: mqtt-busy-tls-broker
+    hostname: mqtt-busy-tls
+    command: ["python3", "mqtt_broker_busy_tls.py"]
+    ports:
+      - "8885:8885"     # Busy TLS, optional client cert
+      - "8886:8886"     # Busy mutual TLS, client cert required
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - ./services/mqtt/certs:/app/certs:rw
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 8885), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "mqtt"
+      oida.description: "MQTT broker, high-activity + TLS/mTLS encrypted (admin:admin123, scada:scada)"
+      oida.ports: "8885, 8886"
+
+  # ============================================================================
+  # OPC UA Advanced Testing Services
+  # ============================================================================
+
+  opcua-advanced:
+    build:
+      context: ./services/opcua/mock
+      dockerfile: Dockerfile.opcua
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua:latest
+    container_name: opcua-advanced-server
+    hostname: opcua-advanced
+    ports:
+      - "4841:4840"     # OPC UA Enhanced (methods, subscriptions, events, multi-security)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - OPCUA_PORT=4840
+      - OPCUA_SECURITY=true
+      - OPCUA_AUTH=true
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 4840), timeout=2).close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "opcua"
+      oida.description: "OPC UA server with security policies + username auth (admin:admin123)"
+      oida.ports: "4841"
+
+  opcua-gds:
+    build:
+      context: ./services/opcua/mock
+      dockerfile: Dockerfile.opcua-gds
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua-gds:latest
+    container_name: opcua-gds-server
+    hostname: opcua-gds
+    ports:
+      - "4850:4850"     # OPC UA Global Discovery Server
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - GDS_PORT=4850
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 4850), timeout=2).close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "opcua"
+      oida.description: "OPC UA Global Discovery Server (GDS), certificate management, anonymous"
+      oida.ports: "4850"
+
+  opcua-insecure:
+    build:
+      context: ./services/opcua/mock
+      dockerfile: Dockerfile.opcua
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua:latest
+    container_name: opcua-insecure-server
+    hostname: opcua-insecure
+    ports:
+      - "4842:4840"     # OPC UA Insecure (no security, anonymous only)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - OPCUA_PORT=4840
+      - OPCUA_SECURITY=false
+      - OPCUA_AUTH=false
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 4840), timeout=2).close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "opcua"
+      oida.description: "OPC UA server, no security policy, anonymous access, no encryption"
+      oida.ports: "4842"
+
+  opcua-usercert-vuln:
+    build:
+      context: ./services/opcua/mock
+      dockerfile: Dockerfile.opcua
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua:latest
+    container_name: opcua-usercert-vuln-server
+    hostname: opcua-usercert-vuln
+    ports:
+      - "4843:4840"     # OPC UA - trusts ANY self-signed X509 user cert (vulnerable)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - OPCUA_PORT=4840
+      - OPCUA_USER_CERT_MODE=permissive
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 4840), timeout=2).close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "opcua"
+      oida.description: "OPC UA server that trusts ANY self-signed user certificate (insecure X509 user auth)"
+      oida.ports: "4843"
+
+  opcua-usercert-trusted:
+    build:
+      context: ./services/opcua/mock
+      dockerfile: Dockerfile.opcua
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opcua:latest
+    container_name: opcua-usercert-trusted-server
+    hostname: opcua-usercert-trusted
+    ports:
+      - "4844:4840"     # OPC UA - trusts only one registered operator cert (secure baseline)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - OPCUA_PORT=4840
+      - OPCUA_USER_CERT_MODE=trusted
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 4840), timeout=2).close()"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "opcua"
+      oida.description: "OPC UA server trusting one registered user cert (in /tmp/opcua_certs; docker cp to use)"
+      oida.ports: "4844"
+
+  # ============================================================================
+  # DNP3 Mock Services (stepfunc dnp3 Rust crate - pure-Rust outstation)
+  # ============================================================================
+
+  dnp3-basic:
+    build:
+      context: ./services/dnp3/mock
+      dockerfile: Dockerfile.dnp3
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3:latest
+    container_name: dnp3-basic-server
+    hostname: dnp3-basic
+    ports:
+      - "20000:20000"   # DNP3 TCP (basic)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=1024
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=10
+      - DNP3_AI_COUNT=10
+      - DNP3_CT_COUNT=5
+      - DNP3_BO_COUNT=5
+      - DNP3_AO_COUNT=5
+      - DNP3_UPDATE_INTERVAL=5
+      - DNP3_DEVICE_NAME=OIDA Basic Outstation
+      - DNP3_SERIAL=OIDA-DNP3-BASIC-001
+      - DNP3_SOFTWARE_VERSION=2.1.0
+      - DNP3_HARDWARE_VERSION=Rev-A
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "dnp3"
+      oida.description: "DNP3 outstation, basic config, addr 1024, 30 data points, no auth"
+      oida.ports: "20000"
+
+  dnp3-complex:
+    build:
+      context: ./services/dnp3/mock
+      dockerfile: Dockerfile.dnp3
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3:latest
+    container_name: dnp3-complex-server
+    hostname: dnp3-complex
+    ports:
+      - "20001:20000"   # DNP3 TCP (complex)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=10
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=50
+      - DNP3_AI_COUNT=50
+      - DNP3_CT_COUNT=20
+      - DNP3_BO_COUNT=20
+      - DNP3_AO_COUNT=20
+      - DNP3_UPDATE_INTERVAL=3
+      - DNP3_DEVICE_NAME=OIDA Substation RTU
+      - DNP3_SERIAL=OIDA-DNP3-SUB-010
+      - DNP3_SOFTWARE_VERSION=3.4.1
+      - DNP3_HARDWARE_VERSION=Rev-C
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "dnp3"
+      oida.description: "DNP3 outstation, substation RTU sim, addr 10, 160 data points, no auth"
+      oida.ports: "20001"
+
+  dnp3-tls:
+    build:
+      context: ./services/dnp3/mock
+      dockerfile: Dockerfile.dnp3
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3:latest
+    container_name: dnp3-tls-server
+    hostname: dnp3-tls
+    ports:
+      - "20002:20000"   # DNP3 TLS
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=1024
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=10
+      - DNP3_AI_COUNT=10
+      - DNP3_CT_COUNT=5
+      - DNP3_BO_COUNT=5
+      - DNP3_AO_COUNT=5
+      - DNP3_UPDATE_INTERVAL=5
+      - DNP3_DEVICE_NAME=OIDA Secure Outstation
+      - DNP3_SERIAL=OIDA-DNP3-TLS-1024
+      - DNP3_TLS=true
+      - DNP3_TLS_DNS_NAME=dnp3-tls
+      - DNP3_SOFTWARE_VERSION=2.1.0
+      - DNP3_HARDWARE_VERSION=Rev-A
+    volumes:
+      - ./services/dnp3/mock/certs:/app/certs
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "dnp3"
+      oida.description: "DNP3 outstation with TLS transport encryption, addr 1024, self-signed cert"
+      oida.ports: "20002"
+
+  dnp3-addr1:
+    build:
+      context: ./services/dnp3/mock
+      dockerfile: Dockerfile.dnp3
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3:latest
+    container_name: dnp3-addr1-server
+    hostname: dnp3-addr1
+    ports:
+      - "20003:20000"   # DNP3 TCP (outstation addr 2)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=2
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=10
+      - DNP3_AI_COUNT=10
+      - DNP3_CT_COUNT=5
+      - DNP3_BO_COUNT=5
+      - DNP3_AO_COUNT=5
+      - DNP3_UPDATE_INTERVAL=5
+      - DNP3_DEVICE_NAME=OIDA Multi-Drop RTU 2
+      - DNP3_SERIAL=OIDA-DNP3-MULTI-002
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "dnp3"
+      oida.description: "DNP3 multi-drop outstation, addr 2, address scan target, no auth"
+      oida.ports: "20003"
+
+  dnp3-addr10:
+    build:
+      context: ./services/dnp3/mock
+      dockerfile: Dockerfile.dnp3
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3:latest
+    container_name: dnp3-addr10-server
+    hostname: dnp3-addr10
+    ports:
+      - "20004:20000"   # DNP3 TCP (outstation addr 10)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=10
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=15
+      - DNP3_AI_COUNT=15
+      - DNP3_CT_COUNT=8
+      - DNP3_BO_COUNT=8
+      - DNP3_AO_COUNT=8
+      - DNP3_UPDATE_INTERVAL=5
+      - DNP3_DEVICE_NAME=OIDA Multi-Drop RTU 10
+      - DNP3_SERIAL=OIDA-DNP3-MULTI-010
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "dnp3"
+      oida.description: "DNP3 multi-drop outstation, addr 10, address scan target, no auth"
+      oida.ports: "20004"
+
+  dnp3-addr100:
+    build:
+      context: ./services/dnp3/mock
+      dockerfile: Dockerfile.dnp3
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3:latest
+    container_name: dnp3-addr100-server
+    hostname: dnp3-addr100
+    ports:
+      - "20005:20000"   # DNP3 TCP (outstation addr 100)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=100
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=5
+      - DNP3_AI_COUNT=5
+      - DNP3_CT_COUNT=3
+      - DNP3_BO_COUNT=3
+      - DNP3_AO_COUNT=3
+      - DNP3_UPDATE_INTERVAL=10
+      - DNP3_DEVICE_NAME=OIDA Multi-Drop RTU 100
+      - DNP3_SERIAL=OIDA-DNP3-MULTI-100
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "dnp3"
+      oida.description: "DNP3 multi-drop outstation, addr 100, address scan target, no auth"
+      oida.ports: "20005"
+
+  dnp3-enhanced:
+    build:
+      context: ./services/dnp3/mock
+      dockerfile: Dockerfile.dnp3-enhanced
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3-enhanced:latest
+    container_name: dnp3-enhanced-server
+    hostname: dnp3-enhanced
+    ports:
+      - "20010:20000"   # DNP3 TCP (enhanced)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_OUTSTATION_ADDR=10
+      - DNP3_MASTER_ADDR=1
+      - DNP3_BI_COUNT=10
+      - DNP3_AI_COUNT=10
+      - DNP3_CT_COUNT=5
+      - DNP3_BO_COUNT=5
+      - DNP3_AO_COUNT=5
+      - DNP3_FROZEN_COUNTER_COUNT=5
+      - DNP3_OCTET_COUNT=3
+      - DNP3_UPDATE_INTERVAL=5
+      - DNP3_DEVICE_NAME=OIDA Enhanced Outstation
+      - DNP3_SERIAL=OIDA-DNP3-ENH-001
+      - DNP3_COLD_RESTART_DELAY=60
+      - DNP3_WARM_RESTART_DELAY=5000
+      - DNP3_SOFTWARE_VERSION=4.0.0-beta
+      - DNP3_HARDWARE_VERSION=Rev-D
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "dnp3"
+      oida.group: "dnp3"
+      oida.description: "DNP3 enhanced outstation, freeze/cold-restart/warm-restart/deadband/octet strings"
+      oida.ports: "20010"
+
+  dnp3-filetransfer:
+    build:
+      context: ./services/dnp3/mock
+      dockerfile: Dockerfile.dnp3-filetransfer
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dnp3-filetransfer:latest
+    container_name: dnp3-filetransfer-server
+    hostname: dnp3-filetransfer
+    ports:
+      - "20020:20000"   # DNP3 TCP (file transfer)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DNP3_PORT=20000
+      - DNP3_SLAVE_ADDR=1
+      - DNP3_MASTER_ADDR=2
+      - DNP3_BI_COUNT=5
+      - DNP3_AI_COUNT=5
+      - DNP3_BO_COUNT=5
+      - DNP3_AO_COUNT=5
+      - DNP3_UPDATE_INTERVAL=5
+      - DNP3_FILE_DIR=/app/files
+      - DNP3_VIEW_TRAFFIC=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -z localhost 20000 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "dnp3"
+      oida.group: "dnp3"
+      oida.description: "DNP3 outstation with file transfer (Group 70), master addr 2, slave addr 1"
+      oida.ports: "20020"
+
+  # ============================================================================
+  # OpENer - ODVA-compliant EtherNet/IP Stack
+  # ============================================================================
+
+  ethernetip-opener:
+    build:
+      context: ./services/ethernetip/mock
+      dockerfile: Dockerfile.opener
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-opener:latest
+    container_name: ethernetip-opener-server
+    hostname: opener-device
+    ports:
+      - "44819:44818"       # EtherNet/IP TCP (mapped to 44819 to avoid conflict)
+      - "44819:44818/udp"   # EtherNet/IP UDP
+      - "2223:2222/udp"     # I/O messaging UDP
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "opener-device", "44818"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      oida.group: "ethernetip"
+      oida.description: "EtherNet/IP adapter (OpENer C stack), CIP identity + I/O assemblies, no auth"
+      oida.ports: "44819, 2223/udp"
+
+  # Conpot EtherNet/IP Honeypot (Honeynet Project)
+  ethernetip-conpot:
+    build:
+      context: ./services/ethernetip/mock/conpot
+      dockerfile: Dockerfile
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-conpot-enip:latest
+    container_name: ethernetip-conpot-server
+    hostname: ethernetip-conpot
+    ports:
+      - "44823:44818"    # EtherNet/IP (Conpot internal 44818, mapped to 44823)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 44818), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 60s
+    labels:
+      oida.protocol: "ethernetip"
+      oida.group: "ethernetip"
+      oida.description: "Conpot EtherNet/IP honeypot, Allen-Bradley ControlLogix 5571 sim, CIP ListIdentity + tag R/W"
+      oida.ports: "44823"
+
+  # ============================================================================
+  # HART-IP Servers (FieldComm Group hipserver + hipflowapp)
+  # https://github.com/FieldCommGroup/hipserver
+  # https://github.com/FieldCommGroup/hipflowapp
+  # ============================================================================
+
+  hart-mock:
+    build:
+      context: ./services/hart/mock
+      dockerfile: Dockerfile.hart-hipserver
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart-hipserver:latest
+    container_name: hart-hipserver
+    hostname: hart-mock
+    ports:
+      - "5094:5094/udp"   # HART-IP UDP
+      - "5094:5094/tcp"   # HART-IP TCP (same port per TP10300)
+    environment:
+      - TZ=UTC
+      - HART_UDP_PORT=5094
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-zu", "localhost", "5094"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      oida.group: "hart"
+      oida.description: "HART-IP primary master, UDP + TCP, universal commands, no auth"
+      oida.ports: "5094/udp, 5094/tcp"
+
+  # FieldComm hipserver + hipflowapp, compiled HART 5 (universal rev 5, short
+  # Cmd 0 identity, tag FLOW5DEV). Built from source, no committed binaries.
+  hart-hipflow-hart5:
+    build:
+      context: ./services/hart/mock
+      dockerfile: Dockerfile.hart-hipflow
+      args:
+        HART_VERSION: "5"
+        DEVICE_TAG: "FLOW5DEV"
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart-hipflow-hart5:latest
+    container_name: hart-hipflow-hart5
+    hostname: hart-hipflow-hart5
+    ports:
+      - "5100:5094/udp"   # HART-IP UDP
+      - "5100:5094/tcp"   # HART-IP TCP (same port per TP10300)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-zu", "localhost", "5094"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      oida.group: "hart"
+      oida.description: "HART-IP FieldComm hipflowapp flow device, HART 5 (universal rev 5), mfr 0xF9 type 0xFD tag FLOW5DEV, PV mass-flow kg/h, no auth"
+      oida.ports: "5100/udp, 5100/tcp"
+
+  # FieldComm hipserver + hipflowapp, compiled HART 7 (universal rev 7, extended
+  # Cmd 0 identity with profile/device-var-count, tag FLOW7DEV).
+  hart-hipflow-hart7:
+    build:
+      context: ./services/hart/mock
+      dockerfile: Dockerfile.hart-hipflow
+      args:
+        HART_VERSION: "7"
+        DEVICE_TAG: "FLOW7DEV"
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart-hipflow-hart7:latest
+    container_name: hart-hipflow-hart7
+    hostname: hart-hipflow-hart7
+    ports:
+      - "5102:5094/udp"   # HART-IP UDP
+      - "5102:5094/tcp"   # HART-IP TCP (same port per TP10300)
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-zu", "localhost", "5094"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      oida.group: "hart"
+      oida.description: "HART-IP FieldComm hipflowapp flow device, HART 7 (universal rev 7), mfr 0xF9 type 0xFD tag FLOW7DEV, PV mass-flow kg/h, no auth"
+      oida.ports: "5102/udp, 5102/tcp"
+
+  hart-tls:
+    build:
+      context: ./services/hart/mock
+      dockerfile: Dockerfile.hart-hipserver-tls
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart-hipserver-tls:latest
+    container_name: hart-hipserver-tls
+    hostname: hart-tls
+    ports:
+      - "5095:5094/udp"   # HART-IP v2 UDP
+      - "5095:5094/tcp"   # HART-IP v2 TCP (STARTTLS upgrade)
+    environment:
+      - TZ=UTC
+      - HART_UDP_PORT=5094
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-zu", "localhost", "5094"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      oida.group: "hart"
+      oida.description: "HART-IP primary master with TLS transport encryption, self-signed cert"
+      oida.ports: "5095/udp, 5095/tcp"
+
+  hart-secondary:
+    build:
+      context: ./services/hart/mock
+      dockerfile: Dockerfile.hart-hipserver
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart-hipserver:latest
+    container_name: hart-hipserver-secondary
+    hostname: hart-secondary
+    ports:
+      - "5096:5094/udp"   # HART-IP UDP (mapped to 5096)
+      - "5097:5095"       # HART-IP TCP (mapped to 5097)
+    environment:
+      - TZ=UTC
+      - HART_UDP_PORT=5094
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-zu", "localhost", "5094"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      oida.group: "hart"
+      oida.description: "HART-IP secondary master, separate UDP/TCP ports, no auth"
+      oida.ports: "5096/udp, 5097/tcp"
+
+  hart-tertiary:
+    build:
+      context: ./services/hart/mock
+      dockerfile: Dockerfile.hart-hipserver
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart-hipserver:latest
+    container_name: hart-hipserver-tertiary
+    hostname: hart-tertiary
+    ports:
+      - "5098:5094/udp"   # HART-IP UDP (mapped to 5098)
+      - "5099:5095"       # HART-IP TCP (mapped to 5099)
+    environment:
+      - TZ=UTC
+      - HART_UDP_PORT=5094
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-zu", "localhost", "5094"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    labels:
+      oida.group: "hart"
+      oida.description: "HART-IP tertiary master, separate UDP/TCP ports, no auth"
+      oida.ports: "5098/udp, 5099/tcp"
+
+  # ----------------------------------------------------------------------------
+  # Pure-Python HART-IP mocks (hart_server.py). The C hipserver above is the
+  # FieldComm reference used by the scanner integration tests; these provide the
+  # richer per-command device data that the protocol-level tests in
+  # tests/integration/test_hart_mock.py assert against.
+  # ----------------------------------------------------------------------------
+  hart-pymock:
+    build:
+      context: ./services/hart/mock
+      dockerfile: Dockerfile.hart
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart:latest
+    container_name: hart-pymock
+    hostname: hart-pymock
+    ports:
+      - "5090:5094/udp"
+      - "5091:5095/tcp"
+    environment:
+      - TZ=UTC
+      - HART_MODE=basic
+      - HART_UDP_PORT=5094
+      - HART_TCP_PORT=5095
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('127.0.0.1', 5095), timeout=2).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      oida.group: "hart"
+      oida.description: "HART-IP pure-Python mock (basic device), per-command device data"
+      oida.ports: "5090/udp, 5091/tcp"
+
+  hart-pymock-multidrop:
+    build:
+      context: ./services/hart/mock
+      dockerfile: Dockerfile.hart
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hart:latest
+    container_name: hart-pymock-multidrop
+    hostname: hart-pymock-multidrop
+    ports:
+      - "5092:5094/udp"
+      - "5093:5095/tcp"
+    environment:
+      - TZ=UTC
+      - HART_MODE=multidrop
+      - HART_UDP_PORT=5094
+      - HART_TCP_PORT=5095
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('127.0.0.1', 5095), timeout=2).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      oida.group: "hart"
+      oida.description: "HART-IP pure-Python mock (multidrop bus), multiple device addresses"
+      oida.ports: "5092/udp, 5093/tcp"
+
+  # ============================================================================
+  # SNMP Mock Service
+  # ============================================================================
+
+  snmp-mock:
+    build:
+      context: ./services/snmp/mock
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-snmp:latest
+    container_name: snmp-mock-server
+    hostname: snmp-mock
+    ports:
+      - "10161:161/udp"    # SNMP UDP (net-snmp, v2c+v3, linux profile)
+    environment:
+      - TZ=UTC
+      - SNMP_PROFILE=linux
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN          # for dummy interfaces, ARP entries
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "snmpget", "-v2c", "-c", "public", "-t", "2", "-r", "0", "localhost:161", ".1.3.6.1.2.1.1.1.0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 8s
+    labels:
+      oida.group: "snmp"
+      oida.description: "SNMP v2c+v3 (communities: public/private/SCADA/monitor, v3: admin:admin123, engineer:engineer1, monitor:monitor1, operator:operator1)"
+      oida.ports: "10161/udp"
+
+  snmp-v3only:
+    build:
+      context: ./services/snmp/mock
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-snmp:latest
+    container_name: snmp-v3only-server
+    hostname: snmp-v3only
+    ports:
+      - "10164:161/udp"    # SNMP UDP (net-snmp, v3 only, hardened)
+    environment:
+      - TZ=UTC
+      - SNMP_PROFILE=v3only
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "snmpget", "-v3", "-u", "engineer", "-a", "SHA", "-A", "engineer1", "-l", "authNoPriv", "-t", "2", "-r", "0", "localhost:161", ".1.3.6.1.2.1.1.1.0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 8s
+    labels:
+      oida.group: "snmp"
+      oida.description: "SNMP v3-only, no v1/v2c (admin:admin123, engineer:engineer1, operator:operator1, backup:backup12)"
+      oida.ports: "10164/udp"
+
+  snmp-switch:
+    build:
+      context: ./services/snmp/mock
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-snmp:latest
+    container_name: snmp-switch-server
+    hostname: snmp-switch
+    ports:
+      - "10162:161/udp"    # SNMP UDP (net-snmp, H3C switch profile)
+    environment:
+      - TZ=UTC
+      - SNMP_PROFILE=switch
+    restart: unless-stopped
+    cap_add:
+      - NET_ADMIN
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "snmpget", "-v2c", "-c", "public", "-t", "2", "-r", "0", "localhost:161", ".1.3.6.1.2.1.1.1.0"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 8s
+    labels:
+      oida.group: "snmp"
+      oida.description: "SNMP H3C switch (H3C creds, Brocade ADX, bridge FDB)"
+      oida.ports: "10162/udp"
+
+  # ============================================================================
+  # SunSpec Mock Server (pymodbus)
+  # Simulates a 10kW three-phase PV inverter with battery storage
+  # Model chain: 1 (Common) -> 103 (Inverter) -> 120 (Nameplate) ->
+  #              123 (Controls) -> 124 (Storage) -> 160 (MPPT) -> END
+  # Test with: oida modbus -t localhost -p 5502 --sunspec
+  # ============================================================================
+
+  modbus-sunspec:
+    build:
+      context: ./services/modbus/mock
+      dockerfile: Dockerfile.sunspec
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-sunspec:latest
+    container_name: modbus-sunspec-server
+    hostname: modbus-sunspec
+    ports:
+      - "5502:5502"       # Modbus TCP (SunSpec)
+    environment:
+      - TZ=UTC
+      - SUNSPEC_PORT=5502
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 5502), timeout=2).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      oida.group: "modbus"
+      oida.description: "SunSpec Modbus solar inverter simulator, SunSpec register map at 40000+, no auth"
+      oida.ports: "5502"
+
+  # ============================================================================
+  # HTTP/2 Fuzzing Testbed
+  # ============================================================================
+
+  http2-nghttp2:
+    build:
+      context: ./services/http2/mock
+      dockerfile: Dockerfile.nghttp2
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-http2-nghttp2:latest
+    container_name: http2-nghttp2-server
+    hostname: http2-nghttp2
+    ports:
+      - "8280:8443"     # HTTP/2 TLS (nghttpd)
+      - "8281:8080"     # HTTP/2 cleartext (h2c)
+    volumes:
+      - ./services/http2/certs:/app/certs:ro
+      - ./logs/http2:/var/log/http2:rw
+    environment:
+      - TZ=UTC
+      - HTTP2_VERBOSE=true
+      - HTTP2_HEXDUMP=false
+      - HTTP2_LOG_FRAMES=true
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "curl", "-s", "-o", "/dev/null", "-w", "%{http_code}", "--http2-prior-knowledge", "http://localhost:8080/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "http2"
+      oida.group: "http2"
+      oida.description: "HTTP/2 server (C, nghttp2), TLS + cleartext, frame logging enabled"
+      oida.ports: "8280, 8281"
+
+  http2-python:
+    build:
+      context: ./services/http2/mock
+      dockerfile: Dockerfile.python
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-http2-python:latest
+    container_name: http2-python-server
+    hostname: http2-python
+    ports:
+      - "9443:9443"     # HTTP/2 TLS (hyper-h2)
+      - "9080:9080"     # HTTP/2 cleartext
+    volumes:
+      - ./logs/http2:/var/log/http2:rw
+      - ./services/http2/certs:/app/certs:rw
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - HTTP2_LOG_LEVEL=INFO
+      - HTTP2_VALIDATE_HEADERS=true
+      - HTTP2_LOG_HPACK=true
+      - HTTP2_LOG_FRAMES=true
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 9080), timeout=2).close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "http2"
+      oida.group: "http2"
+      oida.description: "HTTP/2 server (Python, hyper-h2), TLS + cleartext, HPACK + header validation"
+      oida.ports: "9443, 9080"
+
+  http2-h2spec:
+    image: summerwind/h2spec:latest
+    container_name: http2-h2spec
+    hostname: h2spec
+    profiles: ["http2-test"]
+    networks:
+      - ics-network
+    entrypoint: ["sleep", "infinity"]
+    labels:
+      oida.protocol: "http2"
+      oida.group: "http2"
+      oida.description: "HTTP/2 spec conformance tester (h2spec), validates RFC 7540 compliance"
+      oida.ports: ""
+
+  # ============================================================================
+  # ASTM/LIS Mock Servers
+  # ============================================================================
+
+  astm-mock:
+    image: itechuw/astm-mock-server:latest
+    container_name: astm-mock-server
+    hostname: astm-server
+    ports:
+      - "1394:5000"     # ASTM E1394 (LIS2-A2)
+    environment:
+      - TZ=UTC
+      - ANALYZER_TYPE=CHEMISTRY
+      - RESPONSE_DELAY_MS=100
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 5000), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "astm"
+      oida.description: "ASTM E1394 chemistry analyzer sim, LIS2-A2 framing, bidirectional"
+      oida.ports: "1394"
+
+  astm-hematology:
+    image: itechuw/astm-mock-server:latest
+    container_name: astm-hematology-server
+    hostname: astm-hematology
+    ports:
+      - "1395:5000"     # ASTM on alternate port
+    environment:
+      - TZ=UTC
+      - ANALYZER_TYPE=HEMATOLOGY
+      - RESPONSE_DELAY_MS=100
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 5000), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "astm"
+      oida.description: "ASTM LIS hematology analyzer sim, CBC/differential results, 100ms delay"
+      oida.ports: "1395"
+
+  astm-data:
+    build:
+      context: ./services/astm/mock
+      dockerfile: Dockerfile.astm
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-astm:latest
+    container_name: astm-data-server
+    hostname: astm-data
+    ports:
+      - "1396:1394"     # ASTM with mock patient/order data
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - ASTM_PORT=1394
+      - ASTM_ANALYZER=COBAS_8000
+      - ASTM_ACCEPT_ALL=true
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 1394), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "astm"
+      oida.description: "ASTM LIS data server (Cobas 8000 profile), accepts all connections, sample results"
+      oida.ports: "1396"
+
+  astm-realstack-chemistry:
+    build:
+      context: ./services/astm/mock
+      dockerfile: Dockerfile.astm-real
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-astm-real:latest
+    container_name: astm-realstack-chemistry
+    hostname: astm-chemistry
+    ports:
+      - "1397:15200"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - ASTM_PORT=15200
+      - ASTM_INSTRUMENT=Roche-Cobas-8000
+      - ASTM_MODEL=c702-chemistry
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 15200), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "astm"
+      oida.description: "REAL ASTM LIS (python-astm, BSD, built from PyPI) - Roche Cobas 8000 chemistry analyzer profile"
+      oida.ports: "1397"
+
+  astm-realstack-hematology:
+    build:
+      context: ./services/astm/mock
+      dockerfile: Dockerfile.astm-real
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-astm-real:latest
+    container_name: astm-realstack-hematology
+    hostname: astm-hematology-real
+    ports:
+      - "1398:15200"
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - ASTM_PORT=15200
+      - ASTM_INSTRUMENT=Sysmex-XN-1000
+      - ASTM_MODEL=XN-hematology
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python", "-c", "import socket; socket.create_connection(('localhost', 15200), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "astm"
+      oida.description: "REAL ASTM LIS (python-astm, BSD, built from PyPI) - Sysmex XN-1000 hematology analyzer profile"
+      oida.ports: "1398"
+
+  # ============================================================================
+  # OCPP (Open Charge Point Protocol) Mock CSMS
+  # ============================================================================
+
+  ocpp-insecure:
+    build:
+      context: ./services/ocpp/mock
+      dockerfile: Dockerfile.ocpp
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ocpp:latest
+    container_name: ocpp-insecure-csms
+    hostname: ocpp-insecure
+    ports:
+      - "9000:9000"     # OCPP ws:// (insecure — no auth, accepts everything)
+      - "9001:9001"     # OCPP ws:// (secure — HTTP Basic Auth, hardened)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; [socket.create_connection(('localhost', p), timeout=2).close() for p in [9000, 9001]]"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      oida.protocol: "ocpp"
+      oida.group: "ocpp"
+      oida.description: "OCPP 1.6/2.0.1 CSMS, insecure ws://9000 + secure ws://9001 (CP001:SecureKey123)"
+      oida.ports: "9000, 9001"
+
+  # ============================================================================
+  # SteVe (real OCPP 1.2/1.5/1.6 Central System / CSMS)
+  # GPL-3.0 — built from source at image-build time, NO binaries committed.
+  # See ./services/ocpp/steve/README.md for the license note + config matrix.
+  # One MariaDB backend + three SteVe app containers sharing one built image,
+  # differing only by runtime Spring -D overrides and per-config DB schema.
+  # ============================================================================
+
+  ocpp-steve-db:
+    image: mariadb:10.11.16
+    container_name: ocpp-steve-db
+    hostname: ocpp-steve-db
+    environment:
+      - MYSQL_RANDOM_ROOT_PASSWORD=yes
+      - MYSQL_DATABASE=stevedb
+      - MYSQL_USER=steve
+      - MYSQL_PASSWORD=changeme
+      - TZ=+00:00
+    volumes:
+      - ocpp-steve-db-data:/var/lib/mysql
+      - ./services/ocpp/steve/initdb:/docker-entrypoint-initdb.d:ro
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
+    labels:
+      oida.protocol: "ocpp"
+      oida.group: "ocpp"
+      oida.description: "SteVe OCPP CSMS MariaDB backend (steve:changeme), schemas: stevedb_open/registered/secure"
+      oida.ports: ""
+
+  # Config 1: OPEN — auto-registers unknown stations, accepts BootNotification
+  # from ANY chargeBoxId. ws:// on 8180.
+  ocpp-steve-open:
+    build:
+      context: ./services/ocpp/steve
+      dockerfile: Dockerfile.steve
+      args:
+        STEVE_TAG: steve-3.13.0
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ocpp-steve:latest
+    container_name: ocpp-steve-open
+    hostname: ocpp-steve-open
+    depends_on:
+      ocpp-steve-db:
+        condition: service_healthy
+    ports:
+      - "8180:8180"     # SteVe HTTP — web UI :/steve/manager, ws OCPP
+    environment:
+      - TZ=UTC
+      - BUILD_DB_SCHEMA=stevedb_open
+      - JAVA_OPTS=-Dspring.datasource.url=jdbc:mariadb://ocpp-steve-db:3306/stevedb_open
+        -Dserver.address=0.0.0.0 -Dserver.port=8180
+        -Dsteve.ocpp.auto-register-unknown-stations=true
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8180/steve/manager/signin || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    labels:
+      oida.protocol: "ocpp"
+      oida.group: "ocpp"
+      oida.description: "Real SteVe OCPP 1.6J CSMS (open), ws://8180/steve/websocket/CentralSystemService/<id>, auto-registers any CP, web UI admin:1234"
+      oida.ports: "8180"
+
+  # Config 2: REGISTERED-ONLY — rejects unknown chargeBoxIds (auto-register
+  # false). Only pre-registered (via web UI/API) charge boxes are accepted.
+  ocpp-steve-registered:
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ocpp-steve:latest
+    container_name: ocpp-steve-registered
+    hostname: ocpp-steve-registered
+    depends_on:
+      ocpp-steve-db:
+        condition: service_healthy
+      ocpp-steve-open:
+        condition: service_started
+    ports:
+      - "8181:8180"     # SteVe HTTP (registered-only)
+    environment:
+      - TZ=UTC
+      - BUILD_DB_SCHEMA=stevedb_registered
+      - JAVA_OPTS=-Dspring.datasource.url=jdbc:mariadb://ocpp-steve-db:3306/stevedb_registered
+        -Dserver.address=0.0.0.0 -Dserver.port=8180
+        -Dsteve.ocpp.auto-register-unknown-stations=false
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsS -o /dev/null http://localhost:8180/steve/manager/signin || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    labels:
+      oida.protocol: "ocpp"
+      oida.group: "ocpp"
+      oida.description: "Real SteVe OCPP 1.6J CSMS (registered-only), ws://8181/steve/..., rejects unknown CP (auto-register off), web UI admin:1234"
+      oida.ports: "8181"
+
+  # Config 3: SECURE — HTTPS/WSS with a self-signed PKCS12 keystore generated
+  # at container start; rejects unknown chargeBoxIds. wss:// on 8543.
+  ocpp-steve-secure:
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ocpp-steve:latest
+    container_name: ocpp-steve-secure
+    hostname: ocpp-steve-secure
+    depends_on:
+      ocpp-steve-db:
+        condition: service_healthy
+      ocpp-steve-open:
+        condition: service_started
+    ports:
+      - "8543:8443"     # SteVe HTTPS — wss OCPP + web UI over TLS
+    environment:
+      - TZ=UTC
+    command:
+      - "sh"
+      - "-c"
+      - |
+        set -e
+        KS=/tmp/steve-keystore.p12
+        if [ ! -f "$$KS" ]; then
+          keytool -genkeypair -alias steve -keyalg RSA -keysize 2048 \
+            -validity 3650 -storetype PKCS12 -keystore "$$KS" \
+            -storepass changeit -keypass changeit \
+            -dname "CN=ocpp-steve-secure, O=OIDA, C=DE" \
+            -ext "SAN=dns:ocpp-steve-secure,dns:localhost,ip:127.0.0.1"
+        fi
+        dockerize -wait tcp://ocpp-steve-db:3306 -timeout 120s
+        ./mvnw --batch-mode clean package -Pdocker,mariadb \
+          -Ddb.ip=ocpp-steve-db -Ddb.port=3306 -Ddb.schema=stevedb_secure \
+          -Ddb.user=steve -Ddb.password=changeme \
+          -Djdk.tls.client.protocols="TLSv1,TLSv1.1,TLSv1.2"
+        exec java -XX:MaxRAMPercentage=75 \
+          -Dspring.datasource.url=jdbc:mariadb://ocpp-steve-db:3306/stevedb_secure \
+          -Dserver.address=0.0.0.0 \
+          -Dserver.port=8443 \
+          -Dhttp.enabled=false \
+          -Dserver.ssl.enabled=true \
+          -Dserver.ssl.key-store-type=PKCS12 \
+          -Dserver.ssl.key-store="$$KS" \
+          -Dserver.ssl.key-store-password=changeit \
+          -Dserver.ssl.key-alias=steve \
+          -Dsteve.ocpp.auto-register-unknown-stations=false \
+          -jar target/steve.war
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -fsSk -o /dev/null https://localhost:8443/steve/manager/signin || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 180s
+    labels:
+      oida.protocol: "ocpp"
+      oida.group: "ocpp"
+      oida.description: "Real SteVe OCPP 1.6J CSMS (secure/TLS), wss://8543/steve/..., self-signed keystore, rejects unknown CP, web UI admin:1234"
+      oida.ports: "8543"
+
+  # ============================================================================
+  # CAN Bus Mock (UDP multicast — no kernel modules needed)
+  # ============================================================================
+
+  # ============================================================================
+  # Layer 2 / Multicast Services (profiled - require host networking)
+  # ============================================================================
+
+  can-mock:
+    build:
+      context: ./services/can/mock
+      dockerfile: Dockerfile.can
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-can:latest
+    container_name: can-mock-server
+    hostname: can-mock
+    network_mode: host
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - CAN_MULTICAST_PORT=43113
+      # Throttle the background noise flood for deterministic, fast integration
+      # tests. Heartbeats, J1939 broadcasts/Address-Claimed and every protocol
+      # responder stay fully active -- only the high-frequency noise senders are
+      # stretched. Remove this line for a realistic full-rate (~3700 fps) bus.
+      - CAN_QUIET=1
+    restart: unless-stopped
+    profiles: ["can"]
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; s=socket.socket(socket.AF_INET, socket.SOCK_DGRAM); s.settimeout(2); s.sendto(b'ping', ('239.0.0.1', 43113)); s.close()"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      oida.protocol: "can"
+      oida.group: "can"
+      oida.description: "CAN bus gateway sim, UDP multicast 239.0.0.1:43113, host networking"
+      oida.ports: "43113/udp"
+
+  # ----------------------------------------------------------------------------
+  # Real CANopen nodes (genuine canopen.LocalNode stack on SocketCAN vcan0).
+  #
+  # Unlike can-mock (a UDP-multicast SIMULATION), these run an actual CiA-301
+  # CANopen device: heartbeat producer + SDO server answering identity-object
+  # uploads (0x1000/0x1008/0x1018/...). Each service creates its OWN vcan0 in
+  # its OWN network namespace at start-up, so it needs NET_ADMIN (privileged
+  # here for portability; cap_add: [NET_ADMIN] also works on most hosts).
+  #
+  # CAN is L2 / NON-ROUTABLE: there are no TCP/UDP ports to publish, and a
+  # scanner CANNOT reach the bus over ics-network. To scan, share the node's
+  # netns:  docker run --rm --network container:canopen-401-io \
+  #             -v $PWD:/oida -w /oida python:3.11-slim \
+  #             sh -c 'pip install -e ".[can,fuzz]" && oida can vcan0 --canopen-scan'
+  # Two co-resident nodes on one bus: start canopen-402-drive with
+  #   network_mode: "container:canopen-401-io"  (already wired below).
+  # ----------------------------------------------------------------------------
+  canopen-401-io:
+    build:
+      context: ./services/can/mock
+      dockerfile: Dockerfile.canopen
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-canopen:latest
+    container_name: canopen-401-io
+    hostname: canopen-401-io
+    privileged: true              # NET_ADMIN to create/up vcan0; cap_add also works
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - CANOPEN_CHANNEL=vcan0
+      - CANOPEN_NODE_ID=1
+      - CANOPEN_PROFILE=401       # CiA-401 Generic I/O -> device type 0x00000191
+      - CANOPEN_VENDOR_ID=0x000002AA
+      - CANOPEN_PRODUCT_CODE=0x00000401
+      - CANOPEN_REVISION=0x00010003
+      - CANOPEN_SERIAL=0x10000001
+      - CANOPEN_DEVICE_NAME=OIDA-IO-401
+      - CANOPEN_HW_VERSION=HW-1.0
+      - CANOPEN_SW_VERSION=IO-2.1.0
+      - CANOPEN_HEARTBEAT_MS=1000
+    restart: unless-stopped
+    profiles: ["can", "canopen"]
+    healthcheck:
+      test: ["CMD-SHELL", "ip link show vcan0 | grep -q UP && pgrep -f canopen_node.py >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 8s
+    labels:
+      oida.protocol: "can"
+      oida.group: "can"
+      oida.description: "Real CANopen node, node-id 1, CiA-401 Generic I/O, vcan0 (SocketCAN). Scan via shared netns: --network container:canopen-401-io"
+      oida.ports: "none (L2 CAN bus, vcan0)"
+
+  canopen-402-drive:
+    build:
+      context: ./services/can/mock
+      dockerfile: Dockerfile.canopen
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-canopen:latest
+    container_name: canopen-402-drive
+    # Share canopen-401-io's netns so BOTH nodes sit on the SAME vcan0 bus and
+    # a single `oida can vcan0 --canopen-scan` discovers both. The link is
+    # already created+UP by canopen-401-io; this container only adds node 4.
+    network_mode: "container:canopen-401-io"
+    depends_on:
+      canopen-401-io:
+        condition: service_healthy
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - CANOPEN_CHANNEL=vcan0
+      - CANOPEN_NODE_ID=4
+      - CANOPEN_PROFILE=402       # CiA-402 Drives/Motion -> device type 0x00000192
+      - CANOPEN_VENDOR_ID=0x0000012D
+      - CANOPEN_PRODUCT_CODE=0x00040200
+      - CANOPEN_REVISION=0x00020001
+      - CANOPEN_SERIAL=0x40000007
+      - CANOPEN_DEVICE_NAME=OIDA-DRIVE-402
+      - CANOPEN_HW_VERSION=DRV-HW-2.0
+      - CANOPEN_SW_VERSION=DRV-3.4.1
+      - CANOPEN_HEARTBEAT_MS=1000
+    restart: unless-stopped
+    profiles: ["can", "canopen"]
+    healthcheck:
+      test: ["CMD-SHELL", "pgrep -f canopen_node.py >/dev/null || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 8s
+    labels:
+      oida.protocol: "can"
+      oida.group: "can"
+      oida.description: "Real CANopen node, node-id 4, CiA-402 Drives/Motion, co-resident on canopen-401-io's vcan0 bus"
+      oida.ports: "none (L2 CAN bus, shared vcan0)"
+
+  ethercat-slave:
+    build:
+      context: ./services/ethercat/mock
+      dockerfile: Dockerfile.ethercat
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ethercat:latest
+    container_name: ethercat-slave-device
+    hostname: ethercat-slave
+    network_mode: host
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - TZ=UTC
+      - ETHERCAT_INTERFACE=eth0
+      - ETHERCAT_POSITION=1
+      - ETHERCAT_VERBOSITY=1
+      - ETHERCAT_CREATE_VETH=0
+    restart: unless-stopped
+    profiles: ["ethercat"]
+    healthcheck:
+      test: ["CMD", "/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "ethercat"
+      oida.group: "ethercat"
+      oida.description: "EtherCAT slave device sim, raw L2 frames, host networking, requires root"
+      oida.ports: "L2"
+
+  # EtherCAT slave with self-contained veth pair for testing without hardware.
+  # Creates ecat0/ecat1 pair inside the container; bridges ecat1 to eth0
+  # so frames from the Docker bridge reach the slave.
+  # Test with: oida ethercat br-ecat  (from host, targeting Docker bridge)
+  ethercat-slave-veth:
+    build:
+      context: ./services/ethercat/mock
+      dockerfile: Dockerfile.ethercat
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ethercat:latest
+    container_name: ethercat-slave-veth
+    hostname: ethercat-veth
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - TZ=UTC
+      - ETHERCAT_INTERFACE=eth0
+      - ETHERCAT_POSITION=1
+      - ETHERCAT_VERBOSITY=1
+      - ETHERCAT_CREATE_VETH=1
+    restart: unless-stopped
+    profiles: ["ethercat"]
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.protocol: "ethercat"
+      oida.group: "ethercat"
+      oida.description: "EtherCAT slave with veth pair, bridge networking, self-contained testing"
+      oida.ports: "L2"
+
+  # ── EtherCAT slaves: REAL software slave simulator (leducp/KickCAT) ───────
+  #
+  # Replaces the hand-written ethercat_slave.c sim with leducp/KickCAT's
+  # `network_simulator`, built FROM SOURCE (no committed binaries; CeCILL-C,
+  # attribution + LICENSE bundled at /opt/oida/KickCAT-LICENSE in the image).
+  # KickCAT is a real EtherCAT Slave Controller emulator (EmulatedESC: ESC
+  # registers, SyncManagers, FMMUs, EEPROM/SII compiled from ESI XML, CoE
+  # mailbox, DC clock). Two DISTINCT slaves are daisy-chained on the bus, each
+  # built from its own vendor ESI XML:
+  #   Slave 1  EVS-NET-01  vendor 0x029C (INGENIA-CAT)  product 0x03B11002  rev 0x00050005  (DS402 servo drive, 11 in / 11 out)
+  #   Slave 2  Relax       vendor 0x06A5 (Wandercraft)  product 0x00B0CAD0  rev 0x00000001  (XMC4800 dev board, 2 in / 0 out)
+  #
+  # WHY IT IS SOEM-DISCOVERABLE (the whole point -- `oida ethercat` is a SOEM
+  # master via pysoem): given a PLAIN interface name (not "tap:server"),
+  # network_simulator opens a real PF_PACKET/SOCK_RAW socket on that Linux
+  # interface (EtherType 0x88A4) -- the same L2 mechanism SOEM uses. The
+  # entrypoint creates an internal veth pair (ecatsimA <-> ecatsimB); the
+  # simulator binds ecatsimA, and any SOEM master in this container's netns
+  # targets ecatsimB.
+  #
+  # REACHABILITY (verified end-to-end with the REAL `oida ethercat` CLI):
+  #   EtherCAT is raw Layer 2, non-routable -- NO TCP/UDP ports. The slaves are
+  #   reachable ONLY inside this container's network namespace. Scan from the
+  #   SAME netns, either:
+  #     (a) sidecar sharing the netns:
+  #           docker run --rm --network container:ethercat-kickcat-slaves \
+  #             --cap-add NET_RAW --cap-add NET_ADMIN <oida-image> \
+  #             oida ethercat ecatsimB
+  #     (b) or run oida inside this container's netns however you prefer.
+  #   Verified output: 2 slaves, distinct vendor/product/revision + PDO layouts.
+  #   Requires CAP_NET_RAW (raw socket) + CAP_NET_ADMIN (veth + promisc).
+  ethercat-kickcat-slaves:
+    build:
+      context: ./services/ethercat/mock
+      dockerfile: Dockerfile.ethercat-kickcat
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ethercat-kickcat:latest
+    container_name: ethercat-kickcat-slaves
+    hostname: ethercat-kickcat
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - TZ=UTC
+      - ECAT_IF_SLAVE=ecatsimA
+      - ECAT_IF_SCAN=ecatsimB
+    restart: unless-stopped
+    profiles: ["ethercat"]
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "/healthcheck.sh"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.protocol: "ethercat"
+      oida.group: "ethercat"
+      oida.description: "Real software EtherCAT slaves (KickCAT network_simulator, source-built), 2 distinct identities (Ingenia EVS-NET-01 + Infineon XMC4800 Relax), raw L2 0x88A4, SOEM/pysoem-discoverable via internal veth pair (scan ecatsimB from same netns)"
+      oida.ports: "L2"
+
+  # ── PROFINET IO devices: real, source-built p-net (rtlabs) stack ──────────
+  #
+  # Two DISTINCT configs from ONE Dockerfile. vendor_id / device_id are baked
+  # at IMAGE-BUILD time via build args (the GSDML header #ifndef-guards them so
+  # -DAPP_GSDML_* wins), therefore each config needs its OWN image tag -- unlike
+  # the bacnet-realstack pattern where variants differ only at runtime. Station
+  # name stays runtime via PNET_STATION_NAME (-s).
+  #
+  # REACHABILITY (verified on the wire with tcpdump + tshark + the real OIDA
+  # scanner): a Docker user-defined bridge (ics-network) FORWARDS the DCP
+  # Identify-All multicast (dst 01:0e:cf:00:00:00, EtherType 0x8892) between
+  # sibling containers. A scanner container on ics-network -- or a host-side
+  # `sudo oida profinet <docker-bridge-iface>` -- discovers BOTH devices with a
+  # single Identify-All. No veth/netns/macvlan tricks needed.
+  #
+  # Config A: Siemens ET 200SP  -- vendor 0x002A (SIEMENS AG), device 0x0301
+  profinet-siemens-et200sp:
+    build:
+      context: ./services/profinet/mock
+      dockerfile: Dockerfile.profinet
+      args:
+        APP_VENDOR_ID: "0x002A"
+        APP_DEVICE_ID: "0x0301"
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-profinet:siemens-et200sp
+    container_name: profinet-siemens-et200sp
+    hostname: profinet-siemens
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - TZ=UTC
+      - PNET_STATION_NAME=siemens-et200sp
+      - PNET_INTERFACE=eth0
+      - PNET_VERBOSITY=2
+    restart: unless-stopped
+    profiles: ["profinet"]
+    networks:
+      - ics-network
+    healthcheck:
+      # No listening port (raw L2 device); health = the pn_dev process (PID 1)
+      # is alive, which only happens once it has bound the interface.
+      test: ["CMD-SHELL", "grep -q pn_dev /proc/1/comm || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "profinet"
+      oida.group: "profinet"
+      oida.description: "Real p-net PROFINET IO device, station siemens-et200sp, vendor 0x002A (SIEMENS AG) device 0x0301, DCP Identify-All over raw L2 (0x8892) on ics-network bridge"
+      oida.ports: "L2"
+
+  # Config B: Beckhoff EL6631   -- vendor 0x0120 (Beckhoff), device 0x0002
+  profinet-beckhoff-el6631:
+    build:
+      context: ./services/profinet/mock
+      dockerfile: Dockerfile.profinet
+      args:
+        APP_VENDOR_ID: "0x0120"
+        APP_DEVICE_ID: "0x0002"
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-profinet:beckhoff-el6631
+    container_name: profinet-beckhoff-el6631
+    hostname: profinet-beckhoff
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - TZ=UTC
+      - PNET_STATION_NAME=beckhoff-el6631
+      - PNET_INTERFACE=eth0
+      - PNET_VERBOSITY=2
+    restart: unless-stopped
+    profiles: ["profinet"]
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q pn_dev /proc/1/comm || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.protocol: "profinet"
+      oida.group: "profinet"
+      oida.description: "Real p-net PROFINET IO device, station beckhoff-el6631, vendor 0x0120 (Beckhoff) device 0x0002, DCP Identify-All over raw L2 (0x8892) on ics-network bridge"
+      oida.ports: "L2"
+
+  goose-l2-publisher:
+    build:
+      context: ./services/goose/mock
+      dockerfile: Dockerfile.goose-real
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-goose-real:latest
+    container_name: goose-l2-publisher
+    hostname: goose-publisher
+    network_mode: host
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - TZ=UTC
+      - GOOSE_INTERFACE=${GOOSE_INTERFACE:-eth0}
+      - GOOSE_APPID=0x1000
+      - GOOSE_GOCB_REF=simpleIOGenericIO/LLN0$$GO$$gcbAnalogValues
+      - GOOSE_DATASET_REF=simpleIOGenericIO/LLN0$$AnalogValues
+      - GOOSE_GO_ID=OIDA-GOOSE-Analog
+      - GOOSE_CONF_REV=1
+      - GOOSE_INTERVAL_MS=1000
+      - GOOSE_STATE_INTERVAL_MS=10000
+      - GOOSE_DST_LAST_OCTET=1
+    restart: unless-stopped
+    profiles: ["goose-l2"]
+    healthcheck:
+      # No listening port (raw L2 publisher); health = the publisher process
+      # (PID 1, the goose_publisher_real C binary) is alive past raw-socket bind.
+      test: ["CMD-SHELL", "grep -q goose /proc/1/comm || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      oida.protocol: "goose"
+      oida.group: "goose"
+      oida.description: "REAL IEC 61850 GOOSE publisher (libiec61850, GPLv3, built from source) - analog-values dataset, AppID 0x1000"
+      oida.ports: "L2"
+
+  goose-l2-publisher-breaker:
+    build:
+      context: ./services/goose/mock
+      dockerfile: Dockerfile.goose-real
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-goose-real:latest
+    container_name: goose-l2-publisher-breaker
+    hostname: goose-publisher-breaker
+    network_mode: host
+    cap_add:
+      - NET_RAW
+      - NET_ADMIN
+    environment:
+      - TZ=UTC
+      - GOOSE_INTERFACE=${GOOSE_INTERFACE:-eth0}
+      - GOOSE_APPID=0x2000
+      - GOOSE_GOCB_REF=simpleIOGenericIO/LLN0$$GO$$gcbBreaker
+      - GOOSE_DATASET_REF=simpleIOGenericIO/LLN0$$BreakerStatus
+      - GOOSE_GO_ID=OIDA-GOOSE-Breaker
+      - GOOSE_CONF_REV=2
+      - GOOSE_INTERVAL_MS=500
+      - GOOSE_STATE_INTERVAL_MS=5000
+      - GOOSE_DST_LAST_OCTET=2
+    restart: unless-stopped
+    profiles: ["goose-l2"]
+    healthcheck:
+      test: ["CMD-SHELL", "grep -q goose /proc/1/comm || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      oida.protocol: "goose"
+      oida.group: "goose"
+      oida.description: "REAL IEC 61850 GOOSE publisher (libiec61850, GPLv3, built from source) - breaker-status dataset, AppID 0x2000, 500ms retrans"
+      oida.ports: "L2"
+
+  # ============================================================================
+  # VNC / FTP / SMTP / HTTP Mock Services (state machine testing)
+  # ============================================================================
+
+  vnc-mock:
+    build:
+      context: ./services/vnc/mock
+      dockerfile: Dockerfile.vnc
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-vnc:latest
+    container_name: vnc-mock-server
+    hostname: vnc-mock
+    ports:
+      - "5900:5900"
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "5900"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "vnc"
+      oida.description: "VNC mock server (x11vnc, no auth) for state machine testing"
+      oida.ports: "5900"
+
+  ftp-mock:
+    build:
+      context: ./services/ftp/mock
+      dockerfile: Dockerfile.ftp
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-ftp:latest
+    container_name: ftp-mock-server
+    hostname: ftp-mock
+    ports:
+      - "2121:21"
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "nc -w 2 127.0.0.1 21 </dev/null 2>&1 | grep -q 220"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      oida.group: "ftp"
+      oida.description: "FTP mock server (vsftpd, local auth) for state machine testing"
+      oida.ports: "2121"
+
+  smtp-mock:
+    build:
+      context: ./services/smtp/mock
+      dockerfile: Dockerfile.smtp
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-smtp:latest
+    container_name: smtp-mock-server
+    hostname: smtp-mock
+    ports:
+      - "2530:25"
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "nc", "-z", "localhost", "25"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "smtp"
+      oida.description: "SMTP mock server (Postfix, AUTH LOGIN) for state machine testing"
+      oida.ports: "2530"
+
+  http-mock:
+    image: nginx:1.27-alpine
+    container_name: http-mock-server
+    hostname: http-mock
+    ports:
+      - "8083:80"
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:80/"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+    labels:
+      oida.group: "http"
+      oida.description: "HTTP mock server (nginx) for state machine testing"
+      oida.ports: "8083"
+
+  # ============================================================================
+  # Medical Protocols — HL7 / DICOM / FHIR
+  # ============================================================================
+
+  hl7-mock:
+    build:
+      context: ./services/hl7/mock
+      dockerfile: Dockerfile.hl7
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hl7:latest
+    container_name: hl7-mock-server
+    hostname: hl7-server
+    ports:
+      - "2575:2575"     # HL7 v2 MLLP
+      - "2576:2576"     # HL7 v2 MLLPS (TLS)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - ENABLE_TLS=1
+      - RESPONSE_MODE=normal
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 2575), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "hl7"
+      oida.description: "HL7 v2 MLLP + MLLPS server, ADT/ORM/ORU messages, no auth"
+      oida.ports: "2575, 2576"
+
+  hl7-node-mock:
+    build:
+      context: ./services/hl7/mock
+      dockerfile: Dockerfile.hl7-node
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-hl7-node:latest
+    container_name: hl7-node-mock-server
+    hostname: hl7-node
+    ports:
+      - "2577:2576"     # HL7 v2 MLLP (Node.js stack)
+    environment:
+      - TZ=UTC
+      - PORT=2576
+      - RESPONSE_MODE=normal
+      - SERVER_APP=NODE_HIS
+      - SERVER_FACILITY=GENERAL_HOSPITAL
+      - HL7_VERSION=2.5.1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "node", "-e", "const s=require('net').createConnection({port:2576,timeout:2000});s.on('connect',()=>{s.end();process.exit(0)});s.on('error',()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "hl7"
+      oida.description: "HL7 v2 MLLP server (Node.js)"
+      oida.ports: "2577"
+
+  dicom-mock:
+    build:
+      context: ./services/dicom/mock
+      dockerfile: Dockerfile.dicom
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dicom:latest
+    container_name: dicom-mock-server
+    hostname: dicom-server
+    ports:
+      - "11112:11112"   # DICOM (pynetdicom)
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DICOM_AET=MOCK_PACS
+      - DICOM_PORT=11112
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 11112), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "dicom"
+      oida.description: "DICOM SCP (AET: MOCK_PACS), accepts any calling AET, C-ECHO/C-STORE/C-FIND"
+      oida.ports: "11112"
+
+  dicom-strict:
+    build:
+      context: ./services/dicom/mock
+      dockerfile: Dockerfile.dicom
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-dicom:latest
+    container_name: dicom-strict-server
+    hostname: dicom-strict
+    ports:
+      - "11113:11112"   # DICOM with strict AET whitelist
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+      - DICOM_AET=STRICT_PACS
+      - DICOM_PORT=11112
+      - DICOM_AET_WHITELIST=PACS,WORKSTATION,CT_SCANNER,MR_SCANNER
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import socket; socket.create_connection(('localhost', 11112), timeout=2).close()"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+    labels:
+      oida.group: "dicom"
+      oida.description: "DICOM SCP, AET whitelist enforced (AET: STRICT_PACS, allowed: PACS/WORKSTATION/CT_SCANNER/MR_SCANNER)"
+      oida.ports: "11113"
+
+  fhir-mock:
+    build:
+      context: ./services/fhir/mock
+      dockerfile: Dockerfile.fhir
+    image: ${OIDA_REGISTRY:?OIDA_REGISTRY is unset - copy docker/mocks/.env.example to docker/mocks/.env}/oida-mock-fhir:latest
+    container_name: fhir-mock-server
+    hostname: fhir-server
+    ports:
+      - "8081:8080"     # FHIR R4 REST API
+    environment:
+      - TZ=UTC
+      - PYTHONUNBUFFERED=1
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "python3", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8080/fhir/metadata', timeout=2)"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    labels:
+      oida.group: "fhir"
+      oida.description: "FHIR R4 REST API simulation (Python stdlib, no auth)"
+      oida.ports: "8081"
+
+  # ============================================================================
+  # HAPI FHIR JPA Server (REAL) - official hapiproject/hapi image (Apache-2.0)
+  # https://github.com/hapifhir/hapi-fhir-jpaserver-starter
+  # Genuine Spring-Boot FHIR server, embedded H2 (no external DB). Nothing is
+  # vendored - the official image is pulled at runtime; only mounted yaml config
+  # (./services/fhir/hapi/) is committed. CapabilityStatement at /fhir/metadata.
+  # ============================================================================
+
+  fhir-hapi-r4:
+    image: hapiproject/hapi:v8.6.5-1
+    container_name: fhir-hapi-r4-server
+    hostname: fhir-hapi-r4
+    ports:
+      - "8090:8080"     # FHIR R4 REST API (real HAPI JPA, permissive)
+    environment:
+      - TZ=UTC
+      # Additive: layer our overrides ON TOP of the image's bundled
+      # application.yaml (do NOT replace it - replacing drops keys the app
+      # needs and breaks bean wiring). Arg form passed as a Spring env override.
+      - SPRING_CONFIG_ADDITIONAL_LOCATION=file:///configs/application.yaml
+    volumes:
+      - ./services/fhir/hapi/application-r4.yaml:/configs/application.yaml:ro
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      # Image is distroless (only `java` is present - no curl/sh/wget), so this
+      # is a JVM-liveness check; the real /fhir/metadata round-trip is verified
+      # from the host. Same pattern as the knx-devices Java mock.
+      test: ["CMD", "java", "-version"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    labels:
+      oida.group: "fhir"
+      oida.description: "HAPI FHIR JPA server (real, Apache-2.0), FHIR R4, embedded H2, permissive, no auth"
+      oida.ports: "8090"
+
+  fhir-hapi-r5:
+    image: hapiproject/hapi:v8.6.5-1
+    container_name: fhir-hapi-r5-server
+    hostname: fhir-hapi-r5
+    ports:
+      - "8091:8080"     # FHIR R5 REST API (real HAPI JPA, permissive)
+    environment:
+      - TZ=UTC
+      # Additive: layer our overrides ON TOP of the image's bundled
+      # application.yaml (do NOT replace it - replacing drops keys the app
+      # needs and breaks bean wiring). Arg form passed as a Spring env override.
+      - SPRING_CONFIG_ADDITIONAL_LOCATION=file:///configs/application.yaml
+    volumes:
+      - ./services/fhir/hapi/application-r5.yaml:/configs/application.yaml:ro
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      # Image is distroless (only `java` is present - no curl/sh/wget), so this
+      # is a JVM-liveness check; the real /fhir/metadata round-trip is verified
+      # from the host. Same pattern as the knx-devices Java mock.
+      test: ["CMD", "java", "-version"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    labels:
+      oida.group: "fhir"
+      oida.description: "HAPI FHIR JPA server (real, Apache-2.0), FHIR R5, embedded H2, permissive, no auth"
+      oida.ports: "8091"
+
+  fhir-hapi-r4-strict:
+    image: hapiproject/hapi:v8.6.5-1
+    container_name: fhir-hapi-r4-strict-server
+    hostname: fhir-hapi-r4-strict
+    ports:
+      - "8092:8080"     # FHIR R4 REST API (real HAPI JPA, validating/strict)
+    environment:
+      - TZ=UTC
+      # Additive: layer our overrides ON TOP of the image's bundled
+      # application.yaml (do NOT replace it - replacing drops keys the app
+      # needs and breaks bean wiring). Arg form passed as a Spring env override.
+      - SPRING_CONFIG_ADDITIONAL_LOCATION=file:///configs/application.yaml
+    volumes:
+      - ./services/fhir/hapi/application-r4-strict.yaml:/configs/application.yaml:ro
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      # Image is distroless (only `java` is present - no curl/sh/wget), so this
+      # is a JVM-liveness check; the real /fhir/metadata round-trip is verified
+      # from the host. Same pattern as the knx-devices Java mock.
+      test: ["CMD", "java", "-version"]
+      interval: 30s
+      timeout: 5s
+      retries: 5
+      start_period: 90s
+    labels:
+      oida.group: "fhir"
+      oida.description: "HAPI FHIR JPA server (real, Apache-2.0), FHIR R4, request+response validation, external refs blocked"
+      oida.ports: "8092"
+
+  # ============================================================================
+  # Orthanc PACS Server (Full-Featured DICOM)
+  # ============================================================================
+
+  dicom-orthanc:
+    image: jodogne/orthanc-plugins:1.12.3
+    container_name: dicom-orthanc
+    hostname: orthanc
+    ports:
+      - "4242:4242"       # DICOM (standard port 104 equivalent)
+      - "8042:8042"       # Web UI / REST API
+    volumes:
+      - ./services/dicom/mock/orthanc.json:/etc/orthanc/orthanc.json:ro
+      - orthanc-data:/var/lib/orthanc/db
+    environment:
+      - TZ=UTC
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://127.0.0.1:8042/system"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 30s
+    labels:
+      oida.group: "dicom"
+      oida.description: "Orthanc PACS server (AET: ORTHANC_PACS, REST: 8042, no auth)"
+      oida.ports: "4242, 8042"
+
+  # ============================================================================
+  # Mirth Connect (Full-Featured HL7 Engine)
+  # ============================================================================
+
+  hl7-mirth-db:
+    image: postgres:15-alpine
+    container_name: hl7-mirth-db
+    hostname: mirth-db
+    environment:
+      - POSTGRES_USER=mirth
+      - POSTGRES_PASSWORD=mirth
+      - POSTGRES_DB=mirthdb
+    volumes:
+      - mirth-db-data:/var/lib/postgresql/data
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U mirth -d mirthdb"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    labels:
+      oida.group: "hl7"
+      oida.description: "HL7 Mirth Connect PostgreSQL backend, db: mirthdb (mirth:mirth)"
+      oida.ports: ""
+
+  hl7-mirth:
+    image: nextgenhealthcare/connect:4.5.0
+    container_name: hl7-mirth
+    hostname: mirth
+    depends_on:
+      hl7-mirth-db:
+        condition: service_healthy
+    ports:
+      - "8443:8443"       # Mirth Administrator (HTTPS)
+      - "8080:8080"       # HTTP API
+      - "6661:6661"       # HL7 MLLP Channel 1 (ADT)
+      - "6662:6662"       # HL7 MLLP Channel 2 (ORU)
+      - "6663:6663"       # HL7 MLLP Channel 3 (ORM)
+    environment:
+      - TZ=UTC
+      - DATABASE=postgres
+      - DATABASE_URL=jdbc:postgresql://mirth-db:5432/mirthdb
+      - DATABASE_USERNAME=mirth
+      - DATABASE_PASSWORD=mirth
+      - VMOPTIONS=-Xmx512m
+    volumes:
+      - ./services/hl7/mock/mirth/channels:/opt/connect/channels:ro
+      - mirth-appdata:/opt/connect/appdata
+    restart: unless-stopped
+    networks:
+      - ics-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -k -s -o /dev/null https://localhost:8443/api/system/stats || test $? -eq 22"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 120s
+    labels:
+      oida.group: "hl7"
+      oida.description: "Mirth Connect HL7 integration engine, web UI :8443, MLLP :6661-6663 (mirth:mirth)"
+      oida.ports: "8443, 6661-6663"
+
+networks:
+  ics-network:
+    # No subnet/ipam pin: Docker picks a free subnet from its default address
+    # pools, so the stack can't clash with a host that already routes a given
+    # range (VPN, another bridge, etc.). Nothing depends on a fixed range -
+    # the ADS mocks derive their AMS NetId and loopback subnet from whatever
+    # interface Docker assigns them.
+    driver: bridge
+
+volumes:
+  logs:
+  orthanc-data:
+  mirth-db-data:
+  mirth-appdata:
+  ocpp-steve-db-data:
+  bacnetsc-secure-certs:
+  bacnetsc-weak-certs:

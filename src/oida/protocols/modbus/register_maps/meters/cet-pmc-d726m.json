@@ -1,0 +1,351 @@
+{
+  "vendor": "CET",
+  "model": "PMC D 726 M",
+  "description": "CET PMC D 726 M power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "ubn1": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "Ubn1",
+      "unit": "V"
+    },
+    "ucn1": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "Ucn1",
+      "unit": "V"
+    },
+    "uln_average": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "ULN average",
+      "unit": "V"
+    },
+    "uab": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "Uab",
+      "unit": "V"
+    },
+    "ubc": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "Ubc",
+      "unit": "V"
+    },
+    "uca": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "Uca",
+      "unit": "V"
+    },
+    "ull_average": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "ULL average",
+      "unit": "V"
+    },
+    "ia": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "Ia",
+      "unit": "A"
+    },
+    "ib": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "Ib",
+      "unit": "A"
+    },
+    "ic": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "description": "Ic",
+      "unit": "A"
+    },
+    "i_average": {
+      "address": 22,
+      "type": "u32",
+      "access": "r",
+      "description": "I average",
+      "unit": "A"
+    },
+    "kwa1": {
+      "address": 24,
+      "type": "i32",
+      "access": "r",
+      "description": "kWa1",
+      "unit": "kW"
+    },
+    "kwb1": {
+      "address": 26,
+      "type": "i32",
+      "access": "r",
+      "description": "kWb1",
+      "unit": "kW"
+    },
+    "kwc1": {
+      "address": 28,
+      "type": "i32",
+      "access": "r",
+      "description": "kWc1",
+      "unit": "kW"
+    },
+    "kw_total": {
+      "address": 30,
+      "type": "i32",
+      "access": "r",
+      "description": "kW total",
+      "unit": "kW"
+    },
+    "kvara1": {
+      "address": 32,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvara1",
+      "unit": "kvar"
+    },
+    "kvarb1": {
+      "address": 34,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarb1",
+      "unit": "kvar"
+    },
+    "kvarc1": {
+      "address": 36,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarc1",
+      "unit": "kvar"
+    },
+    "kvar_total": {
+      "address": 38,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvar total",
+      "unit": "kvar"
+    },
+    "kvaa1": {
+      "address": 40,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAa1",
+      "unit": "kVA"
+    },
+    "kvab1": {
+      "address": 42,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAb1",
+      "unit": "kVA"
+    },
+    "kvac1": {
+      "address": 44,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAc1",
+      "unit": "kVA"
+    },
+    "kva_total": {
+      "address": 46,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA total",
+      "unit": "kVA"
+    },
+    "pfa1": {
+      "address": 48,
+      "type": "i16",
+      "access": "r",
+      "description": "PFa1"
+    },
+    "pfb1": {
+      "address": 49,
+      "type": "i16",
+      "access": "r",
+      "description": "PFb1"
+    },
+    "pfc1": {
+      "address": 50,
+      "type": "i16",
+      "access": "r",
+      "description": "PFc1"
+    },
+    "pf_average": {
+      "address": 51,
+      "type": "i16",
+      "access": "r",
+      "description": "PF average"
+    },
+    "freq": {
+      "address": 52,
+      "type": "i16",
+      "access": "r",
+      "description": "FREQ",
+      "unit": "Hz"
+    },
+    "uan_uab_3p3w_angle": {
+      "address": 53,
+      "type": "u16",
+      "access": "r",
+      "description": "Uan/Uab (3P3W) angle",
+      "unit": "D"
+    },
+    "ubn_ubc_3p3w_angle": {
+      "address": 54,
+      "type": "u16",
+      "access": "r",
+      "description": "Ubn/Ubc (3P3W) angle",
+      "unit": "D"
+    },
+    "ucn_uca_3p3w_angle": {
+      "address": 55,
+      "type": "u16",
+      "access": "r",
+      "description": "Ucn/Uca (3P3W) angle",
+      "unit": "D"
+    },
+    "ia_angle": {
+      "address": 56,
+      "type": "u16",
+      "access": "r",
+      "description": "Ia angle",
+      "unit": "D"
+    },
+    "ib_angle": {
+      "address": 57,
+      "type": "u16",
+      "access": "r",
+      "description": "Ib angle",
+      "unit": "D"
+    },
+    "ic_angle": {
+      "address": 58,
+      "type": "u16",
+      "access": "r",
+      "description": "Ic angle",
+      "unit": "D"
+    },
+    "in_calculated": {
+      "address": 59,
+      "type": "u32",
+      "access": "r",
+      "description": "In (Calculated)",
+      "unit": "A"
+    },
+    "phase_a_fundamental_pf": {
+      "address": 61,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A fundamental PF",
+      "unit": "A"
+    },
+    "phase_b_fundamental_pf": {
+      "address": 62,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B fundamental PF",
+      "unit": "A"
+    },
+    "phase_c_fundamental_pf": {
+      "address": 63,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C fundamental PF",
+      "unit": "A"
+    },
+    "setpoint_status3": {
+      "address": 95,
+      "type": "i16",
+      "access": "r",
+      "description": "Setpoint status3",
+      "unit": "A"
+    },
+    "do_status4": {
+      "address": 96,
+      "type": "i16",
+      "access": "r",
+      "description": "DO status4",
+      "unit": "A"
+    },
+    "di_status5": {
+      "address": 97,
+      "type": "i16",
+      "access": "r",
+      "description": "DI status5",
+      "unit": "A"
+    },
+    "soe_pointer6": {
+      "address": 98,
+      "type": "u32",
+      "access": "r",
+      "description": "SOE pointer6",
+      "unit": "A"
+    },
+    "ia_tdd": {
+      "address": 1300,
+      "type": "f32",
+      "access": "r",
+      "description": "Ia TDD"
+    },
+    "ib_tdd": {
+      "address": 1302,
+      "type": "f32",
+      "access": "r",
+      "description": "Ib TDD"
+    },
+    "ic_tdd": {
+      "address": 1304,
+      "type": "f32",
+      "access": "r",
+      "description": "Ic TDD"
+    },
+    "ia_tdd_odd": {
+      "address": 1306,
+      "type": "f32",
+      "access": "r",
+      "description": "Ia TDD odd"
+    },
+    "ib_tdd_odd": {
+      "address": 1308,
+      "type": "f32",
+      "access": "r",
+      "description": "Ib TDD odd"
+    },
+    "ic_tdd_odd": {
+      "address": 1310,
+      "type": "f32",
+      "access": "r",
+      "description": "Ic TDD odd"
+    },
+    "ia_tdd_even": {
+      "address": 1312,
+      "type": "f32",
+      "access": "r",
+      "description": "Ia TDD even"
+    },
+    "ib_tdd_even": {
+      "address": 1314,
+      "type": "f32",
+      "access": "r",
+      "description": "Ib TDD even"
+    }
+  }
+}

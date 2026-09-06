@@ -1,0 +1,319 @@
+{
+  "vendor": "Rayleigh Instruments",
+  "model": "RI F 220 / RI F 300 RI F 400",
+  "description": "Rayleigh Instruments RI F 220 / RI F 300 RI F 400 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: RI F 220, RI F 300 RI F 400",
+  "registers": {
+    "voltage_v2n": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage v2n"
+    },
+    "voltage_v3n": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage v3n"
+    },
+    "average_voltage_ln": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Average voltage ln"
+    },
+    "voltage_v12": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage V12"
+    },
+    "voltage_v23": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage V23"
+    },
+    "voltage_v31": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage V31"
+    },
+    "average_voltage_ll": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "Average voltage ll"
+    },
+    "current_i1": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I1"
+    },
+    "current_i2": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I2"
+    },
+    "current_i3": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I3"
+    },
+    "average_current": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "Average current"
+    },
+    "kw1": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "kW1"
+    },
+    "kw2": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "kW2"
+    },
+    "kw3": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "kW3"
+    },
+    "kva1": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva1"
+    },
+    "kva2": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva2"
+    },
+    "kva3": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva3"
+    },
+    "kvar1": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar1"
+    },
+    "kvar2": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar2"
+    },
+    "kvar3": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar3"
+    },
+    "total_kw": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Total kw"
+    },
+    "total_kva": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "Total kva",
+      "unit": "kVA"
+    },
+    "total_kvar": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "Total kvar",
+      "unit": "kVAr"
+    },
+    "pf1": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "PF1"
+    },
+    "pf2": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "PF2"
+    },
+    "pf3": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "PF3"
+    },
+    "average_pf": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "Average pf"
+    },
+    "frequency": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "total_kwh": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "Total kwh",
+      "unit": "kWh"
+    },
+    "total_kvah": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Total kvah"
+    },
+    "total_kvarh": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Total kvarh",
+      "unit": "kVArh"
+    },
+    "kw_max_active_power": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "Kw max active power"
+    },
+    "kw_min_active_power": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Kw min active power"
+    },
+    "kvarh_max_reactive_power": {
+      "address": 68,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarh max reactive power"
+    },
+    "kvarh_min_reactive_power": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarh min reactive power"
+    },
+    "kva_max_apparent_power": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva max apparent power"
+    },
+    "max_i1_demand": {
+      "address": 74,
+      "type": "f32",
+      "access": "r",
+      "description": "Max I1 demand"
+    },
+    "max_i2_demand": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "description": "Max I2 demand"
+    },
+    "max_i3_demand": {
+      "address": 78,
+      "type": "f32",
+      "access": "r",
+      "description": "Max I3 demand"
+    },
+    "max_avg_i_demand": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "Max avg. I demand"
+    },
+    "run_hour": {
+      "address": 82,
+      "type": "f32",
+      "access": "r",
+      "description": "Run hour"
+    },
+    "imp_kwh1": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "description": "Imp kwh1"
+    },
+    "imp_kwh2": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "Imp kwh2"
+    },
+    "imp_kwh3": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "Imp kwh3"
+    },
+    "exp_kwh1": {
+      "address": 90,
+      "type": "f32",
+      "access": "r",
+      "description": "Exp kwh1"
+    },
+    "exp_kwh2": {
+      "address": 92,
+      "type": "f32",
+      "access": "r",
+      "description": "Exp kwh2"
+    },
+    "exp_kwh3": {
+      "address": 94,
+      "type": "f32",
+      "access": "r",
+      "description": "Exp kwh3"
+    },
+    "total_imp_kwh": {
+      "address": 96,
+      "type": "f32",
+      "access": "r",
+      "description": "Total imp kwh",
+      "unit": "kWh"
+    },
+    "total_exp_kwh": {
+      "address": 98,
+      "type": "f32",
+      "access": "r",
+      "description": "Total exp kwh",
+      "unit": "kWh"
+    },
+    "imp_kvarh1": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "Imp kvarh1"
+    }
+  }
+}

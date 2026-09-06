@@ -1,0 +1,360 @@
+{
+  "vendor": "Eaton",
+  "model": "IQ DP 4000",
+  "description": "Eaton IQ DP 4000 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "peak_demand_forward_watts": {
+      "address": 7222,
+      "type": "f32",
+      "access": "r",
+      "description": "Peak demand forward watts",
+      "unit": "W"
+    },
+    "peak_demand_reverse_watts": {
+      "address": 7264,
+      "type": "f32",
+      "access": "r",
+      "description": "Peak demand reverse watts",
+      "unit": "W"
+    },
+    "peak_demand_lagging_vars": {
+      "address": 7305,
+      "type": "f32",
+      "access": "r",
+      "description": "Peak demand lagging vars",
+      "unit": "VAr"
+    },
+    "peak_demand_leading_vars": {
+      "address": 7347,
+      "type": "f32",
+      "access": "r",
+      "description": "Peak demand leading vars",
+      "unit": "VAr"
+    },
+    "status": {
+      "address": 3000,
+      "type": "u16",
+      "access": "r",
+      "description": "Status"
+    },
+    "vab": {
+      "address": 4002,
+      "type": "f32",
+      "access": "r",
+      "description": "Vab",
+      "unit": "V"
+    },
+    "vbc": {
+      "address": 4004,
+      "type": "f32",
+      "access": "r",
+      "description": "Vbc",
+      "unit": "V"
+    },
+    "vca": {
+      "address": 4006,
+      "type": "f32",
+      "access": "r",
+      "description": "Vca",
+      "unit": "V"
+    },
+    "van": {
+      "address": 4010,
+      "type": "f32",
+      "access": "r",
+      "description": "Van",
+      "unit": "V"
+    },
+    "vbn": {
+      "address": 4012,
+      "type": "f32",
+      "access": "r",
+      "description": "Vbn",
+      "unit": "V"
+    },
+    "vcn": {
+      "address": 4014,
+      "type": "f32",
+      "access": "r",
+      "description": "Vcn",
+      "unit": "V"
+    },
+    "la": {
+      "address": 5002,
+      "type": "f32",
+      "access": "r",
+      "description": "La",
+      "unit": "A"
+    },
+    "ib": {
+      "address": 5004,
+      "type": "f32",
+      "access": "r",
+      "description": "Ib",
+      "unit": "A"
+    },
+    "ic": {
+      "address": 5006,
+      "type": "f32",
+      "access": "r",
+      "description": "Ic",
+      "unit": "A"
+    },
+    "peak_demand_la": {
+      "address": 5014,
+      "type": "f32",
+      "access": "r",
+      "description": "Peak demand la",
+      "unit": "A"
+    },
+    "peak_demand_lb": {
+      "address": 5016,
+      "type": "f32",
+      "access": "r",
+      "description": "Peak demand lb",
+      "unit": "A"
+    },
+    "peak_demand_ic": {
+      "address": 5018,
+      "type": "f32",
+      "access": "r",
+      "description": "Peak demand ic",
+      "unit": "A"
+    },
+    "demand_la": {
+      "address": 5250,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand la",
+      "unit": "A"
+    },
+    "demand_ib": {
+      "address": 5252,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand ib",
+      "unit": "A"
+    },
+    "demand_ic": {
+      "address": 5254,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand ic",
+      "unit": "A"
+    },
+    "real_power": {
+      "address": 6006,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power",
+      "unit": "W"
+    },
+    "apparent_power": {
+      "address": 6070,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power",
+      "unit": "VA"
+    },
+    "reactive_power": {
+      "address": 6134,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power",
+      "unit": "VAr"
+    },
+    "pf_displacement": {
+      "address": 6218,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf displacement"
+    },
+    "pf_apparent": {
+      "address": 6220,
+      "type": "f32",
+      "access": "r",
+      "description": "Pf apparent"
+    },
+    "forward_real_energy": {
+      "address": 7004,
+      "type": "f32",
+      "access": "r",
+      "description": "Forward real energy",
+      "unit": "Wh"
+    },
+    "reverse_real_energy": {
+      "address": 7006,
+      "type": "f32",
+      "access": "r",
+      "description": "Reverse real energy",
+      "unit": "Wh"
+    },
+    "net_real_energy": {
+      "address": 7008,
+      "type": "f32",
+      "access": "r",
+      "description": "Net real energy",
+      "unit": "Wh"
+    },
+    "leading_reactive_energy": {
+      "address": 7010,
+      "type": "f32",
+      "access": "r",
+      "description": "Leading reactive energy",
+      "unit": "Varh"
+    },
+    "lagging_reactive_energy": {
+      "address": 7012,
+      "type": "f32",
+      "access": "r",
+      "description": "Lagging reactive energy",
+      "unit": "Varh"
+    },
+    "net_reactive_energy": {
+      "address": 7014,
+      "type": "f32",
+      "access": "r",
+      "description": "Net reactive energy",
+      "unit": "reactive-hours"
+    },
+    "apparent_energy": {
+      "address": 7016,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy",
+      "unit": "hours"
+    },
+    "demand_watts": {
+      "address": 7023,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand watts",
+      "unit": "W"
+    },
+    "demand_forward_watts": {
+      "address": 7220,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand forward watts",
+      "unit": "W"
+    },
+    "demand_reverse_watts": {
+      "address": 7262,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand reverse watts",
+      "unit": "W"
+    },
+    "demand_vars": {
+      "address": 7029,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand vars",
+      "unit": "VA- reactive"
+    },
+    "demand_lagging_vars": {
+      "address": 7303,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand lagging vars",
+      "unit": "VA- reactive"
+    },
+    "demand_leading_vars": {
+      "address": 7345,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand leading vars",
+      "unit": "reactive"
+    },
+    "demand_vas": {
+      "address": 7035,
+      "type": "f32",
+      "access": "r",
+      "description": "Demand vas",
+      "unit": "VA"
+    },
+    "peak_demand_watts": {
+      "address": 7040,
+      "type": "f32",
+      "access": "r",
+      "description": "Peak demand watts",
+      "unit": "W"
+    },
+    "peak_demand_vars": {
+      "address": 7045,
+      "type": "f32",
+      "access": "r",
+      "description": "Peak demand vars",
+      "unit": "VAr"
+    },
+    "peak_demand_vas": {
+      "address": 7050,
+      "type": "f32",
+      "access": "r",
+      "description": "Peak demand vas",
+      "unit": "VAs"
+    },
+    "total_reactive_energy": {
+      "address": 7628,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive energy",
+      "unit": "reactive-hours"
+    },
+    "total_real_energy": {
+      "address": 7679,
+      "type": "f32",
+      "access": "r",
+      "description": "Total real energy",
+      "unit": "Wh"
+    },
+    "percent_thd_la": {
+      "address": 9436,
+      "type": "f32",
+      "access": "r",
+      "description": "Percent thd la",
+      "unit": "%"
+    },
+    "percent_thd_lb": {
+      "address": 9438,
+      "type": "f32",
+      "access": "r",
+      "description": "Percent thd lb",
+      "unit": "%"
+    },
+    "percent_thd_ic": {
+      "address": 9440,
+      "type": "f32",
+      "access": "r",
+      "description": "Percent thd ic",
+      "unit": "%"
+    },
+    "percent_thd_vab": {
+      "address": 8148,
+      "type": "f32",
+      "access": "r",
+      "description": "Percent thd vab",
+      "unit": "%"
+    },
+    "percent_thd_vbc": {
+      "address": 8150,
+      "type": "f32",
+      "access": "r",
+      "description": "Percent thd vbc",
+      "unit": "%"
+    },
+    "percent_thd_vca": {
+      "address": 8152,
+      "type": "f32",
+      "access": "r",
+      "description": "Percent thd vca",
+      "unit": "%"
+    }
+  }
+}

@@ -1,0 +1,201 @@
+{
+  "vendor": "SDM72V2",
+  "model": "Eastron SDM72 v2",
+  "description": "Imported from mbmd (sdm72v2)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/sdm72v2.go",
+  "registers": {
+    "voltage_l1": {
+      "address": 0,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 line to neutral volts",
+      "function_code": 4
+    },
+    "voltage_l2": {
+      "address": 2,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 line to neutral volts",
+      "function_code": 4
+    },
+    "voltage_l3": {
+      "address": 4,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 line to neutral volts",
+      "function_code": 4
+    },
+    "current_l1": {
+      "address": 6,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 current",
+      "function_code": 4
+    },
+    "current_l2": {
+      "address": 8,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 current",
+      "function_code": 4
+    },
+    "current_l3": {
+      "address": 10,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 current",
+      "function_code": 4
+    },
+    "power_l1": {
+      "address": 12,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 active power",
+      "function_code": 4
+    },
+    "power_l2": {
+      "address": 14,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 active power",
+      "function_code": 4
+    },
+    "power_l3": {
+      "address": 16,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 active power",
+      "function_code": 4
+    },
+    "apparent_power_l1": {
+      "address": 18,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 apparent power",
+      "function_code": 4
+    },
+    "apparent_power_l2": {
+      "address": 20,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 apparent power",
+      "function_code": 4
+    },
+    "apparent_power_l3": {
+      "address": 22,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 apparent power",
+      "function_code": 4
+    },
+    "reactive_power_l1": {
+      "address": 24,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 reactive power",
+      "function_code": 4
+    },
+    "reactive_power_l2": {
+      "address": 26,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 reactive power",
+      "function_code": 4
+    },
+    "reactive_power_l3": {
+      "address": 28,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 reactive power",
+      "function_code": 4
+    },
+    "cosphi_l1": {
+      "address": 30,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 1 power factor",
+      "function_code": 4
+    },
+    "cosphi_l2": {
+      "address": 32,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 2 power factor",
+      "function_code": 4
+    },
+    "cosphi_l3": {
+      "address": 34,
+      "type": "f32",
+      "access": "ro",
+      "description": "Phase 3 power factor",
+      "function_code": 4
+    },
+    "power": {
+      "address": 52,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system power",
+      "function_code": 4
+    },
+    "apparent_power": {
+      "address": 56,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system volt amps.",
+      "function_code": 4
+    },
+    "reactive_power": {
+      "address": 60,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system VAr",
+      "function_code": 4
+    },
+    "cosphi": {
+      "address": 62,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total system power factor",
+      "function_code": 4
+    },
+    "frequency": {
+      "address": 70,
+      "type": "f32",
+      "access": "ro",
+      "description": "Frequency of supply voltages",
+      "function_code": 4
+    },
+    "import": {
+      "address": 72,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Import kWh",
+      "function_code": 4
+    },
+    "export": {
+      "address": 74,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total Export kWh",
+      "function_code": 4
+    },
+    "sum": {
+      "address": 342,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kWh",
+      "function_code": 4
+    },
+    "reactive_sum": {
+      "address": 344,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total kVArh",
+      "function_code": 4
+    }
+  },
+  "_source_verified": "Verified: Eastron SDM72 v2 confirmed; mbmd source sdm72v2.go and nmakel/sdm_modbus support verified"
+}

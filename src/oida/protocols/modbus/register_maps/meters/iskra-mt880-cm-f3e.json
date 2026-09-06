@@ -1,0 +1,313 @@
+{
+  "vendor": "Iskra",
+  "model": "MT 880 CM F 3 E",
+  "description": "Iskra MT 880 CM F 3 E power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "current_system_time": {
+      "address": 2,
+      "type": "i32",
+      "access": "r",
+      "description": "Current system time"
+    },
+    "current_system_date": {
+      "address": 5,
+      "type": "i32",
+      "access": "r",
+      "description": "Current system date"
+    },
+    "active_energy_import_a": {
+      "address": 8,
+      "type": "f64",
+      "access": "r",
+      "description": "Active energy import (+a)"
+    },
+    "active_energy_export_a": {
+      "address": 12,
+      "type": "f64",
+      "access": "r",
+      "description": "Active energy export (a)"
+    },
+    "reactive_energy_import_r": {
+      "address": 16,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy import (+r)"
+    },
+    "reactive_energy_export_r": {
+      "address": 20,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy export ( r)"
+    },
+    "reactive_energy_q1_ri": {
+      "address": 24,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q1 (+ri)"
+    },
+    "reactive_energy_q2_rc": {
+      "address": 28,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q2 (+rc)"
+    },
+    "reactive_energy_q3_ri": {
+      "address": 32,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q3 ( ri)"
+    },
+    "reactive_energy_q4_rc": {
+      "address": 36,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q4 ( rc)"
+    },
+    "apparent_energy_import_va_q1_q4": {
+      "address": 40,
+      "type": "f64",
+      "access": "r",
+      "description": "Apparent energy import (+va) (Q1 + q4)"
+    },
+    "apparent_energy_export_va_q2_q3": {
+      "address": 44,
+      "type": "f64",
+      "access": "r",
+      "description": "Apparent energy export ( va) (Q2 + q3)"
+    },
+    "active_energy_import_a_l1": {
+      "address": 48,
+      "type": "f64",
+      "access": "r",
+      "description": "Active energy import (+a) L1"
+    },
+    "active_energy_import_a_l2": {
+      "address": 52,
+      "type": "f64",
+      "access": "r",
+      "description": "Active energy import (+a) L2"
+    },
+    "active_energy_import_a_l3": {
+      "address": 56,
+      "type": "f64",
+      "access": "r",
+      "description": "Active energy import (+a) L3"
+    },
+    "active_energy_export_a_l1": {
+      "address": 60,
+      "type": "f64",
+      "access": "r",
+      "description": "Active energy export ( a) L1"
+    },
+    "active_energy_export_a_l2": {
+      "address": 64,
+      "type": "f64",
+      "access": "r",
+      "description": "Active energy export ( a) L2"
+    },
+    "active_energy_export_a_l3": {
+      "address": 68,
+      "type": "f64",
+      "access": "r",
+      "description": "Active energy export ( a) L3"
+    },
+    "reactive_energy_import_r_l1": {
+      "address": 72,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy import (+r) L1"
+    },
+    "reactive_energy_import_r_l2": {
+      "address": 76,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy import (+r) L2"
+    },
+    "reactive_energy_import_r_l3": {
+      "address": 80,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy import (+r) L3"
+    },
+    "reactive_energy_export_r_l1": {
+      "address": 84,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy export ( r) L1"
+    },
+    "reactive_energy_export_r_l2": {
+      "address": 88,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy export ( r) L2"
+    },
+    "reactive_energy_export_r_l3": {
+      "address": 92,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy export ( r) L3"
+    },
+    "reactive_energy_q1_ri_l1": {
+      "address": 96,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q1 (+ri) L1"
+    },
+    "reactive_energy_q1_ri_l2": {
+      "address": 100,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q1 (+ri) L2"
+    },
+    "reactive_energy_q1_ri_l3": {
+      "address": 104,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q1 (+ri) L3"
+    },
+    "reactive_energy_q2_rc_l1": {
+      "address": 108,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q2 (+rc) L1"
+    },
+    "reactive_energy_q2_rc_l2": {
+      "address": 112,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q2 (+rc) L2"
+    },
+    "reactive_energy_q2_rc_l3": {
+      "address": 116,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q2 (+rc) L3"
+    },
+    "reactive_energy_q3_ri_l1": {
+      "address": 120,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q3 ( ri) L1"
+    },
+    "reactive_energy_q3_ri_l2": {
+      "address": 124,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q3 ( ri) L2"
+    },
+    "reactive_energy_q3_ri_l3": {
+      "address": 128,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q3 ( ri) L3"
+    },
+    "reactive_energy_q4_rc_l1": {
+      "address": 132,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q4 ( rc) L1"
+    },
+    "reactive_energy_q4_rc_l2": {
+      "address": 136,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q4 ( rc) L2"
+    },
+    "reactive_energy_q4_rc_l3": {
+      "address": 140,
+      "type": "f64",
+      "access": "r",
+      "description": "Reactive energy Q4 ( rc) L3"
+    },
+    "apparent_energy_import_va_q1_q4_l1": {
+      "address": 144,
+      "type": "f64",
+      "access": "r",
+      "description": "Apparent energy import (+va) (Q1 + q4) L1"
+    },
+    "apparent_energy_import_va_q1_q4_l2": {
+      "address": 148,
+      "type": "f64",
+      "access": "r",
+      "description": "Apparent energy import (+va) (Q1 + q4) L2"
+    },
+    "apparent_energy_import_va_q1_q4_l3": {
+      "address": 152,
+      "type": "f64",
+      "access": "r",
+      "description": "Apparent energy import (+va) (Q1 + q4) L3"
+    },
+    "apparent_energy_export_va_q2_q3_l1": {
+      "address": 156,
+      "type": "f64",
+      "access": "r",
+      "description": "Apparent energy export ( va) (Q2 + q3) L1"
+    },
+    "apparent_energy_export_va_q2_q3_l2": {
+      "address": 160,
+      "type": "f64",
+      "access": "r",
+      "description": "Apparent energy export ( va) (Q2 + q3) L2"
+    },
+    "apparent_energy_export_va_q2_q3_l3": {
+      "address": 164,
+      "type": "f64",
+      "access": "r",
+      "description": "Apparent energy export ( va) (Q2 + q3) L3"
+    },
+    "instantaneous_active_power_a_a": {
+      "address": 168,
+      "type": "f32",
+      "access": "r",
+      "description": "Instantaneous active power (|+a|+| a|)"
+    },
+    "instantaneous_active_import_power_a": {
+      "address": 170,
+      "type": "f32",
+      "access": "r",
+      "description": "Instantaneous active import power (+a)"
+    },
+    "instantaneous_active_import_power_a_l1": {
+      "address": 172,
+      "type": "f32",
+      "access": "r",
+      "description": "Instantaneous active import power (+a) L1"
+    },
+    "instantaneous_active_import_power_a_l2": {
+      "address": 174,
+      "type": "f32",
+      "access": "r",
+      "description": "Instantaneous active import power (+a) L2"
+    },
+    "instantaneous_active_import_power_a_l3": {
+      "address": 176,
+      "type": "f32",
+      "access": "r",
+      "description": "Instantaneous active import power (+a) L3"
+    },
+    "instantaneous_active_export_power_a": {
+      "address": 178,
+      "type": "f32",
+      "access": "r",
+      "description": "Instantaneous active export power ( a)"
+    },
+    "instantaneous_active_export_power_a_l1": {
+      "address": 180,
+      "type": "f32",
+      "access": "r",
+      "description": "Instantaneous active export power ( a) L1"
+    },
+    "instantaneous_active_export_power_a_l2": {
+      "address": 182,
+      "type": "f32",
+      "access": "r",
+      "description": "Instantaneous active export power ( a) L2"
+    }
+  }
+}

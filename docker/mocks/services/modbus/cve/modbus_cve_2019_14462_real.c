@@ -1,0 +1,91 @@
+/**
+ * Real CVE-2019-14462 - Uses actual vulnerable libmodbus v3.1.4
+ *
+ * Vulnerability: Out-of-bounds read in FC 0x0F (Write Multiple Coils)
+ * when byte_count doesn't match (quantity + 7) / 8.
+ */
+
+#include <stdio.h>
+#include <stdlib.h>
+#include <unistd.h>
+#include <errno.h>
+#include <modbus/modbus.h>
+
+/* ASan manual poisoning API (resolved by the -fsanitize=address runtime).
+ * Lets us mark the bytes beyond the actually-received frame as off-limits, so
+ * libmodbus's over-read past the message is caught even though it stays inside
+ * the fixed 260-byte query[] allocation. */
+void __asan_poison_memory_region(void const volatile *addr, size_t size);
+void __asan_unpoison_memory_region(void const volatile *addr, size_t size);
+
+#define PORT 5024
+
+int main(void) {
+    modbus_t *ctx;
+    modbus_mapping_t *mb_mapping;
+    uint8_t query[MODBUS_TCP_MAX_ADU_LENGTH];
+    int server_socket, client_socket;
+
+    setbuf(stdout, NULL);
+
+    printf("===========================================\n");
+    printf("  REAL libmodbus CVE-2019-14462 Server\n");
+    printf("  Using: libmodbus v3.1.4 (vulnerable)\n");
+    printf("  Port: %d\n", PORT);
+    printf("  Trigger: FC 0x0F with mismatched byte_count\n");
+    printf("===========================================\n");
+
+    ctx = modbus_new_tcp("0.0.0.0", PORT);
+    if (ctx == NULL) {
+        fprintf(stderr, "modbus_new_tcp failed\n");
+        return 1;
+    }
+
+    mb_mapping = modbus_mapping_new(1000, 0, 0, 0);
+    if (mb_mapping == NULL) {
+        fprintf(stderr, "modbus_mapping_new failed\n");
+        modbus_free(ctx);
+        return 1;
+    }
+
+    server_socket = modbus_tcp_listen(ctx, 1);
+    if (server_socket == -1) {
+        fprintf(stderr, "modbus_tcp_listen failed\n");
+        modbus_mapping_free(mb_mapping);
+        modbus_free(ctx);
+        return 1;
+    }
+
+    printf("[*] Listening on port %d...\n", PORT);
+
+    while (1) {
+        client_socket = modbus_tcp_accept(ctx, &server_socket);
+        if (client_socket == -1) continue;
+
+        printf("[*] Client connected\n");
+
+        while (1) {
+            int rc = modbus_receive(ctx, query);
+            if (rc == -1) break;
+
+            printf("[*] Received %d bytes, FC=0x%02x\n", rc, query[7]);
+
+            /* Bytes past the received frame are not valid input: poison them so
+             * the CVE's over-read (FC 0x0F, quantity >> byte_count) hits ASan. */
+            __asan_poison_memory_region(query + rc, sizeof(query) - rc);
+            int reply_rc = modbus_reply(ctx, query, rc, mb_mapping);
+            __asan_unpoison_memory_region(query, sizeof(query));
+            if (reply_rc == -1) {
+                printf("[!] modbus_reply failed: %s\n", modbus_strerror(errno));
+            }
+        }
+
+        printf("[*] Client disconnected\n");
+        close(client_socket);
+    }
+
+    modbus_mapping_free(mb_mapping);
+    modbus_close(ctx);
+    modbus_free(ctx);
+    return 0;
+}

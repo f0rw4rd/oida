@@ -1,0 +1,82 @@
+{
+  "vendor": "SunSpec",
+  "model": "Common Model 1",
+  "description": "SunSpec Common Model - Required on all SunSpec devices",
+  "version": "1.0",
+  "standard": "sunspec",
+  "sunspec_model_id": 1,
+  "base_address": 40000,
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "SunSpec marker 'SunS' (0x53756E53) at base address identifies compliant devices",
+  "registers": {
+    "sunspec_id": {
+      "address": 0,
+      "type": "u32",
+      "access": "r",
+      "description": "SunSpec ID marker (0x53756E53 = 'SunS')",
+      "expected_value": "0x53756E53"
+    },
+    "model_id": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Model ID (1 = Common Model)"
+    },
+    "model_length": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Model length in registers (65 or 66)"
+    },
+    "manufacturer": {
+      "address": 4,
+      "type": "str",
+      "length": 32,
+      "access": "r",
+      "description": "Manufacturer name (16 registers)"
+    },
+    "model": {
+      "address": 20,
+      "type": "str",
+      "length": 32,
+      "access": "r",
+      "description": "Device model name (16 registers)"
+    },
+    "options": {
+      "address": 36,
+      "type": "str",
+      "length": 16,
+      "access": "r",
+      "description": "Options / device variant (8 registers)"
+    },
+    "version": {
+      "address": 44,
+      "type": "str",
+      "length": 16,
+      "access": "r",
+      "description": "Firmware version (8 registers)"
+    },
+    "serial_number": {
+      "address": 52,
+      "type": "str",
+      "length": 32,
+      "access": "r",
+      "description": "Device serial number (16 registers)"
+    },
+    "device_address": {
+      "address": 68,
+      "type": "u16",
+      "access": "rw",
+      "description": "Modbus device address (Unit ID)"
+    },
+    "pad": {
+      "address": 69,
+      "type": "u16",
+      "access": "r",
+      "description": "Padding register (0xFFFF = NaN)"
+    }
+  },
+  "_source_verified": "Verified: SunSpec Common Model 1 with 0x53756E53 marker is the foundational SunSpec model; universally documented"
+}

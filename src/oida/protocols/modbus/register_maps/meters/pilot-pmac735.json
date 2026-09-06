@@ -1,0 +1,347 @@
+{
+  "vendor": "Pilot",
+  "model": "PMAC 735",
+  "description": "Pilot PMAC 735 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "phase_b_voltage": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B voltage",
+      "unit": "V"
+    },
+    "phase_c_voltage": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C voltage",
+      "unit": "V"
+    },
+    "line_ab_voltage": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Line ab voltage",
+      "unit": "V"
+    },
+    "line_bc_voltage": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Line bc voltage",
+      "unit": "V"
+    },
+    "line_ca_voltage": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Line ca voltage",
+      "unit": "V"
+    },
+    "phase_a_current": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A current",
+      "unit": "A"
+    },
+    "phase_b_current": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B current",
+      "unit": "A"
+    },
+    "phase_c_current": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C current",
+      "unit": "A"
+    },
+    "neutral_current": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "A"
+    },
+    "three_phase_active_power": {
+      "address": 10,
+      "type": "i32",
+      "access": "r",
+      "description": "Three phase active power",
+      "unit": "W"
+    },
+    "three_phase_reactive_power": {
+      "address": 12,
+      "type": "i32",
+      "access": "r",
+      "description": "Three phase reactive power",
+      "unit": "Var"
+    },
+    "three_phase_apparent_power": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase apparent power",
+      "unit": "VA"
+    },
+    "total_power_factor": {
+      "address": 16,
+      "type": "i16",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "frequency": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "input_active_energy": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "Input active energy",
+      "unit": "kwh"
+    },
+    "input_reactive_energy": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "description": "Input reactive energy",
+      "unit": "kvarh"
+    },
+    "output_active_energy": {
+      "address": 22,
+      "type": "u32",
+      "access": "r",
+      "description": "Output active energy",
+      "unit": "kwh"
+    },
+    "output_reactive_energy": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "Output reactive energy",
+      "unit": "kvarh"
+    },
+    "on_off_status": {
+      "address": 26,
+      "type": "u16",
+      "access": "r",
+      "description": "On off status"
+    },
+    "relay_status": {
+      "address": 27,
+      "type": "u16",
+      "access": "r",
+      "description": "Relay status"
+    },
+    "va_vab_thd": {
+      "address": 28,
+      "type": "u16",
+      "access": "r",
+      "description": "Va/vab thd"
+    },
+    "vb_vbc_thd": {
+      "address": 29,
+      "type": "u16",
+      "access": "r",
+      "description": "Vb/vbc thd"
+    },
+    "vc_vca_thd": {
+      "address": 30,
+      "type": "u16",
+      "access": "r",
+      "description": "Vc/vca thd"
+    },
+    "ia_thd": {
+      "address": 31,
+      "type": "u16",
+      "access": "r",
+      "description": "Ia thd"
+    },
+    "ib_thd": {
+      "address": 32,
+      "type": "u16",
+      "access": "r",
+      "description": "Ib thd"
+    },
+    "ic_thd": {
+      "address": 33,
+      "type": "u16",
+      "access": "r",
+      "description": "Ic thd"
+    },
+    "ia_k_factor": {
+      "address": 34,
+      "type": "u16",
+      "access": "r",
+      "description": "Ia K factor"
+    },
+    "ib_k_factor": {
+      "address": 35,
+      "type": "u16",
+      "access": "r",
+      "description": "Ib K factor"
+    },
+    "ic_k_factor": {
+      "address": 36,
+      "type": "u16",
+      "access": "r",
+      "description": "Ic K factor"
+    },
+    "average_phase_current_demand": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "Average phase current demand",
+      "unit": "A"
+    },
+    "three_phase_active_power_demand": {
+      "address": 38,
+      "type": "i32",
+      "access": "r",
+      "description": "Three phase active power demand",
+      "unit": "W"
+    },
+    "three_phase_reactive_power_demand": {
+      "address": 40,
+      "type": "i32",
+      "access": "r",
+      "description": "Three phase reactive power demand",
+      "unit": "Var"
+    },
+    "three_phase_apparent_power_demand": {
+      "address": 42,
+      "type": "u32",
+      "access": "r",
+      "description": "Three phase apparent power demand",
+      "unit": "VA"
+    },
+    "soe_event_counter": {
+      "address": 44,
+      "type": "u16",
+      "access": "r",
+      "description": "Soe event counter"
+    },
+    "phase_a_voltage": {
+      "address": 100,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage",
+      "unit": "V"
+    },
+    "phase_b_voltage_101": {
+      "address": 101,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B voltage",
+      "unit": "V"
+    },
+    "phase_c_voltage_102": {
+      "address": 102,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C voltage",
+      "unit": "V"
+    },
+    "phase_voltage_unbalance_rate": {
+      "address": 103,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase voltage unbalance rate"
+    },
+    "average_phase_voltage": {
+      "address": 104,
+      "type": "u16",
+      "access": "r",
+      "description": "Average phase voltage",
+      "unit": "V"
+    },
+    "line_ab_voltage_105": {
+      "address": 105,
+      "type": "u16",
+      "access": "r",
+      "description": "Line ab voltage",
+      "unit": "V"
+    },
+    "line_bc_voltage_106": {
+      "address": 106,
+      "type": "u16",
+      "access": "r",
+      "description": "Line bc voltage",
+      "unit": "V"
+    },
+    "line_ca_voltage_107": {
+      "address": 107,
+      "type": "u16",
+      "access": "r",
+      "description": "Line ca voltage",
+      "unit": "V"
+    },
+    "line_voltage_unbalance_rate": {
+      "address": 108,
+      "type": "u16",
+      "access": "r",
+      "description": "Line voltage unbalance rate"
+    },
+    "average_line_voltage": {
+      "address": 109,
+      "type": "u16",
+      "access": "r",
+      "description": "Average line voltage",
+      "unit": "V"
+    },
+    "neutral_voltage": {
+      "address": 110,
+      "type": "u16",
+      "access": "r",
+      "description": "Neutral voltage",
+      "unit": "V"
+    },
+    "phase_a_current_111": {
+      "address": 111,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A current",
+      "unit": "A"
+    },
+    "phase_b_current_112": {
+      "address": 112,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B current",
+      "unit": "A"
+    },
+    "phase_c_current_113": {
+      "address": 113,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C current",
+      "unit": "A"
+    },
+    "current_unbalance_rate": {
+      "address": 114,
+      "type": "u16",
+      "access": "r",
+      "description": "Current unbalance rate"
+    },
+    "average_phase_current": {
+      "address": 115,
+      "type": "u16",
+      "access": "r",
+      "description": "Average phase current",
+      "unit": "A"
+    }
+  }
+}

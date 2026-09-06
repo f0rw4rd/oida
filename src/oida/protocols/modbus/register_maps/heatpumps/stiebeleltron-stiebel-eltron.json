@@ -1,0 +1,187 @@
+{
+  "vendor": "StiebelEltron",
+  "model": "StiebelEltron",
+  "description": "Imported from nymea-plugins-modbus (stiebeleltron)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/stiebeleltron/stiebel-eltron-registers.json",
+  "registers": {
+    "outdoorTemperature": {
+      "address": 506,
+      "type": "i16",
+      "access": "ro",
+      "description": "Outdoor temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "flowTemperature": {
+      "address": 514,
+      "type": "i16",
+      "access": "ro",
+      "description": "Flow temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "hotWaterTemperature": {
+      "address": 521,
+      "type": "u16",
+      "access": "ro",
+      "description": "Hot water temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "hotGasTemperature1": {
+      "address": 543,
+      "type": "u16",
+      "access": "ro",
+      "description": "Hot gas temperature HP 1",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "hotGasTemperature2": {
+      "address": 550,
+      "type": "u16",
+      "access": "ro",
+      "description": "Hot gas temperature HP 2",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "SourceTemperature": {
+      "address": 562,
+      "type": "u16",
+      "access": "ro",
+      "description": "Source temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "roomTemperatureFEK": {
+      "address": 502,
+      "type": "u16",
+      "access": "ro",
+      "description": "Room temperature FEK",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "returnTemperature": {
+      "address": 515,
+      "type": "i16",
+      "access": "ro",
+      "description": "Return temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "solarCollectorTemperature": {
+      "address": 527,
+      "type": "u16",
+      "access": "ro",
+      "description": "Solar collector temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "solarStorageTankTemperature": {
+      "address": 528,
+      "type": "u16",
+      "access": "ro",
+      "description": "Solar storage tank temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "storageTankTemperature": {
+      "address": 517,
+      "type": "u16",
+      "access": "ro",
+      "description": "Storage tank temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "externalHeatSourceTemperature": {
+      "address": 530,
+      "type": "u16",
+      "access": "ro",
+      "description": "External heat source temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "heatingEnergy": {
+      "address": 3501,
+      "type": "u32",
+      "access": "ro",
+      "description": "Heating energy",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "hotWaterEnergy": {
+      "address": 3504,
+      "type": "u32",
+      "access": "ro",
+      "description": "Hot water energy",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "consumedEnergyHeating": {
+      "address": 3511,
+      "type": "u32",
+      "access": "ro",
+      "description": "Consumed energy heating",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "consumedEnergyHotWater": {
+      "address": 3514,
+      "type": "u32",
+      "access": "ro",
+      "description": "Consumed energy hot water",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "operatingMode": {
+      "address": 1500,
+      "type": "u16",
+      "access": "ro",
+      "description": "Operating mode"
+    },
+    "systemStatus": {
+      "address": 2500,
+      "type": "u16",
+      "access": "ro",
+      "description": "System status",
+      "function_code": 4
+    },
+    "sgReadyStateRO": {
+      "address": 5000,
+      "type": "u16",
+      "access": "ro",
+      "description": "Smart grid status",
+      "function_code": 4
+    },
+    "sgReadyActive": {
+      "address": 4000,
+      "type": "u16",
+      "access": "rw",
+      "description": "SG ready active"
+    },
+    "sgReadyState": {
+      "address": 4001,
+      "type": "u32",
+      "access": "rw",
+      "description": "SG Ready mode"
+    }
+  },
+  "enums": {
+    "OperatingMode": {
+      "0": "Emergency",
+      "1": "Standby",
+      "2": "Program",
+      "3": "Comfort",
+      "4": "Eco",
+      "5": "HotWater"
+    },
+    "SmartGridState": {
+      "1": "ModeOne",
+      "0": "ModeTwo",
+      "65536": "ModeThree",
+      "65537": "ModeFour"
+    }
+  },
+  "_source_verified": "Verified: ISG Modbus TCP confirmed; official PDF 321798-44755-9770 and openHAB binding verified"
+}

@@ -1,0 +1,40 @@
+# Snap7 Mock Server Dockerfile
+# Simulates Siemens S7 PLC for testing oida s7 scanner
+
+FROM python:3.11-slim-bookworm
+
+LABEL maintainer="OIDA Project"
+LABEL description="Snap7 Mock S7 PLC Server"
+
+# Install system dependencies for snap7 native library
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    netcat-openbsd \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
+
+# Install Python dependencies
+# python-snap7 2.x includes bundled libsnap7
+RUN pip install --no-cache-dir python-snap7==2.0.2
+
+# Verify snap7 installation
+RUN python -c "import snap7; print(f'snap7 version: {snap7.__version__}')"
+
+# Copy server script
+COPY snap7_server.py /app/snap7_server.py
+
+WORKDIR /app
+
+# Default environment
+ENV SNAP7_PORT=102
+ENV SNAP7_CPU_TYPE=1200
+ENV SNAP7_DB_COUNT=10
+
+# Expose S7 port (ISO-TSAP)
+EXPOSE 102
+
+# Health check
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+    CMD nc -z localhost ${SNAP7_PORT} || exit 1
+
+# Run server
+CMD ["python", "-u", "snap7_server.py"]

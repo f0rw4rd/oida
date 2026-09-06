@@ -1,0 +1,175 @@
+{
+  "vendor": "AmtronHCC3",
+  "model": "AmtronHCC3",
+  "description": "Imported from nymea-plugins-modbus (mennekes)",
+  "byte_order": "little",
+  "word_order": "little",
+  "source": "nymea-plugins-modbus/mennekes/amtron-hcc3-registers.json",
+  "registers": {
+    "serialNumber": {
+      "address": 779,
+      "type": "u32",
+      "access": "ro",
+      "description": "Serial number",
+      "function_code": 4
+    },
+    "name": {
+      "address": 785,
+      "type": "str",
+      "access": "ro",
+      "description": "Wallbox name",
+      "function_code": 4
+    },
+    "customerCurrentLimitation": {
+      "address": 1024,
+      "type": "u16",
+      "access": "rw",
+      "description": "Customer Current Limitation",
+      "unit": "A"
+    },
+    "changeChargeState": {
+      "address": 1025,
+      "type": "u16",
+      "access": "ro",
+      "description": "Change charge state"
+    },
+    "cpSignalState": {
+      "address": 770,
+      "type": "u16",
+      "access": "ro",
+      "description": "CP signal state",
+      "function_code": 4
+    },
+    "ppState": {
+      "address": 771,
+      "type": "u16",
+      "access": "ro",
+      "description": "PP state",
+      "function_code": 4
+    },
+    "hcc3ErrorCode": {
+      "address": 772,
+      "type": "u16",
+      "access": "ro",
+      "description": "HCC3 Error Code",
+      "function_code": 4
+    },
+    "amtronState": {
+      "address": 773,
+      "type": "u16",
+      "access": "ro",
+      "description": "AMTRON state",
+      "function_code": 4
+    },
+    "phaseCount": {
+      "address": 776,
+      "type": "u16",
+      "access": "ro",
+      "description": "Phase count",
+      "function_code": 4
+    },
+    "ratedCurrent": {
+      "address": 777,
+      "type": "u16",
+      "access": "ro",
+      "description": "Rated Current",
+      "unit": "A",
+      "function_code": 4
+    },
+    "installationCurrent": {
+      "address": 778,
+      "type": "u16",
+      "access": "ro",
+      "description": "Installation current",
+      "function_code": 4
+    },
+    "chargingSessionMeter": {
+      "address": 781,
+      "type": "u32",
+      "access": "ro",
+      "description": "Charging session meter count",
+      "unit": "Wh",
+      "function_code": 4
+    },
+    "actualPowerConsumption": {
+      "address": 783,
+      "type": "u32",
+      "access": "ro",
+      "description": "Actual power consumption",
+      "unit": "W",
+      "function_code": 4
+    },
+    "plannedMinimumCurrent": {
+      "address": 805,
+      "type": "u16",
+      "access": "ro",
+      "description": "Planned Minimum Current per Phase",
+      "unit": "A",
+      "function_code": 4
+    },
+    "plannedMaximumCurrent": {
+      "address": 806,
+      "type": "u16",
+      "access": "ro",
+      "description": "Planned Maximum Current per Phase",
+      "unit": "A",
+      "function_code": 4
+    }
+  },
+  "enums": {
+    "CPSignalState": {
+      "1": "A1",
+      "2": "A2",
+      "3": "B1",
+      "4": "B2",
+      "5": "C1",
+      "6": "C2",
+      "7": "D1",
+      "8": "D2"
+    },
+    "PPState": {
+      "0": "Illegal",
+      "1": "Open",
+      "2": "13A",
+      "3": "20A",
+      "4": "32A"
+    },
+    "ChargeState": {
+      "1": "Pause",
+      "2": "Continue",
+      "3": "Terminate",
+      "4": "Start"
+    },
+    "HCC3ErrorCode": {
+      "0": "NoError",
+      "10": "InstallationFault",
+      "11": "ControllerFault",
+      "12": "Misconfiguration",
+      "13": "Overtemperature",
+      "14": "MirrorContactorError",
+      "15": "InvalidDeviceTime",
+      "16": "EnergyManagerConnectionError",
+      "30": "DeviceStartup",
+      "31": "InternalTestNotPassed",
+      "32": "HMINoConnection",
+      "50": "BadlyPluggedCable",
+      "51": "WrongCable",
+      "52": "DefectCable",
+      "100": "ACUCommunicationError",
+      "101": "NotPolledByACU",
+      "102": "Maintenance",
+      "103": "Disabled",
+      "255": "UnknownError"
+    },
+    "AmtronState": {
+      "0": "Idle",
+      "1": "StandByAuthorize",
+      "2": "StandbyConnect",
+      "3": "Charging",
+      "4": "Paused",
+      "5": "Terminated",
+      "6": "Error"
+    }
+  },
+  "_source_verified": "Verified: Official Modbus docs confirmed; registers verified against aggsoft.com and NodeRedContribAmtronWallbox"
+}

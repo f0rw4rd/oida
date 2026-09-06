@@ -1,0 +1,313 @@
+{
+  "vendor": "Accuenergy",
+  "model": "ACUVIM L POWER METER",
+  "description": "Accuenergy ACUVIM L POWER METER power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "frequency_f": {
+      "address": 1536,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency F"
+    },
+    "phase_voltage_v1": {
+      "address": 1538,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage v1"
+    },
+    "phase_voltage_v2": {
+      "address": 1540,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage v2"
+    },
+    "phase_voltage_v3": {
+      "address": 1542,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase voltage v3"
+    },
+    "line_voltage_v12": {
+      "address": 1544,
+      "type": "f32",
+      "access": "r",
+      "description": "Line voltage v12"
+    },
+    "line_voltage_v23": {
+      "address": 1546,
+      "type": "f32",
+      "access": "r",
+      "description": "Line voltage v23"
+    },
+    "line_voltage_v31": {
+      "address": 1548,
+      "type": "f32",
+      "access": "r",
+      "description": "Line voltage v31"
+    },
+    "phase_line_current_i1": {
+      "address": 1550,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase (line) current i1"
+    },
+    "phase_line_current_i2": {
+      "address": 1552,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase (line) current i2"
+    },
+    "phase_line_current_i3": {
+      "address": 1554,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase (line) current i3"
+    },
+    "neutral_line_current_in": {
+      "address": 1556,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral line current in"
+    },
+    "phase_power_pa": {
+      "address": 1558,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase power pa"
+    },
+    "phase_power_pb": {
+      "address": 1560,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase power pb"
+    },
+    "phase_power_pc": {
+      "address": 1562,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase power pc"
+    },
+    "system_power_psum": {
+      "address": 1564,
+      "type": "f32",
+      "access": "r",
+      "description": "System power psum"
+    },
+    "phase_reactive_power_qa": {
+      "address": 1566,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power qa"
+    },
+    "phase_reactive_power_qb": {
+      "address": 1568,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power qb"
+    },
+    "phase_reactive_power_qc": {
+      "address": 1570,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power qc"
+    },
+    "system_reactive_power": {
+      "address": 1572,
+      "type": "f32",
+      "access": "r",
+      "description": "System reactive power"
+    },
+    "system_apparent_ssum": {
+      "address": 1574,
+      "type": "f32",
+      "access": "r",
+      "description": "System apparent ssum"
+    },
+    "phase_power_factor_pfa": {
+      "address": 1576,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase power factor PFa"
+    },
+    "phase_power_factor_pfb": {
+      "address": 1578,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase power factor PFb"
+    },
+    "phase_power_factor_pfc": {
+      "address": 1580,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase power factor PFc"
+    },
+    "system_power_pfsum": {
+      "address": 1582,
+      "type": "f32",
+      "access": "r",
+      "description": "System power PFsum"
+    },
+    "voltage_unbalance_factor": {
+      "address": 1584,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance factor"
+    },
+    "current_unbalance_factor": {
+      "address": 1586,
+      "type": "f32",
+      "access": "r",
+      "description": "Current unbalance factor"
+    },
+    "phase_apparent_power_sa": {
+      "address": 1590,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power sa"
+    },
+    "phase_apparent_power_sb": {
+      "address": 1592,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power sb"
+    },
+    "phase_apparent_power_sc": {
+      "address": 1594,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power sc"
+    },
+    "apparent_power_demand": {
+      "address": 1598,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power demand"
+    },
+    "power_demand_p_dmd": {
+      "address": 1600,
+      "type": "f32",
+      "access": "r",
+      "description": "Power demand P_Dmd"
+    },
+    "reactive_power_demand": {
+      "address": 1602,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power demand"
+    },
+    "phase_a_current_demand": {
+      "address": 1604,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase A current demand"
+    },
+    "phase_a_current_demand_1606": {
+      "address": 1606,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase A current demand"
+    },
+    "phase_c_current_demand": {
+      "address": 1608,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase C current demand"
+    },
+    "total_harmonic_distortion_of_v1_or_v12": {
+      "address": 1024,
+      "type": "u16",
+      "access": "r",
+      "description": "Total harmonic distortion of v1 or v12"
+    },
+    "total_harmonic_distortion_of_v2_or_v23": {
+      "address": 1025,
+      "type": "u16",
+      "access": "r",
+      "description": "Total harmonic distortion of v2 or v23"
+    },
+    "total_harmonic_distortion_of_v3_or_v31": {
+      "address": 1026,
+      "type": "u16",
+      "access": "r",
+      "description": "Total harmonic distortion of v3 or v31"
+    },
+    "total_harmonic_distortion_of_i1_thd_i1": {
+      "address": 1027,
+      "type": "u16",
+      "access": "r",
+      "description": "Total harmonic distortion of i1 THD_ i1"
+    },
+    "total_harmonic_distortion_of_i2_thd_i2": {
+      "address": 1028,
+      "type": "u16",
+      "access": "r",
+      "description": "Total harmonic distortion of i2 THD_ i2"
+    },
+    "total_harmonic_distortion_of_i3_thd_i3": {
+      "address": 1029,
+      "type": "u16",
+      "access": "r",
+      "description": "Total harmonic distortion of i3 THD_ i3"
+    },
+    "import_energy_ep_imp": {
+      "address": 342,
+      "type": "u32",
+      "access": "r",
+      "description": "Import energy ep imp"
+    },
+    "export_energy_ep_exp": {
+      "address": 344,
+      "type": "u32",
+      "access": "r",
+      "description": "Export energy ep exp"
+    },
+    "import_reactive_energy_eq_imp": {
+      "address": 346,
+      "type": "u32",
+      "access": "r",
+      "description": "Import reactive energy eq imp"
+    },
+    "export_reactive_energy_eq_exp": {
+      "address": 348,
+      "type": "u32",
+      "access": "r",
+      "description": "Export reactive energy eq exp"
+    },
+    "apparent_energy_es": {
+      "address": 350,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent energy es"
+    },
+    "phase_a_import_energy_ep_imp": {
+      "address": 352,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase A import energy ep imp"
+    },
+    "phase_a_export_energy_ep_exp": {
+      "address": 354,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase A export energy ep_exp"
+    },
+    "phase_b_import_energy_ep_imp": {
+      "address": 356,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase B import energy ep_imp"
+    },
+    "phase_b_export_energy_ep_exp": {
+      "address": 358,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase B export energy ep_exp"
+    }
+  }
+}

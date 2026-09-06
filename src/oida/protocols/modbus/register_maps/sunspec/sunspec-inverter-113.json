@@ -1,0 +1,266 @@
+{
+  "vendor": "SunSpec",
+  "model": "Inverter Model 113 (Three-Phase Float)",
+  "description": "SunSpec Model 113 - Three Phase Inverter with IEEE 754 Float format",
+  "version": "1.0",
+  "standard": "sunspec",
+  "sunspec_model_id": 113,
+  "base_address": 40000,
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Model 113 = Three-phase inverter (float). Model length is 60 registers. Same fields as Model 103 but uses float32 instead of integer + scale factor. Common on newer inverters. Addresses include 2-register header (ID+Length).",
+  "source": "https://github.com/sunspec/models/blob/master/smdx/smdx_00113.xml",
+  "registers": {
+    "model_id": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Model ID (113 = three-phase inverter float)"
+    },
+    "model_length": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Model length (60 registers)"
+    },
+    "ac_current": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "unit": "A",
+      "description": "AC Total Current (A)"
+    },
+    "ac_current_a": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "unit": "A",
+      "description": "Phase A Current (AphA)"
+    },
+    "ac_current_b": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "unit": "A",
+      "description": "Phase B Current (AphB)"
+    },
+    "ac_current_c": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "unit": "A",
+      "description": "Phase C Current (AphC)"
+    },
+    "ac_voltage_ab": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "unit": "V",
+      "description": "Phase A-B Voltage (PPVphAB)"
+    },
+    "ac_voltage_bc": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "unit": "V",
+      "description": "Phase B-C Voltage (PPVphBC)"
+    },
+    "ac_voltage_ca": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "unit": "V",
+      "description": "Phase C-A Voltage (PPVphCA)"
+    },
+    "ac_voltage_an": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "unit": "V",
+      "description": "Phase A-N Voltage (PhVphA)"
+    },
+    "ac_voltage_bn": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "unit": "V",
+      "description": "Phase B-N Voltage (PhVphB)"
+    },
+    "ac_voltage_cn": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "unit": "V",
+      "description": "Phase C-N Voltage (PhVphC)"
+    },
+    "ac_power": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "unit": "W",
+      "description": "AC Power output (W)"
+    },
+    "ac_frequency": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "unit": "Hz",
+      "description": "AC Frequency (Hz)"
+    },
+    "ac_va": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Apparent Power (VA)"
+    },
+    "ac_var": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "unit": "var",
+      "description": "Reactive Power (VAr)"
+    },
+    "ac_pf": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "unit": "%",
+      "description": "Power Factor (PF)"
+    },
+    "ac_energy_wh": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "unit": "Wh",
+      "description": "AC Energy lifetime (WH)"
+    },
+    "dc_current": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "unit": "A",
+      "description": "DC Current (DCA)"
+    },
+    "dc_voltage": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "unit": "V",
+      "description": "DC Voltage (DCV)"
+    },
+    "dc_power": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "unit": "W",
+      "description": "DC Power (DCW)"
+    },
+    "cabinet_temperature": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "unit": "C",
+      "description": "Cabinet Temperature (TmpCab)"
+    },
+    "heatsink_temperature": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "unit": "C",
+      "description": "Heat Sink Temperature (TmpSnk)"
+    },
+    "transformer_temperature": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "unit": "C",
+      "description": "Transformer Temperature (TmpTrns)"
+    },
+    "other_temperature": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "unit": "C",
+      "description": "Other Temperature (TmpOt)"
+    },
+    "operating_state": {
+      "address": 48,
+      "type": "u16",
+      "access": "r",
+      "description": "Operating State (St)",
+      "enum": {
+        "1": "OFF",
+        "2": "SLEEPING",
+        "3": "STARTING",
+        "4": "MPPT",
+        "5": "THROTTLED",
+        "6": "SHUTTING_DOWN",
+        "7": "FAULT",
+        "8": "STANDBY"
+      }
+    },
+    "vendor_state": {
+      "address": 49,
+      "type": "u16",
+      "access": "r",
+      "description": "Vendor-specific operating state (StVnd)"
+    },
+    "event1": {
+      "address": 50,
+      "type": "u32",
+      "access": "r",
+      "description": "Event flags bitfield 1 (Evt1)",
+      "bitfield": {
+        "0": "GROUND_FAULT",
+        "1": "DC_OVER_VOLT",
+        "2": "AC_DISCONNECT",
+        "3": "DC_DISCONNECT",
+        "4": "GRID_DISCONNECT",
+        "5": "CABINET_OPEN",
+        "6": "MANUAL_SHUTDOWN",
+        "7": "OVER_TEMP",
+        "8": "OVER_FREQUENCY",
+        "9": "UNDER_FREQUENCY",
+        "10": "AC_OVER_VOLT",
+        "11": "AC_UNDER_VOLT",
+        "12": "BLOWN_STRING_FUSE",
+        "13": "UNDER_TEMP",
+        "14": "MEMORY_LOSS",
+        "15": "HW_TEST_FAILURE"
+      }
+    },
+    "event2": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "description": "Event flags bitfield 2 (Evt2) - reserved"
+    },
+    "vendor_event1": {
+      "address": 54,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor event bitfield 1 (EvtVnd1)"
+    },
+    "vendor_event2": {
+      "address": 56,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor event bitfield 2 (EvtVnd2)"
+    },
+    "vendor_event3": {
+      "address": 58,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor event bitfield 3 (EvtVnd3)"
+    },
+    "vendor_event4": {
+      "address": 60,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor event bitfield 4 (EvtVnd4)"
+    }
+  },
+  "_source_verified": "Verified: Model 113 register offsets confirmed against official sunspec/models/smdx/smdx_00113.xml"
+}

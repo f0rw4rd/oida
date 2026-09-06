@@ -1,0 +1,62 @@
+# Vulnerable ProFTPD 1.3.5 - CVE-2015-3306 (mod_copy)
+# Unauthenticated file copy allowing arbitrary file read/write
+#
+# FOR SECURITY TESTING PURPOSES ONLY
+
+FROM debian:bullseye-slim
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    wget \
+    && rm -rf /var/lib/apt/lists/*
+
+# Download and build vulnerable ProFTPD 1.3.5
+WORKDIR /tmp
+RUN wget -q ftp://ftp.proftpd.org/distrib/source/proftpd-1.3.5.tar.gz && \
+    tar xzf proftpd-1.3.5.tar.gz && \
+    cd proftpd-1.3.5 && \
+    ./configure --with-modules=mod_copy && \
+    make && \
+    make install && \
+    cd / && rm -rf /tmp/proftpd*
+
+# Create FTP directories and user
+RUN useradd -m -s /bin/bash ftpuser && \
+    echo "ftpuser:ftpuser" | chpasswd && \
+    mkdir -p /var/ftp/pub && \
+    chmod 755 /var/ftp/pub && \
+    echo "Secret data for CVE-2015-3306 testing" > /etc/shadow.bak
+
+# Vulnerable configuration with mod_copy enabled
+RUN mkdir -p /usr/local/etc && \
+    echo "ServerName \"ProFTPD Vulnerable\"" > /usr/local/etc/proftpd.conf && \
+    echo "ServerType standalone" >> /usr/local/etc/proftpd.conf && \
+    echo "DefaultServer on" >> /usr/local/etc/proftpd.conf && \
+    echo "Port 21" >> /usr/local/etc/proftpd.conf && \
+    echo "Umask 022" >> /usr/local/etc/proftpd.conf && \
+    echo "MaxInstances 30" >> /usr/local/etc/proftpd.conf && \
+    echo "User nobody" >> /usr/local/etc/proftpd.conf && \
+    echo "Group nogroup" >> /usr/local/etc/proftpd.conf && \
+    echo "DefaultRoot ~" >> /usr/local/etc/proftpd.conf && \
+    echo "AllowOverwrite on" >> /usr/local/etc/proftpd.conf && \
+    echo "<Anonymous /var/ftp>" >> /usr/local/etc/proftpd.conf && \
+    echo "  User ftp" >> /usr/local/etc/proftpd.conf && \
+    echo "  Group ftp" >> /usr/local/etc/proftpd.conf && \
+    echo "  UserAlias anonymous ftp" >> /usr/local/etc/proftpd.conf && \
+    echo "  MaxClients 10" >> /usr/local/etc/proftpd.conf && \
+    echo "  <Limit WRITE>" >> /usr/local/etc/proftpd.conf && \
+    echo "    DenyAll" >> /usr/local/etc/proftpd.conf && \
+    echo "  </Limit>" >> /usr/local/etc/proftpd.conf && \
+    echo "</Anonymous>" >> /usr/local/etc/proftpd.conf
+
+# Create ftp user for anonymous access
+RUN useradd -M -s /bin/false ftp || true
+
+EXPOSE 21
+
+LABEL oida.cve="CVE-2015-3306"
+LABEL oida.protocol="ftp"
+LABEL oida.severity="critical"
+LABEL oida.description="ProFTPD mod_copy unauthenticated file copy"
+
+CMD ["/usr/local/sbin/proftpd", "-n", "-c", "/usr/local/etc/proftpd.conf"]

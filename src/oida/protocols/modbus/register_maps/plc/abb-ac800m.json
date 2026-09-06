@@ -1,0 +1,86 @@
+{
+  "vendor": "ABB",
+  "model": "AC800M",
+  "description": "ABB AC800M Controller Modbus register map (VERIFIED)",
+  "version": "2.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: CI854A is PROFIBUS DP-V1, NOT Modbus TCP. Use CI867 (single port) or CI867A (dual port) for Modbus TCP/IP. All register addresses must be configured in Compact Control Builder.",
+  "source": "ABB AC800M Documentation, CI867 Technical Reference",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register"
+    },
+    {
+      "code": "15",
+      "function": "Write Multiple Coils"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers"
+    }
+  ],
+  "registers": {
+    "example_real_value": {
+      "address": 100,
+      "type": "f32",
+      "access": "rw",
+      "description": "Example: User-defined REAL at register 100"
+    },
+    "example_dint_value": {
+      "address": 200,
+      "type": "i32",
+      "access": "rw",
+      "description": "Example: User-defined DINT at register 200"
+    }
+  },
+  "extended_info": {
+    "communication_modules": {
+      "CI867": {
+        "type": "Modbus TCP/IP",
+        "ports": 1,
+        "max_connections": 16,
+        "description": "Single-port Modbus TCP/IP communication interface"
+      },
+      "CI867A": {
+        "type": "Modbus TCP/IP",
+        "ports": 2,
+        "max_connections": 32,
+        "description": "Dual-port Modbus TCP/IP communication interface"
+      },
+      "CI854A": {
+        "type": "PROFIBUS DP-V1",
+        "note": "NOT for Modbus - commonly confused"
+      }
+    },
+    "configuration_requirements": [
+      "CI867/CI867A module required for Modbus TCP",
+      "Configure data areas in Compact Control Builder",
+      "Use OPC Connect for tag mapping",
+      "Set IP address via front panel or MMS protocol"
+    ]
+  },
+  "_source_verified": "Verified: CI867/CI867A Modbus TCP interface confirmed; ABB product selector and library PDFs"
+}

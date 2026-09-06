@@ -1,0 +1,283 @@
+{
+  "vendor": "Sofar",
+  "model": "Lsw3",
+  "description": "Imported from Home Assistant Solarman (sofar_lsw3.yaml)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "home_assistant_solarman/sofar_lsw3.yaml",
+  "registers": {
+    "pv1_power": {
+      "address": 10,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Power",
+      "unit": "W",
+      "scale": 10
+    },
+    "pv2_power": {
+      "address": 11,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Power",
+      "unit": "W",
+      "scale": 10
+    },
+    "pv1_voltage": {
+      "address": 6,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv2_voltage": {
+      "address": 8,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv1_current": {
+      "address": 7,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "pv2_current": {
+      "address": 9,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "daily_production": {
+      "address": 25,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Production",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "total_production": {
+      "address": 22,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Production",
+      "unit": "kWh"
+    },
+    "total_generation_time": {
+      "address": 24,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total generation time",
+      "unit": "h"
+    },
+    "today_generation_time": {
+      "address": 26,
+      "type": "u16",
+      "access": "ro",
+      "description": "Today generation time",
+      "unit": "min"
+    },
+    "output_active_power": {
+      "address": 12,
+      "type": "u16",
+      "access": "ro",
+      "description": "Output active power",
+      "unit": "W",
+      "scale": 10
+    },
+    "output_reactive_power": {
+      "address": 13,
+      "type": "u16",
+      "access": "ro",
+      "description": "Output reactive power",
+      "unit": "kVar",
+      "scale": 0.01
+    },
+    "grid_frequency": {
+      "address": 14,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "l1_voltage": {
+      "address": 15,
+      "type": "u16",
+      "access": "ro",
+      "description": "L1 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "l1_current": {
+      "address": 16,
+      "type": "u16",
+      "access": "ro",
+      "description": "L1 Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "l2_voltage": {
+      "address": 17,
+      "type": "u16",
+      "access": "ro",
+      "description": "L2 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "l2_current": {
+      "address": 18,
+      "type": "u16",
+      "access": "ro",
+      "description": "L2 Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "l3_voltage": {
+      "address": 19,
+      "type": "u16",
+      "access": "ro",
+      "description": "L3 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "l3_current": {
+      "address": 20,
+      "type": "u16",
+      "access": "ro",
+      "description": "L3 Current",
+      "unit": "A",
+      "scale": 0.01
+    },
+    "inverter_status": {
+      "address": 0,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter status"
+    },
+    "inverter_module_temperature": {
+      "address": 27,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter module temperature",
+      "unit": "°C"
+    },
+    "inverter_inner_temperature": {
+      "address": 28,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter inner temperature",
+      "unit": "°C"
+    },
+    "inverter_bus_voltage": {
+      "address": 29,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter bus voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv1_voltage_sample_by_slave_cpu": {
+      "address": 30,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 voltage sample by slave CPU",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv1_current_sample_by_slave_cpu": {
+      "address": 31,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 current sample by slave CPU",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "countdown_time": {
+      "address": 32,
+      "type": "u16",
+      "access": "ro",
+      "description": "Countdown time",
+      "unit": "s"
+    },
+    "inverter_alert_message": {
+      "address": 33,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter alert message"
+    },
+    "input_mode": {
+      "address": 34,
+      "type": "u16",
+      "access": "ro",
+      "description": "Input mode"
+    },
+    "communication_board_inner_message": {
+      "address": 35,
+      "type": "u16",
+      "access": "ro",
+      "description": "Communication Board inner message"
+    },
+    "insulation_of_pv1_to_ground": {
+      "address": 36,
+      "type": "u16",
+      "access": "ro",
+      "description": "Insulation of PV1+ to ground"
+    },
+    "insulation_of_pv2_to_ground": {
+      "address": 37,
+      "type": "u16",
+      "access": "ro",
+      "description": "Insulation of PV2+ to ground"
+    },
+    "insulation_of_pv_to_ground": {
+      "address": 38,
+      "type": "u16",
+      "access": "ro",
+      "description": "Insulation of PV- to ground"
+    },
+    "country": {
+      "address": 39,
+      "type": "u16",
+      "access": "ro",
+      "description": "Country"
+    },
+    "fault_1": {
+      "address": 1,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 1"
+    },
+    "fault_2": {
+      "address": 2,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 2"
+    },
+    "fault_3": {
+      "address": 3,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 3"
+    },
+    "fault_4": {
+      "address": 4,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 4"
+    },
+    "fault_5": {
+      "address": 5,
+      "type": "u16",
+      "access": "ro",
+      "description": "Fault 5"
+    }
+  },
+  "_source_verified": "Verified: Source YAML confirmed; LSW-3 WiFi Stick confirmed via MichaluxPL/Sofar_LSW3"
+}

@@ -1,0 +1,89 @@
+# IEC 60870-5-104 TLS Mock Server
+#
+# Builds lib60870 with mbedTLS 3.6 support for IEC 62351-3 TLS transport.
+#
+# Build: docker build -t iec104-tls-server -f Dockerfile.tls .
+# Run:   docker run -p 19998:19998 \
+#          -v ./certs/ca.pem:/certs/ca.pem:ro \
+#          -v ./certs/iec104-tls/server.pem:/certs/server.pem:ro \
+#          -v ./certs/iec104-tls/server.key:/certs/server.key:ro \
+#          iec104-tls-server
+
+FROM debian:bookworm-slim AS builder
+
+# Install build dependencies
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    cmake \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+# Clone lib60870
+WORKDIR /build
+RUN git clone --depth 1 https://github.com/mz-automation/lib60870.git
+
+# Clone mbedTLS 3.6.x into lib60870's expected dependency path
+WORKDIR /build/lib60870/lib60870-C/dependencies
+RUN git clone --depth 1 --branch v3.6.0 https://github.com/Mbed-TLS/mbedtls.git mbedtls-3.6
+
+# Replace lib60870's broken mbedtls_config.h (contains #error directive and lacks
+# ECDH/ECP/DHM/ECDSA) with mbedtls 3.6's default config which has all cipher suites.
+# Note: cmake's -DMBEDTLS_CONFIG_FILE="mbedtls_config.h" resolves via include paths;
+# replacing both copies ensures consistency regardless of resolution order.
+RUN cp /build/lib60870/lib60870-C/dependencies/mbedtls-3.6/include/mbedtls/mbedtls_config.h \
+       /build/lib60870/lib60870-C/src/hal/tls/mbedtls3/mbedtls_config.h
+
+# Patch lib60870's TLS layer for mock server compatibility:
+# VERIFY_OPTIONAL: accept clients with or without certificates (lib60870 hardcodes
+# VERIFY_REQUIRED which mandates mutual TLS — too strict for a test mock)
+RUN sed -i 's/MBEDTLS_SSL_VERIFY_REQUIRED/MBEDTLS_SSL_VERIFY_OPTIONAL/' \
+    /build/lib60870/lib60870-C/src/hal/tls/mbedtls3/tls_mbedtls.c
+
+# Build lib60870 with mbedTLS 3.x support
+WORKDIR /build/lib60870/lib60870-C/build
+RUN cmake -DWITH_MBEDTLS3=1 .. && make -j$(nproc)
+
+# Copy TLS server source and build
+WORKDIR /build/server
+COPY iec104_tls_server.c .
+
+# Build the TLS server (mbedtls is compiled into lib60870 when WITH_MBEDTLS=1)
+RUN gcc -o iec104_tls_server iec104_tls_server.c \
+    -I/build/lib60870/lib60870-C/src/inc/api \
+    -I/build/lib60870/lib60870-C/src/inc/internal \
+    -I/build/lib60870/lib60870-C/src/common/inc \
+    -I/build/lib60870/lib60870-C/src/hal/inc \
+    -I/build/lib60870/lib60870-C/src/hal/serial \
+    -I/build/lib60870/lib60870-C/src/hal/tls \
+    -I/build/lib60870/lib60870-C/src/file-service \
+    -I/build/lib60870/lib60870-C/dependencies/mbedtls-3.6/include \
+    -L/build/lib60870/lib60870-C/build/src \
+    -Wl,-Bstatic -llib60870 -Wl,-Bdynamic \
+    -lpthread \
+    -lm
+
+# Final stage - minimal runtime image
+FROM debian:bookworm-slim
+
+# Install bash for healthcheck
+RUN apt-get update && apt-get install -y \
+    bash \
+    && rm -rf /var/lib/apt/lists/*
+
+# Copy built binary
+COPY --from=builder /build/server/iec104_tls_server /usr/local/bin/
+
+# Create cert directory (certs mounted at runtime)
+RUN mkdir -p /certs
+
+# Expose IEC 62351-3 TLS port
+EXPOSE 19998
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD timeout 2 bash -c '</dev/tcp/localhost/19998' || exit 1
+
+USER root
+
+ENTRYPOINT ["/usr/local/bin/iec104_tls_server"]
+CMD ["-p", "19998"]

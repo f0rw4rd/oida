@@ -1,0 +1,138 @@
+                    GNU AFFERO GENERAL PUBLIC LICENSE
+                       Version 3, 19 November 2007
+
+Copyright (C) 2025 OIDA Team
+
+OIDA - OT/ICS Discovery & Assessment
+
+This program is free software: you can redistribute it and/or modify
+it under the terms of the GNU Affero General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+
+This program is distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of
+MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+GNU Affero General Public License for more details.
+
+You should have received a copy of the GNU Affero General Public License
+along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
+-------------------------------------------------------------------------------
+
+SPDX-License-Identifier: AGPL-3.0-or-later
+
+The full text of the GNU Affero General Public License v3 is available at:
+https://www.gnu.org/licenses/agpl-3.0.html
+
+-------------------------------------------------------------------------------
+
+AFFERO CLAUSE (Section 13):
+
+If you modify this Program and make it available over a network, you must
+provide the complete Corresponding Source to users interacting with your
+modified version remotely. This applies to:
+
+  - Web applications using oida
+  - API services built on oida
+  - Cloud/SaaS deployments of oida
+  - Any network-accessible service using this code
+
+This ensures that improvements to this security testing framework remain
+open source for the benefit of the entire security community.
+
+-------------------------------------------------------------------------------
+                    SECURITY TOOL DISCLAIMER AND TERMS OF USE
+-------------------------------------------------------------------------------
+
+This software is a SECURITY TESTING TOOL designed for AUTHORIZED USE ONLY.
+
+By downloading, installing, or using this software, you acknowledge and agree:
+
+1. AUTHORIZATION REQUIRED
+   You will ONLY use this software on systems and networks for which you have
+   explicit, written authorization from the system owner. Unauthorized access
+   to computer systems is illegal in virtually all jurisdictions.
+
+2. LEGAL COMPLIANCE
+   You are solely responsible for ensuring your use complies with all
+   applicable laws and regulations, including but not limited to:
+
+   - United States: Computer Fraud and Abuse Act (CFAA), 18 U.S.C. § 1030
+   - European Union: Directive 2013/40/EU on attacks against information systems
+   - Germany: §202a-c StGB (Hackerparagraph), §303a-b StGB
+   - Austria: §118a, §126a-c StGB
+   - United Kingdom: Computer Misuse Act 1990
+   - And all other applicable national and international cybercrime laws
+
+3. CRITICAL INFRASTRUCTURE WARNING
+   This tool can interact with Industrial Control Systems (ICS), SCADA,
+   healthcare systems, and other critical infrastructure. Improper use may
+   cause:
+   - Physical damage to equipment
+   - Disruption of essential services
+   - Risk to human health and safety
+   - Significant financial losses
+
+   NEVER use this tool on production critical infrastructure systems without
+   proper authorization, safety protocols, and rollback procedures in place.
+
+4. HEALTHCARE DATA (HIPAA/GDPR)
+   This tool includes capabilities for testing healthcare protocols (HL7,
+   DICOM, FHIR). Use on systems containing Protected Health Information (PHI)
+   requires compliance with HIPAA, GDPR, and applicable healthcare privacy laws.
+
+5. NO WARRANTY
+   This software is provided "AS IS" without warranty of any kind. The authors
+   make no guarantees regarding the software's fitness for any purpose,
+   accuracy, or reliability.
+
+6. LIMITATION OF LIABILITY
+   In no event shall the authors, contributors, or copyright holders be liable
+   for any direct, indirect, incidental, special, exemplary, or consequential
+   damages arising from the use or inability to use this software.
+
+7. INDEMNIFICATION
+   You agree to indemnify, defend, and hold harmless the authors and
+   contributors from any claims, damages, losses, or expenses arising from
+   your use or misuse of this software.
+
+8. INTENDED USE CASES
+   This software is designed for:
+   - Authorized penetration testing engagements
+   - Security research and academic study
+   - Defensive security assessments
+   - Compliance auditing (IEC 62443, NERC CIP, NIST, HIPAA)
+   - Capture The Flag (CTF) competitions
+   - Educational purposes
+
+9. PROHIBITED USES
+   This software shall NOT be used for:
+   - Unauthorized access to any system
+   - Disruption or denial of service attacks
+   - Data theft or exfiltration
+   - Any activity intended to cause harm
+   - Circumventing security measures without authorization
+
+IF YOU DO NOT AGREE TO THESE TERMS, DO NOT USE THIS SOFTWARE.
+
+-------------------------------------------------------------------------------
+                         CONTRIBUTOR LICENSE TERMS
+-------------------------------------------------------------------------------
+
+By submitting code, documentation, or other material ("Contributions") to this
+project through any mechanism (pull request, patch, issue, email, or otherwise),
+Contributors automatically grant the OIDA Project and its maintainers a
+perpetual, worldwide, non-exclusive, royalty-free, irrevocable license to use,
+reproduce, modify, sublicense, relicense, and distribute the Contribution under
+any license terms, including the right to offer the project under dual-license
+or alternative license arrangements.
+
+Contributors retain ownership of their Contributions. This grant allows the
+project maintainers to evolve the project's licensing as needed while ensuring
+Contributors' work remains attributed.
+
+The full Contributor License Agreement is specified in CONTRIBUTING.md.
+By submitting a Contribution, you confirm you have read and agree to those terms.
+
+-------------------------------------------------------------------------------

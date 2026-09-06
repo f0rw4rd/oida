@@ -1,0 +1,360 @@
+{
+  "vendor": "Powerscout",
+  "model": "3 8 VIEWPOINT",
+  "description": "Powerscout 3 8 VIEWPOINT power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "kwh_system_lsw": {
+      "address": 4000,
+      "type": "u16",
+      "access": "r",
+      "description": "kWh System LSW",
+      "unit": "kWh"
+    },
+    "kwh_system_msw": {
+      "address": 4001,
+      "type": "u16",
+      "access": "r",
+      "description": "kWh System MSW",
+      "unit": "kWh"
+    },
+    "kw_system": {
+      "address": 4002,
+      "type": "u16",
+      "access": "r",
+      "description": "kW System",
+      "unit": "kW"
+    },
+    "kw_demand_system_max": {
+      "address": 4003,
+      "type": "u16",
+      "access": "r",
+      "description": "kW Demand System Max",
+      "unit": "kW"
+    },
+    "kw_demand_system_now": {
+      "address": 4004,
+      "type": "u16",
+      "access": "r",
+      "description": "kW Demand System Now",
+      "unit": "kW"
+    },
+    "kw_system_max": {
+      "address": 4005,
+      "type": "u16",
+      "access": "r",
+      "description": "kW System Max",
+      "unit": "kW"
+    },
+    "kw_system_min": {
+      "address": 4006,
+      "type": "u16",
+      "access": "r",
+      "description": "kW System Min",
+      "unit": "kW"
+    },
+    "kvarh_system_lsw": {
+      "address": 4007,
+      "type": "u16",
+      "access": "r",
+      "description": "kVARh System LSW",
+      "unit": "kVA"
+    },
+    "kvarh_system_msw": {
+      "address": 4008,
+      "type": "u16",
+      "access": "r",
+      "description": "kVARh System MSW",
+      "unit": "kVA"
+    },
+    "kvar_system": {
+      "address": 4009,
+      "type": "u16",
+      "access": "r",
+      "description": "kVAR System",
+      "unit": "kVA"
+    },
+    "kvah_system_lsw": {
+      "address": 4010,
+      "type": "u16",
+      "access": "r",
+      "description": "kVAh System LSW",
+      "unit": "kVA"
+    },
+    "kvah_system_msw": {
+      "address": 4011,
+      "type": "u16",
+      "access": "r",
+      "description": "kVAh System MSW",
+      "unit": "kVA"
+    },
+    "kva_system": {
+      "address": 4012,
+      "type": "u16",
+      "access": "r",
+      "description": "kVA System",
+      "unit": "kVA"
+    },
+    "displacement_pf_system": {
+      "address": 4013,
+      "type": "u16",
+      "access": "r",
+      "description": "Displacement PF System"
+    },
+    "apparent_pf_system": {
+      "address": 4014,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent PF System"
+    },
+    "amps_system_avg": {
+      "address": 4015,
+      "type": "u16",
+      "access": "r",
+      "description": "Amps System Avg",
+      "unit": "Amps"
+    },
+    "volts_line_to_line_avg": {
+      "address": 4016,
+      "type": "u16",
+      "access": "r",
+      "description": "Volts Line to Line Avg",
+      "unit": "Volts"
+    },
+    "volts_line_to_neutral_avg": {
+      "address": 4017,
+      "type": "u16",
+      "access": "r",
+      "description": "Volts Line to Neutral Avg",
+      "unit": "Volts"
+    },
+    "volts_l1_to_l2": {
+      "address": 4018,
+      "type": "u16",
+      "access": "r",
+      "description": "Volts L1 to L2",
+      "unit": "Volts"
+    },
+    "volts_l2_to_l3": {
+      "address": 4019,
+      "type": "u16",
+      "access": "r",
+      "description": "Volts L2 to L3",
+      "unit": "Volts"
+    },
+    "volts_l1_to_l3": {
+      "address": 4020,
+      "type": "u16",
+      "access": "r",
+      "description": "Volts L1 to L3",
+      "unit": "Volts"
+    },
+    "line_frequency": {
+      "address": 4021,
+      "type": "u16",
+      "access": "r",
+      "description": "Line Frequency",
+      "unit": "Hz"
+    },
+    "kwh_l1_lsw": {
+      "address": 4022,
+      "type": "u16",
+      "access": "r",
+      "description": "kWh L1 LSW",
+      "unit": "kWh"
+    },
+    "kwh_l1_msw": {
+      "address": 4023,
+      "type": "u16",
+      "access": "r",
+      "description": "kWh L1 MSW",
+      "unit": "kWh"
+    },
+    "kwh_l2_lsw": {
+      "address": 4024,
+      "type": "u16",
+      "access": "r",
+      "description": "kWh L2 LSW",
+      "unit": "kWh"
+    },
+    "kwh_l2_msw": {
+      "address": 4025,
+      "type": "u16",
+      "access": "r",
+      "description": "kWh L2 MSW",
+      "unit": "kWh"
+    },
+    "kwh_l3_lsw": {
+      "address": 4026,
+      "type": "u16",
+      "access": "r",
+      "description": "kWh L3 LSW",
+      "unit": "kWh"
+    },
+    "kwh_l3_msw": {
+      "address": 4027,
+      "type": "u16",
+      "access": "r",
+      "description": "kWh L3 MSW",
+      "unit": "kWh"
+    },
+    "kw_l1": {
+      "address": 4028,
+      "type": "u16",
+      "access": "r",
+      "description": "kW L1",
+      "unit": "kW"
+    },
+    "kw_l2": {
+      "address": 4029,
+      "type": "u16",
+      "access": "r",
+      "description": "kW L2",
+      "unit": "kW"
+    },
+    "kw_l3": {
+      "address": 4030,
+      "type": "u16",
+      "access": "r",
+      "description": "kW L3",
+      "unit": "kW"
+    },
+    "kvarh_l1_lsw": {
+      "address": 4031,
+      "type": "u16",
+      "access": "r",
+      "description": "kVARh L1 LSW",
+      "unit": "kVA"
+    },
+    "kvarh_l1_msw": {
+      "address": 4032,
+      "type": "u16",
+      "access": "r",
+      "description": "kVARh L1 MSW",
+      "unit": "kVA"
+    },
+    "kvarh_l2_lsw": {
+      "address": 4033,
+      "type": "u16",
+      "access": "r",
+      "description": "kVARh L2 LSW",
+      "unit": "kVA"
+    },
+    "kvarh_l2_msw": {
+      "address": 4034,
+      "type": "u16",
+      "access": "r",
+      "description": "kVARh L2 MSW",
+      "unit": "kVA"
+    },
+    "kvarh_l3_lsw": {
+      "address": 4035,
+      "type": "u16",
+      "access": "r",
+      "description": "kVARh L3 LSW",
+      "unit": "kVA"
+    },
+    "kvarh_l3_msw": {
+      "address": 4036,
+      "type": "u16",
+      "access": "r",
+      "description": "kVARh L3 MSW",
+      "unit": "kVA"
+    },
+    "kvar_l1": {
+      "address": 4037,
+      "type": "u16",
+      "access": "r",
+      "description": "kVAR L1",
+      "unit": "kVA"
+    },
+    "kvar_l2": {
+      "address": 4038,
+      "type": "u16",
+      "access": "r",
+      "description": "kVAR L2",
+      "unit": "kVA"
+    },
+    "kvar_l3": {
+      "address": 4039,
+      "type": "u16",
+      "access": "r",
+      "description": "kVAR L3",
+      "unit": "kVA"
+    },
+    "kvah_l1_lsw": {
+      "address": 4040,
+      "type": "u16",
+      "access": "r",
+      "description": "kVAh L1 LSW",
+      "unit": "kVA"
+    },
+    "kvah_l1_msw": {
+      "address": 4041,
+      "type": "u16",
+      "access": "r",
+      "description": "kVAh L1 MSW",
+      "unit": "kVA"
+    },
+    "kvah_l2_lsw": {
+      "address": 4042,
+      "type": "u16",
+      "access": "r",
+      "description": "kVAh L2 LSW",
+      "unit": "kVA"
+    },
+    "kvah_l2_msw": {
+      "address": 4043,
+      "type": "u16",
+      "access": "r",
+      "description": "kVAh L2 MSW",
+      "unit": "kVA"
+    },
+    "kvah_l3_lsw": {
+      "address": 4044,
+      "type": "u16",
+      "access": "r",
+      "description": "kVAh L3 LSW",
+      "unit": "kVA"
+    },
+    "kvah_l3_msw": {
+      "address": 4045,
+      "type": "u16",
+      "access": "r",
+      "description": "kVAh L3 MSW",
+      "unit": "kVA"
+    },
+    "kva_l1": {
+      "address": 4046,
+      "type": "u16",
+      "access": "r",
+      "description": "kVA L1",
+      "unit": "kVA"
+    },
+    "kva_l2": {
+      "address": 4047,
+      "type": "u16",
+      "access": "r",
+      "description": "kVA L2",
+      "unit": "kVA"
+    },
+    "kva_l3": {
+      "address": 4048,
+      "type": "u16",
+      "access": "r",
+      "description": "kVA L3",
+      "unit": "kVA"
+    },
+    "displacement_pf_l1": {
+      "address": 4049,
+      "type": "u16",
+      "access": "r",
+      "description": "Displacement PF L1"
+    }
+  }
+}

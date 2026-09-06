@@ -1,0 +1,60 @@
+{
+  "vendor": "Test",
+  "model": "Test",
+  "description": "Imported from nymea-plugins-modbus (tools)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/tools/test-registers.json",
+  "registers": {
+    "nameRegister": {
+      "address": 30,
+      "type": "str",
+      "access": "ro",
+      "description": "Name string register"
+    },
+    "unsignedLongWord": {
+      "address": 1,
+      "type": "i32",
+      "access": "ro",
+      "description": "Unsigned long word register",
+      "unit": "kW"
+    },
+    "unsignedWord": {
+      "address": 3,
+      "type": "u16",
+      "access": "ro",
+      "description": "Unsigned word register",
+      "unit": "s"
+    },
+    "initBlockRegisterOne": {
+      "address": 100,
+      "type": "i32",
+      "access": "ro",
+      "description": "Block register one"
+    },
+    "initBlockRegisterTwo": {
+      "address": 102,
+      "type": "i32",
+      "access": "ro",
+      "description": "Block register two"
+    },
+    "blockRegisterOne": {
+      "address": 200,
+      "type": "i32",
+      "access": "ro",
+      "description": "Block register one"
+    },
+    "blockRegisterTwo": {
+      "address": 202,
+      "type": "i32",
+      "access": "ro",
+      "description": "Block register two"
+    }
+  },
+  "enums": {
+    "TestEnum": {
+      "0": "Zero",
+      "1": "One"
+    }
+  }
+}

@@ -1,0 +1,77 @@
+# REAL lib60870-C CS104 slave heap OOB read (CWE-125) at tag v2.2.0 + ASan.
+#
+# Unbounded information-object element parse driven by an attacker-chosen VSQ
+# count. At v2.2.0 EVERY per-element parser in cs101_information_objects.c
+# lacks the minSize>msgSize guard (the "unified length checks" commit 58001d6
+# first lands in v2.2.1). So CS101_ASDU_getElementEx() with a large index
+# computes startIndex = index*(sizeOfIOA+elementSize) and the parser reads
+# msg[startIndex] with NO bound check:
+#
+#   src/iec60870/cs101/cs101_information_objects.c
+#     FileDirectory_getFromBuffer()  (TypeID F_DR_TA_1 / 126, elementSize 13)
+#     -> InformationObject_getFromBuffer()
+#     -> InformationObject_ParseObjectAddress()   reads msg[startIndex]
+#
+#   With VSQ=127 and index=126: startIndex = 126*(3+13) = 2016 bytes past the
+#   payload, which lies inside the 260-byte recvBuffer of the heap-allocated
+#   sMasterConnection -> heap-buffer-overflow READ, caught NATIVELY by ASan.
+#
+# Reachable pre-auth over CS104/TCP 2404 (STARTDT_ACT then one crafted I-frame).
+# Fixed in v2.2.1 / commit 58001d6. Distinct from GHSA-75pr (NULL deref) and
+# from the contained GHSA-7v97 read at v2.4.0 (which IS guarded there).
+#
+# Build mirrors Dockerfile.iec104-cve-ghsa-75pr-real: compile the lib60870-C
+# sources straight into the harness with sanitizer flags, no CMake, no mbedtls
+# (CONFIG_CS104_SUPPORT_TLS is undefined when compiling the .c files directly).
+
+FROM debian:bullseye
+
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+# Clone and pin the confirmed-vulnerable tag (v2.2.0: zero element-size guards).
+RUN git clone https://github.com/mz-automation/lib60870.git && \
+    cd lib60870 && \
+    git checkout v2.2.0
+
+WORKDIR /app
+COPY iec104_asdu_oob_real.c server.c
+
+RUN set -eux; \
+    L=/build/lib60870/lib60870-C; \
+    gcc -g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer \
+      -I$L/config -I$L/src/inc/api -I$L/src/inc/internal \
+      -I$L/src/hal/inc -I$L/src/common/inc \
+      server.c \
+      $L/src/iec60870/frame.c \
+      $L/src/iec60870/lib60870_common.c \
+      $L/src/iec60870/link_layer/serial_transceiver_ft_1_2.c \
+      $L/src/iec60870/link_layer/link_layer.c \
+      $L/src/iec60870/link_layer/buffer_frame.c \
+      $L/src/iec60870/cs104/cs104_slave.c \
+      $L/src/iec60870/cs104/cs104_frame.c \
+      $L/src/iec60870/cs104/cs104_connection.c \
+      $L/src/iec60870/cs101/cs101_slave.c \
+      $L/src/iec60870/cs101/cs101_queue.c \
+      $L/src/iec60870/cs101/cs101_master_connection.c \
+      $L/src/iec60870/cs101/cs101_master.c \
+      $L/src/iec60870/cs101/cs101_information_objects.c \
+      $L/src/iec60870/cs101/cs101_asdu.c \
+      $L/src/iec60870/cs101/cs101_bcr.c \
+      $L/src/iec60870/apl/cpXXtime2a.c \
+      $L/src/common/linked_list.c \
+      $L/src/hal/memory/lib_memory.c \
+      $L/src/hal/socket/linux/socket_linux.c \
+      $L/src/hal/time/unix/time.c \
+      $L/src/hal/thread/linux/thread_linux.c \
+      $L/src/hal/serial/linux/serial_port_linux.c \
+      -fsanitize=address,undefined \
+      -o server -lpthread
+
+ENV IEC104_PORT=2404
+ENV ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
+ENV UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0
+EXPOSE 2404
+CMD ["./server"]

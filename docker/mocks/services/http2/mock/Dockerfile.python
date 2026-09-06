@@ -1,0 +1,47 @@
+# HTTP/2 Python Validation Server
+# Based on hyper-h2 for comprehensive protocol compliance feedback
+
+FROM python:3.11-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    openssl \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Install Python dependencies
+RUN pip install --no-cache-dir \
+    h2>=4.1.0 \
+    hpack>=4.0.0 \
+    hyperframe>=6.0.0 \
+    cryptography>=41.0.0
+
+# Copy server script
+COPY http2_validation_server.py /app/
+
+# Create directories
+RUN mkdir -p /app/certs /var/log/http2
+
+# Generate self-signed certs (will be overwritten if mounted)
+RUN openssl req -x509 -newkey rsa:2048 \
+    -keyout /app/certs/server.key \
+    -out /app/certs/server.crt \
+    -days 365 -nodes \
+    -subj "/CN=http2-python/O=OIDA Mock/C=US"
+
+# Expose ports
+EXPOSE 9080 9443
+
+# Environment defaults
+ENV HTTP2_LOG_LEVEL=INFO \
+    HTTP2_VALIDATE_HEADERS=true \
+    HTTP2_LOG_HPACK=true \
+    HTTP2_LOG_FRAMES=true \
+    HTTP2_ENABLE_TLS=true \
+    HTTP2_ENABLE_H2C=true \
+    HTTP2_H2C_PORT=9080 \
+    HTTP2_TLS_PORT=9443 \
+    PYTHONUNBUFFERED=1
+
+CMD ["python3", "http2_validation_server.py"]

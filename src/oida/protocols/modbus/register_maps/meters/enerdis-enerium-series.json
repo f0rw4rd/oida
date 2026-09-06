@@ -1,0 +1,337 @@
+{
+  "vendor": "Enerdis",
+  "model": "ENERIUM 100 200 / ENERIUM POWER MONITOR 100 200 300",
+  "description": "Enerdis ENERIUM 100 200 / ENERIUM POWER MONITOR 100 200 300 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: ENERIUM 100 200, ENERIUM POWER MONITOR 100 200 300",
+  "registers": {
+    "v1": {
+      "address": 1280,
+      "type": "u32",
+      "access": "r",
+      "description": "V1",
+      "unit": "V"
+    },
+    "v2": {
+      "address": 1282,
+      "type": "u32",
+      "access": "r",
+      "description": "V2",
+      "unit": "V"
+    },
+    "v3": {
+      "address": 1284,
+      "type": "u32",
+      "access": "r",
+      "description": "V3",
+      "unit": "V"
+    },
+    "vearth": {
+      "address": 1286,
+      "type": "u32",
+      "access": "r",
+      "description": "Vearth",
+      "unit": "V"
+    },
+    "u12": {
+      "address": 1288,
+      "type": "u32",
+      "access": "r",
+      "description": "U12",
+      "unit": "V"
+    },
+    "u23": {
+      "address": 1290,
+      "type": "u32",
+      "access": "r",
+      "description": "U23",
+      "unit": "V"
+    },
+    "u31": {
+      "address": 1292,
+      "type": "u32",
+      "access": "r",
+      "description": "U31",
+      "unit": "V"
+    },
+    "i1": {
+      "address": 1294,
+      "type": "u32",
+      "access": "r",
+      "description": "I1",
+      "unit": "A"
+    },
+    "i2": {
+      "address": 1296,
+      "type": "u32",
+      "access": "r",
+      "description": "I2",
+      "unit": "A"
+    },
+    "i3": {
+      "address": 1298,
+      "type": "u32",
+      "access": "r",
+      "description": "I3",
+      "unit": "A"
+    },
+    "in": {
+      "address": 1300,
+      "type": "u32",
+      "access": "r",
+      "description": "In",
+      "unit": "A"
+    },
+    "p1": {
+      "address": 1302,
+      "type": "i32",
+      "access": "r",
+      "description": "P1",
+      "unit": "W"
+    },
+    "p2": {
+      "address": 1304,
+      "type": "i32",
+      "access": "r",
+      "description": "P2",
+      "unit": "W"
+    },
+    "p3": {
+      "address": 1306,
+      "type": "i32",
+      "access": "r",
+      "description": "P3",
+      "unit": "W"
+    },
+    "p": {
+      "address": 1308,
+      "type": "i32",
+      "access": "r",
+      "description": "P",
+      "unit": "W"
+    },
+    "q1": {
+      "address": 1310,
+      "type": "i32",
+      "access": "r",
+      "description": "Q1",
+      "unit": "var"
+    },
+    "q2": {
+      "address": 1312,
+      "type": "i32",
+      "access": "r",
+      "description": "Q2",
+      "unit": "var"
+    },
+    "q3": {
+      "address": 1314,
+      "type": "i32",
+      "access": "r",
+      "description": "Q3",
+      "unit": "var"
+    },
+    "q": {
+      "address": 1316,
+      "type": "i32",
+      "access": "r",
+      "description": "Q",
+      "unit": "var"
+    },
+    "s1": {
+      "address": 1318,
+      "type": "u32",
+      "access": "r",
+      "description": "S1",
+      "unit": "VA"
+    },
+    "s2": {
+      "address": 1320,
+      "type": "u32",
+      "access": "r",
+      "description": "S2",
+      "unit": "VA"
+    },
+    "s3": {
+      "address": 1322,
+      "type": "u32",
+      "access": "r",
+      "description": "S3",
+      "unit": "VA"
+    },
+    "s": {
+      "address": 1324,
+      "type": "u32",
+      "access": "r",
+      "description": "S",
+      "unit": "VA"
+    },
+    "pf1": {
+      "address": 1326,
+      "type": "i16",
+      "access": "r",
+      "description": "PF1"
+    },
+    "quadrant_pf1": {
+      "address": 1327,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant, PF1"
+    },
+    "pf2": {
+      "address": 1328,
+      "type": "i16",
+      "access": "r",
+      "description": "PF2"
+    },
+    "quadrant_pf2": {
+      "address": 1329,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant, PF2"
+    },
+    "pf3": {
+      "address": 1330,
+      "type": "i16",
+      "access": "r",
+      "description": "PF3"
+    },
+    "quadrant_pf3": {
+      "address": 1331,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant, PF3"
+    },
+    "pf": {
+      "address": 1332,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf"
+    },
+    "quadrant_pf": {
+      "address": 1333,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant, pf"
+    },
+    "cos_phi_phase_1": {
+      "address": 1334,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos phi, phase 1"
+    },
+    "quadrant_cos_phi_phase_1": {
+      "address": 1335,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant, cos phi, phase 1"
+    },
+    "cos_phi_phase_2": {
+      "address": 1336,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos phi, phase 2"
+    },
+    "quadrant_cos_phi_phase_2": {
+      "address": 1337,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant, cos phi, phase 2"
+    },
+    "cos_phi_phase_3": {
+      "address": 1338,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos phi, phase 3"
+    },
+    "quadrant_cos_phi_phase_3": {
+      "address": 1339,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant, cos phi, phase 3"
+    },
+    "cos_phi_three_phase": {
+      "address": 1340,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos phi, three phase"
+    },
+    "quadrant_cos_phi_three_phase": {
+      "address": 1341,
+      "type": "u16",
+      "access": "r",
+      "description": "Quadrant, cos phi, three phase"
+    },
+    "crest_factor_v1": {
+      "address": 1342,
+      "type": "u16",
+      "access": "r",
+      "description": "Crest factor, V1"
+    },
+    "crest_factor_v2": {
+      "address": 1343,
+      "type": "u16",
+      "access": "r",
+      "description": "Crest factor, V2"
+    },
+    "crest_factor_v3": {
+      "address": 1344,
+      "type": "u16",
+      "access": "r",
+      "description": "Crest factor, V3"
+    },
+    "crest_factor_i1": {
+      "address": 1345,
+      "type": "u16",
+      "access": "r",
+      "description": "Crest factor, I1"
+    },
+    "crest_factor_i2": {
+      "address": 1346,
+      "type": "u16",
+      "access": "r",
+      "description": "Crest factor, I2"
+    },
+    "crest_factor_i3": {
+      "address": 1347,
+      "type": "u16",
+      "access": "r",
+      "description": "Crest factor, I3"
+    },
+    "unbalance_of_the_voltages": {
+      "address": 1348,
+      "type": "i16",
+      "access": "r",
+      "description": "Unbalance of the voltages"
+    },
+    "frequency": {
+      "address": 1349,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "harmonics_order_by_order_v1_0_to_50": {
+      "address": 1536,
+      "type": "u16",
+      "access": "r",
+      "description": "Harmonics, order by order, V1 [0 to 50"
+    },
+    "harmonics_order_by_order_v2_0_to_50": {
+      "address": 1587,
+      "type": "u16",
+      "access": "r",
+      "description": "Harmonics, order by order, V2 [0 to 50"
+    },
+    "harmonics_order_by_order_v3_0_to_50": {
+      "address": 1638,
+      "type": "u16",
+      "access": "r",
+      "description": "Harmonics, order by order, V3 [0 to 50"
+    }
+  }
+}

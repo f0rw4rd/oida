@@ -1,0 +1,69 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+*.egg-info/
+.eggs/
+*.egg
+
+# Virtual environments
+.venv/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Docker
+logs/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Certificates generated at runtime
+*.pem
+*.der
+*.crt
+*.key
+*.csr
+*.srl
+
+# But keep test/mock certificates checked in
+!services/dnp3-certs/*.pem
+!services/mqtt/certs/*.crt
+!services/mqtt/certs/*.key
+!services/mqtt/certs/*.csr
+!services/mqtt/certs/*.srl
+!services/http2/certs/*.crt
+!services/http2/certs/*.key
+# Shared mTLS test certs (one CA signs modbus-tls + iec104-tls + client/bogus).
+# Committed so every worktree and the mock containers trust the same CA.
+!certs/*.pem
+!certs/*.key
+!certs/modbus-tls/*.pem
+!certs/modbus-tls/*.key
+!certs/iec104-tls/*.pem
+!certs/iec104-tls/*.key
+
+# Local overrides
+docker-compose.override.yml
+.env.local
+
+# Database files
+*.db
+
+# Large test data (download separately)
+test_data/dicom/dicom-test-files/
+dicom_output/
+
+# Compiled binaries and object files
+services/ethercat_slave
+services/ethercat_slave.o
+services/iec104/iec104_server_native
+*.o

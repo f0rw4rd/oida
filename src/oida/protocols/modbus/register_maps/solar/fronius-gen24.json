@@ -1,0 +1,254 @@
+{
+  "vendor": "Fronius",
+  "model": "Symo GEN24/Primo GEN24 + Smart Meter TS 65A-3",
+  "description": "Fronius GEN24 hybrid inverters with Smart Meter. This map combines Smart Meter registers (258-327) and SunSpec inverter registers (40xxx).",
+  "version": "1.1",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "Smart Meter uses i32 with little word order at addresses 258-327. GEN24 inverter uses SunSpec float registers at 40xxx. Update rate: 1s realtime. RTU: 9600 baud, 8N1.",
+  "source": "https://github.com/otti/FroniusModbusRtu (Smart Meter), https://github.com/oscarknapp/Fronius-Gen-24-Modbus-Integration (Inverter SunSpec)",
+  "registers": {
+    "meter_voltage_ln": {
+      "address": 258,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Smart Meter: Average line-to-neutral voltage"
+    },
+    "meter_voltage_ll": {
+      "address": 260,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Smart Meter: Average line-to-line voltage"
+    },
+    "meter_power_real": {
+      "address": 262,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "W",
+      "description": "Smart Meter: Total real power (sum of all phases)"
+    },
+    "meter_power_apparent": {
+      "address": 264,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "VA",
+      "description": "Smart Meter: Total apparent power"
+    },
+    "meter_power_reactive": {
+      "address": 266,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "var",
+      "description": "Smart Meter: Total reactive power"
+    },
+    "meter_power_factor": {
+      "address": 268,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Smart Meter: Power factor (cos phi)"
+    },
+    "meter_frequency": {
+      "address": 272,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "Hz",
+      "description": "Smart Meter: AC frequency"
+    },
+    "meter_energy_import": {
+      "address": 274,
+      "type": "i32",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Smart Meter: Total import energy"
+    },
+    "meter_energy_export": {
+      "address": 276,
+      "type": "i32",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Smart Meter: Total export energy"
+    },
+    "meter_current_l1": {
+      "address": 286,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "Smart Meter: Current phase L1 (in mA)"
+    },
+    "meter_current_l2": {
+      "address": 288,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "Smart Meter: Current phase L2 (in mA)"
+    },
+    "meter_current_l3": {
+      "address": 290,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "Smart Meter: Current phase L3 (in mA)"
+    },
+    "meter_voltage_l1n": {
+      "address": 292,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Smart Meter: Voltage L1-N"
+    },
+    "meter_voltage_l2n": {
+      "address": 294,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Smart Meter: Voltage L2-N"
+    },
+    "meter_voltage_l3n": {
+      "address": 296,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Smart Meter: Voltage L3-N"
+    },
+    "meter_power_l1": {
+      "address": 298,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "W",
+      "description": "Smart Meter: Real power L1"
+    },
+    "meter_power_l2": {
+      "address": 300,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "W",
+      "description": "Smart Meter: Real power L2"
+    },
+    "meter_power_l3": {
+      "address": 302,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "W",
+      "description": "Smart Meter: Real power L3"
+    },
+    "inverter_sunspec_id": {
+      "address": 40001,
+      "type": "u32",
+      "access": "r",
+      "description": "SunSpec ID 'SunS' (0x53756e53)"
+    },
+    "inverter_model_id": {
+      "address": 40070,
+      "type": "u16",
+      "access": "r",
+      "description": "SunSpec Inverter Model ID (101=single, 103=three-phase, 111-113=float)"
+    },
+    "inverter_ac_power": {
+      "address": 40084,
+      "type": "f32",
+      "access": "r",
+      "unit": "W",
+      "description": "AC power output (SunSpec float model 111-113)"
+    },
+    "inverter_ac_frequency": {
+      "address": 40086,
+      "type": "f32",
+      "access": "r",
+      "unit": "Hz",
+      "description": "AC frequency (SunSpec float)"
+    },
+    "inverter_ac_voltage_ab": {
+      "address": 40088,
+      "type": "f32",
+      "access": "r",
+      "unit": "V",
+      "description": "AC voltage phase AB (SunSpec float)"
+    },
+    "inverter_ac_voltage_bc": {
+      "address": 40090,
+      "type": "f32",
+      "access": "r",
+      "unit": "V",
+      "description": "AC voltage phase BC (SunSpec float)"
+    },
+    "inverter_ac_voltage_ca": {
+      "address": 40092,
+      "type": "f32",
+      "access": "r",
+      "unit": "V",
+      "description": "AC voltage phase CA (SunSpec float)"
+    },
+    "inverter_ac_current": {
+      "address": 40072,
+      "type": "f32",
+      "access": "r",
+      "unit": "A",
+      "description": "AC current total (SunSpec float)"
+    },
+    "inverter_energy_total": {
+      "address": 40094,
+      "type": "f32",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Lifetime energy production (SunSpec float)"
+    },
+    "inverter_dc_power_scale": {
+      "address": 40267,
+      "type": "i16",
+      "access": "r",
+      "description": "DC power scale factor (10^x)"
+    },
+    "inverter_pv1_power": {
+      "address": 40285,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40267,
+      "unit": "W",
+      "description": "PV String 1 power output"
+    },
+    "inverter_pv2_power": {
+      "address": 40305,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 40267,
+      "unit": "W",
+      "description": "PV String 2 power output"
+    },
+    "inverter_status": {
+      "address": 40118,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter operating status",
+      "enum": {
+        "1": "OFF",
+        "2": "SLEEPING",
+        "3": "STARTING",
+        "4": "MPPT",
+        "5": "THROTTLED",
+        "6": "SHUTTING_DOWN",
+        "7": "FAULT",
+        "8": "STANDBY"
+      }
+    }
+  },
+  "_source_verified": "Verified: Smart Meter registers 258-327 confirmed via otti/FroniusModbusRtu; SunSpec at 40xxx confirmed via official Fronius docs"
+}

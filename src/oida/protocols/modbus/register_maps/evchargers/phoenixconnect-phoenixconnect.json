@@ -1,0 +1,178 @@
+{
+  "vendor": "Phoenix",
+  "model": "Phoenix",
+  "description": "Imported from nymea-plugins-modbus (phoenixconnect)",
+  "byte_order": "little",
+  "word_order": "little",
+  "source": "nymea-plugins-modbus/phoenixconnect/phoenixconnect-registers.json",
+  "registers": {
+    "cpStatus": {
+      "address": 100,
+      "type": "u16",
+      "access": "ro",
+      "description": "ChargePilot status",
+      "function_code": 4
+    },
+    "chargingTime": {
+      "address": 102,
+      "type": "u32",
+      "access": "ro",
+      "description": "Charging Time",
+      "function_code": 4
+    },
+    "dipSwitches": {
+      "address": 104,
+      "type": "u16",
+      "access": "ro",
+      "description": "DIP switch configuration",
+      "function_code": 4
+    },
+    "firmwareVersion": {
+      "address": 105,
+      "type": "str",
+      "access": "ro",
+      "description": "Firmware version",
+      "function_code": 4
+    },
+    "errorCode": {
+      "address": 107,
+      "type": "u16",
+      "access": "ro",
+      "description": "Error codes",
+      "function_code": 4
+    },
+    "chargingCurrent": {
+      "address": 300,
+      "type": "u16",
+      "access": "ro",
+      "description": "Charging current",
+      "unit": "1/10 A"
+    },
+    "chargingEnabled": {
+      "address": 400,
+      "type": "u16",
+      "access": "rw",
+      "description": "Charging enabled"
+    },
+    "rfidEnabled": {
+      "address": 419,
+      "type": "u16",
+      "access": "rw",
+      "description": "RFID enabled"
+    },
+    "chargingAllowed": {
+      "address": 436,
+      "type": "u16",
+      "access": "ro",
+      "description": "Charging allowed"
+    },
+    "chargingPaused": {
+      "address": 468,
+      "type": "u16",
+      "access": "rw",
+      "description": "Charging paused"
+    },
+    "maximumChargingCurrent": {
+      "address": 528,
+      "type": "u16",
+      "access": "rw",
+      "description": "Maximum charging current",
+      "unit": "1/10 A"
+    },
+    "totalEnergy": {
+      "address": 904,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total energy consumption",
+      "unit": "Wh"
+    },
+    "voltageI1": {
+      "address": 108,
+      "type": "u32",
+      "access": "ro",
+      "description": "Voltage I1",
+      "unit": "V",
+      "function_code": 4
+    },
+    "voltageI2": {
+      "address": 110,
+      "type": "u32",
+      "access": "ro",
+      "description": "Voltage I2",
+      "unit": "V",
+      "function_code": 4
+    },
+    "voltageI3": {
+      "address": 112,
+      "type": "u32",
+      "access": "ro",
+      "description": "Voltage I3",
+      "unit": "V",
+      "function_code": 4
+    },
+    "currentI1": {
+      "address": 114,
+      "type": "u32",
+      "access": "ro",
+      "description": "Current I1",
+      "unit": "A",
+      "function_code": 4
+    },
+    "currentI2": {
+      "address": 116,
+      "type": "u32",
+      "access": "ro",
+      "description": "Current I2",
+      "unit": "A",
+      "function_code": 4
+    },
+    "currentI3": {
+      "address": 118,
+      "type": "u32",
+      "access": "ro",
+      "description": "Current I3",
+      "unit": "A",
+      "function_code": 4
+    },
+    "activePower": {
+      "address": 120,
+      "type": "u32",
+      "access": "ro",
+      "description": "Active power",
+      "function_code": 4
+    },
+    "serial": {
+      "address": 304,
+      "type": "str",
+      "access": "ro",
+      "description": "Serial number"
+    },
+    "deviceName": {
+      "address": 310,
+      "type": "str",
+      "access": "ro",
+      "description": "Device name"
+    }
+  },
+  "enums": {
+    "ErrorCode": {
+      "0": "NoError",
+      "1": "CableRejected13or20A",
+      "2": "CableRejected13A",
+      "3": "InvalidPPValue",
+      "4": "InvalidCPValue",
+      "5": "ChargingUnavailable",
+      "6": "Lock",
+      "7": "Unlock",
+      "8": "ErrorDuringLocking",
+      "9": "OverloadProtection",
+      "10": "MeterCommunicationError",
+      "11": "VehicleRejected",
+      "12": "ContactorFault",
+      "13": "VehicleCPDiodeMissing",
+      "14": "Unkown",
+      "15": "DCErrorCurrent"
+    }
+  },
+  "_source_verified": "Verified: Phoenix Contact EV Charge Control Modbus docs confirmed; nymea-plugins-modbus source verified"
+}

@@ -1,0 +1,213 @@
+{
+  "vendor": "SunSpec",
+  "model": "Basic Storage Control Model 124",
+  "description": "SunSpec Model 124 - Basic Storage Controls for battery charge/discharge management",
+  "version": "1.0",
+  "standard": "sunspec",
+  "sunspec_model_id": 124,
+  "base_address": 40000,
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Model 124 provides basic storage control for grid-tied battery systems. Model length is 24 registers. Used by Fronius GEN24, SolarEdge StorEdge, SMA Sunny Boy Storage. Addresses include 2-register header.",
+  "source": "https://github.com/sunspec/models/blob/master/smdx/smdx_00124.xml",
+  "registers": {
+    "model_id": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Model ID (124 = Basic Storage Control)"
+    },
+    "model_length": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Model length (24 registers)"
+    },
+    "wcha_max": {
+      "address": 2,
+      "type": "u16",
+      "access": "rw",
+      "scale_factor_register": 18,
+      "unit": "W",
+      "description": "Setpoint for maximum charge power (WChaMax)"
+    },
+    "wcha_gra": {
+      "address": 3,
+      "type": "u16",
+      "access": "rw",
+      "scale_factor_register": 19,
+      "unit": "% WChaMax/sec",
+      "description": "Setpoint for maximum charging rate gradient (WChaGra)"
+    },
+    "wdischa_gra": {
+      "address": 4,
+      "type": "u16",
+      "access": "rw",
+      "scale_factor_register": 19,
+      "unit": "% WChaMax/sec",
+      "description": "Setpoint for maximum discharge rate gradient (WDisChaGra)"
+    },
+    "stor_ctl_mod": {
+      "address": 5,
+      "type": "u16",
+      "access": "rw",
+      "description": "Storage control mode bitfield (StorCtl_Mod)",
+      "bitfield": {
+        "0": "CHARGE",
+        "1": "DISCHARGE"
+      }
+    },
+    "vacha_max": {
+      "address": 6,
+      "type": "u16",
+      "access": "rw",
+      "scale_factor_register": 20,
+      "unit": "VA",
+      "description": "Setpoint for maximum charging VA (VAChaMax)"
+    },
+    "min_rsv_pct": {
+      "address": 7,
+      "type": "u16",
+      "access": "rw",
+      "scale_factor_register": 21,
+      "unit": "%",
+      "description": "Minimum reserve percentage (MinRsvPct)"
+    },
+    "cha_state": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 22,
+      "unit": "%",
+      "description": "Currently available energy as % of capacity (ChaState)"
+    },
+    "stor_aval": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 23,
+      "unit": "Ah",
+      "description": "State of charge minus reserve times capacity (StorAval)"
+    },
+    "in_bat_v": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 24,
+      "unit": "V",
+      "description": "Internal battery voltage (InBatV)"
+    },
+    "cha_st": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Charge status (ChaSt)",
+      "enum": {
+        "1": "OFF",
+        "2": "EMPTY",
+        "3": "DISCHARGING",
+        "4": "CHARGING",
+        "5": "FULL",
+        "6": "HOLDING",
+        "7": "TESTING"
+      }
+    },
+    "out_w_rte": {
+      "address": 12,
+      "type": "i16",
+      "access": "rw",
+      "scale_factor_register": 25,
+      "unit": "%",
+      "description": "Percent of max discharge rate (OutWRte)"
+    },
+    "in_w_rte": {
+      "address": 13,
+      "type": "i16",
+      "access": "rw",
+      "scale_factor_register": 25,
+      "unit": "%",
+      "description": "Percent of max charging rate (InWRte)"
+    },
+    "in_out_w_rte_win_tms": {
+      "address": 14,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Time window for charge/discharge rate change (InOutWRte_WinTms)"
+    },
+    "in_out_w_rte_rvrt_tms": {
+      "address": 15,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Timeout period for charge/discharge rate (InOutWRte_RvrtTms)"
+    },
+    "in_out_w_rte_rmp_tms": {
+      "address": 16,
+      "type": "u16",
+      "access": "rw",
+      "unit": "s",
+      "description": "Ramp time for setpoint transitions (InOutWRte_RmpTms)"
+    },
+    "cha_gri_set": {
+      "address": 17,
+      "type": "u16",
+      "access": "rw",
+      "description": "Charging source selection (ChaGriSet)",
+      "enum": {
+        "0": "PV",
+        "1": "GRID"
+      }
+    },
+    "wcha_max_sf": {
+      "address": 18,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor for WChaMax (WChaMax_SF)"
+    },
+    "wcha_discha_gra_sf": {
+      "address": 19,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor for charge/discharge gradient (WChaDisChaGra_SF)"
+    },
+    "vacha_max_sf": {
+      "address": 20,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor for VAChaMax (VAChaMax_SF)"
+    },
+    "min_rsv_pct_sf": {
+      "address": 21,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor for MinRsvPct (MinRsvPct_SF)"
+    },
+    "cha_state_sf": {
+      "address": 22,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor for ChaState (ChaState_SF)"
+    },
+    "stor_aval_sf": {
+      "address": 23,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor for StorAval (StorAval_SF)"
+    },
+    "in_bat_v_sf": {
+      "address": 24,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor for InBatV (InBatV_SF)"
+    },
+    "in_out_w_rte_sf": {
+      "address": 25,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale factor for InWRte/OutWRte (InOutWRte_SF)"
+    }
+  },
+  "_source_verified": "Verified: Model 124 register offsets confirmed against official sunspec/models/smdx/smdx_00124.xml"
+}

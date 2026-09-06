@@ -1,0 +1,115 @@
+# OIDA confirm-gate-missing snapshot — flags advertised as dangerous in proto_args.py
+# whose protocol code does NOT show an explicit `args.<dest>` ↔ `confirm` enforcement.
+#
+# 145 sites locked at snapshot time. Each line: <protocol>:<dest>.
+# Drift in either direction (new gap OR resolved gap) fails the contract test
+# and forces an explicit acknowledgement.
+#
+# Known confirm-gate-missing bugs from CODE_REVIEW.md + TEST_GAP_AUDIT.md are in here.
+# Some entries are false positives (the regex is intentionally loose — e.g. matches
+# `--fuzz-iterations N` because of `--fuzz` substring). Resolve via either:
+#  - fix the bug (add the guard) and remove the line, OR
+#  - confirm it's a false positive and remove the line.
+# Either way, removing the line is the action; the test will then alert if it
+# resurfaces in a future commit.
+astm:action_code
+astm:delete_result
+astm:fuzz_frame
+astm:fuzz_record
+bacnet:assess
+bacnet:enumerate_writable
+bacnet:test_write
+can:id_scan
+can:uds_reset
+can:xcp_memory_read
+coap:content_format
+coap:psk
+coap:psk_identity
+dicom:probe_ops
+dnp3:activate_config
+dnp3:ao_direct
+dnp3:ao_sbo
+dnp3:ao_value
+dnp3:assign_class
+dnp3:bo_direct
+dnp3:bo_sbo
+dnp3:cold_restart
+dnp3:delete_file
+dnp3:disable_unsol
+dnp3:enable_unsol
+dnp3:file_auth
+dnp3:init_app
+dnp3:init_data
+dnp3:save_config
+dnp3:start_app
+dnp3:stop_app
+dnp3:time_sync
+dnp3:warm_restart
+dnp3:write_data
+dnp3:write_deadband
+dnp3:write_file
+ethercat:eeprom_write
+ethercat:fuzz
+ethercat:sdo_write
+ethernetip:write
+fhir:create_observation
+fhir:create_patient
+hl7:probe_ops
+hl7:send_bar
+hl7:send_dft
+hl7:send_mfn
+hl7:send_ras
+hl7:send_rds
+hl7:send_rgv
+hl7:send_rx
+iec104:param_float
+iec104:param_normalized
+iec104:param_scaled
+iec104:value
+iec104:write_double
+iec104:write_float
+iec104:write_normalized
+iec104:write_scaled
+iec104:write_single
+iec104:write_step
+iec104:write_type
+knx:confirm
+knx:fuzz_iterations
+knx:fuzz_property
+knx:group_write
+knx:key_write
+knx:memory_write
+knx:property_write
+knx:restart
+modbus:broadcast
+modbus:decode
+modbus:fuzz_all_access
+modbus:fuzz_max_addresses
+ocpp:test_authorize
+ocpp:test_charging
+ocpp:test_charging_profile
+ocpp:test_display_msg
+ocpp:test_firmware
+ocpp:test_install_cert
+ocpp:test_meter_inject
+ocpp:test_remote_start
+ocpp:test_reset
+ocpp:test_unlock
+ocpp:test_ws_hijack
+ocpp:ws_brute
+opcua:call_method
+opcua:test_subscription_limits
+pcap:hashcat
+profinet:confirm
+profinet:detect_write_only
+profinet:fuzz
+profinet:fuzz_indices
+profinet:fuzz_iterations
+profinet:test_write
+profinet:write_im1
+profinet:write_im2
+profinet:write_im3
+profinet:write_index
+snap7:fuzz_max_targets
+snap7:restart
+snmp:default_creds

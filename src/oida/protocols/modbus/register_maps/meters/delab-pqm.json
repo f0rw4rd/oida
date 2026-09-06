@@ -1,0 +1,355 @@
+{
+  "vendor": "Delab",
+  "model": "PQM",
+  "description": "Delab PQM power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "ampere_l2": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "Ampere L2",
+      "unit": "A"
+    },
+    "ampere_l3": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "Ampere L3",
+      "unit": "A"
+    },
+    "ampere_neutral_current": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "Ampere (neutral current)",
+      "unit": "A"
+    },
+    "voltage_l1": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L1",
+      "unit": "V"
+    },
+    "voltage_l2": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L2",
+      "unit": "V"
+    },
+    "voltage_l3": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L3",
+      "unit": "V"
+    },
+    "voltage_l12": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L12",
+      "unit": "V"
+    },
+    "voltage_l23": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L23",
+      "unit": "V"
+    },
+    "voltage_l31": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L31",
+      "unit": "V"
+    },
+    "voltage_assym": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage assym",
+      "unit": "%"
+    },
+    "frequency": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "kw_l1": {
+      "address": 22,
+      "type": "i32",
+      "access": "r",
+      "description": "Kw L1",
+      "unit": "W"
+    },
+    "kw_l2": {
+      "address": 24,
+      "type": "i32",
+      "access": "r",
+      "description": "Kw L2",
+      "unit": "W"
+    },
+    "kw_l3": {
+      "address": 26,
+      "type": "i32",
+      "access": "r",
+      "description": "Kw L3",
+      "unit": "W"
+    },
+    "kvar_l1": {
+      "address": 28,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvar L1",
+      "unit": "Var"
+    },
+    "kvar_l2": {
+      "address": 30,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvar L2",
+      "unit": "Var"
+    },
+    "kvar_l3": {
+      "address": 32,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvar L3",
+      "unit": "Var"
+    },
+    "kva_l1": {
+      "address": 34,
+      "type": "u32",
+      "access": "r",
+      "description": "Kva L1",
+      "unit": "VA"
+    },
+    "kva_l2": {
+      "address": 36,
+      "type": "u32",
+      "access": "r",
+      "description": "Kva L2",
+      "unit": "VA"
+    },
+    "kva_l3": {
+      "address": 38,
+      "type": "u32",
+      "access": "r",
+      "description": "Kva L3",
+      "unit": "VA"
+    },
+    "pf_l1": {
+      "address": 40,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf L1"
+    },
+    "pf_l2": {
+      "address": 41,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf L2"
+    },
+    "pf_l3": {
+      "address": 42,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf L3"
+    },
+    "pf_avg": {
+      "address": 43,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf avg"
+    },
+    "cos_l1": {
+      "address": 44,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos L1"
+    },
+    "cos_l2": {
+      "address": 45,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos L2"
+    },
+    "cos_l3": {
+      "address": 46,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos L3"
+    },
+    "cos_avg": {
+      "address": 47,
+      "type": "i16",
+      "access": "r",
+      "description": "Cos avg"
+    },
+    "energy_import_kwh": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "description": "Energy import (kwh)",
+      "unit": "kWh"
+    },
+    "energy_export_kwh": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "description": "Energy export (kwh)",
+      "unit": "kWh"
+    },
+    "energy_inductive_kvarh": {
+      "address": 56,
+      "type": "u32",
+      "access": "r",
+      "description": "Energy inductive (kvarh)",
+      "unit": "kVarh"
+    },
+    "energy_capacitive_kvarh": {
+      "address": 60,
+      "type": "u32",
+      "access": "r",
+      "description": "Energy capacitive (kvarh)",
+      "unit": "kVarh"
+    },
+    "energy_apparent_kvah": {
+      "address": 64,
+      "type": "u32",
+      "access": "r",
+      "description": "Energy apparent (kvah)",
+      "unit": "kVAh"
+    },
+    "max_dmd_kw_l1_import": {
+      "address": 68,
+      "type": "u32",
+      "access": "r",
+      "description": "Max dmd kw L1 (import)",
+      "unit": "W"
+    },
+    "max_dmd_kw_l2_import": {
+      "address": 70,
+      "type": "u32",
+      "access": "r",
+      "description": "Max dmd kw L2 (import)",
+      "unit": "W"
+    },
+    "max_dmd_kw_l3_import": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "description": "Max dmd kw L3 (import)",
+      "unit": "W"
+    },
+    "max_dmd_kw_total_import": {
+      "address": 74,
+      "type": "u32",
+      "access": "r",
+      "description": "Max dmd kw total (import)",
+      "unit": "W"
+    },
+    "max_dmd_kva_l1": {
+      "address": 76,
+      "type": "u32",
+      "access": "r",
+      "description": "Max dmd kva L1",
+      "unit": "VA"
+    },
+    "max_dmd_kva_l2": {
+      "address": 78,
+      "type": "u32",
+      "access": "r",
+      "description": "Max dmd kva L2",
+      "unit": "VA"
+    },
+    "max_dmd_kva_l3": {
+      "address": 80,
+      "type": "u32",
+      "access": "r",
+      "description": "Max dmd kva L3",
+      "unit": "VA"
+    },
+    "max_dmd_kva_total": {
+      "address": 82,
+      "type": "u32",
+      "access": "r",
+      "description": "Max dmd kva total",
+      "unit": "VA"
+    },
+    "max_dmd_i_l1": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "description": "Max dmd I L1",
+      "unit": "A"
+    },
+    "max_dmd_i_l2": {
+      "address": 86,
+      "type": "u32",
+      "access": "r",
+      "description": "Max dmd I L2",
+      "unit": "A"
+    },
+    "max_dmd_i_l3": {
+      "address": 88,
+      "type": "u32",
+      "access": "r",
+      "description": "Max dmd I L3",
+      "unit": "A"
+    },
+    "max_dmd_iavg_3phase": {
+      "address": 90,
+      "type": "u32",
+      "access": "r",
+      "description": "Max dmd iavg (3phase)",
+      "unit": "A"
+    },
+    "prev_dmd_kw_l1_import": {
+      "address": 92,
+      "type": "u32",
+      "access": "r",
+      "description": "Prev dmd kw L1 (import)",
+      "unit": "W"
+    },
+    "prev_dmd_kw_l2_import": {
+      "address": 94,
+      "type": "u32",
+      "access": "r",
+      "description": "Prev dmd kw L2 (import)",
+      "unit": "W"
+    },
+    "prev_dmd_kw_l3_import": {
+      "address": 96,
+      "type": "u32",
+      "access": "r",
+      "description": "Prev dmd kw L3 (import)",
+      "unit": "W"
+    },
+    "prev_dmd_kw_total_import": {
+      "address": 98,
+      "type": "u32",
+      "access": "r",
+      "description": "Prev dmd kw total (import)",
+      "unit": "W"
+    },
+    "prev_dmd_kva_l1": {
+      "address": 100,
+      "type": "u32",
+      "access": "r",
+      "description": "Prev dmd kva L1",
+      "unit": "VA"
+    }
+  }
+}

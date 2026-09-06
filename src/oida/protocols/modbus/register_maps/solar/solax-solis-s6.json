@@ -1,0 +1,1080 @@
+{
+  "vendor": "Solis",
+  "model": "S6/S5 Series",
+  "description": "Solis S6/S5 Series inverter register map extracted from homeassistant-solax-modbus",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Solis S6/S5 series inverters.",
+  "source": "https://github.com/wills106/homeassistant-solax-modbus",
+  "registers": {
+    "serialnumber": {
+      "address": 33004,
+      "type": "str",
+      "access": "r",
+      "description": "Serial Number",
+      "function_code": 4
+    },
+    "rtc": {
+      "address": 33022,
+      "type": "u16",
+      "access": "r",
+      "description": "RTC",
+      "function_code": 4
+    },
+    "power_generation_total": {
+      "address": 33029,
+      "type": "u32",
+      "access": "r",
+      "description": "Power Generation Total",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "power_generation_this_month": {
+      "address": 33031,
+      "type": "u32",
+      "access": "r",
+      "description": "Power Generation This Month",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "power_generation_last_month": {
+      "address": 33033,
+      "type": "u32",
+      "access": "r",
+      "description": "Power Generation Last Month",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "power_generation_today": {
+      "address": 33035,
+      "type": "u16",
+      "access": "r",
+      "description": "Power Generation Today",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "power_generation_yesterday": {
+      "address": 33036,
+      "type": "u16",
+      "access": "r",
+      "description": "Power Generation Yesterday",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "power_generation_this_year": {
+      "address": 33037,
+      "type": "u32",
+      "access": "r",
+      "description": "Power Generation This Year",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "power_generation_last_year": {
+      "address": 33039,
+      "type": "u32",
+      "access": "r",
+      "description": "Power Generation Last Year",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "pv_voltage_1": {
+      "address": 33049,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 1",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "pv_current_1": {
+      "address": 33050,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 1",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "pv_voltage_2": {
+      "address": 33051,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 2",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "pv_current_2": {
+      "address": 33052,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 2",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "pv_voltage_3": {
+      "address": 33053,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 3",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "pv_current_3": {
+      "address": 33054,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 3",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "pv_voltage_4": {
+      "address": 33055,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 4",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "pv_current_4": {
+      "address": 33056,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 4",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "pv_total_power": {
+      "address": 33057,
+      "type": "u32",
+      "access": "r",
+      "description": "PV Total Power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "inverter_voltage": {
+      "address": 33073,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Voltage",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_voltage_l1": {
+      "address": 33073,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Voltage L1",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_voltage_l2": {
+      "address": 33074,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Voltage L2",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_voltage_l3": {
+      "address": 33075,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Voltage L3",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "inverter_current": {
+      "address": 33076,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Current",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_current_l1": {
+      "address": 33076,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Current L1",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_current_l2": {
+      "address": 33077,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Current L2",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_current_l3": {
+      "address": 33078,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Current L3",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "active_power": {
+      "address": 33079,
+      "type": "i32",
+      "access": "r",
+      "description": "Active Power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "reactive_power": {
+      "address": 33081,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive Power",
+      "unit": "var",
+      "function_code": 4
+    },
+    "apparent_power": {
+      "address": 33083,
+      "type": "i32",
+      "access": "r",
+      "description": "Apparent Power",
+      "unit": "VA",
+      "function_code": 4
+    },
+    "inverter_temperature": {
+      "address": 33093,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Temperature",
+      "unit": "C",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "inverter_frequency": {
+      "address": 33094,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Frequency",
+      "unit": "Hz",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "inverter_status": {
+      "address": 33095,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Status",
+      "function_code": 4
+    },
+    "meter_total_activepower": {
+      "address": 33126,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter Total ActivePower",
+      "unit": "kWh",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "meter_voltage": {
+      "address": 33128,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter Voltage",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "meter_current": {
+      "address": 33129,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter Current",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "meter_active_power": {
+      "address": 33130,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Active Power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "energy_storage_control_switch": {
+      "address": 33132,
+      "type": "u16",
+      "access": "r",
+      "description": "Energy Storage Control Switch",
+      "function_code": 4
+    },
+    "battery_voltage": {
+      "address": 33133,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Voltage",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "battery_current": {
+      "address": 33134,
+      "type": "i16",
+      "access": "r",
+      "description": "Battery Current",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "battery_charge_direction": {
+      "address": 33135,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Charge Direction",
+      "function_code": 4
+    },
+    "battery_soc": {
+      "address": 33139,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery SOC",
+      "unit": "%",
+      "function_code": 4
+    },
+    "battery_soh": {
+      "address": 33140,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery SOH",
+      "unit": "%",
+      "function_code": 4
+    },
+    "bms_battery_voltage": {
+      "address": 33141,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Battery Voltage",
+      "unit": "V",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "bms_battery_current": {
+      "address": 33142,
+      "type": "i16",
+      "access": "r",
+      "description": "BMS Battery Current",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "bms_battery_charge_limit": {
+      "address": 33143,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Battery Charge Limit",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "bms_battery_discharge_limit": {
+      "address": 33144,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Battery Discharge Limit",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "house_load": {
+      "address": 33147,
+      "type": "u16",
+      "access": "r",
+      "description": "House Load",
+      "unit": "W",
+      "function_code": 4
+    },
+    "bypass_load": {
+      "address": 33148,
+      "type": "u16",
+      "access": "r",
+      "description": "Bypass Load",
+      "unit": "W",
+      "function_code": 4
+    },
+    "battery_power": {
+      "address": 33149,
+      "type": "i32",
+      "access": "r",
+      "description": "Battery Power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "total_battery_charge": {
+      "address": 33161,
+      "type": "u32",
+      "access": "r",
+      "description": "Total Battery Charge",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "battery_charge_today": {
+      "address": 33163,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Charge Today",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "battery_charge_yesterday": {
+      "address": 33164,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Charge Yesterday",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "total_battery_discharge": {
+      "address": 33165,
+      "type": "u32",
+      "access": "r",
+      "description": "Total Battery Discharge",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "battery_discharge_today": {
+      "address": 33167,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Discharge Today",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "battery_discharge_yesterday": {
+      "address": 33168,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Discharge Yesterday",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_import_total": {
+      "address": 33169,
+      "type": "u32",
+      "access": "r",
+      "description": "Grid Import Total",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "grid_import_today": {
+      "address": 33171,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Import Today",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_import_yesterday": {
+      "address": 33172,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Import Yesterday",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_export_total": {
+      "address": 33173,
+      "type": "u32",
+      "access": "r",
+      "description": "Grid Export Total",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "grid_export_today": {
+      "address": 33175,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Export Today",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_export_yesterday": {
+      "address": 33176,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Export Yesterday",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "house_load_total": {
+      "address": 33177,
+      "type": "u32",
+      "access": "r",
+      "description": "House Load Total",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "house_load_today": {
+      "address": 33179,
+      "type": "u16",
+      "access": "r",
+      "description": "House Load Today",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "house_load_yesterday": {
+      "address": 33180,
+      "type": "u16",
+      "access": "r",
+      "description": "House Load Yesterday",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "battery_charge_current_limit": {
+      "address": 33206,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Charge Current Limit",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "battery_discharge_current_limit": {
+      "address": 33207,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Discharge Current Limit",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "meter_ac_voltage": {
+      "address": 33251,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter AC Voltage",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "meter_ac_current": {
+      "address": 33252,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter AC Current",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "meter_ac_voltage_l1": {
+      "address": 33251,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter AC Voltage L1",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "meter_ac_current_l1": {
+      "address": 33252,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter AC Current L1",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "meter_ac_voltage_l2": {
+      "address": 33253,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter AC Voltage L2",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "meter_ac_current_l2": {
+      "address": 33254,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter AC Current L2",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "meter_ac_voltage_l3": {
+      "address": 33255,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter AC Voltage L3",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "meter_ac_current_l3": {
+      "address": 33256,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter AC Current L3",
+      "unit": "A",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "meter_active_power_l1": {
+      "address": 33257,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Active Power L1",
+      "unit": "kW",
+      "scale": 0.001,
+      "function_code": 4
+    },
+    "meter_active_power_l2": {
+      "address": 33259,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Active Power L2",
+      "unit": "kW",
+      "scale": 0.001,
+      "function_code": 4
+    },
+    "meter_active_power_l3": {
+      "address": 33261,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Active Power L3",
+      "unit": "kW",
+      "scale": 0.001,
+      "function_code": 4
+    },
+    "meter_active_power_total": {
+      "address": 33263,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Active Power Total",
+      "unit": "kW",
+      "scale": 0.001,
+      "function_code": 4
+    },
+    "meter_reactive_power": {
+      "address": 33265,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Reactive Power",
+      "unit": "var",
+      "function_code": 4
+    },
+    "meter_reactive_power_l1": {
+      "address": 33265,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Reactive Power L1",
+      "unit": "var",
+      "function_code": 4
+    },
+    "meter_reactive_power_l2": {
+      "address": 33267,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Reactive Power L2",
+      "unit": "var",
+      "function_code": 4
+    },
+    "meter_reactive_power_l3": {
+      "address": 33269,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Reactive Power L3",
+      "unit": "var",
+      "function_code": 4
+    },
+    "meter_reactive_power_total": {
+      "address": 33271,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Reactive Power Total",
+      "unit": "var",
+      "function_code": 4
+    },
+    "meter_apparent_power": {
+      "address": 33273,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Apparent Power",
+      "unit": "VA",
+      "function_code": 4
+    },
+    "meter_apparent_power_l1": {
+      "address": 33273,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Apparent Power L1",
+      "unit": "VA",
+      "function_code": 4
+    },
+    "meter_apparent_power_L2": {
+      "address": 33275,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Apparent Power L2",
+      "unit": "VA",
+      "function_code": 4
+    },
+    "meter_apparent_power_l3": {
+      "address": 33277,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Apparent Power L3",
+      "unit": "VA",
+      "function_code": 4
+    },
+    "meter_apparent_power_total": {
+      "address": 33279,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter Apparent Power Total",
+      "unit": "VA",
+      "function_code": 4
+    },
+    "meter_power_factor": {
+      "address": 33281,
+      "type": "i16",
+      "access": "r",
+      "description": "Meter Power Factor",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "meter_grid_frequency": {
+      "address": 33282,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter Grid Frequency",
+      "unit": "Hz",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "meter_grid_import_total": {
+      "address": 33283,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter Grid Import Total",
+      "unit": "kWh",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "meter_grid_export_total": {
+      "address": 33285,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter Grid Export Total",
+      "unit": "kWh",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "power_switch": {
+      "address": 43007,
+      "type": "u16",
+      "access": "r",
+      "description": "Power Switch"
+    },
+    "battery_minimum_soc": {
+      "address": 43011,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Minimum SOC"
+    },
+    "force_charge_soc": {
+      "address": 43018,
+      "type": "u16",
+      "access": "r",
+      "description": "Force Charge SOC"
+    },
+    "backup_mode_soc": {
+      "address": 43024,
+      "type": "u16",
+      "access": "r",
+      "description": "Backup Mode SOC"
+    },
+    "backflow_power_switch": {
+      "address": 43073,
+      "type": "u16",
+      "access": "r",
+      "description": "Backflow Power Switch"
+    },
+    "backflow_power": {
+      "address": 43074,
+      "type": "u16",
+      "access": "r",
+      "description": "Backflow Power",
+      "unit": "W",
+      "scale": 100.0
+    },
+    "battery_chargedischarge_current": {
+      "address": 43116,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery ChargeDischarge Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "battery_charge_current": {
+      "address": 43117,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Charge Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "battery_discharge_current": {
+      "address": 43118,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Discharge Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "timed_charge_current": {
+      "address": 43141,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "timed_discharge_current": {
+      "address": 43142,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "timed_charge_start_hours": {
+      "address": 43143,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge Start Hours",
+      "unit": "h"
+    },
+    "timed_charge_start_minutes": {
+      "address": 43144,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge Start Minutes",
+      "unit": "min"
+    },
+    "timed_charge_end_hours": {
+      "address": 43145,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge End Hours",
+      "unit": "h"
+    },
+    "timed_charge_end_minutes": {
+      "address": 43146,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge End Minutes",
+      "unit": "min"
+    },
+    "timed_discharge_start_hours": {
+      "address": 43147,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge Start Hours",
+      "unit": "h"
+    },
+    "timed_discharge_start_minutes": {
+      "address": 43148,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge Start Minutes",
+      "unit": "min"
+    },
+    "timed_discharge_end_hours": {
+      "address": 43149,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge End Hours",
+      "unit": "h"
+    },
+    "timed_discharge_end_minutes": {
+      "address": 43150,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge End Minutes",
+      "unit": "min"
+    },
+    "timed_charge_start_hours_2": {
+      "address": 43153,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge Start Hours 2",
+      "unit": "h"
+    },
+    "timed_charge_start_minutes_2": {
+      "address": 43154,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge Start Minutes 2",
+      "unit": "min"
+    },
+    "timed_charge_end_hours_2": {
+      "address": 43155,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge End Hours 2",
+      "unit": "h"
+    },
+    "timed_charge_end_minutes_2": {
+      "address": 43156,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge End Minutes 2",
+      "unit": "min"
+    },
+    "timed_discharge_start_hours_2": {
+      "address": 43157,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge Start Hours 2",
+      "unit": "h"
+    },
+    "timed_discharge_start_minutes_2": {
+      "address": 43158,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge Start Minutes 2",
+      "unit": "min"
+    },
+    "timed_discharge_end_hours_2": {
+      "address": 43159,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge End Hours 2",
+      "unit": "h"
+    },
+    "timed_discharge_end_minutes_2": {
+      "address": 43160,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge End Minutes 2",
+      "unit": "min"
+    },
+    "timed_charge_start_hours_3": {
+      "address": 43163,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge Start Hours 3",
+      "unit": "h"
+    },
+    "timed_charge_start_minutes_3": {
+      "address": 43164,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge Start Minutes 3",
+      "unit": "min"
+    },
+    "timed_charge_end_hours_3": {
+      "address": 43165,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge End Hours 3",
+      "unit": "h"
+    },
+    "timed_charge_end_minutes_3": {
+      "address": 43166,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Charge End Minutes 3",
+      "unit": "min"
+    },
+    "timed_discharge_start_hours_3": {
+      "address": 43167,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge Start Hours 3",
+      "unit": "h"
+    },
+    "timed_discharge_start_minutes_3": {
+      "address": 43168,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge Start Minutes 3",
+      "unit": "min"
+    },
+    "timed_discharge_end_hours_3": {
+      "address": 43169,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge End Hours 3",
+      "unit": "h"
+    },
+    "timed_discharge_end_minutes_3": {
+      "address": 43170,
+      "type": "u16",
+      "access": "r",
+      "description": "Timed Discharge End Minutes 3",
+      "unit": "min"
+    },
+    "special_settings": {
+      "address": 43249,
+      "type": "u16",
+      "access": "r",
+      "description": "Special Settings"
+    },
+    "battery_control_override_charge_power": {
+      "address": 43136,
+      "type": "u16",
+      "access": "rw",
+      "description": "Battery control override charge power",
+      "unit": "W",
+      "scale": 10.0
+    },
+    "battery_control_override_discharge_power": {
+      "address": 43129,
+      "type": "u16",
+      "access": "rw",
+      "description": "Battery control override discharge power",
+      "unit": "W",
+      "scale": 10.0
+    },
+    "battery_control_override_switch": {
+      "address": 43135,
+      "type": "u16",
+      "access": "rw",
+      "description": "Battery control override",
+      "enum": {
+        "0": "Off",
+        "1": "Force charge",
+        "2": "Force discharge"
+      }
+    }
+  },
+  "_source_verified": "Verified: plugin_solis.py confirmed; Solis S6 documented at OpenEnergyMonitor community"
+}

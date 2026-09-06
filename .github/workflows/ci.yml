@@ -1,0 +1,87 @@
+name: CI
+
+on:
+  # Manual-only: run from the Actions tab (or `gh workflow run ci.yml`).
+  # Auto push/PR triggers were removed intentionally — CI is opt-in.
+  workflow_dispatch:
+  workflow_call:  # Allow release.yml to reuse this as a pre-publish quality gate
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    name: Lint & format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
+        with:
+          persist-credentials: false
+
+      # uv handles both the toolchain (Python 3.12 via uv python install)
+      # and the lint tools (ruff/vulture/bandit are in the dev extra).
+      # No separate actions/setup-python step needed.
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "0.11.18"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.12"
+
+      - name: Sync dev tools from lockfile
+        # `uv sync --extra dev --frozen` installs ruff/vulture/bandit at
+        # the EXACT versions pinned in uv.lock. Don't `uv pip install
+        # ruff vulture bandit` — that bypasses the lockfile and fetches
+        # latest from PyPI, breaking reproducibility.
+        run: uv sync --extra dev --frozen
+
+      - name: Ruff lint
+        run: uv run ruff check src/oida/
+
+      - name: Ruff format check
+        run: uv run ruff format --check src/oida/
+
+      - name: Vulture dead code
+        run: uv run vulture src/oida/ .vulture_whitelist.py --min-confidence 80
+
+      - name: Bandit security lint
+        run: uv run bandit -r src/oida/ -c pyproject.toml -q
+
+  test:
+    name: Tests (Python ${{ matrix.python-version }})
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        python-version: ["3.10", "3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "0.11.18"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          # python-version influences which interpreter `uv sync` picks
+          # when no .python-version file matches the matrix.
+          python-version: ${{ matrix.python-version }}
+
+      - name: Sync environment from lockfile
+        # `uv sync --all-extras` materializes EXACT versions from uv.lock —
+        # the same set every CI run, every dev box. --frozen errors if
+        # uv.lock is out of date vs pyproject.toml (caught by the
+        # lockfile-drift contract test, but belt-and-braces here too).
+        run: uv sync --all-extras --frozen
+
+      - name: Unit tests
+        # tests/unit/pcap/ shell out to the real tshark binary and assert on
+        # its dissector output, so they are integration-grade and sensitive to
+        # the runner's tshark version (CI ships 4.2.x, dev boxes run 4.6.x).
+        # They are excluded from the fast/deterministic unit lane; run them in
+        # an integration job with a pinned tshark instead.
+        # tests/contracts/ are fast static repo-invariant guards (confirm-gate,
+        # credential-leak, dead-import resolution, …) — run them here so they
+        # actually gate PRs.
+        run: uv run pytest tests/unit/ tests/contracts/ --ignore=tests/unit/pcap -x -q --timeout=15

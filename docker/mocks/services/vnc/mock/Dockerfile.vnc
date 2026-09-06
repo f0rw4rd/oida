@@ -1,0 +1,4 @@
+FROM alpine:3.20
+RUN apk add --no-cache tigervnc
+EXPOSE 5900
+CMD ["Xvnc", ":99", "-SecurityTypes", "None", "-rfbport", "5900", "-geometry", "640x480", "-depth", "24", "-BlacklistTimeout", "0", "-BlacklistThreshold", "1000000"]

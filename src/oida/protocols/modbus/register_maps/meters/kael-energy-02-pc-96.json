@@ -1,0 +1,313 @@
+{
+  "vendor": "Kael",
+  "model": "ENERGY 02 PC 96 / MULTIMET 01 PC 96 / MULTISER 01 96 MULTISER 11 96 / MULTISER 01 MULTISER 11 MULTISER 13 / MULTISER 03 PC TFT / MULTISER 04 PC TFT",
+  "description": "Kael ENERGY 02 PC 96 / MULTIMET 01 PC 96 / MULTISER 01 96 MULTISER 11 96 / MULTISER 01 MULTISER 11 MULTISER 13 / MULTISER 03 PC TFT / MULTISER 04 PC TFT power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: ENERGY 02 PC 96, MULTIMET 01 PC 96, MULTISER 01 96 MULTISER 11 96, MULTISER 01 MULTISER 11 MULTISER 13, MULTISER 03 PC TFT, MULTISER 04 PC TFT",
+  "registers": {
+    "company_code_7436": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Company code (7436)"
+    },
+    "product_code_88503": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "Product code (88503)"
+    },
+    "barcode_check_9": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Barcode check (9)"
+    },
+    "program_version_v2_30_0x0230": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Program version (V2.30)(0x0230)"
+    },
+    "user_define_device_number_h": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "User define device number H"
+    },
+    "user_define_device_number_l": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "User define device number L"
+    },
+    "file_system_version_v1_00_0x0100": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "File system version (V1.00)(0x0100)"
+    },
+    "realtime_date_year_month_0xyymm": {
+      "address": 4092,
+      "type": "u16",
+      "access": "r",
+      "description": "RealTime date year month (0xYYMM)"
+    },
+    "realtime_date_day_hour_0xddhh": {
+      "address": 4093,
+      "type": "u16",
+      "access": "r",
+      "description": "RealTime date day hour (0xDDHH)"
+    },
+    "realtime_date_minute_second_0xmmss": {
+      "address": 4094,
+      "type": "u16",
+      "access": "r",
+      "description": "RealTime date minute second (0xMMSS)"
+    },
+    "vtrfwm": {
+      "address": 4095,
+      "type": "u16",
+      "access": "r",
+      "description": "VTRFWM"
+    },
+    "ctrf": {
+      "address": 4096,
+      "type": "u16",
+      "access": "r",
+      "description": "CTRF"
+    },
+    "device_working_informations": {
+      "address": 4097,
+      "type": "u16",
+      "access": "r",
+      "description": "Device working informations"
+    },
+    "phase1_voltage_trms_value": {
+      "address": 4098,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase1 voltage TRMS value"
+    },
+    "phase2_voltage_trms_value": {
+      "address": 4099,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase2 voltage TRMS value"
+    },
+    "phase3_voltage_trms_value": {
+      "address": 4100,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase3 voltage TRMS value"
+    },
+    "phase1_current_trms_value": {
+      "address": 4101,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase1 current TRMS value"
+    },
+    "phase2_current_trms_value": {
+      "address": 4102,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase2 current TRMS value"
+    },
+    "phase3_current_trms_value": {
+      "address": 4103,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase3 current TRMS value"
+    },
+    "phase1_active_power_trms_value": {
+      "address": 4104,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase1 active power TRMS value"
+    },
+    "phase2_active_power_trms_value": {
+      "address": 4105,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase2 active power TRMS value"
+    },
+    "phase3_active_power_trms_value": {
+      "address": 4106,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase3 active power TRMS value"
+    },
+    "phase1_reactive_power_trms_value": {
+      "address": 4107,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase1 reactive power TRMS value"
+    },
+    "phase2_reactive_power_trms_value": {
+      "address": 4108,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase2 reactive power TRMS value"
+    },
+    "phase3_reactive_power_trms_value": {
+      "address": 4109,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase3 reactive power TRMS value"
+    },
+    "phase1_appeared_power_trms_value": {
+      "address": 4110,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase1 appeared power TRMS value"
+    },
+    "phase2_appeared_power_trms_value": {
+      "address": 4111,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase2 appeared power TRMS value"
+    },
+    "phase3_appeared_power_trms_value": {
+      "address": 4112,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase3 appeared power TRMS value"
+    },
+    "phase1_cosfivalue": {
+      "address": 4113,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase1 CosFiValue"
+    },
+    "phase2_cosfivalue": {
+      "address": 4114,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase2 CosFiValue"
+    },
+    "phase3_cosfivalue": {
+      "address": 4115,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase3 CosFiValue"
+    },
+    "sum_cosfivalue": {
+      "address": 4116,
+      "type": "i16",
+      "access": "r",
+      "description": "Sum CosFiValue"
+    },
+    "phase1_powerfactor": {
+      "address": 4117,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase1 PowerFactor"
+    },
+    "phase2_powerfactor": {
+      "address": 4118,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase2 PowerFactor"
+    },
+    "phase3_powerfactor": {
+      "address": 4119,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase3 PowerFactor"
+    },
+    "sum_powerfactor": {
+      "address": 4120,
+      "type": "i16",
+      "access": "r",
+      "description": "SUM PowerFactor"
+    },
+    "total_active_power": {
+      "address": 4121,
+      "type": "i16",
+      "access": "r",
+      "description": "Total active power"
+    },
+    "total_positive_reactivepower_q_unsigned": {
+      "address": 4122,
+      "type": "u16",
+      "access": "r",
+      "description": "Total positive ReactivePower (+q) (unsigned)"
+    },
+    "total_negative_reactive_power_q_unsigned": {
+      "address": 4123,
+      "type": "u16",
+      "access": "r",
+      "description": "Total negative reactive power ( q) (unsigned)"
+    },
+    "sum_reactive_power_q_q": {
+      "address": 4124,
+      "type": "i16",
+      "access": "r",
+      "description": "Sum reactive power ((+q) ( q))"
+    },
+    "sum_appeared_power": {
+      "address": 4125,
+      "type": "u16",
+      "access": "r",
+      "description": "Sum appeared power"
+    },
+    "frequency": {
+      "address": 4126,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "phase_order_number_of_frequency_supply_phase": {
+      "address": 4127,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase order number of frequency supply phase"
+    },
+    "phase_current_connection_and_error_messages": {
+      "address": 4133,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase current connection and error messages"
+    },
+    "voltage1_zerocrossover_referance_everytime_0": {
+      "address": 4134,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage1 ZerocrossOver (Referance)(Everytime 0)"
+    },
+    "current1_zerocrossover_angle_value_0_359": {
+      "address": 4135,
+      "type": "u16",
+      "access": "r",
+      "description": "Current1 ZeroCrossover (Angle value)(0 359)"
+    },
+    "voltage2_zerocrossover_angle_value_0_359": {
+      "address": 4136,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage2 ZerocrossOver (Angle value)(0 359)"
+    },
+    "current2_zerocrossover_angle_value_0_359": {
+      "address": 4137,
+      "type": "u16",
+      "access": "r",
+      "description": "Current2 ZeroCrossover (Angle value)(0 359)"
+    },
+    "voltage3_zerocrossover_angle_value_0_359": {
+      "address": 4138,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage3 ZerocrossOver (Angle value)(0 359)"
+    },
+    "current3_zerocrossover_angle_value_0_359": {
+      "address": 4139,
+      "type": "u16",
+      "access": "r",
+      "description": "Current3 ZeroCrossover (Angle value)(0 359)"
+    }
+  }
+}

@@ -1,0 +1,56 @@
+# REAL CVE-2020-36429 - actual vulnerable open62541 v1.0.1 + AddressSanitizer
+#
+# Heap OOB write (CWE-787): the JSON encoder's CtxJson.commaNeeded[100] array is
+# indexed by recursion depth with NO bound check in writeJsonArrStart /
+# writeJsonObjStart at v1.0.1. JSON-encoding a value nested deeper than 100
+# levels writes commaNeeded[>=100] past the array end. CVE names the function
+# "Variant_encodeJson". Fixed in v1.0.4 (depth-guard added to the array/object
+# writers).
+#
+# JSON encoding is off by default at v1.0.1, so we force UA_ENABLE_JSON_ENCODING.
+# The harness includes the INTERNAL header src/ua_types_encoding_json.h, so the
+# build tree's src/ and src_generated/ are kept and put on the include path.
+# ASan catches the OOB write to commaNeeded[>=100] natively.
+
+FROM debian:bullseye
+
+RUN apt-get update && apt-get install -y \
+    git build-essential cmake python3 python3-six netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN git clone https://github.com/open62541/open62541.git && \
+    cd open62541 && \
+    git checkout v1.0.1 && \
+    git submodule update --init --recursive && \
+    mkdir build && cd build && \
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Debug \
+        -DBUILD_SHARED_LIBS=OFF \
+        -DUA_ENABLE_AMALGAMATION=OFF \
+        -DUA_ENABLE_JSON_ENCODING=ON \
+        -DUA_BUILD_EXAMPLES=OFF \
+        -DUA_LOGLEVEL=300 \
+        -DCMAKE_INSTALL_PREFIX=/usr \
+        -DCMAKE_C_FLAGS="-g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer" \
+        -DCMAKE_EXE_LINKER_FLAGS="-fsanitize=address,undefined" \
+        -DCMAKE_SHARED_LINKER_FLAGS="-fsanitize=address,undefined" && \
+    make -j$(nproc) && make install
+
+WORKDIR /app
+COPY opcua_cve_2020_36429_real.c server.c
+# Internal JSON header lives in the source tree; generated headers in src_generated.
+RUN gcc -g -O0 -fsanitize=address,undefined -fno-omit-frame-pointer \
+    -o server server.c \
+    -I/usr/include \
+    -I/build/open62541/arch \
+    -I/build/open62541/src \
+    -I/build/open62541/plugins/include \
+    -I/build/open62541/build/src_generated \
+    -lopen62541 -lpthread
+
+ENV LD_LIBRARY_PATH=/usr/lib
+ENV ASAN_OPTIONS=abort_on_error=1:halt_on_error=1:detect_leaks=0
+ENV UBSAN_OPTIONS=print_stacktrace=1:halt_on_error=0
+EXPOSE 4840
+CMD ["./server"]

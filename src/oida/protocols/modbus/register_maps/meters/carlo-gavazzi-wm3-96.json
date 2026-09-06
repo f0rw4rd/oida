@@ -1,0 +1,325 @@
+{
+  "vendor": "Carlo Gavazzi",
+  "model": "WM 3 96",
+  "description": "Carlo Gavazzi WM 3 96 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "a_l1": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "A L1",
+      "unit": "A"
+    },
+    "w_l1": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "W L1"
+    },
+    "v_l2_n": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "V L2 N",
+      "unit": "V"
+    },
+    "a_l2": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "A L2",
+      "unit": "A"
+    },
+    "w_l2": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "description": "W L2"
+    },
+    "v_l3_n": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "V L3 N",
+      "unit": "V"
+    },
+    "a_l3": {
+      "address": 28,
+      "type": "u32",
+      "access": "r",
+      "description": "A L3",
+      "unit": "A"
+    },
+    "w_l3": {
+      "address": 32,
+      "type": "u32",
+      "access": "r",
+      "description": "W L3"
+    },
+    "v_l1": {
+      "address": 36,
+      "type": "u32",
+      "access": "r",
+      "description": "V L1",
+      "unit": "V"
+    },
+    "v_l2": {
+      "address": 40,
+      "type": "u32",
+      "access": "r",
+      "description": "V L2",
+      "unit": "V"
+    },
+    "v_l3": {
+      "address": 44,
+      "type": "u32",
+      "access": "r",
+      "description": "V L3",
+      "unit": "V"
+    },
+    "va_l1": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "description": "VA L1"
+    },
+    "var_l1": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "description": "Var L1"
+    },
+    "pf_l1": {
+      "address": 56,
+      "type": "u32",
+      "access": "r",
+      "description": "PF L1"
+    },
+    "va_l2": {
+      "address": 60,
+      "type": "u32",
+      "access": "r",
+      "description": "VA L2"
+    },
+    "var_l2": {
+      "address": 64,
+      "type": "u32",
+      "access": "r",
+      "description": "Var L2"
+    },
+    "pf_l2": {
+      "address": 68,
+      "type": "u32",
+      "access": "r",
+      "description": "PF L2"
+    },
+    "va_l3": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "description": "VA L3"
+    },
+    "var_l3": {
+      "address": 76,
+      "type": "u32",
+      "access": "r",
+      "description": "Var L3"
+    },
+    "pf_l3": {
+      "address": 80,
+      "type": "u32",
+      "access": "r",
+      "description": "PF L3"
+    },
+    "v": {
+      "address": 84,
+      "type": "u32",
+      "access": "r",
+      "description": "V",
+      "unit": "V"
+    },
+    "a_n": {
+      "address": 88,
+      "type": "u32",
+      "access": "r",
+      "description": "A N",
+      "unit": "A"
+    },
+    "w": {
+      "address": 92,
+      "type": "u32",
+      "access": "r",
+      "description": "W"
+    },
+    "va": {
+      "address": 96,
+      "type": "u32",
+      "access": "r",
+      "description": "VA"
+    },
+    "var": {
+      "address": 100,
+      "type": "u32",
+      "access": "r",
+      "description": "Var"
+    },
+    "pf": {
+      "address": 104,
+      "type": "u32",
+      "access": "r",
+      "description": "PF"
+    },
+    "thd_v1": {
+      "address": 108,
+      "type": "u32",
+      "access": "r",
+      "description": "THD V1"
+    },
+    "thde_v1": {
+      "address": 112,
+      "type": "u32",
+      "access": "r",
+      "description": "THDe V1"
+    },
+    "thdo_v1": {
+      "address": 116,
+      "type": "u32",
+      "access": "r",
+      "description": "THDo V1"
+    },
+    "thd_v2": {
+      "address": 120,
+      "type": "u32",
+      "access": "r",
+      "description": "THD V2"
+    },
+    "thde_v2": {
+      "address": 124,
+      "type": "u32",
+      "access": "r",
+      "description": "THDe V2"
+    },
+    "thdo_v2": {
+      "address": 128,
+      "type": "u32",
+      "access": "r",
+      "description": "THDo V2"
+    },
+    "thd_v3": {
+      "address": 132,
+      "type": "u32",
+      "access": "r",
+      "description": "THD V3"
+    },
+    "thde_v3": {
+      "address": 136,
+      "type": "u32",
+      "access": "r",
+      "description": "THDe V3"
+    },
+    "thdo_v3": {
+      "address": 140,
+      "type": "u32",
+      "access": "r",
+      "description": "THDo V3"
+    },
+    "thd_a1": {
+      "address": 144,
+      "type": "u32",
+      "access": "r",
+      "description": "THD A1"
+    },
+    "thde_a1": {
+      "address": 148,
+      "type": "u32",
+      "access": "r",
+      "description": "THDe A1"
+    },
+    "thdo_a1": {
+      "address": 152,
+      "type": "u32",
+      "access": "r",
+      "description": "THDo A1"
+    },
+    "thd_a2": {
+      "address": 156,
+      "type": "u32",
+      "access": "r",
+      "description": "THD A2"
+    },
+    "thde_a2": {
+      "address": 160,
+      "type": "u32",
+      "access": "r",
+      "description": "THDe A2"
+    },
+    "thdo_a2": {
+      "address": 164,
+      "type": "u32",
+      "access": "r",
+      "description": "THDo A2"
+    },
+    "thd_a3": {
+      "address": 168,
+      "type": "u32",
+      "access": "r",
+      "description": "THD A3"
+    },
+    "thde_a3": {
+      "address": 172,
+      "type": "u32",
+      "access": "r",
+      "description": "THDe A3"
+    },
+    "thdo_a3": {
+      "address": 176,
+      "type": "u32",
+      "access": "r",
+      "description": "THDo A3"
+    },
+    "a_dmd": {
+      "address": 180,
+      "type": "u32",
+      "access": "r",
+      "description": "A dmd",
+      "unit": "A"
+    },
+    "va_dmd": {
+      "address": 184,
+      "type": "u32",
+      "access": "r",
+      "description": "VA dmd"
+    },
+    "tpf_avg": {
+      "address": 188,
+      "type": "u32",
+      "access": "r",
+      "description": "TPF avg"
+    },
+    "w_dmd": {
+      "address": 192,
+      "type": "u32",
+      "access": "r",
+      "description": "W dmd"
+    },
+    "hz": {
+      "address": 196,
+      "type": "u32",
+      "access": "r",
+      "description": "Hz",
+      "unit": "Hz"
+    },
+    "asy": {
+      "address": 200,
+      "type": "u32",
+      "access": "r",
+      "description": "ASY"
+    }
+  }
+}

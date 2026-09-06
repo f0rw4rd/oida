@@ -1,0 +1,355 @@
+{
+  "vendor": "Dent Instruments",
+  "model": "INSTRUMENTS POWERSCOUNT 3037",
+  "description": "Dent Instruments INSTRUMENTS POWERSCOUNT 3037 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "system_total_true_energy": {
+      "address": 4000,
+      "type": "u32",
+      "access": "r",
+      "description": "System total true energy",
+      "unit": "kWh"
+    },
+    "system_total_true_power": {
+      "address": 4002,
+      "type": "u16",
+      "access": "r",
+      "description": "System total true power",
+      "unit": "kW"
+    },
+    "system_maximum_demand": {
+      "address": 4003,
+      "type": "u16",
+      "access": "r",
+      "description": "System maximum demand"
+    },
+    "average_power": {
+      "address": 4004,
+      "type": "u16",
+      "access": "r",
+      "description": "Average power",
+      "unit": "kW"
+    },
+    "system_maximum_instantaneous_kw": {
+      "address": 4005,
+      "type": "u16",
+      "access": "r",
+      "description": "System maximum instantaneous kW"
+    },
+    "system_minimum_instantaneous_kw": {
+      "address": 4006,
+      "type": "u16",
+      "access": "r",
+      "description": "System minimum instantaneous kW"
+    },
+    "system_total_reactive_energy": {
+      "address": 4007,
+      "type": "u32",
+      "access": "r",
+      "description": "System total reactive energy",
+      "unit": "kVARh"
+    },
+    "system_total_reactive_power": {
+      "address": 4009,
+      "type": "u16",
+      "access": "r",
+      "description": "System total reactive power",
+      "unit": "kVAR"
+    },
+    "system_total_apparent_energy": {
+      "address": 4010,
+      "type": "u32",
+      "access": "r",
+      "description": "System total apparent energy",
+      "unit": "kVAh"
+    },
+    "system_total_apparent_power": {
+      "address": 4012,
+      "type": "u16",
+      "access": "r",
+      "description": "System total apparent power",
+      "unit": "kVA"
+    },
+    "system_displacement_power_factor": {
+      "address": 4013,
+      "type": "u16",
+      "access": "r",
+      "description": "System displacement power factor",
+      "unit": "PF"
+    },
+    "system_apparent_power_factor": {
+      "address": 4014,
+      "type": "u16",
+      "access": "r",
+      "description": "System apparent power factor",
+      "unit": "PF"
+    },
+    "average_of_all_phases": {
+      "address": 4015,
+      "type": "u16",
+      "access": "r",
+      "description": "Average of all phases"
+    },
+    "voltage_line_to_line": {
+      "address": 4016,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage line to line",
+      "unit": "Volts"
+    },
+    "voltage_line_to_neutral": {
+      "address": 4017,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage line to neutral",
+      "unit": "volts"
+    },
+    "phase_to_phase_voltages_l1": {
+      "address": 4018,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltages, L1"
+    },
+    "phase_to_phase_voltages_l2": {
+      "address": 4019,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltages, L2"
+    },
+    "phase_to_phase_voltages_l1_4020": {
+      "address": 4020,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltages, L1"
+    },
+    "line_frequency": {
+      "address": 4021,
+      "type": "u16",
+      "access": "r",
+      "description": "Line frequency",
+      "unit": "Hz"
+    },
+    "phase_true_energy_l1": {
+      "address": 4022,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase true energy, L1",
+      "unit": "kWh"
+    },
+    "phase_true_energy_l2": {
+      "address": 4024,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase true energy, L2",
+      "unit": "kWh"
+    },
+    "phase_true_energy_l3": {
+      "address": 4026,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase true energy, L3",
+      "unit": "kWh"
+    },
+    "phase_true_powers_l1": {
+      "address": 4028,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase true powers, L1",
+      "unit": "kW"
+    },
+    "phase_true_powers_l2": {
+      "address": 4029,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase true powers, L2",
+      "unit": "kW"
+    },
+    "phase_true_powers_l3": {
+      "address": 4030,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase true powers, L3",
+      "unit": "kW"
+    },
+    "phase_reactive_energy_l1": {
+      "address": 4031,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase reactive energy, L1",
+      "unit": "kVARh"
+    },
+    "phase_reactive_energy_l2": {
+      "address": 4033,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase reactive energy, L2",
+      "unit": "kVARh"
+    },
+    "phase_reactive_energy_l3": {
+      "address": 4035,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase reactive energy, L3",
+      "unit": "kVARh"
+    },
+    "phase_reactive_powers_l1": {
+      "address": 4037,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase reactive powers, L1",
+      "unit": "kVAR"
+    },
+    "phase_reactive_powers_l2": {
+      "address": 4038,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase reactive powers, L2",
+      "unit": "kVAR"
+    },
+    "phase_reactive_powers_l3": {
+      "address": 4039,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase reactive powers, L3",
+      "unit": "kVAR"
+    },
+    "phase_apparent_energy_l1": {
+      "address": 4040,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase apparent energy, L1",
+      "unit": "kVAh"
+    },
+    "phase_apparent_energy_l2": {
+      "address": 4042,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase apparent energy, L2",
+      "unit": "kVAh"
+    },
+    "phase_apparent_energy_l3": {
+      "address": 4044,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase apparent energy, L3",
+      "unit": "kVAh"
+    },
+    "phase_apparent_powers_l1": {
+      "address": 4046,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase apparent powers, L1",
+      "unit": "kVA"
+    },
+    "phase_apparent_powers_l2": {
+      "address": 4047,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase apparent powers, L2",
+      "unit": "kVA"
+    },
+    "phase_apparent_powers_l3": {
+      "address": 4048,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase apparent powers, L3",
+      "unit": "kVA"
+    },
+    "phase_displacement_power_factor_l1": {
+      "address": 4049,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase displacement power factor, L1",
+      "unit": "PF"
+    },
+    "phase_displacement_power_factor_l2": {
+      "address": 4050,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase displacement power factor, L2",
+      "unit": "PF"
+    },
+    "phase_displacement_power_factor_l3": {
+      "address": 4051,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase displacement power factor, L3",
+      "unit": "PF"
+    },
+    "phase_apparent_power_factors_l1": {
+      "address": 4052,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase apparent power factors, L1",
+      "unit": "PF"
+    },
+    "phase_apparent_power_factors_l2": {
+      "address": 4053,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase apparent power factors, L2",
+      "unit": "PF"
+    },
+    "phase_apparent_power_factors_l3": {
+      "address": 4054,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase apparent power factors, L3",
+      "unit": "PF"
+    },
+    "phase_currents_l1": {
+      "address": 4055,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase currents, L1",
+      "unit": "A"
+    },
+    "phase_currents_l2": {
+      "address": 4056,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase currents, L2",
+      "unit": "A"
+    },
+    "phase_currents_l3": {
+      "address": 4057,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase currents, L3",
+      "unit": "A"
+    },
+    "phase_to_neutral_voltages_l1": {
+      "address": 4058,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to neutral voltages, L1",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltages_l2": {
+      "address": 4059,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to neutral voltages, L2",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltages_l3": {
+      "address": 4060,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to neutral voltages, L3",
+      "unit": "V"
+    },
+    "seconds_since_kwh_register_was_reset": {
+      "address": 4061,
+      "type": "u32",
+      "access": "r",
+      "description": "Seconds since KWH register was reset"
+    }
+  }
+}

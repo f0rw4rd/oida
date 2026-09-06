@@ -1,0 +1,519 @@
+{
+  "vendor": "Kostal",
+  "model": "Kostal",
+  "description": "Imported from nymea-plugins-modbus (kostal)",
+  "byte_order": "little",
+  "word_order": "little",
+  "source": "nymea-plugins-modbus/kostal/kostal-registers.json",
+  "registers": {
+    "inverterState": {
+      "address": 56,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter state"
+    },
+    "totalDcPower": {
+      "address": 100,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total DC power",
+      "unit": "W"
+    },
+    "batteryChargeCurrent": {
+      "address": 190,
+      "type": "f32",
+      "access": "ro",
+      "description": "Battery charge current",
+      "unit": "A"
+    },
+    "numberOfBytteryCycles": {
+      "address": 194,
+      "type": "f32",
+      "access": "ro",
+      "description": "Number of battery cycles"
+    },
+    "actualBatteryChargeCurrent": {
+      "address": 200,
+      "type": "f32",
+      "access": "ro",
+      "description": "Actual battery charge (-) / discharge (+) current",
+      "unit": "A"
+    },
+    "batteryTemperature": {
+      "address": 214,
+      "type": "f32",
+      "access": "ro",
+      "description": "Battery temperature",
+      "unit": "°C"
+    },
+    "batteryVoltage": {
+      "address": 216,
+      "type": "f32",
+      "access": "ro",
+      "description": "Battery voltage",
+      "unit": "V"
+    },
+    "batteryManufacturer": {
+      "address": 517,
+      "type": "str",
+      "access": "ro",
+      "description": "Battery Manufacturer"
+    },
+    "batteryModelId": {
+      "address": 525,
+      "type": "u32",
+      "access": "ro",
+      "description": "Battery model ID"
+    },
+    "batterySerialNumber": {
+      "address": 527,
+      "type": "u32",
+      "access": "ro",
+      "description": "Battery serial number"
+    },
+    "batteryWorkCapacity": {
+      "address": 529,
+      "type": "u32",
+      "access": "ro",
+      "description": "Battery work capacity",
+      "unit": "Wh"
+    },
+    "inverterManufacturer": {
+      "address": 535,
+      "type": "str",
+      "access": "ro",
+      "description": "Inverter manufacturer"
+    },
+    "inverterSerialNumber2": {
+      "address": 559,
+      "type": "str",
+      "access": "ro",
+      "description": "Inverter serial number 2"
+    },
+    "energyScaleFactor": {
+      "address": 579,
+      "type": "i16",
+      "access": "ro",
+      "description": "Energy scale factor"
+    },
+    "batteryActualPower": {
+      "address": 582,
+      "type": "i16",
+      "access": "ro",
+      "description": "Actual battery charge/discharge power",
+      "unit": "W"
+    },
+    "batteryType": {
+      "address": 588,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery type"
+    },
+    "productName": {
+      "address": 768,
+      "type": "str",
+      "access": "ro",
+      "description": "Productname"
+    },
+    "totalEnergyAcToGrid": {
+      "address": 1064,
+      "type": "i32",
+      "access": "ro",
+      "description": "Total energy AC-side to grid (scale from energyScaleFactor register)",
+      "unit": "Wh"
+    },
+    "modbusUnitId": {
+      "address": 4,
+      "type": "u16",
+      "access": "ro",
+      "description": "MODBUS Unit-ID"
+    },
+    "modbusByteOrder": {
+      "address": 5,
+      "type": "u16",
+      "access": "ro",
+      "description": "MODBUS Byte Order Note"
+    },
+    "inverterArticleNumber": {
+      "address": 6,
+      "type": "str",
+      "access": "ro",
+      "description": "Inverter article number"
+    },
+    "inverterSerialNumber1": {
+      "address": 14,
+      "type": "str",
+      "access": "ro",
+      "description": "Inverter serial number 1"
+    },
+    "hardwareVersion": {
+      "address": 36,
+      "type": "u32",
+      "access": "ro",
+      "description": "Hardware-Version"
+    },
+    "softwareVersionMainController": {
+      "address": 38,
+      "type": "str",
+      "access": "ro",
+      "description": "Software-Version Maincontroller (MC)"
+    },
+    "softwareVersionIoController": {
+      "address": 46,
+      "type": "str",
+      "access": "ro",
+      "description": "Software-Version IO-Controller (IOC)"
+    },
+    "powerId": {
+      "address": 54,
+      "type": "u16",
+      "access": "ro",
+      "description": "Power-ID"
+    },
+    "energyManagementState": {
+      "address": 104,
+      "type": "u32",
+      "access": "ro",
+      "description": "State of energy manager"
+    },
+    "homeOwnConsumptionFromBattery": {
+      "address": 106,
+      "type": "f32",
+      "access": "ro",
+      "description": "Home own consumption from battery",
+      "unit": "W"
+    },
+    "homeOwnConsumptionFromGrid": {
+      "address": 108,
+      "type": "f32",
+      "access": "ro",
+      "description": "Home own consumption from grid",
+      "unit": "W"
+    },
+    "totalHomeConsumptionFromBattery": {
+      "address": 110,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total home consumption Battery",
+      "unit": "Wh"
+    },
+    "totalHomeConsumptionFromGrid": {
+      "address": 112,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total home consumption grid",
+      "unit": "Wh"
+    },
+    "totalHomeConsumptionFromPv": {
+      "address": 114,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total home consumption from PV",
+      "unit": "Wh"
+    },
+    "homeOwnConsumptionPv": {
+      "address": 116,
+      "type": "f32",
+      "access": "ro",
+      "description": "Home own consumption from PV",
+      "unit": "W"
+    },
+    "totalHomeConsumption": {
+      "address": 118,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total home consumption",
+      "unit": "Wh"
+    },
+    "gridFrequencyInverter": {
+      "address": 152,
+      "type": "f32",
+      "access": "ro",
+      "description": "Grid frequency inverter",
+      "unit": "Hz"
+    },
+    "currentPhase1": {
+      "address": 154,
+      "type": "f32",
+      "access": "ro",
+      "description": "Current phase 1",
+      "unit": "A"
+    },
+    "activePowerPhase1": {
+      "address": 156,
+      "type": "f32",
+      "access": "ro",
+      "description": "Active power phase 1",
+      "unit": "W"
+    },
+    "voltagePhase1": {
+      "address": 158,
+      "type": "f32",
+      "access": "ro",
+      "description": "Voltage phase 1",
+      "unit": "V"
+    },
+    "currentPhase2": {
+      "address": 160,
+      "type": "f32",
+      "access": "ro",
+      "description": "Current phase 2",
+      "unit": "A"
+    },
+    "activePowerPhase2": {
+      "address": 162,
+      "type": "f32",
+      "access": "ro",
+      "description": "Active power phase 2",
+      "unit": "W"
+    },
+    "voltagePhase2": {
+      "address": 164,
+      "type": "f32",
+      "access": "ro",
+      "description": "Voltage phase 2",
+      "unit": "V"
+    },
+    "currentPhase3": {
+      "address": 166,
+      "type": "f32",
+      "access": "ro",
+      "description": "Current phase 3",
+      "unit": "A"
+    },
+    "activePowerPhase3": {
+      "address": 168,
+      "type": "f32",
+      "access": "ro",
+      "description": "Active power phase 3",
+      "unit": "W"
+    },
+    "voltagePhase3": {
+      "address": 170,
+      "type": "f32",
+      "access": "ro",
+      "description": "Voltage phase 3",
+      "unit": "V"
+    },
+    "totalAcPower": {
+      "address": 172,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total AC power",
+      "unit": "W"
+    },
+    "gridFrequencyPowerMeter": {
+      "address": 220,
+      "type": "f32",
+      "access": "ro",
+      "description": "Grid frequency (powermeter)",
+      "unit": "Hz"
+    },
+    "powerMeterCurrentPhase1": {
+      "address": 222,
+      "type": "f32",
+      "access": "ro",
+      "description": "Current phase 1 (powermeter)",
+      "unit": "A"
+    },
+    "powerMeterActivePowerPhase1": {
+      "address": 224,
+      "type": "f32",
+      "access": "ro",
+      "description": "Active power phase 1 (powermeter)",
+      "unit": "W"
+    },
+    "powerMeterReactivePowerPhase1": {
+      "address": 226,
+      "type": "f32",
+      "access": "ro",
+      "description": "Reactive power phase 1 (powermeter)",
+      "unit": "var"
+    },
+    "powerMeterApparentPowerPhase1": {
+      "address": 228,
+      "type": "f32",
+      "access": "ro",
+      "description": "Apparent power phase 1 (powermeter)",
+      "unit": "VA"
+    },
+    "powerMeterVoltagePhase1": {
+      "address": 230,
+      "type": "f32",
+      "access": "ro",
+      "description": "Voltage phase 1 (powermeter)",
+      "unit": "V"
+    },
+    "powerMeterCurrentPhase2": {
+      "address": 232,
+      "type": "f32",
+      "access": "ro",
+      "description": "Current phase 2 (powermeter)",
+      "unit": "A"
+    },
+    "powerMeterActivePowerPhase2": {
+      "address": 234,
+      "type": "f32",
+      "access": "ro",
+      "description": "Active power phase 2 (powermeter)",
+      "unit": "W"
+    },
+    "powerMeterReactivePowerPhase2": {
+      "address": 236,
+      "type": "f32",
+      "access": "ro",
+      "description": "Reactive power phase 2 (powermeter)",
+      "unit": "var"
+    },
+    "powerMeterApparentPowerPhase2": {
+      "address": 238,
+      "type": "f32",
+      "access": "ro",
+      "description": "Apparent power phase 2 (powermeter)",
+      "unit": "VA"
+    },
+    "powerMeterVoltagePhase2": {
+      "address": 240,
+      "type": "f32",
+      "access": "ro",
+      "description": "Voltage phase 2 (powermeter)",
+      "unit": "V"
+    },
+    "powerMeterCurrentPhase3": {
+      "address": 242,
+      "type": "f32",
+      "access": "ro",
+      "description": "Current phase 3 (powermeter)",
+      "unit": "A"
+    },
+    "powerMeterActivePowerPhase3": {
+      "address": 244,
+      "type": "f32",
+      "access": "ro",
+      "description": "Active power phase 3 (powermeter)",
+      "unit": "W"
+    },
+    "powerMeterReactivePowerPhase3": {
+      "address": 246,
+      "type": "f32",
+      "access": "ro",
+      "description": "Reactive power phase 3 (powermeter)",
+      "unit": "var"
+    },
+    "powerMeterApparentPowerPhase3": {
+      "address": 248,
+      "type": "f32",
+      "access": "ro",
+      "description": "Apparent power phase 3 (powermeter)",
+      "unit": "VA"
+    },
+    "powerMeterVoltagePhase3": {
+      "address": 250,
+      "type": "f32",
+      "access": "ro",
+      "description": "Voltage phase 3 (powermeter)",
+      "unit": "V"
+    },
+    "powerMeterTotalActivePower": {
+      "address": 252,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total active power (powermeter)",
+      "unit": "W"
+    },
+    "powerMeterTotalReactivePower": {
+      "address": 254,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total reactive power (powermeter)",
+      "unit": "var"
+    },
+    "powerMeterTotalApparentPower": {
+      "address": 256,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total apparent power (powermeter)",
+      "unit": "VA"
+    },
+    "totalYield": {
+      "address": 320,
+      "type": "f32",
+      "access": "ro",
+      "description": "Total yield",
+      "unit": "Wh"
+    },
+    "dailyYield": {
+      "address": 322,
+      "type": "f32",
+      "access": "ro",
+      "description": "Daily yield",
+      "unit": "Wh"
+    },
+    "yearlyYield": {
+      "address": 324,
+      "type": "f32",
+      "access": "ro",
+      "description": "Yearly yield",
+      "unit": "Wh"
+    },
+    "MonthlyYield": {
+      "address": 326,
+      "type": "f32",
+      "access": "ro",
+      "description": "Monthly yield",
+      "unit": "Wh"
+    },
+    "batteryGrossCapacity": {
+      "address": 512,
+      "type": "u32",
+      "access": "ro",
+      "description": "Battery gross capacity",
+      "unit": "Ah"
+    },
+    "batteryStateOfCharge": {
+      "address": 514,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery SoC",
+      "unit": "%"
+    }
+  },
+  "enums": {
+    "ByteOrder": {
+      "0": "LittleEndian",
+      "1": "BigEndian"
+    },
+    "InverterState": {
+      "0": "Off",
+      "1": "Init",
+      "2": "IsoMeas",
+      "3": "GridCheck",
+      "4": "StartUp",
+      "6": "FeedIn",
+      "7": "Throttled",
+      "8": "ExtSwitchOff",
+      "9": "Update",
+      "10": "Standby",
+      "11": "GridSync",
+      "12": "GridPreCheck",
+      "13": "GridSwitchOff",
+      "14": "Overheating",
+      "15": "Shutdown",
+      "16": "ImproperDcVoltage",
+      "17": "Esb",
+      "18": "Unknown"
+    },
+    "EnergyManagementState": {
+      "0": "Idle",
+      "2": "EmergencyBatteryCharge",
+      "8": "WinterModeStep1",
+      "16": "WinterModeStep2"
+    },
+    "BatteryType": {
+      "0": "NoBattery",
+      "2": "SonyMurata",
+      "4": "BydBbox"
+    }
+  },
+  "_source_verified": "Verified: Registers confirmed against kilianknoll/kostal-modbusquery; imported from nymea-plugins-modbus"
+}

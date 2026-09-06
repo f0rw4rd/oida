@@ -1,0 +1,213 @@
+{
+  "vendor": "GoodWe",
+  "model": "DT Series",
+  "device_type": "Solar Inverter",
+  "models": [
+    "GW3600D-NS",
+    "GW5000D-NS",
+    "GW6000D-NS",
+    "GW8000-DT"
+  ],
+  "description": "GoodWe DT/D-NS series grid-tied solar inverter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 247,
+  "default_port": 502,
+  "function_code": 3,
+  "notes": "Default Modbus address 247 (0xF7). Standard register layout starting at 768. Max 124 registers per request. Baud 9600.",
+  "source": "GoodWe Modbus Protocol, MiG-41/Modbus-GoodWe-DT GitHub",
+  "holding_registers": {
+    "dc_voltage_pv1": {
+      "address": 768,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "PV1 string DC voltage"
+    },
+    "dc_voltage_pv2": {
+      "address": 769,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "PV2 string DC voltage"
+    },
+    "dc_current_pv1": {
+      "address": 770,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "A",
+      "description": "PV1 string DC current"
+    },
+    "dc_current_pv2": {
+      "address": 771,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "A",
+      "description": "PV2 string DC current"
+    },
+    "ac_voltage_l1": {
+      "address": 772,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "AC voltage phase 1"
+    },
+    "ac_voltage_l2": {
+      "address": 773,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "AC voltage phase 2"
+    },
+    "ac_voltage_l3": {
+      "address": 774,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "AC voltage phase 3"
+    },
+    "ac_current_l1": {
+      "address": 775,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "A",
+      "description": "AC current phase 1"
+    },
+    "ac_current_l2": {
+      "address": 776,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "A",
+      "description": "AC current phase 2"
+    },
+    "ac_current_l3": {
+      "address": 777,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "A",
+      "description": "AC current phase 3"
+    },
+    "ac_frequency_l1": {
+      "address": 778,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "Hz",
+      "description": "AC frequency phase 1"
+    },
+    "ac_frequency_l2": {
+      "address": 779,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "Hz",
+      "description": "AC frequency phase 2"
+    },
+    "ac_frequency_l3": {
+      "address": 780,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "Hz",
+      "description": "AC frequency phase 3"
+    },
+    "ac_power": {
+      "address": 781,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "AC output power"
+    },
+    "operating_status": {
+      "address": 782,
+      "type": "u16",
+      "access": "r",
+      "description": "Operating status: 0=Waiting, 1=Working, 2=Error"
+    },
+    "internal_temp": {
+      "address": 783,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "C",
+      "description": "Internal temperature"
+    },
+    "fault_code": {
+      "address": 784,
+      "type": "u32",
+      "access": "r",
+      "description": "Fault code bitmap"
+    },
+    "energy_total": {
+      "address": 787,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "kWh",
+      "description": "Total energy generated (low word)"
+    },
+    "operating_hours": {
+      "address": 788,
+      "type": "u32",
+      "access": "r",
+      "unit": "h",
+      "description": "Total operating hours"
+    },
+    "energy_today": {
+      "address": 790,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "kWh",
+      "description": "Energy generated today"
+    },
+    "rated_power": {
+      "address": 885,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "Inverter rated power"
+    },
+    "model_name": {
+      "address": 887,
+      "type": "str10",
+      "access": "r",
+      "description": "Model name (ASCII)"
+    }
+  },
+  "enums": {
+    "operating_status": {
+      "0": "Waiting",
+      "1": "Working",
+      "2": "Error"
+    }
+  },
+  "fault_codes": {
+    "0": "No fault",
+    "1": "Utility loss",
+    "2": "Grid voltage high",
+    "4": "Grid voltage low",
+    "8": "Grid frequency high",
+    "16": "Grid frequency low",
+    "32": "PV voltage high",
+    "64": "Isolation fault",
+    "128": "Temperature high",
+    "256": "Fan fault",
+    "512": "Internal communication fault",
+    "1024": "Ground fault",
+    "2048": "DC bus high",
+    "4096": "DC injection high"
+  },
+  "_source_verified": "Verified: Registers 768-771 confirmed against MiG-41/Modbus-GoodWe-DT; default unit ID 247 confirmed"
+}

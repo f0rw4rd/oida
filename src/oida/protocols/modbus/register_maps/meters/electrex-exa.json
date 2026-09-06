@@ -1,0 +1,363 @@
+{
+  "vendor": "Electrex",
+  "model": "EXA / FEMTO",
+  "description": "Electrex EXA / FEMTO power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: EXA, FEMTO",
+  "registers": {
+    "phase_to_neutral_voltage_thd": {
+      "address": 200,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, thd",
+      "unit": "%"
+    },
+    "phase_to_neutral_voltage_thd_202": {
+      "address": 202,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, thd",
+      "unit": "%"
+    },
+    "phase_to_neutral_voltage_thd_204": {
+      "address": 204,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, thd",
+      "unit": "%"
+    },
+    "phase_to_phase_voltage_thd": {
+      "address": 206,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage, thd",
+      "unit": "%"
+    },
+    "phase_to_phase_voltage_thd_208": {
+      "address": 208,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage, thd",
+      "unit": "%"
+    },
+    "phase_to_phase_voltage_thd_210": {
+      "address": 210,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage, thd",
+      "unit": "%"
+    },
+    "phase_current_thd": {
+      "address": 212,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current, thd",
+      "unit": "%"
+    },
+    "phase_current_thd_214": {
+      "address": 214,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current, thd",
+      "unit": "%"
+    },
+    "phase_current_thd_216": {
+      "address": 216,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current, thd",
+      "unit": "%"
+    },
+    "frequency_of_u1n": {
+      "address": 218,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency of u1n",
+      "unit": "Hz"
+    },
+    "phase_to_neutral_voltage_rms_amplitude": {
+      "address": 220,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, rms amplitude",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_rms_amplitude_222": {
+      "address": 222,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, rms amplitude",
+      "unit": "V"
+    },
+    "phase_to_neutral_voltage_rms_amplitude_224": {
+      "address": 224,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, rms amplitude",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_rms_amplitude": {
+      "address": 226,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage, rms amplitude",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_rms_amplitude_228": {
+      "address": 228,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage, rms amplitude",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_rms_amplitude_230": {
+      "address": 230,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage, rms amplitude",
+      "unit": "V"
+    },
+    "phase_current_rms_amplitude": {
+      "address": 232,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current, rms amplitude",
+      "unit": "A"
+    },
+    "phase_current_rms_amplitude_234": {
+      "address": 234,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current, rms amplitude",
+      "unit": "A"
+    },
+    "phase_current_rms_amplitude_236": {
+      "address": 236,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current, rms amplitude",
+      "unit": "A"
+    },
+    "neutral_current_rms_amplitude": {
+      "address": 238,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current, rms amplitude",
+      "unit": "A"
+    },
+    "phase_active_power_imp_exp": {
+      "address": 240,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active power (imp/ exp)",
+      "unit": "W"
+    },
+    "phase_active_power_imp_exp_242": {
+      "address": 242,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active power (imp/ exp)",
+      "unit": "W"
+    },
+    "phase_active_power_imp_exp_244": {
+      "address": 244,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase active power (imp/ exp)",
+      "unit": "W"
+    },
+    "phase_reactive_power_imp_exp": {
+      "address": 246,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power (imp/ exp)",
+      "unit": "var"
+    },
+    "phase_reactive_power_imp_exp_248": {
+      "address": 248,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power (imp/ exp)",
+      "unit": "var"
+    },
+    "phase_reactive_power_imp_exp_250": {
+      "address": 250,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase reactive power (imp/ exp)",
+      "unit": "var"
+    },
+    "phase_apparent_power": {
+      "address": 252,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power",
+      "unit": "VA"
+    },
+    "phase_apparent_power_254": {
+      "address": 254,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power",
+      "unit": "VA"
+    },
+    "phase_apparent_power_256": {
+      "address": 256,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase apparent power",
+      "unit": "VA"
+    },
+    "phase_power_factor_imp_exp": {
+      "address": 258,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase power factor (imp/ exp)",
+      "unit": "-"
+    },
+    "phase_power_factor_imp_exp_260": {
+      "address": 260,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase power factor (imp/ exp)",
+      "unit": "-"
+    },
+    "phase_power_factor_imp_exp_262": {
+      "address": 262,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase power factor (imp/ exp)",
+      "unit": "-"
+    },
+    "phase_to_neutral_voltage_mean_thd": {
+      "address": 264,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, mean thd",
+      "unit": "%"
+    },
+    "phase_to_phase_voltage_mean_thd": {
+      "address": 266,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage, mean thd",
+      "unit": "%"
+    },
+    "phase_current_mean_thd": {
+      "address": 268,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current, mean thd",
+      "unit": "%"
+    },
+    "phase_to_neutral_voltage_mean_rms_amplitude": {
+      "address": 270,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to neutral voltage, mean rms amplitude",
+      "unit": "V"
+    },
+    "phase_to_phase_voltage_mean_rms_amplitude": {
+      "address": 272,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase to phase voltage, mean rms amplitude",
+      "unit": "V"
+    },
+    "three_phase_current_rms_amplitude": {
+      "address": 274,
+      "type": "f32",
+      "access": "r",
+      "description": "Three phase current, rms amplitude",
+      "unit": "A"
+    },
+    "total_active_power_imp_exp": {
+      "address": 276,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active power (imp/ exp)",
+      "unit": "W"
+    },
+    "total_reactive_power_imp_exp": {
+      "address": 278,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive power (imp/ exp)",
+      "unit": "var"
+    },
+    "total_apparent_power": {
+      "address": 280,
+      "type": "f32",
+      "access": "r",
+      "description": "Total apparent power",
+      "unit": "VA"
+    },
+    "total_power_factor_imp_exp": {
+      "address": 282,
+      "type": "f32",
+      "access": "r",
+      "description": "Total power factor (imp/ exp)",
+      "unit": "-"
+    },
+    "phase_current_rms_amplitude_avg": {
+      "address": 332,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current, rms amplitude, avg",
+      "unit": "A"
+    },
+    "phase_current_rms_amplitude_avg_334": {
+      "address": 334,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current, rms amplitude, avg",
+      "unit": "A"
+    },
+    "phase_current_rms_amplitude_avg_336": {
+      "address": 336,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase current, rms amplitude, avg",
+      "unit": "A"
+    },
+    "total_imported_active_power_avg": {
+      "address": 344,
+      "type": "f32",
+      "access": "r",
+      "description": "Total imported active power, avg",
+      "unit": "W"
+    },
+    "total_imported_inductive_power_avg": {
+      "address": 346,
+      "type": "f32",
+      "access": "r",
+      "description": "Total imported inductive power, avg",
+      "unit": "var"
+    },
+    "total_imported_capacitive_power_avg": {
+      "address": 348,
+      "type": "f32",
+      "access": "r",
+      "description": "Total imported capacitive power, avg",
+      "unit": "var"
+    },
+    "total_imported_apparent_power_avg": {
+      "address": 350,
+      "type": "f32",
+      "access": "r",
+      "description": "Total imported apparent power, avg",
+      "unit": "VA"
+    },
+    "total_exported_active_power_avg": {
+      "address": 352,
+      "type": "f32",
+      "access": "r",
+      "description": "Total exported active power, avg",
+      "unit": "W"
+    }
+  }
+}

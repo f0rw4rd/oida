@@ -1,0 +1,352 @@
+{
+  "vendor": "Entes",
+  "model": "MPR 1 SERIES / MPR 2 SERIES / MPR 3 SERIES MPR 4 SERIES",
+  "description": "Entes MPR 1 SERIES / MPR 2 SERIES / MPR 3 SERIES MPR 4 SERIES power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: MPR 1 SERIES, MPR 2 SERIES, MPR 3 SERIES MPR 4 SERIES",
+  "registers": {
+    "voltage_l2_n": {
+      "address": 2,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L2 N",
+      "unit": "V/10"
+    },
+    "voltage_l3_n": {
+      "address": 4,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L3 N",
+      "unit": "V/10"
+    },
+    "voltage_l4_n": {
+      "address": 6,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L4 N",
+      "unit": "V/10"
+    },
+    "voltage_l1_l2": {
+      "address": 8,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L1 L2",
+      "unit": "V/10"
+    },
+    "voltage_l2_l3": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L2 L3",
+      "unit": "V/10"
+    },
+    "voltage_l3_l1": {
+      "address": 12,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage L3 L1",
+      "unit": "V/10"
+    },
+    "current_l1": {
+      "address": 14,
+      "type": "u32",
+      "access": "r",
+      "description": "Current L1",
+      "unit": "mA"
+    },
+    "current_l2": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "description": "Current L2",
+      "unit": "mA"
+    },
+    "current_l3": {
+      "address": 18,
+      "type": "u32",
+      "access": "r",
+      "description": "Current L3",
+      "unit": "mA"
+    },
+    "current_l4": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "description": "Current L4",
+      "unit": "mA"
+    },
+    "neutral_current_il1_il2_il3": {
+      "address": 22,
+      "type": "u32",
+      "access": "r",
+      "description": "Neutral current = il1+il2+il3",
+      "unit": "mA"
+    },
+    "measured_frequency": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "description": "Measured frequency",
+      "unit": "Hz / 100"
+    },
+    "active_power_l1_n": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L1 N",
+      "unit": "W"
+    },
+    "active_power_l2_n": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L2 N",
+      "unit": "W"
+    },
+    "active_power_l3_n": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L3 N",
+      "unit": "W"
+    },
+    "active_power_l4_n": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power L4 N",
+      "unit": "W"
+    },
+    "total_import_active_power": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Total import active power",
+      "unit": "W"
+    },
+    "total_export_active_power": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Total export active power",
+      "unit": "W"
+    },
+    "active_power_p_p1_p2_p3": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power +/ = P =p1+p2+p3",
+      "unit": "W"
+    },
+    "reactive_power_l1": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L1",
+      "unit": "var"
+    },
+    "reactive_power_l2": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L2",
+      "unit": "var"
+    },
+    "reactive_power_l3": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L3",
+      "unit": "var"
+    },
+    "reactive_power_l4": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power L4",
+      "unit": "var"
+    },
+    "quadrant_1_total_reactive_power": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "Quadrant 1 total reactive power",
+      "unit": "var"
+    },
+    "quadrant_2_total_reactive_power": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "Quadrant 2 total reactive power",
+      "unit": "var"
+    },
+    "quadrant_3_total_reactive_power": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Quadrant 3 total reactive power",
+      "unit": "var"
+    },
+    "quadrant_4_total_reactive_power": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "Quadrant 4 total reactive power",
+      "unit": "var"
+    },
+    "reactive_power_q_q1_q2_q3": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power +/ = q=q1+q2+q3",
+      "unit": "var"
+    },
+    "apparent_power_l1_n": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L1 N",
+      "unit": "VA"
+    },
+    "apparent_power_l2_n": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L2 N",
+      "unit": "VA"
+    },
+    "apparent_power_l3_n": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L3 N",
+      "unit": "VA"
+    },
+    "apparent_power_l4_n": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power L4 N",
+      "unit": "VA"
+    },
+    "total_import_apparent_power": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Total import apparent power",
+      "unit": "VA"
+    },
+    "total_export_apparent_power": {
+      "address": 68,
+      "type": "f32",
+      "access": "r",
+      "description": "Total export apparent power",
+      "unit": "VA"
+    },
+    "apparent_power_s_s1_s2_s3": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power +/ = s=s1+s2+s3",
+      "unit": "VA"
+    },
+    "power_factor_l1": {
+      "address": 72,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor L1"
+    },
+    "power_factor_l2": {
+      "address": 74,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor L2"
+    },
+    "power_factor_l3": {
+      "address": 76,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor L3"
+    },
+    "power_factor_l4": {
+      "address": 78,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor L4"
+    },
+    "power_factor_pf_pfl1_pfl2_pfl3": {
+      "address": 80,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor +/ = pf=pfl1+pfl2+pfl3"
+    },
+    "cosphi_l1": {
+      "address": 82,
+      "type": "i32",
+      "access": "r",
+      "description": "Cosphi L1"
+    },
+    "cosphi_l2": {
+      "address": 84,
+      "type": "i32",
+      "access": "r",
+      "description": "Cosphi L2"
+    },
+    "cosphi_l3": {
+      "address": 86,
+      "type": "i32",
+      "access": "r",
+      "description": "Cosphi L3"
+    },
+    "cosphi_l4": {
+      "address": 88,
+      "type": "i32",
+      "access": "r",
+      "description": "Cosphi L4"
+    },
+    "cos_phi_cos_l1_cos_l2_cos_l3": {
+      "address": 90,
+      "type": "i32",
+      "access": "r",
+      "description": "Cos phi = cos_l1 + cos_l2 + cos_l3"
+    },
+    "rotation_field_1_right_0_none_1_left": {
+      "address": 92,
+      "type": "i32",
+      "access": "r",
+      "description": "Rotation field; 1=right, 0=none, 1=left"
+    },
+    "voltage_unbalance": {
+      "address": 94,
+      "type": "u32",
+      "access": "r",
+      "description": "Voltage unbalance",
+      "unit": "%"
+    },
+    "current_unbalance": {
+      "address": 96,
+      "type": "u32",
+      "access": "r",
+      "description": "Current unbalance",
+      "unit": "%"
+    },
+    "l1_phase_voltage_angle": {
+      "address": 98,
+      "type": "i64",
+      "access": "r",
+      "description": "L1 phase voltage angle",
+      "unit": "Angle"
+    },
+    "l2_phase_voltage_angle": {
+      "address": 100,
+      "type": "i64",
+      "access": "r",
+      "description": "L2 phase voltage angle",
+      "unit": "Angle"
+    }
+  }
+}

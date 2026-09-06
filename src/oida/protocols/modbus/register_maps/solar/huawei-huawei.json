@@ -1,0 +1,202 @@
+{
+  "vendor": "Huawei",
+  "model": "Huawei",
+  "description": "Imported from nymea-plugins-modbus (huawei)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/huawei/huawei-registers.json",
+  "registers": {
+    "inverterActivePower": {
+      "address": 32080,
+      "type": "i32",
+      "access": "ro",
+      "description": "Inverter active power",
+      "unit": "kW"
+    },
+    "inverterDeviceStatus": {
+      "address": 32089,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter device status"
+    },
+    "inverterEnergyProduced": {
+      "address": 32106,
+      "type": "u32",
+      "access": "ro",
+      "description": "Inverter energy produced",
+      "unit": "kWh"
+    },
+    "powerMeterActivePower": {
+      "address": 37113,
+      "type": "i32",
+      "access": "ro",
+      "description": "Power meter active power",
+      "unit": "W"
+    },
+    "powerMeterEnergyReturned": {
+      "address": 37119,
+      "type": "i32",
+      "access": "ro",
+      "description": " Positive active electricity - To Grid",
+      "unit": "kWh"
+    },
+    "powerMeterEnergyAquired": {
+      "address": 37121,
+      "type": "i32",
+      "access": "ro",
+      "description": "Reverse active power - From Grid",
+      "unit": "kWh"
+    },
+    "lunaBattery1Status": {
+      "address": 37000,
+      "type": "u16",
+      "access": "ro",
+      "description": "Luna 2000 Battery 1 status"
+    },
+    "lunaBattery1Power": {
+      "address": 37001,
+      "type": "i32",
+      "access": "ro",
+      "description": "Luna 2000 Battery 1 power",
+      "unit": "W"
+    },
+    "lunaBattery1Soc": {
+      "address": 37004,
+      "type": "u16",
+      "access": "ro",
+      "description": "Luna 2000 Battery 1 state of charge",
+      "unit": "%"
+    },
+    "lunaBattery2Status": {
+      "address": 37741,
+      "type": "u16",
+      "access": "ro",
+      "description": "Luna 2000 Battery 2 status"
+    },
+    "lunaBattery2Power": {
+      "address": 37743,
+      "type": "i32",
+      "access": "ro",
+      "description": "Luna 2000 Battery 2 power",
+      "unit": "W"
+    },
+    "lunaBattery2Soc": {
+      "address": 37738,
+      "type": "u16",
+      "access": "ro",
+      "description": "Luna 2000 Battery 2 state of charge",
+      "unit": "%"
+    },
+    "model": {
+      "address": 30000,
+      "type": "str",
+      "access": "ro",
+      "description": "Model"
+    },
+    "serialNumber": {
+      "address": 30015,
+      "type": "str",
+      "access": "ro",
+      "description": "Serial number"
+    },
+    "productNumber": {
+      "address": 30025,
+      "type": "str",
+      "access": "ro",
+      "description": "Product number"
+    },
+    "modelId": {
+      "address": 30070,
+      "type": "u16",
+      "access": "ro",
+      "description": "Model ID"
+    },
+    "numberOfPvStrings": {
+      "address": 30071,
+      "type": "u16",
+      "access": "ro",
+      "description": "Number of PV strings"
+    },
+    "numberOfMppTracks": {
+      "address": 30072,
+      "type": "u16",
+      "access": "ro",
+      "description": "Number of MPP tracks"
+    },
+    "ratedPower": {
+      "address": 30073,
+      "type": "u32",
+      "access": "ro",
+      "description": "Rated power (Pn)",
+      "unit": "kW"
+    },
+    "maxActivePower": {
+      "address": 30075,
+      "type": "u32",
+      "access": "ro",
+      "description": "Maximum active power (P max)",
+      "unit": "kW"
+    },
+    "maxApparentPower": {
+      "address": 30077,
+      "type": "u32",
+      "access": "ro",
+      "description": "Maximum apparant power (S max)",
+      "unit": "kVA"
+    },
+    "maxReactivePowerToGrid": {
+      "address": 30079,
+      "type": "i32",
+      "access": "ro",
+      "description": "Maximum reactive power (Q max) - fed to grid",
+      "unit": "kVar"
+    },
+    "maxReactivePowerFromGrid": {
+      "address": 30081,
+      "type": "i32",
+      "access": "ro",
+      "description": "Maximum reactive power (Q max) - absorbed from grid",
+      "unit": "kVar"
+    }
+  },
+  "enums": {
+    "InverterDeviceStatus": {
+      "0": "StandbyInitializing",
+      "1": "StandbyDetectingInsulationResistance",
+      "2": "StandbyDetectingIrradiation",
+      "3": "StandbyDridDetecting",
+      "256": "Starting",
+      "512": "OnGrid",
+      "513": "PowerLimited",
+      "514": "SelfDerating",
+      "768": "ShutdownFault",
+      "769": "ShutdownCommand",
+      "770": "ShutdownOVGR",
+      "771": "ShutdownCommunicationDisconnected",
+      "772": "ShutdownPowerLimit",
+      "773": "ShutdownManualStartupRequired",
+      "774": "ShutdownInputUnderpower",
+      "1025": "GridSchedulingPCurve",
+      "1026": "GridSchedulingQUCurve",
+      "1027": "GridSchedulingPFUCurve",
+      "1028": "GridSchedulingDryContact",
+      "1029": "GridSchedulingQPCurve",
+      "1280": "SpotCheckReady",
+      "1281": "SpotChecking",
+      "1536": "Inspecting",
+      "1792": "AfciSelfCheck",
+      "2048": "IVScanning",
+      "2304": "DCInputDetection",
+      "2560": "RunningOffGridCharging",
+      "40960": "StandbyNoIrradiation"
+    },
+    "BatteryDeviceStatus": {
+      "0": "Offline",
+      "1": "Standby",
+      "2": "Running",
+      "3": "Fault",
+      "4": "SleepMode"
+    }
+  },
+  "_source_verified": "Verified: Imported from nymea-plugins-modbus; registers 32080/32089/32106/37113 match Huawei Modbus Interface Definitions"
+}

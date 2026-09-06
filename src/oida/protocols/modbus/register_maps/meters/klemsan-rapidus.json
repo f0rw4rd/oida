@@ -1,0 +1,313 @@
+{
+  "vendor": "Klemsan",
+  "model": "KLEA 110 P ECRAS POWYS / KLEA 220 P POWYS 3121 / RAPIDUS",
+  "description": "Klemsan KLEA 110 P ECRAS POWYS / KLEA 220 P POWYS 3121 / RAPIDUS power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: KLEA 110 P ECRAS POWYS, KLEA 220 P POWYS 3121, RAPIDUS",
+  "registers": {
+    "phase_1_2_voltage_l_l": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 2 voltage (l l)"
+    },
+    "phase_1_current": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 current"
+    },
+    "phase_1_cos": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 cos"
+    },
+    "phase_1_power_factor": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 power factor"
+    },
+    "phase_1_active_power": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 active power"
+    },
+    "phase_1_reactive_power": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 reactive power"
+    },
+    "phase_1_apparent_power": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 apparent power"
+    },
+    "phase_1_thdv": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 thdv"
+    },
+    "phase_1_thdi": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 thdi"
+    },
+    "phase_2_voltage_l_n": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 voltage (l n)"
+    },
+    "phase_2_3_voltage_l_l": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 3 voltage (l l)"
+    },
+    "phase_2_current": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 current"
+    },
+    "phase_2_cos": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 cos"
+    },
+    "phase_2_power_factor": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 power factor"
+    },
+    "phase_2_active_power": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 active power"
+    },
+    "phase_2_reactive_power": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 reactive power"
+    },
+    "phase_2_apparent_power": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 apparent power"
+    },
+    "phase_2_thdv": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 thdv"
+    },
+    "phase_2_thdi": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 thdi"
+    },
+    "phase_3_voltage_l_n": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 voltage (l n)"
+    },
+    "phase_3_1_voltage_l_l": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 1 voltage (l l)"
+    },
+    "phase_3_current": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 current"
+    },
+    "phase_3_cos": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 cos"
+    },
+    "phase_3_power_factor": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 power factor"
+    },
+    "phase_3_active_power": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 active power"
+    },
+    "phase_3_reactive_power": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 reactive power"
+    },
+    "phase_3_apparent_power": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 apparent power"
+    },
+    "phase_3_thdv": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 thdv"
+    },
+    "phase_3_thdi": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 thdi"
+    },
+    "average_voltage_l_n": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Average voltage (l n)"
+    },
+    "average_voltage_l_l": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Average voltage (l l)"
+    },
+    "total_current": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "Total current"
+    },
+    "system_power_factor": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "System power factor"
+    },
+    "total_active_power": {
+      "address": 68,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active power"
+    },
+    "total_reactive_power": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive power"
+    },
+    "total_apparent_power": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "Total apparent power"
+    },
+    "system_frequency": {
+      "address": 74,
+      "type": "f32",
+      "access": "r",
+      "description": "System frequency"
+    },
+    "neutral_current": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current"
+    },
+    "phase_1_voltage_harmonics_1": {
+      "address": 78,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage harmonics 1"
+    },
+    "phase_1_voltage_harmonics_3": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage harmonics 3"
+    },
+    "phase_1_voltage_harmonics_5": {
+      "address": 82,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage harmonics 5"
+    },
+    "phase_1_voltage_harmonics_7": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage harmonics 7"
+    },
+    "phase_1_voltage_harmonics_9": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage harmonics 9"
+    },
+    "phase_1_voltage_harmonics_11": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage harmonics 11"
+    },
+    "phase_1_voltage_harmonics_13": {
+      "address": 90,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage harmonics 13"
+    },
+    "phase_1_voltage_harmonics_15": {
+      "address": 92,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage harmonics 15"
+    },
+    "phase_1_voltage_harmonics_17": {
+      "address": 94,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage harmonics 17"
+    },
+    "phase_1_voltage_harmonics_19": {
+      "address": 96,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage harmonics 19"
+    },
+    "phase_1_voltage_harmonics_21": {
+      "address": 98,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage harmonics 21"
+    },
+    "phase_1_voltage_harmonics_23": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 voltage harmonics 23"
+    }
+  }
+}

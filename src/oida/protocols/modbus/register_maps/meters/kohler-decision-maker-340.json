@@ -1,0 +1,355 @@
+{
+  "vendor": "Kohler",
+  "model": "DECISION MAKER 340",
+  "description": "Kohler DECISION MAKER 340 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "system_time": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "System time"
+    },
+    "day_of_week": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Day of week"
+    },
+    "month": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Month",
+      "unit": "112"
+    },
+    "day": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Day",
+      "unit": "131"
+    },
+    "year": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Year"
+    },
+    "week_of_month": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Week of month"
+    },
+    "voltage_l1l2": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage l1l2",
+      "unit": "Volts"
+    },
+    "voltage_l2l3": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage l2l3",
+      "unit": "Volts"
+    },
+    "voltage_l3l1": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage l3l1",
+      "unit": "Volts"
+    },
+    "frequency": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "voltage_l1l0": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage l1l0",
+      "unit": "Volts"
+    },
+    "voltage_l2l0": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage l2l0",
+      "unit": "Volts"
+    },
+    "voltage_l3l0": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage l3l0",
+      "unit": "Volts"
+    },
+    "alert_code": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Alert code",
+      "unit": "AeRGode"
+    },
+    "engine_speed": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine speed"
+    },
+    "coolant_temp": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "description": "Coolant temp"
+    },
+    "oil_pressure": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "Oil pressure"
+    },
+    "battery_voltage": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery voltage",
+      "unit": "VDC "
+    },
+    "l1_current": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "description": "L1 current",
+      "unit": "Amps"
+    },
+    "l2_current": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "description": "L2 current",
+      "unit": "Amps"
+    },
+    "l3_current": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "L3 current",
+      "unit": "Amps"
+    },
+    "power_factor": {
+      "address": 22,
+      "type": "u16",
+      "access": "r",
+      "description": "Power factor",
+      "unit": " 100"
+    },
+    "total_real_power": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Total real power",
+      "unit": "kW"
+    },
+    "percent_of_max_power": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "Percent of max. Power",
+      "unit": "% "
+    },
+    "status": {
+      "address": 33,
+      "type": "u16",
+      "access": "r",
+      "description": "Status",
+      "unit": "01: Sw. Position (00=open; 01=auto; 10=run; 11=off)"
+    },
+    "engine_start_time": {
+      "address": 47,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine start time",
+      "unit": "Sec"
+    },
+    "crank_time": {
+      "address": 48,
+      "type": "u16",
+      "access": "r",
+      "description": "Crank time",
+      "unit": "Sec"
+    },
+    "crank_pause_time": {
+      "address": 49,
+      "type": "u16",
+      "access": "r",
+      "description": "Crank pause time",
+      "unit": "Sec"
+    },
+    "num_of_crank_cycles": {
+      "address": 50,
+      "type": "u16",
+      "access": "r",
+      "description": "Num of crank cycles"
+    },
+    "engine_cooldown_time": {
+      "address": 51,
+      "type": "u16",
+      "access": "r",
+      "description": "Engine cooldown time",
+      "unit": "Sec"
+    },
+    "over_voltage_time_delay": {
+      "address": 52,
+      "type": "u16",
+      "access": "r",
+      "description": "Over voltage time delay",
+      "unit": "Sec"
+    },
+    "under_voltage_time_delay": {
+      "address": 53,
+      "type": "u16",
+      "access": "r",
+      "description": "Under voltage time delay",
+      "unit": "Sec"
+    },
+    "starting_aid_time": {
+      "address": 54,
+      "type": "u16",
+      "access": "r",
+      "description": "Starting aid time",
+      "unit": "Sec"
+    },
+    "aux_1_inhibit_time": {
+      "address": 55,
+      "type": "u16",
+      "access": "r",
+      "description": "Aux 1 inhibit time",
+      "unit": "Sec"
+    },
+    "aux_1_delay_time": {
+      "address": 56,
+      "type": "u16",
+      "access": "r",
+      "description": "Aux 1 delay time",
+      "unit": "Sec"
+    },
+    "aux_2_inhibit_time": {
+      "address": 57,
+      "type": "u16",
+      "access": "r",
+      "description": "Aux 2 inhibit time",
+      "unit": "Sec"
+    },
+    "aux_2_delay_time": {
+      "address": 58,
+      "type": "u16",
+      "access": "r",
+      "description": "Aux 2 delay time",
+      "unit": "Sec"
+    },
+    "aux_3_inhibit_time": {
+      "address": 59,
+      "type": "u16",
+      "access": "r",
+      "description": "Aux 3 inhibit time",
+      "unit": "Sec"
+    },
+    "aux_3_delay_time": {
+      "address": 60,
+      "type": "u16",
+      "access": "r",
+      "description": "Aux 3 delay time",
+      "unit": "Sec"
+    },
+    "aux_4_inhibit_time": {
+      "address": 61,
+      "type": "u16",
+      "access": "r",
+      "description": "Aux 4 inhibit time",
+      "unit": "Sec"
+    },
+    "aux_4_delay_time": {
+      "address": 62,
+      "type": "u16",
+      "access": "r",
+      "description": "Aux 4 delay time",
+      "unit": "Sec"
+    },
+    "over_voltage_trip_point": {
+      "address": 63,
+      "type": "u16",
+      "access": "r",
+      "description": "Over voltage trip point",
+      "unit": "%"
+    },
+    "under_voltage_trip_point": {
+      "address": 64,
+      "type": "u16",
+      "access": "r",
+      "description": "Under voltage trip point",
+      "unit": "%"
+    },
+    "over_freq_trip_point": {
+      "address": 65,
+      "type": "u16",
+      "access": "r",
+      "description": "Over freq trip point",
+      "unit": "%"
+    },
+    "under_freq_trip_point": {
+      "address": 66,
+      "type": "u16",
+      "access": "r",
+      "description": "Under freq trip point",
+      "unit": "%"
+    },
+    "over_speed_trip_point": {
+      "address": 67,
+      "type": "u16",
+      "access": "r",
+      "description": "Over speed trip point",
+      "unit": "%"
+    },
+    "low_battery_voltage_trip_point": {
+      "address": 68,
+      "type": "u16",
+      "access": "r",
+      "description": "Low battery voltage trip point",
+      "unit": "VDC"
+    },
+    "high_battery_voltage_trip_point": {
+      "address": 69,
+      "type": "u16",
+      "access": "r",
+      "description": "High battery voltage trip point",
+      "unit": "VDC "
+    },
+    "system_voltage": {
+      "address": 70,
+      "type": "u16",
+      "access": "r",
+      "description": "System voltage",
+      "unit": "Volts, 105-14600"
+    },
+    "system_frequency": {
+      "address": 71,
+      "type": "u16",
+      "access": "r",
+      "description": "System frequency",
+      "unit": "Hz, 48-62"
+    }
+  }
+}

@@ -1,0 +1,313 @@
+{
+  "vendor": "Schweitzer Engineering",
+  "model": "ENGINEERING LABORATORIES SEL 735",
+  "description": "Schweitzer Engineering ENGINEERING LABORATORIES SEL 735 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "ia": {
+      "address": 350,
+      "type": "i32",
+      "access": "r",
+      "description": "Ia"
+    },
+    "ib": {
+      "address": 352,
+      "type": "i32",
+      "access": "r",
+      "description": "Ib"
+    },
+    "ic": {
+      "address": 354,
+      "type": "i32",
+      "access": "r",
+      "description": "Ic"
+    },
+    "in": {
+      "address": 356,
+      "type": "i32",
+      "access": "r",
+      "description": "In"
+    },
+    "va": {
+      "address": 358,
+      "type": "i32",
+      "access": "r",
+      "description": "Va"
+    },
+    "vc": {
+      "address": 360,
+      "type": "i32",
+      "access": "r",
+      "description": "Vc"
+    },
+    "vb": {
+      "address": 362,
+      "type": "i32",
+      "access": "r",
+      "description": "Vb"
+    },
+    "vab": {
+      "address": 364,
+      "type": "i32",
+      "access": "r",
+      "description": "Vab"
+    },
+    "vbc": {
+      "address": 366,
+      "type": "i32",
+      "access": "r",
+      "description": "Vbc"
+    },
+    "vca": {
+      "address": 368,
+      "type": "i32",
+      "access": "r",
+      "description": "Vca"
+    },
+    "w3": {
+      "address": 370,
+      "type": "i32",
+      "access": "r",
+      "description": "W3"
+    },
+    "u3": {
+      "address": 372,
+      "type": "i32",
+      "access": "r",
+      "description": "U3"
+    },
+    "q3": {
+      "address": 374,
+      "type": "i32",
+      "access": "r",
+      "description": "Q3"
+    },
+    "wa": {
+      "address": 376,
+      "type": "i32",
+      "access": "r",
+      "description": "Wa"
+    },
+    "wb": {
+      "address": 378,
+      "type": "i32",
+      "access": "r",
+      "description": "Wb"
+    },
+    "wc": {
+      "address": 380,
+      "type": "i32",
+      "access": "r",
+      "description": "Wc"
+    },
+    "ua": {
+      "address": 382,
+      "type": "i32",
+      "access": "r",
+      "description": "Ua"
+    },
+    "ub": {
+      "address": 384,
+      "type": "i32",
+      "access": "r",
+      "description": "Ub"
+    },
+    "uc": {
+      "address": 386,
+      "type": "i32",
+      "access": "r",
+      "description": "Uc"
+    },
+    "qa": {
+      "address": 388,
+      "type": "i32",
+      "access": "r",
+      "description": "Qa"
+    },
+    "qb": {
+      "address": 390,
+      "type": "i32",
+      "access": "r",
+      "description": "Qb"
+    },
+    "qc": {
+      "address": 392,
+      "type": "i32",
+      "access": "r",
+      "description": "Qc"
+    },
+    "wd3_del": {
+      "address": 400,
+      "type": "i32",
+      "access": "r",
+      "description": "WD3 del"
+    },
+    "wd3_rec": {
+      "address": 402,
+      "type": "i32",
+      "access": "r",
+      "description": "WD3 rec"
+    },
+    "ud3_del": {
+      "address": 404,
+      "type": "i32",
+      "access": "r",
+      "description": "UD3 del"
+    },
+    "ud3_rec": {
+      "address": 406,
+      "type": "i32",
+      "access": "r",
+      "description": "UD3 rec"
+    },
+    "qd3_del": {
+      "address": 408,
+      "type": "i32",
+      "access": "r",
+      "description": "QD3 del"
+    },
+    "qd3_rec": {
+      "address": 410,
+      "type": "i32",
+      "access": "r",
+      "description": "QD3 rec"
+    },
+    "ida": {
+      "address": 412,
+      "type": "i32",
+      "access": "r",
+      "description": "Ida"
+    },
+    "idb": {
+      "address": 414,
+      "type": "i32",
+      "access": "r",
+      "description": "Idb"
+    },
+    "idc": {
+      "address": 416,
+      "type": "i32",
+      "access": "r",
+      "description": "Idc"
+    },
+    "idn": {
+      "address": 418,
+      "type": "i32",
+      "access": "r",
+      "description": "Idn"
+    },
+    "3i0d": {
+      "address": 420,
+      "type": "i32",
+      "access": "r",
+      "description": "3i0d"
+    },
+    "3i2d": {
+      "address": 422,
+      "type": "i32",
+      "access": "r",
+      "description": "3i2d"
+    },
+    "wda_del": {
+      "address": 424,
+      "type": "i32",
+      "access": "r",
+      "description": "Wda del"
+    },
+    "wdb_del": {
+      "address": 426,
+      "type": "i32",
+      "access": "r",
+      "description": "Wdb del"
+    },
+    "wdc_del": {
+      "address": 428,
+      "type": "i32",
+      "access": "r",
+      "description": "Wdc del"
+    },
+    "wda_rec": {
+      "address": 430,
+      "type": "i32",
+      "access": "r",
+      "description": "Wda rec"
+    },
+    "wdb_rec": {
+      "address": 432,
+      "type": "i32",
+      "access": "r",
+      "description": "Wdb rec"
+    },
+    "wdc_rec": {
+      "address": 434,
+      "type": "i32",
+      "access": "r",
+      "description": "Wdc rec"
+    },
+    "uda_del": {
+      "address": 436,
+      "type": "i32",
+      "access": "r",
+      "description": "Uda del"
+    },
+    "udb_del": {
+      "address": 438,
+      "type": "i32",
+      "access": "r",
+      "description": "Udb del"
+    },
+    "udc_del": {
+      "address": 440,
+      "type": "i32",
+      "access": "r",
+      "description": "Udc del"
+    },
+    "uda_rec": {
+      "address": 442,
+      "type": "i32",
+      "access": "r",
+      "description": "Uda rec"
+    },
+    "udb_rec": {
+      "address": 444,
+      "type": "i32",
+      "access": "r",
+      "description": "Udb rec"
+    },
+    "ucd_rec": {
+      "address": 446,
+      "type": "i32",
+      "access": "r",
+      "description": "Ucd rec"
+    },
+    "qda_del": {
+      "address": 448,
+      "type": "i32",
+      "access": "r",
+      "description": "Qda del"
+    },
+    "qdb_del": {
+      "address": 450,
+      "type": "i32",
+      "access": "r",
+      "description": "Qdb del"
+    },
+    "qdc_rec": {
+      "address": 452,
+      "type": "i32",
+      "access": "r",
+      "description": "Qdc rec"
+    },
+    "qda_rec": {
+      "address": 454,
+      "type": "i32",
+      "access": "r",
+      "description": "Qda rec"
+    }
+  }
+}

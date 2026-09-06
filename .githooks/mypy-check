@@ -1,0 +1,15 @@
+#!/usr/bin/env bash
+# Informational mypy check — prints summary, never blocks push.
+# Will become blocking once the error count is under control.
+output=$(mypy src/oida/ 2>&1)
+summary=$(echo "$output" | tail -1)
+echo "$summary"
+
+# Show real type bugs (skip cosmetic annotation warnings)
+real_errors=$(echo "$output" | grep '\[' | grep -v '\[no-untyped-def\]\|\[var-annotated\]\|\[no-any-return\]')
+if [ -n "$real_errors" ]; then
+    count=$(echo "$real_errors" | wc -l)
+    echo "  ($count type errors — run 'mypy src/oida/' for details)"
+fi
+
+exit 0

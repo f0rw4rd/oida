@@ -1,0 +1,23 @@
+# IEC 60870-5-104 Mock Server (Python) with Custom Type Support
+#
+# This version supports custom/vendor-specific Type IDs (128-255)
+# for testing the --probe-custom-types feature
+#
+# Build from docker/mock_services: docker build -f iec104/Dockerfile.python -t iec104-python-server .
+# Run: docker run -p 2405:2404 iec104-python-server
+
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# Copy the mock server (context is docker/mock_services)
+COPY iec104_server.py /app/
+
+# Expose IEC 104 port
+EXPOSE 2404
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --retries=3 \
+    CMD timeout 2 bash -c '</dev/tcp/localhost/2404' || exit 1
+
+ENTRYPOINT ["python3", "/app/iec104_server.py"]

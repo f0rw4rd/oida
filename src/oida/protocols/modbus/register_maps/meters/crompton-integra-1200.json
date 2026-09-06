@@ -1,0 +1,363 @@
+{
+  "vendor": "Crompton",
+  "model": "INTEGRA 1200",
+  "description": "Crompton INTEGRA 1200 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "phase_2_line_to_neutral_voltage": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 line to neutral voltage",
+      "unit": "Volts"
+    },
+    "phase_3_line_to_neutral_voltage": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 line to neutral voltage",
+      "unit": "Volts"
+    },
+    "line_1_current": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 1 current",
+      "unit": "Amps"
+    },
+    "line_2_current": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 2 current",
+      "unit": "Amps"
+    },
+    "line_3_current": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 3 current",
+      "unit": "Amps"
+    },
+    "phase_1_power": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 power",
+      "unit": "Watts"
+    },
+    "phase_2_power": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 power",
+      "unit": "Watts"
+    },
+    "phase_3_power": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 power",
+      "unit": "Watts"
+    },
+    "phase_1_va": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 VA",
+      "unit": "VA"
+    },
+    "phase_2_va": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 VA",
+      "unit": "VA"
+    },
+    "phase_3_va": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 VA",
+      "unit": "VA"
+    },
+    "phase_1_var": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 VAr",
+      "unit": "VAr"
+    },
+    "phase_2_var": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 VAr",
+      "unit": "VAr"
+    },
+    "phase_3_var": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 VAr",
+      "unit": "VAr"
+    },
+    "phase_1_power_factor": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 power factor",
+      "unit": "None"
+    },
+    "phase_2_power_factor": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 power factor",
+      "unit": "None"
+    },
+    "phase_3_power_factor": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 power factor",
+      "unit": "None"
+    },
+    "phase_1_phase_angle": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 phase angle",
+      "unit": "Degrees"
+    },
+    "phase_2_phase_angle": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 phase angle",
+      "unit": "Degrees"
+    },
+    "phase_3_phase_angle": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 phase angle",
+      "unit": "Degrees"
+    },
+    "average_line_to_neutral_voltage": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Average line to neutral voltage",
+      "unit": "Volts"
+    },
+    "average_line_current": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "Average line current",
+      "unit": "Amps"
+    },
+    "sum_of_line_currents": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "Sum of line currents",
+      "unit": "Amps"
+    },
+    "sum_of_phase_powers": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Sum of phase powers",
+      "unit": "Watts"
+    },
+    "sum_of_phase_vas": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Sum of phase VAs",
+      "unit": "VA"
+    },
+    "sum_of_phase_vars": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Sum of phase VArs",
+      "unit": "VAr"
+    },
+    "total_system_power_factor": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Total system power factor",
+      "unit": "None"
+    },
+    "total_system_phase_angle": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Total system phase angle",
+      "unit": "Degrees"
+    },
+    "system_frequency": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "System frequency",
+      "unit": "Hz"
+    },
+    "import_watt_hours": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "Import watt hours",
+      "unit": "Watt Hours"
+    },
+    "export_watt_hours": {
+      "address": 74,
+      "type": "f32",
+      "access": "r",
+      "description": "Export watt hours",
+      "unit": "Watt Hours"
+    },
+    "import_var_hours": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "description": "Import VAr hours",
+      "unit": "VAr Hours"
+    },
+    "export_var_hours": {
+      "address": 78,
+      "type": "f32",
+      "access": "r",
+      "description": "Export VAr hours",
+      "unit": "VAr Hours"
+    },
+    "va_hours": {
+      "address": 80,
+      "type": "f32",
+      "access": "r",
+      "description": "VA hours",
+      "unit": "VA Hours"
+    },
+    "current_sum_hours": {
+      "address": 82,
+      "type": "f32",
+      "access": "r",
+      "description": "Current sum hours",
+      "unit": "A Hours"
+    },
+    "import_power_sum_demand": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "description": "Import power sum demand",
+      "unit": "Watts"
+    },
+    "maximum_import_power_sum_demand": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "description": "Maximum import power sum demand",
+      "unit": "Watts"
+    },
+    "import_active_power_demand": {
+      "address": 88,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active power demand",
+      "unit": "Watt"
+    },
+    "import_active_power_max_demand": {
+      "address": 90,
+      "type": "f32",
+      "access": "r",
+      "description": "Import active power max demand",
+      "unit": "Watt"
+    },
+    "export_active_power_demand": {
+      "address": 92,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active power demand",
+      "unit": "Watt"
+    },
+    "export_active_power_max_demand": {
+      "address": 94,
+      "type": "f32",
+      "access": "r",
+      "description": "Export active power max demand",
+      "unit": "Watt"
+    },
+    "va_sum_demand": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "description": "VA sum demand",
+      "unit": "VA"
+    },
+    "maximum_va_sum_demand": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "description": "Maximum VA sum demand",
+      "unit": "VA"
+    },
+    "neutral_current_demand": {
+      "address": 104,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current demand",
+      "unit": "Amps"
+    },
+    "maximum_neutral_current_demand": {
+      "address": 106,
+      "type": "f32",
+      "access": "r",
+      "description": "Maximum neutral current demand",
+      "unit": "Amps"
+    },
+    "total_system_reactive_power_demand": {
+      "address": 108,
+      "type": "f32",
+      "access": "r",
+      "description": "Total system reactive power demand",
+      "unit": "Var"
+    },
+    "maximum_total_system_reactive_power_demand": {
+      "address": 110,
+      "type": "f32",
+      "access": "r",
+      "description": "Maximum total system reactive power demand",
+      "unit": "Var"
+    },
+    "voltage_phase_sequence_normal_1_reverse_2": {
+      "address": 160,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage phase sequence normal=1 reverse=2)",
+      "unit": "None"
+    },
+    "current_phase_sequence_normal_1_reverse_2": {
+      "address": 162,
+      "type": "f32",
+      "access": "r",
+      "description": "Current phase sequence normal=1 reverse=2)",
+      "unit": "None"
+    },
+    "nature_of_the_load_resistive_1_inductive_2_capacitive_3": {
+      "address": 192,
+      "type": "f32",
+      "access": "r",
+      "description": "Nature of the load resistive =1 inductive =2 capacitive =3)",
+      "unit": "None"
+    }
+  }
+}

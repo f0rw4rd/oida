@@ -1,0 +1,196 @@
+{
+  "vendor": "Bernecker Engineering",
+  "model": "MPM3PM",
+  "description": "Imported from mbmd (mpm3pm)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/mpm3pm.go",
+  "registers": {
+    "sum": {
+      "address": 0,
+      "type": "s32",
+      "access": "ro",
+      "description": "Total kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "import": {
+      "address": 2,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Import kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "export": {
+      "address": 4,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Export kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "reactive_sum": {
+      "address": 6,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total kVArh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "voltage_l1": {
+      "address": 8,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 1 line to neutral volts",
+      "function_code": 3,
+      "scale": 0.1
+    },
+    "voltage_l2": {
+      "address": 10,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 2 line to neutral volts",
+      "function_code": 3,
+      "scale": 0.1
+    },
+    "voltage_l3": {
+      "address": 12,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 3 line to neutral volts",
+      "function_code": 3,
+      "scale": 0.1
+    },
+    "current_l1": {
+      "address": 14,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 1 current",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "current_l2": {
+      "address": 16,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 2 current",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "current_l3": {
+      "address": 18,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 3 current",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "power_l1": {
+      "address": 20,
+      "type": "s32",
+      "access": "ro",
+      "description": "Phase 1 active power",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "power_l2": {
+      "address": 22,
+      "type": "s32",
+      "access": "ro",
+      "description": "Phase 2 active power",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "power_l3": {
+      "address": 24,
+      "type": "s32",
+      "access": "ro",
+      "description": "Phase 3 active power",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "reactive_power_l1": {
+      "address": 26,
+      "type": "s32",
+      "access": "ro",
+      "description": "Phase 1 reactive power",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "reactive_power_l2": {
+      "address": 28,
+      "type": "s32",
+      "access": "ro",
+      "description": "Phase 2 reactive power",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "reactive_power_l3": {
+      "address": 30,
+      "type": "s32",
+      "access": "ro",
+      "description": "Phase 3 reactive power",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "cosphi_l1": {
+      "address": 32,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 1 power factor",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "cosphi_l2": {
+      "address": 34,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 2 power factor",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "cosphi_l3": {
+      "address": 36,
+      "type": "u32",
+      "access": "ro",
+      "description": "Phase 3 power factor",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "power": {
+      "address": 38,
+      "type": "s32",
+      "access": "ro",
+      "description": "Total system power",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "reactive_power": {
+      "address": 40,
+      "type": "s32",
+      "access": "ro",
+      "description": "Total system VAr",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "cosphi": {
+      "address": 42,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total system power factor",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "frequency": {
+      "address": 44,
+      "type": "u32",
+      "access": "ro",
+      "description": "Frequency of supply voltages",
+      "function_code": 3,
+      "scale": 0.01
+    }
+  },
+  "_source_verified": "Verified: Bernecker Engineering MPM3PM confirmed; mbmd source mpm3pm.go verified"
+}

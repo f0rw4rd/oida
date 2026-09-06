@@ -1,0 +1,29 @@
+# DNP3 mock outstation built on the stepfunc `dnp3` Rust crate.
+# Replaces the removed pydnp3-stepfunc PyPI package with a pure-Rust outstation.
+# Behavior (point counts, addresses, attributes, TLS, restart/freeze, octet
+# strings) is driven entirely by environment variables — see dnp3-rs/src/main.rs.
+#
+# The basic, enhanced, and filetransfer compose variants all build this same
+# binary; they differ only in the environment variables compose.yml passes.
+
+# ── stage 1: build ──
+FROM rust:slim-bookworm AS builder
+WORKDIR /build
+COPY dnp3-rs/Cargo.toml dnp3-rs/Cargo.lock ./
+COPY dnp3-rs/src ./src
+RUN cargo build --release && strip target/release/oida-dnp3-outstation
+
+# ── stage 2: slim runtime ──
+FROM debian:bookworm-slim
+WORKDIR /app
+# openssl: self-signed TLS cert generation at startup (DNP3_TLS=true)
+# netcat-openbsd: compose healthcheck (nc -z localhost <PORT>)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        openssl netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+COPY --from=builder /build/target/release/oida-dnp3-outstation /usr/local/bin/oida-dnp3-outstation
+
+EXPOSE 20000
+
+# All configuration via environment variables (see dnp3-rs/src/main.rs)
+CMD ["oida-dnp3-outstation"]

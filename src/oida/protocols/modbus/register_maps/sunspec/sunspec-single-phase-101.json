@@ -1,0 +1,361 @@
+{
+  "vendor": "SunSpec",
+  "model": "Inverter Model 101 (Single-Phase Integer)",
+  "description": "SunSpec Model 101 - Single Phase Inverter with Integer + Scale Factor format",
+  "version": "1.0",
+  "standard": "sunspec",
+  "sunspec_model_id": 101,
+  "base_address": 40000,
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Model 101 = Single-phase inverter (integer). Model length is 50 registers. Scale factors (SF) are signed int16 representing 10^x. Addresses include 2-register header (ID+Length). Supported by SMA, Fronius, SolarEdge, ABB, and others.",
+  "source": "https://github.com/sunspec/models/blob/master/smdx/smdx_00101.xml",
+  "registers": {
+    "model_id": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Model ID (101 = single-phase inverter)"
+    },
+    "model_length": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Model length (50 registers)"
+    },
+    "ac_current": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 6,
+      "unit": "A",
+      "description": "AC Total Current (A)"
+    },
+    "ac_current_a": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 6,
+      "unit": "A",
+      "description": "Phase A Current (AphA)"
+    },
+    "ac_current_b": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 6,
+      "unit": "A",
+      "description": "Phase B Current (AphB) - optional for single-phase"
+    },
+    "ac_current_c": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 6,
+      "unit": "A",
+      "description": "Phase C Current (AphC) - optional for single-phase"
+    },
+    "ac_current_sf": {
+      "address": 6,
+      "type": "i16",
+      "access": "r",
+      "description": "Current scale factor (A_SF)"
+    },
+    "ac_voltage_ab": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 13,
+      "unit": "V",
+      "description": "Phase A-B Voltage (PPVphAB) - optional"
+    },
+    "ac_voltage_bc": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 13,
+      "unit": "V",
+      "description": "Phase B-C Voltage (PPVphBC) - optional"
+    },
+    "ac_voltage_ca": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 13,
+      "unit": "V",
+      "description": "Phase C-A Voltage (PPVphCA) - optional"
+    },
+    "ac_voltage_an": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 13,
+      "unit": "V",
+      "description": "Phase A-N Voltage (PhVphA)"
+    },
+    "ac_voltage_bn": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 13,
+      "unit": "V",
+      "description": "Phase B-N Voltage (PhVphB) - optional"
+    },
+    "ac_voltage_cn": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 13,
+      "unit": "V",
+      "description": "Phase C-N Voltage (PhVphC) - optional"
+    },
+    "ac_voltage_sf": {
+      "address": 13,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage scale factor (V_SF)"
+    },
+    "ac_power": {
+      "address": 14,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 15,
+      "unit": "W",
+      "description": "AC Power output (W)"
+    },
+    "ac_power_sf": {
+      "address": 15,
+      "type": "i16",
+      "access": "r",
+      "description": "Power scale factor (W_SF)"
+    },
+    "ac_frequency": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 17,
+      "unit": "Hz",
+      "description": "AC Frequency (Hz)"
+    },
+    "ac_frequency_sf": {
+      "address": 17,
+      "type": "i16",
+      "access": "r",
+      "description": "Frequency scale factor (Hz_SF)"
+    },
+    "ac_va": {
+      "address": 18,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 19,
+      "unit": "VA",
+      "description": "Apparent Power (VA)"
+    },
+    "ac_va_sf": {
+      "address": 19,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent power scale factor (VA_SF)"
+    },
+    "ac_var": {
+      "address": 20,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 21,
+      "unit": "var",
+      "description": "Reactive Power (VAr)"
+    },
+    "ac_var_sf": {
+      "address": 21,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power scale factor (VAr_SF)"
+    },
+    "ac_pf": {
+      "address": 22,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 23,
+      "unit": "%",
+      "description": "Power Factor (PF)"
+    },
+    "ac_pf_sf": {
+      "address": 23,
+      "type": "i16",
+      "access": "r",
+      "description": "Power factor scale factor (PF_SF)"
+    },
+    "ac_energy_wh": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "scale_factor_register": 26,
+      "unit": "Wh",
+      "description": "AC Energy lifetime (WH) - acc32"
+    },
+    "ac_energy_wh_sf": {
+      "address": 26,
+      "type": "i16",
+      "access": "r",
+      "description": "Energy scale factor (WH_SF)"
+    },
+    "dc_current": {
+      "address": 27,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 28,
+      "unit": "A",
+      "description": "DC Current (DCA)"
+    },
+    "dc_current_sf": {
+      "address": 28,
+      "type": "i16",
+      "access": "r",
+      "description": "DC current scale factor (DCA_SF)"
+    },
+    "dc_voltage": {
+      "address": 29,
+      "type": "u16",
+      "access": "r",
+      "scale_factor_register": 30,
+      "unit": "V",
+      "description": "DC Voltage (DCV)"
+    },
+    "dc_voltage_sf": {
+      "address": 30,
+      "type": "i16",
+      "access": "r",
+      "description": "DC voltage scale factor (DCV_SF)"
+    },
+    "dc_power": {
+      "address": 31,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 32,
+      "unit": "W",
+      "description": "DC Power (DCW)"
+    },
+    "dc_power_sf": {
+      "address": 32,
+      "type": "i16",
+      "access": "r",
+      "description": "DC power scale factor (DCW_SF)"
+    },
+    "cabinet_temperature": {
+      "address": 33,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 37,
+      "unit": "C",
+      "description": "Cabinet Temperature (TmpCab)"
+    },
+    "heatsink_temperature": {
+      "address": 34,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 37,
+      "unit": "C",
+      "description": "Heat Sink Temperature (TmpSnk)"
+    },
+    "transformer_temperature": {
+      "address": 35,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 37,
+      "unit": "C",
+      "description": "Transformer Temperature (TmpTrns)"
+    },
+    "other_temperature": {
+      "address": 36,
+      "type": "i16",
+      "access": "r",
+      "scale_factor_register": 37,
+      "unit": "C",
+      "description": "Other Temperature (TmpOt)"
+    },
+    "temperature_sf": {
+      "address": 37,
+      "type": "i16",
+      "access": "r",
+      "description": "Temperature scale factor (Tmp_SF)"
+    },
+    "operating_state": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Operating State (St)",
+      "enum": {
+        "1": "OFF",
+        "2": "SLEEPING",
+        "3": "STARTING",
+        "4": "MPPT",
+        "5": "THROTTLED",
+        "6": "SHUTTING_DOWN",
+        "7": "FAULT",
+        "8": "STANDBY"
+      }
+    },
+    "vendor_state": {
+      "address": 39,
+      "type": "u16",
+      "access": "r",
+      "description": "Vendor-specific operating state (StVnd)"
+    },
+    "event1": {
+      "address": 40,
+      "type": "u32",
+      "access": "r",
+      "description": "Event flags bitfield 1 (Evt1)",
+      "bitfield": {
+        "0": "GROUND_FAULT",
+        "1": "DC_OVER_VOLT",
+        "2": "AC_DISCONNECT",
+        "3": "DC_DISCONNECT",
+        "4": "GRID_DISCONNECT",
+        "5": "CABINET_OPEN",
+        "6": "MANUAL_SHUTDOWN",
+        "7": "OVER_TEMP",
+        "8": "OVER_FREQUENCY",
+        "9": "UNDER_FREQUENCY",
+        "10": "AC_OVER_VOLT",
+        "11": "AC_UNDER_VOLT",
+        "12": "BLOWN_STRING_FUSE",
+        "13": "UNDER_TEMP",
+        "14": "MEMORY_LOSS",
+        "15": "HW_TEST_FAILURE"
+      }
+    },
+    "event2": {
+      "address": 42,
+      "type": "u32",
+      "access": "r",
+      "description": "Event flags bitfield 2 (Evt2) - reserved"
+    },
+    "vendor_event1": {
+      "address": 44,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor event bitfield 1 (EvtVnd1)"
+    },
+    "vendor_event2": {
+      "address": 46,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor event bitfield 2 (EvtVnd2)"
+    },
+    "vendor_event3": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor event bitfield 3 (EvtVnd3)"
+    },
+    "vendor_event4": {
+      "address": 50,
+      "type": "u32",
+      "access": "r",
+      "description": "Vendor event bitfield 4 (EvtVnd4)"
+    }
+  },
+  "_source_verified": "Verified: Model 101 register offsets confirmed against official sunspec/models/smdx/smdx_00101.xml"
+}

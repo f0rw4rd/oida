@@ -1,0 +1,250 @@
+{
+  "vendor": "Wattsonic",
+  "model": "Wattsonic",
+  "description": "Imported from nymea-plugins-modbus (wattsonic)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/wattsonic/wattsonic-registers.json",
+  "registers": {
+    "serialNumber": {
+      "address": 10000,
+      "type": "str",
+      "access": "ro",
+      "description": "Serial number"
+    },
+    "equipmentInfo": {
+      "address": 10008,
+      "type": "u16",
+      "access": "ro",
+      "description": "EquipmentInfo"
+    },
+    "firmwareVersion": {
+      "address": 10011,
+      "type": "u32",
+      "access": "ro",
+      "description": "Firmware version"
+    },
+    "inverterStatus": {
+      "address": 10105,
+      "type": "u16",
+      "access": "ro",
+      "description": "Inverter status"
+    },
+    "phaseAPower": {
+      "address": 10994,
+      "type": "i32",
+      "access": "ro",
+      "description": "Phase A power",
+      "unit": "W"
+    },
+    "phaseBPower": {
+      "address": 10996,
+      "type": "i32",
+      "access": "ro",
+      "description": "Phase B power",
+      "unit": "W"
+    },
+    "phaseCPower": {
+      "address": 10998,
+      "type": "i32",
+      "access": "ro",
+      "description": "Phase C power",
+      "unit": "W"
+    },
+    "totalPowerOnMeter": {
+      "address": 11000,
+      "type": "i32",
+      "access": "ro",
+      "description": "Total power on meter",
+      "unit": "W"
+    },
+    "totalGridInjectionEnergy": {
+      "address": 11002,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total grid injection energy on meter",
+      "unit": "kWh"
+    },
+    "totalPurchasingEnergyFromGrid": {
+      "address": 11004,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total purchasing energy from grid on meter",
+      "unit": "kWh"
+    },
+    "gridPhaseAVoltage": {
+      "address": 11009,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Phase A Voltage",
+      "unit": "V"
+    },
+    "gridPhaseACurrent": {
+      "address": 11010,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Phase A Current",
+      "unit": "A"
+    },
+    "gridPhaseBVoltage": {
+      "address": 11011,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Phase B Voltage",
+      "unit": "V"
+    },
+    "gridPhaseBCurrent": {
+      "address": 11012,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Phase B Current",
+      "unit": "A"
+    },
+    "gridPhaseCVoltage": {
+      "address": 11013,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Phase C Voltage",
+      "unit": "V"
+    },
+    "gridPhaseCCurrent": {
+      "address": 11014,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid Phase C Current",
+      "unit": "A"
+    },
+    "pAC": {
+      "address": 11016,
+      "type": "i32",
+      "access": "ro",
+      "description": "P_AC",
+      "unit": "W"
+    },
+    "totalPVGenerationFromInstallation": {
+      "address": 11020,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total PV Generation from installation",
+      "unit": "kWh"
+    },
+    "pvInputTotalPower": {
+      "address": 11028,
+      "type": "u32",
+      "access": "ro",
+      "description": "PV Total Input Power",
+      "unit": "W"
+    },
+    "batteryVoltageDcGen3": {
+      "address": 30254,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery voltage DC (gen3)",
+      "unit": "V"
+    },
+    "batteryModeGen3": {
+      "address": 30256,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery mode (gen3)"
+    },
+    "batteryPowerGen3": {
+      "address": 30258,
+      "type": "i32",
+      "access": "ro",
+      "description": "Battery power (gen3)",
+      "unit": "W"
+    },
+    "totalEnergyInjectedToGridGen3": {
+      "address": 31102,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total energy injected to grid (gen3)",
+      "unit": "kWh"
+    },
+    "totalEnergyPurchasedFromGridGen3": {
+      "address": 31104,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total energy purchased from grid (gen3)",
+      "unit": "kWh"
+    },
+    "SOCGen3": {
+      "address": 33000,
+      "type": "u16",
+      "access": "ro",
+      "description": "SOC (gen3)",
+      "unit": "%"
+    },
+    "SOHGen3": {
+      "address": 33001,
+      "type": "u16",
+      "access": "ro",
+      "description": "SOH (gen3)",
+      "unit": "%"
+    },
+    "batteryVoltageDcGen2": {
+      "address": 40254,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery voltage DC (gen2)",
+      "unit": "V"
+    },
+    "batteryModeGen2": {
+      "address": 40256,
+      "type": "u16",
+      "access": "ro",
+      "description": "Battery mode (gen2)"
+    },
+    "batteryPowerGen2": {
+      "address": 40258,
+      "type": "i32",
+      "access": "ro",
+      "description": "Battery power (gen2)",
+      "unit": "W"
+    },
+    "totalEnergyInjectedToGridGen2": {
+      "address": 41102,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total energy injected to grid (gen2)",
+      "unit": "kWh"
+    },
+    "totalEnergyPurchasedFromGridGen2": {
+      "address": 41104,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total energy purchased from grid (gen2)",
+      "unit": "kWh"
+    },
+    "SOCGen2": {
+      "address": 43000,
+      "type": "u16",
+      "access": "ro",
+      "description": "SOC (gen2)",
+      "unit": "%"
+    },
+    "SOHGen2": {
+      "address": 43001,
+      "type": "u16",
+      "access": "ro",
+      "description": "SOH (gen2)",
+      "unit": "%"
+    }
+  },
+  "enums": {
+    "InverterStatus": {
+      "0": "Wait",
+      "1": "Check",
+      "2": "OnGrid",
+      "3": "Fault",
+      "4": "Flash",
+      "5": "OffGrid"
+    },
+    "BatteryMode": {
+      "0": "Discharge",
+      "1": "Charge"
+    }
+  },
+  "_source_verified": "Verified: Registers confirmed against smarthome.exposed Wattsonic Modbus RTU protocol; imported from nymea-plugins-modbus"
+}

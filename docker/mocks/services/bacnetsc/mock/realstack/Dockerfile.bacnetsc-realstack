@@ -1,0 +1,83 @@
+# OIDA real-stack BACnet/SC (Secure Connect) mock — genuine bacnet-stack
+# "bacserv" built for the BSC datalink (BACDL=bsc), running in direct-connect
+# accept mode over WSS/TLS so OIDA's bacnetsc scanner gets real Who-Is / I-Am /
+# ReadProperty / object-enumeration responses over a TLS+X.509 secure datalink.
+#
+# Upstream: https://github.com/bacnet-stack/bacnet-stack
+# License:  library GPL-2.0-or-later WITH GCC-exception-2.0; demo apps MIT.
+# SPDX-License-Identifier: GPL-2.0-or-later WITH GCC-exception-2.0
+#
+# BSC needs libwebsockets + openssl (libssl/libcrypto) + libcap as build/runtime
+# deps — the BACnet/IP realstack image only needs build-essential, so the SC
+# image adds those here.
+
+FROM debian:bookworm-slim AS build
+
+ARG BACNET_TAG=bacnet-stack-1.4.4
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git build-essential ca-certificates \
+      libwebsockets-dev libssl-dev libcap-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN git clone --depth 1 --branch "${BACNET_TAG}" \
+      https://github.com/bacnet-stack/bacnet-stack.git
+WORKDIR /build/bacnet-stack
+
+# Reuse the BACnet/IP mock's rich object inventory for the SC device so the SC
+# node exposes the same objects (the whole point: app layer rides over SC).
+COPY profile.inc apps/server/profile.inc
+
+# Inject the profile fragment into apps/server/main.c (same mechanism as the
+# BACnet/IP realstack image; verified with grep so a layout change fails loud).
+RUN sed -i 's@#include "bacnet/basic/object/device.h"@#include "bacnet/basic/object/device.h"\n#include "profile.inc"@' apps/server/main.c && \
+    sed -i 's@^\( *\)/\* we need to handle who-is to support dynamic device binding \*/@\1Server_Profile_Init();\n\1/* we need to handle who-is to support dynamic device binding */@' apps/server/main.c && \
+    grep -qF '#include "profile.inc"' apps/server/main.c && \
+    grep -qF 'Server_Profile_Init();' apps/server/main.c
+
+# Posture: stock bacnet-stack does NOT set the libwebsockets "require valid
+# client cert" option, so it accepts anonymous/rogue clients and TLS 1.2 — a
+# realistic WEAK posture used by the weak mock to validate OIDA's findings fire.
+# For the SECURE mock (STRICT=1) we patch websocket-srv.c to (a) REQUIRE a valid
+# client cert chaining to the issuer CA (mutual-auth enforcement) and (b) pin the
+# TLS floor to 1.3, so OIDA's findings are correctly SILENT.
+# libwebsockets 4.1.6 (debian bookworm) has NO tls_min_version struct field, so
+# TLS-1.3 pinning is done at the OpenSSL layer via info.ssl_options_set with
+# SSL_OP_NO_TLSv1 | _TLSv1_1 | _TLSv1_2 (openssl/ssl.h). Mutual-auth enforcement
+# is the REQUIRE_VALID_OPENSSL_CLIENT_CERT option. Both are gated behind STRICT=1.
+ARG STRICT=0
+RUN if [ "${STRICT}" = "1" ]; then \
+      sed -i 's@\( *\)info.options |= LWS_SERVER_OPTION_FAIL_UPON_UNABLE_TO_BIND;@&\n\1info.options |= LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT;\n\1info.ssl_options_set |= (SSL_OP_NO_TLSv1 | SSL_OP_NO_TLSv1_1 | SSL_OP_NO_TLSv1_2); /* OIDA: pin TLS 1.3 */@' \
+        ports/linux/websocket-srv.c && \
+      grep -qF 'LWS_SERVER_OPTION_REQUIRE_VALID_OPENSSL_CLIENT_CERT' ports/linux/websocket-srv.c ; \
+    fi
+
+# Build the BSC server. BACDL=bsc auto-defines BACFILE (cert files are exposed
+# as BACnet File objects by the stack), and links -lwebsockets -lssl -lcrypto
+# -lcap (see apps/Makefile).
+RUN make BACDL=bsc LEGACY=true -s -C apps server && \
+    test -x apps/server/bacserv && \
+    cp apps/server/bacserv /usr/local/bin/bacserv
+
+# ---- runtime image: binary + TLS runtime libs + openssl for cert minting ----
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      libwebsockets17 libssl3 libcap2 openssl ca-certificates netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /usr/local/bin/bacserv /usr/local/bin/bacserv
+COPY gen_certs.sh /usr/local/bin/gen_certs.sh
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh /usr/local/bin/gen_certs.sh
+
+ENV BACNET_DEVICE_INSTANCE=123 \
+    BACNET_DEVICE_NAME=OIDA-BACnetSC-Device \
+    BACNET_PROFILE=building \
+    BACNET_SC_DIRECT_PORT=47800 \
+    BACNET_SC_WEAK=0
+
+EXPOSE 47800/tcp
+
+CMD ["/entrypoint.sh"]

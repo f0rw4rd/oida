@@ -1,0 +1,359 @@
+{
+  "vendor": "Continental Control Systems",
+  "model": "CONTROL SYSTEMS WATTNODE",
+  "description": "Continental Control Systems CONTROL SYSTEMS WATTNODE power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "total_net_bidirectional_energy": {
+      "address": 1001,
+      "type": "f32",
+      "access": "r",
+      "description": "Total net (bidirectional) energy",
+      "unit": "kWh"
+    },
+    "total_positive_energy": {
+      "address": 1003,
+      "type": "f32",
+      "access": "r",
+      "description": "Total positive energy",
+      "unit": "kWh"
+    },
+    "total_net_bidirectional_energy_non_resettable": {
+      "address": 1005,
+      "type": "f32",
+      "access": "r",
+      "description": "Total net (bidirectional) energy non resettable",
+      "unit": "kWh"
+    },
+    "total_positive_energy_non_resettable": {
+      "address": 1007,
+      "type": "f32",
+      "access": "r",
+      "description": "Total positive energy non resettable",
+      "unit": "kWh"
+    },
+    "real_power_sum_of_active_phases": {
+      "address": 1009,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, sum of active phases",
+      "unit": "W"
+    },
+    "real_power_phase_a": {
+      "address": 1011,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, phase A",
+      "unit": "W"
+    },
+    "real_power_phase_b": {
+      "address": 1013,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, phase B",
+      "unit": "W"
+    },
+    "real_power_phase_c": {
+      "address": 1015,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, phase C",
+      "unit": "W"
+    },
+    "average_phase_to_neutral_voltage": {
+      "address": 1017,
+      "type": "f32",
+      "access": "r",
+      "description": "Average phase to neutral voltage",
+      "unit": "V"
+    },
+    "rms_voltage_phase_a_to_neutral": {
+      "address": 1019,
+      "type": "f32",
+      "access": "r",
+      "description": "Rms voltage, phase A to neutral",
+      "unit": "V"
+    },
+    "rms_voltage_phase_b_to_neutral": {
+      "address": 1021,
+      "type": "f32",
+      "access": "r",
+      "description": "Rms voltage, phase B to neutral",
+      "unit": "V"
+    },
+    "rms_voltage_phase_c_to_neutral": {
+      "address": 1023,
+      "type": "f32",
+      "access": "r",
+      "description": "Rms voltage, phase C to neutral",
+      "unit": "V"
+    },
+    "average_line_to_line_voltage": {
+      "address": 1025,
+      "type": "f32",
+      "access": "r",
+      "description": "Average line to line voltage",
+      "unit": "V"
+    },
+    "rms_voltage_line_to_line_phase_a_to_b": {
+      "address": 1027,
+      "type": "f32",
+      "access": "r",
+      "description": "Rms voltage, line to line, phase A to B",
+      "unit": "V"
+    },
+    "rms_voltage_line_to_line_phase_b_to_c": {
+      "address": 1029,
+      "type": "f32",
+      "access": "r",
+      "description": "Rms voltage, line to line, phase B to C",
+      "unit": "V"
+    },
+    "rms_voltage_line_to_line_phase_a_to_c": {
+      "address": 1031,
+      "type": "f32",
+      "access": "r",
+      "description": "Rms voltage, line to line, phase A to C",
+      "unit": "V"
+    },
+    "power_line_frequency": {
+      "address": 1033,
+      "type": "f32",
+      "access": "r",
+      "description": "Power line frequency",
+      "unit": "Hz"
+    },
+    "net_bidirectional_energy_phase_a": {
+      "address": 1101,
+      "type": "f32",
+      "access": "r",
+      "description": "Net (bidirectional) energy, phase A",
+      "unit": "kWh"
+    },
+    "net_bidirectional_energy_phase_b": {
+      "address": 1103,
+      "type": "f32",
+      "access": "r",
+      "description": "Net (bidirectional) energy, phase B",
+      "unit": "kWh"
+    },
+    "net_bidirectional_energy_phase_c": {
+      "address": 1105,
+      "type": "f32",
+      "access": "r",
+      "description": "Net (bidirectional) energy, phase C",
+      "unit": "kWh"
+    },
+    "positive_energy_phase_a": {
+      "address": 1107,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive energy, phase A",
+      "unit": "kWh"
+    },
+    "positive_energy_phase_b": {
+      "address": 1109,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive energy, phase B",
+      "unit": "kWh"
+    },
+    "positive_energy_phase_c": {
+      "address": 1111,
+      "type": "f32",
+      "access": "r",
+      "description": "Positive energy, phase C",
+      "unit": "kWh"
+    },
+    "negative_energy_sum_of_active_phases": {
+      "address": 1113,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative energy, sum of active phases",
+      "unit": "kWh"
+    },
+    "negative_energy_sum_of_active_phases_non_resettable": {
+      "address": 1115,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative energy, sum of active phases non resettable",
+      "unit": "kWh"
+    },
+    "negative_energy_phase_a": {
+      "address": 1117,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative energy, phase A",
+      "unit": "kWh"
+    },
+    "negative_energy_phase_b": {
+      "address": 1119,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative energy, phase B",
+      "unit": "kWh"
+    },
+    "negative_energy_phase_c": {
+      "address": 1121,
+      "type": "f32",
+      "access": "r",
+      "description": "Negative energy, phase C",
+      "unit": "kWh"
+    },
+    "reactive_energy_sum_of_active_phases": {
+      "address": 1123,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy, sum of active phases",
+      "unit": "kVARh"
+    },
+    "net_reactive_energy_phase_a": {
+      "address": 1125,
+      "type": "f32",
+      "access": "r",
+      "description": "Net reactive energy, phase A",
+      "unit": "kVARh"
+    },
+    "net_reactive_energy_phase_b": {
+      "address": 1127,
+      "type": "f32",
+      "access": "r",
+      "description": "Net reactive energy, phase B",
+      "unit": "kVARh"
+    },
+    "net_reactive_energy_phase_c": {
+      "address": 1129,
+      "type": "f32",
+      "access": "r",
+      "description": "Net reactive energy, phase C",
+      "unit": "kVARh"
+    },
+    "apparent_energy_sum_of_active_phases": {
+      "address": 1131,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy, sum of active phases",
+      "unit": "kVAh"
+    },
+    "apparent_energy_phase_a": {
+      "address": 1133,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy, phase A",
+      "unit": "kVAh"
+    },
+    "apparent_energy_phase_b": {
+      "address": 1135,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy, phase B",
+      "unit": "kVAh"
+    },
+    "apparent_energy_phase_c": {
+      "address": 1137,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy, phase C",
+      "unit": "kVAh"
+    },
+    "power_factor_average_of_active_phases": {
+      "address": 1139,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, average of active phases"
+    },
+    "power_factor_phase_a": {
+      "address": 1141,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase A"
+    },
+    "power_factor_phase_b": {
+      "address": 1143,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase B"
+    },
+    "power_factor_phase_c": {
+      "address": 1145,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, phase C"
+    },
+    "reactive_power_sum_of_active_phases": {
+      "address": 1147,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, sum of active phases",
+      "unit": "VAR"
+    },
+    "reactive_power_phase_a": {
+      "address": 1149,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, phase A",
+      "unit": "VAR"
+    },
+    "reactive_power_phase_b": {
+      "address": 1151,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, phase B",
+      "unit": "VAR"
+    },
+    "reactive_power_phase_c": {
+      "address": 1153,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, phase C",
+      "unit": "VAR"
+    },
+    "apparent_power_sum_of_active_phases": {
+      "address": 1155,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, sum of active phases",
+      "unit": "VA"
+    },
+    "apparent_power_phase_a": {
+      "address": 1157,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, phase A",
+      "unit": "VA"
+    },
+    "apparent_power_phase_b": {
+      "address": 1159,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, phase B",
+      "unit": "VA"
+    },
+    "apparent_power_phase_c": {
+      "address": 1161,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, phase C",
+      "unit": "VA"
+    },
+    "rms_current_phase_a": {
+      "address": 1163,
+      "type": "f32",
+      "access": "r",
+      "description": "Rms current, phase A",
+      "unit": "A"
+    },
+    "rms_current_phase_b": {
+      "address": 1165,
+      "type": "f32",
+      "access": "r",
+      "description": "Rms current, phase B",
+      "unit": "A"
+    }
+  }
+}

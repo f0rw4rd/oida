@@ -1,0 +1,58 @@
+name: Publish mock images
+
+# Builds every buildable mock/CVE service image and pushes it to the GitHub
+# Container Registry (ghcr.io/f0rw4rd/oida-mock-*), so `services.py up` can pull
+# pre-built images instead of compiling them locally.
+#
+# Manual-only (to conserve Actions minutes): run from the Actions tab or
+# `gh workflow run mocks-publish.yml` after changing docker/mocks/**.
+on:
+  workflow_dispatch:
+    inputs:
+      registry:
+        description: "Registry + namespace prefix to push to (no trailing slash)"
+        required: false
+        default: ghcr.io/f0rw4rd
+
+permissions:
+  contents: read
+  packages: write
+
+concurrency:
+  group: mocks-publish
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    name: Build & push mock images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@e468171a9de216ec08956ac3ada2f0791b6bd435  # v3.11.1
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@74a5d142397b4f367a81961eba4e8cd7edddf772  # v3.4.0
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # buildx bake reads the compose files, builds every service that has a
+      # `build:` section (image-only services like nginx/postgres are ignored),
+      # tags each with its `image:` value, and pushes. Profiles do not gate bake,
+      # so the vuln-services CVE images are included automatically.
+      - name: Build & push all mock images
+        working-directory: docker/mocks
+        env:
+          # compose/bake fail hard if OIDA_REGISTRY is unset (no default in the
+          # compose files). Locally this comes from a gitignored .env; in CI we
+          # feed it from the dispatch input (default ghcr.io/f0rw4rd).
+          OIDA_REGISTRY: ${{ inputs.registry }}
+        run: |
+          docker buildx bake \
+            -f compose.yml \
+            -f compose.cve.yml \
+            --push

@@ -1,0 +1,354 @@
+{
+  "vendor": "Pilot",
+  "model": "PMAC 770",
+  "description": "Pilot PMAC 770 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "vb_ph_n": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Vb (ph N)",
+      "unit": "V"
+    },
+    "vc_ph_n": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Vc (ph N)",
+      "unit": "V"
+    },
+    "vab_ph_ph": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Vab (ph ph)",
+      "unit": "V"
+    },
+    "vbc_ph_ph": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Vbc (ph ph)",
+      "unit": "V"
+    },
+    "vca_ph_ph": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Vca (ph ph)",
+      "unit": "V"
+    },
+    "positive_sequence_voltage": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Positive sequence voltage"
+    },
+    "negative_sequence_voltage": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Negative sequence voltage"
+    },
+    "neutral_voltage": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Neutral voltage",
+      "unit": "V"
+    },
+    "ia": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "Ia",
+      "unit": "A"
+    },
+    "ib": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Ib",
+      "unit": "A"
+    },
+    "ic": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "description": "Ic",
+      "unit": "A"
+    },
+    "in": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "description": "In",
+      "unit": "A"
+    },
+    "average_current": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "Average current",
+      "unit": "A"
+    },
+    "negative_sequence_current": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "Negative sequence current"
+    },
+    "neutral_current": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "A"
+    },
+    "phase_a_active_power": {
+      "address": 26,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A active power",
+      "unit": "W"
+    },
+    "phase_b_active_power": {
+      "address": 27,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B active power",
+      "unit": "W"
+    },
+    "phase_c_active_power": {
+      "address": 28,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C active power",
+      "unit": "W"
+    },
+    "total_active_power": {
+      "address": 29,
+      "type": "i32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "W"
+    },
+    "total_active_power_30": {
+      "address": 30,
+      "type": "i32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "W"
+    },
+    "phase_a_reactive_power": {
+      "address": 31,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A reactive power",
+      "unit": "var"
+    },
+    "phase_b_reactive_power": {
+      "address": 32,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B reactive power",
+      "unit": "var"
+    },
+    "phase_c_reactive_power": {
+      "address": 33,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C reactive power",
+      "unit": "var"
+    },
+    "total_reactive_power": {
+      "address": 34,
+      "type": "i32",
+      "access": "r",
+      "description": "Total reactive power",
+      "unit": "var"
+    },
+    "total_reactive_power_35": {
+      "address": 35,
+      "type": "i32",
+      "access": "r",
+      "description": "Total reactive power",
+      "unit": "var"
+    },
+    "phase_a_apparent_power": {
+      "address": 36,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A apparent power",
+      "unit": "VA"
+    },
+    "phase_b_apparent_power": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B apparent power",
+      "unit": "VA"
+    },
+    "phase_c_apparent_power": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C apparent power",
+      "unit": "VA"
+    },
+    "total_apparent_power": {
+      "address": 39,
+      "type": "u16",
+      "access": "r",
+      "description": "Total apparent power",
+      "unit": "VA"
+    },
+    "phase_a_power_factor": {
+      "address": 40,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A power factor"
+    },
+    "phase_b_power_factor": {
+      "address": 41,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B power factor"
+    },
+    "phase_c_power_factor": {
+      "address": 42,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C power factor"
+    },
+    "total_power_factor": {
+      "address": 43,
+      "type": "i16",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "frequency": {
+      "address": 44,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "digital_input_status": {
+      "address": 45,
+      "type": "u16",
+      "access": "r",
+      "description": "Digital input status"
+    },
+    "analog_input_2": {
+      "address": 50,
+      "type": "u16",
+      "access": "r",
+      "description": "Analog input 2"
+    },
+    "pulse_input": {
+      "address": 51,
+      "type": "u16",
+      "access": "r",
+      "description": "Pulse input",
+      "unit": "%"
+    },
+    "phase_b_voltage_deviation": {
+      "address": 53,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B voltage deviation",
+      "unit": "%"
+    },
+    "phase_c_voltage_deviation": {
+      "address": 54,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C voltage deviation",
+      "unit": "%"
+    },
+    "frequency_deviation": {
+      "address": 10055,
+      "type": "i16",
+      "access": "r",
+      "description": "Frequency deviation",
+      "unit": "Hz"
+    },
+    "vph_n_unbalance_rate": {
+      "address": 10056,
+      "type": "u16",
+      "access": "r",
+      "description": "Vph N unbalance rate",
+      "unit": "%"
+    },
+    "1st_quadrant_phase_a_kwh": {
+      "address": 100,
+      "type": "i32",
+      "access": "r",
+      "description": "1st quadrant, phase A kWh",
+      "unit": "kWh"
+    },
+    "1st_quadrant_phase_a_kwh_101": {
+      "address": 101,
+      "type": "i32",
+      "access": "r",
+      "description": "1st quadrant, phase A kWh",
+      "unit": "kWh"
+    },
+    "1st_quadrant_phase_b_kwh": {
+      "address": 102,
+      "type": "i32",
+      "access": "r",
+      "description": "1st quadrant, phase B kWh",
+      "unit": "kWh"
+    },
+    "1st_quadrant_phase_b_kwh_103": {
+      "address": 103,
+      "type": "i32",
+      "access": "r",
+      "description": "1st quadrant, phase B kWh",
+      "unit": "kWh"
+    },
+    "1st_quadrant_phase_c_kwh": {
+      "address": 104,
+      "type": "i32",
+      "access": "r",
+      "description": "1st quadrant, phase C kWh",
+      "unit": "kWh"
+    },
+    "1st_quadrant_phase_c_kwh_105": {
+      "address": 105,
+      "type": "i32",
+      "access": "r",
+      "description": "1st quadrant, phase C kWh",
+      "unit": "kWh"
+    },
+    "1st_quadrant_total_kwh": {
+      "address": 106,
+      "type": "i32",
+      "access": "r",
+      "description": "1st quadrant, total kWh",
+      "unit": "kWh"
+    },
+    "1st_quadrant_total_kwh_107": {
+      "address": 107,
+      "type": "i32",
+      "access": "r",
+      "description": "1st quadrant, total kWh",
+      "unit": "kWh"
+    },
+    "1st_quadrant_phase_a_kvarh": {
+      "address": 108,
+      "type": "i32",
+      "access": "r",
+      "description": "1st quadrant, phase A kvarh",
+      "unit": "kvarh"
+    }
+  }
+}

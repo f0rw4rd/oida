@@ -1,0 +1,534 @@
+{
+  "vendor": "Sungrow",
+  "model": "String Inverters (SG Series)",
+  "description": "Sungrow grid connect string inverter series - SG3.0RT-SG20RT, SG30KTL-M, SG33CX-SG250HX, and more",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Grid-tied string inverters. Input registers (FC04) for real-time data. Holding registers (FC03) for settings. Supports single and three phase models.",
+  "source": "https://github.com/bohdan-s/SungrowInverter",
+  "registers": {
+    "output_type": {
+      "address": 5002,
+      "type": "u16",
+      "access": "ro",
+      "description": "Output type code",
+      "enum": {
+        "0": "Single phase",
+        "1": "Three phase (3P4L)",
+        "2": "Three phase (3P3L)"
+      }
+    },
+    "daily_energy_yield": {
+      "address": 5003,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily energy yield"
+    },
+    "total_energy_yield": {
+      "address": 5004,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "description": "Total energy yield"
+    },
+    "total_running_time": {
+      "address": 5005,
+      "type": "u32",
+      "access": "ro",
+      "unit": "h",
+      "description": "Total running time"
+    },
+    "inside_temperature": {
+      "address": 5008,
+      "type": "u16",
+      "access": "ro",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Internal inverter temperature"
+    },
+    "total_apparent_power": {
+      "address": 5009,
+      "type": "u32",
+      "access": "ro",
+      "unit": "VA",
+      "description": "Total apparent power"
+    },
+    "mppt_1_voltage": {
+      "address": 5011,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 1 voltage"
+    },
+    "mppt_1_current": {
+      "address": 5012,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 1 current"
+    },
+    "mppt_2_voltage": {
+      "address": 5013,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 2 voltage"
+    },
+    "mppt_2_current": {
+      "address": 5014,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 2 current"
+    },
+    "mppt_3_voltage": {
+      "address": 5015,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 3 voltage"
+    },
+    "mppt_3_current": {
+      "address": 5016,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 3 current"
+    },
+    "total_dc_power": {
+      "address": 5017,
+      "type": "u32",
+      "access": "ro",
+      "unit": "W",
+      "description": "PV power that is usable (inverter after inefficiency)"
+    },
+    "grid_voltage": {
+      "address": 5019,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid voltage (single phase only)"
+    },
+    "phase_a_voltage": {
+      "address": 5019,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase A (1-2) voltage is also the grid voltage on a single phase inverter"
+    },
+    "phase_b_voltage": {
+      "address": 5020,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase B voltage"
+    },
+    "phase_c_voltage": {
+      "address": 5021,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase C voltage"
+    },
+    "phase_a_current": {
+      "address": 5022,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Phase A current"
+    },
+    "phase_b_current": {
+      "address": 5023,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Phase B current"
+    },
+    "phase_c_current": {
+      "address": 5024,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Phase C current"
+    },
+    "total_active_power": {
+      "address": 5031,
+      "type": "u32",
+      "access": "ro",
+      "unit": "W",
+      "description": "Total active power"
+    },
+    "reactive_power": {
+      "address": 5033,
+      "type": "i32",
+      "access": "ro",
+      "unit": "var",
+      "description": "Reactive power"
+    },
+    "power_factor": {
+      "address": 5035,
+      "type": "u16",
+      "access": "ro",
+      "scale": 0.001,
+      "description": "Power factor"
+    },
+    "grid_frequency": {
+      "address": 5036,
+      "type": "u16",
+      "access": "ro",
+      "unit": "Hz",
+      "scale": 0.1,
+      "description": "Grid frequency"
+    },
+    "system_state": {
+      "address": 5038,
+      "type": "u16",
+      "access": "ro",
+      "description": "System state code",
+      "enum": {
+        "0": "Run",
+        "32768": "Stopped",
+        "4864": "Key stop",
+        "5376": "Emergency stop",
+        "5120": "Standby",
+        "4608": "Initial standby",
+        "5632": "Starting",
+        "37120": "Alarm run",
+        "33024": "Derating run",
+        "33280": "Dispatch run",
+        "21760": "Fault"
+      }
+    },
+    "nominal_reactive_power": {
+      "address": 5049,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kvar",
+      "scale": 0.1,
+      "description": "Nominal reactive power"
+    },
+    "array_insulation_resistance": {
+      "address": 5071,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kohm",
+      "description": "Array insulation resistance"
+    },
+    "running_state": {
+      "address": 5081,
+      "type": "u32",
+      "access": "ro",
+      "description": "Running state bitmap (refer appendix 2 of sungrow reference)"
+    },
+    "meter_power": {
+      "address": 5083,
+      "type": "i32",
+      "access": "ro",
+      "unit": "W",
+      "description": "Meter power (selected models only)"
+    },
+    "meter_a_phase_power": {
+      "address": 5085,
+      "type": "i32",
+      "access": "ro",
+      "unit": "W",
+      "description": "Meter phase A power (selected models only)"
+    },
+    "meter_b_phase_power": {
+      "address": 5087,
+      "type": "i32",
+      "access": "ro",
+      "unit": "W",
+      "description": "Meter phase B power (selected models only)"
+    },
+    "meter_c_phase_power": {
+      "address": 5089,
+      "type": "i32",
+      "access": "ro",
+      "unit": "W",
+      "description": "Meter phase C power (selected models only)"
+    },
+    "load_power": {
+      "address": 5091,
+      "type": "i32",
+      "access": "ro",
+      "unit": "W",
+      "description": "Load power (selected models only)"
+    },
+    "daily_export_energy": {
+      "address": 5093,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily export energy from PV (selected models only)"
+    },
+    "total_export_energy": {
+      "address": 5095,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total export energy from PV (selected models only)"
+    },
+    "daily_import_energy": {
+      "address": 5097,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily import energy from grid (selected models only)"
+    },
+    "total_import_energy": {
+      "address": 5099,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total import energy from grid (selected models only)"
+    },
+    "daily_direct_energy_consumption": {
+      "address": 5101,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily direct energy consumption (selected models only)"
+    },
+    "total_direct_energy_consumption": {
+      "address": 5103,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total direct energy consumption (selected models only)"
+    },
+    "daily_running_time": {
+      "address": 5113,
+      "type": "u16",
+      "access": "ro",
+      "unit": "min",
+      "description": "Daily running time"
+    },
+    "present_country": {
+      "address": 5114,
+      "type": "u16",
+      "access": "ro",
+      "description": "Present country code"
+    },
+    "mppt_4_voltage": {
+      "address": 5115,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 4 voltage"
+    },
+    "mppt_4_current": {
+      "address": 5116,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 4 current"
+    },
+    "mppt_5_voltage": {
+      "address": 5117,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 5 voltage"
+    },
+    "mppt_5_current": {
+      "address": 5118,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 5 current"
+    },
+    "mppt_6_voltage": {
+      "address": 5119,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 6 voltage"
+    },
+    "mppt_6_current": {
+      "address": 5120,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 6 current"
+    },
+    "mppt_7_voltage": {
+      "address": 5121,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 7 voltage"
+    },
+    "mppt_7_current": {
+      "address": 5122,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 7 current"
+    },
+    "mppt_8_voltage": {
+      "address": 5123,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 8 voltage"
+    },
+    "mppt_8_current": {
+      "address": 5124,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 8 current"
+    },
+    "monthly_energy_yield": {
+      "address": 5128,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Monthly energy yield"
+    },
+    "mppt_9_voltage": {
+      "address": 5130,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 9 voltage"
+    },
+    "mppt_9_current": {
+      "address": 5131,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 9 current"
+    },
+    "mppt_10_voltage": {
+      "address": 5132,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 10 voltage"
+    },
+    "mppt_10_current": {
+      "address": 5133,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 10 current"
+    },
+    "mppt_11_voltage": {
+      "address": 5134,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 11 voltage"
+    },
+    "mppt_11_current": {
+      "address": 5135,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 11 current"
+    },
+    "mppt_12_voltage": {
+      "address": 5136,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 12 voltage"
+    },
+    "mppt_12_current": {
+      "address": 5137,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 12 current"
+    },
+    "total_power_yields": {
+      "address": 5144,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total power yields (selected models only)"
+    },
+    "year": {
+      "address": 5000,
+      "type": "u16",
+      "access": "rw",
+      "description": "Current year (holding register)"
+    },
+    "month": {
+      "address": 5001,
+      "type": "u16",
+      "access": "rw",
+      "description": "Current month (holding register)"
+    },
+    "day": {
+      "address": 5002,
+      "type": "u16",
+      "access": "rw",
+      "description": "Current day (holding register)"
+    },
+    "hour": {
+      "address": 5003,
+      "type": "u16",
+      "access": "rw",
+      "description": "Current hour (holding register)"
+    },
+    "minute": {
+      "address": 5004,
+      "type": "u16",
+      "access": "rw",
+      "description": "Current minute (holding register)"
+    },
+    "second": {
+      "address": 5005,
+      "type": "u16",
+      "access": "rw",
+      "description": "Current second (holding register)"
+    }
+  },
+  "_source_verified": "Verified: Registers 5002-5081 confirmed against Sungrow Protocol V1.1.37/V1.1.53"
+}

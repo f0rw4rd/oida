@@ -1,0 +1,328 @@
+{
+  "vendor": "Deye/Sunsynk",
+  "model": "SUN-xK-SG04LP3 Hybrid Inverters",
+  "description": "Deye and Sunsynk hybrid inverters with Modbus RTU/TCP",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Protocol V118 (2024). Deye and Sunsynk use identical protocols. Holding registers (FC03). Input registers (FC04). RTU: 9600 baud 8N1.",
+  "source": "https://github.com/kellerza/sunsynk, https://github.com/kbialek/deye-inverter-mqtt",
+  "registers": {
+    "serial_number": {
+      "address": 3,
+      "type": "string",
+      "length": 5,
+      "access": "r",
+      "description": "Inverter serial number"
+    },
+    "rated_power": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "Rated power"
+    },
+    "run_state": {
+      "address": 59,
+      "type": "u16",
+      "access": "r",
+      "description": "Run state (1=standby, 2=selftest, 4=normal, 8=alarm, 16=fault)"
+    },
+    "pv1_power": {
+      "address": 186,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "PV1 power"
+    },
+    "pv2_power": {
+      "address": 187,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "PV2 power"
+    },
+    "pv1_voltage": {
+      "address": 109,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV1 voltage"
+    },
+    "pv1_current": {
+      "address": 110,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "PV1 current"
+    },
+    "pv2_voltage": {
+      "address": 111,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV2 voltage"
+    },
+    "pv2_current": {
+      "address": 112,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "PV2 current"
+    },
+    "battery_voltage": {
+      "address": 183,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Battery voltage"
+    },
+    "battery_current": {
+      "address": 184,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Battery current (positive = charging)"
+    },
+    "battery_power": {
+      "address": 190,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Battery power (positive = charging)"
+    },
+    "battery_soc": {
+      "address": 184,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "Battery state of charge"
+    },
+    "battery_temperature": {
+      "address": 182,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Battery temperature"
+    },
+    "grid_voltage_l1": {
+      "address": 150,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid voltage L1"
+    },
+    "grid_voltage_l2": {
+      "address": 151,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid voltage L2"
+    },
+    "grid_voltage_l3": {
+      "address": 152,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid voltage L3"
+    },
+    "grid_current_l1": {
+      "address": 160,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Grid current L1"
+    },
+    "grid_current_l2": {
+      "address": 161,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Grid current L2"
+    },
+    "grid_current_l3": {
+      "address": 162,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Grid current L3"
+    },
+    "grid_power": {
+      "address": 169,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Grid power (positive = import)"
+    },
+    "grid_frequency": {
+      "address": 79,
+      "type": "u16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Grid frequency"
+    },
+    "load_power_l1": {
+      "address": 176,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "Load power L1"
+    },
+    "load_power_l2": {
+      "address": 177,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "Load power L2"
+    },
+    "load_power_l3": {
+      "address": 178,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "Load power L3"
+    },
+    "load_power_total": {
+      "address": 178,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "Total load power"
+    },
+    "inverter_power": {
+      "address": 175,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Inverter output power"
+    },
+    "dc_temperature": {
+      "address": 90,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "DC side temperature"
+    },
+    "ac_temperature": {
+      "address": 91,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "AC side temperature"
+    },
+    "day_pv_energy": {
+      "address": 108,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "PV energy generated today"
+    },
+    "day_battery_charge": {
+      "address": 70,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Battery charged today"
+    },
+    "day_battery_discharge": {
+      "address": 71,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Battery discharged today"
+    },
+    "day_grid_import": {
+      "address": 76,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Grid import today"
+    },
+    "day_grid_export": {
+      "address": 77,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Grid export today"
+    },
+    "day_load_energy": {
+      "address": 84,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Load energy consumed today"
+    },
+    "total_pv_energy": {
+      "address": 96,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total PV energy generated"
+    },
+    "total_battery_charge": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total battery charged"
+    },
+    "total_battery_discharge": {
+      "address": 74,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total battery discharged"
+    },
+    "total_grid_import": {
+      "address": 78,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total grid import"
+    },
+    "total_grid_export": {
+      "address": 81,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total grid export"
+    },
+    "total_load_energy": {
+      "address": 85,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total load energy consumed"
+    }
+  },
+  "_source_verified": "Verified: Registers 3/16/59/186/187 individually confirmed against kellerza/sunsynk definitions. Source: github.com/kellerza/sunsynk"
+}

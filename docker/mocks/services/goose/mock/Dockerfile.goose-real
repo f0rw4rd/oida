@@ -1,0 +1,68 @@
+# Real IEC 61850 GOOSE publisher built from libiec61850 source.
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+#
+# Library: libiec61850 v1.6.0 (MZ Automation, https://github.com/mz-automation/libiec61850)
+#   Dual-licensed GPLv3 / commercial; we use it under GPLv3 (OSS). Some HAL/third-
+#   party headers carry MPL/Apache -- compatible for this GPLv3 build. We build the
+#   library FROM SOURCE at image-build time and DO NOT commit any binaries.
+#
+# This produces ONE binary (goose_publisher_real) that emits genuine GOOSE frames
+# (EtherType 0x88B8) via libiec61850's GoosePublisher API. All publisher parameters
+# (AppID, GoCBRef, dataset, goID, confRev, intervals) are read from environment
+# variables so multiple distinct configurations can run as separate services.
+#
+# GOOSE is raw L2 multicast (no IP). The container must run with NET_RAW and an
+# interface it can publish on (typically network_mode: host). See compose.yml.
+
+# -- stage 1: build ---------------------------------------------------------
+FROM debian:bookworm AS builder
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        build-essential cmake wget ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+
+# libiec61850 v1.6.0 from source (no binaries committed)
+RUN wget -q https://github.com/mz-automation/libiec61850/archive/refs/tags/v1.6.0.tar.gz \
+    && tar -xzf v1.6.0.tar.gz \
+    && rm v1.6.0.tar.gz
+
+# Build the static library + HAL only (we don't need the examples).
+WORKDIR /build/libiec61850-1.6.0
+RUN cmake -DBUILD_EXAMPLES=OFF -DBUILD_TESTS=OFF -B build . \
+    && cmake --build build --target iec61850 -j"$(nproc)"
+
+# Compile the env-driven publisher against the static libs.
+WORKDIR /build/publisher
+COPY goose_publisher_real.c .
+RUN gcc -O2 -o goose_publisher_real goose_publisher_real.c \
+        -I/build/libiec61850-1.6.0/src/goose \
+        -I/build/libiec61850-1.6.0/src/r_session \
+        -I/build/libiec61850-1.6.0/src/iec61850/inc \
+        -I/build/libiec61850-1.6.0/src/mms/inc \
+        -I/build/libiec61850-1.6.0/src/common/inc \
+        -I/build/libiec61850-1.6.0/src/logging \
+        -I/build/libiec61850-1.6.0/hal/inc \
+        -I/build/libiec61850-1.6.0/config \
+        /build/libiec61850-1.6.0/build/src/libiec61850.a \
+        /build/libiec61850-1.6.0/build/hal/libhal.a \
+        -lpthread \
+    && ./goose_publisher_real --help >/dev/null 2>&1 || true
+
+# -- stage 2: runtime -------------------------------------------------------
+FROM debian:bookworm-slim
+
+COPY --from=builder /build/publisher/goose_publisher_real /usr/local/bin/goose_publisher_real
+
+# Default config (overridden per-service in compose.yml)
+ENV GOOSE_INTERFACE=eth0 \
+    GOOSE_APPID=0x1000 \
+    GOOSE_GOCB_REF=simpleIOGenericIO/LLN0\$GO\$gcb01 \
+    GOOSE_DATASET_REF=simpleIOGenericIO/LLN0\$dataset1 \
+    GOOSE_CONF_REV=1 \
+    GOOSE_INTERVAL_MS=1000 \
+    GOOSE_STATE_INTERVAL_MS=10000
+
+CMD ["/usr/local/bin/goose_publisher_real"]

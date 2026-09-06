@@ -1,0 +1,355 @@
+{
+  "vendor": "Delta",
+  "model": "DPM 520 / DPM 530",
+  "description": "Delta DPM 520 / DPM 530 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: DPM 520, DPM 530",
+  "registers": {
+    "voltage_a_n": {
+      "address": 256,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage A N",
+      "unit": "V"
+    },
+    "voltage_b_n": {
+      "address": 258,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage B N",
+      "unit": "V"
+    },
+    "voltage_c_n": {
+      "address": 260,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage C N",
+      "unit": "V"
+    },
+    "voltage_l_n_avg": {
+      "address": 262,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L N avg",
+      "unit": "V"
+    },
+    "voltage_a_b": {
+      "address": 264,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage A B",
+      "unit": "V"
+    },
+    "voltage_b_c": {
+      "address": 266,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage B C",
+      "unit": "V"
+    },
+    "voltage_c_a": {
+      "address": 268,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage C A",
+      "unit": "V"
+    },
+    "voltage_l_l_avg": {
+      "address": 270,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage L L avg",
+      "unit": "V"
+    },
+    "voltage_unbalance_a_n": {
+      "address": 272,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance A N",
+      "unit": "%"
+    },
+    "voltage_unbalance_b_n": {
+      "address": 274,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance B N",
+      "unit": "%"
+    },
+    "voltage_unbalance_c_n": {
+      "address": 276,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance C N",
+      "unit": "%"
+    },
+    "voltage_unbalance_l_n_avg": {
+      "address": 278,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance L N avg",
+      "unit": "%"
+    },
+    "voltage_unbalance_a_b": {
+      "address": 280,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance A B",
+      "unit": "%"
+    },
+    "voltage_unbalance_b_c": {
+      "address": 282,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance B C",
+      "unit": "%"
+    },
+    "voltage_unbalance_c_a": {
+      "address": 284,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance C A",
+      "unit": "%"
+    },
+    "voltage_unbalance_l_l_avg": {
+      "address": 286,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage unbalance L L avg",
+      "unit": "%"
+    },
+    "current_a": {
+      "address": 288,
+      "type": "f32",
+      "access": "r",
+      "description": "Current A",
+      "unit": "A"
+    },
+    "current_b": {
+      "address": 290,
+      "type": "f32",
+      "access": "r",
+      "description": "Current B",
+      "unit": "A"
+    },
+    "current_c": {
+      "address": 292,
+      "type": "f32",
+      "access": "r",
+      "description": "Current C",
+      "unit": "A"
+    },
+    "current_avg": {
+      "address": 294,
+      "type": "f32",
+      "access": "r",
+      "description": "Current avg",
+      "unit": "A"
+    },
+    "current_n": {
+      "address": 296,
+      "type": "f32",
+      "access": "r",
+      "description": "Current N",
+      "unit": "A"
+    },
+    "current_unbalance_a": {
+      "address": 298,
+      "type": "f32",
+      "access": "r",
+      "description": "Current unbalance A",
+      "unit": "%"
+    },
+    "current_unbalance_b": {
+      "address": 300,
+      "type": "f32",
+      "access": "r",
+      "description": "Current unbalance B",
+      "unit": "%"
+    },
+    "current_unbalance_c": {
+      "address": 302,
+      "type": "f32",
+      "access": "r",
+      "description": "Current unbalance C",
+      "unit": "%"
+    },
+    "current_unbalance_avg": {
+      "address": 304,
+      "type": "f32",
+      "access": "r",
+      "description": "Current unbalance avg",
+      "unit": "%"
+    },
+    "power_factor_total": {
+      "address": 306,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor total"
+    },
+    "power_factor_a": {
+      "address": 308,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor A"
+    },
+    "power_factor_b": {
+      "address": 310,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor B"
+    },
+    "power_factor_c": {
+      "address": 312,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor C"
+    },
+    "displacement_power_factor_total": {
+      "address": 314,
+      "type": "f32",
+      "access": "r",
+      "description": "Displacement power factor total"
+    },
+    "displacement_power_factor_a": {
+      "address": 316,
+      "type": "f32",
+      "access": "r",
+      "description": "Displacement power factor A"
+    },
+    "displacement_power_factor_b": {
+      "address": 318,
+      "type": "f32",
+      "access": "r",
+      "description": "Displacement power factor B"
+    },
+    "displacement_power_factor_c": {
+      "address": 320,
+      "type": "f32",
+      "access": "r",
+      "description": "Displacement power factor C"
+    },
+    "frequency": {
+      "address": 322,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "active_power_total": {
+      "address": 324,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power total",
+      "unit": "kW"
+    },
+    "active_power_a": {
+      "address": 326,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power A",
+      "unit": "kW"
+    },
+    "active_power_b": {
+      "address": 328,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power B",
+      "unit": "kW"
+    },
+    "active_power_c": {
+      "address": 330,
+      "type": "f32",
+      "access": "r",
+      "description": "Active power C",
+      "unit": "kW"
+    },
+    "reactive_power_total": {
+      "address": 332,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power total",
+      "unit": "kVAR"
+    },
+    "reactive_power_a": {
+      "address": 334,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power A",
+      "unit": "kVAR"
+    },
+    "reactive_power_b": {
+      "address": 336,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power B",
+      "unit": "kVAR"
+    },
+    "reactive_power_c": {
+      "address": 338,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power C",
+      "unit": "kVAR"
+    },
+    "apparent_power_total": {
+      "address": 340,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power total",
+      "unit": "kVA"
+    },
+    "apparent_power_a": {
+      "address": 342,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power A",
+      "unit": "kVA"
+    },
+    "apparent_power_b": {
+      "address": 344,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power B",
+      "unit": "kVA"
+    },
+    "apparent_power_c": {
+      "address": 346,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power C",
+      "unit": "kVA"
+    },
+    "active_energy_delivered": {
+      "address": 348,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy delivered",
+      "unit": "Wh"
+    },
+    "active_energy_received": {
+      "address": 350,
+      "type": "u32",
+      "access": "r",
+      "description": "Active energy received",
+      "unit": "Wh"
+    },
+    "reactive_energy_delivered": {
+      "address": 352,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive energy delivered",
+      "unit": "VARh"
+    },
+    "reactive_energy_received": {
+      "address": 354,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive energy received",
+      "unit": "VARh"
+    }
+  }
+}

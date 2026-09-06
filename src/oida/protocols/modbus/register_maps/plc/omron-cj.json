@@ -1,0 +1,129 @@
+{
+  "vendor": "Omron",
+  "model": "CJ1W-ETN21",
+  "description": "Omron CJ-series with CJ1W-ETN21 Modbus register map (VERIFIED)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: CJ1W-ETN21 module REQUIRED - built-in EtherNet/IP does NOT support Modbus TCP sockets. FC0F (Write Multiple Coils) is NOT SUPPORTED. For 32-bit DWORD, high word occupies lower register address.",
+  "source": "STA46 (Modbus TCP Quick Start Manual), W420/W421 (Ethernet Units Operation Manuals)",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils",
+      "notes": "pdu_range=0-65535, memory=CIO 0.00 - CIO 4095.15"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs",
+      "notes": "pdu_range=0-5119, memory=CIO 0.00 - CIO 319.15"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers",
+      "notes": "pdu_range=0-32767, memory=D0 - D32767"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers",
+      "notes": "pdu_range=0-5800, memory=CIO 0 - CIO 5800"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers"
+    }
+  ],
+  "registers": {
+    "d0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data memory D0 (holding register 40001)",
+      "notes": "omron_address=D0"
+    },
+    "d100": {
+      "address": 100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Data memory D100",
+      "notes": "omron_address=D100"
+    },
+    "d100_dword": {
+      "address": 100,
+      "type": "u32",
+      "access": "rw",
+      "description": "32-bit DWORD at D100 (high word at D100, low word at D101)",
+      "notes": "omron_address=D100-D101"
+    },
+    "cio0": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "function_code": 4,
+      "description": "CIO area word 0 (input register 30001)",
+      "notes": "omron_address=CIO 0"
+    }
+  },
+  "coils": {
+    "cio0_0": {
+      "address": 0,
+      "access": "rw",
+      "description": "CIO bit 0.00",
+      "notes": "omron_address=CIO 0.00"
+    }
+  },
+  "extended_info": {
+    "module_required": "CJ1W-ETN21",
+    "not_supported": {
+      "fc0f": "Write Multiple Coils (FC15) is NOT supported"
+    },
+    "32bit_note": "For 32-bit DWORD values, high word occupies lower register address (big-endian)",
+    "memory_mapping": {
+      "coils": {
+        "pdu_address": "0-65535",
+        "omron_memory": "CIO 0.00 - CIO 4095.15",
+        "access": "rw"
+      },
+      "discrete_inputs": {
+        "pdu_address": "0-5119",
+        "omron_memory": "CIO 0.00 - CIO 319.15",
+        "access": "r"
+      },
+      "holding_registers": {
+        "pdu_address": "0-32767",
+        "omron_memory": "D0 - D32767",
+        "access": "rw"
+      },
+      "input_registers": {
+        "pdu_address": "0-5800",
+        "omron_memory": "CIO 0 - CIO 5800",
+        "access": "r"
+      }
+    },
+    "status_counters": {
+      "W491": "Exception count",
+      "W492": "Receive count",
+      "W493": "Send count",
+      "W494": "Socket errors",
+      "W495": "Additional status"
+    },
+    "nj_nx_series": {
+      "note": "NJ/NX series provide built-in Modbus TCP Master via EtherNet/IP port",
+      "instructions": [
+        "SktTCPConnect",
+        "ModbusTCPCmd"
+      ],
+      "configuration": "Sysmac Studio"
+    }
+  },
+  "_source_verified": "Verified: CJ1-series with CJ1W-ETN21; STA46 Modbus TCP Quick Start Manual confirmed"
+}

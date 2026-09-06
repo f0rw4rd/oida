@@ -1,0 +1,189 @@
+{
+  "vendor": "Eastron",
+  "model": "SDM230",
+  "description": "Eastron SDM230 single-phase energy meter with Modbus RTU",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "function_code": 4,
+  "notes": "All registers use IEEE 754 float32 format. Uses FC04 (Read Input Registers). Single-phase variant of SDM630. RTU: 2400-9600 baud, 8N1.",
+  "source": "https://github.com/nmakel/sdm_modbus, Eastron SDM230 Modbus Protocol",
+  "registers": {
+    "voltage": {
+      "address": 0,
+      "type": "f32",
+      "access": "r",
+      "unit": "V",
+      "description": "Line to neutral voltage"
+    },
+    "current": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "unit": "A",
+      "description": "Current"
+    },
+    "power_active": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active power"
+    },
+    "power_apparent": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "unit": "VA",
+      "description": "Apparent power"
+    },
+    "power_reactive": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "unit": "var",
+      "description": "Reactive power"
+    },
+    "power_factor": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor"
+    },
+    "phase_angle": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "unit": "deg",
+      "description": "Phase angle"
+    },
+    "frequency": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "unit": "Hz",
+      "description": "Frequency"
+    },
+    "energy_import": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "unit": "kWh",
+      "description": "Import active energy"
+    },
+    "energy_export": {
+      "address": 74,
+      "type": "f32",
+      "access": "r",
+      "unit": "kWh",
+      "description": "Export active energy"
+    },
+    "energy_import_reactive": {
+      "address": 76,
+      "type": "f32",
+      "access": "r",
+      "unit": "kvarh",
+      "description": "Import reactive energy"
+    },
+    "energy_export_reactive": {
+      "address": 78,
+      "type": "f32",
+      "access": "r",
+      "unit": "kvarh",
+      "description": "Export reactive energy"
+    },
+    "demand_power": {
+      "address": 84,
+      "type": "f32",
+      "access": "r",
+      "unit": "W",
+      "description": "Demand power"
+    },
+    "demand_power_max": {
+      "address": 86,
+      "type": "f32",
+      "access": "r",
+      "unit": "W",
+      "description": "Maximum demand power"
+    },
+    "demand_current": {
+      "address": 258,
+      "type": "f32",
+      "access": "r",
+      "unit": "A",
+      "description": "Demand current"
+    },
+    "demand_current_max": {
+      "address": 264,
+      "type": "f32",
+      "access": "r",
+      "unit": "A",
+      "description": "Maximum demand current"
+    },
+    "energy_total": {
+      "address": 342,
+      "type": "f32",
+      "access": "r",
+      "unit": "kWh",
+      "description": "Total active energy"
+    },
+    "energy_reactive_total": {
+      "address": 344,
+      "type": "f32",
+      "access": "r",
+      "unit": "kvarh",
+      "description": "Total reactive energy"
+    },
+    "resettable_import_energy": {
+      "address": 384,
+      "type": "f32",
+      "access": "r",
+      "unit": "kWh",
+      "description": "Resettable import energy counter"
+    },
+    "resettable_export_energy": {
+      "address": 386,
+      "type": "f32",
+      "access": "r",
+      "unit": "kWh",
+      "description": "Resettable export energy counter"
+    },
+    "resettable_total_energy": {
+      "address": 388,
+      "type": "f32",
+      "access": "r",
+      "unit": "kWh",
+      "description": "Resettable total energy counter"
+    },
+    "resettable_import_reactive": {
+      "address": 390,
+      "type": "f32",
+      "access": "r",
+      "unit": "kvarh",
+      "description": "Resettable import reactive energy"
+    },
+    "resettable_export_reactive": {
+      "address": 392,
+      "type": "f32",
+      "access": "r",
+      "unit": "kvarh",
+      "description": "Resettable export reactive energy"
+    },
+    "resettable_total_reactive": {
+      "address": 394,
+      "type": "f32",
+      "access": "r",
+      "unit": "kvarh",
+      "description": "Resettable total reactive energy"
+    },
+    "net_energy": {
+      "address": 396,
+      "type": "f32",
+      "access": "r",
+      "unit": "kWh",
+      "description": "Net energy (import - export)"
+    }
+  },
+  "_source_verified": "Verified: SDM230 registers confirmed against official Eastron protocol documentation"
+}

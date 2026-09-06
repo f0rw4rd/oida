@@ -1,0 +1,313 @@
+{
+  "vendor": "Heyuan",
+  "model": "DZ 81 DZS 310",
+  "description": "Heyuan DZ 81 DZS 310 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "a_phase_voltage": {
+      "address": 4096,
+      "type": "u16",
+      "access": "r",
+      "description": "A phase voltage"
+    },
+    "b_phase_voltage": {
+      "address": 4097,
+      "type": "u16",
+      "access": "r",
+      "description": "B phase voltage"
+    },
+    "c_phase_voltage": {
+      "address": 4098,
+      "type": "u16",
+      "access": "r",
+      "description": "C phase voltage"
+    },
+    "phase_voltage_mean_value": {
+      "address": 4099,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase voltage mean value"
+    },
+    "zero_phase_voltage": {
+      "address": 4100,
+      "type": "u16",
+      "access": "r",
+      "description": "Zero phase voltage"
+    },
+    "line_voltage_a_b": {
+      "address": 4101,
+      "type": "u16",
+      "access": "r",
+      "description": "Line voltage (A b)"
+    },
+    "line_voltage_b_c": {
+      "address": 4102,
+      "type": "u16",
+      "access": "r",
+      "description": "Line voltage (B c)"
+    },
+    "line_voltage_c_a": {
+      "address": 4103,
+      "type": "u16",
+      "access": "r",
+      "description": "Line voltage (C a)"
+    },
+    "line_voltage_mean_value": {
+      "address": 4104,
+      "type": "u16",
+      "access": "r",
+      "description": "Line voltage mean value"
+    },
+    "a_phase_current": {
+      "address": 4105,
+      "type": "u16",
+      "access": "r",
+      "description": "A phase current"
+    },
+    "b_phase_current": {
+      "address": 4106,
+      "type": "u16",
+      "access": "r",
+      "description": "B phase current"
+    },
+    "c_phase_current": {
+      "address": 4107,
+      "type": "u16",
+      "access": "r",
+      "description": "C phase current"
+    },
+    "current_mean_value": {
+      "address": 4108,
+      "type": "u16",
+      "access": "r",
+      "description": "Current mean value"
+    },
+    "zero_phase_current": {
+      "address": 4109,
+      "type": "u16",
+      "access": "r",
+      "description": "Zero phase current"
+    },
+    "a_phase_active_power": {
+      "address": 4110,
+      "type": "i16",
+      "access": "r",
+      "description": "A phase active power"
+    },
+    "b_phase_active_power": {
+      "address": 4111,
+      "type": "i16",
+      "access": "r",
+      "description": "B phase active power"
+    },
+    "c_phase_active_power": {
+      "address": 4112,
+      "type": "i16",
+      "access": "r",
+      "description": "C phase active power"
+    },
+    "total_active_power": {
+      "address": 4113,
+      "type": "i16",
+      "access": "r",
+      "description": "Total active power"
+    },
+    "a_phase_reactive_power": {
+      "address": 4114,
+      "type": "i16",
+      "access": "r",
+      "description": "A phase reactive power"
+    },
+    "b_phase_reactive_power": {
+      "address": 4115,
+      "type": "i16",
+      "access": "r",
+      "description": "B phase reactive power"
+    },
+    "c_phase_reactive_power": {
+      "address": 4116,
+      "type": "i16",
+      "access": "r",
+      "description": "C phase reactive power"
+    },
+    "total_reactive_power": {
+      "address": 4117,
+      "type": "i16",
+      "access": "r",
+      "description": "Total reactive power"
+    },
+    "a_phase_apparent_power": {
+      "address": 4118,
+      "type": "i16",
+      "access": "r",
+      "description": "A phase apparent power"
+    },
+    "b_phase_apparent_power": {
+      "address": 4119,
+      "type": "i16",
+      "access": "r",
+      "description": "B phase apparent power"
+    },
+    "c_phase_apparent_power": {
+      "address": 4120,
+      "type": "i16",
+      "access": "r",
+      "description": "C phase apparent power"
+    },
+    "total_apparent_power": {
+      "address": 4121,
+      "type": "i16",
+      "access": "r",
+      "description": "Total apparent power"
+    },
+    "a_phase_power_factor": {
+      "address": 4122,
+      "type": "i16",
+      "access": "r",
+      "description": "A phase power factor"
+    },
+    "b_phase_power_factor": {
+      "address": 4123,
+      "type": "i16",
+      "access": "r",
+      "description": "B phase power factor"
+    },
+    "c_phase_power_factor": {
+      "address": 4124,
+      "type": "i16",
+      "access": "r",
+      "description": "C phase power factor"
+    },
+    "total_power_factor": {
+      "address": 4125,
+      "type": "i16",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "frequency": {
+      "address": 4126,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "voltage_unbalance": {
+      "address": 4127,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage unbalance"
+    },
+    "current_unbalance": {
+      "address": 4128,
+      "type": "u16",
+      "access": "r",
+      "description": "Current unbalance"
+    },
+    "a_phase_voltage_5376": {
+      "address": 5376,
+      "type": "u32",
+      "access": "r",
+      "description": "A phase voltage"
+    },
+    "b_phase_voltage_5378": {
+      "address": 5378,
+      "type": "u32",
+      "access": "r",
+      "description": "B phase voltage"
+    },
+    "c_phase_voltage_5380": {
+      "address": 5380,
+      "type": "u32",
+      "access": "r",
+      "description": "C phase voltage"
+    },
+    "phase_voltage_mean_value_5382": {
+      "address": 5382,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase voltage mean value"
+    },
+    "zero_phase_voltage_5384": {
+      "address": 5384,
+      "type": "u32",
+      "access": "r",
+      "description": "Zero phase voltage"
+    },
+    "line_voltage_a_b_5386": {
+      "address": 5386,
+      "type": "u32",
+      "access": "r",
+      "description": "Line voltage (A b)"
+    },
+    "line_voltage_b_c_5388": {
+      "address": 5388,
+      "type": "u32",
+      "access": "r",
+      "description": "Line voltage (B c)"
+    },
+    "line_voltage_c_a_5390": {
+      "address": 5390,
+      "type": "u32",
+      "access": "r",
+      "description": "Line voltage (C a)"
+    },
+    "line_voltage_mean_value_5392": {
+      "address": 5392,
+      "type": "u32",
+      "access": "r",
+      "description": "Line voltage mean value"
+    },
+    "a_phase_current_5394": {
+      "address": 5394,
+      "type": "u32",
+      "access": "r",
+      "description": "A phase current"
+    },
+    "b_phase_current_5396": {
+      "address": 5396,
+      "type": "u32",
+      "access": "r",
+      "description": "B phase current"
+    },
+    "c_phase_current_5398": {
+      "address": 5398,
+      "type": "u32",
+      "access": "r",
+      "description": "C phase current"
+    },
+    "current_mean_value_5400": {
+      "address": 5400,
+      "type": "u32",
+      "access": "r",
+      "description": "Current mean value"
+    },
+    "zero_phase_current_5402": {
+      "address": 5402,
+      "type": "u32",
+      "access": "r",
+      "description": "Zero phase current"
+    },
+    "a_phase_active_power_5404": {
+      "address": 5404,
+      "type": "i32",
+      "access": "r",
+      "description": "A phase active power"
+    },
+    "b_phase_active_power_5406": {
+      "address": 5406,
+      "type": "i32",
+      "access": "r",
+      "description": "B phase active power"
+    },
+    "c_phase_active_power_5408": {
+      "address": 5408,
+      "type": "i32",
+      "access": "r",
+      "description": "C phase active power"
+    }
+  }
+}

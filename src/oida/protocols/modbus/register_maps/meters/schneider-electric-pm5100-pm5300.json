@@ -1,0 +1,331 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "PM 5100 PM 5300",
+  "description": "Schneider Electric PM 5100 PM 5300 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "meter_name": {
+      "address": 29,
+      "type": "str",
+      "access": "r",
+      "description": "Meter name"
+    },
+    "meter_model": {
+      "address": 49,
+      "type": "str",
+      "access": "r",
+      "description": "Meter model"
+    },
+    "manufacturer": {
+      "address": 69,
+      "type": "str",
+      "access": "r",
+      "description": "Manufacturer"
+    },
+    "product_id_number": {
+      "address": 89,
+      "type": "u16",
+      "access": "r",
+      "description": "Product ID number"
+    },
+    "manufacturing_unit_id_to_be_prefixed_in_serial_number_while_displaying": {
+      "address": 128,
+      "type": "u16",
+      "access": "r",
+      "description": "Manufacturing unit id (To be prefixed in serial number while displaying)"
+    },
+    "serial_number": {
+      "address": 129,
+      "type": "u32",
+      "access": "r",
+      "description": "Serial number"
+    },
+    "number_of_metering_system_restarts": {
+      "address": 1827,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of metering system restarts"
+    },
+    "number_of_control_power_failures": {
+      "address": 1828,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of control power failures"
+    },
+    "duration_of_last_control_power_failure": {
+      "address": 1833,
+      "type": "u32",
+      "access": "r",
+      "description": "Duration of last control power failure",
+      "unit": "seconds"
+    },
+    "cause_of_last_meter_reset": {
+      "address": 1835,
+      "type": "u16",
+      "access": "r",
+      "description": "Cause of last meter reset"
+    },
+    "year": {
+      "address": 1836,
+      "type": "u16",
+      "access": "r",
+      "description": "Year",
+      "unit": "year"
+    },
+    "month": {
+      "address": 1837,
+      "type": "u16",
+      "access": "r",
+      "description": "Month",
+      "unit": "month"
+    },
+    "day": {
+      "address": 1838,
+      "type": "u16",
+      "access": "r",
+      "description": "Day",
+      "unit": "days"
+    },
+    "hour": {
+      "address": 1839,
+      "type": "u16",
+      "access": "r",
+      "description": "Hour",
+      "unit": "hours"
+    },
+    "minute": {
+      "address": 1840,
+      "type": "u16",
+      "access": "r",
+      "description": "Minute",
+      "unit": "minutes"
+    },
+    "second": {
+      "address": 1841,
+      "type": "u16",
+      "access": "r",
+      "description": "Second",
+      "unit": "seconds"
+    },
+    "millisecond": {
+      "address": 1842,
+      "type": "u16",
+      "access": "r",
+      "description": "Millisecond",
+      "unit": "msec"
+    },
+    "day_of_week": {
+      "address": 1843,
+      "type": "u16",
+      "access": "r",
+      "description": "Day of week"
+    },
+    "year_1844": {
+      "address": 1844,
+      "type": "u16",
+      "access": "r",
+      "description": "Year"
+    },
+    "month_and_day": {
+      "address": 1845,
+      "type": "u16",
+      "access": "r",
+      "description": "Month and day"
+    },
+    "hour_and_minute": {
+      "address": 1846,
+      "type": "u16",
+      "access": "r",
+      "description": "Hour and minute"
+    },
+    "milliseconds": {
+      "address": 1847,
+      "type": "u16",
+      "access": "r",
+      "description": "Milliseconds"
+    },
+    "setup_password": {
+      "address": 1879,
+      "type": "str",
+      "access": "r",
+      "description": "Setup password"
+    },
+    "energy_reset_password": {
+      "address": 1883,
+      "type": "str",
+      "access": "r",
+      "description": "Energy reset password"
+    },
+    "demand_reset_password": {
+      "address": 1887,
+      "type": "str",
+      "access": "r",
+      "description": "Demand reset password"
+    },
+    "min_max_reset_password": {
+      "address": 1891,
+      "type": "str",
+      "access": "r",
+      "description": "Min/Max reset password"
+    },
+    "revenue_security_status": {
+      "address": 1920,
+      "type": "u16",
+      "access": "r",
+      "description": "Revenue security status"
+    },
+    "conditional_energy_control_status": {
+      "address": 1999,
+      "type": "u16",
+      "access": "r",
+      "description": "Conditional energy control status"
+    },
+    "active_load_timer": {
+      "address": 2001,
+      "type": "u32",
+      "access": "r",
+      "description": "Active load timer",
+      "unit": "seconds"
+    },
+    "meter_operation_timer": {
+      "address": 2003,
+      "type": "u32",
+      "access": "r",
+      "description": "Meter operation timer",
+      "unit": "seconds"
+    },
+    "cycle_count": {
+      "address": 2005,
+      "type": "u32",
+      "access": "r",
+      "description": "Cycle count"
+    },
+    "heartbeat_led_control": {
+      "address": 2007,
+      "type": "u16",
+      "access": "r",
+      "description": "Heartbeat LED control"
+    },
+    "number_of_phases": {
+      "address": 2013,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of phases"
+    },
+    "number_of_wires": {
+      "address": 2014,
+      "type": "u16",
+      "access": "r",
+      "description": "Number of wires"
+    },
+    "power_system_configuration": {
+      "address": 2015,
+      "type": "u16",
+      "access": "r",
+      "description": "Power system configuration"
+    },
+    "nominal_frequency": {
+      "address": 2016,
+      "type": "u16",
+      "access": "r",
+      "description": "Nominal frequency",
+      "unit": "Hz"
+    },
+    "nominal_voltage": {
+      "address": 2017,
+      "type": "f32",
+      "access": "r",
+      "description": "Nominal voltage",
+      "unit": "V"
+    },
+    "nominal_current": {
+      "address": 2019,
+      "type": "f32",
+      "access": "r",
+      "description": "Nominal current",
+      "unit": "A"
+    },
+    "nominal_power_factor": {
+      "address": 2021,
+      "type": "u32",
+      "access": "r",
+      "description": "Nominal power factor"
+    },
+    "normal_phase_rotation": {
+      "address": 2023,
+      "type": "u16",
+      "access": "r",
+      "description": "Normal phase rotation"
+    },
+    "number_vts": {
+      "address": 2024,
+      "type": "u16",
+      "access": "r",
+      "description": "Number VTs"
+    },
+    "vt_primary": {
+      "address": 2025,
+      "type": "f32",
+      "access": "r",
+      "description": "VT primary",
+      "unit": "V"
+    },
+    "vt_secondary": {
+      "address": 2027,
+      "type": "u16",
+      "access": "r",
+      "description": "VT secondary",
+      "unit": "V"
+    },
+    "number_cts": {
+      "address": 2028,
+      "type": "u16",
+      "access": "r",
+      "description": "Number CTs"
+    },
+    "ct_primary": {
+      "address": 2029,
+      "type": "u16",
+      "access": "r",
+      "description": "CT primary",
+      "unit": "A"
+    },
+    "ct_secondary": {
+      "address": 2030,
+      "type": "u16",
+      "access": "r",
+      "description": "CT secondary",
+      "unit": "A"
+    },
+    "ct_location_for_1_or_2_ct_metering": {
+      "address": 2033,
+      "type": "u16",
+      "access": "r",
+      "description": "CT location for 1 or 2 CT metering"
+    },
+    "vt_location_for_1_or_2_vt_metering": {
+      "address": 2034,
+      "type": "u16",
+      "access": "r",
+      "description": "VT location for 1 or 2 VT metering"
+    },
+    "vt_connection_type": {
+      "address": 2035,
+      "type": "u16",
+      "access": "r",
+      "description": "VT connection type"
+    },
+    "peak_current_demand_over_last_year": {
+      "address": 2047,
+      "type": "f32",
+      "access": "r",
+      "description": "Peak current demand over last year",
+      "unit": "A"
+    }
+  }
+}

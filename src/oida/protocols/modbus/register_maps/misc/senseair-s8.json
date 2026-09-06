@@ -1,0 +1,25 @@
+{
+  "vendor": "SenseAirS8",
+  "model": "SenseAirS8",
+  "description": "Imported from nymea-plugins-modbus (senseair)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/senseair/s8-registers.json",
+  "registers": {
+    "meterStatus": {
+      "address": 0,
+      "type": "u16",
+      "access": "ro",
+      "description": "Meter status",
+      "function_code": 4
+    },
+    "spaceCo2": {
+      "address": 3,
+      "type": "u16",
+      "access": "ro",
+      "description": "Space CO2",
+      "function_code": 4
+    }
+  },
+  "_source_verified": "Verified: Senseair S8 CO2 sensor Modbus RTU confirmed; official docs at driesen-kern.de and co2meters.com"
+}

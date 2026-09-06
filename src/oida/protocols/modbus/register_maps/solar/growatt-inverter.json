@@ -1,0 +1,283 @@
+{
+  "vendor": "Growatt",
+  "model": "MIN/MIC/MOD/MAC TL-X Series",
+  "description": "Growatt grid-tied string inverters with Modbus RTU Protocol V1.24",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Protocol V1.24 (2023). Input registers (FC04) for monitoring. Holding registers (FC03) for settings. RTU: 9600/19200 baud, 8N1. All values big-endian.",
+  "source": "https://github.com/johanmeijer/grott (Protocol V1.24 PDF)",
+  "registers": {
+    "inverter_status": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter status",
+      "enum": {
+        "0": "WAITING",
+        "1": "NORMAL",
+        "2": "FAULT"
+      }
+    },
+    "pv1_voltage": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV1 voltage"
+    },
+    "pv1_current": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "PV1 current"
+    },
+    "pv1_power": {
+      "address": 3,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "scale": 0.1,
+      "description": "PV1 power"
+    },
+    "pv2_voltage": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV2 voltage"
+    },
+    "pv2_current": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "PV2 current"
+    },
+    "pv2_power": {
+      "address": 7,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "scale": 0.1,
+      "description": "PV2 power"
+    },
+    "output_power": {
+      "address": 9,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "scale": 0.1,
+      "description": "Output power (AC)"
+    },
+    "grid_frequency": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Grid frequency"
+    },
+    "grid_voltage_l1": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid voltage L1"
+    },
+    "grid_current_l1": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Grid current L1"
+    },
+    "grid_power_l1": {
+      "address": 16,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "scale": 0.1,
+      "description": "Grid power L1"
+    },
+    "grid_voltage_l2": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid voltage L2"
+    },
+    "grid_current_l2": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Grid current L2"
+    },
+    "grid_power_l2": {
+      "address": 20,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "scale": 0.1,
+      "description": "Grid power L2"
+    },
+    "grid_voltage_l3": {
+      "address": 22,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid voltage L3"
+    },
+    "grid_current_l3": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Grid current L3"
+    },
+    "grid_power_l3": {
+      "address": 24,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "scale": 0.1,
+      "description": "Grid power L3"
+    },
+    "energy_today": {
+      "address": 26,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Energy generated today"
+    },
+    "energy_total": {
+      "address": 28,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total energy generated"
+    },
+    "total_working_time": {
+      "address": 30,
+      "type": "u32",
+      "access": "r",
+      "unit": "s",
+      "scale": 0.5,
+      "description": "Total working time"
+    },
+    "pv_total_power": {
+      "address": 34,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "scale": 0.1,
+      "description": "Total PV input power"
+    },
+    "temperature_inverter": {
+      "address": 93,
+      "type": "u16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Inverter temperature"
+    },
+    "temperature_ipm": {
+      "address": 94,
+      "type": "u16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "IPM temperature"
+    },
+    "bus_voltage": {
+      "address": 96,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "DC bus voltage"
+    },
+    "pv1_energy_today": {
+      "address": 48,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "PV1 energy today"
+    },
+    "pv1_energy_total": {
+      "address": 50,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "PV1 total energy"
+    },
+    "pv2_energy_today": {
+      "address": 52,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "PV2 energy today"
+    },
+    "pv2_energy_total": {
+      "address": 54,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "PV2 total energy"
+    },
+    "reactive_power": {
+      "address": 11,
+      "type": "u32",
+      "access": "r",
+      "unit": "var",
+      "scale": 0.1,
+      "description": "Reactive power output"
+    },
+    "power_factor": {
+      "address": 36,
+      "type": "u16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Power factor"
+    },
+    "fault_code": {
+      "address": 40,
+      "type": "u16",
+      "access": "r",
+      "description": "Fault code (0 = no fault)"
+    },
+    "warning_code": {
+      "address": 41,
+      "type": "u16",
+      "access": "r",
+      "description": "Warning code (0 = no warning)"
+    },
+    "real_power_percent": {
+      "address": 42,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "Real power percentage"
+    }
+  },
+  "_source_verified": "PARTIAL: Register addresses 1-7 appear shifted by 2 positions vs official Growatt Modbus RTU Protocol V1.20/V1.24. File maps PV1 voltage at addr 1 but official protocol places it at addr 3 (addrs 1-2 are total input power). Status enum FAULT value is 2 in file but 3 in protocol."
+}

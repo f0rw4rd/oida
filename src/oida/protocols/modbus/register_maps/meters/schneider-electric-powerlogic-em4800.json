@@ -1,0 +1,313 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "EM 4800",
+  "description": "Schneider Electric EM 4800 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "meter_2_wh_delivered": {
+      "address": 2,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 2 WH delivered"
+    },
+    "meter_3_wh_delivered": {
+      "address": 4,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 3 WH delivered"
+    },
+    "meter_4_wh_delivered": {
+      "address": 6,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 4 WH delivered"
+    },
+    "meter_5_wh_delivered": {
+      "address": 8,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 5 WH delivered"
+    },
+    "meter_6_wh_delivered": {
+      "address": 10,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 6 WH delivered"
+    },
+    "meter_7_wh_delivered": {
+      "address": 12,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 7 WH delivered"
+    },
+    "meter_8_wh_delivered": {
+      "address": 14,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 8 WH delivered"
+    },
+    "meter_1_wh_received": {
+      "address": 100,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 1 wh received"
+    },
+    "meter_2_wh_received": {
+      "address": 102,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 2 wh received"
+    },
+    "meter_3_wh_received": {
+      "address": 104,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 3 wh received"
+    },
+    "meter_4_wh_received": {
+      "address": 106,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 4 wh received"
+    },
+    "meter_5_wh_received": {
+      "address": 108,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 5 wh received"
+    },
+    "meter_6_wh_received": {
+      "address": 110,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 6 wh received"
+    },
+    "meter_7_wh_received": {
+      "address": 112,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 7 wh received"
+    },
+    "meter_8_wh_received": {
+      "address": 114,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 8 wh received"
+    },
+    "meter_1_varh_delivered": {
+      "address": 200,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 1 VARh delivered"
+    },
+    "meter_2_varh_delivered": {
+      "address": 202,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 2 VARh delivered"
+    },
+    "meter_3_varh_delivered": {
+      "address": 204,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 3 VARh delivered"
+    },
+    "meter_4_varh_delivered": {
+      "address": 206,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 4 VARh delivered"
+    },
+    "meter_5_varh_delivered": {
+      "address": 208,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 5 VARh delivered"
+    },
+    "meter_6_varh_delivered": {
+      "address": 210,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 6 VARh delivered"
+    },
+    "meter_7_varh_delivered": {
+      "address": 212,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 7 VARh delivered"
+    },
+    "meter_8_varh_delivered": {
+      "address": 214,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 8 VARh delivered"
+    },
+    "meter_1_varh_received": {
+      "address": 300,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 1 VARh received"
+    },
+    "meter_2_varh_received": {
+      "address": 302,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 2 VARh received"
+    },
+    "meter_3_varh_received": {
+      "address": 304,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 3 VARh received"
+    },
+    "meter_4_varh_received": {
+      "address": 306,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 4 VARh received"
+    },
+    "meter_5_varh_received": {
+      "address": 308,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 5 VARh received"
+    },
+    "meter_6_varh_received": {
+      "address": 310,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 6 VARh received"
+    },
+    "meter_7_varh_received": {
+      "address": 312,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 7 VARh received"
+    },
+    "meter_8_varh_received": {
+      "address": 314,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 8 VARh received"
+    },
+    "meter_1_vah": {
+      "address": 400,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 1 VAh"
+    },
+    "meter_2_vah": {
+      "address": 402,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 2 VAh"
+    },
+    "meter_3_vah": {
+      "address": 404,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 3 VAh"
+    },
+    "meter_4_vah": {
+      "address": 406,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 4 VAh"
+    },
+    "meter_5_vah": {
+      "address": 408,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 5 VAh"
+    },
+    "meter_6_vah": {
+      "address": 410,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 6 VAh"
+    },
+    "meter_7_vah": {
+      "address": 412,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 7 VAh"
+    },
+    "meter_8_vah": {
+      "address": 414,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 8 VAh"
+    },
+    "meter_1_watts": {
+      "address": 600,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 1 watts"
+    },
+    "meter_2_watts": {
+      "address": 602,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 2 watts"
+    },
+    "meter_3_watts": {
+      "address": 604,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 3 watts"
+    },
+    "meter_4_watts": {
+      "address": 606,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 4 watts"
+    },
+    "meter_5_watts": {
+      "address": 608,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 5 watts"
+    },
+    "meter_6_watts": {
+      "address": 610,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 6 watts"
+    },
+    "meter_7_watts": {
+      "address": 612,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 7 watts"
+    },
+    "meter_8_watts": {
+      "address": 614,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 8 watts"
+    },
+    "meter_1_var": {
+      "address": 700,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 1 VAR"
+    },
+    "meter_2_var": {
+      "address": 702,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 2 VAR"
+    },
+    "meter_3_var": {
+      "address": 704,
+      "type": "i32",
+      "access": "r",
+      "description": "Meter 3 VAR"
+    }
+  }
+}

@@ -1,0 +1,17 @@
+FROM python:3.11-slim
+
+WORKDIR /app
+
+# pymodbus 3.12.x: new TLS framer (wire-compatible with the host's 3.13 client)
+# but still the classic ModbusServerContext datastore (3.13 deprecated it to a
+# SimDevice shim that silently serves zeros).
+RUN pip install --no-cache-dir "pymodbus==3.12.0" cryptography>=41.0.0
+
+COPY modbus_tls_server.py /app/
+
+# Certs auto-generated at first startup into /certs
+VOLUME /certs
+
+EXPOSE 802
+
+CMD ["python3", "-u", "modbus_tls_server.py"]

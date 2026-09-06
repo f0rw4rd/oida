@@ -1,0 +1,231 @@
+{
+  "vendor": "AlphaInnotec",
+  "model": "AlphaInnotec",
+  "description": "Imported from nymea-plugins-modbus (alphainnotec)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/alphainnotec/alphainnotec-registers.json",
+  "registers": {
+    "flowTemperature": {
+      "address": 1,
+      "type": "u16",
+      "access": "ro",
+      "description": "Flow",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "returnTemperature": {
+      "address": 2,
+      "type": "u16",
+      "access": "ro",
+      "description": "Return",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "externalReturnTemperature": {
+      "address": 3,
+      "type": "u16",
+      "access": "ro",
+      "description": "External return",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "hotWaterTemperature": {
+      "address": 4,
+      "type": "u16",
+      "access": "ro",
+      "description": "Hot water temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "hotGasTemperature": {
+      "address": 8,
+      "type": "u16",
+      "access": "ro",
+      "description": "Hot gas temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "heatSourceInletTemperature": {
+      "address": 9,
+      "type": "u16",
+      "access": "ro",
+      "description": "Heat source inlet temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "heatSourceOutletTemperature": {
+      "address": 10,
+      "type": "u16",
+      "access": "ro",
+      "description": "Heat source outlet temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "roomTemperature1": {
+      "address": 11,
+      "type": "u16",
+      "access": "ro",
+      "description": "Room remote adjuster 1 temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "roomTemperature2": {
+      "address": 12,
+      "type": "u16",
+      "access": "ro",
+      "description": "Room remote adjuster 2 temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "roomTemperature3": {
+      "address": 13,
+      "type": "u16",
+      "access": "ro",
+      "description": "Room remote adjuster 3 temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "solarCollectorTemperature": {
+      "address": 14,
+      "type": "u16",
+      "access": "ro",
+      "description": "Solar collector temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "solarStorageTankTemperature": {
+      "address": 15,
+      "type": "u16",
+      "access": "ro",
+      "description": "Solar storage tank temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "externalEnergySourceTemperature": {
+      "address": 16,
+      "type": "u16",
+      "access": "ro",
+      "description": "External energy source temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "supplyAirTemperature": {
+      "address": 17,
+      "type": "u16",
+      "access": "ro",
+      "description": "Supply air temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "externalAirTemperature": {
+      "address": 18,
+      "type": "u16",
+      "access": "ro",
+      "description": "External air temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "rbeRoomActualTemperature": {
+      "address": 24,
+      "type": "u16",
+      "access": "ro",
+      "description": "RBE actual room temperature",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "rbeRoomSetpointTemperature": {
+      "address": 24,
+      "type": "u16",
+      "access": "ro",
+      "description": "RBE room temperature setpoint",
+      "unit": "°C",
+      "function_code": 4
+    },
+    "heatingPumpOperatingHours": {
+      "address": 33,
+      "type": "u16",
+      "access": "ro",
+      "description": "Heating pump operating hours",
+      "unit": "h",
+      "function_code": 4
+    },
+    "systemStatus": {
+      "address": 37,
+      "type": "u16",
+      "access": "ro",
+      "description": "System status",
+      "function_code": 4
+    },
+    "heatingEnergy": {
+      "address": 38,
+      "type": "u32",
+      "access": "ro",
+      "description": "Heating energy",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "waterHeatEnergy": {
+      "address": 40,
+      "type": "u32",
+      "access": "ro",
+      "description": "Water heat energy",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "totalHeatEnergy": {
+      "address": 44,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total energy",
+      "unit": "kWh",
+      "function_code": 4
+    },
+    "outdoorTemperature": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Outdoor temperature",
+      "unit": "°C"
+    },
+    "returnSetpointTemperature": {
+      "address": 1,
+      "type": "u16",
+      "access": "rw",
+      "description": "Return setpoint temperature",
+      "unit": "°C"
+    },
+    "hotWaterSetpointTemperature": {
+      "address": 5,
+      "type": "u16",
+      "access": "rw",
+      "description": "Hot water setpoint temperature",
+      "unit": "°C"
+    },
+    "smartGrid": {
+      "address": 14,
+      "type": "u16",
+      "access": "rw",
+      "description": "Smart grid control"
+    }
+  },
+  "enums": {
+    "SystemStatus": {
+      "0": "HeatingMode",
+      "1": "DomesticHotWater",
+      "2": "SwimmingPool",
+      "3": "EVUOff",
+      "4": "Defrost",
+      "5": "Off",
+      "6": "ExternalEnergySource",
+      "7": "CoolingMode"
+    },
+    "SmartGridState": {
+      "0": "Off",
+      "1": "Low",
+      "2": "Standard",
+      "3": "High"
+    }
+  },
+  "_source_verified": "Verified: Alpha Innotec with Luxtronik 2.1 Modbus TCP from FW V3.90.3+ confirmed; nymea source verified"
+}

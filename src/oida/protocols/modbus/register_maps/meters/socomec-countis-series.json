@@ -1,0 +1,313 @@
+{
+  "vendor": "Socomec",
+  "model": "COUNTIS E 13 / COUNTIS E 14",
+  "description": "Socomec COUNTIS E 13 / COUNTIS E 14 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: COUNTIS E 13, COUNTIS E 14",
+  "registers": {
+    "product_name": {
+      "address": 50000,
+      "type": "str",
+      "access": "r",
+      "description": "Product name"
+    },
+    "product_order_id_countis_100_protection_200_atys_300_diris_400": {
+      "address": 50004,
+      "type": "u16",
+      "access": "r",
+      "description": "Product order ID (Countis:100, protection:200, atys:300, diris:400)"
+    },
+    "product_id": {
+      "address": 50005,
+      "type": "u16",
+      "access": "r",
+      "description": "Product ID"
+    },
+    "product_software_version": {
+      "address": 50007,
+      "type": "u16",
+      "access": "r",
+      "description": "Product software version"
+    },
+    "product_version_major": {
+      "address": 50018,
+      "type": "u16",
+      "access": "r",
+      "description": "Product version (Major)"
+    },
+    "product_version_minor": {
+      "address": 50019,
+      "type": "u16",
+      "access": "r",
+      "description": "Product version (Minor)"
+    },
+    "product_version_revision": {
+      "address": 50020,
+      "type": "u16",
+      "access": "r",
+      "description": "Product version (Revision)"
+    },
+    "product_version_build": {
+      "address": 50021,
+      "type": "u16",
+      "access": "r",
+      "description": "Product version (Build)"
+    },
+    "software_technical_base_version_major": {
+      "address": 50025,
+      "type": "u16",
+      "access": "r",
+      "description": "Software technical base version (Major)"
+    },
+    "software_technical_base_version_minor": {
+      "address": 50026,
+      "type": "u16",
+      "access": "r",
+      "description": "Software technical base version (Minor)"
+    },
+    "software_technical_base_version_revision": {
+      "address": 50027,
+      "type": "u16",
+      "access": "r",
+      "description": "Software technical base version (Revision)"
+    },
+    "customization_version_major": {
+      "address": 50028,
+      "type": "u16",
+      "access": "r",
+      "description": "Customization version (Major)"
+    },
+    "customization_version_minor": {
+      "address": 50029,
+      "type": "u16",
+      "access": "r",
+      "description": "Customization version (Minor)"
+    },
+    "product_vlo": {
+      "address": 50030,
+      "type": "str",
+      "access": "r",
+      "description": "Product VLO"
+    },
+    "customization_vlo": {
+      "address": 50034,
+      "type": "str",
+      "access": "r",
+      "description": "Customization VLO"
+    },
+    "software_technical_base_vlo": {
+      "address": 50038,
+      "type": "str",
+      "access": "r",
+      "description": "Software technical base VLO"
+    },
+    "vendor_name": {
+      "address": 50042,
+      "type": "str",
+      "access": "r",
+      "description": "Vendor name"
+    },
+    "product_name_50050": {
+      "address": 50050,
+      "type": "str",
+      "access": "r",
+      "description": "Product name"
+    },
+    "extended_name": {
+      "address": 50058,
+      "type": "str",
+      "access": "r",
+      "description": "Extended name"
+    },
+    "simple_voltage_v1": {
+      "address": 50520,
+      "type": "u32",
+      "access": "r",
+      "description": "Simple voltage: V1"
+    },
+    "current_i1": {
+      "address": 50528,
+      "type": "u32",
+      "access": "r",
+      "description": "Current: I1"
+    },
+    "active_power_p": {
+      "address": 50536,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power +/ : P"
+    },
+    "reactive_power_q": {
+      "address": 50538,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power +/ : Q"
+    },
+    "apparent_power_s": {
+      "address": 50540,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power: S"
+    },
+    "power_factor_leading_et_lagging_pf": {
+      "address": 50542,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor: : leading et +: lagging: PF"
+    },
+    "active_power_phase_1_p1": {
+      "address": 50544,
+      "type": "i32",
+      "access": "r",
+      "description": "Active power phase 1 +/ : P1"
+    },
+    "reactive_power_phase_1_q1": {
+      "address": 50550,
+      "type": "i32",
+      "access": "r",
+      "description": "Reactive power phase 1 +/ : Q1"
+    },
+    "apparent_power_phase_1_s1": {
+      "address": 50556,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent power phase 1: S1"
+    },
+    "power_factor_phase_1_leading_and_lagging_pf1": {
+      "address": 50562,
+      "type": "i32",
+      "access": "r",
+      "description": "Power factor phase 1 : leading and +: lagging: PF1"
+    },
+    "total_positive_active_energy_no_resetable_ea": {
+      "address": 50770,
+      "type": "u32",
+      "access": "r",
+      "description": "Total positive active energy (no resetable): ea+"
+    },
+    "total_positive_reactive_energy_no_resetable_er": {
+      "address": 50772,
+      "type": "u32",
+      "access": "r",
+      "description": "Total positive reactive energy (no resetable): er +"
+    },
+    "total_negative_active_energy_no_resetable_ea": {
+      "address": 50776,
+      "type": "u32",
+      "access": "r",
+      "description": "Total negative active energy (no resetable): ea"
+    },
+    "partial_positive_active_energy_ea": {
+      "address": 50780,
+      "type": "u32",
+      "access": "r",
+      "description": "Partial positive active energy: ea+"
+    },
+    "partial_positive_reactive_energy_er": {
+      "address": 50782,
+      "type": "u32",
+      "access": "r",
+      "description": "Partial positive reactive energy: er +"
+    },
+    "partial_negative_active_energy_ea": {
+      "address": 50786,
+      "type": "u32",
+      "access": "r",
+      "description": "Partial negative active energy: ea"
+    },
+    "total_positive_active_energy_no_resetable_ea_50946": {
+      "address": 50946,
+      "type": "u32",
+      "access": "r",
+      "description": "Total positive active energy (no resetable): ea+"
+    },
+    "total_positive_reactive_energy_no_resetable_er_50948": {
+      "address": 50948,
+      "type": "u32",
+      "access": "r",
+      "description": "Total positive reactive energy (no resetable): er +"
+    },
+    "total_negative_active_energy_no_resetable_ea_50952": {
+      "address": 50952,
+      "type": "u32",
+      "access": "r",
+      "description": "Total negative active energy (no resetable): ea"
+    },
+    "partial_positive_active_energy_ea_50956": {
+      "address": 50956,
+      "type": "u32",
+      "access": "r",
+      "description": "Partial positive active energy: ea+"
+    },
+    "partial_positive_reactive_energy_er_50958": {
+      "address": 50958,
+      "type": "u32",
+      "access": "r",
+      "description": "Partial positive reactive energy: er +"
+    },
+    "partial_negative_active_energy_ea_50962": {
+      "address": 50962,
+      "type": "u32",
+      "access": "r",
+      "description": "Partial negative active energy: ea"
+    },
+    "phase_to_phase_voltage_u12": {
+      "address": 51281,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltage: U12"
+    },
+    "phase_to_phase_voltage_u23": {
+      "address": 51282,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltage: U23"
+    },
+    "phase_to_phase_voltage_u31": {
+      "address": 51283,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase to phase voltage: U31"
+    },
+    "simple_voltage_v1_51284": {
+      "address": 51284,
+      "type": "u16",
+      "access": "r",
+      "description": "Simple voltage: V1"
+    },
+    "simple_voltage_v2": {
+      "address": 51285,
+      "type": "u16",
+      "access": "r",
+      "description": "Simple voltage: V2"
+    },
+    "simple_voltage_v3": {
+      "address": 51286,
+      "type": "u16",
+      "access": "r",
+      "description": "Simple voltage: V3"
+    },
+    "power_factor_leading_and_lagging_pf": {
+      "address": 51295,
+      "type": "i16",
+      "access": "r",
+      "description": "Power factor: : leading and +: lagging: PF"
+    },
+    "total_positive_active_energy_no_resetable_ea_51311": {
+      "address": 51311,
+      "type": "u16",
+      "access": "r",
+      "description": "Total positive active energy (no resetable): ea+"
+    },
+    "total_positive_reactive_energy_no_resetable_er_51312": {
+      "address": 51312,
+      "type": "u16",
+      "access": "r",
+      "description": "Total positive reactive energy (no resetable): er +"
+    }
+  }
+}

@@ -1,0 +1,89 @@
+{
+  "vendor": "B+G e-tech",
+  "model": "WS100",
+  "description": "Imported from mbmd (ws100)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/ws100.go",
+  "registers": {
+    "voltage": {
+      "address": 256,
+      "type": "u32",
+      "access": "ro",
+      "description": "Voltage",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "current": {
+      "address": 258,
+      "type": "s32",
+      "access": "ro",
+      "description": "Current",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "power": {
+      "address": 260,
+      "type": "s32",
+      "access": "ro",
+      "description": "Active power",
+      "function_code": 3
+    },
+    "apparent_power": {
+      "address": 262,
+      "type": "u32",
+      "access": "ro",
+      "description": "Apparent power",
+      "function_code": 3
+    },
+    "reactive_power": {
+      "address": 264,
+      "type": "s32",
+      "access": "ro",
+      "description": "Reactive power",
+      "function_code": 3
+    },
+    "frequency": {
+      "address": 266,
+      "type": "u16",
+      "access": "ro",
+      "description": "Frequency of supply voltages",
+      "function_code": 3,
+      "scale": 0.1
+    },
+    "cosphi": {
+      "address": 267,
+      "type": "s16",
+      "access": "ro",
+      "description": "Power factor",
+      "function_code": 3,
+      "scale": 0.001
+    },
+    "import": {
+      "address": 270,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Import kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "export": {
+      "address": 280,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Export kWh",
+      "function_code": 3,
+      "scale": 0.01
+    },
+    "sum": {
+      "address": 290,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total kWh",
+      "function_code": 3,
+      "scale": 0.01
+    }
+  },
+  "_source_verified": "Verified: B+G E-Tech WS100 single-phase meter confirmed; mbmd source ws100.go verified"
+}

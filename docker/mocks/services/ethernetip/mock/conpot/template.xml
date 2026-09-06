@@ -1,0 +1,28 @@
+<core>
+    <template>
+        <entity name="unit">1756-L71</entity>
+        <entity name="vendor">Rockwell Automation/Allen-Bradley</entity>
+        <entity name="description">Allen-Bradley ControlLogix 5571 EtherNet/IP Controller</entity>
+        <entity name="protocols">enip</entity>
+        <entity name="creator">OIDA ICS Testing Framework</entity>
+    </template>
+    <databus>
+        <key_value_mappings>
+            <key name="FacilityName">
+                <value type="value">"OIDA Test Plant"</value>
+            </key>
+            <key name="SystemName">
+                <value type="value">"ControlLogix Station_1"</value>
+            </key>
+            <key name="SystemDescription">
+                <value type="value">"Allen-Bradley ControlLogix 5571 Processor"</value>
+            </key>
+            <key name="VendorName">
+                <value type="value">"Rockwell Automation/Allen-Bradley"</value>
+            </key>
+            <key name="ProductName">
+                <value type="value">"1756-L71/B LOGIX5571"</value>
+            </key>
+        </key_value_mappings>
+    </databus>
+</core>

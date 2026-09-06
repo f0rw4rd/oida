@@ -1,0 +1,313 @@
+{
+  "vendor": "Heyuan",
+  "model": "DZS 900",
+  "description": "Heyuan DZS 900 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "phase_a_voltage": {
+      "address": 4096,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase A voltage"
+    },
+    "phase_b_voltage": {
+      "address": 4097,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase B voltage"
+    },
+    "phase_c_voltage": {
+      "address": 4098,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase C voltage"
+    },
+    "phase_voltage_mean_value": {
+      "address": 4099,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase voltage mean value"
+    },
+    "zero_sequence_voltage": {
+      "address": 4100,
+      "type": "u16",
+      "access": "r",
+      "description": "Zero sequence voltage"
+    },
+    "phase_line_a_current": {
+      "address": 4101,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase/line A current"
+    },
+    "phase_line_b_current": {
+      "address": 4102,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase/line B current"
+    },
+    "phase_line_c_current": {
+      "address": 4103,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase/line C current"
+    },
+    "zero_sequence_phase_line_current": {
+      "address": 4104,
+      "type": "u16",
+      "access": "r",
+      "description": "Zero sequence phase/line current"
+    },
+    "phase_a_active_power": {
+      "address": 4105,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A active power"
+    },
+    "phase_b_active_power": {
+      "address": 4106,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B active power"
+    },
+    "phase_c_active_power": {
+      "address": 4107,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C active power"
+    },
+    "total_three_phase_active_power": {
+      "address": 4108,
+      "type": "i16",
+      "access": "r",
+      "description": "Total three phase active power"
+    },
+    "phase_a_reactive_power": {
+      "address": 4109,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A reactive power"
+    },
+    "phase_b_reactive_power": {
+      "address": 4110,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B reactive power"
+    },
+    "phase_c_reactive_power": {
+      "address": 4111,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C reactive power"
+    },
+    "total_three_phase_reactive_power": {
+      "address": 4112,
+      "type": "i16",
+      "access": "r",
+      "description": "Total three phase reactive power"
+    },
+    "phase_a_apparent_power": {
+      "address": 4113,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A apparent power"
+    },
+    "phase_b_apparent_power": {
+      "address": 4114,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B apparent power"
+    },
+    "phase_c_apparent_power": {
+      "address": 4115,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C apparent power"
+    },
+    "total_three_phase_apparent_power": {
+      "address": 4116,
+      "type": "i16",
+      "access": "r",
+      "description": "Total three phase apparent power"
+    },
+    "phase_a_power_factor": {
+      "address": 4117,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A power factor"
+    },
+    "phase_b_power_factor": {
+      "address": 4118,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B power factor"
+    },
+    "phase_c_power_factor": {
+      "address": 4119,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C power factor"
+    },
+    "total_three_phase_power_factor": {
+      "address": 4120,
+      "type": "i16",
+      "access": "r",
+      "description": "Total three phase power factor"
+    },
+    "phase_line_a_current_4121": {
+      "address": 4121,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase/line A current"
+    },
+    "phase_line_b_current_4122": {
+      "address": 4122,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase/line B current"
+    },
+    "phase_line_c_current_4123": {
+      "address": 4123,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase/line C current"
+    },
+    "zero_sequence_phase_line_current_4124": {
+      "address": 4124,
+      "type": "i16",
+      "access": "r",
+      "description": "Zero sequence phase/line current"
+    },
+    "phase_a_active_power_4125": {
+      "address": 4125,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A active power"
+    },
+    "phase_b_active_power_4126": {
+      "address": 4126,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B active power"
+    },
+    "phase_c_active_power_4127": {
+      "address": 4127,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C active power"
+    },
+    "total_three_phase_active_power_4128": {
+      "address": 4128,
+      "type": "i16",
+      "access": "r",
+      "description": "Total three phase active power"
+    },
+    "phase_a_reactive_power_4129": {
+      "address": 4129,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A reactive power"
+    },
+    "phase_b_reactive_power_4130": {
+      "address": 4130,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B reactive power"
+    },
+    "phase_c_reactive_power_4131": {
+      "address": 4131,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C reactive power"
+    },
+    "total_three_phase_reactive_power_4132": {
+      "address": 4132,
+      "type": "i16",
+      "access": "r",
+      "description": "Total three phase reactive power"
+    },
+    "phase_a_apparent_power_4133": {
+      "address": 4133,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A apparent power"
+    },
+    "phase_b_apparent_power_4134": {
+      "address": 4134,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B apparent power"
+    },
+    "phase_c_apparent_power_4135": {
+      "address": 4135,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C apparent power"
+    },
+    "total_three_phase_apparent_power_4136": {
+      "address": 4136,
+      "type": "i16",
+      "access": "r",
+      "description": "Total three phase apparent power"
+    },
+    "phase_a_power_factor_4137": {
+      "address": 4137,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A power factor"
+    },
+    "phase_b_power_factor_4138": {
+      "address": 4138,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B power factor"
+    },
+    "phase_c_power_factor_4139": {
+      "address": 4139,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C power factor"
+    },
+    "total_three_phase_power_factor_4140": {
+      "address": 4140,
+      "type": "i16",
+      "access": "r",
+      "description": "Total three phase power factor"
+    },
+    "phase_line_a_current_4141": {
+      "address": 4141,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase/line A current"
+    },
+    "phase_line_b_current_4142": {
+      "address": 4142,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase/line B current"
+    },
+    "phase_line_c_current_4143": {
+      "address": 4143,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase/line C current"
+    },
+    "zero_sequence_phase_line_current_4144": {
+      "address": 4144,
+      "type": "i16",
+      "access": "r",
+      "description": "Zero sequence phase/line current"
+    },
+    "phase_a_active_power_4145": {
+      "address": 4145,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A active power"
+    }
+  }
+}

@@ -1,0 +1,72 @@
+# OIDA real-stack BACnet mock - genuine bacnet-stack "bacserv" server
+#
+# Builds Steve Karg's bacnet-stack reference BACnet/IP server (bacserv) from
+# source at a RECENT STABLE tag (NOT a vulnerable version) and layers a
+# profile-specific object inventory on top so OIDA's bacnet scanner gets real
+# Who-Is / I-Am / ReadProperty / object-enumeration responses.
+#
+# Upstream: https://github.com/bacnet-stack/bacnet-stack  (bacnet.sourceforge.net)
+# License:  the library is GPL-2.0-or-later WITH GCC-exception-2.0; the
+#           apps/server (bacserv) demo sources are MIT/Apache-2.0. We build
+#           bacserv from source at image-build time and run it; NO prebuilt
+#           binaries are committed to this repo and nothing is redistributed.
+# SPDX-License-Identifier: GPL-2.0-or-later WITH GCC-exception-2.0
+#
+# Pinned tag is supplied via build-arg so the compose file controls it.
+
+FROM debian:bookworm-slim AS build
+
+ARG BACNET_TAG=bacnet-stack-1.4.4
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      git build-essential ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /build
+RUN git clone --depth 1 --branch "${BACNET_TAG}" \
+      https://github.com/bacnet-stack/bacnet-stack.git
+WORKDIR /build/bacnet-stack
+
+# Drop the OIDA object-profile fragment next to the demo server sources.
+COPY profile.inc apps/server/profile.inc
+
+# Inject the fragment into apps/server/main.c without touching the Makefile:
+#   1. #include "profile.inc"  right after the device.h object include
+#   2. Server_Profile_Init();  right after the stock dynamic-create loop
+# Both insertions are verified with grep -qF so a layout change fails the build
+# loudly instead of silently producing a stock server.
+RUN sed -i 's@#include "bacnet/basic/object/device.h"@#include "bacnet/basic/object/device.h"\n#include "profile.inc"@' apps/server/main.c && \
+    sed -i 's@^\( *\)/\* we need to handle who-is to support dynamic device binding \*/@\1Server_Profile_Init();\n\1/* we need to handle who-is to support dynamic device binding */@' apps/server/main.c && \
+    grep -qF '#include "profile.inc"' apps/server/main.c && \
+    grep -qF 'Server_Profile_Init();' apps/server/main.c
+
+# Build the BACnet/IP datalink server (bacserv). LEGACY=true matches the
+# build target used elsewhere in this repo for this app.
+#
+# MAKE_DEFINE=-DBACFILE=1 enables the File object (AtomicReadFile/WriteFile):
+# upstream only defines BACFILE for the BSC datalink, so a plain BACDL=bip build
+# compiles bacfile.c but excludes OBJECT_FILE from the device object-table and
+# drops the file-service handlers. The building profile's File objects need it.
+RUN make BACDL=bip LEGACY=true MAKE_DEFINE=-DBACFILE=1 -s -C apps server && \
+    test -x apps/server/bacserv && \
+    cp apps/server/bacserv /usr/local/bin/bacserv
+
+# ---- runtime image: no toolchain, just the binary ----
+FROM debian:bookworm-slim
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+      netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY --from=build /usr/local/bin/bacserv /usr/local/bin/bacserv
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
+
+ENV BACNET_IP_PORT=47808 \
+    BACNET_DEVICE_INSTANCE=1234 \
+    BACNET_DEVICE_NAME=OIDA-BACnet-Device \
+    BACNET_PROFILE=rtu
+
+EXPOSE 47808/udp
+
+CMD ["/entrypoint.sh"]

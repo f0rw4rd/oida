@@ -1,0 +1,59 @@
+name: PR quick check
+
+# Manual-only (to conserve Actions minutes): run from the Actions tab or
+# `gh workflow run pr.yml`. Runs lint (seconds) + unit/contract tests on a
+# single Python version; the full 3.10/3.11/3.12 matrix lives in ci.yml.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  quick:
+    name: Ruff lint & format
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "0.11.18"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.12"
+
+      - name: Sync dev tools from lockfile
+        run: uv sync --extra dev --frozen
+
+      - name: Ruff lint
+        run: uv run ruff check src/oida/
+
+      - name: Ruff format check
+        run: uv run ruff format --check src/oida/
+
+  unit:
+    name: Unit & contract tests (Python 3.12)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "0.11.18"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.12"
+
+      - name: Sync environment from lockfile
+        run: uv sync --all-extras --frozen
+
+      - name: Unit & contract tests
+        # Exclude tests/unit/pcap (shell out to tshark; version-sensitive — they
+        # belong in an integration job with a pinned tshark). -n auto keeps the
+        # ~13k-test suite to a few minutes; the full 3-version matrix is in ci.yml.
+        run: uv run pytest tests/unit/ tests/contracts/ --ignore=tests/unit/pcap -n auto --dist worksteal -q

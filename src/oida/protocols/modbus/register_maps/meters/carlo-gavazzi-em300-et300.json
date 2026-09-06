@@ -1,0 +1,350 @@
+{
+  "vendor": "Carlo Gavazzi",
+  "model": "EM 300 ET 300",
+  "description": "Carlo Gavazzi EM 300 ET 300 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "v_l2_n": {
+      "address": 2,
+      "type": "i32",
+      "access": "r",
+      "description": "V L2 N",
+      "unit": "Volt"
+    },
+    "v_l3_n": {
+      "address": 4,
+      "type": "i32",
+      "access": "r",
+      "description": "V L3 N",
+      "unit": "Volt"
+    },
+    "v_l1_l2": {
+      "address": 6,
+      "type": "i32",
+      "access": "r",
+      "description": "V L1 L2",
+      "unit": "Volt"
+    },
+    "v_l2_l3": {
+      "address": 8,
+      "type": "i32",
+      "access": "r",
+      "description": "V L2 L3",
+      "unit": "Volt"
+    },
+    "v_l3_l1": {
+      "address": 10,
+      "type": "i32",
+      "access": "r",
+      "description": "V L3 L1",
+      "unit": "Volt"
+    },
+    "a_l1": {
+      "address": 12,
+      "type": "i32",
+      "access": "r",
+      "description": "A L1",
+      "unit": "Ampere"
+    },
+    "a_l2": {
+      "address": 14,
+      "type": "i32",
+      "access": "r",
+      "description": "A L2",
+      "unit": "Ampere"
+    },
+    "a_l3": {
+      "address": 16,
+      "type": "i32",
+      "access": "r",
+      "description": "A L3",
+      "unit": "Ampere"
+    },
+    "kw_l1": {
+      "address": 18,
+      "type": "i32",
+      "access": "r",
+      "description": "Kw L1",
+      "unit": "Watt"
+    },
+    "kw_l2": {
+      "address": 20,
+      "type": "i32",
+      "access": "r",
+      "description": "Kw L2",
+      "unit": "Watt"
+    },
+    "kw_l3": {
+      "address": 22,
+      "type": "i32",
+      "access": "r",
+      "description": "Kw L3",
+      "unit": "Watt"
+    },
+    "kva_l1": {
+      "address": 24,
+      "type": "i32",
+      "access": "r",
+      "description": "Kva L1"
+    },
+    "kva_l2": {
+      "address": 26,
+      "type": "i32",
+      "access": "r",
+      "description": "Kva L2"
+    },
+    "kva_l3": {
+      "address": 28,
+      "type": "i32",
+      "access": "r",
+      "description": "Kva L3"
+    },
+    "kvar_l1": {
+      "address": 30,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvar L1",
+      "unit": "var"
+    },
+    "kvar_l2": {
+      "address": 32,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvar L2",
+      "unit": "var"
+    },
+    "kvar_l3": {
+      "address": 34,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvar L3",
+      "unit": "var"
+    },
+    "v_l_n_sys": {
+      "address": 36,
+      "type": "i32",
+      "access": "r",
+      "description": "V L N sys",
+      "unit": "Volt"
+    },
+    "v_l_l_sys": {
+      "address": 38,
+      "type": "i32",
+      "access": "r",
+      "description": "V L L sys",
+      "unit": "Volt"
+    },
+    "kw_sys": {
+      "address": 40,
+      "type": "i32",
+      "access": "r",
+      "description": "Kw sys",
+      "unit": "Watt"
+    },
+    "kva_sys": {
+      "address": 42,
+      "type": "i32",
+      "access": "r",
+      "description": "Kva sys"
+    },
+    "kvar_sys": {
+      "address": 44,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvar sys",
+      "unit": "var"
+    },
+    "pf_l1": {
+      "address": 46,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf L1"
+    },
+    "pf_l2": {
+      "address": 47,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf L2"
+    },
+    "pf_l3": {
+      "address": 48,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf L3"
+    },
+    "pf_sys": {
+      "address": 49,
+      "type": "i16",
+      "access": "r",
+      "description": "Pf sys"
+    },
+    "phase_sequence": {
+      "address": 50,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase sequence"
+    },
+    "hz": {
+      "address": 51,
+      "type": "i16",
+      "access": "r",
+      "description": "Hz",
+      "unit": "Hz"
+    },
+    "kwh_tot": {
+      "address": 52,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh (+) tot",
+      "unit": "kWh"
+    },
+    "kvarh_tot": {
+      "address": 54,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh (+) tot",
+      "unit": "kvar"
+    },
+    "kw_dmd": {
+      "address": 56,
+      "type": "i32",
+      "access": "r",
+      "description": "Kw dmd",
+      "unit": "Watt"
+    },
+    "kw_dmd_peak": {
+      "address": 58,
+      "type": "i32",
+      "access": "r",
+      "description": "Kw dmd peak",
+      "unit": "Watt"
+    },
+    "kwh_partial": {
+      "address": 60,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh (+) partial",
+      "unit": "kWh"
+    },
+    "kvarh_partial": {
+      "address": 62,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh (+) partial",
+      "unit": "kvar"
+    },
+    "kwh_l1": {
+      "address": 64,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh (+) L1",
+      "unit": "kWh"
+    },
+    "kwh_l2": {
+      "address": 66,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh (+) L2",
+      "unit": "kWh"
+    },
+    "kwh_l3": {
+      "address": 68,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh (+) L3",
+      "unit": "kWh"
+    },
+    "kwh_t1": {
+      "address": 70,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh (+) t1",
+      "unit": "kWh"
+    },
+    "kwh_t2": {
+      "address": 72,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh (+) t2",
+      "unit": "kWh"
+    },
+    "kwh_t3": {
+      "address": 74,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh (+) t3",
+      "unit": "kWh"
+    },
+    "kwh_t4": {
+      "address": 76,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh (+) t4",
+      "unit": "kWh"
+    },
+    "kwh_tot_78": {
+      "address": 78,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh ( ) tot",
+      "unit": "kWh"
+    },
+    "kvarh_tot_80": {
+      "address": 80,
+      "type": "i32",
+      "access": "r",
+      "description": "Kvarh ( ) tot",
+      "unit": "kvar"
+    },
+    "hour_meter": {
+      "address": 90,
+      "type": "i32",
+      "access": "r",
+      "description": "Hour meter"
+    },
+    "kwh_l1_96": {
+      "address": 96,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh ( ) L1",
+      "unit": "kWh"
+    },
+    "kwh_l2_98": {
+      "address": 98,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh ( ) L2",
+      "unit": "kWh"
+    },
+    "kwh_l3_100": {
+      "address": 100,
+      "type": "i32",
+      "access": "r",
+      "description": "Kwh ( ) L3",
+      "unit": "kWh"
+    },
+    "thd_a_l1": {
+      "address": 130,
+      "type": "i32",
+      "access": "r",
+      "description": "Thd A L1"
+    },
+    "thd_a_l2": {
+      "address": 132,
+      "type": "i32",
+      "access": "r",
+      "description": "Thd A L2"
+    },
+    "thd_a_l3": {
+      "address": 134,
+      "type": "i32",
+      "access": "r",
+      "description": "Thd A L3"
+    }
+  }
+}

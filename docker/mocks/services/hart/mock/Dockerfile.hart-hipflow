@@ -1,0 +1,121 @@
+# SPDX-License-Identifier: Apache-2.0
+#
+# FieldComm Group HART-IP reference device: hipserver + hipflowapp.
+# Builds a genuine, fully-functioning HART-IP field device from upstream source.
+#
+#   hipserver   - HART-IP comms stack (sessions, subscriptions, TLS-capable)
+#                 https://github.com/FieldCommGroup/hipserver
+#                 pinned commit 8c5b565a93c3bb50a8eec47df62d2b3ea2edd45c
+#   hipflowapp  - HART 5/HART 7 flow-device application (universal cmds, PV/SV/TV/QV)
+#                 https://github.com/FieldCommGroup/hipflowapp
+#                 pinned commit 1c5b22112b95f4e7e14cb62539c3806f98040c1e
+#
+# Both projects are licensed Apache-2.0 by FieldComm Group, Inc. Only Dockerfiles
+# and authored config are committed to this repo; all binaries are built from
+# source at image-build time (no committed binaries).
+#
+# HART revision is a COMPILE-TIME choice in hipflowapp via the -D_IS_HART7 flag
+# in Hip_Native/Makefile_macros.inc:
+#   HART_VERSION=7 -> keep -D_IS_HART7 -> INIT_UNIV_REV 0x07, Cmd0 emits the
+#                     HART7 extended identity fields (devVarCnt, configChangeCnt,
+#                     extended status, MfgId, private-label distributor, profile)
+#   HART_VERSION=5 -> strip -D_IS_HART7 -> INIT_UNIV_REV 0x05, short Cmd0 identity
+#
+# DEVICE_TAG overrides the 8-char short tag baked into configuration_Default.h so
+# the two services are distinctly identifiable to a scanner.
+#
+# Launch model: `hipserver -p <port> <app-path>`. The "-p" must immediately
+# follow argv[0] (main.c checks argv[i-1] contains the tool name). hipserver then
+# system()-launches the hipflowapp device app and bridges token-passing PDUs.
+#
+# A device-identity brick guard: hipserver bricks (locked version -255) on first
+# session unless /var/lib/hipServer/hipServer.conf carries "version":"1". The
+# entrypoint seeds that file so the plaintext HART-IP v1 device answers Cmd 0.
+
+ARG HART_VERSION=7
+
+# ----------------------------------------------------------------------------
+FROM ubuntu:22.04 AS builder
+ARG HART_VERSION
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    build-essential \
+    g++ \
+    git \
+    make \
+    libssl-dev \
+    libjsoncpp-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /src
+# Pin both repos to specific commits for reproducibility (no moving HEAD).
+RUN git clone https://github.com/FieldCommGroup/hipserver.git && \
+    git -C hipserver checkout 8c5b565a93c3bb50a8eec47df62d2b3ea2edd45c && \
+    git clone https://github.com/FieldCommGroup/hipflowapp.git && \
+    git -C hipflowapp checkout 1c5b22112b95f4e7e14cb62539c3806f98040c1e
+
+# hipflowapp references hipserver as an (uncloned) submodule dir; fill it with
+# the pinned hipserver checkout so the combined device app links.
+RUN rm -rf /src/hipflowapp/hipflowapp/Hip_Native/hipserver && \
+    cp -r /src/hipserver /src/hipflowapp/hipflowapp/Hip_Native/hipserver
+
+ARG DEVICE_TAG=NATIVEPI
+WORKDIR /src/hipflowapp/hipflowapp/Hip_Native
+
+# COMPILE-TIME HART 5 vs HART 7 selection + distinct device tag.
+RUN set -eux; \
+    if [ "$HART_VERSION" = "5" ]; then \
+        sed -i 's/-D_IS_HART7 //' Makefile_macros.inc; \
+    fi; \
+    sed -i "s/#define INIT_TAG            \"NATIVEPI\"/#define INIT_TAG            \"${DEVICE_TAG}\"/" configuration_Default.h; \
+    echo "=== CFLAGS ==="; grep '^CFLAGS' Makefile_macros.inc; \
+    echo "=== INIT_TAG ==="; grep 'INIT_TAG' configuration_Default.h
+
+# Build the hipserver comms-stack binary (Server/).
+RUN make -C hipserver/hipserver/Server
+# Build the hipflowapp device-app binary (Hip_Native top Makefile).
+RUN make
+
+# ----------------------------------------------------------------------------
+FROM ubuntu:22.04
+ENV DEBIAN_FRONTEND=noninteractive
+
+RUN apt-get update && apt-get install -y \
+    libssl3 \
+    libjsoncpp25 \
+    libconfig9 \
+    netcat-openbsd \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Copy the two freshly-built binaries (distinct names so neither shadows a dir).
+COPY --from=builder /src/hipflowapp/hipflowapp/Hip_Native/hipserver/hipserver/Server/hipserver /app/hipserver
+COPY --from=builder /src/hipflowapp/hipflowapp/Hip_Native/hipflowapp /app/hipflowapp
+# readonly.json controls the read-only command allow-list (defensive default).
+COPY --from=builder /src/hipflowapp/hipflowapp/Hip_Native/hipserver/hipserver/Server/readonly.json /app/readonly.json
+
+# hipServer.conf: "version":"1" pins plaintext HART-IP v1 and avoids the
+# bricked-state (locked version -255) that hipserver enters when unprovisioned.
+RUN printf '%s' '{"version":"1","slots":[{"clientIdentifier":"HART-IPClient","clientSecurityOptions":"0","key":"7777772e68617274636f6d6d2e6f7267","password":"!1HARTIPhighway","slot":"0"}],"supTCPPort":"0","supUDPPort":"0","syslogHOSTNAME":"","syslogIPPort":"514","syslogKey":"","syslogPassword":""}' > /app/hipServer.conf
+
+RUN printf '#!/bin/bash\n\
+set -e\n\
+mkdir -p /var/lib/hipServer\n\
+cp -n /app/readonly.json    /var/lib/hipServer/readonly.json\n\
+cp    /app/hipServer.conf   /var/lib/hipServer/hipServer.conf\n\
+echo "========================================"\n\
+echo "FieldComm HART-IP device (hipserver + hipflowapp)"\n\
+echo "  Port:  ${HART_PORT:-5094} (UDP + TCP)"\n\
+echo "========================================"\n\
+cd /app\n\
+exec /app/hipserver -p ${HART_PORT:-5094} /app/hipflowapp\n' > /app/start.sh && chmod +x /app/start.sh
+
+EXPOSE 5094/udp
+EXPOSE 5094/tcp
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=30s \
+    CMD nc -zu localhost 5094 || exit 1
+
+CMD ["/app/start.sh"]

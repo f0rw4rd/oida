@@ -1,0 +1,564 @@
+{
+  "vendor": "Deye",
+  "model": "Hybrid Inverter",
+  "description": "Deye hybrid inverters (single phase/dual phase)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Converted from deye-inverter-mqtt project. Holding registers (FC03).",
+  "source": "https://github.com/kbialek/deye-inverter-mqtt",
+  "registers": {
+    "pv1_power": {
+      "address": 186,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "PV1 Power"
+    },
+    "pv2_power": {
+      "address": 187,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "PV2 Power"
+    },
+    "pv1_voltage": {
+      "address": 109,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV1 Voltage"
+    },
+    "pv2_voltage": {
+      "address": 111,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "PV2 Voltage"
+    },
+    "pv1_current": {
+      "address": 110,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "PV1 Current"
+    },
+    "pv2_current": {
+      "address": 112,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "PV2 Current"
+    },
+    "daily_production": {
+      "address": 108,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily Production"
+    },
+    "total_production": {
+      "address": 96,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total Production"
+    },
+    "micro_inverter_power": {
+      "address": 166,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "Micro-inverter Power"
+    },
+    "total_battery_charge": {
+      "address": 72,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total Battery Charge"
+    },
+    "total_battery_discharge": {
+      "address": 74,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total Battery Discharge"
+    },
+    "daily_battery_charge": {
+      "address": 70,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily Battery Charge"
+    },
+    "daily_battery_discharge": {
+      "address": 71,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily Battery Discharge"
+    },
+    "battery_status": {
+      "address": 189,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Status"
+    },
+    "battery_power": {
+      "address": 190,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Battery Power"
+    },
+    "battery_voltage": {
+      "address": 183,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Battery Voltage"
+    },
+    "battery_soc": {
+      "address": 184,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "Battery SOC"
+    },
+    "battery_current": {
+      "address": 191,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Battery Current"
+    },
+    "battery_temperature": {
+      "address": 182,
+      "type": "u16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "offset": -100,
+      "description": "Battery Temperature"
+    },
+    "total_grid_power": {
+      "address": 169,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Total Grid Power"
+    },
+    "grid_voltage_l1": {
+      "address": 150,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid Voltage L1"
+    },
+    "grid_voltage_l2": {
+      "address": 151,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid Voltage L2"
+    },
+    "internal_ct_l1_power": {
+      "address": 167,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Internal CT L1 Power"
+    },
+    "internal_ct_l2_power": {
+      "address": 168,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Internal CT L2 Power"
+    },
+    "external_ct_l1_power": {
+      "address": 170,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "External CT L1 Power"
+    },
+    "external_ct_l2_power": {
+      "address": 171,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "External CT L2 Power"
+    },
+    "daily_energy_bought": {
+      "address": 76,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily Energy Bought"
+    },
+    "total_energy_bought": {
+      "address": 78,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total Energy Bought"
+    },
+    "daily_energy_sold": {
+      "address": 77,
+      "type": "u16",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily Energy Sold"
+    },
+    "total_energy_sold": {
+      "address": 81,
+      "type": "u32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total Energy Sold"
+    },
+    "total_power": {
+      "address": 175,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Total Power"
+    },
+    "current_l1": {
+      "address": 164,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Current L1"
+    },
+    "current_l2": {
+      "address": 165,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Current L2"
+    },
+    "inverter_l1_power": {
+      "address": 173,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Inverter L1 Power"
+    },
+    "inverter_l2_power": {
+      "address": 174,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Inverter L2 Power"
+    },
+    "load_frequency": {
+      "address": 192,
+      "type": "u16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Load Frequency"
+    },
+    "dc_temperature": {
+      "address": 90,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "offset": -100,
+      "description": "DC Temperature"
+    },
+    "ac_temperature": {
+      "address": 91,
+      "type": "i16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "offset": -100,
+      "description": "AC Temperature"
+    },
+    "time_of_use_enabled": {
+      "address": 248,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Enabled"
+    },
+    "time_of_use_time_1": {
+      "address": 250,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Time 1"
+    },
+    "time_of_use_time_2": {
+      "address": 251,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Time 2"
+    },
+    "time_of_use_time_3": {
+      "address": 252,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Time 3"
+    },
+    "time_of_use_time_4": {
+      "address": 253,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Time 4"
+    },
+    "time_of_use_time_5": {
+      "address": 254,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Time 5"
+    },
+    "time_of_use_time_6": {
+      "address": 255,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Time 6"
+    },
+    "time_of_use_power_1": {
+      "address": 256,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Power 1"
+    },
+    "time_of_use_power_2": {
+      "address": 257,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Power 2"
+    },
+    "time_of_use_power_3": {
+      "address": 258,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Power 3"
+    },
+    "time_of_use_power_4": {
+      "address": 259,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Power 4"
+    },
+    "time_of_use_power_5": {
+      "address": 260,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Power 5"
+    },
+    "time_of_use_power_6": {
+      "address": 261,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Power 6"
+    },
+    "time_of_use_voltage_1": {
+      "address": 262,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Time of Use Voltage 1"
+    },
+    "time_of_use_voltage_2": {
+      "address": 263,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Time of Use Voltage 2"
+    },
+    "time_of_use_voltage_3": {
+      "address": 264,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Time of Use Voltage 3"
+    },
+    "time_of_use_voltage_4": {
+      "address": 265,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Time of Use Voltage 4"
+    },
+    "time_of_use_voltage_5": {
+      "address": 266,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Time of Use Voltage 5"
+    },
+    "time_of_use_voltage_6": {
+      "address": 267,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "Time of Use Voltage 6"
+    },
+    "time_of_use_soc_1": {
+      "address": 268,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use SOC 1"
+    },
+    "time_of_use_soc_2": {
+      "address": 269,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use SOC 2"
+    },
+    "time_of_use_soc_3": {
+      "address": 270,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use SOC 3"
+    },
+    "time_of_use_soc_4": {
+      "address": 271,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use SOC 4"
+    },
+    "time_of_use_soc_5": {
+      "address": 272,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use SOC 5"
+    },
+    "time_of_use_soc_6": {
+      "address": 273,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use SOC 6"
+    },
+    "time_of_use_enable_1": {
+      "address": 274,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Enable 1"
+    },
+    "time_of_use_enable_2": {
+      "address": 275,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Enable 2"
+    },
+    "time_of_use_enable_3": {
+      "address": 276,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Enable 3"
+    },
+    "time_of_use_enable_4": {
+      "address": 277,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Enable 4"
+    },
+    "time_of_use_enable_5": {
+      "address": 278,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Enable 5"
+    },
+    "time_of_use_enable_6": {
+      "address": 279,
+      "type": "u16",
+      "access": "r",
+      "description": "Time of Use Enable 6"
+    },
+    "bms1_charging_voltage": {
+      "address": 312,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "BMS1 Charging Voltage"
+    },
+    "bms1_discharge_voltage": {
+      "address": 313,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "BMS1 Discharge Voltage"
+    },
+    "bms1_charge_current_limit": {
+      "address": 314,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "description": "BMS1 Charge Current Limit"
+    },
+    "bms1_discharge_current_limit": {
+      "address": 315,
+      "type": "u16",
+      "access": "r",
+      "unit": "A",
+      "description": "BMS1 Discharge Current Limit"
+    },
+    "bms1_soc": {
+      "address": 316,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "BMS1 SOC"
+    },
+    "bms1_voltage": {
+      "address": 317,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.01,
+      "description": "BMS1 Voltage"
+    },
+    "bms1_current": {
+      "address": 318,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "description": "BMS1 Current"
+    },
+    "bms1_temp": {
+      "address": 319,
+      "type": "u16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "BMS1 Temperature"
+    }
+  },
+  "_source_verified": "Verified: Registers 186/187/109 confirmed against kellerza/sunsynk sensor definitions. Source: github.com/kbialek/deye-inverter-mqtt"
+}

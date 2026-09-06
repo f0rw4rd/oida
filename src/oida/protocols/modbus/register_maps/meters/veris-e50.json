@@ -1,0 +1,363 @@
+{
+  "vendor": "Veris",
+  "model": "E 50",
+  "description": "Veris E 50 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "real_energy_consumption": {
+      "address": 1,
+      "type": "u32",
+      "access": "r",
+      "description": "Real energy consumption",
+      "unit": "kWh"
+    },
+    "total_instantaneous_real_power_3_phase_total": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Total instantaneous real power (3 phase total)",
+      "unit": "kW"
+    },
+    "total_instantaneous_reactive_power_3_phase_total": {
+      "address": 4,
+      "type": "u16",
+      "access": "r",
+      "description": "Total instantaneous reactive power (3 phase total)",
+      "unit": "kVAR"
+    },
+    "total_instantaneous_apparent_power_3_phase_total": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "description": "Total instantaneous apparent power (3 phase total)",
+      "unit": "KVA"
+    },
+    "total_power_factor_total_kw_total_kva": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Total power factor (total kw /total kva)",
+      "unit": "Ratio"
+    },
+    "voltage_l_l_average_of_3_phases": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, L l, average of 3 phases",
+      "unit": "Volt"
+    },
+    "voltage_l_ii_average_of_3_phases": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, L ii, average of 3 phases",
+      "unit": "Volt"
+    },
+    "current_average_of_3_phases": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, average of 3 phases",
+      "unit": "Amp"
+    },
+    "real_power_phase_a": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Real power, phase A",
+      "unit": "kW"
+    },
+    "real_power_phase_b": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Real power, phase B",
+      "unit": "kW"
+    },
+    "real_power_phase_c": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Real power, phase C",
+      "unit": "kW"
+    },
+    "power_factor_phase_a": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "Power factor, phase A",
+      "unit": "Ratio"
+    },
+    "power_factor_phase_b": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Power factor, phase B",
+      "unit": "Ratio"
+    },
+    "power_factor_phase_c": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "description": "Power factor, phase C",
+      "unit": "Ratio"
+    },
+    "voltage_phase_a_b": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, phase A B",
+      "unit": "Volt"
+    },
+    "voltage_phase_b_c": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, phase B C",
+      "unit": "Volt"
+    },
+    "voltage_phase_a_c": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, phase A C",
+      "unit": "Volt"
+    },
+    "voltage_phase_a_n": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, phase A N",
+      "unit": "Volt"
+    },
+    "voltage_phase_b_n": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, phase B N",
+      "unit": "Volt"
+    },
+    "voltage_phase_c_n": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, phase C N",
+      "unit": "Volt"
+    },
+    "current_instantaneous_phase_a": {
+      "address": 22,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, instantaneous, phase A",
+      "unit": "Amp"
+    },
+    "current_instantaneous_phase_b": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, instantaneous, phase B",
+      "unit": "Amp"
+    },
+    "ljrrent_instantaneous_phase_c": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "Ljrrent, instantaneous, phase C",
+      "unit": "Amp"
+    },
+    "frequency_derived_from_phase_a": {
+      "address": 26,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency (derived from phase A)",
+      "unit": "Hz"
+    },
+    "apparent_power_phase_a": {
+      "address": 31,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent power phase A",
+      "unit": "KVA"
+    },
+    "apparent_power_phase_b": {
+      "address": 32,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent power phase B",
+      "unit": "KVA"
+    },
+    "reactive_power_phase_a": {
+      "address": 34,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive power, phase A",
+      "unit": "kVAR"
+    },
+    "reactive_power_phase_b": {
+      "address": 35,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive power, phase B",
+      "unit": "kVAR"
+    },
+    "reactive_power_phase_c": {
+      "address": 36,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive power, phase C",
+      "unit": "kVAR"
+    },
+    "total_real_power_present_demand": {
+      "address": 37,
+      "type": "u16",
+      "access": "r",
+      "description": "Total real power present demand",
+      "unit": "kW"
+    },
+    "total_reactive_power_present_demand": {
+      "address": 38,
+      "type": "u16",
+      "access": "r",
+      "description": "Total reactive power present demand",
+      "unit": "kVAR"
+    },
+    "total_apparent_power_present_demand": {
+      "address": 39,
+      "type": "u16",
+      "access": "r",
+      "description": "Total apparent power present demand",
+      "unit": "KVA"
+    },
+    "total_real_power_max_demand": {
+      "address": 40,
+      "type": "u16",
+      "access": "r",
+      "description": "Total real power max demand",
+      "unit": "kW"
+    },
+    "total_reactive_power_max_demand": {
+      "address": 41,
+      "type": "u16",
+      "access": "r",
+      "description": "Total reactive power max demand",
+      "unit": "kVAR"
+    },
+    "total_apparent_power_max_demand": {
+      "address": 42,
+      "type": "u16",
+      "access": "r",
+      "description": "Total apparent power max demand",
+      "unit": "KVA"
+    },
+    "real_energy_consumption_clear_via_reset_register": {
+      "address": 257,
+      "type": "f32",
+      "access": "r",
+      "description": "Real energy consumption (clear via reset register)",
+      "unit": "kWh"
+    },
+    "real_energy_consumption_clear_via_reset_register_259": {
+      "address": 259,
+      "type": "f32",
+      "access": "r",
+      "description": "Real energy consumption (clear via reset register)",
+      "unit": "kWh"
+    },
+    "total_instantaneous_real_power": {
+      "address": 261,
+      "type": "f32",
+      "access": "r",
+      "description": "Total instantaneous real power",
+      "unit": "kW"
+    },
+    "total_instantaneous_reactive_power": {
+      "address": 263,
+      "type": "f32",
+      "access": "r",
+      "description": "Total instantaneous reactive power",
+      "unit": "kVAk"
+    },
+    "total_instantaneous_apparent_power": {
+      "address": 265,
+      "type": "f32",
+      "access": "r",
+      "description": "Total instantaneous apparent power",
+      "unit": "kVA"
+    },
+    "total_power_factor_total_kw_total_kva_267": {
+      "address": 267,
+      "type": "f32",
+      "access": "r",
+      "description": "Total power factor (total kw / total kva)",
+      "unit": "Ratio"
+    },
+    "current_average_of_3_phases_273": {
+      "address": 273,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, average of 3 phases",
+      "unit": "Amp"
+    },
+    "real_power_phase_a_275": {
+      "address": 275,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power phase A",
+      "unit": "kW"
+    },
+    "real_power_phase_b_277": {
+      "address": 277,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power phase B",
+      "unit": "kW"
+    },
+    "real_power_phase_c_279": {
+      "address": 279,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power phase C",
+      "unit": "kW"
+    },
+    "power_factor_phase_a_281": {
+      "address": 281,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase A",
+      "unit": "Ratio"
+    },
+    "power_factor_phase_b_283": {
+      "address": 283,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase B",
+      "unit": "Ratio"
+    },
+    "power_factor_phase_c_285": {
+      "address": 285,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor phase C",
+      "unit": "Ratio"
+    },
+    "voltage_phase_a_b_287": {
+      "address": 287,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, phase A B",
+      "unit": "Volt"
+    },
+    "voltage_phase_b_c_289": {
+      "address": 289,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, phase B C",
+      "unit": "Volt"
+    }
+  }
+}

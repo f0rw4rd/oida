@@ -1,0 +1,139 @@
+{
+  "vendor": "SmaSolarInverter",
+  "model": "SmaSolarInverter",
+  "description": "Imported from nymea-plugins-modbus (sma)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "nymea-plugins-modbus/sma/sma-solar-inverter-registers.json",
+  "registers": {
+    "deviceName": {
+      "address": 40631,
+      "type": "str",
+      "access": "ro",
+      "description": "Device name"
+    },
+    "deviceClass": {
+      "address": 30051,
+      "type": "u32",
+      "access": "ro",
+      "description": "Device class"
+    },
+    "modelIdentifier": {
+      "address": 30053,
+      "type": "u32",
+      "access": "ro",
+      "description": "Device type (model identifier)"
+    },
+    "serialNumber": {
+      "address": 30057,
+      "type": "u32",
+      "access": "ro",
+      "description": "Serial number"
+    },
+    "softwarePackage": {
+      "address": 30059,
+      "type": "u32",
+      "access": "ro",
+      "description": "Firmware version"
+    },
+    "totalYield": {
+      "address": 30513,
+      "type": "u64",
+      "access": "ro",
+      "description": "Total yield",
+      "unit": "Wh"
+    },
+    "dailyYield": {
+      "address": 30517,
+      "type": "u64",
+      "access": "ro",
+      "description": "Today yield",
+      "unit": "Wh"
+    },
+    "currentPower": {
+      "address": 30775,
+      "type": "i32",
+      "access": "ro",
+      "description": "Current power",
+      "unit": "W"
+    },
+    "currentPowerPhaseA": {
+      "address": 30777,
+      "type": "i32",
+      "access": "ro",
+      "description": "Current power L1",
+      "unit": "W"
+    },
+    "currentPowerPhaseB": {
+      "address": 30779,
+      "type": "i32",
+      "access": "ro",
+      "description": "Current power L2",
+      "unit": "W"
+    },
+    "currentPowerPhaseC": {
+      "address": 30781,
+      "type": "i32",
+      "access": "ro",
+      "description": "Current power L3",
+      "unit": "W"
+    },
+    "gridVoltagePhaseA": {
+      "address": 30783,
+      "type": "u32",
+      "access": "ro",
+      "description": "Grid voltage L1",
+      "unit": "V"
+    },
+    "gridVoltagePhaseB": {
+      "address": 30785,
+      "type": "u32",
+      "access": "ro",
+      "description": "Grid voltage L2",
+      "unit": "V"
+    },
+    "gridVoltagePhaseC": {
+      "address": 30787,
+      "type": "u32",
+      "access": "ro",
+      "description": "Grid voltage L3",
+      "unit": "V"
+    },
+    "gridCurrentPhaseA": {
+      "address": 30977,
+      "type": "i32",
+      "access": "ro",
+      "description": "Grid current L1",
+      "unit": "A"
+    },
+    "gridCurrentPhaseB": {
+      "address": 30979,
+      "type": "i32",
+      "access": "ro",
+      "description": "Grid current L2",
+      "unit": "A"
+    },
+    "gridCurrentPhaseC": {
+      "address": 30981,
+      "type": "i32",
+      "access": "ro",
+      "description": "Grid current L3",
+      "unit": "A"
+    }
+  },
+  "enums": {
+    "Condition": {
+      "35": "Fault",
+      "303": "Off",
+      "307": "Ok",
+      "455": "Warning"
+    },
+    "RecommendedAction": {
+      "336": "ContactManufacturer",
+      "337": "ContactInstaller",
+      "338": "Invalid",
+      "887": "None"
+    }
+  },
+  "_source_verified": "Verified: Imported from nymea-plugins-modbus; registers match official SMA Modbus interface definitions"
+}

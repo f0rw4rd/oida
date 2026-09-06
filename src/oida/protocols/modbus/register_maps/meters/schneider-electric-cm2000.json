@@ -1,0 +1,355 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "CM 2000",
+  "description": "Schneider Electric CM 2000 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "update_interval": {
+      "address": 1000,
+      "type": "u16",
+      "access": "r",
+      "description": "Update interval",
+      "unit": "second"
+    },
+    "frequency": {
+      "address": 1001,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hertz"
+    },
+    "temperature_inside_cm_enclosure": {
+      "address": 1002,
+      "type": "u16",
+      "access": "r",
+      "description": "Temperature inside CM enclosure",
+      "unit": "Degrees C"
+    },
+    "current_phase_a": {
+      "address": 1003,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, phase A",
+      "unit": "Amps"
+    },
+    "current_phase_b": {
+      "address": 1004,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, phase B",
+      "unit": "Amps"
+    },
+    "current_phase_c": {
+      "address": 1005,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, phase C",
+      "unit": "Amps"
+    },
+    "current_neutral": {
+      "address": 1006,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, neutral",
+      "unit": "Amps"
+    },
+    "current_ground": {
+      "address": 1007,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, ground",
+      "unit": "Amps"
+    },
+    "current_3_phase_average": {
+      "address": 1008,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, 3 phase average",
+      "unit": "Amps"
+    },
+    "current_apparent_rms": {
+      "address": 1009,
+      "type": "u16",
+      "access": "r",
+      "description": "Current, apparent rms",
+      "unit": "Amps"
+    },
+    "current_unbalance_phase_a": {
+      "address": 1010,
+      "type": "u16",
+      "access": "r",
+      "description": "Current unbalance, phase A",
+      "unit": "Percent"
+    },
+    "current_unbalance_phase_b": {
+      "address": 1011,
+      "type": "u16",
+      "access": "r",
+      "description": "Current unbalance, phase B",
+      "unit": "Percent"
+    },
+    "current_unbalance_phase_c": {
+      "address": 1012,
+      "type": "u16",
+      "access": "r",
+      "description": "Current unbalance, phase C",
+      "unit": "Percent"
+    },
+    "current_unbalance_worst": {
+      "address": 1013,
+      "type": "u16",
+      "access": "r",
+      "description": "Current unbalance, worst",
+      "unit": "Percent"
+    },
+    "voltage_phase_a_to_b": {
+      "address": 1014,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, phase A to B",
+      "unit": "Volts"
+    },
+    "voltage_phase_b_to_c": {
+      "address": 1015,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, phase B to C",
+      "unit": "Volts"
+    },
+    "voltage_phase_c_to_a": {
+      "address": 1016,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, phase C to A",
+      "unit": "Volts"
+    },
+    "voltage_l_l_3_phase_average": {
+      "address": 1017,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage L L, 3 phase average",
+      "unit": "Volts"
+    },
+    "voltage_phase_a_to_neutral": {
+      "address": 1018,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, phase A to neutral",
+      "unit": "Volts"
+    },
+    "voltage_phase_b_to_neutral": {
+      "address": 1019,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, phase B to neutral",
+      "unit": "Volts"
+    },
+    "voltage_phase_c_to_neutral": {
+      "address": 1020,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage, phase C to neutral",
+      "unit": "Volts"
+    },
+    "voltage_l_n_3_phase_average": {
+      "address": 1021,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage L N, 3 phase average",
+      "unit": "Volts"
+    },
+    "voltage_unbalance_phase_a_b": {
+      "address": 1022,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage unbalance, phase A B",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_phase_b_c": {
+      "address": 1023,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage unbalance, phase B C",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_phase_c_a": {
+      "address": 1024,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage unbalance, phase C A",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_l_l_worst": {
+      "address": 1025,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage unbalance, L L worst",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_phase_a": {
+      "address": 1026,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage unbalance, phase A",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_phase_b": {
+      "address": 1027,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage unbalance, phase B",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_phase_c": {
+      "address": 1028,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage unbalance, phase C",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_l_n_worst": {
+      "address": 1029,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage unbalance, L N worst",
+      "unit": "Percent"
+    },
+    "true_power_factor_phase_a": {
+      "address": 1031,
+      "type": "u16",
+      "access": "r",
+      "description": "True power factor, phase A"
+    },
+    "true_power_factor_phase_b": {
+      "address": 1032,
+      "type": "u16",
+      "access": "r",
+      "description": "True power factor, phase B"
+    },
+    "true_power_factor_phase_c": {
+      "address": 1033,
+      "type": "u16",
+      "access": "r",
+      "description": "True power factor, phase C"
+    },
+    "true_power_factor_3_phase_total": {
+      "address": 1034,
+      "type": "u16",
+      "access": "r",
+      "description": "True power factor, 3 phase total"
+    },
+    "displacement_power_factor_phase_a": {
+      "address": 1035,
+      "type": "u16",
+      "access": "r",
+      "description": "Displacement power factor, phase A"
+    },
+    "displacement_power_factor_phase_b": {
+      "address": 1036,
+      "type": "u16",
+      "access": "r",
+      "description": "Displacement power factor, phase B"
+    },
+    "displacement_power_factor_phase_c": {
+      "address": 1037,
+      "type": "u16",
+      "access": "r",
+      "description": "Displacement power factor, phase C"
+    },
+    "displacement_power_factor_3_phase_total": {
+      "address": 1038,
+      "type": "u16",
+      "access": "r",
+      "description": "Displacement power factor, 3 phase total"
+    },
+    "real_power_phase_a": {
+      "address": 1039,
+      "type": "u16",
+      "access": "r",
+      "description": "Real power, phase A",
+      "unit": "kW"
+    },
+    "real_power_phase_b": {
+      "address": 1040,
+      "type": "u16",
+      "access": "r",
+      "description": "Real power, phase B",
+      "unit": "kW"
+    },
+    "real_power_phase_c": {
+      "address": 1041,
+      "type": "u16",
+      "access": "r",
+      "description": "Real power, phase C",
+      "unit": "kW"
+    },
+    "real_power_3_phase_total": {
+      "address": 1042,
+      "type": "u16",
+      "access": "r",
+      "description": "Real power, 3 phase total",
+      "unit": "kW"
+    },
+    "reactive_power_phase_a": {
+      "address": 1043,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive power, phase A",
+      "unit": "kVAr"
+    },
+    "reactive_power_phase_b": {
+      "address": 1044,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive power, phase B",
+      "unit": "kVAr"
+    },
+    "reactive_power_phase_c": {
+      "address": 1045,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive power, phase C",
+      "unit": "kVAr"
+    },
+    "reactive_power_3_phase_total": {
+      "address": 1046,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive power, 3 phase total",
+      "unit": "kVAr"
+    },
+    "apparent_power_phase_a": {
+      "address": 1047,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent power, phase A",
+      "unit": "kVA"
+    },
+    "apparent_power_phase_b": {
+      "address": 1048,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent power, phase B",
+      "unit": "kVA"
+    },
+    "apparent_power_phase_c": {
+      "address": 1049,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent power, phase C",
+      "unit": "kVA"
+    },
+    "apparent_power_3_phase_total": {
+      "address": 1050,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent power, 3 phase total",
+      "unit": "kVA"
+    }
+  }
+}

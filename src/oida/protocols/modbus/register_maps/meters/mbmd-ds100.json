@@ -1,0 +1,96 @@
+{
+  "vendor": "DS100",
+  "model": "B+G e-tech DS100",
+  "description": "Imported from mbmd (ds100)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "mbmd/meters/rs485/ds100.go",
+  "registers": {
+    "import_l1": {
+      "address": 1290,
+      "type": "f32",
+      "access": "ro",
+      "description": "A phase forward active energy",
+      "function_code": 3
+    },
+    "import_l2": {
+      "address": 1390,
+      "type": "f32",
+      "access": "ro",
+      "description": "B phase forward active energy",
+      "function_code": 3
+    },
+    "import_l3": {
+      "address": 1490,
+      "type": "f32",
+      "access": "ro",
+      "description": "C phase forward active energy",
+      "function_code": 3
+    },
+    "import": {
+      "address": 270,
+      "type": "f32",
+      "access": "ro",
+      "description": "total forward active energy",
+      "function_code": 3
+    },
+    "export_l1": {
+      "address": 1300,
+      "type": "f32",
+      "access": "ro",
+      "description": "A phase reverse active energy",
+      "function_code": 3
+    },
+    "export_l2": {
+      "address": 1400,
+      "type": "f32",
+      "access": "ro",
+      "description": "B phase reverse active energy",
+      "function_code": 3
+    },
+    "export_l3": {
+      "address": 1500,
+      "type": "f32",
+      "access": "ro",
+      "description": "C phase reverse active energy",
+      "function_code": 3
+    },
+    "export": {
+      "address": 4490,
+      "type": "f32",
+      "access": "ro",
+      "description": "total reverse active energy",
+      "function_code": 3
+    },
+    "sum_l1": {
+      "address": 1280,
+      "type": "f32",
+      "access": "ro",
+      "description": "A phase total active energy",
+      "function_code": 3
+    },
+    "sum_l2": {
+      "address": 1380,
+      "type": "f32",
+      "access": "ro",
+      "description": "B phase total active energy",
+      "function_code": 3
+    },
+    "sum_l3": {
+      "address": 1480,
+      "type": "f32",
+      "access": "ro",
+      "description": "C phase total active energy",
+      "function_code": 3
+    },
+    "sum": {
+      "address": 290,
+      "type": "f32",
+      "access": "ro",
+      "description": "total total active energy",
+      "function_code": 3
+    }
+  },
+  "_source_verified": "Verified: B+G E-Tech DS100 three-phase bidirectional meter confirmed; mbmd source ds100.go verified"
+}

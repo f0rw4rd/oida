@@ -1,0 +1,55 @@
+{
+  "vendor": "ABB",
+  "model": "AC500",
+  "description": "ABB AC500 PLC Modbus register map",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "registers": {
+    "cpu_status": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "CPU status",
+      "enum": {
+        "0": "STOP",
+        "1": "RUN",
+        "2": "HALT"
+      }
+    },
+    "cycle_time": {
+      "address": 10,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "ms",
+      "description": "Task cycle time"
+    },
+    "mw0": {
+      "address": 100,
+      "type": "u16",
+      "access": "rw",
+      "description": "Marker word %MW0"
+    },
+    "md0": {
+      "address": 200,
+      "type": "f32",
+      "access": "rw",
+      "description": "Marker double word %MD0"
+    },
+    "iw0": {
+      "address": 300,
+      "type": "u16",
+      "access": "r",
+      "description": "Input word %IW0"
+    },
+    "qw0": {
+      "address": 400,
+      "type": "u16",
+      "access": "rw",
+      "description": "Output word %QW0"
+    }
+  },
+  "_source_verified": "Verified: ABB AC500 Modbus TCP via CI521/CI522 confirmed in ABB InfoSys documentation"
+}

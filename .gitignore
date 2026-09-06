@@ -1,0 +1,152 @@
+# Claude Code local machine-specific settings — keep local
+.claude/settings.local.json
+
+# Internal review artifacts — enumerate findings/vulns; keep LOCAL, never ship
+CODE_REVIEW.md
+TEST_GAP_AUDIT.md
+.review-tmp/
+
+# Per-protocol research material — kept local
+ref/
+
+# Per-developer pyenv pin — uv/CI manage the interpreter; don't force a version
+.python-version
+
+# direnv local env — kept local
+.envrc
+
+# Private registry URL for mock-image push/pull — keep LOCAL, never commit.
+# Template lives at docker/mocks/.env.example (committed).
+.env
+docker/mocks/.env
+
+# Fuzz session / test databases (root-level scratch)
+oida_fuzz_session.db
+fuzzer_session.db
+http_cli_test.db
+modbus_crash_test.db
+modbus_rtu_broadcast_test.db
+modbus_unit_id_test.db
+test_fuzz_session.db
+# SQLite WAL/SHM sidecars — never source
+*.db-wal
+*.db-shm
+# Root-level fuzz/scan scratch DB families
+/cve*.db
+/killtest*.db
+/rd_rd*.db
+/spd*.db
+/spd2*.db
+boofuzz-results/
+# Scan output / findings — may contain credentials or capture data, keep local
+findings/
+# Working notes / task scratch — kept local
+tasks/
+SLOP_CHECK_TODO.md
+# Fuzzer crash dumps
+/crashes/
+
+# KNX hash-extraction inner-zip outputs (extract_knxproj_hash fallback path)
+/P-*.zip
+
+# Real-coverage suite per-run output (Axis 1: scanner field-coverage).
+# Manifest files are run artefacts, not source.
+tests/coverage/results/*.json
+
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# PyInstaller
+*.manifest
+*.spec
+# ...but the committed build recipe is tracked.
+!oida.spec
+
+# Unit test / coverage reports
+htmlcov/
+# Scanner/test output artifacts (e.g. DICOM C-GET/C-STORE retrievals written to cwd)
+dicom_output/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+coverage.json
+*.cover
+.hypothesis/
+.pytest_cache/
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
+env.bak/
+venv.bak/
+
+# uv caches (the lockfile uv.lock IS checked in for reproducibility).
+.uv-cache/
+__uv_cache__/
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Project specific
+*.log
+/logs/
+/output/
+/dumps/
+/exports/
+/codesys/
+
+# Reference materials (binaries)
+reference/codesys/dlls/
+reference/codesys/pcaps/
+*.dll
+
+# Generated reports and external libs
+code_quality_reports/
+libs/
+
+# Credentials and keys
+*.key
+*.pem
+*.p12
+*.pfx
+credentials/
+secrets/
+reference/

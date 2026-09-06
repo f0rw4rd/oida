@@ -1,0 +1,88 @@
+{
+  "vendor": "Rockwell Automation",
+  "model": "CompactLogix",
+  "description": "Allen-Bradley CompactLogix Modbus register map (VERIFIED)",
+  "version": "2.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 1,
+  "notes": "CRITICAL: CompactLogix does NOT have native Modbus support. Requires Add-On Instruction (AOI) from Rockwell (sample code 23503) or ProSoft MVI56E module. MSG instruction for Modbus client only, not server.",
+  "source": "Rockwell Knowledge Base, Sample Code 23503",
+  "registers": {
+    "controller_status": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Controller run/program status (if mapped via AOI)"
+    },
+    "major_fault": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Major fault code (if mapped via AOI)"
+    },
+    "minor_fault": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Minor fault code (if mapped via AOI)"
+    },
+    "int_array_element_0": {
+      "address": 100,
+      "type": "i16",
+      "access": "rw",
+      "description": "Example: INT array element mapped to register 100"
+    },
+    "real_array_element_0": {
+      "address": 200,
+      "type": "f32",
+      "access": "rw",
+      "description": "Example: REAL array element mapped to registers 200-201"
+    }
+  },
+  "coils": {
+    "bool_array_element_0": {
+      "address": 0,
+      "access": "rw",
+      "description": "Example: BOOL array element mapped to coil 0"
+    }
+  },
+  "extended_info": {
+    "modbus_options": {
+      "aoi_server": {
+        "name": "Modbus TCP Server AOI",
+        "source": "Rockwell Sample Code 23503",
+        "description": "Add-On Instruction that implements Modbus TCP server in ladder logic",
+        "requirements": [
+          "Studio 5000 v20+",
+          "EtherNet/IP module"
+        ],
+        "limitations": [
+          "Requires CPU cycles",
+          "Max ~100 connections"
+        ]
+      },
+      "prosoft_module": {
+        "name": "ProSoft MVI56E-MNETC",
+        "description": "Hardware module providing native Modbus TCP",
+        "benefits": [
+          "Dedicated processor",
+          "No CPU load",
+          "Multiple protocols"
+        ]
+      },
+      "msg_instruction": {
+        "name": "MSG Instruction",
+        "description": "Built-in instruction for Modbus CLIENT only",
+        "note": "Cannot act as Modbus server without AOI"
+      }
+    },
+    "configuration_requirements": [
+      "Download and import AOI from Rockwell Sample Code 23503",
+      "Create user-defined tags for Modbus data",
+      "Map controller tags to AOI input/output arrays",
+      "Addresses are determined by array index in AOI configuration"
+    ]
+  },
+  "_source_verified": "Verified: Requires AOI or ProSoft MVI56E for Modbus TCP confirmed via Rockwell KB articles"
+}

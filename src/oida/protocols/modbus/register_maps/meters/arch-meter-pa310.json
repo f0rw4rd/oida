@@ -1,0 +1,313 @@
+{
+  "vendor": "Arch",
+  "model": "METER PA 310",
+  "description": "Arch METER PA 310 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "ct_ratio": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Ct ratio"
+    },
+    "modbus_address": {
+      "address": 4096,
+      "type": "u16",
+      "access": "r",
+      "description": "Modbus address"
+    },
+    "baudrate_set": {
+      "address": 4097,
+      "type": "u16",
+      "access": "r",
+      "description": "Baudrate set"
+    },
+    "stopbit": {
+      "address": 4098,
+      "type": "u16",
+      "access": "r",
+      "description": "Stopbit"
+    },
+    "wiring": {
+      "address": 4100,
+      "type": "u16",
+      "access": "r",
+      "description": "Wiring"
+    },
+    "clr_kwh": {
+      "address": 4114,
+      "type": "i16",
+      "access": "r",
+      "description": "Clr kwh"
+    },
+    "kt_value": {
+      "address": 4128,
+      "type": "i16",
+      "access": "r",
+      "description": "Kt value"
+    },
+    "voltage_transform_er_ratio": {
+      "address": 4129,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage transform er ratio"
+    },
+    "current_transform_er_ratio": {
+      "address": 4130,
+      "type": "u16",
+      "access": "r",
+      "description": "Current transform er ratio"
+    },
+    "year": {
+      "address": 4131,
+      "type": "u16",
+      "access": "r",
+      "description": "Year"
+    },
+    "month": {
+      "address": 4132,
+      "type": "u16",
+      "access": "r",
+      "description": "Month"
+    },
+    "date": {
+      "address": 4133,
+      "type": "u16",
+      "access": "r",
+      "description": "Date"
+    },
+    "hour": {
+      "address": 4134,
+      "type": "u16",
+      "access": "r",
+      "description": "Hour"
+    },
+    "minute": {
+      "address": 4135,
+      "type": "u16",
+      "access": "r",
+      "description": "Minute"
+    },
+    "second": {
+      "address": 4136,
+      "type": "u16",
+      "access": "r",
+      "description": "Second"
+    },
+    "day_of_week": {
+      "address": 4137,
+      "type": "u16",
+      "access": "r",
+      "description": "Day of week"
+    },
+    "demand_flag": {
+      "address": 4144,
+      "type": "i16",
+      "access": "r",
+      "description": "Demand flag"
+    },
+    "sub_interval": {
+      "address": 4145,
+      "type": "i16",
+      "access": "r",
+      "description": "Sub interval"
+    },
+    "interval_multipli_er": {
+      "address": 4146,
+      "type": "i16",
+      "access": "r",
+      "description": "Interval multipli er"
+    },
+    "lp_data_group1_clr": {
+      "address": 4147,
+      "type": "u16",
+      "access": "r",
+      "description": "Lp_data_group1_ clr"
+    },
+    "lp_group1_datac_ounter": {
+      "address": 4148,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp_group1_datac ounter"
+    },
+    "lp_group1_intlen_gth": {
+      "address": 4149,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp group1 intlen gth"
+    },
+    "lp_g1_ch1_save_data": {
+      "address": 4150,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp_g1_ch1_save data"
+    },
+    "lp_g1_ch2_save_data": {
+      "address": 4151,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G1 Ch2 save data"
+    },
+    "lp_g1_ch3_save_data": {
+      "address": 4152,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp_g1_ch3_save data"
+    },
+    "lp_g1_ch4_save_data": {
+      "address": 4153,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G1 Ch4 save data"
+    },
+    "lp_g1_ch5_save_data": {
+      "address": 4154,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp_g1_ch5_save data"
+    },
+    "lp_g1_ch6_save_data": {
+      "address": 4155,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G1 Ch6 save data"
+    },
+    "lp_g1_ch7_save_data": {
+      "address": 4156,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp_g1_ch7_save data"
+    },
+    "lp_g1_ch8_save_data": {
+      "address": 4157,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G1 Ch8 save data"
+    },
+    "lp_g1_ch9_save_data": {
+      "address": 4158,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp_g1_ch9_save data"
+    },
+    "lp_g1_ch10_save_data": {
+      "address": 4159,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G1 ch10 save data"
+    },
+    "lp_g1_ch11_save_data": {
+      "address": 4160,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp_g1_ch11_save data"
+    },
+    "lp_g1_ch12_save_data": {
+      "address": 4161,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp_g1_ch12_save data"
+    },
+    "lp_data_group2_cfr": {
+      "address": 4162,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp data group2 cfr"
+    },
+    "lp_group2_datac_ounter": {
+      "address": 4163,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp group2 datac ounter"
+    },
+    "lp_group2_intlen_gth": {
+      "address": 4164,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp group2 intlen gth"
+    },
+    "lp_g2_ch1_save_data": {
+      "address": 4165,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G2 Ch1 save data"
+    },
+    "lp_g2_ch2_save_data": {
+      "address": 4166,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G2 Ch2 save data"
+    },
+    "lp_g2_ch3_save_data": {
+      "address": 4167,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G2 Ch3 save data"
+    },
+    "lp_g2_ch4_save_data": {
+      "address": 4168,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G2 Ch4 save data"
+    },
+    "lp_g2_ch5_save_data": {
+      "address": 4169,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G2 Ch5 save data"
+    },
+    "lp_g2_ch6_save_data": {
+      "address": 4170,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G2 Ch6 save data"
+    },
+    "lp_g2_ch7_save_data": {
+      "address": 4171,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G2 Ch7 save data"
+    },
+    "lp_g2_ch8_save_data": {
+      "address": 4172,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp G2 Ch8 save data"
+    },
+    "lp_read_begin_int_erval_serial_numbe": {
+      "address": 4173,
+      "type": "i16",
+      "access": "r",
+      "description": "Lp read begin int erval serial numbe"
+    },
+    "kwh_deiiver_a": {
+      "address": 4864,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh_deiiver_a"
+    },
+    "kwh_receiver_a": {
+      "address": 4866,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh receiver a"
+    },
+    "kvarh_iagging_a": {
+      "address": 4868,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarh_iagging_a"
+    },
+    "kvarh_ieading_a": {
+      "address": 4870,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarh_ieading_a"
+    }
+  }
+}

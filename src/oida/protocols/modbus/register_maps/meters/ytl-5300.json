@@ -1,0 +1,313 @@
+{
+  "vendor": "YTL",
+  "model": "5300",
+  "description": "YTL 5300 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "meter_id": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Meter ID"
+    },
+    "baud_rate": {
+      "address": 3,
+      "type": "f32",
+      "access": "r",
+      "description": "Baud rate"
+    },
+    "software_version": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Software version"
+    },
+    "hardware_version": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Hardware version"
+    },
+    "s0_output_rate": {
+      "address": 9,
+      "type": "f32",
+      "access": "r",
+      "description": "S0 output rate"
+    },
+    "combined_code": {
+      "address": 11,
+      "type": "f32",
+      "access": "r",
+      "description": "Combined code"
+    },
+    "holiday_weekend_t": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "HOLIDAY WEEKEND T"
+    },
+    "cycle_time": {
+      "address": 13,
+      "type": "f32",
+      "access": "r",
+      "description": "Cycle time"
+    },
+    "l1_voltage": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 voltage"
+    },
+    "l2_voltage": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 voltage"
+    },
+    "l3_voltage": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 voltage"
+    },
+    "grid_frequency": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "Grid frequency"
+    },
+    "l1_current": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 current"
+    },
+    "l2_current": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 current"
+    },
+    "l3_current": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 current"
+    },
+    "total_active_power": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active power"
+    },
+    "l1_active_power": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 active power"
+    },
+    "l2_active_power": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 active power"
+    },
+    "l3_active_power": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 active power"
+    },
+    "total_reactive_power": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive power"
+    },
+    "l1_reactive_power": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 reactive power"
+    },
+    "l2_reactive_power": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 reactive power"
+    },
+    "l3_reactive_power": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 reactive power"
+    },
+    "total_apparent_power": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "Total apparent power"
+    },
+    "l1_apparent_power": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 apparent power"
+    },
+    "l2_apparent_power": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 apparent power"
+    },
+    "l3_apparent_power": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 apparent power"
+    },
+    "total_power_factor": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "power_factor": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor"
+    },
+    "power_factor_56": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor"
+    },
+    "power_factor_58": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor"
+    },
+    "time": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Time"
+    },
+    "season_on_off": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "Season ON/OFF"
+    },
+    "crc_code": {
+      "address": 65,
+      "type": "f32",
+      "access": "r",
+      "description": "CRC CODE"
+    },
+    "total_active_energy": {
+      "address": 256,
+      "type": "f32",
+      "access": "r",
+      "description": "Total active energy"
+    },
+    "l1_total_active_energy": {
+      "address": 258,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 total active energy"
+    },
+    "l2_total_active_energy": {
+      "address": 260,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 total active energy"
+    },
+    "l3_total_active_energy": {
+      "address": 262,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 total active energy"
+    },
+    "forward_active_energy": {
+      "address": 264,
+      "type": "f32",
+      "access": "r",
+      "description": "Forward active energy"
+    },
+    "l1_forward_active_energy": {
+      "address": 266,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 forward active energy"
+    },
+    "l2_forward_active_energy": {
+      "address": 268,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 forward active energy"
+    },
+    "l3_forward_active_energy": {
+      "address": 270,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 forward active energy"
+    },
+    "reverse_active_energy": {
+      "address": 272,
+      "type": "f32",
+      "access": "r",
+      "description": "Reverse active energy"
+    },
+    "l1_reverse_active_energy": {
+      "address": 274,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 reverse active energy"
+    },
+    "l2_reverse_active_energy": {
+      "address": 276,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 reverse active energy"
+    },
+    "l3_reverse_active_energy": {
+      "address": 278,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 reverse active energy"
+    },
+    "total_reactive_energy": {
+      "address": 280,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive energy"
+    },
+    "l1_reactive_energy": {
+      "address": 282,
+      "type": "f32",
+      "access": "r",
+      "description": "L1 reactive energy"
+    },
+    "l2_reactive_energy": {
+      "address": 284,
+      "type": "f32",
+      "access": "r",
+      "description": "L2 reactive energy"
+    },
+    "l3_reactive_energy": {
+      "address": 286,
+      "type": "f32",
+      "access": "r",
+      "description": "L3 reactive energy"
+    }
+  }
+}

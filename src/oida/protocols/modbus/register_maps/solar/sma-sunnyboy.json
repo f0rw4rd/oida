@@ -1,0 +1,263 @@
+{
+  "vendor": "SMA",
+  "model": "Sunny Boy / Sunny Tripower",
+  "device_type": "Solar Inverter",
+  "models": [
+    "SB3.0",
+    "SB5.0",
+    "STP8.0",
+    "STP10.0",
+    "STP Core1"
+  ],
+  "description": "SMA solar inverters with SMA Modbus profile (30000 series registers)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 3,
+  "default_port": 502,
+  "function_code": 3,
+  "notes": "SMA devices support both SMA Modbus (Unit ID 3) and SunSpec (Unit ID 126 = 3+123). This map covers SMA-specific 30000-series registers. For SunSpec registers, use sunspec-*.json maps.",
+  "source": "SMA SunSpec Modbus Interface TI, Home Assistant community, AggSoft SMA registers",
+  "holding_registers": {
+    "device_class": {
+      "address": 30051,
+      "type": "u32",
+      "access": "r",
+      "description": "Device class (8000=Inverters)"
+    },
+    "device_type": {
+      "address": 30053,
+      "type": "u32",
+      "access": "r",
+      "description": "Device type ID"
+    },
+    "serial_number": {
+      "address": 30057,
+      "type": "u32",
+      "access": "r",
+      "description": "Serial number"
+    },
+    "software_package": {
+      "address": 30059,
+      "type": "u32",
+      "access": "r",
+      "description": "Software package version"
+    },
+    "condition": {
+      "address": 30201,
+      "type": "u32",
+      "access": "r",
+      "description": "Condition status code"
+    },
+    "grid_relay_status": {
+      "address": 30217,
+      "type": "u32",
+      "access": "r",
+      "description": "Grid relay/contactor status"
+    },
+    "energy_total": {
+      "address": 30513,
+      "type": "u64",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Total energy yield (lifetime)"
+    },
+    "energy_today": {
+      "address": 30517,
+      "type": "u64",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Daily energy yield"
+    },
+    "operating_time": {
+      "address": 30521,
+      "type": "u64",
+      "access": "r",
+      "unit": "s",
+      "description": "Total operating time"
+    },
+    "feed_in_time": {
+      "address": 30525,
+      "type": "u64",
+      "access": "r",
+      "unit": "s",
+      "description": "Feed-in time (connected to grid)"
+    },
+    "ac_power": {
+      "address": 30775,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "AC active power output"
+    },
+    "ac_apparent_power": {
+      "address": 30777,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "description": "AC apparent power"
+    },
+    "ac_reactive_power": {
+      "address": 30779,
+      "type": "i32",
+      "access": "r",
+      "unit": "var",
+      "description": "AC reactive power"
+    },
+    "ac_current": {
+      "address": 30795,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "AC total current"
+    },
+    "ac_voltage_l1": {
+      "address": 30783,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "V",
+      "description": "AC voltage phase 1"
+    },
+    "ac_voltage_l2": {
+      "address": 30785,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "V",
+      "description": "AC voltage phase 2"
+    },
+    "ac_voltage_l3": {
+      "address": 30787,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "V",
+      "description": "AC voltage phase 3"
+    },
+    "grid_frequency": {
+      "address": 30803,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "Hz",
+      "description": "Grid frequency"
+    },
+    "dc_power_total": {
+      "address": 30773,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "DC power total (all strings)"
+    },
+    "dc_voltage_a": {
+      "address": 30957,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "V",
+      "description": "DC voltage input A (MPP1)"
+    },
+    "dc_current_a": {
+      "address": 30959,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "DC current input A (MPP1)"
+    },
+    "dc_power_a": {
+      "address": 30961,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "DC power input A (MPP1)"
+    },
+    "dc_voltage_b": {
+      "address": 30963,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.01,
+      "unit": "V",
+      "description": "DC voltage input B (MPP2)"
+    },
+    "dc_current_b": {
+      "address": 30965,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "DC current input B (MPP2)"
+    },
+    "dc_power_b": {
+      "address": 30967,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "DC power input B (MPP2)"
+    },
+    "internal_temp": {
+      "address": 30953,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "C",
+      "description": "Internal temperature"
+    },
+    "isolation_resistance": {
+      "address": 30225,
+      "type": "u32",
+      "access": "r",
+      "unit": "kOhm",
+      "description": "Insulation resistance"
+    },
+    "operating_status": {
+      "address": 30203,
+      "type": "u32",
+      "access": "r",
+      "description": "Operating status code"
+    },
+    "error_status": {
+      "address": 30247,
+      "type": "u32",
+      "access": "r",
+      "description": "Error status / fault code"
+    },
+    "power_limit": {
+      "address": 30837,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active power limitation"
+    }
+  },
+  "enums": {
+    "condition": {
+      "35": "Fault",
+      "303": "Off",
+      "307": "OK",
+      "455": "Warning"
+    },
+    "operating_status": {
+      "35": "Fault",
+      "303": "Stop",
+      "307": "Constant voltage",
+      "308": "Feed-in",
+      "381": "Waiting for utility company",
+      "443": "Derating",
+      "455": "Warning",
+      "1467": "Waiting for PV voltage",
+      "1469": "Starting",
+      "1392": "MPP (normal operation)",
+      "1393": "Regulated",
+      "2119": "Shut down"
+    },
+    "grid_relay_status": {
+      "51": "Closed",
+      "311": "Open",
+      "16777213": "Information not available"
+    }
+  },
+  "_source_verified": "Verified: Registers 30051/30053/30057/30775/30845/40631 confirmed against official SMA Modbus profile documentation"
+}

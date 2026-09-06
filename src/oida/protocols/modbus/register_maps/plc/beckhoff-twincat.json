@@ -1,0 +1,124 @@
+{
+  "vendor": "Beckhoff",
+  "model": "TwinCAT Modbus TCP Server",
+  "description": "Beckhoff TwinCAT 2/3 PLC Modbus TCP Server default mapping (TF6250/TS6250)",
+  "version": "1.0",
+  "byte_order": "little",
+  "word_order": "little",
+  "default_port": 502,
+  "source": "Beckhoff InfoSys TF6250 documentation",
+  "notes": {
+    "ads_mapping": "Modbus addresses map to ADS IndexGroups",
+    "input_coils": "0xF021 (61473) - Physical inputs %IX",
+    "output_coils": "0xF031 (61489) - Physical outputs %QX",
+    "input_registers": "0xF020 (61472) - Physical inputs %IW",
+    "holding_registers": "0x4020 (16416) - PLC memory %MW"
+  },
+  "registers": {
+    "input_coil_0": {
+      "address": 0,
+      "type": "coil",
+      "access": "ro",
+      "function_code": 2,
+      "description": "Physical input %IX0.0 (discrete input coil)",
+      "notes": "ads_index_group=0xF021"
+    },
+    "output_coil_0": {
+      "address": 0,
+      "type": "coil",
+      "access": "rw",
+      "function_code": 1,
+      "description": "Physical output %QX0.0 (discrete output coil)",
+      "notes": "ads_index_group=0xF031"
+    },
+    "mb_input_coils": {
+      "address": 32768,
+      "type": "coil",
+      "access": "ro",
+      "function_code": 2,
+      "description": "PLC variable .mb_Input_Coils array (addresses 32768-33023)"
+    },
+    "mb_output_coils": {
+      "address": 32768,
+      "type": "coil",
+      "access": "rw",
+      "function_code": 1,
+      "description": "PLC variable .mb_Output_Coils array"
+    },
+    "input_register_0": {
+      "address": 0,
+      "type": "u16",
+      "access": "ro",
+      "function_code": 4,
+      "description": "Physical input register %IW0",
+      "notes": "ads_index_group=0xF020"
+    },
+    "holding_register_0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 3,
+      "description": "PLC memory %MW0 (flag/marker area)",
+      "notes": "ads_index_group=0x4020"
+    },
+    "memory_area_0x4000": {
+      "address": 16384,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 3,
+      "description": "Memory area with 0x4000 offset - maps to MB0..MB1"
+    },
+    "mb_input_registers": {
+      "address": 32768,
+      "type": "u16",
+      "access": "ro",
+      "function_code": 4,
+      "description": "PLC variable .mb_Input_Registers array"
+    },
+    "mb_output_registers": {
+      "address": 32768,
+      "type": "u16",
+      "access": "rw",
+      "function_code": 3,
+      "description": "PLC variable .mb_Output_Registers array"
+    }
+  },
+  "address_ranges": {
+    "input_coils": {
+      "start": 0,
+      "end": 32767,
+      "description": "Physical inputs %IX via ADS 0xF021"
+    },
+    "input_coils_plc": {
+      "start": 32768,
+      "end": 33023,
+      "description": "PLC .mb_Input_Coils variable"
+    },
+    "output_coils": {
+      "start": 0,
+      "end": 32767,
+      "description": "Physical outputs %QX via ADS 0xF031"
+    },
+    "output_coils_plc": {
+      "start": 32768,
+      "end": 65535,
+      "description": "PLC .mb_Output_Coils variable"
+    },
+    "input_registers": {
+      "start": 0,
+      "end": 32767,
+      "description": "Physical inputs %IW via ADS 0xF020"
+    },
+    "holding_registers": {
+      "start": 0,
+      "end": 32767,
+      "description": "PLC memory %MW via ADS 0x4020"
+    },
+    "holding_registers_0x3000": {
+      "start": 12288,
+      "end": 16383,
+      "description": "Default Modbus 0x3000 mapping to PLC memory"
+    }
+  },
+  "_source_verified": "Verified: TF6250 TwinCAT 3 Modbus TCP Server ADS mapping confirmed at infosys.beckhoff.com"
+}

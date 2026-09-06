@@ -1,0 +1,313 @@
+{
+  "vendor": "Seneca",
+  "model": "S 203",
+  "description": "Seneca S 203 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "voltage_a": {
+      "address": 134,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage A"
+    },
+    "voltage_b": {
+      "address": 136,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage B"
+    },
+    "voltage_c": {
+      "address": 138,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage C"
+    },
+    "voltage_3ph": {
+      "address": 140,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage 3ph"
+    },
+    "voltage_a_192": {
+      "address": 192,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage A"
+    },
+    "voltage_b_193": {
+      "address": 193,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage B"
+    },
+    "voltage_c_194": {
+      "address": 194,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage C"
+    },
+    "voltage_3ph_195": {
+      "address": 195,
+      "type": "u16",
+      "access": "r",
+      "description": "Voltage 3ph"
+    },
+    "current_a": {
+      "address": 142,
+      "type": "f32",
+      "access": "r",
+      "description": "Current A"
+    },
+    "current_b": {
+      "address": 144,
+      "type": "f32",
+      "access": "r",
+      "description": "Current B"
+    },
+    "current_c": {
+      "address": 146,
+      "type": "f32",
+      "access": "r",
+      "description": "Current C"
+    },
+    "current_3ph": {
+      "address": 148,
+      "type": "f32",
+      "access": "r",
+      "description": "Current 3ph"
+    },
+    "current_a_196": {
+      "address": 196,
+      "type": "u16",
+      "access": "r",
+      "description": "Current A"
+    },
+    "current_b_197": {
+      "address": 197,
+      "type": "u16",
+      "access": "r",
+      "description": "Current B"
+    },
+    "current_c_198": {
+      "address": 198,
+      "type": "u16",
+      "access": "r",
+      "description": "Current C"
+    },
+    "current_3ph_199": {
+      "address": 199,
+      "type": "u16",
+      "access": "r",
+      "description": "Current 3ph"
+    },
+    "active_pow_a": {
+      "address": 150,
+      "type": "f32",
+      "access": "r",
+      "description": "Active pow A"
+    },
+    "active_pow_b": {
+      "address": 152,
+      "type": "f32",
+      "access": "r",
+      "description": "Active pow B"
+    },
+    "active_pow_c": {
+      "address": 154,
+      "type": "f32",
+      "access": "r",
+      "description": "Active pow C"
+    },
+    "active_pow_3ph": {
+      "address": 156,
+      "type": "f32",
+      "access": "r",
+      "description": "Active pow 3ph"
+    },
+    "active_pow_a_200": {
+      "address": 200,
+      "type": "u16",
+      "access": "r",
+      "description": "Active pow A"
+    },
+    "active_pow_b_201": {
+      "address": 201,
+      "type": "u16",
+      "access": "r",
+      "description": "Active pow B"
+    },
+    "active_pow_c_202": {
+      "address": 202,
+      "type": "u16",
+      "access": "r",
+      "description": "Active pow C"
+    },
+    "active_pow_3ph_203": {
+      "address": 203,
+      "type": "u16",
+      "access": "r",
+      "description": "Active pow 3ph"
+    },
+    "reactive_pow_a": {
+      "address": 158,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive pow A"
+    },
+    "reactive_pow_b": {
+      "address": 160,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive pow B"
+    },
+    "reactive_pow_c": {
+      "address": 162,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive pow C"
+    },
+    "reactive_pow_3_ph": {
+      "address": 164,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive pow 3 ph"
+    },
+    "reactive_pow_a_204": {
+      "address": 204,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive pow A"
+    },
+    "reactive_pow_b_205": {
+      "address": 205,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive pow B"
+    },
+    "reactive_pow_c_206": {
+      "address": 206,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive pow C"
+    },
+    "reactive_pow_3_ph_207": {
+      "address": 207,
+      "type": "u16",
+      "access": "r",
+      "description": "Reactive pow 3 ph"
+    },
+    "apparent_pow_a": {
+      "address": 166,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent pow A"
+    },
+    "apparent_pow_b": {
+      "address": 168,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent pow B"
+    },
+    "apparent_pow_c": {
+      "address": 170,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent pow C"
+    },
+    "apparent_pow_3_ph": {
+      "address": 172,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent pow 3 ph"
+    },
+    "apparent_pow_a_208": {
+      "address": 208,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent pow A"
+    },
+    "apparent_pow_b_209": {
+      "address": 209,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent pow B"
+    },
+    "apparent_pow_c_210": {
+      "address": 210,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent pow C"
+    },
+    "apparent_pow_3_ph_211": {
+      "address": 211,
+      "type": "u16",
+      "access": "r",
+      "description": "Apparent pow 3 ph"
+    },
+    "energy_a": {
+      "address": 184,
+      "type": "f32",
+      "access": "r",
+      "description": "Energy A"
+    },
+    "energy_b": {
+      "address": 186,
+      "type": "f32",
+      "access": "r",
+      "description": "Energy B"
+    },
+    "energy_c": {
+      "address": 188,
+      "type": "f32",
+      "access": "r",
+      "description": "Energy C"
+    },
+    "energy_3ph": {
+      "address": 190,
+      "type": "f32",
+      "access": "r",
+      "description": "Energy 3ph"
+    },
+    "cos_a": {
+      "address": 174,
+      "type": "f32",
+      "access": "r",
+      "description": "Cos A"
+    },
+    "cos_b": {
+      "address": 176,
+      "type": "f32",
+      "access": "r",
+      "description": "Cos B"
+    },
+    "cos_c": {
+      "address": 178,
+      "type": "f32",
+      "access": "r",
+      "description": "Cos C"
+    },
+    "cos_3ph": {
+      "address": 180,
+      "type": "f32",
+      "access": "r",
+      "description": "Cos 3ph"
+    },
+    "cos_a_212": {
+      "address": 212,
+      "type": "u16",
+      "access": "r",
+      "description": "Cos A"
+    },
+    "cos_b_213": {
+      "address": 213,
+      "type": "u16",
+      "access": "r",
+      "description": "Cos B"
+    }
+  }
+}

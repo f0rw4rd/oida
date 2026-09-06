@@ -1,0 +1,334 @@
+{
+  "vendor": "Pilot",
+  "model": "SPM 93",
+  "description": "Pilot SPM 93 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "vb": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Vb",
+      "unit": "V"
+    },
+    "vc": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Vc",
+      "unit": "V"
+    },
+    "ia": {
+      "address": 3,
+      "type": "u32",
+      "access": "r",
+      "description": "Ia",
+      "unit": "A"
+    },
+    "ib": {
+      "address": 5,
+      "type": "u32",
+      "access": "r",
+      "description": "Ib",
+      "unit": "A"
+    },
+    "ic": {
+      "address": 7,
+      "type": "u32",
+      "access": "r",
+      "description": "Ic",
+      "unit": "A"
+    },
+    "frequency": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz,"
+    },
+    "total_power_factor": {
+      "address": 10,
+      "type": "i16",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "total_apparent": {
+      "address": 11,
+      "type": "u32",
+      "access": "r",
+      "description": "Total apparent"
+    },
+    "total_active_energy": {
+      "address": 13,
+      "type": "u32",
+      "access": "r",
+      "description": "Total active energy"
+    },
+    "total_reactive_energy": {
+      "address": 15,
+      "type": "u32",
+      "access": "r",
+      "description": "Total reactive energy",
+      "unit": "kvarh,"
+    },
+    "phase_a_active_power": {
+      "address": 17,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A active power",
+      "unit": "W"
+    },
+    "phase_b_active_power": {
+      "address": 19,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B active power",
+      "unit": "W"
+    },
+    "phase_c_active_power": {
+      "address": 21,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C active power",
+      "unit": "W"
+    },
+    "total_active_power": {
+      "address": 23,
+      "type": "i32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "W"
+    },
+    "phase_a_reactive_power": {
+      "address": 25,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A reactive power"
+    },
+    "phase_b_reactive_power": {
+      "address": 27,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B reactive power"
+    },
+    "phase_c_reactive": {
+      "address": 29,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C reactive"
+    },
+    "total_reactive_power": {
+      "address": 31,
+      "type": "i32",
+      "access": "r",
+      "description": "Total reactive power"
+    },
+    "va_ph_n": {
+      "address": 100,
+      "type": "u16",
+      "access": "r",
+      "description": "Va (ph n)",
+      "unit": "V"
+    },
+    "vb_ph_n": {
+      "address": 101,
+      "type": "u16",
+      "access": "r",
+      "description": "Vb (ph n)",
+      "unit": "V"
+    },
+    "vc_ph_n": {
+      "address": 102,
+      "type": "u16",
+      "access": "r",
+      "description": "Vc (ph n)",
+      "unit": "V"
+    },
+    "vab_ph_ph": {
+      "address": 103,
+      "type": "u16",
+      "access": "r",
+      "description": "Vab (ph ph)",
+      "unit": "V"
+    },
+    "vbc_ph_ph": {
+      "address": 104,
+      "type": "u16",
+      "access": "r",
+      "description": "Vbc (ph ph)",
+      "unit": "V"
+    },
+    "vca_ph_ph": {
+      "address": 105,
+      "type": "u16",
+      "access": "r",
+      "description": "Vca (ph ph)",
+      "unit": "V"
+    },
+    "ia_106": {
+      "address": 106,
+      "type": "u32",
+      "access": "r",
+      "description": "Ia"
+    },
+    "ib_108": {
+      "address": 108,
+      "type": "u32",
+      "access": "r",
+      "description": "Ib"
+    },
+    "ic_110": {
+      "address": 110,
+      "type": "u32",
+      "access": "r",
+      "description": "Ic"
+    },
+    "average_current": {
+      "address": 112,
+      "type": "u32",
+      "access": "r",
+      "description": "Average current"
+    },
+    "phase_a_active_power_114": {
+      "address": 114,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A active power",
+      "unit": "W"
+    },
+    "phase_b_active_power_116": {
+      "address": 116,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B active power",
+      "unit": "W"
+    },
+    "phase_c_active_power_118": {
+      "address": 118,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C active power",
+      "unit": "W"
+    },
+    "total_active_power_120": {
+      "address": 120,
+      "type": "i32",
+      "access": "r",
+      "description": "Total active power",
+      "unit": "W"
+    },
+    "phase_a_reactive_power_122": {
+      "address": 122,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A reactive power"
+    },
+    "phase_b_reactive_power_124": {
+      "address": 124,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B reactive power"
+    },
+    "phase_c_reactive_power": {
+      "address": 126,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C reactive power"
+    },
+    "total_reactive_power_128": {
+      "address": 128,
+      "type": "i32",
+      "access": "r",
+      "description": "Total reactive power"
+    },
+    "phase_a_apparent_power": {
+      "address": 130,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase A apparent power"
+    },
+    "phase_b_apparent_power": {
+      "address": 132,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase B apparent power"
+    },
+    "phase_c_apparent_power": {
+      "address": 134,
+      "type": "u32",
+      "access": "r",
+      "description": "Phase C apparent power"
+    },
+    "total_apparent_power": {
+      "address": 136,
+      "type": "u32",
+      "access": "r",
+      "description": "Total apparent power"
+    },
+    "phase_a_power_factor": {
+      "address": 138,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase A power factor"
+    },
+    "phase_b_power_factor": {
+      "address": 139,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase B power factor"
+    },
+    "phase_c_power_factor": {
+      "address": 140,
+      "type": "i16",
+      "access": "r",
+      "description": "Phase C power factor"
+    },
+    "total_power_factor_141": {
+      "address": 141,
+      "type": "i16",
+      "access": "r",
+      "description": "Total power factor"
+    },
+    "frequency_142": {
+      "address": 142,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "loaded_timing": {
+      "address": 143,
+      "type": "u32",
+      "access": "r",
+      "description": "Loaded timing"
+    },
+    "over_voltage_timing_under_voltage_timing": {
+      "address": 145,
+      "type": "u32",
+      "access": "r",
+      "description": "Over voltage timing under voltage timing"
+    },
+    "imp_kwh": {
+      "address": 1000,
+      "type": "u32",
+      "access": "r",
+      "description": "Imp. kwh"
+    },
+    "exp_kwh": {
+      "address": 1002,
+      "type": "u32",
+      "access": "r",
+      "description": "Exp. kwh"
+    },
+    "total_kwh": {
+      "address": 1004,
+      "type": "u32",
+      "access": "r",
+      "description": "Total kwh"
+    }
+  }
+}

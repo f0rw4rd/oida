@@ -1,0 +1,361 @@
+{
+  "vendor": "Veris",
+  "model": "E 23",
+  "description": "Veris E 23 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "real_energy_ph_consumption": {
+      "address": 1537,
+      "type": "f32",
+      "access": "r",
+      "description": "Real energy (ph) consumption",
+      "unit": "kWh"
+    },
+    "reactive_energy_qh_consumption": {
+      "address": 1539,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy (qh) consumption",
+      "unit": "kVARh"
+    },
+    "apparent_energy_sh_consumption": {
+      "address": 1541,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy (sh) consumption",
+      "unit": "kVAh"
+    },
+    "total_instantaneous_real_power_p": {
+      "address": 1543,
+      "type": "f32",
+      "access": "r",
+      "description": "Total instantaneous real power (p)",
+      "unit": "kW"
+    },
+    "total_instantaneous_reactive_power_q": {
+      "address": 1545,
+      "type": "f32",
+      "access": "r",
+      "description": "Total instantaneous reactive power (q)",
+      "unit": "kVAR"
+    },
+    "total_instantaneous_apparent_power_s": {
+      "address": 1547,
+      "type": "f32",
+      "access": "r",
+      "description": "Total instantaneous apparent power (s)",
+      "unit": "kVA"
+    },
+    "average_power_factor_pf_total_kw_total_kva": {
+      "address": 1549,
+      "type": "f32",
+      "access": "r",
+      "description": "Average power factor (pf: total kw / total kva)",
+      "unit": "Ratio"
+    },
+    "voltage_line_to_line_u_average_of_active_phases": {
+      "address": 1551,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage line to line (u), average of active phases",
+      "unit": "Volt"
+    },
+    "voltageline_to_neutral_v_average_of_active_phases": {
+      "address": 1553,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltageline to neutral (v), average of active phases",
+      "unit": "Volt"
+    },
+    "current_average_of_active_phases": {
+      "address": 1555,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, average of active phases",
+      "unit": "Amp"
+    },
+    "frequency_derived_from_phase_a_b_or_c_in_that_order": {
+      "address": 1557,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency (derived from phase a, b, or C in that order)",
+      "unit": "Hz"
+    },
+    "total_real_power_present_demand": {
+      "address": 1559,
+      "type": "f32",
+      "access": "r",
+      "description": "Total real power present demand",
+      "unit": "kW"
+    },
+    "total_reactive_power_present_demand": {
+      "address": 1561,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive power present demand",
+      "unit": "kVAR"
+    },
+    "total_apparent_power_present_demand": {
+      "address": 1563,
+      "type": "f32",
+      "access": "r",
+      "description": "Total apparent power present demand",
+      "unit": "kVA"
+    },
+    "total_real_power_max_demand": {
+      "address": 1565,
+      "type": "f32",
+      "access": "r",
+      "description": "Total real power max demand",
+      "unit": "kW"
+    },
+    "total_reactive_power_max_demand": {
+      "address": 1567,
+      "type": "f32",
+      "access": "r",
+      "description": "Total reactive power max demand",
+      "unit": "kVAR"
+    },
+    "total_apparent_power_max_demand": {
+      "address": 1569,
+      "type": "f32",
+      "access": "r",
+      "description": "Total apparent power max demand",
+      "unit": "kVA"
+    },
+    "pulse_counter_1_real_energy": {
+      "address": 1577,
+      "type": "f32",
+      "access": "r",
+      "description": "Pulse counter 1 (real energy)"
+    },
+    "pulse_counter_2_reactive_energy": {
+      "address": 1579,
+      "type": "f32",
+      "access": "r",
+      "description": "Pulse counter 2 (reactive energy)"
+    },
+    "real_energy_consumption_l1": {
+      "address": 1589,
+      "type": "f32",
+      "access": "r",
+      "description": "Real energy consumption, L1",
+      "unit": "kWh"
+    },
+    "real_energy_consumption_l2": {
+      "address": 1591,
+      "type": "f32",
+      "access": "r",
+      "description": "Real energy consumption, L2",
+      "unit": "kWh"
+    },
+    "real_energy_consumption_l3": {
+      "address": 1593,
+      "type": "f32",
+      "access": "r",
+      "description": "Real energy consumption, L3",
+      "unit": "kWh"
+    },
+    "reactive_energy_consumption_l1": {
+      "address": 1595,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy consumption, L1",
+      "unit": "kWh"
+    },
+    "reactive_energy_consumption_l2": {
+      "address": 1597,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy consumption, L2",
+      "unit": "kWh"
+    },
+    "reactive_energy_consumption_l3": {
+      "address": 1599,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy consumption, L3",
+      "unit": "kWh"
+    },
+    "apparent_energy_consumption_l1": {
+      "address": 1601,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy consumption, L1",
+      "unit": "kWh"
+    },
+    "apparent_energy_consumption_l2": {
+      "address": 1603,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy consumption, L2",
+      "unit": "kWh"
+    },
+    "apparent_energy_consumption_l3": {
+      "address": 1605,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy consumption, L3",
+      "unit": "kWh"
+    },
+    "real_power_l1": {
+      "address": 1607,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, L1",
+      "unit": "kW"
+    },
+    "real_power_l2": {
+      "address": 1609,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, L2",
+      "unit": "kW"
+    },
+    "real_power_l3": {
+      "address": 1611,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, L3",
+      "unit": "kW"
+    },
+    "reactive_power_l1": {
+      "address": 1613,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, L1",
+      "unit": "kVAR"
+    },
+    "reactive_power_l2": {
+      "address": 1615,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, L2",
+      "unit": "kVAR"
+    },
+    "reactive_power_l3": {
+      "address": 1617,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, L3",
+      "unit": "kVAR"
+    },
+    "apparent_power_l1": {
+      "address": 1619,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, L1",
+      "unit": "kVA"
+    },
+    "apparent_power_l2": {
+      "address": 1621,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, L2",
+      "unit": "kVA"
+    },
+    "apparent_power_l3": {
+      "address": 1623,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, L3",
+      "unit": "kVA"
+    },
+    "power_factor_l1": {
+      "address": 1625,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, L1",
+      "unit": "Ratio"
+    },
+    "power_factor_l2": {
+      "address": 1627,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, L2",
+      "unit": "Ratio"
+    },
+    "power_factor_l3": {
+      "address": 1629,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, L3",
+      "unit": "Ratio"
+    },
+    "voltage_l1_l2": {
+      "address": 1631,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L1 L2",
+      "unit": "Volt"
+    },
+    "voltage_l2_l3": {
+      "address": 1633,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L2 L3",
+      "unit": "Volt"
+    },
+    "voltage_l3_l1": {
+      "address": 1635,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L3 L1",
+      "unit": "Volt"
+    },
+    "voltage_l1_n": {
+      "address": 1637,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L1 N",
+      "unit": "Volt"
+    },
+    "voltage_l2_n": {
+      "address": 1639,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L2 N",
+      "unit": "Volt"
+    },
+    "voltage_l3_n": {
+      "address": 1641,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L3 N",
+      "unit": "Volt"
+    },
+    "current_phase_a": {
+      "address": 1643,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase A",
+      "unit": "Amp"
+    },
+    "current_phase_b": {
+      "address": 1645,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase B",
+      "unit": "Amp"
+    },
+    "current_phase_c": {
+      "address": 1647,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, phase C",
+      "unit": "Amp"
+    },
+    "current_neutral": {
+      "address": 1649,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, neutral",
+      "unit": "Amp"
+    }
+  }
+}

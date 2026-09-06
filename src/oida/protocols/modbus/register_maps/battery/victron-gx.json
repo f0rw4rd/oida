@@ -1,0 +1,224 @@
+{
+  "vendor": "Victron",
+  "model": "GX Series (Cerbo GX, Venus GX)",
+  "description": "Victron Energy GX devices with Modbus TCP for system monitoring and battery data",
+  "version": "1.1",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 100,
+  "notes": "Unit ID 100 is for system summary data (com.victronenergy.system). Battery-specific unit IDs are typically 225-231 for individual batteries. VE.Bus devices use IDs 227-246. Use TCP port 502.",
+  "source": "https://www.victronenergy.com/live/ccgx:modbustcp_faq, CCGX-Modbus-TCP-register-list.xlsx",
+  "registers": {
+    "serial_number": {
+      "address": 800,
+      "type": "string",
+      "length": 6,
+      "access": "r",
+      "description": "System serial number"
+    },
+    "ac_consumption_l1": {
+      "address": 817,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "AC consumption L1"
+    },
+    "ac_consumption_l2": {
+      "address": 818,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "AC consumption L2"
+    },
+    "ac_consumption_l3": {
+      "address": 819,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "AC consumption L3"
+    },
+    "grid_power_l1": {
+      "address": 820,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Grid power L1 (positive=import, negative=export)"
+    },
+    "grid_power_l2": {
+      "address": 821,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Grid power L2 (positive=import, negative=export)"
+    },
+    "grid_power_l3": {
+      "address": 822,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Grid power L3 (positive=import, negative=export)"
+    },
+    "dc_system_power": {
+      "address": 860,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "DC system power (loads/chargers)"
+    },
+    "battery_voltage_system": {
+      "address": 840,
+      "type": "u16",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Battery voltage (system)"
+    },
+    "battery_current_system": {
+      "address": 841,
+      "type": "i16",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Battery current (system, positive=charging)"
+    },
+    "battery_power_system": {
+      "address": 842,
+      "type": "i16",
+      "access": "r",
+      "unit": "W",
+      "description": "Battery power (system, positive=charging)"
+    },
+    "battery_soc_system": {
+      "address": 843,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "Battery state of charge (system)"
+    },
+    "battery_state_system": {
+      "address": 844,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery state (system)",
+      "enum": {
+        "0": "IDLE",
+        "1": "CHARGING",
+        "2": "DISCHARGING"
+      }
+    },
+    "battery_consumed_system": {
+      "address": 845,
+      "type": "u16",
+      "access": "r",
+      "unit": "Ah",
+      "scale": -0.1,
+      "description": "Battery consumed amphours (system)"
+    },
+    "battery_time_to_go_system": {
+      "address": 846,
+      "type": "u16",
+      "access": "r",
+      "unit": "s",
+      "scale": 0.01,
+      "description": "Time to empty in seconds (system)"
+    },
+    "pv_dc_coupled_power": {
+      "address": 850,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "DC-coupled PV power total"
+    },
+    "pv_ac_coupled_on_output_l1": {
+      "address": 808,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "AC-coupled PV on output L1"
+    },
+    "pv_ac_coupled_on_output_l2": {
+      "address": 809,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "AC-coupled PV on output L2"
+    },
+    "pv_ac_coupled_on_output_l3": {
+      "address": 810,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "AC-coupled PV on output L3"
+    },
+    "pv_ac_coupled_on_input_l1": {
+      "address": 811,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "AC-coupled PV on input L1"
+    },
+    "pv_ac_coupled_on_input_l2": {
+      "address": 812,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "AC-coupled PV on input L2"
+    },
+    "pv_ac_coupled_on_input_l3": {
+      "address": 813,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "AC-coupled PV on input L3"
+    },
+    "vebus_state": {
+      "address": 31,
+      "type": "u16",
+      "access": "r",
+      "description": "VE.Bus system state (use Unit ID 227-246 for VE.Bus)",
+      "enum": {
+        "0": "OFF",
+        "1": "LOW_POWER",
+        "2": "FAULT",
+        "3": "BULK",
+        "4": "ABSORPTION",
+        "5": "FLOAT",
+        "6": "STORAGE",
+        "7": "EQUALIZE",
+        "8": "PASSTHRU",
+        "9": "INVERTING",
+        "10": "ASSISTING",
+        "256": "DISCHARGING",
+        "257": "SUSTAIN"
+      }
+    },
+    "ess_battery_life_state": {
+      "address": 2900,
+      "type": "u16",
+      "access": "r",
+      "description": "ESS battery life state",
+      "enum": {
+        "0": "EXTERNAL_CONTROL_OR_BL_DISABLED",
+        "1": "RESTARTING",
+        "2": "SELF_CONSUMPTION",
+        "3": "SELF_CONSUMPTION",
+        "4": "SELF_CONSUMPTION",
+        "5": "DISCHARGE_DISABLED",
+        "6": "FORCE_CHARGE",
+        "7": "SUSTAIN",
+        "9": "KEEP_BATTERIES_CHARGED",
+        "10": "BL_DISABLED",
+        "11": "BL_DISABLED_LOW_SOC"
+      }
+    },
+    "ess_min_soc": {
+      "address": 2901,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "ESS minimum SOC (unless grid fails)"
+    }
+  },
+  "_source_verified": "Verified: Official Victron Modbus-TCP FAQ and CCGX register list confirmed; unit ID 100 for system data"
+}

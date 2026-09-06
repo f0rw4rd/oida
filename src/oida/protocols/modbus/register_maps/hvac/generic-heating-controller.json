@@ -1,0 +1,478 @@
+{
+  "vendor": "Generic",
+  "model": "HVAC Heating Controller",
+  "description": "Generic HVAC/Building heating controller Modbus TCP register map - FrostyGoop attack pattern template",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Generic register map for HVAC heating controllers based on FrostyGoop (2024) attack patterns. Covers common heating control registers including temperature setpoints, mode control, and valve/pump outputs. Applicable to district heating, building management, and residential heating systems.",
+  "source": "Based on FrostyGoop malware analysis (Dragos, Unit42) and common HVAC Modbus implementations",
+  "security_notes": {
+    "verified_attack": "FrostyGoop (Jan 2024, Lviv Ukraine) is the ONLY documented real-world ICS malware using Modbus TCP as primary attack vector",
+    "attack_details": {
+      "date": "January 22-23, 2024",
+      "target": "Municipal district energy company, Lviv, Ukraine",
+      "impact": "600+ apartment buildings lost heating for 2 days in sub-zero temperatures",
+      "method": "Modbus FC3 (read), FC6 (write single), FC16 (write multiple) to ENCO controllers",
+      "target_registers": [53370, 53882, 53760, 54272]
+    },
+    "verified_iocs": {
+      "sha256_samples": [
+        "5d2e4fd08f81e3b2eb2f3eaae16eb32ae02e760afc36fa17f4649322f6da53fb",
+        "a63ba88ad869085f1625729708ba65e87f5b37d7be9153b3db1a1b0e3fed309c"
+      ],
+      "yara_rule": "MAL_Go_Modbus_Jul24_1 by Florian Roth",
+      "virustotal": "https://www.virustotal.com/gui/file/5d2e4fd08f81e3b2eb2f3eaae16eb32ae02e760afc36fa17f4649322f6da53fb"
+    },
+    "attack_vectors": [
+      "Temperature setpoint manipulation to disable heating",
+      "Operating mode changes (heat/cool/off)",
+      "Valve position manipulation",
+      "Firmware downgrade on controllers"
+    ],
+    "mitre_techniques": ["T0855", "T0831", "T0836", "T0879"],
+    "impact": "Loss of heating in critical infrastructure can cause physical harm, pipe freezing, and property damage"
+  },
+  "holding_registers": {
+    "room_temp_setpoint": {
+      "address": 0,
+      "type": "s16",
+      "access": "rw",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Room temperature setpoint (0.1C resolution)",
+      "min": 50,
+      "max": 350,
+      "notes": "Primary attack target - reducing this disables heating"
+    },
+    "supply_temp_setpoint": {
+      "address": 1,
+      "type": "s16",
+      "access": "rw",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Supply water temperature setpoint",
+      "min": 200,
+      "max": 900
+    },
+    "return_temp_setpoint": {
+      "address": 2,
+      "type": "s16",
+      "access": "rw",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Return water temperature setpoint"
+    },
+    "operating_mode": {
+      "address": 3,
+      "type": "u16",
+      "access": "rw",
+      "description": "Operating mode selection",
+      "enum": {
+        "0": "Off",
+        "1": "Heating",
+        "2": "Cooling",
+        "3": "Auto",
+        "4": "Emergency heat",
+        "5": "Standby"
+      },
+      "notes": "FrostyGoop changed this to 0 (Off) to disable heating"
+    },
+    "fan_speed": {
+      "address": 4,
+      "type": "u16",
+      "access": "rw",
+      "description": "Fan speed setting",
+      "enum": {
+        "0": "Off",
+        "1": "Low",
+        "2": "Medium",
+        "3": "High",
+        "4": "Auto"
+      }
+    },
+    "valve_position_setpoint": {
+      "address": 5,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "description": "Heating valve position setpoint (0-100%)",
+      "min": 0,
+      "max": 100,
+      "notes": "Direct valve control - 0% closes valve completely"
+    },
+    "pump_speed_setpoint": {
+      "address": 6,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "description": "Circulation pump speed setpoint (0-100%)",
+      "min": 0,
+      "max": 100
+    },
+    "outdoor_temp_compensation": {
+      "address": 7,
+      "type": "s16",
+      "access": "rw",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Outdoor temperature compensation offset"
+    },
+    "heating_curve_slope": {
+      "address": 8,
+      "type": "u16",
+      "access": "rw",
+      "scale": 0.1,
+      "description": "Heating curve slope (weather compensation)"
+    },
+    "heating_curve_offset": {
+      "address": 9,
+      "type": "s16",
+      "access": "rw",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Heating curve parallel shift"
+    },
+    "dhw_setpoint": {
+      "address": 10,
+      "type": "s16",
+      "access": "rw",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Domestic hot water setpoint",
+      "min": 350,
+      "max": 650
+    },
+    "frost_protection_temp": {
+      "address": 11,
+      "type": "s16",
+      "access": "rw",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Frost protection activation temperature",
+      "notes": "Lowering this removes freeze protection"
+    },
+    "night_setback_temp": {
+      "address": 12,
+      "type": "s16",
+      "access": "rw",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Night setback temperature"
+    },
+    "schedule_override": {
+      "address": 13,
+      "type": "u16",
+      "access": "rw",
+      "description": "Schedule override mode",
+      "enum": {
+        "0": "Normal schedule",
+        "1": "Permanent comfort",
+        "2": "Permanent economy",
+        "3": "Permanent off",
+        "4": "Holiday mode"
+      }
+    },
+    "control_enable": {
+      "address": 14,
+      "type": "u16",
+      "access": "rw",
+      "description": "Control system enable",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      },
+      "notes": "FrostyGoop disabled this to stop automatic heating"
+    },
+    "alarm_reset": {
+      "address": 15,
+      "type": "u16",
+      "access": "rw",
+      "description": "Alarm reset command (write 1 to reset)"
+    },
+    "manual_valve_override": {
+      "address": 16,
+      "type": "u16",
+      "access": "rw",
+      "description": "Manual valve override enable",
+      "enum": {
+        "0": "Auto",
+        "1": "Manual"
+      }
+    },
+    "manual_valve_position": {
+      "address": 17,
+      "type": "u16",
+      "access": "rw",
+      "unit": "%",
+      "description": "Manual valve position (when override enabled)",
+      "min": 0,
+      "max": 100
+    }
+  },
+  "input_registers": {
+    "room_temp_actual": {
+      "address": 0,
+      "type": "s16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Actual room temperature"
+    },
+    "supply_temp_actual": {
+      "address": 1,
+      "type": "s16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Actual supply water temperature"
+    },
+    "return_temp_actual": {
+      "address": 2,
+      "type": "s16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Actual return water temperature"
+    },
+    "outdoor_temp_actual": {
+      "address": 3,
+      "type": "s16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Actual outdoor temperature"
+    },
+    "dhw_temp_actual": {
+      "address": 4,
+      "type": "s16",
+      "access": "r",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Actual DHW temperature"
+    },
+    "valve_position_actual": {
+      "address": 5,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "Actual valve position feedback"
+    },
+    "pump_status": {
+      "address": 6,
+      "type": "u16",
+      "access": "r",
+      "description": "Circulation pump status",
+      "enum": {
+        "0": "Off",
+        "1": "Running"
+      }
+    },
+    "boiler_status": {
+      "address": 7,
+      "type": "u16",
+      "access": "r",
+      "description": "Boiler/heat source status",
+      "enum": {
+        "0": "Off",
+        "1": "Standby",
+        "2": "Heating",
+        "3": "Fault"
+      }
+    },
+    "system_status": {
+      "address": 8,
+      "type": "u16",
+      "access": "r",
+      "description": "Overall system status word",
+      "bits": {
+        "0": "Heating demand",
+        "1": "Cooling demand",
+        "2": "DHW demand",
+        "3": "Frost protection active",
+        "4": "Night mode",
+        "5": "Holiday mode",
+        "6": "Alarm active",
+        "7": "Communication error"
+      }
+    },
+    "alarm_code": {
+      "address": 9,
+      "type": "u16",
+      "access": "r",
+      "description": "Active alarm code"
+    },
+    "heat_demand_percent": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "unit": "%",
+      "description": "Current heating demand"
+    },
+    "flow_rate": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "unit": "l/h",
+      "description": "Water flow rate"
+    },
+    "power_consumption": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "unit": "W",
+      "description": "Current power consumption"
+    },
+    "runtime_hours": {
+      "address": 13,
+      "type": "u32",
+      "access": "r",
+      "unit": "h",
+      "description": "Total runtime hours (32-bit)"
+    }
+  },
+  "coils": {
+    "heating_enable": {
+      "address": 0,
+      "type": "bool",
+      "access": "rw",
+      "description": "Heating system enable"
+    },
+    "cooling_enable": {
+      "address": 1,
+      "type": "bool",
+      "access": "rw",
+      "description": "Cooling system enable"
+    },
+    "dhw_enable": {
+      "address": 2,
+      "type": "bool",
+      "access": "rw",
+      "description": "DHW heating enable"
+    },
+    "pump_enable": {
+      "address": 3,
+      "type": "bool",
+      "access": "rw",
+      "description": "Circulation pump enable"
+    },
+    "frost_protection_enable": {
+      "address": 4,
+      "type": "bool",
+      "access": "rw",
+      "description": "Frost protection enable"
+    },
+    "schedule_enable": {
+      "address": 5,
+      "type": "bool",
+      "access": "rw",
+      "description": "Time schedule enable"
+    },
+    "remote_control_enable": {
+      "address": 6,
+      "type": "bool",
+      "access": "rw",
+      "description": "Remote/Modbus control enable"
+    },
+    "alarm_silence": {
+      "address": 7,
+      "type": "bool",
+      "access": "rw",
+      "description": "Alarm silence/acknowledge"
+    }
+  },
+  "discrete_inputs": {
+    "heating_demand": {
+      "address": 0,
+      "type": "bool",
+      "access": "r",
+      "description": "Heating demand active"
+    },
+    "pump_running": {
+      "address": 1,
+      "type": "bool",
+      "access": "r",
+      "description": "Pump running status"
+    },
+    "boiler_running": {
+      "address": 2,
+      "type": "bool",
+      "access": "r",
+      "description": "Boiler/burner running"
+    },
+    "frost_alarm": {
+      "address": 3,
+      "type": "bool",
+      "access": "r",
+      "description": "Frost alarm active"
+    },
+    "sensor_fault": {
+      "address": 4,
+      "type": "bool",
+      "access": "r",
+      "description": "Temperature sensor fault"
+    },
+    "communication_fault": {
+      "address": 5,
+      "type": "bool",
+      "access": "r",
+      "description": "Communication fault"
+    }
+  },
+  "alarm_codes": {
+    "1": "Room sensor fault",
+    "2": "Supply sensor fault",
+    "3": "Return sensor fault",
+    "4": "Outdoor sensor fault",
+    "5": "DHW sensor fault",
+    "10": "Frost protection triggered",
+    "11": "High temperature alarm",
+    "12": "Low temperature alarm",
+    "20": "Pump fault",
+    "21": "Valve fault",
+    "30": "Boiler communication error",
+    "31": "Boiler fault",
+    "40": "Power failure",
+    "50": "Modbus communication timeout"
+  },
+  "attack_patterns": {
+    "frostygoop_heating_disable": {
+      "description": "FrostyGoop attack pattern to disable heating",
+      "steps": [
+        "1. Write 0 (Off) to operating_mode (HR 3)",
+        "2. Write 0 to room_temp_setpoint (HR 0)",
+        "3. Write 0 to control_enable (HR 14)",
+        "4. Write 0% to valve_position_setpoint (HR 5)"
+      ]
+    },
+    "frost_protection_bypass": {
+      "description": "Disable frost protection to cause pipe freezing",
+      "steps": [
+        "1. Write 0 to frost_protection_enable (Coil 4)",
+        "2. Write -100 (-10C) to frost_protection_temp (HR 11)"
+      ]
+    },
+    "sensor_spoofing": {
+      "description": "Spoof sensor readings to mask attack",
+      "target": "If controller accepts sensor value writes"
+    }
+  },
+  "extended_info": {
+    "applicable_systems": [
+      "District heating substations",
+      "Building management systems (BMS)",
+      "Residential heating controllers",
+      "Industrial process heating",
+      "Hospital/healthcare HVAC"
+    ],
+    "common_vendors": [
+      "ENCO (FrostyGoop target)",
+      "Danfoss",
+      "Honeywell",
+      "Siemens",
+      "Johnson Controls",
+      "Schneider Electric"
+    ]
+  }
+}

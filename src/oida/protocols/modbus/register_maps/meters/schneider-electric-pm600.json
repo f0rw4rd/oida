@@ -1,0 +1,349 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "PM 600",
+  "description": "Schneider Electric PM 600 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "scale_factor_a": {
+      "address": 2019,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale Factor A"
+    },
+    "scale_factor_d": {
+      "address": 2022,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale Factor D"
+    },
+    "scale_factor_e": {
+      "address": 2023,
+      "type": "i16",
+      "access": "r",
+      "description": "Scale Factor E"
+    },
+    "update_interval": {
+      "address": 999,
+      "type": "i16",
+      "access": "r",
+      "description": "Update interval"
+    },
+    "frequency": {
+      "address": 1000,
+      "type": "i16",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hertz"
+    },
+    "current_phase_a": {
+      "address": 1002,
+      "type": "i16",
+      "access": "r",
+      "description": "Current, phase A",
+      "unit": "Amps"
+    },
+    "current_phase_b": {
+      "address": 1003,
+      "type": "i16",
+      "access": "r",
+      "description": "Current, phase B",
+      "unit": "Amps"
+    },
+    "current_phase_c": {
+      "address": 1004,
+      "type": "i16",
+      "access": "r",
+      "description": "Current, phase C",
+      "unit": "Amps"
+    },
+    "current_calculated_neutral": {
+      "address": 1005,
+      "type": "i16",
+      "access": "r",
+      "description": "Current, calculated neutral",
+      "unit": "Amps"
+    },
+    "current_unbalance_phase_a": {
+      "address": 1009,
+      "type": "i16",
+      "access": "r",
+      "description": "Current unbalance, phase A",
+      "unit": "Percent"
+    },
+    "current_unbalance_phase_b": {
+      "address": 1010,
+      "type": "i16",
+      "access": "r",
+      "description": "Current unbalance, phase B",
+      "unit": "Percent"
+    },
+    "current_unbalance_phase_c": {
+      "address": 1011,
+      "type": "i16",
+      "access": "r",
+      "description": "Current unbalance, phase C",
+      "unit": "Percent"
+    },
+    "current_unbalance_worst": {
+      "address": 1012,
+      "type": "i16",
+      "access": "r",
+      "description": "Current unbalance, worst",
+      "unit": "Percent"
+    },
+    "voltage_phase_a_to_b": {
+      "address": 1013,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage, phase A to B",
+      "unit": "Volts"
+    },
+    "voltage_phase_b_to_c": {
+      "address": 1014,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage, phase B to C",
+      "unit": "Volts"
+    },
+    "voltage_phase_c_to_a": {
+      "address": 1015,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage, phase C to A",
+      "unit": "Volts"
+    },
+    "voltage_phase_a_to_neutral": {
+      "address": 1017,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage, phase A to neutral",
+      "unit": "Volts"
+    },
+    "voltage_phase_b_to_neutral": {
+      "address": 1018,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage, phase B to neutral",
+      "unit": "Volts"
+    },
+    "voltage_phase_c_to_neutral": {
+      "address": 1019,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage, phase C to neutral",
+      "unit": "Volts"
+    },
+    "voltage_unbalance_phase_a_b": {
+      "address": 1021,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage unbalance, phase A B",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_phase_b_c": {
+      "address": 1022,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage unbalance, phase B C",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_phase_c_a": {
+      "address": 1023,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage unbalance, phase C A",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_l_l_worst": {
+      "address": 1024,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage unbalance, L L worst",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_phase_a": {
+      "address": 1025,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage unbalance, phase A",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_phase_b": {
+      "address": 1026,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage unbalance, phase B",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_phase_c": {
+      "address": 1027,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage unbalance, phase C",
+      "unit": "Percent"
+    },
+    "voltage_unbalance_l_n_worst": {
+      "address": 1028,
+      "type": "i16",
+      "access": "r",
+      "description": "Voltage unbalance, L N worst",
+      "unit": "Percent"
+    },
+    "true_power_factor_phase_a": {
+      "address": 1030,
+      "type": "i16",
+      "access": "r",
+      "description": "True power factor, phase A"
+    },
+    "true_power_factor_phase_b": {
+      "address": 1031,
+      "type": "i16",
+      "access": "r",
+      "description": "True power factor, phase B"
+    },
+    "true_power_factor_phase_c": {
+      "address": 1032,
+      "type": "i16",
+      "access": "r",
+      "description": "True power factor, phase C"
+    },
+    "true_power_factor_3_phase_total": {
+      "address": 1033,
+      "type": "i16",
+      "access": "r",
+      "description": "True power factor, 3 phase total"
+    },
+    "real_power_phase_a": {
+      "address": 1038,
+      "type": "i16",
+      "access": "r",
+      "description": "Real power, phase A",
+      "unit": "kW"
+    },
+    "real_power_phase_b": {
+      "address": 1039,
+      "type": "i16",
+      "access": "r",
+      "description": "Real power, phase B",
+      "unit": "kW"
+    },
+    "real_power_phase_c": {
+      "address": 1040,
+      "type": "i16",
+      "access": "r",
+      "description": "Real power, phase C",
+      "unit": "kW"
+    },
+    "real_power_3_phase_total": {
+      "address": 1041,
+      "type": "i16",
+      "access": "r",
+      "description": "Real power, 3 phase total",
+      "unit": "kW"
+    },
+    "reactive_power_phase_a": {
+      "address": 1042,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power, phase A",
+      "unit": "kVAr"
+    },
+    "reactive_power_phase_b": {
+      "address": 1043,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power, phase B",
+      "unit": "kVAr"
+    },
+    "reactive_power_phase_c": {
+      "address": 1044,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power, phase C",
+      "unit": "kVAr"
+    },
+    "reactive_power_3_phase_total": {
+      "address": 1045,
+      "type": "i16",
+      "access": "r",
+      "description": "Reactive power, 3 phase total",
+      "unit": "kVAr"
+    },
+    "apparent_power_phase_a": {
+      "address": 1046,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent power, phase A",
+      "unit": "kVA"
+    },
+    "apparent_power_phase_b": {
+      "address": 1047,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent power, phase B",
+      "unit": "kVA"
+    },
+    "apparent_power_phase_c": {
+      "address": 1048,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent power, phase C",
+      "unit": "kVA"
+    },
+    "apparent_power_3_phase_total": {
+      "address": 1049,
+      "type": "i16",
+      "access": "r",
+      "description": "Apparent power, 3 phase total",
+      "unit": "kVA"
+    },
+    "thd_thd_a_current": {
+      "address": 1050,
+      "type": "i16",
+      "access": "r",
+      "description": "Thd/thd A current"
+    },
+    "thd_thd_b_current": {
+      "address": 1051,
+      "type": "i16",
+      "access": "r",
+      "description": "Thd/thd B current"
+    },
+    "thd_thd_c_current": {
+      "address": 1052,
+      "type": "i16",
+      "access": "r",
+      "description": "Thd/thd C current"
+    },
+    "thd_thd_a_voltage": {
+      "address": 1054,
+      "type": "i16",
+      "access": "r",
+      "description": "Thd/thd A voltage"
+    },
+    "thd_thd_b_voltage": {
+      "address": 1055,
+      "type": "i16",
+      "access": "r",
+      "description": "Thd/thd B voltage"
+    },
+    "thd_thd_c_voltage": {
+      "address": 1056,
+      "type": "i16",
+      "access": "r",
+      "description": "Thd/thd C voltage"
+    },
+    "a_current_fundamental_rms_magnitude": {
+      "address": 1077,
+      "type": "i16",
+      "access": "r",
+      "description": "A current fundamental rms magnitude",
+      "unit": "Amps"
+    }
+  }
+}

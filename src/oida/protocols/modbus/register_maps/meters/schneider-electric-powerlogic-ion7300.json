@@ -1,0 +1,338 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "ION 7300 / ION 7500 ION 7600 / ION 8300 ION 8400 ION 8500 / ION 8600 / ION 8800",
+  "description": "Schneider Electric ION 7300 / ION 7500 ION 7600 / ION 8300 ION 8400 ION 8500 / ION 8600 / ION 8800 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: ION 7300, ION 7500 ION 7600, ION 8300 ION 8400 ION 8500, ION 8600, ION 8800",
+  "registers": {
+    "vln_a_modbus_slave_1": {
+      "address": 10,
+      "type": "u16",
+      "access": "r",
+      "description": "Vln a, Modbus Slave 1"
+    },
+    "vln_b_modbus_slave_1": {
+      "address": 11,
+      "type": "u16",
+      "access": "r",
+      "description": "Vln b, Modbus Slave 1"
+    },
+    "vln_c_modbus_slave_1": {
+      "address": 12,
+      "type": "u16",
+      "access": "r",
+      "description": "Vln c, Modbus Slave 1"
+    },
+    "vln_avg_modbus_slave_1": {
+      "address": 13,
+      "type": "u16",
+      "access": "r",
+      "description": "Vln avg, Modbus Slave 1"
+    },
+    "vll_ab_modbus_slave_1": {
+      "address": 14,
+      "type": "u16",
+      "access": "r",
+      "description": "Vll ab, Modbus Slave 1"
+    },
+    "vll_bc_modbus_slave_1": {
+      "address": 15,
+      "type": "u16",
+      "access": "r",
+      "description": "Vll bc, Modbus Slave 1"
+    },
+    "vll_ca_modbus_slave_1": {
+      "address": 16,
+      "type": "u16",
+      "access": "r",
+      "description": "Vll ca, Modbus Slave 1"
+    },
+    "vll_avg_modbus_slave_1": {
+      "address": 17,
+      "type": "u16",
+      "access": "r",
+      "description": "Vll avg, Modbus Slave 1"
+    },
+    "i_a_modbus_slave_1": {
+      "address": 18,
+      "type": "u16",
+      "access": "r",
+      "description": "I a, Modbus Slave 1"
+    },
+    "i_b_modbus_slave_1": {
+      "address": 19,
+      "type": "u16",
+      "access": "r",
+      "description": "I b, Modbus Slave 1"
+    },
+    "i_c_modbus_slave_1": {
+      "address": 20,
+      "type": "u16",
+      "access": "r",
+      "description": "I c, Modbus Slave 1"
+    },
+    "i_avg_modbus_slave_1": {
+      "address": 21,
+      "type": "u16",
+      "access": "r",
+      "description": "I avg, Modbus Slave 1"
+    },
+    "v_unbal_modbus_slave_1": {
+      "address": 22,
+      "type": "u16",
+      "access": "r",
+      "description": "V unbal, Modbus Slave 1",
+      "unit": "V"
+    },
+    "i_unbal_modbus_slave_1": {
+      "address": 23,
+      "type": "u16",
+      "access": "r",
+      "description": "I unbal, Modbus Slave 1"
+    },
+    "freq_modbus_slave_1": {
+      "address": 24,
+      "type": "u16",
+      "access": "r",
+      "description": "Freq, Modbus Slave 1"
+    },
+    "phase_rev_modbus_slave_1": {
+      "address": 25,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase Rev, Modbus Slave 1"
+    },
+    "kw_a_modbus_slave_2": {
+      "address": 26,
+      "type": "i32",
+      "access": "r",
+      "description": "kW a, Modbus Slave 2",
+      "unit": "kW"
+    },
+    "kw_b_modbus_slave_2": {
+      "address": 28,
+      "type": "i32",
+      "access": "r",
+      "description": "kW b, Modbus Slave 2",
+      "unit": "kW"
+    },
+    "kw_c_modbus_slave_2": {
+      "address": 30,
+      "type": "i32",
+      "access": "r",
+      "description": "kW c, Modbus Slave 2",
+      "unit": "kW"
+    },
+    "kw_tot_modbus_slave_2": {
+      "address": 32,
+      "type": "i32",
+      "access": "r",
+      "description": "kW tot, Modbus Slave 2",
+      "unit": "kW"
+    },
+    "kvar_a_modbus_slave_2": {
+      "address": 34,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAR a, Modbus Slave 2",
+      "unit": "kVAR"
+    },
+    "kvar_b_modbus_slave_2": {
+      "address": 36,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAR b, Modbus Slave 2",
+      "unit": "kVAR"
+    },
+    "kvar_c_modbus_slave_2": {
+      "address": 38,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAR c, Modbus Slave 2",
+      "unit": "kVAR"
+    },
+    "kvar_tot_modbus_slave_2": {
+      "address": 40,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAR tot, Modbus Slave 2",
+      "unit": "kVAR"
+    },
+    "kva_a_modbus_slave_2": {
+      "address": 42,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA a, Modbus Slave 2",
+      "unit": "kVA"
+    },
+    "kva_b_modbus_slave_2": {
+      "address": 44,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA b, Modbus Slave 2",
+      "unit": "kVA"
+    },
+    "kva_c_modbus_slave_2": {
+      "address": 46,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA c, Modbus Slave 2",
+      "unit": "kVA"
+    },
+    "kva_tot_modbus_slave_2": {
+      "address": 48,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA tot, Modbus Slave 2",
+      "unit": "kVA"
+    },
+    "pf_sign_a_modbus_slave_2": {
+      "address": 50,
+      "type": "i32",
+      "access": "r",
+      "description": "PF sign a, Modbus Slave 2"
+    },
+    "pf_sign_b_modbus_slave_2": {
+      "address": 52,
+      "type": "i32",
+      "access": "r",
+      "description": "PF sign b, Modbus Slave 2"
+    },
+    "pf_sign_c_modbus_slave_2": {
+      "address": 54,
+      "type": "i32",
+      "access": "r",
+      "description": "PF sign c, Modbus Slave 2"
+    },
+    "pf_sign_tot_modbus_slave_2": {
+      "address": 56,
+      "type": "i32",
+      "access": "r",
+      "description": "PF sign tot, Modbus Slave 2"
+    },
+    "kw_td_modbus_slave_3": {
+      "address": 58,
+      "type": "i32",
+      "access": "r",
+      "description": "kW td, Modbus Slave 3",
+      "unit": "kW"
+    },
+    "kvar_td_modbus_slave_3": {
+      "address": 60,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAR td, Modbus Slave 3",
+      "unit": "kVAR"
+    },
+    "kva_td_modbus_slave_3": {
+      "address": 62,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA td, Modbus Slave 3",
+      "unit": "kVA"
+    },
+    "kw_td_mx_modbus_slave_3": {
+      "address": 64,
+      "type": "i32",
+      "access": "r",
+      "description": "kW td mx, Modbus Slave 3",
+      "unit": "kW"
+    },
+    "kvar_td_mx_modbus_slave_3": {
+      "address": 66,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAR td mx, Modbus Slave 3",
+      "unit": "kVAR"
+    },
+    "kva_td_mx_modbus_slave_3": {
+      "address": 68,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA td mx, Modbus Slave 3",
+      "unit": "kVA"
+    },
+    "vln_avg_mx_modbus_slave_3": {
+      "address": 70,
+      "type": "i32",
+      "access": "r",
+      "description": "Vln avg mx, Modbus Slave 3"
+    },
+    "i_avg_mx_modbus_slave_3": {
+      "address": 72,
+      "type": "i32",
+      "access": "r",
+      "description": "I avg mx, Modbus Slave 3"
+    },
+    "kw_tot_mx_modbus_slave_3": {
+      "address": 74,
+      "type": "i32",
+      "access": "r",
+      "description": "kW tot mx, Modbus Slave 3",
+      "unit": "kW"
+    },
+    "kvar_tot_mx_modbus_slave_3": {
+      "address": 76,
+      "type": "i32",
+      "access": "r",
+      "description": "kVAR tot mx, Modbus Slave 3",
+      "unit": "kVAR"
+    },
+    "kva_tot_mx_modbus_slave_3": {
+      "address": 78,
+      "type": "i32",
+      "access": "r",
+      "description": "kVA tot mx, Modbus Slave 3",
+      "unit": "kVA"
+    },
+    "freq_mx_modbus_slave_3": {
+      "address": 80,
+      "type": "i32",
+      "access": "r",
+      "description": "Freq mx, Modbus Slave 3"
+    },
+    "vln_avg_mn_modbus_slave_3": {
+      "address": 82,
+      "type": "i32",
+      "access": "r",
+      "description": "Vln avg mn, Modbus Slave 3"
+    },
+    "i_avg_mn_modbus_slave_3": {
+      "address": 84,
+      "type": "i32",
+      "access": "r",
+      "description": "I avg mn, Modbus Slave 3"
+    },
+    "freq_mn_modbus_slave_3": {
+      "address": 86,
+      "type": "i32",
+      "access": "r",
+      "description": "Freq mn, Modbus Slave 3"
+    },
+    "kwh_imp_kwh_del_1_modbus_slave_4": {
+      "address": 88,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh imp (kWh del) 1, Modbus Slave 4",
+      "unit": "kWh"
+    },
+    "kwh_exp_kwh_rec_1_modbus_slave_4": {
+      "address": 90,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh exp (kWh rec) 1, Modbus Slave 4",
+      "unit": "kWh"
+    },
+    "kwh_tot_kwh_del_rec_1_modbus_slave_4": {
+      "address": 92,
+      "type": "i32",
+      "access": "r",
+      "description": "kWh tot (kWh del+rec) 1, Modbus Slave 4",
+      "unit": "kWh"
+    }
+  }
+}

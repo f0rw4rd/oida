@@ -1,0 +1,351 @@
+{
+  "vendor": "Seneca",
+  "model": "S 604 / S 700",
+  "description": "Seneca S 604 / S 700 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: S 604, S 700",
+  "registers": {
+    "phase_1_n_voltage": {
+      "address": 4096,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 N voltage",
+      "unit": "V"
+    },
+    "phase_2_n_voltage": {
+      "address": 4098,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 N voltage",
+      "unit": "V"
+    },
+    "phase_3_n_voltage": {
+      "address": 4100,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 N voltage",
+      "unit": "V"
+    },
+    "line_12_voltage": {
+      "address": 4102,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 12 voltage",
+      "unit": "V"
+    },
+    "line_23_voltage": {
+      "address": 4104,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 23 voltage",
+      "unit": "V"
+    },
+    "line_31_voltage": {
+      "address": 4106,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 31 voltage",
+      "unit": "V"
+    },
+    "system_voltage": {
+      "address": 4108,
+      "type": "f32",
+      "access": "r",
+      "description": "System voltage",
+      "unit": "V"
+    },
+    "phase_1_current": {
+      "address": 4110,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 current",
+      "unit": "A"
+    },
+    "phase_2_current": {
+      "address": 4112,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 current",
+      "unit": "A"
+    },
+    "phase_3_current": {
+      "address": 4114,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 current",
+      "unit": "A"
+    },
+    "neutral_current": {
+      "address": 4116,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current",
+      "unit": "A"
+    },
+    "system_current": {
+      "address": 4118,
+      "type": "f32",
+      "access": "r",
+      "description": "System current",
+      "unit": "A"
+    },
+    "phase_1_active_power": {
+      "address": 4120,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 active power",
+      "unit": "W"
+    },
+    "phase_2_active_power": {
+      "address": 4122,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 active power",
+      "unit": "W"
+    },
+    "phase_3_active_power": {
+      "address": 4124,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 active power",
+      "unit": "W"
+    },
+    "system_active_power": {
+      "address": 4126,
+      "type": "f32",
+      "access": "r",
+      "description": "System active power",
+      "unit": "W"
+    },
+    "phase_1_apparent_power": {
+      "address": 4128,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 apparent power",
+      "unit": "VA"
+    },
+    "phase_2_apparent_power": {
+      "address": 4130,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 apparent power",
+      "unit": "VA"
+    },
+    "phase_3_apparent_power": {
+      "address": 4132,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 apparent power",
+      "unit": "VA"
+    },
+    "system_apparent_power": {
+      "address": 4134,
+      "type": "f32",
+      "access": "r",
+      "description": "System apparent power",
+      "unit": "VA"
+    },
+    "phase_1_reactive_power": {
+      "address": 4136,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 reactive power",
+      "unit": "var"
+    },
+    "phase_2_reactive_power": {
+      "address": 4138,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 reactive power",
+      "unit": "var"
+    },
+    "phase_3_reactive_power": {
+      "address": 4140,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 reactive power",
+      "unit": "var"
+    },
+    "system_reactive_power": {
+      "address": 4142,
+      "type": "f32",
+      "access": "r",
+      "description": "System reactive power",
+      "unit": "var"
+    },
+    "phase_1_power_factor": {
+      "address": 4144,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 power factor"
+    },
+    "phase_2_power_factor": {
+      "address": 4146,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 power factor"
+    },
+    "phase_3_power_factor": {
+      "address": 4148,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 power factor"
+    },
+    "system_power_factor": {
+      "address": 4150,
+      "type": "f32",
+      "access": "r",
+      "description": "System power factor"
+    },
+    "phase_1_dpf": {
+      "address": 4152,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 dpf"
+    },
+    "phase_2_dpf": {
+      "address": 4154,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 dpf"
+    },
+    "phase_3_dpf": {
+      "address": 4156,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 dpf"
+    },
+    "phase_1_tangent": {
+      "address": 4158,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 tangent"
+    },
+    "phase_2_tangent": {
+      "address": 4160,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 tangent"
+    },
+    "phase_3_tangent": {
+      "address": 4162,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 tangent"
+    },
+    "system_tangent": {
+      "address": 4164,
+      "type": "f32",
+      "access": "r",
+      "description": "System tangent"
+    },
+    "phase_1_n_voltage_thd": {
+      "address": 4166,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 N voltage thd",
+      "unit": "%"
+    },
+    "phase_2_n_voltage_thd": {
+      "address": 4168,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 N voltage thd",
+      "unit": "%"
+    },
+    "phase_3_n_voltage_thd": {
+      "address": 4170,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 N voltage thd",
+      "unit": "%"
+    },
+    "line_12_voltage_thd": {
+      "address": 4172,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 12 voltage thd",
+      "unit": "%"
+    },
+    "line_23_voltage_thd": {
+      "address": 4174,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 23 voltage thd",
+      "unit": "%"
+    },
+    "line_31_voltage_thd": {
+      "address": 4176,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 31 voltage thd",
+      "unit": "%"
+    },
+    "phase_1_current_thd": {
+      "address": 4178,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 current thd",
+      "unit": "%"
+    },
+    "phase_2_current_thd": {
+      "address": 4180,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 current thd",
+      "unit": "%"
+    },
+    "phase_3_current_thd": {
+      "address": 4182,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 current thd",
+      "unit": "%"
+    },
+    "neutral_current_thd": {
+      "address": 4184,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current thd",
+      "unit": "%"
+    },
+    "frequency": {
+      "address": 4186,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "sequence_00_123_ccw_01_321_cw_02_not_defined": {
+      "address": 4188,
+      "type": "f32",
+      "access": "r",
+      "description": "Sequence ($00=123 ccw, $01=321 cw, $02=not defined)"
+    },
+    "hourcounter": {
+      "address": 4190,
+      "type": "f32",
+      "access": "r",
+      "description": "Hourcounter",
+      "unit": "h"
+    },
+    "hourcounter_4192": {
+      "address": 4192,
+      "type": "f32",
+      "access": "r",
+      "description": "Hourcounter",
+      "unit": "h"
+    },
+    "phase_1_current_dmd": {
+      "address": 4366,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 current dmd",
+      "unit": "A"
+    }
+  }
+}

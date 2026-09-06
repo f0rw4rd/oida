@@ -1,0 +1,200 @@
+{
+  "vendor": "Deye",
+  "model": "4Mppt",
+  "description": "Imported from Home Assistant Solarman (deye_4mppt.yaml)",
+  "byte_order": "big",
+  "word_order": "big",
+  "source": "home_assistant_solarman/deye_4mppt.yaml",
+  "registers": {
+    "pv1_voltage": {
+      "address": 109,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv2_voltage": {
+      "address": 111,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv3_voltage": {
+      "address": 113,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV3 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv4_voltage": {
+      "address": 115,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV4 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv1_current": {
+      "address": 110,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV1 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv2_current": {
+      "address": 112,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV2 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv3_current": {
+      "address": 114,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV3 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv4_current": {
+      "address": 116,
+      "type": "u16",
+      "access": "ro",
+      "description": "PV4 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "daily_production": {
+      "address": 60,
+      "type": "u16",
+      "access": "ro",
+      "description": "Daily Production",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_production": {
+      "address": 63,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total Production",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "active_power_regulations": {
+      "address": 40,
+      "type": "u16",
+      "access": "ro",
+      "description": "Active Power Regulations",
+      "unit": "%"
+    },
+    "ac_voltage": {
+      "address": 73,
+      "type": "u16",
+      "access": "ro",
+      "description": "AC Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_current": {
+      "address": 76,
+      "type": "i16",
+      "access": "ro",
+      "description": "Grid Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "ac_output_frequency": {
+      "address": 79,
+      "type": "u16",
+      "access": "ro",
+      "description": "AC Output Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "running_status": {
+      "address": 59,
+      "type": "u16",
+      "access": "ro",
+      "description": "Running Status",
+      "enum": {
+        "0": "Stand-by",
+        "1": "Self-check",
+        "2": "Normal",
+        "3": "Warning",
+        "4": "Fault"
+      }
+    },
+    "total_ac_output_power_active": {
+      "address": 86,
+      "type": "u32",
+      "access": "ro",
+      "description": "Total AC Output Power (Active)",
+      "unit": "W",
+      "scale": 0.1
+    },
+    "radiator_temperature": {
+      "address": 90,
+      "type": "u16",
+      "access": "ro",
+      "description": "Radiator Temperature",
+      "unit": "°C",
+      "scale": 0.01,
+      "offset": -1000
+    },
+    "inverter_id": {
+      "address": 3,
+      "type": "str",
+      "access": "ro",
+      "description": "Inverter ID"
+    },
+    "rated_power": {
+      "address": 16,
+      "type": "u16",
+      "access": "ro",
+      "description": "Rated Power",
+      "unit": "W",
+      "scale": 0.1
+    },
+    "startup_selfchecking_time": {
+      "address": 21,
+      "type": "u16",
+      "access": "ro",
+      "description": "Start-up Self-checking Time ",
+      "unit": "s"
+    },
+    "soft_start_enable": {
+      "address": 47,
+      "type": "u16",
+      "access": "ro",
+      "description": "Soft Start Enable",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      }
+    },
+    "power_factor_regulation": {
+      "address": 50,
+      "type": "i16",
+      "access": "ro",
+      "description": "Power Factor Regulation",
+      "scale": 0.1
+    },
+    "restore_factory_settings": {
+      "address": 54,
+      "type": "u16",
+      "access": "ro",
+      "description": "Restore Factory Settings",
+      "enum": {
+        "0": "Disabled",
+        "1": "Enabled"
+      }
+    }
+  },
+  "_source_verified": "Verified: Source YAML confirmed at StephanJoubert/home_assistant_solarman; 4 MPPT PV registers verified"
+}

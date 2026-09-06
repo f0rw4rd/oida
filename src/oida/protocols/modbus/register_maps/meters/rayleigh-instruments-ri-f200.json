@@ -1,0 +1,315 @@
+{
+  "vendor": "Rayleigh Instruments",
+  "model": "RI F 200",
+  "description": "Rayleigh Instruments RI F 200 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "voltage_v2n": {
+      "address": 2,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage v2n"
+    },
+    "voltage_v3n": {
+      "address": 4,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage v3n"
+    },
+    "average_voltage_ln": {
+      "address": 6,
+      "type": "f32",
+      "access": "r",
+      "description": "Average voltage ln"
+    },
+    "voltage_v12": {
+      "address": 8,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage V12"
+    },
+    "voltage_v23": {
+      "address": 10,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage V23"
+    },
+    "voltage_v31": {
+      "address": 12,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage V31"
+    },
+    "average_voltage_ll": {
+      "address": 14,
+      "type": "f32",
+      "access": "r",
+      "description": "Average voltage ll"
+    },
+    "current_l1": {
+      "address": 16,
+      "type": "f32",
+      "access": "r",
+      "description": "Current l1"
+    },
+    "current_i2": {
+      "address": 18,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I2"
+    },
+    "current_i3": {
+      "address": 20,
+      "type": "f32",
+      "access": "r",
+      "description": "Current I3"
+    },
+    "average_current": {
+      "address": 22,
+      "type": "f32",
+      "access": "r",
+      "description": "Average current"
+    },
+    "kw1": {
+      "address": 24,
+      "type": "f32",
+      "access": "r",
+      "description": "kW1"
+    },
+    "kw2": {
+      "address": 26,
+      "type": "f32",
+      "access": "r",
+      "description": "kW2"
+    },
+    "kw3": {
+      "address": 28,
+      "type": "f32",
+      "access": "r",
+      "description": "kW3"
+    },
+    "kva1": {
+      "address": 30,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva1"
+    },
+    "kva2": {
+      "address": 32,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva2"
+    },
+    "kva3": {
+      "address": 34,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva3"
+    },
+    "kvar1": {
+      "address": 36,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar1"
+    },
+    "kvar2": {
+      "address": 38,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar2"
+    },
+    "kvar3": {
+      "address": 40,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar3"
+    },
+    "total_kw": {
+      "address": 42,
+      "type": "f32",
+      "access": "r",
+      "description": "Total kw"
+    },
+    "total_kva": {
+      "address": 44,
+      "type": "f32",
+      "access": "r",
+      "description": "Total kva",
+      "unit": "kVA"
+    },
+    "total_kvar": {
+      "address": 46,
+      "type": "f32",
+      "access": "r",
+      "description": "Total kvar",
+      "unit": "kVAr"
+    },
+    "pf1": {
+      "address": 48,
+      "type": "f32",
+      "access": "r",
+      "description": "PF1"
+    },
+    "pf2": {
+      "address": 50,
+      "type": "f32",
+      "access": "r",
+      "description": "PF2"
+    },
+    "pf3": {
+      "address": 52,
+      "type": "f32",
+      "access": "r",
+      "description": "PF3"
+    },
+    "average_pf": {
+      "address": 54,
+      "type": "f32",
+      "access": "r",
+      "description": "Average pf"
+    },
+    "frequency": {
+      "address": 56,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency"
+    },
+    "kwh": {
+      "address": 58,
+      "type": "f32",
+      "access": "r",
+      "description": "Kwh"
+    },
+    "kvah": {
+      "address": 60,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvah"
+    },
+    "kvarh": {
+      "address": 62,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvarh"
+    },
+    "kw_max_active_power": {
+      "address": 64,
+      "type": "f32",
+      "access": "r",
+      "description": "Kw max active power"
+    },
+    "kw_min_active_power": {
+      "address": 66,
+      "type": "f32",
+      "access": "r",
+      "description": "Kw min active power"
+    },
+    "kvar_max_reactive_power": {
+      "address": 68,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar max reactive power"
+    },
+    "kvar_min_reactive_power": {
+      "address": 70,
+      "type": "f32",
+      "access": "r",
+      "description": "Kvar min reactive power"
+    },
+    "kva_max_apparent_power": {
+      "address": 72,
+      "type": "f32",
+      "access": "r",
+      "description": "Kva max apparent power"
+    },
+    "neutral_current": {
+      "address": 122,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current"
+    },
+    "thd_of_voltage_v1n": {
+      "address": 124,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd of voltage v1n"
+    },
+    "thd_of_voltage_v2n": {
+      "address": 126,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd of voltage v2n"
+    },
+    "thd_of_voltage_v3n": {
+      "address": 128,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd of voltage v3n"
+    },
+    "thd_of_voltage_v12": {
+      "address": 130,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd of voltage V12"
+    },
+    "thd_of_voltage_v23": {
+      "address": 132,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd of voltage V23"
+    },
+    "thd_of_voltage_v31": {
+      "address": 134,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd of voltage V31"
+    },
+    "thd_of_current_i1": {
+      "address": 136,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd of current I1"
+    },
+    "thd_of_current_l2": {
+      "address": 138,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd of current l2"
+    },
+    "thd_of_current_l3": {
+      "address": 140,
+      "type": "f32",
+      "access": "r",
+      "description": "Thd of current l3"
+    },
+    "serial_number_of_unit": {
+      "address": 684,
+      "type": "f32",
+      "access": "r",
+      "description": "Serial number of unit"
+    },
+    "max_l1_demand": {
+      "address": 692,
+      "type": "f32",
+      "access": "r",
+      "description": "Max l1 demand"
+    },
+    "max_l2_demand": {
+      "address": 694,
+      "type": "f32",
+      "access": "r",
+      "description": "Max l2 demand"
+    },
+    "max_i3_demand": {
+      "address": 696,
+      "type": "f32",
+      "access": "r",
+      "description": "Max I3 demand"
+    }
+  }
+}

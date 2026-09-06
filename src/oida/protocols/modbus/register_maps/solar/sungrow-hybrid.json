@@ -1,0 +1,449 @@
+{
+  "vendor": "Sungrow",
+  "model": "Hybrid Storage Inverters (SH Series)",
+  "description": "Sungrow hybrid storage inverter series - SH3K6, SH4K6, SH5K-V13, SH5K-20, SH3.6RS-SH6.0RS, SH5.0RT-SH10RT",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Residential Hybrid Single/Three Phase Inverters with battery support. Input registers (FC04) for real-time data. Holding registers (FC03) for settings.",
+  "source": "https://github.com/bohdan-s/SungrowInverter",
+  "registers": {
+    "output_type": {
+      "address": 5002,
+      "type": "u16",
+      "access": "ro",
+      "description": "Output type code",
+      "enum": {
+        "0": "Single phase",
+        "1": "Three phase (3P4L)",
+        "2": "Three phase (3P3L)"
+      }
+    },
+    "daily_energy_yield": {
+      "address": 5003,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Hybrid active power accumulation (Include PV generation and battery discharge energy)"
+    },
+    "total_energy_yield": {
+      "address": 5004,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Hybrid active power accumulation (Include PV generation and battery discharge energy)"
+    },
+    "inside_temperature": {
+      "address": 5008,
+      "type": "u16",
+      "access": "ro",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Internal inverter temperature"
+    },
+    "mppt_1_voltage": {
+      "address": 5011,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 1 voltage"
+    },
+    "mppt_1_current": {
+      "address": 5012,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 1 current"
+    },
+    "mppt_2_voltage": {
+      "address": 5013,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "MPPT 2 voltage"
+    },
+    "mppt_2_current": {
+      "address": 5014,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "MPPT 2 current"
+    },
+    "total_dc_power": {
+      "address": 5017,
+      "type": "u32",
+      "access": "ro",
+      "unit": "W",
+      "description": "PV power that is usable (inverter inefficiency)"
+    },
+    "grid_voltage": {
+      "address": 5019,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid voltage"
+    },
+    "phase_a_voltage": {
+      "address": 5019,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase A (1-2) voltage is also the grid voltage on a single phase inverter"
+    },
+    "phase_b_voltage": {
+      "address": 5020,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase B voltage (three phase models only)"
+    },
+    "phase_c_voltage": {
+      "address": 5021,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase C voltage (three phase models only)"
+    },
+    "reactive_power": {
+      "address": 5033,
+      "type": "i32",
+      "access": "ro",
+      "unit": "var",
+      "description": "Reactive power"
+    },
+    "power_factor": {
+      "address": 5035,
+      "type": "u16",
+      "access": "ro",
+      "scale": 0.001,
+      "description": "Power factor"
+    },
+    "grid_frequency": {
+      "address": 5036,
+      "type": "u16",
+      "access": "ro",
+      "unit": "Hz",
+      "scale": 0.1,
+      "description": "Grid frequency"
+    },
+    "system_state": {
+      "address": 13000,
+      "type": "u16",
+      "access": "ro",
+      "description": "System state code",
+      "enum": {
+        "2": "Stop",
+        "8": "Standby",
+        "16": "Initial Standby",
+        "32": "Startup",
+        "64": "Running",
+        "256": "Fault",
+        "1024": "Running in maintain mode",
+        "2048": "Running in forced mode",
+        "4096": "Running in off-grid mode",
+        "9473": "Restarting",
+        "16384": "Running in external EMS mode"
+      }
+    },
+    "running_state": {
+      "address": 13001,
+      "type": "u16",
+      "access": "ro",
+      "description": "Running state bitmap - bits indicate: power from PV, charging, discharging, load active, exporting, importing, power from load"
+    },
+    "daily_pv_generation": {
+      "address": 13002,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily PV generation"
+    },
+    "total_pv_generation": {
+      "address": 13003,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total PV generation"
+    },
+    "daily_export_from_pv": {
+      "address": 13005,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily export energy from PV"
+    },
+    "total_export_from_pv": {
+      "address": 13006,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total export energy from PV"
+    },
+    "load_power": {
+      "address": 13008,
+      "type": "i32",
+      "access": "ro",
+      "unit": "W",
+      "description": "Load power"
+    },
+    "export_power": {
+      "address": 13010,
+      "type": "i32",
+      "access": "ro",
+      "unit": "W",
+      "description": "Export power to grid"
+    },
+    "daily_battery_charge_from_pv": {
+      "address": 13012,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily battery charge from PV"
+    },
+    "total_battery_charge_from_pv": {
+      "address": 13013,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total battery charge from PV"
+    },
+    "co2_reduction": {
+      "address": 13015,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kg",
+      "scale": 0.1,
+      "description": "CO2 reduction"
+    },
+    "daily_direct_energy_consumption": {
+      "address": 13017,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily direct energy consumption"
+    },
+    "total_direct_energy_consumption": {
+      "address": 13018,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total direct energy consumption"
+    },
+    "battery_voltage": {
+      "address": 13020,
+      "type": "u16",
+      "access": "ro",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Battery voltage"
+    },
+    "battery_current": {
+      "address": 13021,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Battery current"
+    },
+    "battery_power": {
+      "address": 13022,
+      "type": "u16",
+      "access": "ro",
+      "unit": "W",
+      "description": "Battery power"
+    },
+    "battery_level": {
+      "address": 13023,
+      "type": "u16",
+      "access": "ro",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Battery level (state of charge)"
+    },
+    "battery_state_of_health": {
+      "address": 13024,
+      "type": "u16",
+      "access": "ro",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Battery state of health"
+    },
+    "battery_temperature": {
+      "address": 13025,
+      "type": "u16",
+      "access": "ro",
+      "unit": "C",
+      "scale": 0.1,
+      "description": "Battery temperature"
+    },
+    "daily_battery_discharge": {
+      "address": 13026,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily energy that was discharged into the grid"
+    },
+    "total_battery_discharge": {
+      "address": 13027,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total energy that was discharged into the grid"
+    },
+    "self_consumption_today": {
+      "address": 13029,
+      "type": "u16",
+      "access": "ro",
+      "unit": "%",
+      "scale": 0.1,
+      "description": "Self consumption today"
+    },
+    "grid_state": {
+      "address": 13030,
+      "type": "u16",
+      "access": "ro",
+      "description": "Grid state",
+      "enum": {
+        "170": "Off Grid",
+        "85": "On Grid"
+      }
+    },
+    "phase_a_current": {
+      "address": 13031,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Phase A current"
+    },
+    "phase_b_current": {
+      "address": 13032,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Phase B current (three phase models only)"
+    },
+    "phase_c_current": {
+      "address": 13033,
+      "type": "u16",
+      "access": "ro",
+      "unit": "A",
+      "scale": 0.1,
+      "description": "Phase C current (three phase models only)"
+    },
+    "total_active_power": {
+      "address": 13034,
+      "type": "u32",
+      "access": "ro",
+      "unit": "W",
+      "description": "Total active power"
+    },
+    "daily_import_energy": {
+      "address": 13036,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily import energy from grid"
+    },
+    "total_import_energy": {
+      "address": 13037,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total import energy from grid"
+    },
+    "daily_charge_from_grid": {
+      "address": 13040,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily battery charge from grid"
+    },
+    "total_charge_from_grid": {
+      "address": 13041,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total battery charge from grid"
+    },
+    "daily_export_from_battery": {
+      "address": 13045,
+      "type": "u16",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Daily export energy from battery"
+    },
+    "total_export_from_battery": {
+      "address": 13046,
+      "type": "u32",
+      "access": "ro",
+      "unit": "kWh",
+      "scale": 0.1,
+      "description": "Total export energy from battery"
+    },
+    "year": {
+      "address": 5000,
+      "type": "u16",
+      "access": "rw",
+      "description": "Current year (holding register)"
+    },
+    "month": {
+      "address": 5001,
+      "type": "u16",
+      "access": "rw",
+      "description": "Current month (holding register)"
+    },
+    "day": {
+      "address": 5002,
+      "type": "u16",
+      "access": "rw",
+      "description": "Current day (holding register)"
+    },
+    "hour": {
+      "address": 5003,
+      "type": "u16",
+      "access": "rw",
+      "description": "Current hour (holding register)"
+    },
+    "minute": {
+      "address": 5004,
+      "type": "u16",
+      "access": "rw",
+      "description": "Current minute (holding register)"
+    },
+    "second": {
+      "address": 5005,
+      "type": "u16",
+      "access": "rw",
+      "description": "Current second (holding register)"
+    }
+  },
+  "_source_verified": "Verified: Registers 13000-13036 confirmed against SH10RT gist and mkaiser/Sungrow-SHx-Inverter-Modbus-Home-Assistant"
+}

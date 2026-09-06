@@ -1,0 +1,363 @@
+{
+  "vendor": "Socomec",
+  "model": "NETYS PR NETYS RT ITYS",
+  "description": "Socomec NETYS PR NETYS RT ITYS power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "broadcast_load_phase_1_m00": {
+      "address": 96,
+      "type": "u16",
+      "access": "r",
+      "description": "Broadcast, load phase 1 (M00)",
+      "unit": "%"
+    },
+    "broadcast_total_load_m03": {
+      "address": 99,
+      "type": "u16",
+      "access": "r",
+      "description": "Broadcast, total load (M03)",
+      "unit": "%"
+    },
+    "broadcast_battery_capacity_m04": {
+      "address": 100,
+      "type": "u16",
+      "access": "r",
+      "description": "Broadcast, battery capacity (M04)",
+      "unit": "%"
+    },
+    "broadcast_auxiliary_mains_star_voltage_v1_m06": {
+      "address": 102,
+      "type": "u16",
+      "access": "r",
+      "description": "Broadcast, auxiliary mains star voltage v1 (M06)",
+      "unit": "%"
+    },
+    "broadcast_output_star_voltage_v1_m09": {
+      "address": 105,
+      "type": "u16",
+      "access": "r",
+      "description": "Broadcast, output star voltage v1 (M09)",
+      "unit": "V"
+    },
+    "broadcast_output_current_phase_l1_m15": {
+      "address": 111,
+      "type": "u16",
+      "access": "r",
+      "description": "Broadcast, output current phase l1 (M15)",
+      "unit": "A"
+    },
+    "broadcast_auxiliary_frequency_m18": {
+      "address": 114,
+      "type": "u16",
+      "access": "r",
+      "description": "Broadcast, auxiliary frequency (M18)",
+      "unit": "Hz"
+    },
+    "broadcast_output_frequency_m19": {
+      "address": 115,
+      "type": "u16",
+      "access": "r",
+      "description": "Broadcast, output frequency (M19)",
+      "unit": "Hz"
+    },
+    "broadcast_positive_battery_voltage_m20": {
+      "address": 116,
+      "type": "u16",
+      "access": "r",
+      "description": "Broadcast, positive battery voltage (M20)",
+      "unit": "V"
+    },
+    "broadcast_internal_ups_temperature_m22": {
+      "address": 118,
+      "type": "u16",
+      "access": "r",
+      "description": "Broadcast, internal UPS temperature (M22)",
+      "unit": "DC"
+    },
+    "broadcast_remaining_back_up_time_m23": {
+      "address": 119,
+      "type": "u16",
+      "access": "r",
+      "description": "Broadcast, remaining back up time (M23)",
+      "unit": "Minutes"
+    },
+    "broadcast_input_mains_star_voltage_v1_m33": {
+      "address": 129,
+      "type": "u16",
+      "access": "r",
+      "description": "Broadcast, input mains star voltage v1 (M33)",
+      "unit": "V"
+    },
+    "concentrator_load_phase_1_m00": {
+      "address": 4192,
+      "type": "u16",
+      "access": "r",
+      "description": "Concentrator, load phase 1 (M00)",
+      "unit": "%"
+    },
+    "concentrator_total_load_m03": {
+      "address": 4195,
+      "type": "u16",
+      "access": "r",
+      "description": "Concentrator, total load (M03)",
+      "unit": "%"
+    },
+    "concentrator_battery_capacity_m04": {
+      "address": 4196,
+      "type": "u16",
+      "access": "r",
+      "description": "Concentrator, battery capacity (M04)",
+      "unit": "%"
+    },
+    "concentrator_auxiliary_mains_star_voltage_v1_m06": {
+      "address": 4198,
+      "type": "u16",
+      "access": "r",
+      "description": "Concentrator, auxiliary mains star voltage v1 (M06)",
+      "unit": "%"
+    },
+    "concentrator_output_star_voltage_v1_m09": {
+      "address": 4201,
+      "type": "u16",
+      "access": "r",
+      "description": "Concentrator, output star voltage v1 (M09)",
+      "unit": "V"
+    },
+    "concentrator_output_current_phase_l1_m15": {
+      "address": 4207,
+      "type": "u16",
+      "access": "r",
+      "description": "Concentrator, output current phase l1 (M15)",
+      "unit": "A"
+    },
+    "concentrator_auxiliary_frequency_m18": {
+      "address": 4210,
+      "type": "u16",
+      "access": "r",
+      "description": "Concentrator, auxiliary frequency (M18)",
+      "unit": "Hz"
+    },
+    "concentrator_output_frequency_m19": {
+      "address": 4211,
+      "type": "u16",
+      "access": "r",
+      "description": "Concentrator, output frequency (M19)",
+      "unit": "Hz"
+    },
+    "concentrator_positive_battery_voltage_m20": {
+      "address": 4212,
+      "type": "u16",
+      "access": "r",
+      "description": "Concentrator, positive battery voltage (M20)",
+      "unit": "V"
+    },
+    "concentrator_internal_ups_temperature_m22": {
+      "address": 4214,
+      "type": "u16",
+      "access": "r",
+      "description": "Concentrator, internal UPS temperature (M22)",
+      "unit": "DC"
+    },
+    "concentrator_remaining_back_up_time_m23": {
+      "address": 4215,
+      "type": "u16",
+      "access": "r",
+      "description": "Concentrator, remaining back up time (M23)",
+      "unit": "Minutes"
+    },
+    "concentrator_input_mains_star_voltage_v1_m33": {
+      "address": 4225,
+      "type": "u16",
+      "access": "r",
+      "description": "Concentrator, input mains star voltage v1 (M33)",
+      "unit": "V"
+    },
+    "module_1_load_phase_1_m00": {
+      "address": 8288,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 1, load phase 1 (M00)",
+      "unit": "%"
+    },
+    "module_1_total_load_m03": {
+      "address": 8291,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 1, total load (M03)",
+      "unit": "%"
+    },
+    "module_1_battery_capacity_m04": {
+      "address": 8292,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 1, battery capacity (M04)",
+      "unit": "%"
+    },
+    "module_1_auxiliary_mains_star_voltage_v1_m06": {
+      "address": 8294,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 1, auxiliary mains star voltage v1 (M06)",
+      "unit": "%"
+    },
+    "module_1_output_star_voltage_v1_m09": {
+      "address": 8297,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 1, output star voltage v1 (M09)",
+      "unit": "V"
+    },
+    "module_1_output_current_phase_l1_m15": {
+      "address": 8303,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 1, output current phase l1 (M15)",
+      "unit": "A"
+    },
+    "module_1_auxiliary_frequency_m18": {
+      "address": 8306,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 1, auxiliary frequency (M18)",
+      "unit": "Hz"
+    },
+    "module_1_output_frequency_m19": {
+      "address": 8307,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 1, output frequency (M19)",
+      "unit": "Hz"
+    },
+    "module_1_positive_battery_voltage_m20": {
+      "address": 8308,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 1, positive battery voltage (M20)",
+      "unit": "V"
+    },
+    "module_1_internal_ups_temperature_m22": {
+      "address": 8310,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 1, internal UPS temperature (M22)",
+      "unit": "DC"
+    },
+    "module_1_remaining_back_up_time_m23": {
+      "address": 8311,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 1, remaining back up time (M23)",
+      "unit": "Minutes"
+    },
+    "module_1_input_mains_star_voltage_v1_m33": {
+      "address": 8321,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 1, input mains star voltage v1 (M33)",
+      "unit": "V"
+    },
+    "module_2_load_phase_1_m00": {
+      "address": 12384,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 2, load phase 1 (M00)",
+      "unit": "%"
+    },
+    "module_2_total_load_m03": {
+      "address": 12387,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 2, total load (M03)",
+      "unit": "%"
+    },
+    "module_2_battery_capacity_m04": {
+      "address": 12388,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 2, battery capacity (M04)",
+      "unit": "%"
+    },
+    "module_2_auxiliary_mains_star_voltage_v1_m06": {
+      "address": 12390,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 2, auxiliary mains star voltage v1 (M06)",
+      "unit": "%"
+    },
+    "module_2_output_star_voltage_v1_m09": {
+      "address": 12393,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 2, output star voltage v1 (M09)",
+      "unit": "V"
+    },
+    "module_2_output_current_phase_l1_m15": {
+      "address": 12399,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 2, output current phase l1 (M15)",
+      "unit": "A"
+    },
+    "module_2_auxiliary_frequency_m18": {
+      "address": 12402,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 2, auxiliary frequency (M18)",
+      "unit": "Hz"
+    },
+    "module_2_output_frequency_m19": {
+      "address": 12403,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 2, output frequency (M19)",
+      "unit": "Hz"
+    },
+    "module_2_positive_battery_voltage_m20": {
+      "address": 12404,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 2, positive battery voltage (M20)",
+      "unit": "V"
+    },
+    "module_2_internal_ups_temperature_m22": {
+      "address": 12406,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 2, internal UPS temperature (M22)",
+      "unit": "DC"
+    },
+    "module_2_remaining_back_up_time_m23": {
+      "address": 12407,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 2, remaining back up time (M23)",
+      "unit": "Minutes"
+    },
+    "module_2_input_mains_star_voltage_v1_m33": {
+      "address": 12417,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 2, input mains star voltage v1 (M33)",
+      "unit": "V"
+    },
+    "module_3_load_phase_1_m00": {
+      "address": 16480,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 3, load phase 1 (M00)",
+      "unit": "%"
+    },
+    "module_3_total_load_m03": {
+      "address": 16483,
+      "type": "u16",
+      "access": "r",
+      "description": "Module 3, total load (M03)",
+      "unit": "%"
+    }
+  }
+}

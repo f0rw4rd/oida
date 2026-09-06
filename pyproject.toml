@@ -1,0 +1,377 @@
+[build-system]
+requires = ["setuptools>=84.0.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "oida-ics"
+dynamic = ["version"]
+description = "OIDA - OT/ICS Discovery & Assessment"
+readme = "README.md"
+license = {text = "AGPL-3.0-or-later"}
+authors = [
+    {name = "OIDA Team"}
+]
+maintainers = [
+    {name = "f0rw4rd"}
+]
+keywords = ["ics", "scada", "industrial", "security", "pentesting", "modbus", "opcua", "ethercat"]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Information Technology",
+    "Intended Audience :: System Administrators",
+    "Topic :: Security",
+    "Topic :: System :: Networking",
+    "Topic :: System :: Networking :: Monitoring",
+    "Topic :: Software Development :: Testing",
+    "License :: OSI Approved :: GNU Affero General Public License v3 or later (AGPLv3+)",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Operating System :: OS Independent",
+    "Environment :: Console",
+]
+requires-python = ">=3.10"
+# Runtime + per-protocol deps are pinned to EXACT (==) versions sourced from
+# uv.lock. End users `pip install oida-ics[...]` resolve our ranges fresh at install
+# time; an exact pin means pip can only ever fetch the one immutable PyPI file
+# for that version, so a malicious *new* in-range release of a dependency (or a
+# hijacked maintainer account) cannot reach them. uv.lock only protects
+# from-source `uv sync`, never a `pip install` from PyPI — hence the pins here.
+# Bump deliberately: edit the version, re-run `uv lock`, then re-release.
+dependencies = [
+    "tqdm==4.70.0",
+    "manuf2==2.0.2",
+    "pyserial==3.5",
+    "termcolor==3.3.0",
+]
+
+[project.optional-dependencies]
+# ── Per-protocol extras (extra name = protocol directory name) ──
+ads = ["pyads==3.6.0"]
+bacnet = ["BAC0==2025.9.15", "PyYAML==6.0.3"]
+# BACnet/SC rides the BACnet app layer (bacpypes3, pulled via BAC0) over a
+# TLS+WebSocket secure datalink: websockets for the transport, cryptography for
+# the automatic certificate-hygiene checks.
+bacnetsc = ["BAC0==2025.9.15", "PyYAML==6.0.3", "websockets==16.0", "cryptography>=43.0.0"]
+can = ["python-can==4.6.1"]
+coap = ["aiocoap==0.4.17", "cbor2==6.1.4"]
+dicom = ["pynetdicom==3.0.4", "pydicom==3.0.2"]
+discovery = ["zeroconf==0.151.3", "scapy==2.7.0", "psutil==7.2.2", "profinet-py==0.6.3", "defusedxml==0.7.1"]
+dnp3 = ["yadnp3==3.2.1.1"]
+ethercat = ["pysoem==1.1.13; sys_platform != 'win32'"]
+ethernetip = ["pycomm3==1.2.16", "cryptography>=43.0.0"]
+fhir = ["fhirclient==4.4.0", "requests==2.34.2"]
+goose = ["pyiec61850-ng==1.6.1.7"]
+hart = ["hartip-py==0.3.0"]
+hl7 = ["hl7apy==1.3.5"]
+iec104 = ["c104==2.2.1"]
+knx = ["xknx==3.20.0", "xknxproject==3.10.0"]
+mms = ["pyiec61850-ng==1.6.1.7"]
+modbus = ["pymodbus==3.15.0", "PyYAML==6.0.3"]
+mqtt = ["paho-mqtt==2.1.0"]
+opcua = ["asyncua==1.1.8"]
+# pyshark: the PyPI repackage `oida-pyshark` (imports as `pyshark`). It carries
+# upstream's unreleased tshark-4.6 EK fixes. A direct git+https URL here would
+# make PyPI reject the whole `oida` upload (direct-URL deps are not allowed).
+pcap = ["oida-pyshark==0.6.1.post1"]
+profinet = ["profinet-py==0.6.3"]
+snap7 = ["python-snap7==3.1.2"]
+snmp = ["pysnmp==7.1.29"]
+tase2 = ["pyiec61850-ng==1.6.1.7"]
+astm = []
+ocpp = ["websockets==16.0", "cryptography>=43.0.0"]
+# Serial transports (IEC-101/104 serial, DNP3 serial, generic serial discovery)
+serial = ["pyserial==3.5"]
+# ── Non-protocol extras ──
+fuzz = ["boofuzz==0.4.2", "sqlalchemy==2.0.52", "pyasn1==0.6.4", "crc==7.1.0", "h2==4.4.1", "scapy==2.7.0", "brotli==1.2.0", "cryptography>=43.0.0"]
+all = [
+    "oida-ics[ads,astm,bacnet,bacnetsc,can,coap,dicom,discovery,dnp3,ethercat]",
+    "oida-ics[ethernetip,fhir,goose,hart,hl7,iec104,knx,mms]",
+    "oida-ics[modbus,mqtt,ocpp,opcua,pcap,profinet,snap7,snmp,tase2,serial,fuzz]",
+]
+dev = [
+    "pytest>=9.0.3",
+    "pytest-cov>=7.0.0",
+    "pytest-asyncio>=1.4.0",
+    "pytest-docker>=3.2.5",
+    "pytest-xdist>=3.8.0",
+    "pytest-timeout>=2.4.0",
+    "pytest-rerunfailures>=16.6.1",
+    "flake8>=7.3.0",
+    "mypy>=2.3.1",
+    "pre-commit>=4.6.2",
+    "ruff>=0.16.5",
+    "vulture>=2.16",
+    "bandit>=1.9.3",
+    # Test-runtime deps that gate skips in tests/ (without these the matrix
+    # silently shrinks). Keep them in dev rather than per-protocol extras so
+    # CI sees the full skip-free count.
+    "Brotli>=1.2.0",          # tests/unit/fuzz/test_transformers.py
+    "docker>=7.1.0",          # tests/integration/common/test_mock_services_integration.py
+    "defusedxml>=0.7.1",      # SSDP/UPnP — also in discovery extra; here for unit tests
+    "msgpack>=1.2.2",         # python-can udp_multicast — gates tests/integration/test_can_mock_e2e.py
+]
+docs = [
+    # Note: docs site lives in the separate oida-website repo
+    # (Astro/Starlight). These pins are kept for the legacy
+    # sphinx-style API-reference build that some tools still expect.
+    # sphinx 9.x requires Python 3.12+ which is above our project's
+    # requires-python = ">=3.10"; myst-parser also constrains sphinx<9,
+    # so pin both to the 8.x line.
+    "sphinx>=8.1.3,<9",
+    "sphinx-rtd-theme>=3.0.0",
+    "myst-parser>=4.0.1,<5",
+]
+
+[project.urls]
+"Homepage" = "https://github.com/f0rw4rd/oida"
+"Bug Reports" = "https://github.com/f0rw4rd/oida/issues"
+"Source" = "https://github.com/f0rw4rd/oida"
+"Documentation" = "https://getoida.dev"
+"Contact" = "https://getoida.dev/contact"
+"Changelog" = "https://github.com/f0rw4rd/oida/blob/main/CHANGELOG.md"
+"Security" = "https://github.com/f0rw4rd/oida/blob/main/SECURITY.md"
+
+[project.scripts]
+oida = "oida.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+
+[tool.setuptools.package-data]
+oida = [
+    "data/*.json",
+    "data/*.csv",
+    "data/**/*.txt",
+    "data/**/*.json",
+    "protocols/modbus/register_maps/*.json",
+    "protocols/modbus/register_maps/**/*.json",
+    "protocols/hart/data/*.json",
+    "protocols/opcua/data/*.txt",
+]
+
+[tool.setuptools.dynamic]
+version = {attr = "oida.__version__"}
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+extend-exclude = [".vulture_whitelist.py"]
+
+[tool.ruff.format]
+# ruff format replaces black; quote/line-length style matches black defaults.
+docstring-code-format = false
+
+[tool.ruff.lint]
+ignore = [
+    # Module-level imports not at top: required for optional dependency patterns,
+    # environment setup before imports, and lazy loading architecture
+    "E402",
+    # Shadowing builtins: variable/argument names like `id`, `type` in protocol code
+    "A001", "A002",
+    # URL open audit: this is a security testing tool that intentionally opens URLs
+    "S310",
+    # XML parsing: security tool that intentionally parses untrusted XML
+    "S314", "S318",
+    # Enum duplicate values: intentional in protocol constant enums
+    "PIE796",
+    # __eq__ without __hash__: Construct adapter pattern
+    "PLW1641",
+    # Abstract base class without abstract methods: service layer pattern
+    "B024",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# Test files: allow bare except, type() comparisons, star imports, unused imports
+# for try/except ImportError availability checks
+"tests/**" = ["E722", "E721", "F403", "F811", "F601"]
+"tests/unit/modbus/*.py" = ["F401"]
+"tests/unit/fuzz/test_transformers.py" = ["F401"]
+# Mock servers and utility scripts: allow unused imports/vars, bare except
+"docker/mocks/**" = ["F401", "F841", "E722"]
+"scripts/**" = ["F841", "F401", "E722"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+disallow_incomplete_defs = true
+check_untyped_defs = true
+disallow_untyped_decorators = true
+no_implicit_optional = true
+warn_redundant_casts = true
+warn_unused_ignores = true
+warn_no_return = true
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "scapy.*"
+follow_imports = "skip"
+
+[tool.pytest.ini_options]
+minversion = "6.0"
+addopts = "-ra -q --strict-markers --strict-config -m 'not network' --tb=line"
+testpaths = ["tests/unit", "tests/integration", "tests/contracts"]
+timeout = 60
+# Use the signal method, not "thread". The thread method cannot interrupt a
+# blocked socket syscall — on timeout it dumps stacks and hard-exits the whole
+# pytest process (os._exit), so a single hung test body kills the entire run
+# with no per-test report. The signal method (SIGALRM) raises into the test, so
+# one slow test fails and the run continues. Linux/main-thread only — fine here
+# (xdist workers run each test in their own main thread).
+timeout_method = "signal"
+# Don't apply the per-test timer to setup/teardown/fixtures. The
+# session-scoped docker_services fixture brings up ~67 mock containers
+# and routinely exceeds any per-test budget; without this flag it kills
+# the whole pytest session. (Fixture/collection hangs are therefore still
+# possible — run in lanes per docs/TESTING.md, or pass
+# -o timeout_func_only=false when the mocks are already up so setup is just a
+# fast health-check.)
+timeout_func_only = true
+filterwarnings = [
+    "error",
+    "ignore::UserWarning",
+    "ignore::DeprecationWarning",
+    "ignore::PendingDeprecationWarning",
+]
+markers = [
+    "smoke: fast structural tests that verify basic wiring, args, and constants (select with '-m smoke')",
+    "flaky: timing-sensitive against a shared mock; auto-retried (pytest-rerunfailures). NOT for code bugs",
+    "slow: marks tests as slow running (deselect with '-m \"not slow\"')",
+    "network: marks tests requiring network access",
+    "auth: marks tests requiring authentication",
+    "fuzz: marks fuzzing tests (potentially dangerous)",
+    "security: marks security analysis tests",
+    "integration: marks integration tests (deselect with '-m \"not integration\"')",
+    "modbus: Modbus protocol tests",
+    "opcua: OPC UA protocol tests",
+    "ethernetip: EtherNet/IP protocol tests",
+    "ads: Beckhoff ADS protocol tests",
+    "snap7: Siemens S7 protocol tests",
+    "iec101: IEC 101 serial protocol tests",
+    "iec104: IEC 104 protocol tests",
+    "mms: MMS/IEC 61850 protocol tests",
+    "knx: KNX protocol tests",
+    "mqtt: MQTT protocol tests",
+    "hl7: HL7 protocol tests",
+    "dicom: DICOM protocol tests",
+    "astm: ASTM/LIS protocol tests",
+    "dnp3: DNP3 protocol tests",
+    "bacnet: BACnet protocol tests",
+    "bacnetsc: BACnet/SC (Secure Connect) protocol tests",
+    "tase2: TASE.2/ICCP protocol tests",
+    "discovery: Discovery protocol tests",
+    "hart: HART protocol tests",
+    "profinet: PROFINET protocol tests",
+    "lldp: LLDP protocol tests",
+    "snmp: SNMP protocol tests",
+    "http2: HTTP/2 protocol tests",
+    "ocpp: OCPP protocol tests",
+    "fhir: FHIR protocol tests",
+    "containers: marks tests requiring specific Docker containers",
+    "binary: PyInstaller binary smoke tests (requires dist/oida)",
+    "integration_fuzzers: integration tests for fuzz protocol definitions",
+    "coverage: nightly real-coverage suite (tests/coverage/), needs docker mocks",
+    "cve_replication: axis-2 CVE-replication tests (run against compose.cve.yml)",
+    "fidelity: axis-3 Conpot-vs-Python-mock fidelity diff",
+    "mock_services: tests that need a docker mock running on a specific port",
+]
+
+[tool.coverage.run]
+source = ["oida"]
+# parallel + relative_files let the three test lanes (unit / integration /
+# coverage), each run as a SEPARATE pytest invocation with its own xdist
+# workers, write uniquely-suffixed .coverage.* files that `coverage combine`
+# merges into one total. relative_files keeps paths comparable when the
+# integration lane runs mocks from a different CWD (else combine double-counts).
+# Driven by `scripts/run-all-tests.sh --coverage`.
+parallel = true
+relative_files = true
+omit = [
+    "*/tests/*",
+    "*/test_*",
+    "setup.py",
+    "*/constants.py",
+    "*/const.py",
+]
+
+[tool.coverage.report]
+exclude_lines = [
+    "pragma: no cover",
+    "def __repr__",
+    "if self.debug:",
+    "if settings.DEBUG",
+    "raise AssertionError",
+    "raise NotImplementedError",
+    "if 0:",
+    "if __name__ == .__main__.:",
+    "class .*\\bProtocol\\):",
+    "@(abc\\.)?abstractmethod",
+    "^[A-Z_]+ = \\{",
+    "^[A-Z_]+: Dict",
+]
+
+[tool.bandit]
+# Security testing tool: these are inherent to its purpose
+skips = [
+    "B104", "B105", "B106", "B107",
+    "B110", "B112",
+    "B310", "B311", "B314", "B318",
+    "B404", "B405", "B408",
+    "B603", "B607",
+]
+
+# ──────────────────────────────────────────────────────────────────────
+# uv configuration
+#
+# uv is the supported package manager from 1.0 onward. pip still works
+# (the build remains PEP 517 / setuptools-backend), but `uv sync` is the
+# documented reproducible-install path and `uv.lock` is the source of
+# truth for transitive versions in CI / release pipelines.
+#
+# To install:
+#   curl -LsSf https://astral.sh/uv/install.sh | sh   # or `pip install uv`
+#
+# To create the dev environment from the lockfile:
+#   uv sync --all-extras                              # everything
+#   uv sync --extra dev --extra modbus --extra opcua  # subset
+#
+# To regenerate the lockfile after changing dependencies:
+#   uv lock                                           # update lockfile
+#   uv sync --all-extras                              # apply to .venv
+# ──────────────────────────────────────────────────────────────────────
+[tool.uv]
+# Pin the build backend resolution to the one declared in [build-system]
+# above (setuptools) — uv otherwise auto-picks per the PEP 517 hint.
+package = true
+
+# Compile bytecode after install for faster cold-start on first import.
+# CI doesn't need this, but it's cheap for local dev.
+compile-bytecode = true
+
+# Cache strategy: 'copy' to support filesystems that can't hardlink
+# (overlayfs, some NFS). 'auto' is the default which tries hardlinks
+# first and silently falls back; explicit 'copy' is more predictable.
+link-mode = "copy"
+
+# Pre-1.0 protocol extras frequently break their own version pins;
+# allow uv to consider pre-releases when an extra explicitly requires
+# one (does not apply to direct deps, only transitive).
+prerelease = "if-necessary"
+
+# All deps resolve from PyPI. The `pcap` extra's former pyshark git+https URL
+# is now the PyPI package `oida-pyshark`, so no VCS sources remain.
+
+[tool.uv.pip]
+# Mirror the same resolution behaviour for the legacy `uv pip install`
+# pip-compat path so a `uv pip install -e .[dev,all]` command produces
+# the same environment as `uv sync --all-extras`.
+prerelease = "if-necessary"
+
+# Constrain to the Python versions actually supported.
+python-version = "3.10"

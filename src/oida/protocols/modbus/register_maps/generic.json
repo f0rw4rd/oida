@@ -1,0 +1,86 @@
+{
+  "vendor": "Generic",
+  "model": "Template",
+  "description": "Generic Modbus register map template - copy and customize for your device",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "registers": {
+    "device_status": {
+      "address": 0,
+      "type": "u16",
+      "access": "r",
+      "description": "Device status register"
+    },
+    "firmware_version": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "description": "Firmware version (major.minor)"
+    },
+    "serial_number_high": {
+      "address": 2,
+      "type": "u16",
+      "access": "r",
+      "description": "Serial number (high word)"
+    },
+    "serial_number_low": {
+      "address": 3,
+      "type": "u16",
+      "access": "r",
+      "description": "Serial number (low word)"
+    },
+    "analog_input_1": {
+      "address": 100,
+      "type": "f32",
+      "access": "r",
+      "scale": 1.0,
+      "unit": "",
+      "description": "Analog input 1"
+    },
+    "analog_input_2": {
+      "address": 102,
+      "type": "f32",
+      "access": "r",
+      "scale": 1.0,
+      "unit": "",
+      "description": "Analog input 2"
+    },
+    "setpoint_1": {
+      "address": 200,
+      "type": "f32",
+      "access": "rw",
+      "scale": 1.0,
+      "unit": "",
+      "description": "Setpoint 1",
+      "min": 0,
+      "max": 100
+    },
+    "setpoint_2": {
+      "address": 202,
+      "type": "f32",
+      "access": "rw",
+      "scale": 1.0,
+      "unit": "",
+      "description": "Setpoint 2",
+      "min": 0,
+      "max": 100
+    }
+  },
+  "coils": {
+    "output_1": {
+      "address": 0,
+      "access": "rw",
+      "description": "Digital output 1"
+    },
+    "output_2": {
+      "address": 1,
+      "access": "rw",
+      "description": "Digital output 2"
+    }
+  },
+  "extended_info": {
+    "$schema": "https://raw.githubusercontent.com/oida/schemas/main/modbus-register-map.json"
+  }
+}

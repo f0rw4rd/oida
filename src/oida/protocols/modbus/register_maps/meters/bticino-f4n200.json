@@ -1,0 +1,1069 @@
+{
+  "vendor": "BTicino",
+  "model": "F 4 N 200",
+  "description": "Three-phase energy meter with LCD display. Registers from 5889 to 29923 not mapped.",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "device_identifier": {
+      "address": 769,
+      "type": "u16",
+      "access": "r",
+      "description": "The device returns 0006h"
+    },
+    "phase_1_phase_voltage": {
+      "address": 4097,
+      "type": "u32",
+      "access": "r",
+      "description": "Measures",
+      "unit": "mV"
+    },
+    "phase_2_phase_voltage": {
+      "address": 4099,
+      "type": "u32",
+      "access": "r",
+      "description": "Measures",
+      "unit": "mV"
+    },
+    "phase_3_phase_voltage": {
+      "address": 4101,
+      "type": "u32",
+      "access": "r",
+      "description": "Measures",
+      "unit": "mV"
+    },
+    "phase_1_current": {
+      "address": 4103,
+      "type": "u32",
+      "access": "r",
+      "description": "Measures",
+      "unit": "mA"
+    },
+    "phase_2_current": {
+      "address": 4105,
+      "type": "u32",
+      "access": "r",
+      "description": "Measures",
+      "unit": "mA"
+    },
+    "phase_3_current": {
+      "address": 4107,
+      "type": "u32",
+      "access": "r",
+      "description": "Measures",
+      "unit": "mA"
+    },
+    "neutral_current": {
+      "address": 4109,
+      "type": "u32",
+      "access": "r",
+      "description": "Measures",
+      "unit": "mA"
+    },
+    "chained_voltage_l1_l2": {
+      "address": 4111,
+      "type": "u32",
+      "access": "r",
+      "description": "Measures",
+      "unit": "mV"
+    },
+    "chained_voltage_l2_l3": {
+      "address": 4113,
+      "type": "u32",
+      "access": "r",
+      "description": "Measures",
+      "unit": "mV"
+    },
+    "chained_voltage_l3_l1": {
+      "address": 4115,
+      "type": "u32",
+      "access": "r",
+      "description": "Measures",
+      "unit": "mV"
+    },
+    "3_phase_active_power": {
+      "address": 4117,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "3_phase_reactive_power": {
+      "address": 4119,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "var"
+    },
+    "3_phase_apparent_power": {
+      "address": 4121,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "VA"
+    },
+    "3_phase_sign_of_active_power": {
+      "address": 4123,
+      "type": "u16",
+      "access": "r",
+      "description": "0=positive, 1=negative"
+    },
+    "3_phase_sign_of_reactive_power": {
+      "address": 4124,
+      "type": "u16",
+      "access": "r",
+      "description": "0=positive, 1=negative"
+    },
+    "3_phase_positive_active_energy": {
+      "address": 4125,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "Wh"
+    },
+    "3_phase_positive_reactive_energy": {
+      "address": 4127,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "varh"
+    },
+    "3_phase_negative_active_energy": {
+      "address": 4129,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "Wh"
+    },
+    "3_phase_negative_reactive_energy": {
+      "address": 4131,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "varh"
+    },
+    "3_phase_power_factor": {
+      "address": 4133,
+      "type": "i16",
+      "access": "r",
+      "description": ""
+    },
+    "3_phase_sector_of_power_factor_cap_or_ind": {
+      "address": 4134,
+      "type": "u16",
+      "access": "r",
+      "description": "0=\"PF=1\", 1=\"ind\" (L), 2=\"cap\" (C)"
+    },
+    "frequency": {
+      "address": 4135,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "Hz"
+    },
+    "3_phase_average_power": {
+      "address": 4136,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "3_phase_peak_maximum_demand": {
+      "address": 4138,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "time_counter_for_average_power": {
+      "address": 4140,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "min"
+    },
+    "phase_1_active_power": {
+      "address": 4141,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "phase_2_active_power": {
+      "address": 4143,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "phase_3_active_power": {
+      "address": 4145,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "phase_1_sign_of_active_power": {
+      "address": 4147,
+      "type": "u16",
+      "access": "r",
+      "description": "0=positive, 1=negative"
+    },
+    "phase_2_sign_of_active_power": {
+      "address": 4148,
+      "type": "u16",
+      "access": "r",
+      "description": "0=positive, 1=negative"
+    },
+    "phase_3_sign_of_active_power": {
+      "address": 4149,
+      "type": "u16",
+      "access": "r",
+      "description": "0=positive, 1=negative"
+    },
+    "phase_1_reactive_power": {
+      "address": 4150,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "var"
+    },
+    "phase_2_reactive_power": {
+      "address": 4152,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "var"
+    },
+    "phase_3_reactive_power": {
+      "address": 4154,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "var"
+    },
+    "phase_1_sign_of_reactive_power": {
+      "address": 4156,
+      "type": "u16",
+      "access": "r",
+      "description": "0=positive, 1=negative"
+    },
+    "phase_2_sign_of_reactive_power": {
+      "address": 4157,
+      "type": "u16",
+      "access": "r",
+      "description": "0=positive, 1=negative"
+    },
+    "phase_3_sign_of_reactive_power": {
+      "address": 4158,
+      "type": "u16",
+      "access": "r",
+      "description": "0=positive, 1=negative"
+    },
+    "phase_1_apparent_power": {
+      "address": 4159,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "VA"
+    },
+    "phase_2_apparent_power": {
+      "address": 4161,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "VA"
+    },
+    "phase_3_apparent_power": {
+      "address": 4163,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "VA"
+    },
+    "phase_1_power_factor": {
+      "address": 4165,
+      "type": "i16",
+      "access": "r",
+      "description": ""
+    },
+    "phase_2_power_factor": {
+      "address": 4166,
+      "type": "i16",
+      "access": "r",
+      "description": ""
+    },
+    "phase_3_power_factor": {
+      "address": 4167,
+      "type": "i16",
+      "access": "r",
+      "description": ""
+    },
+    "phase_1_sector_of_power_factor_cap_or_ind": {
+      "address": 4168,
+      "type": "u16",
+      "access": "r",
+      "description": "0=\"PF=1\", 1=\"ind\" (L), 2=\"cap\" (C)"
+    },
+    "phase_2_sector_of_power_factor_cap_or_ind": {
+      "address": 4169,
+      "type": "u16",
+      "access": "r",
+      "description": "0=\"PF=1\", 1=\"ind\" (L), 2=\"cap\" (C)"
+    },
+    "phase_3_sector_of_power_factor_cap_or_ind": {
+      "address": 4170,
+      "type": "u16",
+      "access": "r",
+      "description": "0=\"PF=1\", 1=\"ind\" (L), 2=\"cap\" (C)"
+    },
+    "phase_1_thd_v1": {
+      "address": 4171,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 4",
+      "unit": "%"
+    },
+    "phase_2_thd_v2": {
+      "address": 4172,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 4",
+      "unit": "%"
+    },
+    "phase_3_thd_v3": {
+      "address": 4173,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 4",
+      "unit": "%"
+    },
+    "phase_1_thd_i1": {
+      "address": 4174,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "%"
+    },
+    "phase_2_thd_i2": {
+      "address": 4175,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "%"
+    },
+    "phase_3_thd_i3": {
+      "address": 4176,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "%"
+    },
+    "phase_1_i1_average": {
+      "address": 4177,
+      "type": "u32",
+      "access": "r",
+      "description": "",
+      "unit": "mA"
+    },
+    "phase_2_i2_average": {
+      "address": 4179,
+      "type": "u32",
+      "access": "r",
+      "description": "",
+      "unit": "mA"
+    },
+    "phase_3_i3_average": {
+      "address": 4181,
+      "type": "u32",
+      "access": "r",
+      "description": "",
+      "unit": "mA"
+    },
+    "phase_1_i1_peak_max": {
+      "address": 4183,
+      "type": "u32",
+      "access": "r",
+      "description": "",
+      "unit": "mA"
+    },
+    "phase_2_i2_peak_max": {
+      "address": 4185,
+      "type": "u32",
+      "access": "r",
+      "description": "",
+      "unit": "mA"
+    },
+    "phase_3_i3_peak_max": {
+      "address": 4187,
+      "type": "u32",
+      "access": "r",
+      "description": "",
+      "unit": "mA"
+    },
+    "3_phase_i_average": {
+      "address": 4189,
+      "type": "u32",
+      "access": "r",
+      "description": "(I1+I2+I3)/3",
+      "unit": "mA"
+    },
+    "phase_1_v1_min": {
+      "address": 4191,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 4",
+      "unit": "mV"
+    },
+    "phase_2_v2_min": {
+      "address": 4193,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 4",
+      "unit": "mV"
+    },
+    "phase_3_v3_min": {
+      "address": 4195,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 4",
+      "unit": "mV"
+    },
+    "phase_1_v1_max": {
+      "address": 4197,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 4",
+      "unit": "mV"
+    },
+    "phase_2_v2_max": {
+      "address": 4199,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 4",
+      "unit": "mV"
+    },
+    "phase_3_v3_max": {
+      "address": 4201,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 4",
+      "unit": "mV"
+    },
+    "3_phase_partial_active_energy": {
+      "address": 4203,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "Wh"
+    },
+    "3_phase_partial_reactive_energy": {
+      "address": 4205,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "varh"
+    },
+    "operating_timer_counter": {
+      "address": 4207,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "h"
+    },
+    "alarm_status_output_remote_command": {
+      "address": 4208,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: No active alarm, 1: Alarm active | 0: Deactivate 1: Activate"
+    },
+    "3_phase_average_active_power": {
+      "address": 4209,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "3_phase_average_reactive_power": {
+      "address": 4211,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "var"
+    },
+    "3_phase_average_apparent_power": {
+      "address": 4213,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "VA"
+    },
+    "3_phase_active_pmd_power": {
+      "address": 4215,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "3_phase_reactive_pmd_power": {
+      "address": 4217,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "var"
+    },
+    "3_phase_apparent_pmd_power": {
+      "address": 4219,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "VA"
+    },
+    "current_transformer_ratio_ct": {
+      "address": 4609,
+      "type": "u16",
+      "access": "r",
+      "description": ""
+    },
+    "voltage_transformer_ratio_vt": {
+      "address": 4610,
+      "type": "u16",
+      "access": "r",
+      "description": ""
+    },
+    "digital_inputs_status": {
+      "address": 4615,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 3"
+    },
+    "3_phase_positive_total_active_energy": {
+      "address": 4689,
+      "type": "u32",
+      "access": "r",
+      "description": "3 phase: Positive total active energy",
+      "unit": "Wh"
+    },
+    "3_phase_positive_total_reactive_energy": {
+      "address": 4691,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "varh"
+    },
+    "3_phase_negative_total_active_energy": {
+      "address": 4693,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "Wh"
+    },
+    "3_phase_negative_total_reactive_energy": {
+      "address": 4695,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "varh"
+    },
+    "3_phase_positive_partial_active_energy_or_tariff_1_active_energy_if_option_tariffs": {
+      "address": 4697,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "Wh"
+    },
+    "3_phase_negative_partial_active_energy_or_tariff_2_active_energy_if_option_tariffs": {
+      "address": 4699,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "Wh"
+    },
+    "3_phase_positive_partial_reactive_energy_or_tariff_3_active_energy_if_option_tariffs": {
+      "address": 4701,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "Wh"
+    },
+    "3_phase_negative_partial_reactive_energy_or_tariff_4_active_energy_if_option_tariffs": {
+      "address": 4703,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 2",
+      "unit": "varh"
+    },
+    "3_phase_active_average_power": {
+      "address": 4865,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "3_phase_reactive_average_power": {
+      "address": 4867,
+      "type": "u32",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "var"
+    },
+    "3_phase_apparent_average_power": {
+      "address": 4869,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "VA"
+    },
+    "3_phase_active_average_power_tarifs_1": {
+      "address": 4871,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "3_phase_reactive_average_power_tarifs_1": {
+      "address": 4873,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "var"
+    },
+    "3_phase_apparent_average_power_tarifs_1": {
+      "address": 4875,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "VA"
+    },
+    "3_phase_active_average_power_tarifs_2": {
+      "address": 4877,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "3_phase_reactive_average_power_tarifs_2": {
+      "address": 4879,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "var"
+    },
+    "3_phase_apparent_average_power_tarifs_2": {
+      "address": 4881,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "VA"
+    },
+    "3_phase_active_average_power_tarifs_3": {
+      "address": 4883,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "3_phase_reactive_average_power_tarifs_3": {
+      "address": 4885,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "var"
+    },
+    "3_phase_apparent_average_power_tarifs_3": {
+      "address": 4887,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "VA"
+    },
+    "3_phase_active_average_power_tarifs_4": {
+      "address": 4889,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "W"
+    },
+    "3_phase_reactive_average_power_tarifs_4": {
+      "address": 4891,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "var"
+    },
+    "3_phase_apparent_average_power_tarifs_4": {
+      "address": 4893,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 1",
+      "unit": "VA"
+    },
+    "total_apparent_power": {
+      "address": 5425,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "VA"
+    },
+    "3_phase_average_active_power_5427": {
+      "address": 5427,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "W"
+    },
+    "3_phase_average_reactive_power_5429": {
+      "address": 5429,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "var"
+    },
+    "3_phase_average_apparent_power_5431": {
+      "address": 5431,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "VA"
+    },
+    "3_phase_max_active_power": {
+      "address": 5433,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "W"
+    },
+    "3_phase_max_reactive_power": {
+      "address": 5435,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "var"
+    },
+    "3_phase_max_apparent_power": {
+      "address": 5437,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "VA"
+    },
+    "phase1_voltage_crest_factor": {
+      "address": 5505,
+      "type": "u16",
+      "access": "r",
+      "description": ""
+    },
+    "phase2_voltage_crest_factor": {
+      "address": 5506,
+      "type": "u16",
+      "access": "r",
+      "description": ""
+    },
+    "phase3_voltage_crest_factor": {
+      "address": 5507,
+      "type": "u16",
+      "access": "r",
+      "description": ""
+    },
+    "phase1_current_crest_factor": {
+      "address": 5508,
+      "type": "u16",
+      "access": "r",
+      "description": ""
+    },
+    "phase2_current_crest_factor": {
+      "address": 5509,
+      "type": "u16",
+      "access": "r",
+      "description": ""
+    },
+    "phase3_current_crest_factor": {
+      "address": 5510,
+      "type": "u16",
+      "access": "r",
+      "description": ""
+    },
+    "phase1_2_voltage_crest_factor": {
+      "address": 5511,
+      "type": "u16",
+      "access": "r",
+      "description": ""
+    },
+    "phase2_3_voltage_crest_factor": {
+      "address": 5512,
+      "type": "u16",
+      "access": "r",
+      "description": ""
+    },
+    "phase3_1_voltage_crest_factor": {
+      "address": 5513,
+      "type": "u16",
+      "access": "r",
+      "description": ""
+    },
+    "phase_displacement_v1_v2_v12_v23": {
+      "address": 5633,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 4",
+      "unit": "\u00b0"
+    },
+    "phase_displacement_v2_v3_v23_v31": {
+      "address": 5634,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 4",
+      "unit": "\u00b0"
+    },
+    "phase_displacement_v3_v1_v31_v12": {
+      "address": 5635,
+      "type": "u16",
+      "access": "r",
+      "description": "See Note 4",
+      "unit": "\u00b0"
+    },
+    "phase_displacement_i1_i2": {
+      "address": 5636,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "\u00b0"
+    },
+    "phase_displacement_i2_i3": {
+      "address": 5637,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "\u00b0"
+    },
+    "phase_displacement_i3_i1": {
+      "address": 5638,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "\u00b0"
+    },
+    "phase_displacement_v1_i1": {
+      "address": 5639,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "\u00b0"
+    },
+    "phase_displacement_v2_i2": {
+      "address": 5640,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "\u00b0"
+    },
+    "phase_displacement_v3_i3": {
+      "address": 5641,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "\u00b0"
+    },
+    "phase_displacement_total": {
+      "address": 5642,
+      "type": "u16",
+      "access": "r",
+      "description": "",
+      "unit": "\u00b0"
+    },
+    "write_current_transformer_ratio_ct": {
+      "address": 257,
+      "type": "u16",
+      "access": "rw",
+      "description": "CT = I prim / I sec ex: 500 A / 5 A \uf0ae CT = 100"
+    },
+    "write_voltage_transformer_ratio_vt": {
+      "address": 259,
+      "type": "u16",
+      "access": "rw",
+      "description": "VT = V prim / V sec ex: 600 V /100 V VT = 6.00 \uf0ae WRITE 600 If tranformer not present VT = 1.00 \uf0ae WRITE 100"
+    },
+    "energy_mode_accumulation": {
+      "address": 260,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: Asyn 1: Syn 2: Tariff 3: Pulse Counting"
+    },
+    "standard_setup_parameters": {
+      "address": 8193,
+      "type": "u16",
+      "access": "rw",
+      "description": "write 16 byte at once"
+    },
+    "percentage_of_rated_3phase_active_power_run_hour_meter": {
+      "address": 8197,
+      "type": "u16",
+      "access": "rw",
+      "description": "50 \u00f7 5000 means (0.5% \u00f7 50.00%)",
+      "unit": "%"
+    },
+    "run_hour_meter_active_on": {
+      "address": 8198,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: Voltages, 1 Power"
+    },
+    "backlight_intensity": {
+      "address": 8201,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: 0% 1: 35% 2: 70% 3: 100%"
+    },
+    "power_averaging_time": {
+      "address": 8203,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: 5min 1: 8min 2: 10min 3: 15min 4: 20min 5: 30min 6: 60min"
+    },
+    "insertion_type": {
+      "address": 8204,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: 3N 3E 1: 3 3E 2: 3 2E 3: 1N 1E 4: 3N 1E 5: 3 1E"
+    },
+    "measure_on_line_1_of_custom_page": {
+      "address": 8205,
+      "type": "u16",
+      "access": "rw",
+      "description": "0:V1 1:V12 2:I1 3:In 4:P 5:Q 6:S 7:P1 8:Q1 9:S1 10:PF 3 phase"
+    },
+    "measure_on_line_2_of_custom_page": {
+      "address": 8206,
+      "type": "u16",
+      "access": "rw",
+      "description": "0:V2 1:V23 2:I2 3:P 4:Q 5:S 6:P2 7:Q2 8:S2 9:Freq 10:I1"
+    },
+    "measure_on_line_3_of_custom_page": {
+      "address": 8207,
+      "type": "u16",
+      "access": "rw",
+      "description": "0:V3 1:V31 2:I3 3:P 4:Q 5:S 6:P3 7:Q3 8:S3 9:P1 10:I1"
+    },
+    "output_option_setup_parameters": {
+      "address": 8705,
+      "type": "u16",
+      "access": "rw",
+      "description": "write 24 byte at once"
+    },
+    "w10_output_type": {
+      "address": 8715,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: Pulse out 1: Alarm out 2: Dual stable Remote command 3: Timed Remote command"
+    },
+    "w11_pulse_duration": {
+      "address": 8716,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: 50 ms 1: 100 ms 2: 200 ms 3: 300 ms 4: 400 ms 5: 500ms"
+    },
+    "w12_pulse_weight": {
+      "address": 8717,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: 0.01 kWh 1: 0.10 kWh 2: 1.00 kWh 3: 10.0 kWh 4: 0.10 MWh 5: 1.00 MWh 6: 10.0 MWh"
+    },
+    "w13_pulse_active_on": {
+      "address": 8718,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: Active Energy 1: Reactive Energy"
+    },
+    "w14_alarm_deactivation_delay_or_relay_closing_time": {
+      "address": 8719,
+      "type": "u16",
+      "access": "rw",
+      "description": "if Output type = Timed Remote command",
+      "unit": "s"
+    },
+    "w15_alarm_activation_delay": {
+      "address": 8720,
+      "type": "u16",
+      "access": "rw",
+      "description": "",
+      "unit": "s"
+    },
+    "w16_hysteresis": {
+      "address": 8721,
+      "type": "u16",
+      "access": "rw",
+      "description": "",
+      "unit": "%"
+    },
+    "w17_relay_no_nc": {
+      "address": 8722,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: NO 1: NC"
+    },
+    "w18_alarm_on_min_value_or_max_value": {
+      "address": 8723,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: Min 1: Max"
+    },
+    "w19_alarm_setpoint": {
+      "address": 8724,
+      "type": "u16",
+      "access": "rw",
+      "description": ""
+    },
+    "w20": {
+      "address": 8725,
+      "type": "u16",
+      "access": "rw",
+      "description": ""
+    },
+    "w21_unit_of_setpoint": {
+      "address": 8726,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: X.XXX 1: XX.XX 2: XXX.X 3: X.XXX k 4: XX.XX k 5: XXX.X k 6: X.XXX M 7: XX.XX M 8: XXX.X M"
+    },
+    "w22_sign_of_alarm_setpoint": {
+      "address": 8727,
+      "type": "u16",
+      "access": "rw",
+      "description": "0: '+' 1: ' '"
+    },
+    "w23_type_of_measure": {
+      "address": 8728,
+      "type": "u16",
+      "access": "rw",
+      "description": "0:V1 1:V2 2:V3 3:V12 4:V23 5:V31 6:I1 7:I2 8:I3 9:Freq 10:Active Power 11:Reactive Power"
+    },
+    "reset_parameters": {
+      "address": 9217,
+      "type": "u16",
+      "access": "rw",
+      "description": "See Note 1"
+    },
+    "saving_parameters": {
+      "address": 9729,
+      "type": "u16",
+      "access": "rw",
+      "description": "See Note 2"
+    },
+    "enable_writing": {
+      "address": 9985,
+      "type": "u16",
+      "access": "rw",
+      "description": "See Note 2 & Note 3"
+    },
+    "restore_default_parameters": {
+      "address": 10241,
+      "type": "u16",
+      "access": "rw",
+      "description": "See Note 3"
+    }
+  }
+}

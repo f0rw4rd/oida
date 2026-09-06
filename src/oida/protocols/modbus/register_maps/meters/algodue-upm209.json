@@ -1,0 +1,349 @@
+{
+  "vendor": "Algodue",
+  "model": "UPM 209",
+  "description": "Algodue UPM 209 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "phase_1_n_voltage_max": {
+      "address": 4608,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 N voltage MAX",
+      "unit": "V"
+    },
+    "phase_2_n_voltage_max": {
+      "address": 4610,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 N voltage MAX",
+      "unit": "V"
+    },
+    "phase_3_n_voltage_max": {
+      "address": 4612,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 N voltage MAX",
+      "unit": "V"
+    },
+    "line_12_voltage_max": {
+      "address": 4614,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 12 voltage MAX",
+      "unit": "V"
+    },
+    "line_23_voltage_max": {
+      "address": 4616,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 23 voltage MAX",
+      "unit": "V"
+    },
+    "line_31_voltage_max": {
+      "address": 4618,
+      "type": "f32",
+      "access": "r",
+      "description": "Line 31 voltage MAX",
+      "unit": "V"
+    },
+    "system_voltage_max": {
+      "address": 4620,
+      "type": "f32",
+      "access": "r",
+      "description": "System voltage MAX",
+      "unit": "V"
+    },
+    "phase_1_current_max": {
+      "address": 4622,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 current MAX",
+      "unit": "A"
+    },
+    "phase_2_current_max": {
+      "address": 4624,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 current MAX",
+      "unit": "A"
+    },
+    "phase_3_current_max": {
+      "address": 4626,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 current MAX",
+      "unit": "A"
+    },
+    "neutral_current_max": {
+      "address": 4628,
+      "type": "f32",
+      "access": "r",
+      "description": "Neutral current MAX",
+      "unit": "A"
+    },
+    "system_current_max": {
+      "address": 4630,
+      "type": "f32",
+      "access": "r",
+      "description": "System current MAX",
+      "unit": "A"
+    },
+    "phase_1_imported_active_power_max": {
+      "address": 4632,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 imported active power MAX",
+      "unit": "W"
+    },
+    "phase_1_exported_active_power_max": {
+      "address": 4634,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 exported active power MAX",
+      "unit": "W"
+    },
+    "phase_2_imported_active_power_max": {
+      "address": 4636,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 imported active power MAX",
+      "unit": "W"
+    },
+    "phase_2_exported_active_power_max": {
+      "address": 4638,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 exported active power MAX",
+      "unit": "W"
+    },
+    "phase_3_imported_active_power_max": {
+      "address": 4640,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 imported active power MAX",
+      "unit": "W"
+    },
+    "phase_3_exported_active_power_max": {
+      "address": 4642,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 exported active power MAX",
+      "unit": "W"
+    },
+    "system_imported_active_power_max": {
+      "address": 4644,
+      "type": "f32",
+      "access": "r",
+      "description": "System imported active power MAX",
+      "unit": "W"
+    },
+    "system_exported_active_power_max": {
+      "address": 4646,
+      "type": "f32",
+      "access": "r",
+      "description": "System exported active power MAX",
+      "unit": "W"
+    },
+    "phase_1_imported_apparent_power_max": {
+      "address": 4648,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 imported apparent power MAX",
+      "unit": "VA"
+    },
+    "phase_1_exported_apparent_power_max": {
+      "address": 4650,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 exported apparent power MAX",
+      "unit": "VA"
+    },
+    "phase_2_imported_apparent_power_max": {
+      "address": 4652,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 imported apparent power MAX",
+      "unit": "VA"
+    },
+    "phase_2_exported_apparent_power_max": {
+      "address": 4654,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 exported apparent power MAX",
+      "unit": "VA"
+    },
+    "phase_3_imported_apparent_power_max": {
+      "address": 4656,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 imported apparent power MAX",
+      "unit": "VA"
+    },
+    "phase_3_exported_apparent_power_max": {
+      "address": 4658,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 exported apparent power MAX",
+      "unit": "VA"
+    },
+    "system_imported_apparent_power_max": {
+      "address": 4660,
+      "type": "f32",
+      "access": "r",
+      "description": "System imported apparent power MAX",
+      "unit": "VA"
+    },
+    "system_exported_apparent_power_max": {
+      "address": 4662,
+      "type": "f32",
+      "access": "r",
+      "description": "System exported apparent power MAX",
+      "unit": "VA"
+    },
+    "phase_1_imported_reactive_power_max": {
+      "address": 4664,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 imported reactive power MAX",
+      "unit": "var"
+    },
+    "phase_1_exported_reactive_power_max": {
+      "address": 4666,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 exported reactive power MAX",
+      "unit": "var"
+    },
+    "phase_2_imported_reactive_power_max": {
+      "address": 4668,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 imported reactive power MAX",
+      "unit": "var"
+    },
+    "phase_2_exported_reactive_power_max": {
+      "address": 4670,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 exported reactive power MAX",
+      "unit": "var"
+    },
+    "phase_3_imported_reactive_power_max": {
+      "address": 4672,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 imported reactive power MAX",
+      "unit": "var"
+    },
+    "phase_3_exported_reactive_power_max": {
+      "address": 4674,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 exported reactive power MAX",
+      "unit": "var"
+    },
+    "system_imported_reactive_power_max": {
+      "address": 4676,
+      "type": "f32",
+      "access": "r",
+      "description": "System imported reactive power MAX",
+      "unit": "var"
+    },
+    "system_exported_reactive_power_max": {
+      "address": 4678,
+      "type": "f32",
+      "access": "r",
+      "description": "System exported reactive power MAX",
+      "unit": "var"
+    },
+    "phase_1_inductive_power_factor_max": {
+      "address": 4680,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 inductive power factor MAX"
+    },
+    "phase_1_capacitive_power_factor_max": {
+      "address": 4682,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 capacitive power factor MAX"
+    },
+    "phase_2_inductive_power_factor_max": {
+      "address": 4684,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 inductive power factor MAX"
+    },
+    "phase_2_capacitive_power_factor_max": {
+      "address": 4686,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 capacitive power factor MAX"
+    },
+    "phase_3_inductive_power_factor_max": {
+      "address": 4688,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 inductive power factor MAX"
+    },
+    "phase_3_capacitive_power_factor_max": {
+      "address": 4690,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 capacitive power factor MAX"
+    },
+    "system_inductive_power_factor_max": {
+      "address": 4692,
+      "type": "f32",
+      "access": "r",
+      "description": "System inductive power factor MAX"
+    },
+    "system_capacitive_power_factor_max": {
+      "address": 4694,
+      "type": "f32",
+      "access": "r",
+      "description": "System capacitive power factor MAX"
+    },
+    "phase_1_imported_tangent_max": {
+      "address": 4696,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 imported tangent MAX"
+    },
+    "phase_1_exported_tangent_max": {
+      "address": 4698,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 1 exported tangent MAX"
+    },
+    "phase_2_imported_tangent_max": {
+      "address": 4700,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 imported tangent MAX"
+    },
+    "phase_2_exported_tangent_max": {
+      "address": 4702,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 2 exported tangent MAX"
+    },
+    "phase_3_imported_tangent_max": {
+      "address": 4704,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 imported tangent MAX"
+    },
+    "phase_3_exported_tangent_max": {
+      "address": 4706,
+      "type": "f32",
+      "access": "r",
+      "description": "Phase 3 exported tangent MAX"
+    }
+  }
+}

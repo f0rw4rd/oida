@@ -1,0 +1,245 @@
+{
+  "vendor": "Fronius",
+  "model": "Smart Meter TS 65A-3 / TS 100A-1",
+  "description": "Fronius Smart Meter TS series for grid metering via Modbus RTU",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "little",
+  "default_unit_id": 240,
+  "notes": "Smart Meter TS 65A-3 (three-phase 65A) and TS 100A-1 (single-phase 100A). Connected via RS485 to inverter/Datamanager. All values are i32 with little word order. Unit ID typically 200 or 240.",
+  "source": "https://github.com/otti/FroniusModbusRtu, Fronius Smart Meter documentation",
+  "registers": {
+    "voltage_avg_ln": {
+      "address": 258,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Average line-to-neutral voltage"
+    },
+    "voltage_avg_ll": {
+      "address": 260,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Average line-to-line voltage"
+    },
+    "power_real_sum": {
+      "address": 262,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "scale": 0.1,
+      "description": "Total real power (sum of all phases)"
+    },
+    "power_apparent_sum": {
+      "address": 264,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "scale": 0.1,
+      "description": "Total apparent power"
+    },
+    "power_reactive_sum": {
+      "address": 266,
+      "type": "i32",
+      "access": "r",
+      "unit": "var",
+      "scale": 0.1,
+      "description": "Total reactive power"
+    },
+    "power_factor_sum": {
+      "address": 268,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Total power factor"
+    },
+    "frequency": {
+      "address": 272,
+      "type": "i32",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.1,
+      "description": "Grid frequency"
+    },
+    "energy_real_produced": {
+      "address": 274,
+      "type": "i32",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Total real energy produced (export)"
+    },
+    "energy_real_consumed": {
+      "address": 276,
+      "type": "i32",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Total real energy consumed (import)"
+    },
+    "current_l1": {
+      "address": 286,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Phase L1 current"
+    },
+    "current_l2": {
+      "address": 288,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Phase L2 current"
+    },
+    "current_l3": {
+      "address": 290,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.001,
+      "description": "Phase L3 current"
+    },
+    "voltage_l1n": {
+      "address": 292,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase L1 to neutral voltage"
+    },
+    "voltage_l2n": {
+      "address": 294,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase L2 to neutral voltage"
+    },
+    "voltage_l3n": {
+      "address": 296,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Phase L3 to neutral voltage"
+    },
+    "power_real_l1": {
+      "address": 298,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "scale": 0.1,
+      "description": "Phase L1 real power"
+    },
+    "power_real_l2": {
+      "address": 300,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "scale": 0.1,
+      "description": "Phase L2 real power"
+    },
+    "power_real_l3": {
+      "address": 302,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "scale": 0.1,
+      "description": "Phase L3 real power"
+    },
+    "power_apparent_l1": {
+      "address": 304,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "scale": 0.1,
+      "description": "Phase L1 apparent power"
+    },
+    "power_apparent_l2": {
+      "address": 306,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "scale": 0.1,
+      "description": "Phase L2 apparent power"
+    },
+    "power_apparent_l3": {
+      "address": 308,
+      "type": "i32",
+      "access": "r",
+      "unit": "VA",
+      "scale": 0.1,
+      "description": "Phase L3 apparent power"
+    },
+    "power_reactive_l1": {
+      "address": 310,
+      "type": "i32",
+      "access": "r",
+      "unit": "var",
+      "scale": 0.1,
+      "description": "Phase L1 reactive power"
+    },
+    "power_reactive_l2": {
+      "address": 312,
+      "type": "i32",
+      "access": "r",
+      "unit": "var",
+      "scale": 0.1,
+      "description": "Phase L2 reactive power"
+    },
+    "power_reactive_l3": {
+      "address": 314,
+      "type": "i32",
+      "access": "r",
+      "unit": "var",
+      "scale": 0.1,
+      "description": "Phase L3 reactive power"
+    },
+    "power_factor_l1": {
+      "address": 316,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Phase L1 power factor"
+    },
+    "power_factor_l2": {
+      "address": 318,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Phase L2 power factor"
+    },
+    "power_factor_l3": {
+      "address": 320,
+      "type": "i32",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Phase L3 power factor"
+    },
+    "energy_real_produced_l1": {
+      "address": 322,
+      "type": "i32",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Phase L1 energy produced"
+    },
+    "energy_real_produced_l2": {
+      "address": 324,
+      "type": "i32",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Phase L2 energy produced"
+    },
+    "energy_real_produced_l3": {
+      "address": 326,
+      "type": "i32",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Phase L3 energy produced"
+    }
+  },
+  "_source_verified": "Verified: Fronius TS 65A-3 registers 258-273 confirmed via otti/FroniusModbusRtu"
+}

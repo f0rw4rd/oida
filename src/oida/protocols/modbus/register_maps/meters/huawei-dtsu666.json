@@ -1,0 +1,148 @@
+{
+  "vendor": "Huawei",
+  "model": "DTSU666-H / DDSU666-H Smart Power Sensor",
+  "description": "Huawei Smart Power Sensor for grid metering (accessed via SUN2000 inverter)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "DTSU666-H (three-phase) and DDSU666-H (single-phase) registers accessed through inverter. Meter data in 37xxx range. -H version has different register layout from standard Chint meters.",
+  "source": "https://github.com/wlcrs/huawei_solar, Huawei Solar Inverter Modbus Interface Definitions",
+  "registers": {
+    "meter_status": {
+      "address": 37100,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter status (1=normal, 0=abnormal)"
+    },
+    "grid_voltage_a": {
+      "address": 37101,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid voltage phase A"
+    },
+    "grid_voltage_b": {
+      "address": 37103,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid voltage phase B"
+    },
+    "grid_voltage_c": {
+      "address": 37105,
+      "type": "i32",
+      "access": "r",
+      "unit": "V",
+      "scale": 0.1,
+      "description": "Grid voltage phase C"
+    },
+    "grid_current_a": {
+      "address": 37107,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Grid current phase A"
+    },
+    "grid_current_b": {
+      "address": 37109,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Grid current phase B"
+    },
+    "grid_current_c": {
+      "address": 37111,
+      "type": "i32",
+      "access": "r",
+      "unit": "A",
+      "scale": 0.01,
+      "description": "Grid current phase C"
+    },
+    "active_power": {
+      "address": 37113,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active power (positive=export, negative=import)"
+    },
+    "reactive_power": {
+      "address": 37115,
+      "type": "i32",
+      "access": "r",
+      "unit": "var",
+      "description": "Reactive power"
+    },
+    "power_factor": {
+      "address": 37117,
+      "type": "i16",
+      "access": "r",
+      "scale": 0.001,
+      "description": "Power factor"
+    },
+    "grid_frequency": {
+      "address": 37118,
+      "type": "i16",
+      "access": "r",
+      "unit": "Hz",
+      "scale": 0.01,
+      "description": "Grid frequency"
+    },
+    "positive_active_energy": {
+      "address": 37119,
+      "type": "i32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Positive active energy (export to grid)"
+    },
+    "reverse_active_energy": {
+      "address": 37121,
+      "type": "i32",
+      "access": "r",
+      "unit": "kWh",
+      "scale": 0.01,
+      "description": "Reverse active energy (import from grid)"
+    },
+    "accumulated_reactive_power": {
+      "address": 37123,
+      "type": "i32",
+      "access": "r",
+      "unit": "kvarh",
+      "scale": 0.01,
+      "description": "Accumulated reactive power"
+    },
+    "active_power_a": {
+      "address": 37132,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Phase A active power"
+    },
+    "active_power_b": {
+      "address": 37134,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Phase B active power"
+    },
+    "active_power_c": {
+      "address": 37136,
+      "type": "i32",
+      "access": "r",
+      "unit": "W",
+      "description": "Phase C active power"
+    },
+    "meter_type": {
+      "address": 37125,
+      "type": "u16",
+      "access": "r",
+      "description": "Meter type (0=single-phase, 1=three-phase)"
+    }
+  },
+  "_source_verified": "Verified: DTSU666-H registers 37100+ confirmed via Huawei SUN2000 interface definitions; github.com/wlcrs/huawei_solar"
+}

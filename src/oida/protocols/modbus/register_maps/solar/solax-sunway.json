@@ -1,0 +1,553 @@
+{
+  "vendor": "Sunway",
+  "model": "Hybrid",
+  "description": "Sunway Hybrid inverter register map extracted from homeassistant-solax-modbus",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Sunway hybrid inverters.",
+  "source": "https://github.com/wills106/homeassistant-solax-modbus",
+  "registers": {
+    "grid_injection_power_limit_switch_state": {
+      "address": 25100,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Injection Power Limit Switch State"
+    },
+    "eps_ups_function_switch_state": {
+      "address": 50001,
+      "type": "u16",
+      "access": "r",
+      "description": "Eps Ups Function Switch State"
+    },
+    "off_grid_asymmetric_output_switch_state": {
+      "address": 50006,
+      "type": "u16",
+      "access": "r",
+      "description": "Off Grid Asymmetric Output Switch State"
+    },
+    "peak_load_shifting_switch_state": {
+      "address": 50007,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak Load Shifting Switch State"
+    },
+    "on_grid_battery_soc_protection_switch_state": {
+      "address": 52502,
+      "type": "u16",
+      "access": "r",
+      "description": "On Grid Battery Soc Protection Switch State"
+    },
+    "off_grid_battery_soc_protection_switch_state": {
+      "address": 52504,
+      "type": "u16",
+      "access": "r",
+      "description": "Off Grid Battery Soc Protection Switch State"
+    },
+    "inverter_sn": {
+      "address": 10000,
+      "type": "str",
+      "access": "r",
+      "description": "Inverter SN"
+    },
+    "firmware_version": {
+      "address": 10011,
+      "type": "u16",
+      "access": "r",
+      "description": "Firmware Version"
+    },
+    "rtc": {
+      "address": 10100,
+      "type": "u16",
+      "access": "r",
+      "description": "RTC"
+    },
+    "inverter_running_status": {
+      "address": 10105,
+      "type": "u16",
+      "access": "r",
+      "description": "Inverter Running Status"
+    },
+    "equipment_info": {
+      "address": 10008,
+      "type": "u16",
+      "access": "r",
+      "description": "Equipment Info"
+    },
+    "fault_flag_1": {
+      "address": 10112,
+      "type": "u32",
+      "access": "r",
+      "description": "Fault FLAG1"
+    },
+    "arm_fault_flag_1": {
+      "address": 18000,
+      "type": "u32",
+      "access": "r",
+      "description": "ARM Fault FLAG1"
+    },
+    "phase_a_power_on_meter": {
+      "address": 10994,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase A Power on Meter",
+      "unit": "W"
+    },
+    "phase_b_power_on_meter": {
+      "address": 10996,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase B Power on Meter",
+      "unit": "W"
+    },
+    "phase_c_power_on_meter": {
+      "address": 10998,
+      "type": "i32",
+      "access": "r",
+      "description": "Phase C Power on Meter",
+      "unit": "W"
+    },
+    "total_power_on_meter": {
+      "address": 11000,
+      "type": "i32",
+      "access": "r",
+      "description": "Total Power on Meter",
+      "unit": "W"
+    },
+    "total_grid_injection_energy": {
+      "address": 11002,
+      "type": "u32",
+      "access": "r",
+      "description": "Total Grid Injection Energy on Meter",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "total_purchasing_energy": {
+      "address": 11004,
+      "type": "u32",
+      "access": "r",
+      "description": "Total Purchasing Energy from Grid on Meter",
+      "unit": "kWh",
+      "scale": 0.01
+    },
+    "grid_phase_a_voltage": {
+      "address": 11009,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Phase A Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_phase_a_current": {
+      "address": 11010,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Phase A Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_phase_b_voltage": {
+      "address": 11011,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Phase B Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_phase_b_current": {
+      "address": 11012,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Phase B Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_phase_c_voltage": {
+      "address": 11013,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Phase C Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "grid_phase_c_current": {
+      "address": 11014,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Phase C Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "grid_frequency": {
+      "address": 11015,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Frequency",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "ac_power": {
+      "address": 11016,
+      "type": "i32",
+      "access": "r",
+      "description": "AC Power",
+      "unit": "W"
+    },
+    "total_pv_generation_today": {
+      "address": 11018,
+      "type": "u32",
+      "access": "r",
+      "description": "Total PV Generation Today",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_pv_generation_since_installation": {
+      "address": 11020,
+      "type": "u32",
+      "access": "r",
+      "description": "Total PV Generation Since Installation",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "pv_input_total_power": {
+      "address": 11028,
+      "type": "u32",
+      "access": "r",
+      "description": "PV Input Total Power",
+      "unit": "W"
+    },
+    "pv1_voltage": {
+      "address": 11038,
+      "type": "u16",
+      "access": "r",
+      "description": "PV1 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv1_current": {
+      "address": 11039,
+      "type": "u16",
+      "access": "r",
+      "description": "PV1 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv1_input_power": {
+      "address": 11062,
+      "type": "u32",
+      "access": "r",
+      "description": "PV1 Input Power",
+      "unit": "W"
+    },
+    "pv2_voltage": {
+      "address": 11040,
+      "type": "u16",
+      "access": "r",
+      "description": "PV2 Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "pv2_current": {
+      "address": 11041,
+      "type": "u16",
+      "access": "r",
+      "description": "PV2 Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "pv2_input_power": {
+      "address": 11064,
+      "type": "u32",
+      "access": "r",
+      "description": "PV2 Input Power",
+      "unit": "W"
+    },
+    "backup_a_voltage": {
+      "address": 40200,
+      "type": "u16",
+      "access": "r",
+      "description": "Backup A Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "backup_a_current": {
+      "address": 40201,
+      "type": "u16",
+      "access": "r",
+      "description": "Backup A Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "backup_a_power": {
+      "address": 40204,
+      "type": "i32",
+      "access": "r",
+      "description": "Backup A Power",
+      "unit": "W"
+    },
+    "total_backup_power": {
+      "address": 40230,
+      "type": "i32",
+      "access": "r",
+      "description": "Total Backup Power",
+      "unit": "W"
+    },
+    "battery_voltage": {
+      "address": 40254,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Voltage",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "battery_current": {
+      "address": 40255,
+      "type": "i16",
+      "access": "r",
+      "description": "Battery Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "battery_mode": {
+      "address": 40256,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Mode"
+    },
+    "battery_power": {
+      "address": 40258,
+      "type": "i32",
+      "access": "r",
+      "description": "Battery Power",
+      "unit": "W"
+    },
+    "battery_soc": {
+      "address": 43000,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery SOC",
+      "unit": "%",
+      "scale": 0.01
+    },
+    "battery_soh": {
+      "address": 43001,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery SOH",
+      "unit": "%",
+      "scale": 0.01
+    },
+    "total_energy_charged_to_battery": {
+      "address": 41108,
+      "type": "u32",
+      "access": "r",
+      "description": "Total Energy Charged to Battery",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "total_energy_discharged_from_battery": {
+      "address": 41110,
+      "type": "u32",
+      "access": "r",
+      "description": "Total Energy Discharged from Battery",
+      "unit": "kWh",
+      "scale": 0.1
+    },
+    "bms_battery_type": {
+      "address": 42000,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Battery Type"
+    },
+    "bms_battery_strings": {
+      "address": 42001,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Battery Strings"
+    },
+    "bms_protocol": {
+      "address": 42002,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Protocol"
+    },
+    "bms_software_version": {
+      "address": 42003,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Software Version"
+    },
+    "bms_hardware_version": {
+      "address": 42004,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Hardware Version"
+    },
+    "bms_max_charge_current": {
+      "address": 42005,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Max Charge Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "bms_max_discharge_current": {
+      "address": 42006,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Max Discharge Current",
+      "unit": "A",
+      "scale": 0.1
+    },
+    "bms_status": {
+      "address": 43002,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Status"
+    },
+    "bms_pack_temperature": {
+      "address": 43003,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Pack Temperature",
+      "unit": "C",
+      "scale": 0.1
+    },
+    "bms_max_cell_temperature": {
+      "address": 43009,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Max Cell Temperature",
+      "unit": "C",
+      "scale": 0.1
+    },
+    "bms_min_cell_temperature": {
+      "address": 43011,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Min Cell Temperature",
+      "unit": "C",
+      "scale": 0.1
+    },
+    "bms_max_cell_voltage": {
+      "address": 43013,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Max Cell Voltage",
+      "unit": "V",
+      "scale": 0.001
+    },
+    "bms_min_cell_voltage": {
+      "address": 43015,
+      "type": "u16",
+      "access": "r",
+      "description": "BMS Min Cell Voltage",
+      "unit": "V",
+      "scale": 0.001
+    },
+    "bms_error_code": {
+      "address": 43016,
+      "type": "u32",
+      "access": "r",
+      "description": "BMS Error Code"
+    },
+    "bms_warn_code": {
+      "address": 43018,
+      "type": "u32",
+      "access": "r",
+      "description": "BMS Warn Code"
+    },
+    "grid_injection_power_limit_setting": {
+      "address": 25103,
+      "type": "u16",
+      "access": "rw",
+      "description": "Grid Injection Power Limit Setting",
+      "unit": "%",
+      "scale": 0.1
+    },
+    "off_grid_voltage_setting": {
+      "address": 50004,
+      "type": "u16",
+      "access": "rw",
+      "description": "Off-grid Voltage Setting",
+      "unit": "V",
+      "scale": 0.1
+    },
+    "off_grid_frequency_setting": {
+      "address": 50005,
+      "type": "u16",
+      "access": "rw",
+      "description": "Off-grid Frequency Setting",
+      "unit": "Hz",
+      "scale": 0.01
+    },
+    "max_grid_power_value_setting": {
+      "address": 50009,
+      "type": "u16",
+      "access": "rw",
+      "description": "Max Grid Power Value Setting",
+      "scale": 0.1
+    },
+    "pv_power_setting": {
+      "address": 50211,
+      "type": "u16",
+      "access": "rw",
+      "description": "PV Power Setting",
+      "unit": "W"
+    },
+    "on_grid_battery_dod": {
+      "address": 52503,
+      "type": "u16",
+      "access": "rw",
+      "description": "On-grid Battery DOD",
+      "unit": "%",
+      "scale": 0.1
+    },
+    "off_grid_battery_dod": {
+      "address": 52505,
+      "type": "u16",
+      "access": "rw",
+      "description": "Off-grid Battery DOD",
+      "unit": "%",
+      "scale": 0.1
+    },
+    "hybrid_inverter_working_mode": {
+      "address": 50000,
+      "type": "u16",
+      "access": "rw",
+      "description": "Hybrid Inverter Working Mode",
+      "enum": {
+        "1": "General Mode",
+        "2": "Economic Mode",
+        "3": "UPS Mode",
+        "258": "EMS General Mode",
+        "259": "EMS ACCtrlMode",
+        "513": "EMS BattCtrlMode",
+        "772": "EMS OffGridMode"
+      }
+    },
+    "inverter_ac_power_setting_mode": {
+      "address": 50202,
+      "type": "u16",
+      "access": "rw",
+      "description": "Inverter AC Power Setting Mode",
+      "enum": {
+        "0": "Off",
+        "1": "Total Power Setting",
+        "2": "Power on each Phase Setting"
+      }
+    },
+    "priority_power_output_setting": {
+      "address": 50210,
+      "type": "u16",
+      "access": "rw",
+      "description": "Priority Power Output Setting",
+      "enum": {
+        "0": "PV Output Priority",
+        "1": "Battery Output Priority"
+      }
+    }
+  },
+  "_source_verified": "PARTIAL: Sunway Solar is a real manufacturer, but support in wills106/homeassistant-solax-modbus is experimental/WIP (not officially listed). Plugin file plugin_sunway.py exists but is not in the supported brands list."
+}

@@ -1,0 +1,130 @@
+{
+  "vendor": "GE/Emerson",
+  "model": "PACSystems RX3i",
+  "description": "GE/Emerson PACSystems RX3i Modbus register map (VERIFIED)",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Modbus Conformance Classes 0, 1, and 2 supported. Without stored address map, server returns Exception Code 4. Max 16 Modbus TCP server connections per CPU.",
+  "source": "GFK-2224Y/AB (PACSystems RX3i and RSTi-EP TCP/IP Ethernet Communications User Manual)",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils",
+      "notes": "memory=%Q00001, max_bits=32768"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs",
+      "notes": "memory=%I00001, max_bits=32768"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers",
+      "notes": "memory=%R00001, default_words=1024"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers",
+      "notes": "memory=%AI00001, max_words=64"
+    },
+    {
+      "code": "05",
+      "function": "Write Single Coil",
+      "notes": "memory=%Q00001"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register",
+      "notes": "memory=%R00001"
+    },
+    {
+      "code": "07",
+      "function": "Read Exception Status"
+    },
+    {
+      "code": "15",
+      "function": "Write Multiple Coils",
+      "notes": "memory=%Q00001"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers",
+      "notes": "memory=%R00001"
+    },
+    {
+      "code": "20",
+      "function": "Read File Record",
+      "notes": "memory=%W00001"
+    },
+    {
+      "code": "21",
+      "function": "Write File Record",
+      "notes": "memory=%W00001"
+    },
+    {
+      "code": "22",
+      "function": "Mask Write Register",
+      "notes": "memory=%R00001"
+    },
+    {
+      "code": "23",
+      "function": "Read/Write Multiple Registers",
+      "notes": "memory=%R00001"
+    }
+  ],
+  "registers": {
+    "ai00001": {
+      "address": 1,
+      "type": "u16",
+      "access": "r",
+      "function_code": 4,
+      "description": "Analog input (input register 30001)",
+      "notes": "ge_address=%AI00001"
+    },
+    "r00001": {
+      "address": 1,
+      "type": "u16",
+      "access": "rw",
+      "description": "System register (holding register 40001)",
+      "notes": "ge_address=%R00001"
+    }
+  },
+  "extended_info": {
+    "conformance_classes": [
+      "0",
+      "1",
+      "2"
+    ],
+    "max_tcp_connections": 16,
+    "configuration_path": "PAC Machine Edition -> CPU Settings -> Modbus TCP Address Map",
+    "memory_mapping": {
+      "coils_0xxxx": {
+        "ge_memory": "%Q00001",
+        "max_points": 32768,
+        "access": "rw"
+      },
+      "discrete_inputs_1xxxx": {
+        "ge_memory": "%I00001",
+        "max_points": 32768,
+        "access": "r"
+      },
+      "input_registers_3xxxx": {
+        "ge_memory": "%AI00001",
+        "max_points": 64,
+        "access": "r"
+      },
+      "holding_registers_4xxxx": {
+        "ge_memory": "%R00001",
+        "default_points": 1024,
+        "access": "rw"
+      },
+      "file_records": {
+        "ge_memory": "%W00001",
+        "access": "rw"
+      }
+    }
+  },
+  "_source_verified": "Verified: Modbus TCP server with Conformance Classes 0-2 confirmed; GFK-2224 manual verified"
+}

@@ -1,0 +1,201 @@
+{
+  "vendor": "ABB",
+  "model": "Terra AC Wallbox",
+  "device_type": "EV Charger",
+  "description": "ABB Terra AC EV Charger with Modbus TCP/RTU interface",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "default_port": 502,
+  "function_code": 3,
+  "notes": "Requires LCD version for Modbus TCP over LAN. Polling interval 30-90s recommended. Only one Modbus TCP session allowed. Firmware v1.3.x+ required.",
+  "source": "ABB Terra AC Charger Modbus Communication v1.7/v1.11, Home Assistant, EVCC",
+  "holding_registers": {
+    "serial_number": {
+      "address": 16384,
+      "type": "u64",
+      "access": "r",
+      "description": "Charger serial number (8 bytes)"
+    },
+    "firmware_version": {
+      "address": 16388,
+      "type": "u32",
+      "access": "r",
+      "description": "Firmware version (0x01021300 = v1.2.19)"
+    },
+    "max_rated_current": {
+      "address": 16390,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "Maximum rated current"
+    },
+    "error_code": {
+      "address": 16392,
+      "type": "u32",
+      "access": "r",
+      "description": "Error code (0 = no error)"
+    },
+    "socket_lock_state": {
+      "address": 16394,
+      "type": "u32",
+      "access": "r",
+      "description": "Socket/cable lock state bitmap"
+    },
+    "charging_state": {
+      "address": 16396,
+      "type": "u32",
+      "access": "r",
+      "description": "Charging state (IEC 61851: 0=A, 1=B, 2=C, 3=D, 4=E, 5=F)"
+    },
+    "charging_state_actual": {
+      "address": 16397,
+      "type": "u16",
+      "access": "r",
+      "description": "Actual IEC 61851 state (high byte)"
+    },
+    "current_charging_limit": {
+      "address": 16398,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "Currently applied charging current limit"
+    },
+    "current_l1": {
+      "address": 16400,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "Charging current phase 1"
+    },
+    "current_l2": {
+      "address": 16402,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "Charging current phase 2"
+    },
+    "current_l3": {
+      "address": 16404,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "Charging current phase 3"
+    },
+    "voltage_l1": {
+      "address": 16406,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Voltage phase 1"
+    },
+    "voltage_l2": {
+      "address": 16408,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Voltage phase 2"
+    },
+    "voltage_l3": {
+      "address": 16410,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.1,
+      "unit": "V",
+      "description": "Voltage phase 3"
+    },
+    "active_power": {
+      "address": 16412,
+      "type": "u32",
+      "access": "r",
+      "unit": "W",
+      "description": "Active power"
+    },
+    "session_energy": {
+      "address": 16414,
+      "type": "u32",
+      "access": "r",
+      "unit": "Wh",
+      "description": "Energy delivered in current session"
+    },
+    "comm_timeout_status": {
+      "address": 16416,
+      "type": "u16",
+      "access": "r",
+      "unit": "s",
+      "description": "Communication timeout status"
+    },
+    "modbus_current_limit": {
+      "address": 16418,
+      "type": "u32",
+      "access": "r",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "Charging current limit set by Modbus"
+    },
+    "set_current_limit": {
+      "address": 16640,
+      "type": "u32",
+      "access": "w",
+      "scale": 0.001,
+      "unit": "A",
+      "description": "Set charging current limit (mA, min 6A)"
+    },
+    "set_charging_phase": {
+      "address": 16642,
+      "type": "u16",
+      "access": "w",
+      "description": "Set charging phase configuration"
+    },
+    "cable_lock_control": {
+      "address": 16643,
+      "type": "u16",
+      "access": "w",
+      "description": "Lock/unlock cable (0=unlock, 1=lock)"
+    },
+    "charger_availability": {
+      "address": 16644,
+      "type": "u16",
+      "access": "w",
+      "description": "Set charger availability"
+    },
+    "charging_control": {
+      "address": 16645,
+      "type": "u16",
+      "access": "w",
+      "description": "Start/stop charging (0=stop, 1=start)"
+    },
+    "comm_timeout": {
+      "address": 16646,
+      "type": "u16",
+      "access": "w",
+      "unit": "s",
+      "description": "Communication timeout (default 60s, max 65535s)"
+    }
+  },
+  "enums": {
+    "charging_state": {
+      "0": "State A - No vehicle",
+      "1": "State B - Connected, not ready",
+      "2": "State C - Charging",
+      "3": "State D - Charging with ventilation",
+      "4": "State E - Error",
+      "5": "State F - EVSE unavailable"
+    },
+    "error_code": {
+      "0": "No error",
+      "4096": "E-Lock failure",
+      "8192": "Missing phase",
+      "16384": "Modbus communication lost"
+    }
+  },
+  "_source_verified": "Verified: ABB Terra AC Modbus Communication v1.7 PDF confirmed; register 0x4000 = serial number"
+}

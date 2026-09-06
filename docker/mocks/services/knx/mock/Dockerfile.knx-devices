@@ -1,0 +1,42 @@
+# KNX BCU Device Emulator
+# Compiles and runs a Java application that emulates 5 KNX bus devices
+# with management services (memory, properties, authorization, etc.)
+#
+# Requires the Calimero KNXnet/IP server to be running first.
+
+# -- Stage 1: Compile with JDK --
+FROM eclipse-temurin:21-jdk-alpine AS builder
+
+# Copy Calimero libraries from the server image for compilation
+COPY --from=calimeroproject/knxserver:latest \
+     /usr/app/calimero-server/lib/calimero-core-3.0-SNAPSHOT.jar \
+     /usr/app/calimero-server/lib/calimero-device-3.0-SNAPSHOT.jar \
+     /usr/app/calimero-server/lib/calimero-server-3.0-SNAPSHOT.jar \
+     /libs/
+
+WORKDIR /build
+COPY knx/KnxBcuEmulator.java .
+
+# Compile with module path (Calimero 3.x uses Java modules)
+RUN javac \
+    --module-path /libs \
+    --add-modules io.calimero.core,io.calimero.device \
+    -d /build/out \
+    KnxBcuEmulator.java
+
+# -- Stage 2: Runtime with Calimero JARs --
+FROM calimeroproject/knxserver:latest
+
+WORKDIR /app
+
+# Copy compiled classes
+COPY --from=builder /build/out/ /app/classes/
+
+# Run the emulator using the Calimero server's JRE and libraries.
+# Our class is in the unnamed module, so we need --add-reads to let
+# the Calimero modules read from the unnamed module (for callbacks).
+ENTRYPOINT ["java", \
+    "--module-path", "/usr/app/calimero-server/lib", \
+    "--add-modules", "io.calimero.core,io.calimero.device", \
+    "-cp", "/app/classes", \
+    "KnxBcuEmulator"]

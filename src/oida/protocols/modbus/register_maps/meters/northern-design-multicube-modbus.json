@@ -1,0 +1,354 @@
+{
+  "vendor": "Northern Design",
+  "model": "CUBE 350 CUBE 400 RAIL 350 MODBUS / MULTICUBE MODBUS",
+  "description": "Northern Design CUBE 350 CUBE 400 RAIL 350 MODBUS / MULTICUBE MODBUS power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database. Variants: CUBE 350 CUBE 400 RAIL 350 MODBUS, MULTICUBE MODBUS",
+  "registers": {
+    "energy_scaling_escale_cube_350_only": {
+      "address": 512,
+      "type": "u32",
+      "access": "r",
+      "description": "Energy scaling (eScale), cube 350 only"
+    },
+    "kwh_cube_350_only": {
+      "address": 514,
+      "type": "u32",
+      "access": "r",
+      "description": "kWh, cube 350 only",
+      "unit": "kWh"
+    },
+    "kvah_cube_350_only": {
+      "address": 516,
+      "type": "u32",
+      "access": "r",
+      "description": "kVAh, cube 350 only",
+      "unit": "kVAh"
+    },
+    "kvarh_inductive_cube_350_only": {
+      "address": 518,
+      "type": "u32",
+      "access": "r",
+      "description": "Kvarh inductive, cube 350 only",
+      "unit": "kvarh"
+    },
+    "kvarh_capacitive_cube_350_only": {
+      "address": 520,
+      "type": "u32",
+      "access": "r",
+      "description": "Kvarh capacitive, cube 350 only",
+      "unit": "kvarh"
+    },
+    "import_kvarh_cube_350_only": {
+      "address": 522,
+      "type": "u32",
+      "access": "r",
+      "description": "Import kvarh, cube 350 only",
+      "unit": "kvarh"
+    },
+    "export_kwh_cube_350_only": {
+      "address": 524,
+      "type": "u32",
+      "access": "r",
+      "description": "Export kWh, cube 350 only",
+      "unit": "kWh"
+    },
+    "export_kvarh_cube_350_only": {
+      "address": 526,
+      "type": "u32",
+      "access": "r",
+      "description": "Export kvarh, cube 350 only",
+      "unit": "kvarh"
+    },
+    "hours_run_cube_350_only": {
+      "address": 528,
+      "type": "u32",
+      "access": "r",
+      "description": "Hours run, cube 350 only"
+    },
+    "system_kw_cube_350_only": {
+      "address": 2816,
+      "type": "u16",
+      "access": "r",
+      "description": "System kW, cube 350 only",
+      "unit": "kW"
+    },
+    "system_kva_cube_350_only": {
+      "address": 2817,
+      "type": "u16",
+      "access": "r",
+      "description": "System kVA, cube 350 only",
+      "unit": "kVA"
+    },
+    "system_kvar_cube_350_only": {
+      "address": 2818,
+      "type": "u16",
+      "access": "r",
+      "description": "System kvar, cube 350 only",
+      "unit": "kvar"
+    },
+    "system_pf_cube_350_only": {
+      "address": 2819,
+      "type": "u16",
+      "access": "r",
+      "description": "System PF, cube 350 only"
+    },
+    "frequency_cube_350_only": {
+      "address": 2820,
+      "type": "u16",
+      "access": "r",
+      "description": "Frequency, cube 350 only"
+    },
+    "phase_1_volts_cube_350_only": {
+      "address": 2821,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 volts, cube 350 only",
+      "unit": "Volts"
+    },
+    "phase_1_amps_cube_350_only": {
+      "address": 2822,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 amps, cube 350 only",
+      "unit": "Amps"
+    },
+    "phase_1_kw_cube_350_only": {
+      "address": 2823,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 kW, cube 350 only",
+      "unit": "kW"
+    },
+    "phase_2_volts_cube_350_only": {
+      "address": 2824,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 volts, cube 350 only",
+      "unit": "Volts"
+    },
+    "phase_2_amps_cube_350_only": {
+      "address": 2825,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 amps, cube 350 only",
+      "unit": "Amps"
+    },
+    "phase_2_kw_cube_350_only": {
+      "address": 2826,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 kW, cube 350 only",
+      "unit": "kW"
+    },
+    "phase_3_volts_cube_350_only": {
+      "address": 2827,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 3 volts, cube 350 only",
+      "unit": "Volts"
+    },
+    "phase_3_amps_cube_350_only": {
+      "address": 2828,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 3 amps, cube 350 only",
+      "unit": "Amps"
+    },
+    "phase_3_kw_cube_350_only": {
+      "address": 2829,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 3 kW, cube 350 only",
+      "unit": "kW"
+    },
+    "phase_1_pf_cube_350_only": {
+      "address": 2830,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 PF, cube 350 only"
+    },
+    "phase_2_pf_cube_350_only": {
+      "address": 2831,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 PF, cube 350 only"
+    },
+    "phase_3_pf_cube_350_only": {
+      "address": 2832,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 3 PF, cube 350 only"
+    },
+    "ph1_ph2_volts_cube_350_only": {
+      "address": 2833,
+      "type": "u16",
+      "access": "r",
+      "description": "Ph1 Ph2 volts, cube 350 only",
+      "unit": "Volts"
+    },
+    "ph2_ph3_volts_cube_350_only": {
+      "address": 2834,
+      "type": "u16",
+      "access": "r",
+      "description": "Ph2 Ph3 volts, cube 350 only",
+      "unit": "Volts"
+    },
+    "ph3_ph1_volts_cube_350_only": {
+      "address": 2835,
+      "type": "u16",
+      "access": "r",
+      "description": "Ph3 Ph1 volts, cube 350 only",
+      "unit": "Volts"
+    },
+    "neutral_current_cube_350_only": {
+      "address": 2836,
+      "type": "u16",
+      "access": "r",
+      "description": "Neutral current, cube 350 only"
+    },
+    "amps_scale_ki_cube_350_only": {
+      "address": 2837,
+      "type": "u16",
+      "access": "r",
+      "description": "Amps scale ki, cube 350 only",
+      "unit": "Amps"
+    },
+    "phase_volts_scale_kvp_cube_350_only": {
+      "address": 2838,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase volts scale kvp, cube 350 only",
+      "unit": "Volts"
+    },
+    "line_volts_scale_kvl_cube_350_only": {
+      "address": 2839,
+      "type": "u16",
+      "access": "r",
+      "description": "Line volts scale kvl, cube 350 only",
+      "unit": "Volts"
+    },
+    "power_scale_kp_cube_350_only": {
+      "address": 2840,
+      "type": "u16",
+      "access": "r",
+      "description": "Power scale kp, cube 350 only"
+    },
+    "phase_1_kva_cube_350_only": {
+      "address": 3072,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 kVA, cube 350 only",
+      "unit": "kVA"
+    },
+    "phase_2_kva_cube_350_only": {
+      "address": 3073,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 kVA, cube 350 only",
+      "unit": "kVA"
+    },
+    "phase_3_kva_cube_350_only": {
+      "address": 3074,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 3 kVA, cube 350 only",
+      "unit": "kVA"
+    },
+    "phase_1_kvar_cube_350_only": {
+      "address": 3075,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 1 kvar, cube 350 only",
+      "unit": "kvar"
+    },
+    "phase_2_kvar_cube_350_only": {
+      "address": 3076,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 2 kvar, cube 350 only",
+      "unit": "kvar"
+    },
+    "phase_3_kvar_cube_350_only": {
+      "address": 3077,
+      "type": "u16",
+      "access": "r",
+      "description": "Phase 3 kvar, cube 350 only",
+      "unit": "kvar"
+    },
+    "peak_hold_ph1_amps_cube_350_only": {
+      "address": 3328,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak hold ph1 amps, cube 350 only",
+      "unit": "Amps"
+    },
+    "peak_hold_ph2_amps_cube_350_only": {
+      "address": 3329,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak hold ph2 amps, cube 350 only",
+      "unit": "Amps"
+    },
+    "peak_hold_ph3_amps_cube_350_only": {
+      "address": 3330,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak hold ph3 amps, cube 350 only",
+      "unit": "Amps"
+    },
+    "peak_hold_ph1_volts_cube_350_only": {
+      "address": 3331,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak hold ph1 volts, cube 350 only",
+      "unit": "Volts"
+    },
+    "peak_hold_ph2_volts_cube_350_only": {
+      "address": 3332,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak hold ph2 volts, cube 350 only",
+      "unit": "Volts"
+    },
+    "peak_hold_ph3_volts_cube_350_only": {
+      "address": 3333,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak hold ph3 volts, cube 350 only",
+      "unit": "Volts"
+    },
+    "peak_hold_kw_demand_cube_350_only": {
+      "address": 3334,
+      "type": "u16",
+      "access": "r",
+      "description": "Peak hold kW demand, cube 350 only",
+      "unit": "kW"
+    },
+    "kw_demand_period_cube_350_only": {
+      "address": 3335,
+      "type": "u16",
+      "access": "r",
+      "description": "kW demand period, cube 350 only",
+      "unit": "kW"
+    },
+    "kw_demand_cube_350_only": {
+      "address": 3336,
+      "type": "u16",
+      "access": "r",
+      "description": "kW demand, cube 350 only",
+      "unit": "kW"
+    },
+    "kva_demand_cube_350_only": {
+      "address": 3337,
+      "type": "u16",
+      "access": "r",
+      "description": "kVA demand, cube 350 only",
+      "unit": "kVA"
+    }
+  }
+}

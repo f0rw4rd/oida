@@ -1,0 +1,95 @@
+{
+  "vendor": "Siemens",
+  "model": "S7-1200",
+  "description": "Siemens S7-1200 PLC Modbus register map (VERIFIED)",
+  "version": "2.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 255,
+  "notes": "CRITICAL: NO native system registers exposed via Modbus. Only user-defined data in MB_HOLD_REG DB is accessible. System status must be programmatically copied to holding register DB. Requires MB_SERVER instruction in OB1.",
+  "source": "SIOS 102020340",
+  "supported_function_codes": [
+    {
+      "code": "01",
+      "function": "Read Coils",
+      "area": "Q bits (0-9999)"
+    },
+    {
+      "code": "02",
+      "function": "Read Discrete Inputs",
+      "area": "I bits (10001-19999)"
+    },
+    {
+      "code": "03",
+      "function": "Read Holding Registers",
+      "area": "DB or M (40001+)"
+    },
+    {
+      "code": "04",
+      "function": "Read Input Registers",
+      "area": "Input area (30001+)"
+    },
+    {
+      "code": "06",
+      "function": "Write Single Register",
+      "area": "DB or M"
+    },
+    {
+      "code": "16",
+      "function": "Write Multiple Registers",
+      "area": "DB or M"
+    }
+  ],
+  "registers": {
+    "example_db_word_0": {
+      "address": 0,
+      "type": "u16",
+      "access": "rw",
+      "description": "Example: DB.DBW0 mapped to 40001 (user must create)"
+    },
+    "example_db_word_2": {
+      "address": 1,
+      "type": "u16",
+      "access": "rw",
+      "description": "Example: DB.DBW2 mapped to 40002 (user must create)"
+    }
+  },
+  "extended_info": {
+    "mb_server_configuration": {
+      "instruction": "MB_SERVER",
+      "parameters": {
+        "DISCONNECT": "BOOL - 0=Accept, 1=Disconnect",
+        "CONNECT_ID": "UINT 1-4095 - unique per instance",
+        "IP_PORT": "UINT - default 502",
+        "MB_HOLD_REG": "VARIANT - pointer to holding register DB"
+      },
+      "outputs": [
+        "NDR (New Data Ready)",
+        "DR (Data Read)",
+        "ERROR",
+        "STATUS"
+      ]
+    },
+    "memory_mapping": {
+      "formula": "Modbus 40001 = DB.DBW0 (when HR_Start_Offset = 0)",
+      "mapping_rule": "DBx.DBW0 = 40001, DBx.DBW2 = 40002, DBx.DBW4 = 40003 (+2 bytes per register)",
+      "bit_mapping_note": "DB.DBX0.0 -> 40001.8, DB.DBX1.0 -> 40001.0 (due to byte order)"
+    },
+    "configuration_requirements": [
+      "Create Global DB with Array of Word (Standard access, NOT optimized)",
+      "Add MB_SERVER to OB1 (cyclic call)",
+      "Set unique CONNECT_ID per instance",
+      "Reserved ports to avoid: 20, 21, 25, 80, 102, 123, 5001, 34962-34964",
+      "Firmware V4.0+ required for MB_SERVER V3.x"
+    ],
+    "cycle_time_exposure": {
+      "method": "Use RUNTIME instruction to measure cycle time",
+      "steps": [
+        "Call RUNTIME in OB1",
+        "Store result in holding register DB",
+        "Modbus client reads mapped register"
+      ]
+    }
+  },
+  "_source_verified": "Verified: MB_SERVER instruction confirmed; SIOS 102020340 verified at support.industry.siemens.com"
+}

@@ -1,0 +1,26 @@
+#!/usr/bin/env python3
+"""Block files containing DICOM magic bytes — belt-and-suspenders PHI guard.
+
+DICOM files carry a 128-byte preamble followed by the four-byte magic "DICM".
+This hook rejects any staged file that matches that signature regardless of
+extension, so renamed .dcm files don't slip through.
+"""
+import sys
+
+DICOM_PREAMBLE = 128
+DICOM_MAGIC = b"DICM"
+
+failed = False
+for path in sys.argv[1:]:
+    try:
+        with open(path, "rb") as fh:
+            fh.seek(DICOM_PREAMBLE)
+            if fh.read(4) == DICOM_MAGIC:
+                print(f"BLOCKED: {path} — DICOM magic bytes at offset 128 (potential PHI)")
+                failed = True
+    except OSError:
+        pass
+
+if failed:
+    print("\nRemove DICOM files from the index before committing.")
+    sys.exit(1)

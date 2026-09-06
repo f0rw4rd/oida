@@ -1,0 +1,362 @@
+{
+  "vendor": "Schneider Electric",
+  "model": "PM 700",
+  "description": "Schneider Electric PM 700 power meter",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "source": "https://github.com/jibrilsharafi/modbus-database",
+  "notes": "Imported from jibrilsharafi/modbus-database",
+  "registers": {
+    "real_energy_total": {
+      "address": 1000,
+      "type": "f32",
+      "access": "r",
+      "description": "Real energy, total",
+      "unit": "kWh"
+    },
+    "apparent_energy_total": {
+      "address": 1002,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent energy, total",
+      "unit": "kVAh"
+    },
+    "reactive_energy_total": {
+      "address": 1004,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive energy, total",
+      "unit": "kVARh"
+    },
+    "real_power_total": {
+      "address": 1006,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, total",
+      "unit": "kW"
+    },
+    "apparent_power_total": {
+      "address": 1008,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, total",
+      "unit": "kVA"
+    },
+    "reactive_power_total": {
+      "address": 1010,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, total",
+      "unit": "kVAR"
+    },
+    "power_factor_total": {
+      "address": 1012,
+      "type": "f32",
+      "access": "r",
+      "description": "Power factor, total"
+    },
+    "voltage_l_l_3p_average": {
+      "address": 1014,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L L, 3P average",
+      "unit": "Volt"
+    },
+    "voltage_l_n_3p_average": {
+      "address": 1016,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, L N, 3P average",
+      "unit": "Volt"
+    },
+    "current_3p_average": {
+      "address": 1018,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, 3P average",
+      "unit": "Amp"
+    },
+    "frequency": {
+      "address": 1020,
+      "type": "f32",
+      "access": "r",
+      "description": "Frequency",
+      "unit": "Hz"
+    },
+    "current_a": {
+      "address": 1034,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, A",
+      "unit": "Amp"
+    },
+    "current_b": {
+      "address": 1036,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, B",
+      "unit": "Amp"
+    },
+    "current_c": {
+      "address": 1038,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, C",
+      "unit": "Amp"
+    },
+    "current_n": {
+      "address": 1040,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, N",
+      "unit": "Amp"
+    },
+    "voltage_a_b": {
+      "address": 1054,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, A B",
+      "unit": "Volt"
+    },
+    "voltage_b_c": {
+      "address": 1056,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, B C",
+      "unit": "Volt"
+    },
+    "voltage_c_a": {
+      "address": 1058,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, C A",
+      "unit": "Volt"
+    },
+    "voltage_a_n": {
+      "address": 1060,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, A N",
+      "unit": "Volt"
+    },
+    "voltage_b_n": {
+      "address": 1062,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, B N",
+      "unit": "Volt"
+    },
+    "voltage_c_n": {
+      "address": 1064,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, C N",
+      "unit": "Volt"
+    },
+    "real_power_a": {
+      "address": 1066,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, A",
+      "unit": "kW"
+    },
+    "real_power_b": {
+      "address": 1068,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, B",
+      "unit": "kW"
+    },
+    "real_power_c": {
+      "address": 1070,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, C",
+      "unit": "kW"
+    },
+    "apparent_power_a": {
+      "address": 1072,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, A",
+      "unit": "kVA"
+    },
+    "apparent_power_b": {
+      "address": 1074,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, B",
+      "unit": "kVA"
+    },
+    "apparent_power_c": {
+      "address": 1076,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, C",
+      "unit": "kVA"
+    },
+    "reactive_power_a": {
+      "address": 1078,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, A",
+      "unit": "kVAR"
+    },
+    "reactive_power_b": {
+      "address": 1080,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, B",
+      "unit": "kVAR"
+    },
+    "reactive_power_c": {
+      "address": 1082,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, C",
+      "unit": "kVAR"
+    },
+    "current_a_thd": {
+      "address": 1084,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, A, THD",
+      "unit": "%"
+    },
+    "current_b_thd": {
+      "address": 1086,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, B, THD",
+      "unit": "%"
+    },
+    "current_c_thd": {
+      "address": 1088,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, C, THD",
+      "unit": "%"
+    },
+    "voltage_a_n_thd": {
+      "address": 1092,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, A N, THD",
+      "unit": "%"
+    },
+    "voltage_b_n_thd": {
+      "address": 1094,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, B N, THD",
+      "unit": "%"
+    },
+    "voltage_c_n_thd": {
+      "address": 1096,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, C N, THD",
+      "unit": "%"
+    },
+    "voltage_a_b_thd": {
+      "address": 1098,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, A B, THD",
+      "unit": "%"
+    },
+    "voltage_b_c_thd": {
+      "address": 1100,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, B C, THD",
+      "unit": "%"
+    },
+    "voltage_c_a_thd": {
+      "address": 1102,
+      "type": "f32",
+      "access": "r",
+      "description": "Voltage, C A, THD",
+      "unit": "%"
+    },
+    "real_power_total_demand_present": {
+      "address": 1022,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, total demand present",
+      "unit": "kW"
+    },
+    "apparent_power_total_demand_present": {
+      "address": 1024,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, total demand present",
+      "unit": "kVA"
+    },
+    "reactive_power_total_demand_present": {
+      "address": 1026,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, total demand present",
+      "unit": "kVAR"
+    },
+    "real_power_total_demand_peak": {
+      "address": 1028,
+      "type": "f32",
+      "access": "r",
+      "description": "Real power, total demand peak",
+      "unit": "kW"
+    },
+    "apparent_power_total_demand_peak": {
+      "address": 1030,
+      "type": "f32",
+      "access": "r",
+      "description": "Apparent power, total demand peak",
+      "unit": "kVA"
+    },
+    "reactive_power_total_demand_peak": {
+      "address": 1032,
+      "type": "f32",
+      "access": "r",
+      "description": "Reactive power, total demand peak",
+      "unit": "kVAR"
+    },
+    "current_a_demand_present": {
+      "address": 1042,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, A, demand present",
+      "unit": "Amp"
+    },
+    "current_b_demand_present": {
+      "address": 1044,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, B, demand present",
+      "unit": "Amp"
+    },
+    "current_c_demand_present": {
+      "address": 1046,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, C, demand present",
+      "unit": "Amp"
+    },
+    "current_a_demand_peak": {
+      "address": 1048,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, A, demand peak",
+      "unit": "Amp"
+    },
+    "current_b_demand_peak": {
+      "address": 1050,
+      "type": "f32",
+      "access": "r",
+      "description": "Current, B, demand peak",
+      "unit": "Amp"
+    }
+  }
+}

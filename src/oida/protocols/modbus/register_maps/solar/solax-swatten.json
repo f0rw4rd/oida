@@ -1,0 +1,299 @@
+{
+  "vendor": "Swatten",
+  "model": "Hybrid",
+  "description": "Swatten Hybrid inverter register map extracted from homeassistant-solax-modbus",
+  "version": "1.0",
+  "byte_order": "big",
+  "word_order": "big",
+  "default_unit_id": 1,
+  "notes": "Swatten hybrid inverters.",
+  "source": "https://github.com/wills106/homeassistant-solax-modbus",
+  "registers": {
+    "rtc": {
+      "address": 4050,
+      "type": "u16",
+      "access": "r",
+      "description": "RTC",
+      "function_code": 4
+    },
+    "apparent_power": {
+      "address": 4059,
+      "type": "u32",
+      "access": "r",
+      "description": "Apparent Power",
+      "unit": "VA",
+      "function_code": 4
+    },
+    "pv_voltage_1": {
+      "address": 4061,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 1",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "pv_current_1": {
+      "address": 4062,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 1",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "pv_voltage_2": {
+      "address": 4063,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Voltage 2",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "pv_current_2": {
+      "address": 4064,
+      "type": "u16",
+      "access": "r",
+      "description": "PV Current 2",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "pv_power_total": {
+      "address": 4067,
+      "type": "u32",
+      "access": "r",
+      "description": "PV Power Total",
+      "unit": "W",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "inverter_voltage": {
+      "address": 4069,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Voltage",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_voltage_l1": {
+      "address": 4069,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Voltage L1",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_voltage_l2": {
+      "address": 4070,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Voltage L2",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_voltage_l3": {
+      "address": 4071,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Voltage L3",
+      "unit": "V",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_current": {
+      "address": 4072,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Current",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_current_l1": {
+      "address": 4072,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Current L1",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_current_l2": {
+      "address": 4073,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Current L2",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "grid_current_l3": {
+      "address": 4074,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Current L3",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "total_output_power": {
+      "address": 4081,
+      "type": "u32",
+      "access": "r",
+      "description": "Total Output Power",
+      "unit": "W",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "reactive_power": {
+      "address": 4083,
+      "type": "u32",
+      "access": "r",
+      "description": "Reactive Power",
+      "unit": "var",
+      "function_code": 4
+    },
+    "power_factor": {
+      "address": 4085,
+      "type": "i16",
+      "access": "r",
+      "description": "Power Factor",
+      "scale": 0.001
+    },
+    "grid_frequency": {
+      "address": 4198,
+      "type": "u16",
+      "access": "r",
+      "description": "Grid Frequency",
+      "unit": "Hz",
+      "scale": 0.01,
+      "function_code": 4
+    },
+    "measured_power": {
+      "address": 5401,
+      "type": "i16",
+      "access": "r",
+      "description": "Measured Power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "model_type": {
+      "address": 5809,
+      "type": "str",
+      "access": "r",
+      "description": "Model Type",
+      "function_code": 4
+    },
+    "today_pv_generation": {
+      "address": 10002,
+      "type": "u16",
+      "access": "r",
+      "description": "Today",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "total_pv_generation": {
+      "address": 10002,
+      "type": "u32",
+      "access": "r",
+      "description": "Total PV Generation",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "total_consumption": {
+      "address": 10008,
+      "type": "u16",
+      "access": "r",
+      "description": "Total Consumption",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "battery_voltage": {
+      "address": 10020,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Voltage",
+      "unit": "V",
+      "scale": 0.0,
+      "function_code": 4
+    },
+    "battery_current": {
+      "address": 10021,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery Current",
+      "unit": "A",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "battery_power": {
+      "address": 10022,
+      "type": "i16",
+      "access": "r",
+      "description": "Battery Power",
+      "unit": "W",
+      "function_code": 4
+    },
+    "battery_soc": {
+      "address": 10023,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery State of Capacity",
+      "unit": "%",
+      "function_code": 4
+    },
+    "battery_soh": {
+      "address": 10024,
+      "type": "u16",
+      "access": "r",
+      "description": "Battery State of Health",
+      "unit": "%",
+      "function_code": 4
+    },
+    "today_import_energy": {
+      "address": 10036,
+      "type": "u16",
+      "access": "r",
+      "description": "Today",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "total_import_energy": {
+      "address": 10037,
+      "type": "u32",
+      "access": "r",
+      "description": "Total Import Energy",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "today_export_energy": {
+      "address": 10045,
+      "type": "u16",
+      "access": "r",
+      "description": "Today",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    },
+    "total_export_energy": {
+      "address": 10046,
+      "type": "u32",
+      "access": "r",
+      "description": "Total Export Energy",
+      "unit": "kWh",
+      "scale": 0.1,
+      "function_code": 4
+    }
+  },
+  "_source_verified": "Verified: plugin_swatten.py confirmed; Swatten SiH-5/6/8/10kW-TH confirmed via PV Magazine"
+}
