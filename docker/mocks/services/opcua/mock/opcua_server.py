@@ -75,8 +75,16 @@ def reset_device(parent):
 
 
 @uamethod
-def set_temperature(parent, value: float):
-    """Set target temperature - takes float parameter"""
+def set_temperature(parent, value: float = None):
+    """Set target temperature - takes float parameter.
+
+    ``value`` defaults to None so a call with no/empty input arguments (e.g. an
+    OPC UA method fuzzer) returns a clean protocol error (ua.UaError, same as the
+    range check below) instead of raising an uncaught ``TypeError: missing 1
+    required positional argument`` inside the asyncua method dispatcher.
+    """
+    if value is None:
+        raise ua.UaError("set_temperature requires a numeric 'value' argument")
     if value < -50 or value > 200:
         raise ua.UaError(f"Temperature {value} out of valid range (-50 to 200)")
     DEVICE_STATE["last_command"] = f"set_temperature({value})"
@@ -194,7 +202,14 @@ class CustomUserManager:
         """Authenticate user and return User object or None."""
         # X509 user-identity token: asyncua passes the verified peer cert here
         # (its signature already proven) and leaves username/password None.
-        if certificate is not None:
+        #
+        # NB: asyncua >= 2.0 ALSO passes the session's peer certificate as
+        # ``certificate`` for username/password auth (the client sends an app
+        # instance cert at session creation, even over SecurityPolicy None). So
+        # the X509-identity path must be gated on there being NO username --
+        # otherwise valid username/password logins are misrouted to the
+        # cert-trust check and rejected with BadUserAccessDenied.
+        if username is None and certificate is not None:
             return self._get_cert_user(certificate)
 
         log.info(f"Authentication attempt: user='{username}'")
