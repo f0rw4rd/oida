@@ -53,7 +53,7 @@ bacnet = ["BAC0==2025.9.15", "PyYAML==6.0.3"]
 # BACnet/SC rides the BACnet app layer (bacpypes3, pulled via BAC0) over a
 # TLS+WebSocket secure datalink: websockets for the transport, cryptography for
 # the automatic certificate-hygiene checks.
-bacnetsc = ["BAC0==2025.9.15", "PyYAML==6.0.3", "websockets==16.0", "cryptography>=43.0.0"]
+bacnetsc = ["BAC0==2025.9.15", "PyYAML==6.0.3", "websockets==16.1.1", "cryptography>=43.0.0"]
 can = ["python-can==4.6.1"]
 coap = ["aiocoap==0.4.17", "cbor2==6.1.4"]
 dicom = ["pynetdicom==3.0.4", "pydicom==3.0.2"]
@@ -80,7 +80,7 @@ snap7 = ["python-snap7==3.1.2"]
 snmp = ["pysnmp==7.1.29"]
 tase2 = ["pyiec61850-ng==1.6.1.7"]
 astm = []
-ocpp = ["websockets==16.0", "cryptography>=43.0.0"]
+ocpp = ["websockets==16.1.1", "cryptography>=43.0.0"]
 # Serial transports (IEC-101/104 serial, DNP3 serial, generic serial discovery)
 serial = ["pyserial==3.5"]
 # ── Non-protocol extras ──
