@@ -108,7 +108,7 @@ dev = [
     # silently shrinks). Keep them in dev rather than per-protocol extras so
     # CI sees the full skip-free count.
     "Brotli>=1.2.0",          # tests/unit/fuzz/test_transformers.py
-    "docker>=7.1.0",          # tests/integration/common/test_mock_services_integration.py
+    "docker>=7.2.0",          # tests/integration/common/test_mock_services_integration.py
     "defusedxml>=0.7.1",      # SSDP/UPnP — also in discovery extra; here for unit tests
     "msgpack>=1.2.2",         # python-can udp_multicast — gates tests/integration/test_can_mock_e2e.py
 ]

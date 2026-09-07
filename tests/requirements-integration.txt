@@ -1,5 +1,5 @@
 # Additional requirements for integration tests with mock services
-docker==7.1.0
+docker==7.2.0
 pytest==9.0.3
 pytest-html==4.1.1
 pytest-cov==4.1.0
