@@ -51,7 +51,7 @@ prefixes them with ``mysql.``):
 - mysql.query: SQL query text
 - mysql.response_code: 0x00=OK, 0xfe=EOF, 0xff=ERR
 - mysql.affected_rows: Rows affected by statement
-- mysql.error_code / mysql.error_string: Error details
+- mysql.error_code / mysql.error.message / mysql.sqlstate: Error details
 - mysql.server_greeting: Present (as null) on greeting packets
 - mysql.login_request: Present (as null) on login request packets
 """
@@ -433,13 +433,25 @@ class MySQLPassiveListener(PySharkListenerBase):
             )
             return
 
-        # Single-PDU: verify field_names are accessible
-        if not hasattr(mysql_layer, "all_field_names"):
-            # Fallback: record as unknown MySQL message
-            self._handle_unknown(now, src_ip, src_port, dst_ip, dst_port, flow_id, stream_id)
-            return
-        field_names = mysql_layer.all_field_names
-        if field_names is None:
+        # Single-PDU: verify the layer's fields are accessible.  The two
+        # pyshark modes expose this differently -- EK mode has the
+        # ``all_field_names`` property (None when the layer holds an
+        # unsplittable multi-PDU segment), while XML mode -- which is what the
+        # LiveCapture path in pyshark_base uses -- has ``_all_fields`` and no
+        # ``all_field_names`` at all.  Gating solely on ``all_field_names``
+        # therefore sent every XML-mode packet down the unknown branch, so no
+        # credentials, queries or errors were ever extracted from a live
+        # capture.  Mirror ``PySharkListenerBase.get_all_fields``.
+        if hasattr(mysql_layer, "_all_fields"):
+            if not mysql_layer._all_fields:
+                self._handle_unknown(now, src_ip, src_port, dst_ip, dst_port, flow_id, stream_id)
+                return
+        elif hasattr(mysql_layer, "all_field_names"):
+            if mysql_layer.all_field_names is None:
+                self._handle_unknown(now, src_ip, src_port, dst_ip, dst_port, flow_id, stream_id)
+                return
+        else:
+            # Neither accessor: record as unknown MySQL message
             self._handle_unknown(now, src_ip, src_port, dst_ip, dst_port, flow_id, stream_id)
             return
 
@@ -1017,7 +1029,13 @@ class MySQLPassiveListener(PySharkListenerBase):
 
         elif resp_code == MYSQL_RESP_ERR:
             error_code = self.get_field(mysql_layer, "error_code", "")
-            error_msg = self.get_field(mysql_layer, "error_string", "")
+            # tshark registers the ERR text as ``mysql.error.message`` (pyshark
+            # sanitizes that to ``error_message``); there is no
+            # ``mysql.error_string`` field, so the old name always yielded "".
+            error_msg = self.get_field_any(
+                mysql_layer, "error_message", "error.message", "error_string", default=""
+            )
+            sqlstate = self.get_field(mysql_layer, "sqlstate", "")
             detail_parts = ["ERR"]
             if error_code:
                 detail_parts.append(f"#{error_code}")
@@ -1030,6 +1048,7 @@ class MySQLPassiveListener(PySharkListenerBase):
                 "response": "ERR",
                 "error_code": str(error_code) if error_code else "?",
                 "error_string": str(error_msg) if error_msg else "",
+                "sqlstate": str(sqlstate) if sqlstate else "",
                 "packet_number": str(packet_number) if packet_number else "",
             }
             session.error_count += 1
