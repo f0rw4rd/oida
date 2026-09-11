@@ -20,6 +20,7 @@ ASTM Field Delimiters:
 - Escape: &
 """
 
+import re
 from datetime import datetime
 from typing import List
 
@@ -52,6 +53,23 @@ class ASTMRecordBuilder:
         value = value.replace("&", "&E&")
         value = value.replace("\\", "&R&")
         value = value.replace("^", "&S&")
+        value = value.replace("|", "&F&")
+        return value
+
+    def _escape_composite_field(self, value: str) -> str:
+        """Escape special characters in a composite field value.
+
+        Composite fields (e.g. patient name "LAST^FIRST^MIDDLE" or a Universal
+        Test ID) are documented as carrying their own component structure, so
+        the caller-supplied ``^`` separators must be preserved. Only the
+        escape character, repeat delimiter, and field delimiter are escaped;
+        an operator-supplied field delimiter can no longer shift every
+        following field in the record.
+        """
+        if not value:
+            return ""
+        value = value.replace("&", "&E&")
+        value = value.replace("\\", "&R&")
         value = value.replace("|", "&F&")
         return value
 
@@ -101,18 +119,29 @@ class ASTMRecordBuilder:
             Formatted H record string
         """
         # H|\\^&|||sender^id|||||||receiver^id|P|version|datetime
+        # sender_name/sender_id and receiver_name/receiver_id are individual
+        # components joined with a literal "^" by this method, so each one is
+        # escaped as a scalar value (including "^") before joining -- an
+        # operator-supplied "^" must not be allowed to inject a bogus extra
+        # component into the H-5/H-10 composite field.
+        sender = self._escape_field(sender_name)
+        if sender_id:
+            sender = f"{sender}^{self._escape_field(sender_id)}"
+        receiver = self._escape_field(receiver_name)
+        if receiver_id:
+            receiver = f"{receiver}^{self._escape_field(receiver_id)}"
         fields = [
             "H",  # Record type
             "\\^&",  # Delimiter definition
             "",  # Message ID (optional)
             "",  # Access password (optional)
-            f"{sender_name}^{sender_id}" if sender_id else sender_name,  # Sender
+            sender,  # Sender
             "",  # Sender address (optional)
             "",  # Reserved
             "",  # Sender phone (optional)
             "",  # Sender characteristics (optional)
-            "",  # Receiver ID (optional)
-            f"{receiver_name}^{receiver_id}" if receiver_id else receiver_name,  # Receiver
+            receiver,  # Receiver ID
+            "",  # Comment/special instructions (optional)
             processing_id or "P",  # Processing ID
             self.version,  # Version
             message_datetime or self._get_timestamp(),  # Date/Time
@@ -177,34 +206,39 @@ class ASTMRecordBuilder:
             Formatted P record string
         """
         # P|seq|practice_id|lab_id||name||dob|sex|race|address|||phone|physician|...
+        # All operator-supplied scalar values are escaped so an embedded field
+        # delimiter ("|") cannot shift every later field into the wrong
+        # position. patient_name is documented as the composite
+        # "LAST^FIRST^MIDDLE" and is escaped with _escape_composite_field so
+        # its own "^" component structure survives intact.
         fields = [
             "P",  # Record type
             str(sequence),  # Sequence number
-            patient_id,  # Practice patient ID
-            lab_patient_id,  # Lab patient ID
+            self._escape_field(patient_id),  # Practice patient ID
+            self._escape_field(lab_patient_id),  # Lab patient ID
             "",  # Patient ID #3 (optional)
-            patient_name,  # Patient name
+            self._escape_composite_field(patient_name),  # Patient name
             "",  # Mother's maiden name (optional)
-            dob,  # Birthdate
-            sex,  # Sex
-            race,  # Race
-            address,  # Address
+            self._escape_field(dob),  # Birthdate
+            self._escape_field(sex),  # Sex
+            self._escape_field(race),  # Race
+            self._escape_field(address),  # Address
             "",  # Reserved
             "",  # Reserved
-            phone,  # Phone
-            physician_id,  # Attending physician
-            special_field_1,  # Special field 1
-            special_field_2,  # Special field 2
-            height,  # Height
-            weight,  # Weight
-            diagnosis,  # Known diagnosis
-            medications,  # Medications
-            diet,  # Diet
-            practice_field_1,  # Practice field 1
-            practice_field_2,  # Practice field 2
-            admission_date,  # Admission date
-            admission_status,  # Admission status
-            location,  # Location
+            self._escape_field(phone),  # Phone
+            self._escape_field(physician_id),  # Attending physician
+            self._escape_field(special_field_1),  # Special field 1
+            self._escape_field(special_field_2),  # Special field 2
+            self._escape_field(height),  # Height
+            self._escape_field(weight),  # Weight
+            self._escape_field(diagnosis),  # Known diagnosis
+            self._escape_field(medications),  # Medications
+            self._escape_field(diet),  # Diet
+            self._escape_field(practice_field_1),  # Practice field 1
+            self._escape_field(practice_field_2),  # Practice field 2
+            self._escape_field(admission_date),  # Admission date
+            self._escape_field(admission_status),  # Admission status
+            self._escape_field(location),  # Location
         ]
         return self._join_fields(fields)
 
@@ -271,33 +305,37 @@ class ASTMRecordBuilder:
         Returns:
             Formatted O record string
         """
+        # All operator-supplied scalar values are escaped so an embedded field
+        # delimiter cannot shift later fields. test_id (Universal Test ID) is
+        # documented as a composite value and is escaped with
+        # _escape_composite_field so its own "^" component structure survives.
         fields = [
             "O",  # Record type
             str(sequence),  # Sequence number
-            sample_id,  # Specimen ID
-            instrument_specimen_id,  # Instrument specimen ID
-            test_id,  # Universal test ID
-            priority,  # Priority
-            order_datetime or self._get_timestamp(),  # Requested/ordered datetime
-            collection_datetime,  # Specimen collection datetime
-            collection_end_datetime,  # Collection end time
-            volume,  # Collection volume
-            collector_id,  # Collector ID
-            action_code,  # Action code
-            danger_code,  # Danger code
-            clinical_info,  # Clinical info
-            specimen_received_datetime,  # Date received
-            specimen_descriptor,  # Specimen descriptor
-            ordering_physician,  # Ordering physician
-            physician_phone,  # Physician phone
-            user_field_1,  # User field 1
-            user_field_2,  # User field 2
-            lab_field_1,  # Lab field 1
-            lab_field_2,  # Lab field 2
-            report_datetime,  # Report datetime
-            instrument_charge,  # Instrument charge
-            instrument_section,  # Instrument section
-            report_type or "F",  # Report type
+            self._escape_field(sample_id),  # Specimen ID
+            self._escape_field(instrument_specimen_id),  # Instrument specimen ID
+            self._escape_composite_field(test_id),  # Universal test ID
+            self._escape_field(priority),  # Priority
+            self._escape_field(order_datetime) or self._get_timestamp(),  # Requested/ordered datetime
+            self._escape_field(collection_datetime),  # Specimen collection datetime
+            self._escape_field(collection_end_datetime),  # Collection end time
+            self._escape_field(volume),  # Collection volume
+            self._escape_field(collector_id),  # Collector ID
+            self._escape_field(action_code),  # Action code
+            self._escape_field(danger_code),  # Danger code
+            self._escape_field(clinical_info),  # Clinical info
+            self._escape_field(specimen_received_datetime),  # Date received
+            self._escape_field(specimen_descriptor),  # Specimen descriptor
+            self._escape_field(ordering_physician),  # Ordering physician
+            self._escape_field(physician_phone),  # Physician phone
+            self._escape_field(user_field_1),  # User field 1
+            self._escape_field(user_field_2),  # User field 2
+            self._escape_field(lab_field_1),  # Lab field 1
+            self._escape_field(lab_field_2),  # Lab field 2
+            self._escape_field(report_datetime),  # Report datetime
+            self._escape_field(instrument_charge),  # Instrument charge
+            self._escape_field(instrument_section),  # Instrument section
+            self._escape_field(report_type) or "F",  # Report type
         ]
         return self._join_fields(fields)
 
@@ -340,21 +378,25 @@ class ASTMRecordBuilder:
         Returns:
             Formatted R record string
         """
+        # All operator-supplied scalar values are escaped so an embedded field
+        # delimiter cannot shift later fields. test_id (Universal Test ID) is
+        # a composite value and is escaped with _escape_composite_field so its
+        # own "^" component structure survives.
         fields = [
             "R",  # Record type
             str(sequence),  # Sequence number
-            test_id,  # Universal test ID
-            value,  # Data/measurement value
-            units,  # Units
-            reference_range,  # Reference ranges
-            abnormal_flag,  # Abnormal flag
-            nature_of_abnormality,  # Nature of abnormality
-            result_status,  # Result status
-            norms_changed_datetime,  # Date norms changed
-            operator_id,  # Operator ID
-            test_started_datetime,  # Test started
-            test_completed_datetime or self._get_timestamp(),  # Test completed
-            instrument_id,  # Instrument ID
+            self._escape_composite_field(test_id),  # Universal test ID
+            self._escape_field(value),  # Data/measurement value
+            self._escape_field(units),  # Units
+            self._escape_field(reference_range),  # Reference ranges
+            self._escape_field(abnormal_flag),  # Abnormal flag
+            self._escape_field(nature_of_abnormality),  # Nature of abnormality
+            self._escape_field(result_status),  # Result status
+            self._escape_field(norms_changed_datetime),  # Date norms changed
+            self._escape_field(operator_id),  # Operator ID
+            self._escape_field(test_started_datetime),  # Test started
+            self._escape_field(test_completed_datetime) or self._get_timestamp(),  # Test completed
+            self._escape_field(instrument_id),  # Instrument ID
         ]
         return self._join_fields(fields)
 
@@ -382,9 +424,9 @@ class ASTMRecordBuilder:
         fields = [
             "C",  # Record type
             str(sequence),  # Sequence number
-            source,  # Comment source
+            self._escape_field(source),  # Comment source
             self._escape_field(comment_text),  # Comment text (escaped)
-            comment_type,  # Comment type
+            self._escape_field(comment_type),  # Comment type
         ]
         return self._join_fields(fields)
 
@@ -427,21 +469,25 @@ class ASTMRecordBuilder:
         Returns:
             Formatted Q record string
         """
+        # All operator-supplied scalar values are escaped so an embedded field
+        # delimiter cannot shift later fields. universal_test_id is a
+        # composite value and is escaped with _escape_composite_field so its
+        # own "^" component structure survives.
         fields = [
             "Q",  # Record type
             str(sequence),  # Sequence number
-            starting_range,  # Starting range ID
-            ending_range,  # Ending range ID
-            universal_test_id,  # Universal test ID
-            nature_of_request,  # Nature of request
-            requested_datetime or self._get_timestamp(),  # Request datetime
-            beginning_request_datetime,  # Beginning request datetime
-            ending_request_datetime,  # Ending request datetime
-            requesting_physician,  # Requesting physician
-            requesting_phone,  # Requesting phone
-            user_field_1,  # User field 1
-            user_field_2,  # User field 2
-            request_status_codes,  # Status codes
+            self._escape_field(starting_range),  # Starting range ID
+            self._escape_field(ending_range),  # Ending range ID
+            self._escape_composite_field(universal_test_id),  # Universal test ID
+            self._escape_field(nature_of_request),  # Nature of request
+            self._escape_field(requested_datetime) or self._get_timestamp(),  # Request datetime
+            self._escape_field(beginning_request_datetime),  # Beginning request datetime
+            self._escape_field(ending_request_datetime),  # Ending request datetime
+            self._escape_field(requesting_physician),  # Requesting physician
+            self._escape_field(requesting_phone),  # Requesting phone
+            self._escape_field(user_field_1),  # User field 1
+            self._escape_field(user_field_2),  # User field 2
+            self._escape_field(request_status_codes),  # Status codes
         ]
         return self._join_fields(fields)
 
@@ -465,7 +511,7 @@ class ASTMRecordBuilder:
         fields = [
             "L",  # Record type
             str(sequence),  # Sequence number
-            terminator_code,  # Terminator code
+            self._escape_field(terminator_code),  # Terminator code
         ]
         return self._join_fields(fields)
 
@@ -590,6 +636,40 @@ ASTM_VENDOR_MAP = {
     "VERIGENE": ("Luminex", "Verigene"),
 }
 
+
+def identify_vendor_from_name(sender_name: str):
+    """Look up (vendor, product) for an analyzer sender name.
+
+    Matching is anchored so a pattern can only match a whole instrument
+    code, not an arbitrary substring: the character immediately before and
+    after a candidate match (if any) must not be a letter (A-Z). Digits,
+    underscores, and other separators are allowed on either side, which
+    preserves the real ASTM naming convention of a vendor code run directly
+    into a model number with no separator (e.g. "ABL800", "DXC700"), while
+    rejecting an accidental in-word match such as "STA" inside the token
+    "STAT" (e.g. a rogue/typo'd sender name "MY-STAT-ANALYZER") -- that
+    match is blocked because "STA" is immediately followed by the letter
+    "T", not by a digit, separator, or end of string.
+
+    Args:
+        sender_name: Raw H-5 sender name/ID as reported by the analyzer.
+
+    Returns:
+        (vendor, product) tuple, or None if no pattern matches.
+    """
+    if not sender_name:
+        return None
+    name_upper = sender_name.upper()
+    for pattern, (vendor, product) in ASTM_VENDOR_MAP.items():
+        for match in re.finditer(re.escape(pattern), name_upper):
+            start, end = match.start(), match.end()
+            before_ok = start == 0 or not name_upper[start - 1].isalpha()
+            after_ok = end == len(name_upper) or not name_upper[end].isalpha()
+            if before_ok and after_ok:
+                return vendor, product
+    return None
+
+
 # Common lab test codes with names and units
 LAB_TEST_TYPES = {
     # Chemistry - Basic Metabolic Panel
@@ -693,4 +773,5 @@ __all__ = [
     "LF",
     "ASTM_VENDOR_MAP",
     "LAB_TEST_TYPES",
+    "identify_vendor_from_name",
 ]

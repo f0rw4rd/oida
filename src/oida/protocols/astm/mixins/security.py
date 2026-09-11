@@ -103,6 +103,15 @@ class SecurityMixin:
                 except (BrokenPipeError, ConnectionResetError):
                     crash_count += 1
                     self.logger.warning(f"Connection lost on test: {test_name}")
+                    # Close the stale socket before reconnecting -- create_conn_obj()
+                    # just overwrites self.conn with a new socket, so without this
+                    # the old (already-broken) file descriptor leaks on every drop.
+                    old_conn = self.conn
+                    if old_conn is not None:
+                        try:
+                            old_conn.close()
+                        except OSError as close_err:
+                            self.logger.debug(f"error closing stale connection: {close_err}")
                     # Reconnect
                     if not self.create_conn_obj():
                         aborted = True
@@ -124,7 +133,6 @@ class SecurityMixin:
         if crash_count > 0:
             self.results["data"].setdefault("security_findings", []).append(
                 {
-                    "severity": "HIGH",
                     "operation": "Fuzzing",
                     "issue": "Connection Instability",
                     "description": f"Endpoint crashed/disconnected {crash_count} times during fuzzing",
@@ -140,7 +148,6 @@ class SecurityMixin:
         if "No Authentication" not in existing_issues:
             findings.append(
                 {
-                    "severity": "HIGH",
                     "issue": "No Authentication",
                     "description": "ASTM protocol has no native authentication mechanism",
                     "recommendation": "Implement network-level controls (VPN, firewall, VLANs)",
@@ -154,7 +161,6 @@ class SecurityMixin:
         ):
             findings.append(
                 {
-                    "severity": "HIGH",
                     "issue": "Unencrypted Communication",
                     "description": "ASTM traffic is transmitted in plaintext (PHI exposure risk)",
                     "recommendation": "Use ASTM over TLS or VPN tunnel",
