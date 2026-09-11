@@ -24,11 +24,18 @@ from enum import Enum
 from pathlib import Path
 import json
 import os
+import re
 
+from ...utils.common_types import parse_bool
 from ...utils.lazy_import import lazy_import
 from ...utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
+
+# SunSpec defines the sunssf scale-factor exponent as -10..10. Imported as a
+# plain constant (not via the mixin package) to keep the decoder dependency-free.
+SUNSPEC_SF_MIN = -10
+SUNSPEC_SF_MAX = 10
 
 # Lazy import for pymodbus - only loads when actually used
 _pymodbus = lazy_import("pymodbus", "Modbus", "pip install oida[modbus]")
@@ -108,6 +115,11 @@ TYPE_ALIASES = {
     "bit": "bits",
     # BCD
     "bcd": "bcd",
+    # Boolean / single-bit registers (accepted by validate_maps and used by
+    # shipped register maps such as plc/schneider-m221 and the Danfoss VFDs).
+    "bool": "bool",
+    "boolean": "bool",
+    "coil": "bool",
 }
 
 # Registers required per data type
@@ -124,7 +136,40 @@ REGISTERS_PER_TYPE = {
     "hex": None,  # Variable
     "bits": 1,
     "bcd": 1,
+    "bool": 1,
 }
+
+# strN / stringN (e.g. "str7", "string16") -- fixed-length string types
+# accepted by validate_maps.is_valid_type().
+_STRN_RE = re.compile(r"^(?:str|string)(\d+)$", re.IGNORECASE)
+
+
+def _normalize_type(data_type: Any) -> str:
+    """Normalize a register-map ``type`` to a canonical decoder type.
+
+    Folds :data:`TYPE_ALIASES` (``s32`` -> ``i32`` ...) and the ``strN`` /
+    ``stringN`` fixed-length string family onto ``str``. Unknown values are
+    returned lowercased but otherwise unchanged.
+    """
+    if not isinstance(data_type, str):
+        return str(data_type).lower()
+    lowered = data_type.lower()
+    strn = _STRN_RE.match(lowered)
+    if strn:
+        return "str"
+    return TYPE_ALIASES.get(lowered, lowered)
+
+
+def _strn_length(data_type: Any, default: int = 2) -> int:
+    """Character length declared by a ``strN``-style type (else *default*)."""
+    if isinstance(data_type, str):
+        m = _STRN_RE.match(data_type.lower())
+        if m:
+            try:
+                return int(m.group(1))
+            except ValueError:  # pragma: no cover - regex guarantees digits
+                return default
+    return default
 
 
 def get_endian(endian_str: str) -> str:
@@ -239,8 +284,8 @@ class ModbusDecoder:
                 ...
             ]
         """
-        # Normalize type alias
-        data_type = TYPE_ALIASES.get(data_type.lower(), data_type.lower())
+        # Normalize type alias (incl. strN/stringN and bool/boolean/coil)
+        data_type = _normalize_type(data_type)
 
         if data_type not in REGISTERS_PER_TYPE:
             raise ValueError(
@@ -258,6 +303,8 @@ class ModbusDecoder:
             return self._decode_bits(registers, count)
         elif data_type == "bcd":
             return self._decode_bcd(registers, count)
+        elif data_type == "bool":
+            return self._decode_bool(registers, count)
 
         # Standard numeric types via pymodbus convert API
         Mixin = _get_modbus_mixin()
@@ -375,6 +422,24 @@ class ModbusDecoder:
                     "registers": [reg],
                     "offset": i,
                     "bit_list": [int(b) for b in bits],
+                }
+            )
+        return results
+
+    def _decode_bool(
+        self, registers: List[int], count: Optional[int] = None
+    ) -> List[Dict[str, Any]]:
+        """Decode registers as booleans (non-zero == True)."""
+        results: List[Dict[str, Any]] = []
+        max_count = count or len(registers)
+
+        for i, reg in enumerate(registers[:max_count]):
+            results.append(
+                {
+                    "value": bool(reg),
+                    "type": "bool",
+                    "registers": [reg],
+                    "offset": i,
                 }
             )
         return results
@@ -498,6 +563,8 @@ class ModbusEncoder:
             return self.encode_bits(value)
         elif data_type == "bcd":
             return self.encode_bcd(int(value))
+        elif data_type == "bool":
+            return [1 if parse_bool(value) else 0]
         else:
             raise ValueError(f"Encoding not implemented for type: {data_type}")
 
@@ -655,11 +722,15 @@ class ModbusEncoder:
 
 def _required_registers(definition: Dict[str, Any]) -> int:
     """Number of 16-bit registers a typed register definition occupies."""
-    data_type = definition.get("type", "u16")
-    if data_type in ("str", "string"):
-        # For strings, length = char count, need (length+1)//2 registers
-        char_length = definition.get("length", 2)  # Default 2 chars = 1 register
-        return (char_length + 1) // 2
+    raw_type = definition.get("type", "u16")
+    data_type = _normalize_type(raw_type)
+    if data_type == "str":
+        # For strings, length = char count, need (length+1)//2 registers.
+        # A strN-style type ("str7") carries its own length.
+        char_length = definition.get("length")
+        if char_length is None:
+            char_length = _strn_length(raw_type, default=2)
+        return (int(char_length) + 1) // 2
     return REGISTERS_PER_TYPE.get(data_type, 1) or 1
 
 
@@ -676,15 +747,20 @@ def _decode_map_entry(
     Shared by :func:`decode_with_map` and :class:`MapNameResolver`.
     """
     addr = definition.get("address")
-    data_type = definition.get("type", "u16")
+    raw_type = definition.get("type", "u16")
+    data_type = _normalize_type(raw_type)
     scale = definition.get("scale", 1.0)
     offset = definition.get("offset", 0.0)
     unit = definition.get("unit", "")
     description = definition.get("description", "")
     access = definition.get("access", "r")
 
+    string_length = None
+    if data_type == "str" and definition.get("length") is None:
+        string_length = _strn_length(raw_type, default=None)
+
     try:
-        decoded = decoder.decode(reg_values, data_type)
+        decoded = decoder.decode(reg_values, data_type, string_length=string_length)
     except Exception as e:
         return {"value": None, "error": str(e), "address": addr}
 
@@ -700,7 +776,28 @@ def _decode_map_entry(
         # SunSpec scale factor is a signed int16 exponent
         if sf_value > 32767:
             sf_value -= 65536  # Convert to signed
-        scaled_value = raw_value * (10**sf_value)
+        # SunSpec defines sunssf as -10..10. The value comes off the wire and
+        # is used as an exponent (10 ** sf), so an out-of-range one would
+        # build a multi-thousand-digit int (ValueError on str()) or overflow
+        # a float. Drop it and report the register unscaled instead.
+        if not (SUNSPEC_SF_MIN <= sf_value <= SUNSPEC_SF_MAX):
+            logger.debug(
+                "Ignoring out-of-range SunSpec scale factor %r for register %s "
+                "(legal range %d..%d)",
+                sf_value,
+                definition.get("name", addr),
+                SUNSPEC_SF_MIN,
+                SUNSPEC_SF_MAX,
+            )
+            scaled_value = raw_value
+        else:
+            scaled_value = raw_value * (10**sf_value)
+    elif isinstance(raw_value, bool):
+        # bool is a subclass of int, so without this branch a bool-typed register
+        # fell into the arithmetic below and surfaced as "value": 1.0/0.0 instead
+        # of true/false, while raw_value still held the real bool. Scale/offset
+        # are meaningless for a boolean register.
+        scaled_value = raw_value
     elif isinstance(raw_value, (int, float)):
         scaled_value = raw_value * scale + offset
     else:
@@ -945,16 +1042,29 @@ class MapNameResolver:
         Applies inverse scale/offset for numeric types and enforces the
         optional ``min``/``max`` range before encoding.
         """
-        data_type = entry.get("type", "u16")
+        data_type = _normalize_type(entry.get("type", "u16"))
         scale = entry.get("scale", 1.0)
         offset = entry.get("offset", 0.0)
 
         numeric_type = data_type in ("f32", "f64", "i16", "i32", "i64", "u16", "u32", "u64", "bcd")
         if numeric_type and (scale != 1.0 or offset != 0.0):
+            if scale == 0:
+                raise ValueError(f"Register '{entry.get('name', '?')}': scale must not be 0")
             raw = (float(value_str) - offset) / scale
             # Validate against declared engineering range before inverse-scaling.
             self._check_range(entry, float(value_str))
-            encode_input = repr(raw)
+            if data_type in ("f32", "f64"):
+                encode_input = repr(raw)
+            else:
+                # Integer (and bcd) encoders do a bare int(value_str), which
+                # rejects a decimal-point string like "50.0" -- round the
+                # inverse-scaled float to the nearest integer first. Uses
+                # Python's built-in round() (banker's/round-half-to-even)
+                # rather than round-half-away-from-zero: it is unbiased over
+                # many writes and floating-point division error already
+                # makes the exact-.5 boundary essentially unreachable in
+                # practice, so the tie-breaking rule has no real-world effect.
+                encode_input = repr(round(raw))
         else:
             if numeric_type:
                 self._check_range(entry, float(value_str))
