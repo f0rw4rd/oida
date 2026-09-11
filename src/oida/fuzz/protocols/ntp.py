@@ -20,7 +20,7 @@ CVE Coverage:
 import struct
 import time
 
-from boofuzz import Block, Byte, DWord, Group, QWord, Request, Word
+from boofuzz import Block, Byte, DWord, Group, QWord, Request, Size, Word
 
 from typing import List
 
@@ -195,10 +195,20 @@ class NTPFuzzer(BaseFuzzer):
                         Word("AssociationID", 0, endian=">", fuzzable=True),
                         # Offset
                         Word("Offset", 0, endian=">", fuzzable=True),
-                        # Count
-                        Word("Count", 0, endian=">", fuzzable=True),
+                        # Count - number of octets in Control_Data; bound to the data
+                        # block so it tracks mutations instead of lying at 0.
+                        Size(
+                            "Count",
+                            block_name="Control_Data_Block",
+                            length=2,
+                            endian=">",
+                            fuzzable=False,
+                        ),
                         # Data (variable length)
-                        SmartString("Control_Data", "", max_len=468, fuzzable=True),
+                        Block(
+                            "Control_Data_Block",
+                            children=(SmartString("Control_Data", "", max_len=468, fuzzable=True),),
+                        ),
                     ),
                 ),
             ),
@@ -260,9 +270,11 @@ class NTPFuzzer(BaseFuzzer):
                         Byte(
                             "Private_LI_VN_Mode", (0 << 6) | (ntp_version << 3) | 7, fuzzable=True
                         ),
-                        # Implementation number
+                        # Auth bit + sequence number (octet 1 of req_pkt)
+                        Byte("AuthSeq", 0x00, fuzzable=True),
+                        # Implementation number (octet 2 of req_pkt)
                         Byte("Implementation", 0x03, fuzzable=True),  # XNTPD
-                        # Request code
+                        # Request code (octet 3 of req_pkt)
                         Byte("RequestCode", 0x00, fuzzable=True),
                         # Error/More/Auth flags
                         Byte("Flags", 0x00, fuzzable=True),
@@ -270,12 +282,22 @@ class NTPFuzzer(BaseFuzzer):
                         Word("Sequence", 0, endian=">", fuzzable=True),
                         # Status/Num items
                         Word("Status", 0, endian=">", fuzzable=True),
-                        # Data size
-                        Word("DataSize", 0, endian=">", fuzzable=True),
+                        # Data size - number of octets in Private_Data; bound to the data
+                        # block so it tracks mutations instead of lying at 0.
+                        Size(
+                            "DataSize",
+                            block_name="Private_Data_Block",
+                            length=2,
+                            endian=">",
+                            fuzzable=False,
+                        ),
                         # Reserved
                         DWord("Reserved", 0, endian=">", fuzzable=True),
                         # Data (variable)
-                        SmartString("Private_Data", "", max_len=468, fuzzable=True),
+                        Block(
+                            "Private_Data_Block",
+                            children=(SmartString("Private_Data", "", max_len=468, fuzzable=True),),
+                        ),
                     ),
                 ),
             ),
@@ -314,10 +336,30 @@ class NTPFuzzer(BaseFuzzer):
                     children=(
                         # Field Type (16 bits)
                         Word("ExtensionType", 0x0104, endian=">", fuzzable=True),  # NTS Cookie
-                        # Field Length (16 bits)
-                        Word("ExtensionLength", 36, endian=">", fuzzable=True),
-                        # Extension Value (variable)
-                        SmartString("ExtensionValue", "ntp-extension", max_len=1000, fuzzable=True),
+                        # Field Length (16 bits) - includes the 4-byte header, per RFC 7822.
+                        # Bound to the value block so it can't drift; offset=4 accounts for
+                        # the ExtensionType + ExtensionLength header words themselves.
+                        Size(
+                            "ExtensionLength",
+                            block_name="Extension_Value_Block",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
+                        # Extension Value (variable) - default padded to a 4-byte boundary
+                        # so the extension (and thus the whole packet) stays 4-byte aligned.
+                        Block(
+                            "Extension_Value_Block",
+                            children=(
+                                SmartString(
+                                    "ExtensionValue",
+                                    "ntp-extension\x00\x00\x00",
+                                    max_len=1000,
+                                    fuzzable=True,
+                                ),
+                            ),
+                        ),
                     ),
                 ),
             ),
@@ -354,8 +396,23 @@ class NTPFuzzer(BaseFuzzer):
                     "NTS_Cookie_Extension",
                     children=(
                         Word("ExtType1", 0x0104, endian=">"),  # NTS Cookie
-                        Word("ExtLength1", 132, endian=">"),
-                        SmartString("Cookie", "ntp-cookie", max_len=128, fuzzable=True),
+                        # Length includes the 4-byte header; bound to the value block below.
+                        Size(
+                            "ExtLength1",
+                            block_name="NTS_Cookie_Value",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
+                        Block(
+                            "NTS_Cookie_Value",
+                            children=(
+                                SmartString(
+                                    "Cookie", "ntp-cookie\x00\x00", max_len=128, fuzzable=True
+                                ),
+                            ),
+                        ),
                     ),
                 ),
                 # NTS Cookie Placeholder Extension
@@ -374,8 +431,26 @@ class NTPFuzzer(BaseFuzzer):
                         Word(
                             "ExtType3", 0x0404, endian=">"
                         ),  # NTS Authenticator and Encrypted Extensions
-                        Word("ExtLength3", 52, endian=">"),
-                        SmartString("AuthData", "ntp-auth-data", max_len=48, fuzzable=True),
+                        # Length includes the 4-byte header; bound to the value block below.
+                        Size(
+                            "ExtLength3",
+                            block_name="NTS_Auth_Value",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
+                        Block(
+                            "NTS_Auth_Value",
+                            children=(
+                                SmartString(
+                                    "AuthData",
+                                    "ntp-auth-data\x00\x00\x00",
+                                    max_len=48,
+                                    fuzzable=True,
+                                ),
+                            ),
+                        ),
                     ),
                 ),
             ),
@@ -507,11 +582,24 @@ class NTPFuzzer(BaseFuzzer):
                     "Autokey_Extension",
                     children=(
                         Word("ExtType", 0x0002, endian=">"),  # Autokey Request
-                        Word("ExtLength", 16, endian=">"),
-                        DWord("AssocID", 0x12345678, endian=">", fuzzable=True),
-                        DWord("Timestamp", int(time.time()), endian=">", fuzzable=True),
-                        DWord("Filestamp", 0x87654321, endian=">", fuzzable=True),
-                        DWord("Flags", 0x00000001, endian=">", fuzzable=True),
+                        # Length includes the 4-byte header; bound to the value block below.
+                        Size(
+                            "ExtLength",
+                            block_name="Autokey_Value",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
+                        Block(
+                            "Autokey_Value",
+                            children=(
+                                DWord("AssocID", 0x12345678, endian=">", fuzzable=True),
+                                DWord("Timestamp", int(time.time()), endian=">", fuzzable=True),
+                                DWord("Filestamp", 0x87654321, endian=">", fuzzable=True),
+                                DWord("Flags", 0x00000001, endian=">", fuzzable=True),
+                            ),
+                        ),
                     ),
                 ),
             ),
@@ -1064,15 +1152,16 @@ class NTPFuzzer(BaseFuzzer):
                                 # Mode 6: Control - with CTL_OP_TRAP (6) - CVE-2016-9311
                                 bytes([(0 << 6) | (ntp_version << 3) | 6, 0x06]) + b"\x00" * 10,
                                 # Mode 7: Private - REQ_MON_GETLIST_1 (42) - CVE-2013-5211
-                                bytes([(0 << 6) | (ntp_version << 3) | 7, 0x03, 0x2A, 0x00])
+                                # octet1=auth+seq, octet2=implementation, octet3=request code
+                                bytes([(0 << 6) | (ntp_version << 3) | 7, 0x00, 0x03, 0x2A])
                                 + b"\x00" * 8,
                                 # Mode 7: Private - REQ_PEER_LIST (0)
-                                bytes([(0 << 6) | (ntp_version << 3) | 7, 0x03, 0x00, 0x00])
+                                bytes([(0 << 6) | (ntp_version << 3) | 7, 0x00, 0x03, 0x00])
                                 + b"\x00" * 8,
                                 # NTPv3 variants
                                 bytes([(0 << 6) | (3 << 3) | 3]) + b"\x00\x06\xec" + b"\x00" * 44,
                                 bytes([(0 << 6) | (3 << 3) | 6, 0x01]) + b"\x00" * 10,
-                                bytes([(0 << 6) | (3 << 3) | 7, 0x03, 0x2A, 0x00]) + b"\x00" * 8,
+                                bytes([(0 << 6) | (3 << 3) | 7, 0x00, 0x03, 0x2A]) + b"\x00" * 8,
                                 # NTPv4 with extension field (minimal)
                                 bytes([(0 << 6) | (4 << 3) | 3])
                                 + b"\x00\x06\xec"
@@ -1084,11 +1173,12 @@ class NTPFuzzer(BaseFuzzer):
                                 + b"\x00" * 8
                                 + b"RATE"
                                 + b"\x00" * 32,
-                                # Autokey extension
+                                # Autokey extension: length includes the 4-byte header
+                                # (4 + 16-byte value = 20 = 0x14)
                                 bytes([(0 << 6) | (4 << 3) | 3])
                                 + b"\x00\x06\xec"
                                 + b"\x00" * 44
-                                + b"\x00\x02\x00\x10"
+                                + b"\x00\x02\x00\x14"
                                 + b"\x00" * 16,
                             ],
                         ),
@@ -1203,6 +1293,8 @@ class NTPFuzzer(BaseFuzzer):
                     "Monlist_Header",
                     children=(
                         Byte("Private_LI_VN_Mode", (0 << 6) | (ntp_version << 3) | 7),  # Mode 7
+                        # Auth bit + sequence number (octet 1 of req_pkt)
+                        Byte("AuthSeq", 0x00, fuzzable=True),
                         Byte("Implementation", 0x03, fuzzable=True),  # XNTPD
                         # Request codes that can leak information
                         Group(

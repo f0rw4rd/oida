@@ -30,7 +30,7 @@ boofuzz Request node with the same name):
 import logging
 from typing import List
 
-from boofuzz import Group, Request, Static
+from boofuzz import Block, Group, Request, Size, Static
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.codecs.asn1 import ber_content as _ber_content
@@ -41,6 +41,31 @@ from ..primitives.dynamic import SmartBytes, SmartString, StringContext
 from ..primitives.osi import MMSStackBuilder, wrap_in_tpkt_cotp
 
 logger = logging.getLogger(__name__)
+
+
+def _tpkt_header() -> Block:
+    """TPKT header (version/reserved 0x03 0x00 + 2-byte big-endian length).
+
+    RFC 1006: the TPKT length field covers the *entire* TPKT, including its own
+    4-byte header. A Size bound to the payload block with offset=4 recomputes it
+    from the actual rendered payload, so it stays correct under mutation instead
+    of a hardcoded 0x000c.
+    """
+    return Block(
+        name="tpkt_header",
+        children=(
+            Static(name="tpkt_version", default_value=b"\x03\x00"),
+            Size(
+                name="tpkt_length",
+                block_name="rest",
+                endian=">",
+                length=2,
+                output_format="binary",
+                fuzzable=False,
+                offset=4,
+            ),
+        ),
+    )
 
 
 class TASE2Fuzzer(BaseFuzzer):
@@ -175,19 +200,24 @@ class TASE2Fuzzer(BaseFuzzer):
         ber_length_req = Request(
             name="TASE2_BER_Length_Attack",
             children=(
-                Static(name="tpkt_cotp_dt", default_value=b"\x03\x00\x00\x0c\x02\xf0\x80"),
-                Group(
-                    name="confirmed_req_len",
-                    values=[
-                        b"\xa0\x84\xff\xff\xff\xff",  # 4-byte length-of-length, absurd length
-                        b"\xa0\x82\xff\xff",  # 2-byte over-long length (65535)
-                        b"\xa0\x81\xff",  # 1-byte long-form length (255)
-                        b"\xa0\x81\x00",  # long-form length declaring zero
-                        b"\xa0\x82\x00",  # truncated 0x82 (missing 2nd length octet)
-                        b"\xa0\x80",  # BER indefinite length (illegal in DER)
-                    ],
+                _tpkt_header(),
+                Block(
+                    name="rest",
+                    children=(
+                        Group(
+                            name="confirmed_req_len",
+                            values=[
+                                b"\xa0\x84\xff\xff\xff\xff",  # 4-byte length-of-length, absurd length
+                                b"\xa0\x82\xff\xff",  # 2-byte over-long length (65535)
+                                b"\xa0\x81\xff",  # 1-byte long-form length (255)
+                                b"\xa0\x81\x00",  # long-form length declaring zero
+                                b"\xa0\x82\x00",  # truncated 0x82 (missing 2nd length octet)
+                                b"\xa0\x80",  # BER indefinite length (illegal in DER)
+                            ],
+                        ),
+                        Static(name="tase2_read_content", default_value=read_content),
+                    ),
                 ),
-                Static(name="tase2_read_content", default_value=read_content),
             ),
         )
 
@@ -198,33 +228,38 @@ class TASE2Fuzzer(BaseFuzzer):
         objname_req = Request(
             name="TASE2_ObjectName_Overflow",
             children=(
-                Static(name="tpkt_cotp_dt", default_value=b"\x03\x00\x00\x0c\x02\xf0\x80"),
-                # Read [4] -> variableAccessSpecification -> domainSpecific ItemId [1a]
-                Static(
-                    name="read_itemid_prologue",
-                    default_value=b"\xa0\x20\x02\x01\x01\xa4\x1b\xa1\x19\xa0\x17\xa0\x15\x1a",
-                ),
-                Group(
-                    name="declared_name_len",
-                    values=[
-                        encode_ber_length(64),  # 0x40
-                        encode_ber_length(256),  # 0x82 0x01 0x00
-                        encode_ber_length(1024),  # 0x82 0x04 0x00
-                    ],
-                ),
-                # ICCP domainSpecific ItemId [1] VisibleString identifier.
-                # CREDENTIAL adds identifier-injection payloads (NULL truncation,
-                # homoglyph, control chars) — the CVE-2014-2357 ICCP name-handling
-                # decode class. Frame-safe: the enclosing declared_name_len is a
-                # separate (intentionally decoupled) Group and the TPKT/COTP prologue
-                # is Static, so a variable name length recomputes no enclosing length.
-                SmartString(
-                    name="iccp_object_name",
-                    default_value="Transfer_Set_Name",
-                    size=17,
-                    max_len=1024,
-                    fuzzable=True,
-                    context=StringContext.CREDENTIAL,
+                _tpkt_header(),
+                Block(
+                    name="rest",
+                    children=(
+                        # Read [4] -> variableAccessSpecification -> domainSpecific ItemId [1a]
+                        Static(
+                            name="read_itemid_prologue",
+                            default_value=b"\xa0\x20\x02\x01\x01\xa4\x1b\xa1\x19\xa0\x17\xa0\x15\x1a",
+                        ),
+                        Group(
+                            name="declared_name_len",
+                            values=[
+                                encode_ber_length(64),  # 0x40
+                                encode_ber_length(256),  # 0x82 0x01 0x00
+                                encode_ber_length(1024),  # 0x82 0x04 0x00
+                            ],
+                        ),
+                        # ICCP domainSpecific ItemId [1] VisibleString identifier.
+                        # CREDENTIAL adds identifier-injection payloads (NULL truncation,
+                        # homoglyph, control chars) — the CVE-2014-2357 ICCP name-handling
+                        # decode class. Frame-safe: the enclosing declared_name_len is a
+                        # separate (intentionally decoupled) Group and the TPKT/COTP prologue
+                        # is Static, so a variable name length recomputes no enclosing length.
+                        SmartString(
+                            name="iccp_object_name",
+                            default_value="Transfer_Set_Name",
+                            size=17,
+                            max_len=1024,
+                            fuzzable=True,
+                            context=StringContext.CREDENTIAL,
+                        ),
+                    ),
                 ),
             ),
         )
@@ -238,42 +273,47 @@ class TASE2Fuzzer(BaseFuzzer):
         transferset_req = Request(
             name="TASE2_TransferSet_Malformed",
             children=(
-                Static(name="tpkt_cotp_dt", default_value=b"\x03\x00\x00\x0c\x02\xf0\x80"),
-                # Write [5] service, domainSpecific name "DSTransferSet"
-                Static(
-                    name="write_dstransferset_prologue",
-                    default_value=(
-                        b"\xa0\x30\x02\x01\x02\xa5"
-                        + encode_ber_context_tag(
-                            1,
-                            encode_ber_context_tag(
-                                0,
-                                encode_ber_context_tag(
+                _tpkt_header(),
+                Block(
+                    name="rest",
+                    children=(
+                        # Write [5] service, domainSpecific name "DSTransferSet"
+                        Static(
+                            name="write_dstransferset_prologue",
+                            default_value=(
+                                b"\xa0\x30\x02\x01\x02\xa5"
+                                + encode_ber_context_tag(
                                     1,
-                                    codec.build_sequence(
-                                        codec.build_visible_string(domain),
-                                        codec.build_visible_string("DSTransferSet"),
+                                    encode_ber_context_tag(
+                                        0,
+                                        encode_ber_context_tag(
+                                            1,
+                                            codec.build_sequence(
+                                                codec.build_visible_string(domain),
+                                                codec.build_visible_string("DSTransferSet"),
+                                            ),
+                                            constructed=True,
+                                        ),
+                                        constructed=True,
                                     ),
                                     constructed=True,
-                                ),
-                                constructed=True,
+                                )
                             ),
-                            constructed=True,
-                        )
+                        ),
+                        Group(
+                            name="malformed_element_tags",
+                            values=[
+                                b"\xa2\x80\x00\x00",  # Structure [2] indefinite length
+                                b"\xa2\xff\xff",  # Structure [2] over-long length
+                                b"\x85\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff",  # 9-octet integer
+                                b"\xa1\x80",  # Array [1] indefinite length
+                                b"\x8a\xff" + b"A" * 8,  # over-declared visible-string
+                                b"\xa2\x03\xa2\x03\xa2\x03",  # runaway nested structures
+                            ],
+                        ),
+                        SmartBytes(name="transferset_tail", size=16, max_len=512, fuzzable=True),
                     ),
                 ),
-                Group(
-                    name="malformed_element_tags",
-                    values=[
-                        b"\xa2\x80\x00\x00",  # Structure [2] indefinite length
-                        b"\xa2\xff\xff",  # Structure [2] over-long length
-                        b"\x85\x09\x00\xff\xff\xff\xff\xff\xff\xff\xff",  # 9-octet integer
-                        b"\xa1\x80",  # Array [1] indefinite length
-                        b"\x8a\xff" + b"A" * 8,  # over-declared visible-string
-                        b"\xa2\x03\xa2\x03\xa2\x03",  # runaway nested structures
-                    ],
-                ),
-                SmartBytes(name="transferset_tail", size=16, max_len=512, fuzzable=True),
             ),
         )
         _ = write_prologue  # codec.build_write_request exercised for reuse parity
@@ -285,17 +325,22 @@ class TASE2Fuzzer(BaseFuzzer):
         invokeid_req = Request(
             name="TASE2_InvokeID_Boundary",
             children=(
-                Static(name="tpkt_cotp_dt", default_value=b"\x03\x00\x00\x0c\x02\xf0\x80"),
-                Static(name="confirmed_req_tag", default_value=b"\xa0\x30"),
-                Group(
-                    name="invoke_id",
-                    values=[
-                        encode_ber_integer(0),  # 02 01 00
-                        encode_ber_integer(0x7FFFFFFF),  # 02 04 7f ff ff ff
-                        b"\x02\x05\x00\xff\xff\xff\xff",  # 0xFFFFFFFF (unsigned, leading 0)
-                    ],
+                _tpkt_header(),
+                Block(
+                    name="rest",
+                    children=(
+                        Static(name="confirmed_req_tag", default_value=b"\xa0\x30"),
+                        Group(
+                            name="invoke_id",
+                            values=[
+                                encode_ber_integer(0),  # 02 01 00
+                                encode_ber_integer(0x7FFFFFFF),  # 02 04 7f ff ff ff
+                                b"\x02\x05\x00\xff\xff\xff\xff",  # 0xFFFFFFFF (unsigned, leading 0)
+                            ],
+                        ),
+                        Static(name="tase2_read_service", default_value=service_bytes),
+                    ),
                 ),
-                Static(name="tase2_read_service", default_value=service_bytes),
             ),
         )
 
@@ -303,24 +348,29 @@ class TASE2Fuzzer(BaseFuzzer):
         biltable_req = Request(
             name="TASE2_BilateralTable_Malformed",
             children=(
-                Static(name="tpkt_cotp_dt", default_value=b"\x03\x00\x00\x0c\x02\xf0\x80"),
-                Static(name="read_service_tag", default_value=b"\xa0\x20\x02\x01\x03\xa4"),
-                Group(
-                    name="bad_object_name",
-                    values=[
-                        # domainSpecific [1] with a domainId length that overruns
-                        b"\xa1\x19\xa0\x17\xa0\x15\x1a\xff" + b"ICC",
-                        # aa-specific [2] name with truncated content
-                        b"\xa2\x7f",
-                        # domainSpecific with empty domainId then long itemId
-                        b"\xa1\x10\xa0\x0e\xa0\x0c\x1a\x00\x1a\x81\xff" + b"BLT",
-                        # vmd-specific [0] name declaring huge length
-                        b"\xa0\x82\x04\x00" + self._blt_id().encode("ascii"),
-                        # nested domainSpecific recursion
-                        b"\xa1\x06\xa1\x04\xa1\x02\xa1\x00",
-                    ],
+                _tpkt_header(),
+                Block(
+                    name="rest",
+                    children=(
+                        Static(name="read_service_tag", default_value=b"\xa0\x20\x02\x01\x03\xa4"),
+                        Group(
+                            name="bad_object_name",
+                            values=[
+                                # domainSpecific [1] with a domainId length that overruns
+                                b"\xa1\x19\xa0\x17\xa0\x15\x1a\xff" + b"ICC",
+                                # aa-specific [2] name with truncated content
+                                b"\xa2\x7f",
+                                # domainSpecific with empty domainId then long itemId
+                                b"\xa1\x10\xa0\x0e\xa0\x0c\x1a\x00\x1a\x81\xff" + b"BLT",
+                                # vmd-specific [0] name declaring huge length
+                                b"\xa0\x82\x04\x00" + self._blt_id().encode("ascii"),
+                                # nested domainSpecific recursion
+                                b"\xa1\x06\xa1\x04\xa1\x02\xa1\x00",
+                            ],
+                        ),
+                        SmartBytes(name="biltable_tail", size=12, max_len=256, fuzzable=True),
+                    ),
                 ),
-                SmartBytes(name="biltable_tail", size=12, max_len=256, fuzzable=True),
             ),
         )
 
@@ -328,23 +378,28 @@ class TASE2Fuzzer(BaseFuzzer):
         service_boundary_req = Request(
             name="TASE2_MMS_Service_Boundary",
             children=(
-                Static(name="tpkt_cotp_dt", default_value=b"\x03\x00\x00\x0c\x02\xf0\x80"),
-                Static(name="cr_invoke", default_value=b"\xa0\x10\x02\x01\x01"),
-                Group(
-                    name="service_tag",
-                    values=[
-                        b"\xa1",  # [1] GetNameList (valid)
-                        b"\xa4",  # [4] Read (valid)
-                        b"\xa5",  # [5] Write (valid)
-                        b"\xa7",  # [7] GetVariableAccessAttributes (valid)
-                        b"\x82",  # [2] Identify primitive (valid)
-                        b"\xbf",  # long-form/reserved high tag lead octet
-                        b"\xa3",  # [3] Rename (rarely implemented)
-                        b"\xbe",  # reserved constructed context tag
-                        b"\xff",  # illegal tag
-                    ],
+                _tpkt_header(),
+                Block(
+                    name="rest",
+                    children=(
+                        Static(name="cr_invoke", default_value=b"\xa0\x10\x02\x01\x01"),
+                        Group(
+                            name="service_tag",
+                            values=[
+                                b"\xa1",  # [1] GetNameList (valid)
+                                b"\xa4",  # [4] Read (valid)
+                                b"\xa5",  # [5] Write (valid)
+                                b"\xa7",  # [7] GetVariableAccessAttributes (valid)
+                                b"\x82",  # [2] Identify primitive (valid)
+                                b"\xbf",  # long-form/reserved high tag lead octet
+                                b"\xa3",  # [3] Rename (rarely implemented)
+                                b"\xbe",  # reserved constructed context tag
+                                b"\xff",  # illegal tag
+                            ],
+                        ),
+                        SmartBytes(name="service_body", size=8, max_len=256, fuzzable=True),
+                    ),
                 ),
-                SmartBytes(name="service_body", size=8, max_len=256, fuzzable=True),
             ),
         )
 

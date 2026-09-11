@@ -34,7 +34,7 @@ CVE Coverage:
 
 from typing import List
 
-from boofuzz import Block, Byte, DWord, Group, Request, Word
+from boofuzz import Block, Byte, DWord, Group, Request, Size, Word
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.config import ProtocolType
@@ -462,38 +462,52 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x0014, endian=">"),
-                    ),
-                ),
-                Block(
-                    "NPDU_Header_NPDU",
-                    children=(
-                        Byte("NPDU_Version", 0x01),
-                        Group(
-                            "NPDU_Control_Fuzz",
-                            values=[
-                                b"\x00",  # No options
-                                b"\x04",  # Expecting reply
-                                b"\x08",  # Source specifier present
-                                b"\x20",  # Destination specifier present
-                                b"\x28",  # Both specifiers
-                                b"\x80",  # Network layer message
-                                b"\xff",  # All bits set
-                                b"\x7f",  # High bits
-                            ],
+                        # Length covers the WHOLE BVLL message including this 4-byte
+                        # BVLC header; bound to the body block so it can't drift.
+                        Size(
+                            "BVLL_Length",
+                            block_name="Body_NPDU",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
                         ),
                     ),
                 ),
                 Block(
-                    "APDU_Payload_NPDU",
+                    "Body_NPDU",
                     children=(
-                        Byte("APDU_Type", 0x00),
-                        Byte("Service_Choice", 0x0C),
-                        Byte("Invoke_ID", 0x01),
-                        Byte("Object_ID_Tag", 0x0C),
-                        DWord("Object_ID", 0x020004D2, endian=">"),
-                        Byte("Property_ID_Tag", 0x19),
-                        Byte("Property_Value", 0x4D),
+                        Block(
+                            "NPDU_Header_NPDU",
+                            children=(
+                                Byte("NPDU_Version", 0x01),
+                                Group(
+                                    "NPDU_Control_Fuzz",
+                                    values=[
+                                        b"\x00",  # No options
+                                        b"\x04",  # Expecting reply
+                                        b"\x08",  # Source specifier present
+                                        b"\x20",  # Destination specifier present
+                                        b"\x28",  # Both specifiers
+                                        b"\x80",  # Network layer message
+                                        b"\xff",  # All bits set
+                                        b"\x7f",  # High bits
+                                    ],
+                                ),
+                            ),
+                        ),
+                        Block(
+                            "APDU_Payload_NPDU",
+                            children=(
+                                Byte("APDU_Type", 0x00),
+                                Byte("Service_Choice", 0x0C),
+                                Byte("Invoke_ID", 0x01),
+                                Byte("Object_ID_Tag", 0x0C),
+                                DWord("Object_ID", 0x020004D2, endian=">"),
+                                Byte("Property_ID_Tag", 0x19),
+                                Byte("Property_Value", 0x4D),
+                            ),
+                        ),
                     ),
                 ),
             ),
@@ -681,39 +695,53 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x000F, endian=">"),
+                        # Length covers the WHOLE BVLL message including this 4-byte
+                        # BVLC header; bound to the body block so it can't drift.
+                        Size(
+                            "BVLL_Length",
+                            block_name="Body_OIB",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
                     ),
                 ),
                 Block(
-                    "NPDU_Header_OIB",
+                    "Body_OIB",
                     children=(
-                        Byte("NPDU_Version", 0x01),
-                        Byte("NPDU_Control", 0x04),
+                        Block(
+                            "NPDU_Header_OIB",
+                            children=(
+                                Byte("NPDU_Version", 0x01),
+                                Byte("NPDU_Control", 0x04),
+                            ),
+                        ),
+                        Block(
+                            "APDU_Header_OIB",
+                            children=(
+                                Byte("APDU_Type_Flags", 0x00),
+                                Byte("Service_Choice", BACnetServiceCodes.READ_PROPERTY),
+                                Byte("Invoke_ID", 0x01),
+                            ),
+                        ),
+                        Byte("Object_ID_Tag", 0x0C),
+                        Group(
+                            "Object_ID_Boundary",
+                            values=[
+                                b"\x00\x00\x00\x00",  # Object type 0, instance 0
+                                b"\x00\x00\x00\x01",  # Object type 0, instance 1
+                                b"\x00\x3f\xff\xff",  # Object type 0, max instance (4194303)
+                                b"\x00\x80\x00\x00",  # Object type 2, instance 0
+                                b"\x02\x00\x04\xd2",  # Device object, instance 1234
+                                b"\x3f\xc0\x00\x00",  # Max object type (1023), instance 0
+                                b"\xff\xff\xff\xff",  # All bits set (invalid)
+                            ],
+                        ),
+                        Byte("Property_ID_Tag", 0x19),
+                        Byte("Property_Value", 0x4D),
                     ),
                 ),
-                Block(
-                    "APDU_Header_OIB",
-                    children=(
-                        Byte("APDU_Type_Flags", 0x00),
-                        Byte("Service_Choice", BACnetServiceCodes.READ_PROPERTY),
-                        Byte("Invoke_ID", 0x01),
-                    ),
-                ),
-                Byte("Object_ID_Tag", 0x0C),
-                Group(
-                    "Object_ID_Boundary",
-                    values=[
-                        b"\x00\x00\x00\x00",  # Object type 0, instance 0
-                        b"\x00\x00\x00\x01",  # Object type 0, instance 1
-                        b"\x00\x3f\xff\xff",  # Object type 0, max instance (4194303)
-                        b"\x00\x80\x00\x00",  # Object type 2, instance 0
-                        b"\x02\x00\x04\xd2",  # Device object, instance 1234
-                        b"\x3f\xc0\x00\x00",  # Max object type (1023), instance 0
-                        b"\xff\xff\xff\xff",  # All bits set (invalid)
-                    ],
-                ),
-                Byte("Property_ID_Tag", 0x19),
-                Byte("Property_Value", 0x4D),
             ),
         )
 
@@ -726,39 +754,53 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x000F, endian=">"),
+                        # Length covers the WHOLE BVLL message including this 4-byte
+                        # BVLC header; bound to the body block so it can't drift.
+                        Size(
+                            "BVLL_Length",
+                            block_name="Body_PIB",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
                     ),
                 ),
                 Block(
-                    "NPDU_Header_PIB",
+                    "Body_PIB",
                     children=(
-                        Byte("NPDU_Version", 0x01),
-                        Byte("NPDU_Control", 0x04),
+                        Block(
+                            "NPDU_Header_PIB",
+                            children=(
+                                Byte("NPDU_Version", 0x01),
+                                Byte("NPDU_Control", 0x04),
+                            ),
+                        ),
+                        Block(
+                            "APDU_Header_PIB",
+                            children=(
+                                Byte("APDU_Type_Flags", 0x00),
+                                Byte("Service_Choice", BACnetServiceCodes.READ_PROPERTY),
+                                Byte("Invoke_ID", 0x01),
+                            ),
+                        ),
+                        Byte("Object_ID_Tag", 0x0C),
+                        DWord("Device_Object_ID", 0x020004D2, endian=">"),
+                        Byte("Property_ID_Tag", 0x19),
+                        Group(
+                            "Property_ID_Boundary",
+                            values=[
+                                b"\x00",  # ackedTransitions (0)
+                                b"\x01",  # ackRequired (1)
+                                b"\x4c",  # object-list (76)
+                                b"\x4d",  # object-name (77)
+                                b"\x55",  # present-value (85)
+                                b"\x70",  # object-type (112)
+                                b"\xff",  # Proprietary start (255)
+                                b"\xfe\x00",  # Extended property ID
+                            ],
+                        ),
                     ),
-                ),
-                Block(
-                    "APDU_Header_PIB",
-                    children=(
-                        Byte("APDU_Type_Flags", 0x00),
-                        Byte("Service_Choice", BACnetServiceCodes.READ_PROPERTY),
-                        Byte("Invoke_ID", 0x01),
-                    ),
-                ),
-                Byte("Object_ID_Tag", 0x0C),
-                DWord("Device_Object_ID", 0x020004D2, endian=">"),
-                Byte("Property_ID_Tag", 0x19),
-                Group(
-                    "Property_ID_Boundary",
-                    values=[
-                        b"\x00",  # ackedTransitions (0)
-                        b"\x01",  # ackRequired (1)
-                        b"\x4c",  # object-list (76)
-                        b"\x4d",  # object-name (77)
-                        b"\x55",  # present-value (85)
-                        b"\x70",  # object-type (112)
-                        b"\xff",  # Proprietary start (255)
-                        b"\xfe\x00",  # Extended property ID
-                    ],
                 ),
             ),
         )
@@ -860,38 +902,56 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0B),  # Original-Broadcast-NPDU
-                        Word("BVLL_Length", 0x0015, endian=">"),  # 21 bytes total
+                        # Length covers the WHOLE BVLL message including this 4-byte
+                        # BVLC header; bound to the body block so it can't drift.
+                        Size(
+                            "BVLL_Length",
+                            block_name="Body_IAM",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
                     ),
                 ),
                 Block(
-                    "NPDU_Header_IAM",
+                    "Body_IAM",
                     children=(
-                        Byte("NPDU_Version", 0x01),
-                        Byte("NPDU_Control", 0x00),  # No network layer message, no dest/src
+                        Block(
+                            "NPDU_Header_IAM",
+                            children=(
+                                Byte("NPDU_Version", 0x01),
+                                Byte(
+                                    "NPDU_Control", 0x00
+                                ),  # No network layer message, no dest/src
+                            ),
+                        ),
+                        Block(
+                            "APDU_Header_IAM",
+                            children=(
+                                Byte("APDU_Type", 0x10),  # Unconfirmed service request
+                                Byte("Service_Choice", 0x00),  # I-Am service
+                            ),
+                        ),
+                        # I-Am content with proper BACnet ASN.1 encoding
+                        # Object Identifier (context tag 0, 4 bytes): device,1234
+                        Byte("Object_ID_Tag", 0xC4),  # Application tag 12 (Object ID), length 4
+                        DWord(
+                            "Device_Object_ID", 0x020004D2, endian=">"
+                        ),  # Device object type (8) + instance 1234
+                        # Max APDU Length Accepted (application tag 2, 2 bytes)
+                        Byte("Max_APDU_Tag", 0x22),  # Application tag 2 (unsigned), length 2
+                        Word("Max_APDU_Length", 1476, endian=">"),
+                        # Segmentation Supported (application tag 9, 1 byte)
+                        Byte(
+                            "Segmentation_Tag", 0x91
+                        ),  # Application tag 9 (enumerated), length 1
+                        Byte("Segmentation_Support", 0x03),  # No segmentation
+                        # Vendor ID (application tag 2, 1 byte)
+                        Byte("Vendor_ID_Tag", 0x21),  # Application tag 2 (unsigned), length 1
+                        Byte("Vendor_ID", 0x0F),  # Vendor ID 15
                     ),
                 ),
-                Block(
-                    "APDU_Header_IAM",
-                    children=(
-                        Byte("APDU_Type", 0x10),  # Unconfirmed service request
-                        Byte("Service_Choice", 0x00),  # I-Am service
-                    ),
-                ),
-                # I-Am content with proper BACnet ASN.1 encoding
-                # Object Identifier (context tag 0, 4 bytes): device,1234
-                Byte("Object_ID_Tag", 0xC4),  # Application tag 12 (Object ID), length 4
-                DWord(
-                    "Device_Object_ID", 0x020004D2, endian=">"
-                ),  # Device object type (8) + instance 1234
-                # Max APDU Length Accepted (application tag 2, 2 bytes)
-                Byte("Max_APDU_Tag", 0x22),  # Application tag 2 (unsigned), length 2
-                Word("Max_APDU_Length", 1476, endian=">"),
-                # Segmentation Supported (application tag 9, 1 byte)
-                Byte("Segmentation_Tag", 0x91),  # Application tag 9 (enumerated), length 1
-                Byte("Segmentation_Support", 0x03),  # No segmentation
-                # Vendor ID (application tag 2, 1 byte)
-                Byte("Vendor_ID_Tag", 0x21),  # Application tag 2 (unsigned), length 1
-                Byte("Vendor_ID", 0x0F),  # Vendor ID 15
             ),
         )
 
@@ -906,31 +966,52 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),  # Original-Unicast-NPDU
-                        Word("BVLL_Length", 0x000F, endian=">"),  # 15 bytes total
+                        # Length covers the WHOLE BVLL message including this 4-byte
+                        # BVLC header; bound to the body block so it can't drift.
+                        Size(
+                            "BVLL_Length",
+                            block_name="Body_RP",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
                     ),
                 ),
                 Block(
-                    "NPDU_Header_RP",
+                    "Body_RP",
                     children=(
-                        Byte("NPDU_Version", 0x01),
-                        Byte("NPDU_Control", 0x04),  # Expecting reply, no dest/src specifier
+                        Block(
+                            "NPDU_Header_RP",
+                            children=(
+                                Byte("NPDU_Version", 0x01),
+                                Byte(
+                                    "NPDU_Control", 0x04
+                                ),  # Expecting reply, no dest/src specifier
+                            ),
+                        ),
+                        Block(
+                            "APDU_Header_RP",
+                            children=(
+                                # Simplified format: APDU type immediately followed by
+                                # service choice
+                                Byte("APDU_Type_Flags", 0x00),  # Confirmed-REQ
+                                Byte("Service_Choice", 0x0C),  # ReadProperty service
+                                Byte(
+                                    "Invoke_ID", 0x01
+                                ),  # Transaction ID (after service for payload)
+                            ),
+                        ),
+                        # Object identifier with context tag [0]
+                        Byte("Object_ID_Tag", 0x0C),  # Context tag 0, length 4
+                        DWord(
+                            "Object_ID", 0x020004D2, endian=">"
+                        ),  # Device object, instance 1234
+                        # Property identifier with context tag [1]
+                        Byte("Property_ID_Tag", 0x19),  # Context tag 1, length 1
+                        Byte("Property_Value", 0x4D),  # Object-Name property (77)
                     ),
                 ),
-                Block(
-                    "APDU_Header_RP",
-                    children=(
-                        # Simplified format: APDU type immediately followed by service choice
-                        Byte("APDU_Type_Flags", 0x00),  # Confirmed-REQ
-                        Byte("Service_Choice", 0x0C),  # ReadProperty service
-                        Byte("Invoke_ID", 0x01),  # Transaction ID (after service for payload)
-                    ),
-                ),
-                # Object identifier with context tag [0]
-                Byte("Object_ID_Tag", 0x0C),  # Context tag 0, length 4
-                DWord("Object_ID", 0x020004D2, endian=">"),  # Device object, instance 1234
-                # Property identifier with context tag [1]
-                Byte("Property_ID_Tag", 0x19),  # Context tag 1, length 1
-                Byte("Property_Value", 0x4D),  # Object-Name property (77)
             ),
         )
 
@@ -980,28 +1061,42 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x000F, endian=">"),
+                        # Length covers the WHOLE BVLL message including this 4-byte
+                        # BVLC header; bound to the body block so it can't drift.
+                        Size(
+                            "BVLL_Length",
+                            block_name="Body_ROL",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
                     ),
                 ),
                 Block(
-                    "NPDU_Header_ROL",
+                    "Body_ROL",
                     children=(
-                        Byte("NPDU_Version", 0x01),
-                        Byte("NPDU_Control", 0x04),
+                        Block(
+                            "NPDU_Header_ROL",
+                            children=(
+                                Byte("NPDU_Version", 0x01),
+                                Byte("NPDU_Control", 0x04),
+                            ),
+                        ),
+                        Block(
+                            "APDU_Header_ROL",
+                            children=(
+                                Byte("APDU_Type_Flags", 0x00),
+                                Byte("Service_Choice", BACnetServiceCodes.READ_PROPERTY),
+                                Byte("Invoke_ID", 0x0C),
+                            ),
+                        ),
+                        Byte("Object_ID_Tag", 0x0C),
+                        DWord("Device_Object_ID", 0x020004D2, endian=">"),
+                        Byte("Property_ID_Tag", 0x19),
+                        Byte("Object_List_Property", 0x4C),
                     ),
                 ),
-                Block(
-                    "APDU_Header_ROL",
-                    children=(
-                        Byte("APDU_Type_Flags", 0x00),
-                        Byte("Service_Choice", BACnetServiceCodes.READ_PROPERTY),
-                        Byte("Invoke_ID", 0x0C),
-                    ),
-                ),
-                Byte("Object_ID_Tag", 0x0C),
-                DWord("Device_Object_ID", 0x020004D2, endian=">"),
-                Byte("Property_ID_Tag", 0x19),
-                Byte("Object_List_Property", 0x4C),
             ),
         )
 
@@ -1113,36 +1208,53 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x001E, endian=">"),
+                        # Length covers the WHOLE BVLL message including this 4-byte
+                        # BVLC header; bound to the body block so it can't drift.
+                        Size(
+                            "BVLL_Length",
+                            block_name="Body_CEN",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
                     ),
                 ),
                 Block(
-                    "NPDU_Header_CEN",
+                    "Body_CEN",
                     children=(
-                        Byte("NPDU_Version", 0x01),
-                        Byte("NPDU_Control", 0x04),
+                        Block(
+                            "NPDU_Header_CEN",
+                            children=(
+                                Byte("NPDU_Version", 0x01),
+                                Byte("NPDU_Control", 0x04),
+                            ),
+                        ),
+                        Block(
+                            "APDU_Header_CEN",
+                            children=(
+                                Byte("APDU_Type_Flags", 0x00),
+                                Byte(
+                                    "Service_Choice",
+                                    BACnetServiceCodes.CONFIRMED_EVENT_NOTIFICATION,
+                                ),
+                                Byte("Invoke_ID", 0x0A),
+                            ),
+                        ),
+                        Byte("Process_ID_Tag", 0x09),
+                        Byte("Process_ID", 0x01),
+                        Byte("Init_Device_Tag", 0x1C),
+                        DWord("Initiating_Device_ID", 0x020004D2, endian=">"),
+                        Byte("Event_Object_Tag", 0x2C),
+                        DWord("Event_Object_ID", 0x00800001, endian=">"),
+                        Byte("Timestamp_Open", 0x3E),
+                        Byte("Seq_Tag", 0x21),
+                        Byte("Sequence_Number", 0x01),
+                        Byte("Timestamp_Close", 0x3F),
+                        Byte("Notif_Class_Tag", 0x49),
+                        Byte("Notification_Class", 0x01),
                     ),
                 ),
-                Block(
-                    "APDU_Header_CEN",
-                    children=(
-                        Byte("APDU_Type_Flags", 0x00),
-                        Byte("Service_Choice", BACnetServiceCodes.CONFIRMED_EVENT_NOTIFICATION),
-                        Byte("Invoke_ID", 0x0A),
-                    ),
-                ),
-                Byte("Process_ID_Tag", 0x09),
-                Byte("Process_ID", 0x01),
-                Byte("Init_Device_Tag", 0x1C),
-                DWord("Initiating_Device_ID", 0x020004D2, endian=">"),
-                Byte("Event_Object_Tag", 0x2C),
-                DWord("Event_Object_ID", 0x00800001, endian=">"),
-                Byte("Timestamp_Open", 0x3E),
-                Byte("Seq_Tag", 0x21),
-                Byte("Sequence_Number", 0x01),
-                Byte("Timestamp_Close", 0x3F),
-                Byte("Notif_Class_Tag", 0x49),
-                Byte("Notification_Class", 0x01),
             ),
         )
 
@@ -1277,45 +1389,62 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x0020, endian=">"),  # 32 bytes
+                        # Length covers the WHOLE BVLL message including this 4-byte
+                        # BVLC header; bound to the body block so it can't drift.
+                        Size(
+                            "BVLL_Length",
+                            block_name="Body_AUTH",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
                     ),
                 ),
                 Block(
-                    "NPDU_Header_AUTH",
+                    "Body_AUTH",
                     children=(
-                        Byte("NPDU_Version", 0x01),
-                        Byte("NPDU_Control", 0x04),  # Expecting reply
+                        Block(
+                            "NPDU_Header_AUTH",
+                            children=(
+                                Byte("NPDU_Version", 0x01),
+                                Byte("NPDU_Control", 0x04),  # Expecting reply
+                            ),
+                        ),
+                        Block(
+                            "APDU_Header_AUTH",
+                            children=(
+                                Byte("APDU_Type_Flags", 0x00),  # Confirmed-REQ
+                                Byte("Service_Choice", BACnetServiceCodes.AUTHENTICATE),
+                                Byte("Invoke_ID", 0x18),
+                            ),
+                        ),
+                        # Pseudo Random Number (context tag 0)
+                        Byte("PRN_Tag", 0x09),
+                        DWord("Pseudo_Random_Number", 0x12345678, endian=">"),
+                        # Expected Reply Length (context tag 1)
+                        Byte("Reply_Len_Tag", 0x19),
+                        Byte("Expected_Reply_Length", 0x10),  # 16 bytes
+                        # Operator Name (context tag 2) - use SmartString CREDENTIAL
+                        Byte("Operator_Tag", 0x2E),  # Opening tag
+                        SmartString(
+                            "Operator_Name",
+                            bacnet_password,
+                            max_len=32,
+                            context=StringContext.CREDENTIAL,
+                        ),
+                        Byte("Operator_Close", 0x2F),  # Closing tag
+                        # Operator Password (context tag 3) - use SmartString CREDENTIAL
+                        Byte("Password_Tag", 0x3E),  # Opening tag
+                        SmartString(
+                            "Operator_Password",
+                            bacnet_password,
+                            max_len=32,
+                            context=StringContext.CREDENTIAL,
+                        ),
+                        Byte("Password_Close", 0x3F),  # Closing tag
                     ),
                 ),
-                Block(
-                    "APDU_Header_AUTH",
-                    children=(
-                        Byte("APDU_Type_Flags", 0x00),  # Confirmed-REQ
-                        Byte("Service_Choice", BACnetServiceCodes.AUTHENTICATE),
-                        Byte("Invoke_ID", 0x18),
-                    ),
-                ),
-                # Pseudo Random Number (context tag 0)
-                Byte("PRN_Tag", 0x09),
-                DWord("Pseudo_Random_Number", 0x12345678, endian=">"),
-                # Expected Reply Length (context tag 1)
-                Byte("Reply_Len_Tag", 0x19),
-                Byte("Expected_Reply_Length", 0x10),  # 16 bytes
-                # Operator Name (context tag 2) - use SmartString CREDENTIAL
-                Byte("Operator_Tag", 0x2E),  # Opening tag
-                SmartString(
-                    "Operator_Name", bacnet_password, max_len=32, context=StringContext.CREDENTIAL
-                ),
-                Byte("Operator_Close", 0x2F),  # Closing tag
-                # Operator Password (context tag 3) - use SmartString CREDENTIAL
-                Byte("Password_Tag", 0x3E),  # Opening tag
-                SmartString(
-                    "Operator_Password",
-                    bacnet_password,
-                    max_len=32,
-                    context=StringContext.CREDENTIAL,
-                ),
-                Byte("Password_Close", 0x3F),  # Closing tag
             ),
         )
 
@@ -1329,40 +1458,61 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x0018, endian=">"),  # 24 bytes
+                        # Length covers the WHOLE BVLL message including this 4-byte
+                        # BVLC header; bound to the body block so it can't drift.
+                        Size(
+                            "BVLL_Length",
+                            block_name="Body_RK",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
                     ),
                 ),
                 Block(
-                    "NPDU_Header_RK",
+                    "Body_RK",
                     children=(
-                        Byte("NPDU_Version", 0x01),
-                        Byte("NPDU_Control", 0x04),
+                        Block(
+                            "NPDU_Header_RK",
+                            children=(
+                                Byte("NPDU_Version", 0x01),
+                                Byte("NPDU_Control", 0x04),
+                            ),
+                        ),
+                        Block(
+                            "APDU_Header_RK",
+                            children=(
+                                Byte("APDU_Type_Flags", 0x00),
+                                Byte("Service_Choice", BACnetServiceCodes.REQUEST_KEY),
+                                Byte("Invoke_ID", 0x19),
+                            ),
+                        ),
+                        # Requesting Device Identifier (context tag 0)
+                        Byte("Req_Device_Tag", 0x0C),
+                        DWord(
+                            "Requesting_Device_ID", 0x020004D2, endian=">"
+                        ),  # Device 1234
+                        # Requesting Device Address (context tag 1)
+                        Byte("Req_Addr_Tag", 0x1E),  # Opening tag
+                        Byte("Network_Tag", 0x21),
+                        Word("Network_Number", 0x0001, endian=">"),
+                        Byte("MAC_Tag", 0x75),
+                        # Declared length must match the actual "010203040506"
+                        # (12-byte ASCII) default rendered by MAC_Address.
+                        Byte("MAC_Length", 0x0C),
+                        SmartString(
+                            "MAC_Address",
+                            "010203040506",
+                            max_len=12,
+                            context=StringContext.CREDENTIAL,
+                        ),
+                        Byte("Req_Addr_Close", 0x1F),
+                        # Remote Device Identifier (context tag 2)
+                        Byte("Remote_Device_Tag", 0x2C),
+                        DWord("Remote_Device_ID", 0x02000001, endian=">"),  # Device 1
                     ),
                 ),
-                Block(
-                    "APDU_Header_RK",
-                    children=(
-                        Byte("APDU_Type_Flags", 0x00),
-                        Byte("Service_Choice", BACnetServiceCodes.REQUEST_KEY),
-                        Byte("Invoke_ID", 0x19),
-                    ),
-                ),
-                # Requesting Device Identifier (context tag 0)
-                Byte("Req_Device_Tag", 0x0C),
-                DWord("Requesting_Device_ID", 0x020004D2, endian=">"),  # Device 1234
-                # Requesting Device Address (context tag 1)
-                Byte("Req_Addr_Tag", 0x1E),  # Opening tag
-                Byte("Network_Tag", 0x21),
-                Word("Network_Number", 0x0001, endian=">"),
-                Byte("MAC_Tag", 0x75),
-                Byte("MAC_Length", 0x06),
-                SmartString(
-                    "MAC_Address", "010203040506", max_len=12, context=StringContext.CREDENTIAL
-                ),
-                Byte("Req_Addr_Close", 0x1F),
-                # Remote Device Identifier (context tag 2)
-                Byte("Remote_Device_Tag", 0x2C),
-                DWord("Remote_Device_ID", 0x02000001, endian=">"),  # Device 1
             ),
         )
 
@@ -1376,40 +1526,56 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x0018, endian=">"),
+                        # Length covers the WHOLE BVLL message including this 4-byte
+                        # BVLC header; bound to the body block so it can't drift.
+                        Size(
+                            "BVLL_Length",
+                            block_name="Body_RDP",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
                     ),
                 ),
                 Block(
-                    "NPDU_Header_RDP",
+                    "Body_RDP",
                     children=(
-                        Byte("NPDU_Version", 0x01),
-                        Byte("NPDU_Control", 0x04),
+                        Block(
+                            "NPDU_Header_RDP",
+                            children=(
+                                Byte("NPDU_Version", 0x01),
+                                Byte("NPDU_Control", 0x04),
+                            ),
+                        ),
+                        Block(
+                            "APDU_Header_RDP",
+                            children=(
+                                Byte("APDU_Type_Flags", 0x00),
+                                Byte("Service_Choice", BACnetServiceCodes.REINITIALIZE_DEVICE),
+                                Byte("Invoke_ID", 0x14),
+                            ),
+                        ),
+                        # Reinitialized State of Device (context tag 0)
+                        Byte("Reinit_State_Tag", 0x09),
+                        Group(
+                            "Reinit_State",
+                            values=[
+                                b"\x00",  # ColdStart
+                                b"\x01",  # WarmStart
+                            ],
+                        ),
+                        # Password (context tag 1) - optional, use SmartString
+                        # CREDENTIAL. Declared length must match the actual
+                        # "password" (8-byte) default, not a hardcoded 13.
+                        Byte("Password_Opening_Tag", 0x18),  # Context 1, length 8
+                        SmartString(
+                            "Device_Password",
+                            device_password or bacnet_password,
+                            max_len=20,
+                            context=StringContext.CREDENTIAL,
+                        ),
                     ),
-                ),
-                Block(
-                    "APDU_Header_RDP",
-                    children=(
-                        Byte("APDU_Type_Flags", 0x00),
-                        Byte("Service_Choice", BACnetServiceCodes.REINITIALIZE_DEVICE),
-                        Byte("Invoke_ID", 0x14),
-                    ),
-                ),
-                # Reinitialized State of Device (context tag 0)
-                Byte("Reinit_State_Tag", 0x09),
-                Group(
-                    "Reinit_State",
-                    values=[
-                        b"\x00",  # ColdStart
-                        b"\x01",  # WarmStart
-                    ],
-                ),
-                # Password (context tag 1) - optional, use SmartString CREDENTIAL
-                Byte("Password_Opening_Tag", 0x1D),  # Context 1, length 13
-                SmartString(
-                    "Device_Password",
-                    device_password or bacnet_password,
-                    max_len=20,
-                    context=StringContext.CREDENTIAL,
                 ),
             ),
         )
@@ -1424,41 +1590,64 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x0018, endian=">"),
+                        # Length covers the WHOLE BVLL message including this 4-byte
+                        # BVLC header; bound to the body block so it can't drift.
+                        Size(
+                            "BVLL_Length",
+                            block_name="Body_DCCP",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
+                        ),
                     ),
                 ),
                 Block(
-                    "NPDU_Header_DCCP",
+                    "Body_DCCP",
                     children=(
-                        Byte("NPDU_Version", 0x01),
-                        Byte("NPDU_Control", 0x04),
+                        Block(
+                            "NPDU_Header_DCCP",
+                            children=(
+                                Byte("NPDU_Version", 0x01),
+                                Byte("NPDU_Control", 0x04),
+                            ),
+                        ),
+                        Block(
+                            "APDU_Header_DCCP",
+                            children=(
+                                Byte("APDU_Type_Flags", 0x00),
+                                Byte(
+                                    "Service_Choice",
+                                    BACnetServiceCodes.DEVICE_COMMUNICATION_CONTROL,
+                                ),
+                                Byte("Invoke_ID", 0x11),
+                            ),
+                        ),
+                        # Time Duration (context tag 0) - in minutes
+                        Byte("Duration_Tag", 0x05),
+                        Word("Time_Duration", 0x0000, endian=">"),  # Indefinite
+                        # Enable/Disable (context tag 1)
+                        Byte("Enable_Tag", 0x19),
+                        Group(
+                            "Enable_Disable",
+                            values=[
+                                b"\x00",  # Enable
+                                b"\x01",  # Disable
+                                b"\x02",  # DisableInitiation
+                            ],
+                        ),
+                        # Password (context tag 2) - use SmartString CREDENTIAL.
+                        # Declared length must match the actual "password" (8-byte)
+                        # default so a target honouring the tag length doesn't read
+                        # past the end of the frame.
+                        Byte("Password_Tag", 0x28),
+                        SmartString(
+                            "DCC_Password",
+                            bacnet_password,
+                            max_len=20,
+                            context=StringContext.CREDENTIAL,
+                        ),
                     ),
-                ),
-                Block(
-                    "APDU_Header_DCCP",
-                    children=(
-                        Byte("APDU_Type_Flags", 0x00),
-                        Byte("Service_Choice", BACnetServiceCodes.DEVICE_COMMUNICATION_CONTROL),
-                        Byte("Invoke_ID", 0x11),
-                    ),
-                ),
-                # Time Duration (context tag 0) - in minutes
-                Byte("Duration_Tag", 0x05),
-                Word("Time_Duration", 0x0000, endian=">"),  # Indefinite
-                # Enable/Disable (context tag 1)
-                Byte("Enable_Tag", 0x19),
-                Group(
-                    "Enable_Disable",
-                    values=[
-                        b"\x00",  # Enable
-                        b"\x01",  # Disable
-                        b"\x02",  # DisableInitiation
-                    ],
-                ),
-                # Password (context tag 2) - use SmartString CREDENTIAL
-                Byte("Password_Tag", 0x2D),
-                SmartString(
-                    "DCC_Password", bacnet_password, max_len=20, context=StringContext.CREDENTIAL
                 ),
             ),
         )
@@ -1617,68 +1806,84 @@ class BACnetFuzzer(BaseFuzzer):
                     children=(
                         Byte("BVLL_Type", 0x81),
                         Byte("BVLL_Function", 0x0A),
-                        Word("BVLL_Length", 0x0020, endian=">"),
-                    ),
-                ),
-                Block(
-                    "NPDU_Header_AF",
-                    children=(
-                        Byte("NPDU_Version", 0x01),
-                        Byte("NPDU_Control", 0x04),
-                    ),
-                ),
-                Block(
-                    "APDU_Header_AF",
-                    children=(
-                        Byte("APDU_Type_Flags", 0x00),
-                        Byte("Max_Segs_Resp", 0x05),
-                        Byte("Invoke_ID", 0x06),
-                        Group(
-                            "AtomicFile_Service",
-                            values=[
-                                bytes([BACnetServiceCodes.ATOMIC_READ_FILE]),  # 0x06
-                                bytes([BACnetServiceCodes.ATOMIC_WRITE_FILE]),  # 0x07
-                            ],
+                        # Length covers the WHOLE BVLL message including this 4-byte
+                        # BVLC header. Bound to the body block via Size() -- the
+                        # Traversal_Filename tail varies per test case, so a
+                        # hardcoded constant can never be right here.
+                        Size(
+                            "BVLL_Length",
+                            block_name="Body_AF",
+                            length=2,
+                            endian=">",
+                            offset=4,
+                            fuzzable=False,
                         ),
                     ),
                 ),
-                # File object identifier (File object type 10, instance 1)
-                Byte("File_ObjID_Tag", 0x0C),
-                DWord("File_Object_ID", 0x02800001, endian=">"),
-                # Stream-access opening tag [1]
-                Byte("Access_Open_Tag", 0x1E),
-                # fileStartPosition [0] signed int - fuzz start offset
-                Byte("File_Start_Tag", 0x35),
-                Group(
-                    "File_Start_Position",
-                    values=[
-                        b"\x00",
-                        b"\xff",
-                        b"\x7f\xff\xff\xff",  # INT_MAX
-                        b"\x80\x00\x00\x00",  # INT_MIN
-                        b"\xff\xff\xff\xff",  # -1
-                    ],
-                ),
-                # requestedOctetCount / recordCount [1] - fuzz read/write span
-                Byte("Octet_Count_Tag", 0x25),
-                Group(
-                    "Requested_Octet_Count",
-                    values=[
-                        b"\x00",
-                        b"\xff",
-                        b"\xff\xff",
-                        b"\xff\xff\xff\xff",  # 4 GiB span
-                        b"\x00\x00",
-                    ],
-                ),
-                Byte("Access_Close_Tag", 0x1F),
-                # Path-traversal filename delivered as AtomicWriteFile data.
-                Byte("Filename_Tag", 0x75),  # char-string, tag 7
-                SmartString(
-                    "Traversal_Filename",
-                    "../../../../etc/passwd",
-                    max_len=64,
-                    context=StringContext.PATH,
+                Block(
+                    "Body_AF",
+                    children=(
+                        Block(
+                            "NPDU_Header_AF",
+                            children=(
+                                Byte("NPDU_Version", 0x01),
+                                Byte("NPDU_Control", 0x04),
+                            ),
+                        ),
+                        Block(
+                            "APDU_Header_AF",
+                            children=(
+                                Byte("APDU_Type_Flags", 0x00),
+                                Byte("Max_Segs_Resp", 0x05),
+                                Byte("Invoke_ID", 0x06),
+                                Group(
+                                    "AtomicFile_Service",
+                                    values=[
+                                        bytes([BACnetServiceCodes.ATOMIC_READ_FILE]),  # 0x06
+                                        bytes([BACnetServiceCodes.ATOMIC_WRITE_FILE]),  # 0x07
+                                    ],
+                                ),
+                            ),
+                        ),
+                        # File object identifier (File object type 10, instance 1)
+                        Byte("File_ObjID_Tag", 0x0C),
+                        DWord("File_Object_ID", 0x02800001, endian=">"),
+                        # Stream-access opening tag [1]
+                        Byte("Access_Open_Tag", 0x1E),
+                        # fileStartPosition [0] signed int - fuzz start offset
+                        Byte("File_Start_Tag", 0x35),
+                        Group(
+                            "File_Start_Position",
+                            values=[
+                                b"\x00",
+                                b"\xff",
+                                b"\x7f\xff\xff\xff",  # INT_MAX
+                                b"\x80\x00\x00\x00",  # INT_MIN
+                                b"\xff\xff\xff\xff",  # -1
+                            ],
+                        ),
+                        # requestedOctetCount / recordCount [1] - fuzz read/write span
+                        Byte("Octet_Count_Tag", 0x25),
+                        Group(
+                            "Requested_Octet_Count",
+                            values=[
+                                b"\x00",
+                                b"\xff",
+                                b"\xff\xff",
+                                b"\xff\xff\xff\xff",  # 4 GiB span
+                                b"\x00\x00",
+                            ],
+                        ),
+                        Byte("Access_Close_Tag", 0x1F),
+                        # Path-traversal filename delivered as AtomicWriteFile data.
+                        Byte("Filename_Tag", 0x75),  # char-string, tag 7
+                        SmartString(
+                            "Traversal_Filename",
+                            "../../../../etc/passwd",
+                            max_len=64,
+                            context=StringContext.PATH,
+                        ),
+                    ),
                 ),
             ),
         )

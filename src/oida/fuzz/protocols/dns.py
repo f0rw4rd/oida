@@ -1,6 +1,6 @@
 """DNS Protocol Fuzzer"""
 
-from boofuzz import Block, Byte, Bytes, DWord, Group, Request, Static, Word
+from boofuzz import Block, Byte, Bytes, DWord, Group, Request, Size, Static, Word
 
 from typing import List
 
@@ -1077,14 +1077,25 @@ class DNSFuzzer(BaseFuzzer):
                         Byte("extended_rcode", 0),
                         Byte("edns_version", 0),
                         Word("edns_flags", 0x0000, endian=">"),
-                        Word("edns_data_length", 0x0010, endian=">"),  # 16 bytes of option data
+                        Size(
+                            "edns_data_length",
+                            block_name="edns_client_subnet_option",
+                            length=2,
+                            endian=">",
+                            inclusive=False,
+                        ),  # RDLENGTH computed from the actual option RDATA
                         # EDNS Client Subnet Option
-                        Word("option_code", 0x0008, endian=">"),  # ECS option
-                        Word("option_length", 0x0008, endian=">"),
-                        Word("family", 0x0001, endian=">"),  # IPv4
-                        Byte("source_prefix", 24),  # /24 network
-                        Byte("scope_prefix", 0),
-                        DWord("client_subnet", 0xC0A80100, endian=">"),  # 192.168.1.0
+                        Block(
+                            "edns_client_subnet_option",
+                            children=(
+                                Word("option_code", 0x0008, endian=">"),  # ECS option
+                                Word("option_length", 0x0008, endian=">"),
+                                Word("family", 0x0001, endian=">"),  # IPv4
+                                Byte("source_prefix", 24),  # /24 network
+                                Byte("scope_prefix", 0),
+                                DWord("client_subnet", 0xC0A80100, endian=">"),  # 192.168.1.0
+                            ),
+                        ),
                     ),
                 ),
             ),
@@ -2557,6 +2568,16 @@ class DNSFuzzer(BaseFuzzer):
                     ),
                 ),
                 Block(
+                    "DNS_Question_BADSIG",
+                    children=(
+                        Byte("label1_length", 4),
+                        SmartString("label1", "test", max_len=63),
+                        Byte("name_terminator", 0),
+                        Word("qtype", 0x0001, endian=">"),
+                        Word("qclass", 0x0001, endian=">"),
+                    ),
+                ),
+                Block(
                     "DNS_EDNS0_BADSIG",
                     children=(
                         Byte("edns_name", 0),
@@ -2586,6 +2607,16 @@ class DNSFuzzer(BaseFuzzer):
                     ),
                 ),
                 Block(
+                    "DNS_Question_BADKEY",
+                    children=(
+                        Byte("label1_length", 4),
+                        SmartString("label1", "test", max_len=63),
+                        Byte("name_terminator", 0),
+                        Word("qtype", 0x0001, endian=">"),
+                        Word("qclass", 0x0001, endian=">"),
+                    ),
+                ),
+                Block(
                     "DNS_EDNS0_BADKEY",
                     children=(
                         Byte("edns_name", 0),
@@ -2612,6 +2643,16 @@ class DNSFuzzer(BaseFuzzer):
                         Word("answers", 0x0000, endian=">"),
                         Word("authority", 0x0000, endian=">"),
                         Word("additional", 0x0001, endian=">"),
+                    ),
+                ),
+                Block(
+                    "DNS_Question_BADTIME",
+                    children=(
+                        Byte("label1_length", 4),
+                        SmartString("label1", "test", max_len=63),
+                        Byte("name_terminator", 0),
+                        Word("qtype", 0x0001, endian=">"),
+                        Word("qclass", 0x0001, endian=">"),
                     ),
                 ),
                 Block(

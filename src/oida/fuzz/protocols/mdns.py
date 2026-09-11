@@ -170,12 +170,13 @@ class MDNSFuzzer(BaseFuzzer):
         """Create a DNS Question section"""
         # Use the parent name to create unique QNAME block identifiers
         qname_block = f"{name}_QNAME"
-        qname_length = f"{name}_QNAME_Length"
 
         return Block(
             name,
             children=(
-                Size(qname_length, block_name=qname_block, length=1, inclusive=False),
+                # NOTE: no Size prefix here — the QNAME block already begins with its
+                # own wire-format label-length byte (the Label_Type Group), and a
+                # duplicate outer length byte renders an invalid DNS name.
                 Block(
                     qname_block,
                     children=(
@@ -215,12 +216,13 @@ class MDNSFuzzer(BaseFuzzer):
         """Create a DNS Resource Record section"""
         # Use the parent name to create unique NAME block identifiers
         name_block = f"{name}_NAME"
-        name_length = f"{name}_NAME_Length"
 
         return Block(
             name,
             children=(
-                Size(name_length, block_name=name_block, length=1, inclusive=False),
+                # NOTE: no Size prefix here — the NAME block already begins with its
+                # own wire-format label-length byte (the Label_Type Group), and a
+                # duplicate outer length byte renders an invalid DNS name.
                 Block(
                     name_block,
                     children=(
@@ -566,7 +568,7 @@ class MDNSFuzzer(BaseFuzzer):
         long_name = Request(
             "Long_Name",
             children=(
-                self._create_dns_header(name="Long_Name_Header", qr=0),
+                self._create_dns_header(name="Long_Name_Header", qr=0, qdcount=1),
                 Block(
                     "Long_Question",
                     children=(
@@ -587,7 +589,7 @@ class MDNSFuzzer(BaseFuzzer):
         oversized_packet = Request(
             "Oversized_Packet",
             children=(
-                self._create_dns_header(name="Large_Header", qr=1, aa=1),
+                self._create_dns_header(name="Large_Header", qr=1, aa=1, qdcount=1, ancount=3),
                 self._create_dns_question(name="Large_Question"),
                 # Many TXT records with large data to push packet size
                 Block(
@@ -635,7 +637,7 @@ class MDNSFuzzer(BaseFuzzer):
         invalid_compression = Request(
             "Invalid_Compression",
             children=(
-                self._create_dns_header(name="Compression_Header", qr=0),
+                self._create_dns_header(name="Compression_Header", qr=0, qdcount=1),
                 Block(
                     "Bad_Question",
                     children=(
@@ -651,7 +653,7 @@ class MDNSFuzzer(BaseFuzzer):
         circular_compression = Request(
             "Circular_Compression",
             children=(
-                self._create_dns_header(name="Circular_Header", qr=0),
+                self._create_dns_header(name="Circular_Header", qr=0, qdcount=1),
                 Block(
                     "Circular_Question",
                     children=(
@@ -698,7 +700,7 @@ class MDNSFuzzer(BaseFuzzer):
         edns0_malformed = Request(
             "EDNS0_Malformed",
             children=(
-                self._create_dns_header(name="EDNS0_Bad_Header", qr=0),
+                self._create_dns_header(name="EDNS0_Bad_Header", qr=0, qdcount=1, arcount=1),
                 self._create_dns_question(name="EDNS0_Bad_Question"),
                 Block(
                     "Bad_OPT_Record",
@@ -734,6 +736,7 @@ class MDNSFuzzer(BaseFuzzer):
                         # Fuzzable record counts
                         Group(
                             "VR_QDCount",
+                            default_value=b"\x00\x02",  # matches the 2 appended questions
                             values=[
                                 b"\x00\x00",  # 0 questions
                                 b"\x00\x01",  # 1 question
@@ -744,6 +747,7 @@ class MDNSFuzzer(BaseFuzzer):
                         ),
                         Group(
                             "VR_ANCount",
+                            default_value=b"\x00\x03",  # matches the 3 appended answers
                             values=[
                                 b"\x00\x00",  # 0 answers
                                 b"\x00\x01",  # 1 answer
@@ -785,7 +789,7 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "VR_Question2",
                     children=(
-                        Static("VR_Q2_Name", b"\x05_ipp\x04_tcp\x05local\x00"),
+                        Static("VR_Q2_Name", b"\x04_ipp\x04_tcp\x05local\x00"),
                         Static("VR_Q2_Type", b"\x00\x0c"),  # PTR
                         Static("VR_Q2_Class", b"\x00\x01"),  # IN
                     ),
@@ -798,19 +802,19 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("VR_A1_Type", b"\x00\x0c"),  # PTR
                         Static("VR_A1_Class", b"\x00\x01"),  # IN
                         Static("VR_A1_TTL", b"\x00\x00\x00\x78"),  # TTL 120s
-                        Static("VR_A1_RDLength", b"\x00\x15"),  # Length 21
+                        Static("VR_A1_RDLength", b"\x00\x1b"),  # auto: len(VR_A1_RData)=27
                         Static("VR_A1_RData", b"\x08WebShare\x05_http\x04_tcp\x05local\x00"),
                     ),
                 ),
                 Block(
                     "VR_Answer2",
                     children=(
-                        Static("VR_A2_Name", b"\x05_ipp\x04_tcp\x05local\x00"),
+                        Static("VR_A2_Name", b"\x04_ipp\x04_tcp\x05local\x00"),
                         Static("VR_A2_Type", b"\x00\x0c"),  # PTR
                         Static("VR_A2_Class", b"\x00\x01"),  # IN
                         Static("VR_A2_TTL", b"\x00\x00\x00\x78"),  # TTL 120s
-                        Static("VR_A2_RDLength", b"\x00\x14"),  # Length 20
-                        Static("VR_A2_RData", b"\x07Printer\x05_ipp\x04_tcp\x05local\x00"),
+                        Static("VR_A2_RDLength", b"\x00\x19"),  # auto: len(VR_A2_RData)=25
+                        Static("VR_A2_RData", b"\x07Printer\x04_ipp\x04_tcp\x05local\x00"),
                     ),
                 ),
                 Block(
@@ -862,7 +866,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("TC_A1_Type", b"\x00\x0c"),  # PTR
                         Static("TC_A1_Class", b"\x00\x01"),  # IN
                         Static("TC_A1_TTL", b"\x00\x00\x00\x78"),  # TTL 120s
-                        Static("TC_A1_RDLength", b"\x00\x15"),  # Length 21
+                        Static("TC_A1_RDLength", b"\x00\x1b"),  # auto: len(TC_A1_RData)=27
                         Static("TC_A1_RData", b"\x08WebShare\x05_http\x04_tcp\x05local\x00"),
                     ),
                 ),
@@ -873,7 +877,7 @@ class MDNSFuzzer(BaseFuzzer):
         zero_length_label = Request(
             "Zero_Length_Label",
             children=(
-                self._create_dns_header(name="ZL_Header", qr=0),
+                self._create_dns_header(name="ZL_Header", qr=0, qdcount=1),
                 Block(
                     "ZL_Question",
                     children=(
@@ -895,7 +899,7 @@ class MDNSFuzzer(BaseFuzzer):
         standard_query = Request(
             "Standard_Query",
             children=(
-                self._create_dns_header(name="Query_Header", qr=0),  # Query
+                self._create_dns_header(name="Query_Header", qr=0, qdcount=1),  # Query
                 self._create_dns_question(name="Query_Question"),
             ),
         )
@@ -948,7 +952,7 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "Question3",
                     children=(
-                        Static("Q3_Name", b"\x05_ipp\x04_tcp\x05local\x00"),
+                        Static("Q3_Name", b"\x04_ipp\x04_tcp\x05local\x00"),
                         Static("Q3_Type", b"\x00\xff"),  # ANY
                         Static("Q3_Class", b"\x00\x01"),  # IN
                     ),
@@ -961,7 +965,7 @@ class MDNSFuzzer(BaseFuzzer):
             "Standard_Response",
             children=(
                 self._create_dns_header(
-                    name="Response_Header", qr=1, aa=1
+                    name="Response_Header", qr=1, aa=1, qdcount=1, ancount=1, nscount=1, arcount=1
                 ),  # Response, authoritative
                 self._create_dns_question(name="Response_Question"),
                 self._create_dns_rr(name="Answer_RR"),
@@ -1003,7 +1007,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Static("MA_A1_Type", b"\x00\x0c"),  # PTR
                         Static("MA_A1_Class", b"\x00\x01"),  # IN
                         Static("MA_A1_TTL", b"\x00\x00\x01\x2c"),  # TTL 300s
-                        Static("MA_A1_RDLength", b"\x00\x1b"),  # Length 21
+                        Static("MA_A1_RDLength", b"\x00\x1b"),  # auto: len(MA_A1_RData)=27
                         Static("MA_A1_RData", b"\x08WebShare\x05_http\x04_tcp\x05local\x00"),
                     ),
                 ),
@@ -1168,11 +1172,11 @@ class MDNSFuzzer(BaseFuzzer):
         service_subtypes = Request(
             "Service_Subtypes",
             children=(
-                self._create_dns_header(name="Subtype_Header", qr=1, aa=1),
+                self._create_dns_header(name="Subtype_Header", qr=1, aa=1, qdcount=1, ancount=1),
                 Block(
                     "Subtype_Question",
                     children=(
-                        Static("ST_Q_Name", b"\x0b_printer._sub\x05_http\x04_tcp\x05local\x00"),
+                        Static("ST_Q_Name", b"\x08_printer\x04_sub\x05_http\x04_tcp\x05local\x00"),
                         Static("ST_Q_Type", b"\x00\x0c"),  # PTR
                         Static("ST_Q_Class", b"\x00\x01"),  # IN
                     ),
@@ -1180,7 +1184,7 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "Subtype_Answer",
                     children=(
-                        Static("ST_A_Name", b"\x0b_printer._sub\x05_http\x04_tcp\x05local\x00"),
+                        Static("ST_A_Name", b"\x08_printer\x04_sub\x05_http\x04_tcp\x05local\x00"),
                         Static("ST_A_Type", b"\x00\x0c"),  # PTR
                         Static("ST_A_Class", b"\x00\x01"),  # IN
                         Static("ST_A_TTL", b"\x00\x00\x00\x78"),  # TTL 120s
@@ -1195,7 +1199,7 @@ class MDNSFuzzer(BaseFuzzer):
         unicast_response_query = Request(
             "Unicast_Response_Query",
             children=(
-                self._create_dns_header(name="QU_Header", qr=0),
+                self._create_dns_header(name="QU_Header", qr=0, qdcount=1),
                 Block(
                     "QU_Question",
                     children=(
@@ -1211,7 +1215,7 @@ class MDNSFuzzer(BaseFuzzer):
         duplicate_records = Request(
             "Duplicate_Records",
             children=(
-                self._create_dns_header(name="Dup_Header", qr=1, aa=1),
+                self._create_dns_header(name="Dup_Header", qr=1, aa=1, qdcount=1, ancount=3),
                 Block(
                     "Dup_Question",
                     children=(
@@ -1263,7 +1267,7 @@ class MDNSFuzzer(BaseFuzzer):
         multi_known_answer = Request(
             "Multi_Known_Answer",
             children=(
-                self._create_dns_header(name="MKA_Header", qr=0),
+                self._create_dns_header(name="MKA_Header", qr=0, qdcount=2, ancount=2),
                 # First question
                 Block(
                     "MKA_Question1",
@@ -1277,7 +1281,7 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "MKA_Question2",
                     children=(
-                        Static("MKA_Q2_Name", b"\x05_ipp\x04_tcp\x05local\x00"),
+                        Static("MKA_Q2_Name", b"\x04_ipp\x04_tcp\x05local\x00"),
                         Static("MKA_Q2_Type", b"\x00\x0c"),  # PTR
                         Static("MKA_Q2_Class", b"\x00\x01"),  # IN
                     ),
@@ -1298,12 +1302,12 @@ class MDNSFuzzer(BaseFuzzer):
                 Block(
                     "MKA_Answer2",
                     children=(
-                        Static("MKA_A2_Name", b"\x05_ipp\x04_tcp\x05local\x00"),
+                        Static("MKA_A2_Name", b"\x04_ipp\x04_tcp\x05local\x00"),
                         Static("MKA_A2_Type", b"\x00\x0c"),  # PTR
                         Static("MKA_A2_Class", b"\x00\x01"),  # IN
                         Static("MKA_A2_TTL", b"\x00\x00\x00\x10"),  # TTL 16 seconds
                         Static("MKA_A2_RDLength", b"\x00\x1a"),  # auto: len(MKA_A2_RData)=26
-                        Static("MKA_A2_RData", b"\x08Printer1\x05_ipp\x04_tcp\x05local\x00"),
+                        Static("MKA_A2_RData", b"\x08Printer1\x04_ipp\x04_tcp\x05local\x00"),
                     ),
                 ),
             ),
@@ -1313,7 +1317,7 @@ class MDNSFuzzer(BaseFuzzer):
         negative_response = Request(
             "Negative_Response",
             children=(
-                self._create_dns_header(name="NR_Header", qr=1, aa=1),
+                self._create_dns_header(name="NR_Header", qr=1, aa=1, qdcount=1, nscount=1),
                 Block(
                     "NR_Question",
                     children=(
@@ -1349,7 +1353,7 @@ class MDNSFuzzer(BaseFuzzer):
         ptr_query = Request(
             "PTR_Query",
             children=(
-                self._create_dns_header(name="PTR_Header", qr=0),
+                self._create_dns_header(name="PTR_Header", qr=0, qdcount=1),
                 Block(
                     "PTR_Question",
                     children=(
@@ -1365,7 +1369,7 @@ class MDNSFuzzer(BaseFuzzer):
         srv_query = Request(
             "SRV_Query",
             children=(
-                self._create_dns_header(name="SRV_Header", qr=0),
+                self._create_dns_header(name="SRV_Header", qr=0, qdcount=1),
                 Block(
                     "SRV_Question",
                     children=(
@@ -1381,7 +1385,7 @@ class MDNSFuzzer(BaseFuzzer):
         cache_flush_query = Request(
             "Cache_Flush_Query",
             children=(
-                self._create_dns_header(name="Cache_Flush_Header", qr=0),
+                self._create_dns_header(name="Cache_Flush_Header", qr=0, qdcount=1),
                 Block(
                     "Cache_Flush_Question",
                     children=(
@@ -1397,7 +1401,7 @@ class MDNSFuzzer(BaseFuzzer):
         probe_query = Request(
             "Probe_Query",
             children=(
-                self._create_dns_header(name="Probe_Header", qr=0),
+                self._create_dns_header(name="Probe_Header", qr=0, qdcount=1, nscount=1),
                 Block(
                     "Probe_Question",
                     children=(
@@ -1424,7 +1428,7 @@ class MDNSFuzzer(BaseFuzzer):
         goodbye_packet = Request(
             "Goodbye_Packet",
             children=(
-                self._create_dns_header(name="Goodbye_Header", qr=1, aa=1),
+                self._create_dns_header(name="Goodbye_Header", qr=1, aa=1, ancount=1),
                 Block(
                     "Goodbye_Answer",
                     children=(
@@ -1447,7 +1451,7 @@ class MDNSFuzzer(BaseFuzzer):
         edns0_packet = Request(
             "EDNS0_Packet",
             children=(
-                self._create_dns_header(name="EDNS0_Header", qr=0),
+                self._create_dns_header(name="EDNS0_Header", qr=0, qdcount=1, arcount=1),
                 self._create_dns_question(name="EDNS0_Question"),
                 Block(
                     "OPT_Record",

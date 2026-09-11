@@ -1906,7 +1906,7 @@ class SNMPv3Fuzzer(BaseFuzzer):
                                         Static("MessageID_Tag", b"\x02\x04"),
                                         DWord("MessageID", 0x55555555, endian=">", fuzzable=False),
                                         Static("MaxSize_Tag", b"\x02\x03"),
-                                        Byte("MaxSize_Prefix", 0x00),
+                                        Byte("MaxSize_Prefix", 0x00, fuzzable=False),
                                         Word("MaxSize", 65535, endian=">", fuzzable=False),
                                         # authPriv flags (0x07 = auth+priv+reportable)
                                         Static("MsgFlags_Tag", b"\x04\x01"),
