@@ -170,22 +170,29 @@ class FINSScanner:
                 logger.debug(f"FINS: Invalid ICF from {ip_addr}: 0x{icf:02x} (not a response)")
                 return
 
+            # A FINS response always carries the 10-byte header, a 2-byte command
+            # code and a 2-byte end code; anything shorter is not a usable reply.
+            if len(data) < 14:
+                logger.debug(f"FINS: Short response from {ip_addr}: {len(data)} bytes")
+                return
+
             # Response code (2 bytes after header)
-            if len(data) >= 14:
-                main_code = data[12]
-                sub_code = data[13]
+            main_code = data[12]
+            sub_code = data[13]
+            end_code = (main_code << 8) | sub_code
 
-                if main_code != 0 or sub_code != 0:
-                    logger.debug(
-                        f"FINS: Error response from {ip_addr}: {main_code:02x}{sub_code:02x}"
-                    )
-                    # Still record the device even with error
+            if end_code != 0:
+                logger.debug(f"FINS: Error response from {ip_addr}: {main_code:02x}{sub_code:02x}")
 
-            # Extract controller data if present
+            # Extract controller data if present.
+            # Only a success end code (0x0000) is followed by the Controller Data
+            # Read payload. On an error reply the trailing bytes are echo/error
+            # detail, so decoding them as model/version invents a model string
+            # and firmware version for a device that actually refused the command.
             controller_model = ""
             controller_version = ""
 
-            if len(data) > 14:
+            if end_code == 0 and len(data) > 14:
                 # Controller data starts after response code
                 ctrl_data = data[14:]
 
@@ -234,6 +241,7 @@ class FINSScanner:
                         "network_address": sna,
                         "controller_model": controller_model,
                         "controller_version": controller_version,
+                        "end_code": f"{end_code:04x}",
                         "protocol": "FINS/UDP",
                         "port": FINS_UDP_PORT,
                     }
