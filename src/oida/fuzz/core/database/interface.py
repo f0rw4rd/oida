@@ -84,6 +84,17 @@ class DatabaseInterface(ABC):
         """Store crash with full payload"""
 
     @abstractmethod
+    def store_payload(
+        self, test_case_id: int, request: bytes, response: Optional[bytes] = None
+    ) -> None:
+        """Store the request (and optional response) payload of a test case.
+
+        Only meaningful when the backend was initialised with
+        ``store_all_payloads=True``; implementations MUST silently no-op
+        otherwise (crash payloads go through :meth:`store_crash`).
+        """
+
+    @abstractmethod
     def store_metadata(self, key: str, value: str):
         """Store session metadata"""
 
@@ -103,6 +114,12 @@ class DatabaseInterface(ABC):
 
         ``limit`` defaults to 10k to prevent OOM on million-case sessions.
         Pass ``None`` to return everything (replay / forensic paths).
+
+        Ordering: rows MUST be returned newest-first (``timestamp`` descending,
+        ties broken by preserving insertion order — i.e. a stable sort). All
+        backends must agree on this ordering: since ``limit`` truncates the
+        result set, two backends that disagree on order would return disjoint
+        subsets of the data on large (>``limit``) sessions.
         """
 
     @abstractmethod
@@ -114,6 +131,22 @@ class DatabaseInterface(ABC):
         """Get crash information with payload"""
 
     @abstractmethod
+    def get_all_crashes(self) -> List[Crash]:
+        """Return every stored crash (for triage / reporting)."""
+
+    @abstractmethod
+    def get_payload(self, test_case_id: int) -> Optional[dict]:
+        """Get the stored payload for a test case.
+
+        Looks in the crash payloads first, then the payloads table (only
+        populated in ``store_all_payloads`` mode).
+
+        Returns:
+            ``{"request": bytes | None, "response": bytes | None}`` or ``None``
+            when no payload is stored for that test case.
+        """
+
+    @abstractmethod
     def get_metadata(self, key: str) -> Optional[str]:
         """Get session metadata value"""
 
@@ -123,4 +156,22 @@ class DatabaseInterface(ABC):
 
     @abstractmethod
     def get_stats(self) -> Dict[str, Any]:
-        """Get session statistics"""
+        """Get session statistics.
+
+        Every implementation MUST include at least this key set (callers —
+        e.g. ``TestCaseManager.list_test_cases()`` — read these without a
+        ``.get()`` fallback, so a missing key raises ``KeyError``):
+
+        - ``total_test_cases``: int
+        - ``passed`` / ``failed`` / ``crashed`` / ``errors``: int (by result)
+        - ``pass_count`` / ``fail_count``: int (aliases of the above, kept
+          for backward compatibility)
+        - ``crashes_stored``: int, number of crash rows stored
+        - ``db_size_bytes``: int, raw database size in bytes (0 if N/A, e.g.
+          in-memory databases)
+        - ``db_size_mb``: float, database size in MB (0.0 if N/A)
+
+        Implementations may return additional backend-specific keys, but
+        must never omit the ones above — see
+        ``tests/unit/fuzz/test_database_backend_parity.py``.
+        """

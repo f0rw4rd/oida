@@ -17,10 +17,13 @@ class MockDatabase(DatabaseInterface):
         self.test_cases: List[TestCase] = []
         self.crashes: Dict[int, Crash] = {}
         self.metadata: Dict[str, str] = {}
+        self.payloads: Dict[int, Dict[str, Optional[bytes]]] = {}
         self._initialized = False
+        self._store_all_payloads = False
 
     def init_schema(self, store_all_payloads: bool = False):
         self._initialized = True
+        self._store_all_payloads = store_all_payloads
 
     def store_test_case(self, test_case: TestCase) -> Optional[int]:
         self.test_cases.append(test_case)
@@ -40,6 +43,14 @@ class MockDatabase(DatabaseInterface):
             except ImportError:
                 pass  # sqlalchemy not installed; tests that need hash will fail explicitly
         self.crashes[crash.test_case_id] = crash
+
+    def store_payload(
+        self, test_case_id: int, request: bytes, response: Optional[bytes] = None
+    ) -> None:
+        # Mirrors SQLAlchemyDatabase: payload storage is opt-in via init_schema.
+        if not self._store_all_payloads:
+            return
+        self.payloads[test_case_id] = {"request": request, "response": response}
 
     def store_metadata(self, key: str, value: str):
         self.metadata[key] = value
@@ -61,6 +72,9 @@ class MockDatabase(DatabaseInterface):
             rows = [tc for tc in rows if tc.target_ip == target_ip]
         if protocol:
             rows = [tc for tc in rows if tc.protocol == protocol]
+        # Mirrors SQLAlchemyDatabase: ORDER BY timestamp DESC (stable sort keeps
+        # insertion order among equal timestamps deterministic).
+        rows = sorted(rows, key=lambda tc: tc.timestamp, reverse=True)
         if limit is not None:
             rows = rows[:limit]
         return list(rows)
@@ -73,6 +87,19 @@ class MockDatabase(DatabaseInterface):
 
     def get_crash(self, test_id: int) -> Optional[Crash]:
         return self.crashes.get(test_id)
+
+    def get_all_crashes(self) -> List[Crash]:
+        return [self.crashes[k] for k in sorted(self.crashes)]
+
+    def get_payload(self, test_case_id: int) -> Optional[Dict[str, Optional[bytes]]]:
+        # Crash payloads take precedence, matching SQLAlchemyDatabase.
+        crash = self.crashes.get(test_case_id)
+        if crash is not None:
+            return {"request": crash.payload, "response": None}
+        stored = self.payloads.get(test_case_id)
+        if stored is not None:
+            return dict(stored)
+        return None
 
     def get_metadata(self, key: str) -> Optional[str]:
         return self.metadata.get(key)
