@@ -183,8 +183,23 @@ def parse_gsdml(source) -> Optional[GSDMLDevice]:
                             _MAX_GSDML_XML_SIZE,
                         )
                         return None
+                    # The declared file_size check above is a cheap early reject
+                    # for honest archives, but it is an attacker-controlled
+                    # central-directory value: a crafted archive that understates
+                    # its size would stream an unbounded member into memory before
+                    # the trailing CRC/size check fires. Read at most the limit
+                    # (+1 to detect overflow) from the DEcompressed stream.
                     with zf.open(xml_file) as f:
-                        tree = ET.parse(f)
+                        data = f.read(_MAX_GSDML_XML_SIZE + 1)
+                    if len(data) > _MAX_GSDML_XML_SIZE:
+                        logger.warning(
+                            "GSDML member %s exceeds %d bytes uncompressed -- "
+                            "refusing to parse (possible decompression bomb)",
+                            xml_file,
+                            _MAX_GSDML_XML_SIZE,
+                        )
+                        return None
+                    tree = ET.ElementTree(ET.fromstring(data))
             else:
                 tree = ET.parse(source)
         else:
@@ -250,7 +265,12 @@ def parse_gsdml(source) -> Optional[GSDMLDevice]:
                 # Parse SubslotItem
                 for subslot in elem.iter():
                     if "SubslotItem" in subslot.tag:
-                        subslot_num = int(subslot.get("SubslotNumber", "0"))
+                        # SubslotNumber appears both as decimal (32768) and hex
+                        # (0x8000 — the standard interface subslot) in the wild.
+                        # Parse like every other numeric GSDML attribute: bare
+                        # int() raises ValueError on "0x8000", which aborted the
+                        # WHOLE GSDML parse via the catch-all below.
+                        subslot_num = _parse_hex(subslot.get("SubslotNumber", "0"))
                         text_id = subslot.get("TextId", "")
                         # Update submodule with subslot number
                         for submod in device.dap_submodules:
