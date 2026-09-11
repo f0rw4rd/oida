@@ -149,7 +149,7 @@ class TestParsers:
         assert host._parse_memory_write("0x200:abcd") == (0x200, b"\xab\xcd")
 
     def test_parse_memory_write_invalid(self, host):
-        assert host._parse_memory_write("nope") == (0, b"")
+        assert host._parse_memory_write("nope") == (None, b"")
 
     def test_parse_group_write(self, host):
         assert host._parse_group_write("1/2/3:01") == ("1/2/3", b"\x01")

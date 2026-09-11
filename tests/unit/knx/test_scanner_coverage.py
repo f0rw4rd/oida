@@ -171,7 +171,7 @@ def mock_scanner(mock_logger, knx_data):
                 return addr, data
             except Exception as e:
                 self.logger.fail(f"Invalid memory write format '{write_arg}': {e}")
-                return 0, b""
+                return None, b""
 
         def _parse_property_arg(self, prop_arg: str) -> tuple:
             """Parse property read argument (OBJ:PROP)"""
@@ -408,14 +408,14 @@ class TestParseMemoryWrite:
     def test_invalid_format_no_colon(self, mock_scanner):
         """Test invalid format without colon."""
         addr, data = mock_scanner._parse_memory_write("0x0100")
-        assert addr == 0
+        assert addr is None
         assert data == b""
         mock_scanner.logger.fail.assert_called()
 
     def test_invalid_hex_data(self, mock_scanner):
         """Test invalid hex data."""
         addr, data = mock_scanner._parse_memory_write("0x0100:XYZ")
-        assert addr == 0
+        assert addr is None
         assert data == b""
         mock_scanner.logger.fail.assert_called()
 

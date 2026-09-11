@@ -17,8 +17,8 @@ repos:
         stages: [pre-commit]
       # --- pre-push: heavier checks ---
       # Dead code at confidence 60, not 80. At 80 vulture reports only unused
-      # variables; the 247 unused methods and 95 unused classes found in
-      # AI_SLOP_AUDIT.md all sit in the 60-79 band. Ratcheted against
+      # variables; the 247 unused methods and 95 unused classes in this
+      # codebase all sit in the 60-79 band. Ratcheted against
       # .quality/vulture-baseline.txt, which should only ever get shorter.
       - id: vulture
         name: dead code detection (vulture, ratcheted)

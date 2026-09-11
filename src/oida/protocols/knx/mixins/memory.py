@@ -118,6 +118,20 @@ class MemoryMixin:
         self, knx: "XKNX", address: str, mem_addr: int, data: bytes
     ) -> Dict[str, Any]:
         """Write data to device memory"""
+        # Reject the sentinel produced by _parse_memory_write on malformed input so a bad
+        # --memory-write argument never falls back to a default address. Must run before
+        # any hex(mem_addr) formatting below, which would raise TypeError on None.
+        if mem_addr is None:
+            self.logger.fail("Refusing memory write: invalid/missing memory address")
+            return {
+                "address": address,
+                "mem_addr": None,
+                "data": data.hex(),
+                "success": False,
+                "verified": False,
+                "error": "Invalid memory address",
+            }
+
         self.logger.debug(f"Memory write: device={address}, addr={hex(mem_addr)}, len={len(data)}")
         result = {
             "address": address,
@@ -298,7 +312,12 @@ class MemoryMixin:
             return None, None
 
     def _parse_memory_write(self, write_arg: str) -> tuple:
-        """Parse memory write argument (ADDR:DATA)"""
+        """Parse memory write argument (ADDR:DATA)
+
+        Returns (addr, data) on success, or (None, b"") on malformed input so the
+        caller never falls back to a default address. A None memory address is
+        rejected by _write_memory before any telegram is sent.
+        """
         try:
             parts = write_arg.split(":")
             if len(parts) != 2:
@@ -312,7 +331,7 @@ class MemoryMixin:
             return addr, data
         except Exception as e:
             self.logger.fail(f"Invalid memory write format '{write_arg}': {e}")
-            return 0, b""
+            return None, b""
 
     def _parse_group_write(self, write_arg: str) -> tuple:
         """Parse group write argument (ADDR:VALUE)

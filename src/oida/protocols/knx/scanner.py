@@ -274,9 +274,14 @@ class KNXScanner(
             if memory_write_arg:
                 individual_addr = self.args.get("individual-address", "1.1.1")
                 mem_addr, data = self._parse_memory_write(memory_write_arg)
-                results["memory_write"] = await self._write_memory(
-                    knx, individual_addr, mem_addr, data
-                )
+                if mem_addr is None:
+                    results["memory_write"] = {
+                        "error": f"Invalid memory write format '{memory_write_arg}'"
+                    }
+                else:
+                    results["memory_write"] = await self._write_memory(
+                        knx, individual_addr, mem_addr, data
+                    )
 
             # Property read
             property_read_arg = self.args.get("property-read")
