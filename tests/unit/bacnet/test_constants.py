@@ -33,7 +33,7 @@ class TestObjectTypes(unittest.TestCase):
         from oida.protocols.bacnet.constants import VENDORS
 
         self.assertEqual(VENDORS[0], "ASHRAE")
-        self.assertEqual(VENDORS[7], "Siemens Building Technologies")
+        self.assertEqual(VENDORS[7], "Siemens Schweiz AG")
         self.assertIsInstance(VENDORS, dict)
 
     def test_priority_levels(self):

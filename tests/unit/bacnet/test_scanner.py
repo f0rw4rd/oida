@@ -112,11 +112,11 @@ class TestBACnetDataStructures(unittest.TestCase):
 
         # Check common vendors
         self.assertEqual(VENDORS[0], "ASHRAE")
-        self.assertEqual(VENDORS[4], "Honeywell")
+        self.assertEqual(VENDORS[4], "PolarSoft")
         self.assertEqual(VENDORS[5], "Johnson Controls")
-        self.assertEqual(VENDORS[7], "Siemens Building Technologies")
-        self.assertEqual(VENDORS[89], "Tridium")
-        self.assertEqual(VENDORS[222], "Schneider Electric")
+        self.assertEqual(VENDORS[7], "Siemens Schweiz AG")
+        self.assertEqual(VENDORS[17], "Honeywell")
+        self.assertEqual(VENDORS[36], "Tridium")
 
     def test_vendor_coverage(self):
         """Test vendor ID coverage"""
@@ -368,9 +368,10 @@ class TestBACnetVendorLookup(unittest.TestCase):
         """Test lookup of known vendor IDs"""
         from oida.protocols.bacnet import VENDORS
 
-        self.assertEqual(VENDORS.get(7), "Siemens Building Technologies")
+        self.assertEqual(VENDORS.get(7), "Siemens Schweiz AG")
         self.assertEqual(VENDORS.get(5), "Johnson Controls")
-        self.assertEqual(VENDORS.get(4), "Honeywell")
+        self.assertEqual(VENDORS.get(4), "PolarSoft")
+        self.assertEqual(VENDORS.get(17), "Honeywell")
 
     def test_lookup_unknown_vendor(self):
         """Test lookup of unknown vendor ID"""
