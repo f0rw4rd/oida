@@ -18,6 +18,8 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
+from .device_info import decode_s7_field
+
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 else:
@@ -225,11 +227,11 @@ class BlockOperationsMixin(_ScannerBase):
                 "sbb_length": info.SBBLength,
                 "checksum": info.CheckSum,
                 "version": info.Version,
-                "code_date": info.CodeDate,
-                "interface_date": info.IntfDate,
-                "author": getattr(info, "Author", "N/A"),
-                "family": getattr(info, "Family", "N/A"),
-                "header": getattr(info, "Header", "N/A"),
+                "code_date": decode_s7_field(info.CodeDate),
+                "interface_date": decode_s7_field(info.IntfDate),
+                "author": decode_s7_field(getattr(info, "Author", "N/A")),
+                "family": decode_s7_field(getattr(info, "Family", "N/A")),
+                "header": decode_s7_field(getattr(info, "Header", "N/A")),
             }
             self.logger.success(f"{block_type}{block_num} Info:")
             self.logger.display(f"    MC7 Size: {result['mc7_size']} bytes")

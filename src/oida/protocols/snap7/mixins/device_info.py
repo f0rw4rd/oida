@@ -18,6 +18,21 @@ else:
     _ScannerBase = object
 
 
+def decode_s7_field(value: Any) -> Any:
+    """Decode a raw snap7 ctypes field into a clean string.
+
+    python-snap7 structs (S7CpuInfo, TS7BlockInfo, ...) expose fixed-size
+    char-array fields that read back as ``bytes`` at runtime. Decode those
+    to ``ascii`` and strip trailing NULs/whitespace so downstream JSON
+    export doesn't stringify them as ``"b'...'"``. Non-bytes values (already
+    ``str``, ``None``, missing fields defaulted via ``getattr``) pass through
+    unchanged.
+    """
+    if isinstance(value, bytes):
+        return value.decode("ascii", errors="ignore").strip("\x00")
+    return value
+
+
 class DeviceInfoMixin(_ScannerBase):
     """Mixin providing CPU info, PLC status, firmware version, and series identification."""
 
@@ -173,8 +188,14 @@ class DeviceInfoMixin(_ScannerBase):
         try:
             cpu = connection.get_cpu_info()
             if not result["series"]:
-                result["series"] = lookup_s7_series(cpu.ModuleTypeName)
-            result["serial"] = cpu.SerialNumber
+                # ModuleTypeName is a ctypes c_char_Array -> bytes at runtime, and
+                # lookup_s7_series() does str.startswith against it, raising
+                # TypeError. That raise happens BEFORE the serial assignment
+                # below and is swallowed by this block's except, so a real PLC
+                # lost both the series AND the serial. The sibling _get_cpu_info
+                # decodes before the same lookup; do the same here.
+                result["series"] = lookup_s7_series(decode_s7_field(cpu.ModuleTypeName))
+            result["serial"] = decode_s7_field(cpu.SerialNumber)
         except Exception as e:
             error_msg = str(e).strip("b'\" ")
             errors.append(f"CPU info: {error_msg}")
