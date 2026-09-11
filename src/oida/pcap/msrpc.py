@@ -236,6 +236,12 @@ DRSUAPI_OPNUMS = {
     "19": "DsAddEntry",
 }
 
+# Opnum order per MS-SCMR section 3.1.4 "Methods in RPC Opnum Order".
+# The table previously listed opnum 36 as "QueryServiceConfig2W", which is
+# wrong in a security-relevant direction: 36 is RChangeServiceConfig2A, a
+# service-configuration WRITE, so a modification was reported to the operator
+# as a harmless read.  RQueryServiceConfig2W is opnum 39 and was missing
+# entirely.  Names drop the MS-SCMR "R" prefix to match this module's style.
 SVCCTL_OPNUMS = {
     "0": "CloseServiceHandle",
     "1": "ControlService",
@@ -246,6 +252,7 @@ SVCCTL_OPNUMS = {
     "6": "QueryServiceStatus",
     "7": "SetServiceStatus",
     "8": "UnlockServiceDatabase",
+    "9": "NotifyBootConfigStatus",
     "11": "ChangeServiceConfigW",
     "12": "CreateServiceW",
     "13": "EnumDependentServicesW",
@@ -255,12 +262,37 @@ SVCCTL_OPNUMS = {
     "17": "QueryServiceConfigW",
     "18": "QueryServiceLockStatusW",
     "19": "StartServiceW",
+    "20": "GetServiceDisplayNameW",
+    "21": "GetServiceKeyNameW",
+    "23": "ChangeServiceConfigA",
     "24": "CreateServiceA",
+    "25": "EnumDependentServicesA",
     "26": "EnumServicesStatusA",
     "27": "OpenSCManagerA",
     "28": "OpenServiceA",
-    "36": "QueryServiceConfig2W",
+    "29": "QueryServiceConfigA",
+    "30": "QueryServiceLockStatusA",
+    "31": "StartServiceA",
+    "32": "GetServiceDisplayNameA",
+    "33": "GetServiceKeyNameA",
+    "35": "EnumServiceGroupW",
+    "36": "ChangeServiceConfig2A",
+    "37": "ChangeServiceConfig2W",
+    "38": "QueryServiceConfig2A",
+    "39": "QueryServiceConfig2W",
+    "40": "QueryServiceStatusEx",
+    "41": "EnumServicesStatusExA",
     "42": "EnumServicesStatusExW",
+    "44": "CreateServiceWOW64A",
+    "45": "CreateServiceWOW64W",
+    "47": "NotifyServiceStatusChange",
+    "48": "GetNotifyResults",
+    "49": "CloseNotifyHandle",
+    "50": "ControlServiceExA",
+    "51": "ControlServiceExW",
+    "56": "QueryServiceConfigEx",
+    "60": "CreateWowService",
+    "64": "OpenSCManager2",
 }
 
 SRVSVC_OPNUMS = {
@@ -615,46 +647,56 @@ class MSRPCPassiveListener(PySharkListenerBase):
         data = ""
         result_str = ""
 
+        # PyShark's XmlLayer sanitizes each real field name by stripping ONLY
+        # the FIRST occurrence of the "<layername>." prefix, then replacing
+        # remaining "." and "-" with "_" and lowercasing. The real DCERPC
+        # winreg field names repeat the dissector name a second time
+        # (e.g. "winreg.winreg_OpenKey.keyname"), so only the leading
+        # "winreg." is stripped and the field resolves as
+        # "winreg_openkey_keyname" -- the prefixed form below, NOT the bare
+        # "OpenKey.keyname" form. get_field_any() tries the prefixed
+        # (correct) name first and falls back to the bare form so both
+        # conventions resolve across tshark versions.
         # OpenKey -> keyname
-        opened_key = self.get_field(layer, "winreg_OpenKey.keyname", None)
+        opened_key = self.get_field_any(layer, "winreg_OpenKey.keyname", "OpenKey.keyname")
         if opened_key:
             key_path = str(opened_key)
 
         # QueryValue -> value_name
-        qv = self.get_field(layer, "winreg_QueryValue.value_name", None)
+        qv = self.get_field_any(layer, "winreg_QueryValue.value_name", "QueryValue.value_name")
         if qv:
             value_name = str(qv)
 
         # SetValue -> name + data
-        sv_name = self.get_field(layer, "winreg_SetValue.name", None)
+        sv_name = self.get_field_any(layer, "winreg_SetValue.name", "SetValue.name")
         if sv_name:
             value_name = str(sv_name)
-        sv_data = self.get_field(layer, "winreg_SetValue.data", None)
+        sv_data = self.get_field_any(layer, "winreg_SetValue.data", "SetValue.data")
         if sv_data:
             data = str(sv_data)
 
         # CreateKey -> name
-        ck_name = self.get_field(layer, "winreg_CreateKey.name", None)
+        ck_name = self.get_field_any(layer, "winreg_CreateKey.name", "CreateKey.name")
         if ck_name:
             key_path = key_path or str(ck_name)
 
         # DeleteKey -> key
-        dk = self.get_field(layer, "winreg_DeleteKey.key", None)
+        dk = self.get_field_any(layer, "winreg_DeleteKey.key", "DeleteKey.key")
         if dk:
             key_path = key_path or str(dk)
 
         # DeleteValue -> value
-        dv = self.get_field(layer, "winreg_DeleteValue.value", None)
+        dv = self.get_field_any(layer, "winreg_DeleteValue.value", "DeleteValue.value")
         if dv:
             value_name = value_name or str(dv)
 
         # EnumKey -> name
-        ek = self.get_field(layer, "winreg_EnumKey.name", None)
+        ek = self.get_field_any(layer, "winreg_EnumKey.name", "EnumKey.name")
         if ek:
             key_path = key_path or str(ek)
 
         # EnumValue -> name
-        ev = self.get_field(layer, "winreg_EnumValue.name", None)
+        ev = self.get_field_any(layer, "winreg_EnumValue.name", "EnumValue.name")
         if ev:
             value_name = value_name or str(ev)
 
@@ -693,18 +735,33 @@ class MSRPCPassiveListener(PySharkListenerBase):
 
         layer = packet.srvsvc
 
+        # Real srvsvc field names repeat the dissector name a second time
+        # (e.g. "srvsvc.srvsvc_NetShareInfo1.name"), and pyshark's XmlLayer
+        # only strips the FIRST "srvsvc." occurrence -- see the winreg note
+        # above. get_field_any() tries the prefixed (correct) name first and
+        # falls back to the bare form so both conventions resolve.
         # Share info from NetShareEnumAll / NetShareGetInfo responses
-        share_names_raw = self.get_field(layer, "srvsvc_NetShareInfo1.name", None)
-        share_types_raw = self.get_field(layer, "srvsvc_NetShareInfo1.type", None)
-        share_comments_raw = self.get_field(layer, "srvsvc_NetShareInfo1.comment", None)
+        share_names_raw = self.get_field_any(
+            layer, "srvsvc_NetShareInfo1.name", "NetShareInfo1.name"
+        )
+        share_types_raw = self.get_field_any(
+            layer, "srvsvc_NetShareInfo1.type", "NetShareInfo1.type"
+        )
+        share_comments_raw = self.get_field_any(
+            layer, "srvsvc_NetShareInfo1.comment", "NetShareInfo1.comment"
+        )
 
         # Single share query
-        single_share = self.get_field(layer, "srvsvc_NetShareGetInfo.share_name", None)
+        single_share = self.get_field_any(
+            layer, "srvsvc_NetShareGetInfo.share_name", "NetShareGetInfo.share_name"
+        )
         if single_share:
             details["share_name"] = str(single_share)
 
         # Server UNC from enum request
-        server_unc = self.get_field(layer, "srvsvc_NetShareEnumAll.server_unc", None)
+        server_unc = self.get_field_any(
+            layer, "srvsvc_NetShareEnumAll.server_unc", "NetShareEnumAll.server_unc"
+        )
         if server_unc:
             details["server_unc"] = str(server_unc)
 
