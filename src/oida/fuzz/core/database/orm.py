@@ -273,13 +273,18 @@ class SQLAlchemyDatabase(DatabaseInterface):
                 "response": response.hex() if response else None,
             }
 
-            # Create payload record
-            orm_payload = Payload(
-                test_case_id=test_case_id, payload=json.dumps(payload_data).encode("utf-8")
-            )
+            blob = json.dumps(payload_data).encode("utf-8")
 
-            session.add(orm_payload)
-            ics_logger.debug(f"Stored payload for test case {test_case_id}")
+            # Upsert: test_case_id is the PRIMARY KEY of payloads, so a plain
+            # INSERT for an id that already has a payload raises IntegrityError
+            # instead of updating. Mirrors store_crash's check-then-update.
+            existing = session.get(Payload, test_case_id)
+            if existing:
+                existing.payload = blob
+                ics_logger.debug(f"Updated payload for test case {test_case_id}")
+            else:
+                session.add(Payload(test_case_id=test_case_id, payload=blob))
+                ics_logger.debug(f"Stored payload for test case {test_case_id}")
 
     @staticmethod
     def _to_dto(tc: TestCase) -> TestCaseDTO:
@@ -374,6 +379,26 @@ class SQLAlchemyDatabase(DatabaseInterface):
                 )
 
         return None
+
+    def get_all_crashes(self) -> List[CrashDTO]:
+        """Return every stored crash (for triage / reporting).
+
+        Ordered by ``test_case_id`` so the report reads in discovery order.
+        Crashes are few relative to test cases, so this is unbounded on
+        purpose (unlike ``get_test_cases``).
+        """
+        with self.get_session() as session:
+            crashes = session.execute(select(Crash).order_by(Crash.test_case_id)).scalars().all()
+            return [
+                CrashDTO(
+                    test_case_id=c.test_case_id,
+                    payload=c.payload,
+                    crash_info=c.crash_info,
+                    stack_trace=c.stack_trace,
+                    crash_hash=c.crash_hash,
+                )
+                for c in crashes
+            ]
 
     def get_payload(self, test_case_id: int) -> Optional[dict]:
         """
@@ -576,10 +601,12 @@ class SQLAlchemyDatabase(DatabaseInterface):
             )
 
             # Get database file size
+            db_size_bytes = 0
             db_size_mb = 0.0
             if self.database_path and self.database_path != ":memory:":
                 try:
-                    db_size_mb = os.path.getsize(self.database_path) / (1024 * 1024)
+                    db_size_bytes = os.path.getsize(self.database_path)
+                    db_size_mb = db_size_bytes / (1024 * 1024)
                 except OSError as e:
                     ics_logger.debug(f"Failed to get database file size: {e}")
 
@@ -598,11 +625,14 @@ class SQLAlchemyDatabase(DatabaseInterface):
                 "passed": result_counts.get("pass", 0),  # Alias
                 "failed": result_counts.get("fail", 0),  # Alias
                 "crashed": result_counts.get("crash", 0),  # Alias
+                "errors": result_counts.get("error", 0),  # Alias (matches MockDatabase)
                 "average_duration_ms": float(avg_duration) if avg_duration else 0.0,
                 "crashes_with_payloads": crashes_with_payloads,
+                "crashes_stored": crashes_with_payloads,  # Alias (matches MockDatabase)
                 "total_payloads_stored": total_payloads,
                 "date_range": {"oldest": oldest, "newest": newest},
                 "database_path": self.database_path,
+                "db_size_bytes": db_size_bytes,  # Alias (matches MockDatabase)
                 "db_size_mb": db_size_mb,
                 "orm_backend": "sqlalchemy",
                 "store_all_payloads": self._store_all_payloads,
@@ -690,6 +720,18 @@ class SQLAlchemyDatabase(DatabaseInterface):
                 "event": crash_event.to_dict(),
                 "context": [entry.to_dict() for entry in crash_event.context_entries],
             }
+
+    def get_crash_events(self) -> List[dict]:
+        """List all stored crash events (newest first), without their context rows.
+
+        Each dict is ``CrashEvent.to_dict()`` (id, detected_at_id, target, size, ...).
+        Use ``get_crash_event(id)`` to pull one event's full context window.
+        """
+        with self.get_session() as session:
+            events = (
+                session.execute(select(CrashEvent).order_by(CrashEvent.id.desc())).scalars().all()
+            )
+            return [e.to_dict() for e in events]
 
     def get_crash_context_payload(self, crash_event_id: int, test_case_id: int) -> Optional[bytes]:
         """
