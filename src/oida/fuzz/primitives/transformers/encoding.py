@@ -19,6 +19,22 @@ from urllib.parse import quote, unquote, quote_plus, unquote_plus
 from .base import BaseTransformer
 
 
+def _decode_bytes(data: bytes) -> tuple[str, str]:
+    """Decode bytes to text for the text-based encoding transformers below.
+
+    Tries UTF-8 first (so already-valid UTF-8 payloads keep their natural
+    text form) and falls back to Latin-1, which maps every byte 0x00-0xFF
+    to a single codepoint and therefore never raises. Callers MUST re-encode
+    their result with the *same* codec this returns -- mixing codecs (e.g.
+    decoding with Latin-1 but re-encoding with UTF-8) silently turns every
+    byte >= 0x80 into a two-byte UTF-8 sequence and corrupts the payload.
+    """
+    try:
+        return data.decode("utf-8"), "utf-8"
+    except UnicodeDecodeError:
+        return data.decode("latin-1"), "latin-1"
+
+
 class Base64Transformer(BaseTransformer):
     """
     Base64 encoding transformer (RFC 4648).
@@ -144,31 +160,35 @@ class URLEncodeTransformer(BaseTransformer):
 
     def encode(self, data: bytes) -> bytes:
         """Encode data with percent-encoding"""
-        try:
-            text = data.decode("utf-8")
-        except UnicodeDecodeError:
-            text = data.decode("latin-1")
+        text, codec = _decode_bytes(data)
 
+        # Passing encoding=codec makes quote() percent-encode the *original*
+        # raw bytes (it re-encodes `text` with `codec` internally before
+        # quoting), regardless of which codec decoded them -- so this stays
+        # byte-for-byte equivalent to the original data.
         if self.plus_encoding:
-            encoded = quote_plus(text, safe=self.safe)
+            encoded = quote_plus(text, safe=self.safe, encoding=codec)
         else:
-            encoded = quote(text, safe=self.safe)
+            encoded = quote(text, safe=self.safe, encoding=codec)
 
-        return encoded.encode("utf-8")
+        return encoded.encode(codec)
 
     def decode(self, data: bytes) -> bytes:
         """Decode percent-encoded data"""
-        try:
-            text = data.decode("utf-8")
-        except UnicodeDecodeError:
-            text = data.decode("latin-1")
+        # `data` here is percent-encoded text, which quote() always renders
+        # as pure ASCII, so decoding it is never ambiguous. What matters is
+        # the codec used to interpret the %XX bytes: Latin-1 maps every raw
+        # byte 0x00-0xFF to its own codepoint 1:1, so unquoting with Latin-1
+        # and re-encoding with Latin-1 is always lossless, independent of
+        # whichever codec encode() happened to use to build the %XX escapes.
+        text, _ = _decode_bytes(data)
 
         if self.plus_encoding:
-            decoded = unquote_plus(text)
+            decoded = unquote_plus(text, encoding="latin-1")
         else:
-            decoded = unquote(text)
+            decoded = unquote(text, encoding="latin-1")
 
-        return decoded.encode("utf-8")
+        return decoded.encode("latin-1")
 
     @property
     def name(self) -> str:
@@ -280,23 +300,17 @@ class HTMLEntityTransformer(BaseTransformer):
 
     def encode(self, data: bytes) -> bytes:
         """Encode HTML entities"""
-        try:
-            text = data.decode("utf-8")
-        except UnicodeDecodeError:
-            text = data.decode("latin-1")
+        text, codec = _decode_bytes(data)
 
         encoded = html.escape(text, quote=self.quote_style)
-        return encoded.encode("utf-8")
+        return encoded.encode(codec)
 
     def decode(self, data: bytes) -> bytes:
         """Decode HTML entities"""
-        try:
-            text = data.decode("utf-8")
-        except UnicodeDecodeError:
-            text = data.decode("latin-1")
+        text, codec = _decode_bytes(data)
 
         decoded = html.unescape(text)
-        return decoded.encode("utf-8")
+        return decoded.encode(codec)
 
     @property
     def name(self) -> str:
@@ -323,24 +337,36 @@ class JSONEscapeTransformer(BaseTransformer):
 
     def encode(self, data: bytes) -> bytes:
         """Encode for JSON string"""
-        try:
-            text = data.decode("utf-8")
-        except UnicodeDecodeError:
-            text = data.decode("latin-1")
+        text, codec = _decode_bytes(data)
 
         # Use json.dumps to properly escape, then remove outer quotes
         encoded = json.dumps(text)[1:-1]
-        return encoded.encode("utf-8")
+        return encoded.encode(codec)
 
     def decode(self, data: bytes) -> bytes:
         """Decode JSON-escaped string"""
-        try:
-            text = data.decode("utf-8")
-        except UnicodeDecodeError:
-            text = data.decode("latin-1")
+        # `data` is JSON-escaped text, which json.dumps() always renders as
+        # pure ASCII (ensure_ascii=True), so decoding it never needs the
+        # latin-1 fallback and carries no information about which codec
+        # encode() used on the *original* raw bytes -- that information is
+        # lost once non-ASCII bytes get turned into \uXXXX escapes.
+        text, _ = _decode_bytes(data)
 
         # Wrap in quotes and parse as JSON
         decoded = json.loads(f'"{text}"')
+
+        # Recover byte-for-byte fidelity for the common fuzzing case (raw /
+        # invalid-UTF-8 bytes, which is exactly what makes encode() take the
+        # latin-1 fallback): if every recovered codepoint fits in a single
+        # byte, re-encode with latin-1, which is what makes
+        # decode(encode(bytes(range(256)))) == bytes(range(256)) hold.
+        # KNOWN LIMITATION: this is inherently ambiguous -- a genuine
+        # multi-byte UTF-8 source whose codepoints all happen to be <= 0xFF
+        # (e.g. "caf\xe9") is indistinguishable, after the ensure_ascii
+        # round trip, from raw bytes that were latin-1-decoded to the same
+        # codepoints, so that case will still mis-reconstruct.
+        if all(ord(ch) <= 0xFF for ch in decoded):
+            return decoded.encode("latin-1")
         return decoded.encode("utf-8")
 
     @property
@@ -367,10 +393,7 @@ class XMLEscapeTransformer(BaseTransformer):
 
     def encode(self, data: bytes) -> bytes:
         """Escape XML special characters"""
-        try:
-            text = data.decode("utf-8")
-        except UnicodeDecodeError:
-            text = data.decode("latin-1")
+        text, codec = _decode_bytes(data)
 
         # Escape XML special characters
         replacements = {
@@ -384,14 +407,11 @@ class XMLEscapeTransformer(BaseTransformer):
         for char, entity in replacements.items():
             text = text.replace(char, entity)
 
-        return text.encode("utf-8")
+        return text.encode(codec)
 
     def decode(self, data: bytes) -> bytes:
         """Unescape XML entities"""
-        try:
-            text = data.decode("utf-8")
-        except UnicodeDecodeError:
-            text = data.decode("latin-1")
+        text, codec = _decode_bytes(data)
 
         # Unescape XML entities
         replacements = {
@@ -405,7 +425,7 @@ class XMLEscapeTransformer(BaseTransformer):
         for entity, char in replacements.items():
             text = text.replace(entity, char)
 
-        return text.encode("utf-8")
+        return text.encode(codec)
 
     @property
     def name(self) -> str:
