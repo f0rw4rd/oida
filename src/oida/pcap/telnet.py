@@ -178,8 +178,12 @@ class TelnetPassiveListener(PySharkListenerBase):
     LOGIN_PROMPT_REGEX = re.compile(r"login:\s*$", re.IGNORECASE)
     PASSWORD_PROMPT_REGEX = re.compile(r"password:\s*$", re.IGNORECASE)
 
-    # Combined pattern for session-level matching (from BruteShark)
-    TELNET_LOGIN_REGEX = re.compile(r"login:([\s\S]*)password:(.*)", re.IGNORECASE | re.DOTALL)
+    # Combined pattern for session-level matching (from BruteShark).
+    # The username group is lazy and the password group stops at end-of-line so
+    # a buffer holding several attempts (a failed login followed by a retry)
+    # yields one match per attempt instead of one greedy span that pairs the
+    # first username with the last password.
+    TELNET_LOGIN_REGEX = re.compile(r"login:(.*?)password:([^\r\n]*)", re.IGNORECASE | re.DOTALL)
 
     def __init__(
         self,
@@ -659,11 +663,12 @@ class TelnetPassiveListener(PySharkListenerBase):
         # Prefer client-only buffer to avoid echo duplication
         session_text = session.client_buffer or session.data_buffer
 
-        match = self.TELNET_LOGIN_REGEX.search(session_text)
-        if not match and session.client_buffer:
+        matches = list(self.TELNET_LOGIN_REGEX.finditer(session_text))
+        if not matches and session.client_buffer:
             # Fallback to mixed buffer if client-only didn't match
-            match = self.TELNET_LOGIN_REGEX.search(session.data_buffer)
-        if match:
+            matches = list(self.TELNET_LOGIN_REGEX.finditer(session.data_buffer))
+
+        for match in matches:
             # Extract username (text between "login:" and "password:")
             username_part = match.group(1)
             password_part = match.group(2)
@@ -673,9 +678,12 @@ class TelnetPassiveListener(PySharkListenerBase):
             username = self._filter_nvt_ascii(username_part).strip()
             password = self._filter_nvt_ascii(password_part).strip()
 
-            # Remove any trailing/embedded prompts
+            # Remove any trailing/embedded prompts. A lazy username group keeps
+            # each match to a single attempt, but strip a stray "login" echo too.
             if "password" in username.lower():
                 username = username.split("password")[0].strip()
+            if "login" in username.lower():
+                username = username.rsplit("login", 1)[-1].strip()
 
             if username and password:
                 # Check if we already recorded this
