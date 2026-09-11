@@ -172,18 +172,27 @@ class SSDPPassiveListener(PySharkListenerBase):
             name="",
             device_type="UPnP Device",
         )
+        # Update on every packet, not just the first: a later NOTIFY can carry a
+        # changed LOCATION/USN, and an ssdp:byebye must be reflected rather than
+        # leaving a stale "alive" record indefinitely. Prefer newly-seen
+        # non-empty values but keep prior ones when this packet omits a field.
+        existing = getattr(device, "ssdp_data", None) or {}
+
+        def _prefer(new_val: str, key: str) -> str:
+            return new_val if new_val else existing.get(key, "")
+
+        device.ssdp_data = {
+            "msg_type": msg_type,
+            "server": _prefer(server, "server"),
+            "location": _prefer(location, "location"),
+            "usn": _prefer(usn, "usn"),
+            "nt": _prefer(ssdp_info.get("nt", ""), "nt"),
+            "st": _prefer(ssdp_info.get("st", ""), "st"),
+            "nts": _prefer(ssdp_info.get("nts", ""), "nts"),
+            "cache_control": _prefer(ssdp_info.get("cache_control", ""), "cache_control"),
+            "protocol": "SSDP/UDP",
+        }
         if is_new:
-            device.ssdp_data = {
-                "msg_type": msg_type,
-                "server": server,
-                "location": location,
-                "usn": usn,
-                "nt": ssdp_info.get("nt", ""),
-                "st": ssdp_info.get("st", ""),
-                "nts": ssdp_info.get("nts", ""),
-                "cache_control": ssdp_info.get("cache_control", ""),
-                "protocol": "SSDP/UDP",
-            }
             self.logger.debug(f"SSDP: {src_ip} {msg_type} server={server} nt={nt_or_st}")
 
     # ------------------------------------------------------------------
@@ -332,8 +341,11 @@ class SSDPPassiveListener(PySharkListenerBase):
         for raw_key, raw_val in all_fields.items():
             val = str(raw_val).strip()
             if raw_key == "http.unknown_header":
-                # Format: "NT: upnp:rootdevice\r\n"
-                self._parse_ssdp_header_line(val, result)
+                # May carry several headers joined by CRLF, e.g.
+                # "NT: upnp:rootdevice\r\nUSN: uuid:...\r\nNTS: ssdp:alive".
+                # Parse each line so USN/NTS aren't lost to the first one.
+                for header_line in val.replace("\\r\\n", "\n").replace("\r\n", "\n").split("\n"):
+                    self._parse_ssdp_header_line(header_line, result)
 
         # Also try direct ssdp.* fields (some tshark versions expose them)
         for key in ("usn", "st", "nt", "nts"):
