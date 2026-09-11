@@ -1033,12 +1033,37 @@ class MMSPassiveListener(PySharkListenerBase):
         In EK mode, ASN.1 container elements (e.g. ``aarq_element``) have
         null values, so ``get_field()`` returns ``None`` even when the field
         exists.  ``has_field()`` correctly detects presence.
+
+        In XML mode ``has_field()`` exists too but returns False for these
+        zero-length ASN.1 marker elements, even though the key is present in
+        ``layer._all_fields``.  The old code returned that False immediately,
+        so the fallback below was unreachable and every PDU-type branch that
+        keys off a ``*_element`` marker was dead on the live-capture path
+        (``pyshark_base`` builds LiveCapture without ``use_ek``, i.e. XML
+        mode).  Concretely: all 29 Initiate PDUs across the MMS fixtures were
+        classified as generic "MMS PDU" in XML mode but correctly as
+        "Initiate" in EK mode.  So treat has_field() as a positive-only
+        signal and keep probing.
         """
         if hasattr(layer, "has_field"):
-            return bool(layer.has_field(field_name))
-        # XML-mode fallback: check attribute existence with non-None value
-        val = getattr(layer, field_name, None)
-        return val is not None
+            try:
+                if layer.has_field(field_name):
+                    return True
+            except Exception:  # pragma: no cover - defensive, pyshark internals
+                pass
+
+        # XML mode: the raw field map is keyed by the fully-qualified tshark
+        # name ("mms.initiate_RequestPDU_element"), so accept either form.
+        all_fields = getattr(layer, "_all_fields", None)
+        if all_fields:
+            if field_name in all_fields:
+                return True
+            suffix = "." + field_name
+            if any(key.endswith(suffix) for key in all_fields):
+                return True
+
+        # Last resort: plain attribute access with a non-None value.
+        return getattr(layer, field_name, None) is not None
 
     def _extract_identifiers(self, mms) -> List[str]:
         """Extract Identifier list from getNameList response.
@@ -1242,7 +1267,14 @@ class MMSPassiveListener(PySharkListenerBase):
                 self.logger.info(f"MMS/ACSE: calling auth value from {src_ip} to {dst_ip}")
 
         if responding_selector is not None:
-            if not self._is_duplicate(auth_value, "responding", src_ip, dst_ip):
+            # The responding branch stores the credential from the *server's*
+            # point of view (client_ip=dst_ip, server_ip=src_ip), so the
+            # duplicate lookup -- which compares client_ip against its third
+            # argument -- has to be given the same orientation.  Passing
+            # (src_ip, dst_ip) here meant the key could never match anything
+            # this branch had stored, and the same credential was re-appended
+            # for every responding packet in the association.
+            if not self._is_duplicate(auth_value, "responding", dst_ip, src_ip):
                 cred = MMSCredential(
                     auth_value=auth_value,
                     auth_direction="responding",
