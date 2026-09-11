@@ -42,8 +42,9 @@ from .sunspec_constants import (
     SUNSPEC_MODEL_NAMES,
     SUNSPEC_NOT_IMPLEMENTED,
     SUNSPEC_SECURITY_MODELS,
+    SUNSPEC_SF_MAX,
+    SUNSPEC_SF_MIN,
 )
-from oida.utils.common_types import Category
 
 
 def _load_sunspec_maps() -> Dict[int, dict]:
@@ -100,7 +101,7 @@ def _is_not_implemented(value: Any, dtype: str) -> bool:
             return False
 
     # For signed types, check both the unsigned sentinel and the signed equivalent
-    if dtype == "i16":
+    if dtype in ("i16", "sunssf"):
         return bool(value == 0x8000 or value == -32768)
     if dtype == "i32":
         return bool(value == 0x80000000 or value == -2147483648)
@@ -497,6 +498,18 @@ class SunSpecMixin(_ScannerBase):
                     sf_raw = raw_data[addr_offset : addr_offset + regs_needed]
                     sf_val = _raw_regs_to_value(sf_raw, "i16")
                     if sf_val is not None and not _is_not_implemented(sf_raw[0], "sunssf"):
+                        # SunSpec defines sunssf as -10..10. The value comes off
+                        # the wire and is used as an exponent (10 ** sf), so an
+                        # out-of-range one would build a multi-thousand-digit int
+                        # (ValueError on str()) or overflow a float. Drop it and
+                        # report the register unscaled instead.
+                        if not (SUNSPEC_SF_MIN <= sf_val <= SUNSPEC_SF_MAX):
+                            self.logger.debug(
+                                f"Ignoring out-of-range SunSpec scale factor "
+                                f"{reg_name}={sf_val} (legal range "
+                                f"{SUNSPEC_SF_MIN}..{SUNSPEC_SF_MAX})"
+                            )
+                            continue
                         # Store keyed by the JSON address so scale_factor_register refs work
                         sf_values[reg_def.get("address", 0)] = sf_val
 
@@ -578,7 +591,11 @@ class SunSpecMixin(_ScannerBase):
                     scaled_value = raw_value * (10**sf)
 
                 # Format the number
-                if isinstance(scaled_value, float):
+                if isinstance(scaled_value, float) and not math.isfinite(scaled_value):
+                    # inf/-inf survives the "not implemented" NaN check for f32
+                    # and would blow up int(scaled_value) below.
+                    value_str = str(scaled_value)
+                elif isinstance(scaled_value, float):
                     if scaled_value == int(scaled_value):
                         value_str = str(int(scaled_value))
                     else:
@@ -696,7 +713,6 @@ class SunSpecMixin(_ScannerBase):
         if not found_security:
             self.logger.security_finding(
                 "No SunSpec security models (3-9) present",
-                category=Category.AUTHENTICATION,
                 detail=(
                     "Device has no Secure Dataset models -- all Modbus registers "
                     "readable/writable without authentication"
@@ -740,7 +756,6 @@ class SunSpecMixin(_ScannerBase):
         if writable_controls:
             self.logger.security_finding(
                 f"{len(writable_controls)} writable control register(s) exposed",
-                category=Category.ACCESS_CONTROL,
                 detail="Critical DER control registers accessible without authentication",
             )
 
@@ -755,21 +770,18 @@ class SunSpecMixin(_ScannerBase):
             if conn_exposed:
                 self.logger.security_finding(
                     "Inverter connect/disconnect register (Conn) is writable",
-                    category=Category.ACCESS_CONTROL,
                     detail="Model 123 Conn register can disconnect inverter from grid via single Modbus write",
                 )
 
             if set_op_exposed:
                 self.logger.security_finding(
                     "Battery connect/disconnect register (SetOp) is writable",
-                    category=Category.ACCESS_CONTROL,
                     detail="Model 802 SetOp can disconnect battery system via Modbus write",
                 )
 
             if stor_ctl_exposed:
                 self.logger.security_finding(
                     "Battery storage control mode (StorCtl_Mod) is writable",
-                    category=Category.ACCESS_CONTROL,
                     detail="Model 124 StorCtl_Mod controls charge/discharge behavior",
                 )
 
@@ -808,7 +820,6 @@ class SunSpecMixin(_ScannerBase):
                 detail_parts.append(f"AC power={ac_power_w:.0f}W")
             self.logger.security_finding(
                 "Inverter actively producing with writable controls exposed",
-                category=Category.ACCESS_CONTROL,
                 detail=f"Device is online and generating power ({', '.join(detail_parts)})",
             )
 
@@ -820,7 +831,6 @@ class SunSpecMixin(_ScannerBase):
             if isinstance(loc_rem, dict) and loc_rem.get("raw") == 0:
                 self.logger.security_finding(
                     "Battery in REMOTE control mode",
-                    category=Category.ACCESS_CONTROL,
                     detail="Battery accepts remote commands -- writable registers are live",
                 )
 
@@ -843,7 +853,6 @@ class SunSpecMixin(_ScannerBase):
                     if w_rtg >= 100_000 and writable_controls:
                         self.logger.security_finding(
                             f"High-capacity DER ({capacity_str}) with exposed controls",
-                            category=Category.ACCESS_CONTROL,
                             detail=(
                                 "Utility-scale device with writable control registers -- "
                                 "grid stability impact if manipulated"
