@@ -303,11 +303,24 @@ class ASN1Primitive(Fuzzable):
         """Return number of mutations."""
         return len(self._mutations) - 1  # Exclude valid encoding
 
-    def encode(self, value, mutation_context):
-        """Encode the current value."""
-        if mutation_context and mutation_context.mutation_index < len(self._mutations):
-            return self._mutations[mutation_context.mutation_index]
-        return self._mutations[0]  # Valid encoding
+    def encode(self, value, mutation_context=None):
+        """Encode the current value.
+
+        boofuzz's ``Fuzzable.render()`` calls
+        ``encode(value=self.get_value(mutation_context), mutation_context=...)``.
+        ``value`` is therefore already the fully-encoded mutation yielded by
+        :meth:`mutations`, or -- when this node is not being mutated --
+        :meth:`original_value`, i.e. the valid encoding.  It must simply be
+        passed through.
+
+        Note: ``MutationContext`` has no ``mutation_index`` attribute (its
+        public attributes are ``message_path``, ``mutations`` and
+        ``protocol_session``), so indexing ``self._mutations`` by one raised
+        ``AttributeError`` on the first rendered test case.
+        """
+        if value is None:
+            return self.original_value()
+        return value
 
     def original_value(self, test_case_context=None):
         """Return the original (valid) encoded value.
@@ -772,10 +785,16 @@ class ASN1Sequence(Fuzzable):
     def num_mutations(self, default_value=None):
         return len(self._mutations) - 1
 
-    def encode(self, value, mutation_context):
-        if mutation_context and mutation_context.mutation_index < len(self._mutations):
-            return self._mutations[mutation_context.mutation_index]
-        return self._mutations[0]
+    def encode(self, value, mutation_context=None):
+        """Pass the rendered mutation through.
+
+        See :meth:`ASN1Primitive.encode` -- ``value`` already holds either the
+        mutation yielded by :meth:`mutations` or the valid encoding returned by
+        :meth:`original_value`. ``MutationContext`` has no ``mutation_index``.
+        """
+        if value is None:
+            return self.original_value()
+        return value
 
     def original_value(self, test_case_context=None):
         """Return the original (valid) encoded value.

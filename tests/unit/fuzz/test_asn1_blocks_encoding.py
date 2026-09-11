@@ -31,12 +31,16 @@ from src.oida.fuzz.primitives.asn1_blocks import (
 
 
 # ---------------------------------------------------------------------------
-# Minimal boofuzz mutation_context stand-in (a plain value holder, not a patch
-# of the code under test). encode() reads .mutation_index off whatever it gets.
+# Minimal boofuzz mutation_context stand-in. A real boofuzz MutationContext
+# carries only message_path / mutations / protocol_session -- notably NOT a
+# mutation_index -- so encode() must never read an index off it. The mutation
+# itself is delivered through encode()'s `value` argument.
 # ---------------------------------------------------------------------------
 class _Ctx:
-    def __init__(self, idx):
-        self.mutation_index = idx
+    def __init__(self, mutations=None):
+        self.message_path = None
+        self.mutations = mutations or {}
+        self.protocol_session = None
 
 
 # ---------------------------------------------------------------------------
@@ -193,17 +197,15 @@ class TestASN1VisibleStringMutations:
 # encode() dispatch via mutation_context
 # ---------------------------------------------------------------------------
 class TestEncodeDispatch:
-    def test_encode_returns_indexed_mutation(self):
+    def test_encode_passes_the_supplied_mutation_through(self):
         field = ASN1Integer("i", 42)
-        # index 0 is the valid encoding
-        assert field.encode(None, _Ctx(0)) == b"\x02\x01\x2a"
-        # a later index returns the corresponding stored mutation
-        assert field.encode(None, _Ctx(1)) == list(field._mutations)[1]
+        # boofuzz hands encode() the already-rendered mutation via `value`.
+        mutation = list(field._mutations)[1]
+        assert field.encode(mutation, _Ctx()) == mutation
 
-    def test_encode_out_of_range_falls_back_to_valid(self):
+    def test_encode_with_no_value_falls_back_to_valid(self):
         field = ASN1Integer("i", 42)
-        huge = _Ctx(10_000)
-        assert field.encode(None, huge) == b"\x02\x01\x2a"
+        assert field.encode(None, _Ctx()) == b"\x02\x01\x2a"
 
     def test_encode_without_context_returns_valid(self):
         field = ASN1Integer("i", 7)
@@ -223,8 +225,10 @@ class TestASN1SequenceBranches:
     def test_sequence_encode_dispatch(self):
         child = ASN1Integer("c", 1, fuzzable=False)
         seq = ASN1Sequence("seq", children=[child])
-        assert seq.encode(None, _Ctx(0)) == seq.original_value()
-        assert seq.encode(None, _Ctx(99999)) == seq.original_value()
+        assert seq.encode(None, _Ctx()) == seq.original_value()
+        assert seq.encode(None, None) == seq.original_value()
+        mutation = list(seq._mutations)[1]
+        assert seq.encode(mutation, _Ctx()) == mutation
 
     def test_tag_only_fuzz_skips_length_mutations(self):
         child = ASN1Integer("c", 1, fuzzable=False)
