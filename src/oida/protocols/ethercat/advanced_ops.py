@@ -17,6 +17,17 @@ else:
     _ScannerBase = object
 
 
+def _u16le(data: Any) -> int | None:
+    """Decode a little-endian u16 from a device-supplied register read.
+
+    Returns None when the slave answered with fewer than 2 bytes (or with
+    something that isn't bytes at all) instead of raising struct.error.
+    """
+    if not isinstance(data, (bytes, bytearray)) or len(data) < 2:
+        return None
+    return int(struct.unpack_from("<H", data, 0)[0])
+
+
 class AdvancedOpsMixin(_ScannerBase):
     """Mixin providing ESC register debug, DC analysis, emergency monitoring, and FoE."""
 
@@ -29,7 +40,7 @@ class AdvancedOpsMixin(_ScannerBase):
         - 0x0134: AL Status Code (error code)
         - 0x0800-0x083F: SyncManager config (8 bytes each, SM0-SM7)
         - 0x0600-0x06FF: FMMU config (16 bytes each, FMMU0-FMMU15)
-        - 0x0980: DC Activation
+        - 0x0980/0x0981: DC Cycle Unit Control / DC Activation
         """
         self.logger.display("Dumping ESC registers for debug...")
         results = {}
@@ -41,7 +52,12 @@ class AdvancedOpsMixin(_ScannerBase):
                 """Read ESC register via FPRD"""
                 try:
                     if hasattr(slave, "_fprd"):
-                        return slave._fprd(addr, size)
+                        data = slave._fprd(addr, size)
+                        if isinstance(data, (bytes, bytearray)):
+                            return bytes(data)
+                        self.logger.debug(
+                            "FPRD read of 0x%04X returned non-bytes: %r", addr, type(data)
+                        )
                 except Exception as e:
                     self.logger.debug("FPRD read of 0x%04X failed: %s", addr, e)
                 return b""
@@ -50,19 +66,23 @@ class AdvancedOpsMixin(_ScannerBase):
             al_status_data = read_reg(0x0130, 2)
             al_code_data = read_reg(0x0134, 2)
 
-            if al_status_data:
-                al_status = struct.unpack("<H", al_status_data)[0]
+            al_status = _u16le(al_status_data)
+            if al_status is not None:
                 slave_data["al_status"] = {
                     "raw": f"0x{al_status:04X}",
                     "state": self._get_slave_state_name(al_status),
                 }
+            elif al_status_data:
+                self.logger.debug("Truncated AL Status (0x0130) read: %r", al_status_data)
 
-            if al_code_data:
-                al_code = struct.unpack("<H", al_code_data)[0]
+            al_code = _u16le(al_code_data)
+            if al_code is not None:
                 slave_data["al_status_code"] = {
                     "raw": f"0x{al_code:04X}",
                     "meaning": self._get_al_status_error(al_code),
                 }
+            elif al_code_data:
+                self.logger.debug("Truncated AL Status Code (0x0134) read: %r", al_code_data)
 
             # SyncManager configuration
             slave_data["sync_managers"] = []
@@ -154,17 +174,33 @@ class AdvancedOpsMixin(_ScannerBase):
                             ]
                         )
 
-            # DC configuration
+            # DC configuration. The DC Activation register is the single byte
+            # at 0x0981 (0x0980 is the DC Cycle Unit Control reserved byte);
+            # read both so the raw value keeps the real register alignment.
             dc_data = read_reg(0x0980, 2)
-            if dc_data:
-                dc_active = struct.unpack("<H", dc_data)[0]
-                slave_data["dc_activation"] = f"0x{dc_active:04X}"
+            dc_active = _u16le(dc_data)
+            if dc_active is not None:
+                slave_data["dc_activation"] = f"0x{dc_active >> 8:02X}"
                 slave_data["dc_enabled"] = bool(dc_active & 0x0300)
+            elif dc_data:
+                self.logger.debug("Truncated DC Activation (0x0981) read: %r", dc_data)
 
             # Watchdog config
-            wd_div = read_reg(0x0420, 2)
-            if wd_div:
-                slave_data["watchdog_divider"] = struct.unpack("<H", wd_div)[0]
+            # 0x0400 is the shared Watchdog Divider register (ET1100/ESC reg
+            # map; pysoem's ECT_REG_WD_DIV). 0x0420 is a different value — the
+            # Watchdog Time Process Data — and was previously misread here.
+            wd_div = read_reg(0x0400, 2)
+            wd_value = _u16le(wd_div)
+            if wd_value is not None:
+                slave_data["watchdog_divider"] = wd_value
+            elif wd_div:
+                self.logger.debug("Truncated Watchdog Divider (0x0400) read: %r", wd_div)
+
+            # Process-data watchdog time (units of divider*40ns base).
+            wd_time_pd = read_reg(0x0420, 2)
+            wd_time_value = _u16le(wd_time_pd)
+            if wd_time_value is not None:
+                slave_data["watchdog_time_process_data"] = wd_time_value
 
             results[i + 1] = slave_data
 
@@ -195,6 +231,10 @@ class AdvancedOpsMixin(_ScannerBase):
 
             if "watchdog_divider" in slave_data:
                 self.logger.display(f"Watchdog Divider: {slave_data['watchdog_divider']}")
+            if "watchdog_time_process_data" in slave_data:
+                self.logger.display(
+                    f"Watchdog Time Process Data: {slave_data['watchdog_time_process_data']}"
+                )
 
         return results
 

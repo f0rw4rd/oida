@@ -136,10 +136,12 @@ ESC_REGISTER_MAP: Dict[int, tuple] = {
     0x0302: ("Error Counter Port 1", 2),
     0x0304: ("Error Counter Port 2", 2),
     0x0306: ("Error Counter Port 3", 2),
-    # Watchdog
-    0x0420: ("Watchdog Divider", 2),
-    0x0440: ("Watchdog SM", 2),
-    0x0442: ("Watchdog PDO", 2),
+    # Watchdog (ET1100/ESC datasheet section II watchdog block)
+    0x0400: ("Watchdog Divider", 2),
+    0x0410: ("Watchdog Time PDI", 2),
+    0x0420: ("Watchdog Time Process Data", 2),
+    0x0440: ("Watchdog Status Process Data", 1),
+    0x0442: ("Watchdog Counter Process Data", 1),
     # FMMU 0-3 (16 bytes each)
     0x0600: ("FMMU0", 16),
     0x0610: ("FMMU1", 16),
@@ -151,7 +153,8 @@ ESC_REGISTER_MAP: Dict[int, tuple] = {
     0x0810: ("SM2", 8),
     0x0818: ("SM3", 8),
     # Distributed Clocks
-    0x0980: ("DC Activation", 2),
+    0x0980: ("DC Cycle Unit Control", 1),
+    0x0981: ("DC Activation", 1),
     0x0990: ("DC System Time", 8),
     0x09A0: ("DC System Offset", 8),
     0x09B0: ("DC Transmission Delay", 4),
