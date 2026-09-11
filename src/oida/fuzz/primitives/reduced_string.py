@@ -190,6 +190,51 @@ class ReducedString(String):
             "total_per_field": fuzz_count + long_count,
         }
 
+    def encode(self, value, mutation_context=None):
+        """Encode a mutation to bytes.
+
+        boofuzz's ``String.encode()`` unconditionally does
+        ``value.encode(self.encoding, "replace")`` with ``self.encoding`` defaulting to
+        ``"utf-8"``. Our curated payloads above (e.g. ``"\\xde\\xad\\xbe\\xef"``,
+        ``"\\xc0\\x80"``, the ``\\xff``/``\\xfe`` long-string seeds) use characters in
+        U+0080-U+00FF as literal RAW BYTES, not as Unicode codepoints. UTF-8-encoding
+        them expands each such character into two bytes, which both mangles the
+        intended byte sequence and silently doubles every non-ASCII long-string
+        boundary length.
+
+        Only the *default* ``"utf-8"`` encoding is affected: this is what silently
+        mangles the raw-byte payloads above with no explicit opt-in from the field
+        author. If a field explicitly configures a non-default ``encoding`` (e.g.
+        ``encoding="ascii"``, which some callers rely on to collapse non-ASCII
+        payloads to ``"?"`` on purpose), that configured encoding is an intentional
+        choice and must still be honored via the boofuzz base implementation.
+
+        For the default-utf-8 case, render any ``str`` payload whose characters are
+        all <= U+00FF via latin-1, which maps codepoints 0x00-0xFF onto bytes
+        0x00-0xFF one-to-one and therefore reproduces the intended bytes exactly.
+        Payloads containing genuine Unicode (any character > U+00FF, e.g.
+        homoglyphs) keep using utf-8 via the boofuzz base implementation.
+        Pure-ASCII payloads are unaffected: latin-1 and utf-8 agree on every
+        codepoint <= 0x7F, so output stays byte-for-byte identical to before this
+        override existed.
+        """
+        if isinstance(value, bytes):
+            if self.size is not None and len(value) < self.size:
+                value = value + self.padding * (self.size - len(value))
+            return value
+
+        if (
+            isinstance(value, str)
+            and self.encoding.lower() == "utf-8"
+            and all(ord(ch) <= 0xFF for ch in value)
+        ):
+            encoded = value.encode("latin-1")
+            if self.size is not None and len(encoded) < self.size:
+                encoded = encoded + self.padding * (self.size - len(encoded))
+            return encoded
+
+        return super().encode(value, mutation_context)
+
 
 # Convenience function for getting statistics
 def get_reduction_stats():
