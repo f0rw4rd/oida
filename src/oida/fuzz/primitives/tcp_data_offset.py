@@ -44,11 +44,28 @@ class TCPDataOffsetByte(Fuzzable):
 
     def encode(self, value=None, mutation_context=None):
         """
-        Calculate the Data_Offset byte value based on options block size.
+        Render this primitive.
+
+        boofuzz's ``Fuzzable.render()`` calls
+        ``encode(value=self.get_value(mutation_context), ...)``, so ``value``
+        carries the mutation produced by :meth:`mutations` whenever this node is
+        the one being fuzzed. It must be honoured, otherwise every declared
+        mutation renders as the same calculated byte and the field is never
+        actually fuzzed.
+
+        When ``value`` is ``None`` the field is not being mutated and the byte
+        is calculated from the current size of the options block.
 
         Returns:
             bytes: Single byte containing Data_Offset + Reserved + NS flag
         """
+        if value is not None:
+            # mutations() yields single-byte ``bytes`` objects; tolerate a raw
+            # int as well so the primitive also works with fuzz_values=[...].
+            if isinstance(value, int):
+                return bytes([value & 0xFF])
+            return bytes(value)
+
         # Invalidate cache so we recalculate from the current options block
         self._options_size_cache = None
 
@@ -113,12 +130,17 @@ class TCPDataOffsetByte(Fuzzable):
         if not hasattr(self, "_request") or self._request is None:
             return None
 
-        # Use boofuzz's built-in node lookup
-        try:
-            return self._request.names.get(self.options_block_name)
-        except (AttributeError, KeyError):
-            # Fallback: try to find the block manually
-            return self._find_block_recursive(self._request, self.options_block_name)
+        # boofuzz keys ``request.names`` by *qualified* name ("request.block"),
+        # not by the bare name, so a bare lookup silently misses. Try the
+        # qualified key first, then fall back to a recursive walk of the tree.
+        names = getattr(self._request, "names", None)
+        if names:
+            qualified = f"{self._request.name}.{self.options_block_name}"
+            block = names.get(qualified) or names.get(self.options_block_name)
+            if block is not None:
+                return block
+
+        return self._find_block_recursive(self._request, self.options_block_name)
 
     def _find_block_recursive(self, node, target_name):
         """
