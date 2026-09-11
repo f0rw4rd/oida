@@ -183,17 +183,27 @@ def SmartBytes(
     # Remove min_len if passed - boofuzz Bytes doesn't support it
     kwargs.pop("min_len", None)
 
-    if is_radamsa_enabled():
+    # RadamsaBytes has no concept of a fixed field size / padding-to-size -
+    # its mutations() only ever truncates to max_len. A caller asking for a
+    # static `size` (with `padding` only ever meaningful alongside `size`)
+    # cannot have that contract honoured on the radamsa path, so fall back
+    # to the boofuzz-backed primitive rather than silently dropping it.
+    if is_radamsa_enabled() and size is None:
         # Use radamsa-style mutations (native implementation)
         from .radamsa_primitives import RadamsaBytes
 
-        mutation_count = radamsa_mutation_count or get_radamsa_mutation_count()
+        mutation_count = (
+            radamsa_mutation_count
+            if radamsa_mutation_count is not None
+            else get_radamsa_mutation_count()
+        )
 
         return RadamsaBytes(
             name=name,
             default_value=default_value,
             mutation_count=mutation_count,
             max_len=max_len,
+            fuzzable=fuzzable,
             **kwargs,
         )
 
