@@ -14,6 +14,7 @@ from typing import Any, Dict, List, Optional, Set
 
 from ....utils.export_utils import export_table
 from ..constants import (
+    CAN_EXT_ID_MAX,
     CAN_STD_ID_MAX,
     CANOPEN_HEARTBEAT_BASE,
     CANOPEN_NMT_ID,
@@ -24,6 +25,8 @@ from ..constants import (
     OBD2_RESPONSE_RANGE,
     CANMessage,
     CANTrafficStats,
+    make_traffic_key,
+    split_traffic_key,
 )
 
 
@@ -77,14 +80,17 @@ class TrafficMixin:
 
             msg_count += 1
 
-            # Update ID counts
-            if arb_id not in stats.id_counts:
-                stats.id_counts[arb_id] = 0
-            stats.id_counts[arb_id] += 1
+            # Update ID counts. Key on the frame format as well as the numeric
+            # ID: a standard 0x123 and an extended 0x123 are different frames on
+            # the wire and must not be merged into one statistics row.
+            key = make_traffic_key(arb_id, msg.is_extended_id)
+            if key not in stats.id_counts:
+                stats.id_counts[key] = 0
+            stats.id_counts[key] += 1
 
             # Track extended IDs
             if msg.is_extended_id:
-                stats.extended_ids.add(arb_id)
+                stats.extended_ids.add(arb_id & CAN_EXT_ID_MAX)
 
             # Track error/remote frames
             if msg.is_error_frame:
@@ -120,11 +126,11 @@ class TrafficMixin:
         top_ids = stats.get_top_ids(15)
         if top_ids:
             rows = []
-            for arb_id, count in top_ids:
-                is_ext = arb_id in stats.extended_ids
+            for key, count in top_ids:
+                arb_id, is_ext = split_traffic_key(key)
                 id_str = f"0x{arb_id:08X}" if is_ext else f"0x{arb_id:03X}"
                 pct = (count / stats.total_messages * 100) if stats.total_messages > 0 else 0
-                label = self._identify_id(arb_id)
+                label = self._identify_id(arb_id, is_ext)
                 rows.append([id_str, str(count), f"{pct:.1f}%", label])
 
             export_table(
@@ -143,20 +149,34 @@ class TrafficMixin:
         """
         classified = []
 
-        for arb_id, count in sorted(stats.id_counts.items()):
-            is_ext = arb_id in stats.extended_ids
+        for key, count in sorted(stats.id_counts.items()):
+            arb_id, is_ext = split_traffic_key(key)
             entry = {
                 "arbitration_id": f"0x{arb_id:08X}" if is_ext else f"0x{arb_id:03X}",
                 "count": count,
                 "extended": is_ext,
-                "classification": self._identify_id(arb_id),
+                "classification": self._identify_id(arb_id, is_ext),
             }
             classified.append(entry)
 
         return classified
 
-    def _identify_id(self, arb_id: int) -> str:
-        """Classify a single arbitration ID."""
+    def _identify_id(self, arb_id: int, is_extended: Optional[bool] = None) -> str:
+        """Classify a single arbitration ID.
+
+        ``is_extended`` says whether the frame used the 29-bit format. It matters
+        because the OBD-II/UDS/CANopen ranges below are all 11-bit assignments: a
+        29-bit frame that happens to carry the numeric value 0x7E8 is not an
+        OBD-II response. When it is omitted the format is inferred from the
+        numeric value, which is only reliable for IDs above the 11-bit range.
+        """
+        if is_extended is None:
+            is_extended = arb_id > CAN_STD_ID_MAX
+
+        if is_extended:
+            # None of the 11-bit assignments below apply to an extended frame.
+            return "Extended frame (possible J1939)"
+
         # OBD-II
         if arb_id == OBD2_REQUEST_ID:
             return "OBD-II Request (broadcast)"

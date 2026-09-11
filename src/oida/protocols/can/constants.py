@@ -8,7 +8,7 @@ CAN bus security scanning.
 """
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # ---------------------------------------------------------------------------
 # CAN bus frame constants
@@ -21,6 +21,29 @@ CAN_STD_ID_MAX = 0x7FF
 # Extended CAN frame: 29-bit arbitration ID (0x00000000 - 0x1FFFFFFF)
 CAN_EXT_ID_MIN = 0x00000000
 CAN_EXT_ID_MAX = 0x1FFFFFFF
+
+# SocketCAN flag bit marking a frame as using the 29-bit extended format.
+# A standard frame with arbitration ID 0x123 and an extended frame with
+# arbitration ID 0x123 are different frames on the wire, so anything that keys
+# a mapping by arbitration ID alone must also carry this bit to keep them apart.
+CAN_EFF_FLAG = 0x80000000
+
+
+def make_traffic_key(arb_id: int, is_extended: bool) -> int:
+    """Compose the key used to index traffic statistics by arbitration ID.
+
+    Extended frames are tagged with :data:`CAN_EFF_FLAG` so that they never
+    collide with a standard frame carrying the same numeric ID.
+    """
+    if is_extended:
+        return (arb_id & CAN_EXT_ID_MAX) | CAN_EFF_FLAG
+    return arb_id & CAN_STD_ID_MAX
+
+
+def split_traffic_key(key: int) -> Tuple[int, bool]:
+    """Split a traffic key back into ``(arbitration_id, is_extended)``."""
+    return key & CAN_EXT_ID_MAX, bool(key & CAN_EFF_FLAG)
+
 
 # Maximum data length for classic CAN
 CAN_MAX_DLC = 8

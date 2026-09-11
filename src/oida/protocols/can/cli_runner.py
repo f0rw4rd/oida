@@ -17,7 +17,6 @@ import time
 from typing import Any, Dict, List, Optional
 
 from ...connection import SerialConnection
-from ...utils.common_types import Category
 from ...utils.lazy_import import lazy_import
 from .constants import (
     CAN_STD_ID_MAX,
@@ -28,6 +27,7 @@ from .constants import (
     OBD2_RESPONSE_RANGE,
     UDS_SERVICES,
     UDS_SESSIONS,
+    split_traffic_key,
 )
 from .mixins import ISOTPMixin
 from .scanner import CANScanner
@@ -273,7 +273,6 @@ class can(ISOTPMixin, SerialConnection):
         if stats.total_messages > 0:
             self.logger.security_finding(
                 "No encryption",
-                category=Category.ENCRYPTION,
                 detail="CAN bus has no encryption or authentication",
             )
 
@@ -285,12 +284,31 @@ class can(ISOTPMixin, SerialConnection):
             "error_frames": stats.error_frames,
             "remote_frames": stats.remote_frames,
             "top_ids": [
-                {"id": f"0x{arb_id:03X}", "count": count} for arb_id, count in stats.get_top_ids(20)
+                {
+                    "id": f"0x{arb_id:08X}" if is_ext else f"0x{arb_id:03X}",
+                    "count": count,
+                    "extended": is_ext,
+                }
+                for arb_id, is_ext, count in (
+                    (*split_traffic_key(key), count) for key, count in stats.get_top_ids(20)
+                )
             ],
         }
 
     def _handle_uds_scan(self) -> None:
         """Handle UDS service discovery."""
+        # --uds-scan actively probes ECUs and enumerates state-changing service
+        # IDs (ECUReset 0x11, WriteDataByID 0x2E, RoutineControl 0x31,
+        # RequestDownload 0x34...) whose standalone equivalents are all gated;
+        # with --extended it also TesterPresent-sweeps 512+ arbitration IDs.
+        # Gate it on --confirm like every other active operation in this module.
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--uds-scan actively probes ECUs and enumerates state-changing UDS "
+                "services (disruptive on a live bus) — requires --confirm"
+            )
+            return
+
         self.logger.display("[UDS] Scanning for UDS-capable ECUs...")
         results = self.scanner._scan_uds(self.conn)
 
