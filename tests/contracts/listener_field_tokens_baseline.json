@@ -4,20 +4,12 @@
   },
   "dhcp.py": {
     "option_agent_information_option": "broken",
-    "option_boot_file_name": "broken",
-    "option_client_id": "broken",
     "option_domain_search": "broken",
     "option_fqdn_name": "broken",
     "option_message_type": "broken"
   },
   "dns.py": {
     "qr": "broken"
-  },
-  "ibmmq.py": {
-    "md_putapplname": "broken"
-  },
-  "igmp.py": {
-    "record_maddr": "broken"
   },
   "ipsec.py": {
     "exchtype": "broken",
@@ -28,15 +20,11 @@
     "regval16": "synthetic"
   },
   "nfs.py": {
-    "fattr3_mode": "broken",
-    "nfsstat3": "broken"
+    "fattr3_mode": "broken"
   },
   "opcda.py": {
     "resp.hresult": "broken",
     "resp_hresult": "broken"
-  },
-  "opensafety.py": {
-    "msg_spdo_payload": "broken"
   },
   "profinet.py": {
     "service_type_response": "synthetic",
