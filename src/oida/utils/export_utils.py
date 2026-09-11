@@ -36,98 +36,6 @@ _config: Dict[str, Any] = {
 }
 
 
-def add_export_args(parser) -> None:
-    """
-    Add standard --output, --format, --full-width, and --json-log arguments to an argparse parser.
-
-    Call this once when setting up your argument parser:
-        parser = argparse.ArgumentParser()
-        add_export_args(parser)
-
-    Args:
-        parser: argparse.ArgumentParser or argument group
-    """
-    parser.add_argument(
-        "-o",
-        "--output",
-        metavar="DIR",
-        help="Output directory for exported files (CSV/JSON)",
-    )
-    parser.add_argument(
-        "-f",
-        "--format",
-        metavar="FMT",
-        default="csv,json",
-        help="Export format(s): csv, json, xml, or comma-separated (default: csv,json)",
-    )
-    parser.add_argument(
-        "-W",
-        "--full-width",
-        action="store_true",
-        default=False,
-        help="Show full-width tables without truncating to terminal width",
-    )
-    parser.add_argument(
-        "--json-log",
-        type=str,
-        metavar="FILE",
-        help="Write structured JSON log events to FILE (NDJSON format)",
-    )
-
-
-def add_common_args(parser) -> None:
-    """
-    Add common arguments used by most modules: output, format, full-width, json-log, verbose, debug.
-
-    Call this once when setting up your argument parser:
-        parser = argparse.ArgumentParser()
-        add_common_args(parser)
-
-    Args:
-        parser: argparse.ArgumentParser or argument group
-    """
-    # Export options
-    parser.add_argument(
-        "-o",
-        "--output",
-        metavar="DIR",
-        help="Output directory for exported files (CSV/JSON)",
-    )
-    parser.add_argument(
-        "-f",
-        "--format",
-        metavar="FMT",
-        default="csv,json",
-        help="Export format(s): csv, json, xml, or comma-separated (default: csv,json)",
-    )
-    parser.add_argument(
-        "-W",
-        "--full-width",
-        action="store_true",
-        default=False,
-        help="Show full-width tables without truncating to terminal width",
-    )
-    parser.add_argument(
-        "--json-log",
-        type=str,
-        metavar="FILE",
-        help="Write structured JSON log events to FILE (NDJSON format)",
-    )
-    # Verbosity options
-    parser.add_argument(
-        "-v",
-        "--verbose",
-        action="store_true",
-        help="Verbose output",
-    )
-    parser.add_argument(
-        "-d",
-        "--debug",
-        action="store_true",
-        help="Debug output (implies verbose)",
-    )
-
-
 def configure_from_args(args, logger=None) -> None:
     """
     Configure exports from parsed argparse namespace.
@@ -224,7 +132,7 @@ def export_table(
             )
         return True
 
-    formats = [f.strip().lower() for f in _config["format"].split(",")]
+    formats = _resolve_formats(_config["format"])
     success = True
     written_paths = []
 
@@ -250,6 +158,14 @@ def export_table(
                 written_paths.append(str(path))
             else:
                 success = False
+        else:
+            # Previously fell through silently: no file written, still True.
+            _log_msg(
+                f"Unknown export format '{fmt}' (expected one of "
+                f"{', '.join(_FILE_FORMATS)}, all, console) - nothing written",
+                level="error",
+            )
+            success = False
 
     if was_truncated and written_paths:
         _log_msg(
@@ -303,6 +219,30 @@ def _safe_path(name: str, ext: str) -> Path:
     from .common_types import safe_output_path
 
     return Path(safe_output_path(f"{name}.{ext}", str(_config["output_dir"])))
+
+
+# Formats that actually produce a file. ``console`` is a legitimate
+# "print only, write nothing" selection; ``all`` is an alias for all three.
+_FILE_FORMATS = ("csv", "json", "xml")
+
+
+def _resolve_formats(fmt: str) -> List[str]:
+    """Normalise a ``--format`` string into the list of file formats to write.
+
+    Expands the ``all`` alias, drops the file-less ``console`` selection, and
+    keeps anything unrecognised so the caller can report it instead of silently
+    writing nothing (which is what this function was added to fix).
+    """
+    resolved: List[str] = []
+    for raw in fmt.split(","):
+        name = raw.strip().lower()
+        if not name or name == "console":
+            continue
+        if name == "all":
+            resolved.extend(f for f in _FILE_FORMATS if f not in resolved)
+        elif name not in resolved:
+            resolved.append(name)
+    return resolved
 
 
 def _log_msg(message: str, level: str = "info"):

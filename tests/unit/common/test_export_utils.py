@@ -19,11 +19,16 @@ from oida.utils.export_utils import (
     get_export_path,
     get_config,
     _config,
-    add_export_args,
-    add_common_args,
     configure_from_args,
 )
 from oida.utils.proto_args_factory import add_output_options
+
+
+def _add_output_format_args(parser):
+    """Local helper: add the -o/--output and -f/--format args that
+    configure_from_args() reads (replaces the removed add_export_args)."""
+    parser.add_argument("-o", "--output", metavar="DIR")
+    parser.add_argument("-f", "--format", metavar="FMT", default="csv,json")
 
 
 class TestConfigure(unittest.TestCase):
@@ -192,61 +197,6 @@ class TestGetExportPath(unittest.TestCase):
             self.assertEqual(path.read_bytes(), test_data)
 
 
-class TestAddExportArgs(unittest.TestCase):
-    """Test add_export_args() function"""
-
-    def test_add_export_args_adds_output(self):
-        """Test add_export_args adds --output argument"""
-        parser = argparse.ArgumentParser()
-        add_export_args(parser)
-
-        args = parser.parse_args(["-o", "/tmp/test"])
-        self.assertEqual(args.output, "/tmp/test")
-
-    def test_add_export_args_adds_format(self):
-        """Test add_export_args adds --format argument"""
-        parser = argparse.ArgumentParser()
-        add_export_args(parser)
-
-        args = parser.parse_args(["-f", "json"])
-        self.assertEqual(args.format, "json")
-
-    def test_add_export_args_default_format(self):
-        """Test add_export_args has correct default format"""
-        parser = argparse.ArgumentParser()
-        add_export_args(parser)
-
-        args = parser.parse_args([])
-        self.assertEqual(args.format, "csv,json")
-        self.assertIsNone(args.output)
-
-
-class TestAddCommonArgs(unittest.TestCase):
-    """Test add_common_args() function"""
-
-    def test_add_common_args_all_options(self):
-        """Test add_common_args adds all expected arguments"""
-        parser = argparse.ArgumentParser()
-        add_common_args(parser)
-
-        args = parser.parse_args(["-o", "/tmp", "-f", "json", "-v", "-d"])
-        self.assertEqual(args.output, "/tmp")
-        self.assertEqual(args.format, "json")
-        self.assertTrue(args.verbose)
-        self.assertTrue(args.debug)
-
-    def test_add_common_args_defaults(self):
-        """Test add_common_args has correct defaults"""
-        parser = argparse.ArgumentParser()
-        add_common_args(parser)
-
-        args = parser.parse_args([])
-        self.assertIsNone(args.output)
-        self.assertEqual(args.format, "csv,json")
-        self.assertFalse(args.verbose)
-        self.assertFalse(args.debug)
-
-
 class TestAddOutputOptions(unittest.TestCase):
     """Test add_output_options() from proto_args_factory"""
 
@@ -299,7 +249,7 @@ class TestConfigureFromArgs(unittest.TestCase):
     def test_configure_from_args_basic(self):
         """Test configure_from_args with parsed args"""
         parser = argparse.ArgumentParser()
-        add_export_args(parser)
+        _add_output_format_args(parser)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             args = parser.parse_args(["-o", tmpdir, "-f", "json"])
@@ -312,7 +262,7 @@ class TestConfigureFromArgs(unittest.TestCase):
     def test_configure_from_args_with_logger(self):
         """Test configure_from_args passes logger"""
         parser = argparse.ArgumentParser()
-        add_export_args(parser)
+        _add_output_format_args(parser)
 
         args = parser.parse_args([])
         mock_logger = MagicMock()

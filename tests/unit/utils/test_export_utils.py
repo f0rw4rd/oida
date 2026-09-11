@@ -24,10 +24,15 @@ from oida.utils.export_utils import (
     _write_xml,
     print_table,
     export_data,
-    add_export_args,
-    add_common_args,
     configure_from_args,
 )
+
+
+def _add_output_format_args(parser):
+    """Local helper: add the -o/--output and -f/--format args that
+    configure_from_args() reads (replaces the removed add_export_args)."""
+    parser.add_argument("-o", "--output", metavar="DIR")
+    parser.add_argument("-f", "--format", metavar="FMT", default="csv,json")
 
 
 class TestConfigure(unittest.TestCase):
@@ -309,128 +314,6 @@ class TestGetExportPath(unittest.TestCase):
             self.assertEqual(path.read_bytes(), test_data)
 
 
-class TestAddExportArgs(unittest.TestCase):
-    """Test add_export_args() function"""
-
-    def test_add_export_args_adds_output(self):
-        """Test add_export_args adds --output argument"""
-        import argparse
-
-        parser = argparse.ArgumentParser()
-        add_export_args(parser)
-
-        args = parser.parse_args(["-o", "/tmp/test"])
-        self.assertEqual(args.output, "/tmp/test")
-
-    def test_add_export_args_adds_format(self):
-        """Test add_export_args adds --format argument"""
-        import argparse
-
-        parser = argparse.ArgumentParser()
-        add_export_args(parser)
-
-        args = parser.parse_args(["-f", "json"])
-        self.assertEqual(args.format, "json")
-
-    def test_add_export_args_default_format(self):
-        """Test add_export_args has correct default format"""
-        import argparse
-
-        parser = argparse.ArgumentParser()
-        add_export_args(parser)
-
-        args = parser.parse_args([])
-        self.assertEqual(args.format, "csv,json")
-        self.assertIsNone(args.output)
-
-    def test_add_export_args_long_options(self):
-        """Test add_export_args works with long options"""
-        import argparse
-
-        parser = argparse.ArgumentParser()
-        add_export_args(parser)
-
-        args = parser.parse_args(["--output", "/tmp/out", "--format", "xml"])
-        self.assertEqual(args.output, "/tmp/out")
-        self.assertEqual(args.format, "xml")
-
-    def test_add_export_args_to_group(self):
-        """Test add_export_args works with argument groups"""
-        import argparse
-
-        parser = argparse.ArgumentParser()
-        group = parser.add_argument_group("export options")
-        add_export_args(group)
-
-        args = parser.parse_args(["-o", "/tmp/x"])
-        self.assertEqual(args.output, "/tmp/x")
-
-
-class TestAddCommonArgs(unittest.TestCase):
-    """Test add_common_args() function"""
-
-    def test_add_common_args_all_options(self):
-        """Test add_common_args adds all expected arguments"""
-        import argparse
-
-        parser = argparse.ArgumentParser()
-        add_common_args(parser)
-
-        args = parser.parse_args(["-o", "/tmp", "-f", "json", "-v", "-d"])
-        self.assertEqual(args.output, "/tmp")
-        self.assertEqual(args.format, "json")
-        self.assertTrue(args.verbose)
-        self.assertTrue(args.debug)
-
-    def test_add_common_args_defaults(self):
-        """Test add_common_args has correct defaults"""
-        import argparse
-
-        parser = argparse.ArgumentParser()
-        add_common_args(parser)
-
-        args = parser.parse_args([])
-        self.assertIsNone(args.output)
-        self.assertEqual(args.format, "csv,json")
-        self.assertFalse(args.verbose)
-        self.assertFalse(args.debug)
-
-    def test_add_common_args_verbose_only(self):
-        """Test -v flag works independently"""
-        import argparse
-
-        parser = argparse.ArgumentParser()
-        add_common_args(parser)
-
-        args = parser.parse_args(["-v"])
-        self.assertTrue(args.verbose)
-        self.assertFalse(args.debug)
-
-    def test_add_common_args_debug_only(self):
-        """Test -d flag works independently"""
-        import argparse
-
-        parser = argparse.ArgumentParser()
-        add_common_args(parser)
-
-        args = parser.parse_args(["-d"])
-        self.assertFalse(args.verbose)
-        self.assertTrue(args.debug)
-
-    def test_add_common_args_long_options(self):
-        """Test long option names work"""
-        import argparse
-
-        parser = argparse.ArgumentParser()
-        add_common_args(parser)
-
-        args = parser.parse_args(["--verbose", "--debug", "--output", "/out", "--format", "xml"])
-        self.assertTrue(args.verbose)
-        self.assertTrue(args.debug)
-        self.assertEqual(args.output, "/out")
-        self.assertEqual(args.format, "xml")
-
-
 class TestConfigureFromArgs(unittest.TestCase):
     """Test configure_from_args() function"""
 
@@ -451,7 +334,7 @@ class TestConfigureFromArgs(unittest.TestCase):
         import argparse
 
         parser = argparse.ArgumentParser()
-        add_export_args(parser)
+        _add_output_format_args(parser)
 
         with tempfile.TemporaryDirectory() as tmpdir:
             args = parser.parse_args(["-o", tmpdir, "-f", "json"])
@@ -466,7 +349,7 @@ class TestConfigureFromArgs(unittest.TestCase):
         import argparse
 
         parser = argparse.ArgumentParser()
-        add_export_args(parser)
+        _add_output_format_args(parser)
 
         args = parser.parse_args([])
         mock_logger = MagicMock()
@@ -480,7 +363,7 @@ class TestConfigureFromArgs(unittest.TestCase):
         import argparse
 
         parser = argparse.ArgumentParser()
-        add_export_args(parser)
+        _add_output_format_args(parser)
 
         args = parser.parse_args([])
         configure_from_args(args)
