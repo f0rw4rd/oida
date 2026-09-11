@@ -279,13 +279,21 @@ class BACnetScanner:
             offset += 2
 
             # Skip DNET/DADR if present
-            if npdu_control & 0x20:  # DNET present
-                offset += 4  # DNET (2) + DLEN (1) + hop count (1)
+            dnet_present = bool(npdu_control & 0x20)
+            if dnet_present:
+                dlen = data[offset + 2] if offset + 2 < len(data) else 0
+                offset += 3 + dlen  # DNET (2) + DLEN (1) + DADR (dlen)
 
             # Skip SNET/SADR if present
             if npdu_control & 0x08:  # SNET present
                 slen = data[offset + 2] if offset + 2 < len(data) else 0
-                offset += 3 + slen
+                offset += 3 + slen  # SNET (2) + SLEN (1) + SADR (slen)
+
+            # Hop count trails the source fields (clause 6.2.2 orders the NPCI as
+            # DNET, DLEN, DADR, SNET, SLEN, SADR, Hop Count) and is only present
+            # when DNET is. Skipping it before SNET would misread SLEN as SADR[0].
+            if dnet_present:
+                offset += 1
 
             if offset >= len(data):
                 return
@@ -301,12 +309,22 @@ class BACnetScanner:
 
             offset += 2
 
-            # Parse I-Am content
-            # Object Identifier (context tag 0), Max APDU (context 1), Segmentation (2), Vendor ID (3)
+            # Parse I-Am content.
+            # I-Am-Request (ASHRAE 135 clause 21) carries its four parameters as
+            # APPLICATION-tagged primitives, not context-tagged ones:
+            #   app tag 12 -> BACnetObjectIdentifier (4 octets)
+            #   app tag 2  -> Unsigned: 1st occurrence maxAPDULengthAccepted,
+            #                 2nd occurrence vendorID
+            #   app tag 9  -> Enumerated segmentationSupported
+            # A real I-Am APDU looks like:
+            #   10 00 C4 02 00 00 03 22 01 E0 91 00 21 4B
+            # The context-tag branches are kept as a fallback for senders that
+            # encode the parameters non-conformantly.
 
             device_instance = 0
             vendor_id = 0
             max_apdu = 0
+            unsigned_seen = 0
 
             while offset < len(data):
                 tag = data[offset]
@@ -315,25 +333,39 @@ class BACnetScanner:
                 length = tag & 0x07
 
                 offset += 1
-                if length == 5 and offset < len(data):
+
+                if tag_number == 0x0F and offset < len(data):
+                    # Tag number 15 means the real tag number is in the next octet
+                    tag_number = data[offset]
+                    offset += 1
+
+                if length in (6, 7):
+                    # Opening/closing tag - carries no content octets
+                    length = 0
+                elif length == 5 and offset < len(data):
                     length = data[offset]
                     offset += 1
 
                 if offset + length > len(data):
                     break
 
-                if tag_number == 0 and tag_class == 1:  # Object Identifier
-                    if length >= 4:
-                        obj_id = struct.unpack(">I", data[offset : offset + 4])[0]
-                        device_instance = obj_id & 0x3FFFFF
-                elif tag_number == 1:  # Max APDU
-                    if length >= 1:
-                        max_apdu = data[offset]
-                elif tag_number == 3:  # Vendor ID
-                    if length == 1:
-                        vendor_id = data[offset]
-                    elif length == 2:
-                        vendor_id = struct.unpack(">H", data[offset : offset + 2])[0]
+                value = data[offset : offset + length]
+
+                if tag_class == 1:  # context-specific (fallback)
+                    if tag_number == 0 and length >= 4:
+                        device_instance = struct.unpack(">I", value[:4])[0] & 0x3FFFFF
+                    elif tag_number == 1 and length >= 1:
+                        max_apdu = int.from_bytes(value, "big")
+                    elif tag_number == 3 and length >= 1:
+                        vendor_id = int.from_bytes(value, "big")
+                elif tag_number == 12 and length >= 4:  # BACnetObjectIdentifier
+                    device_instance = struct.unpack(">I", value[:4])[0] & 0x3FFFFF
+                elif tag_number == 2 and length >= 1:  # Unsigned
+                    unsigned_seen += 1
+                    if unsigned_seen == 1:
+                        max_apdu = int.from_bytes(value, "big")
+                    elif unsigned_seen == 2:
+                        vendor_id = int.from_bytes(value, "big")
 
                 offset += length
 
@@ -644,8 +676,12 @@ class CODESYSScanner:
             target_type = 0
             serial_number = ""
 
-            # Structured header: minimum 24 bytes
-            if len(data) < offset + 24:
+            # Structured header: the block below consumes
+            # 4 + 2 + 4 + 2 + 2 + 2 + 4 + 4 + 4 = 28 bytes before the strings.
+            # Guarding on 24 let a 24-27 byte header through, which then raised
+            # struct.error on the final target_version unpack and was swallowed
+            # by the broad handler below, silently dropping the whole response.
+            if len(data) < offset + 28:
                 return None
 
             # Parse header fields
@@ -896,7 +932,7 @@ class ADSScanner:
         result: Dict[str, Any] = {}
         pos = 0
 
-        while pos < len(data) - 4:
+        while pos + 4 <= len(data):
             try:
                 tag_type, tag_len = struct.unpack("<HH", data[pos : pos + 4])
                 pos += 4

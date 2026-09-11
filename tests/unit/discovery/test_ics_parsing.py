@@ -64,10 +64,14 @@ def build_bacnet_i_am(device_instance=12345, vendor_id=7, max_apdu=5) -> bytes:
     """Build a BACnet/IP I-Am response with context-tagged I-Am content."""
     obj_id = (8 << 22) | device_instance  # object type 8 = device
     iam = b""
+    # Tag octet layout: tag number = t >> 4, class bit = (t >> 3) & 1, LVT = t & 7.
+    # These frames deliberately use context-specific tags (class bit set) to
+    # exercise the parser's non-conformant-sender fallback; a conformant I-Am
+    # uses application tags and is covered by test_bacnet_iam_review.py.
     iam += bytes([0x0C]) + struct.pack(">I", obj_id)  # ctx tag 0, len 4
-    iam += bytes([0x11, max_apdu])  # ctx tag 1 (Max APDU), len 1
-    iam += bytes([0x21, 0x00])  # ctx tag 2 (Segmentation), len 1
-    iam += bytes([0x32]) + struct.pack(">H", vendor_id)  # ctx tag 3, len 2
+    iam += bytes([0x19, max_apdu])  # ctx tag 1 (Max APDU), len 1
+    iam += bytes([0x29, 0x00])  # ctx tag 2 (Segmentation), len 1
+    iam += bytes([0x3A]) + struct.pack(">H", vendor_id)  # ctx tag 3, len 2
 
     apdu = bytes([0x10, 0x00]) + iam  # unconfirmed (pdu type 1), I-Am (0x00)
     npdu = bytes([0x01, 0x00])  # version 1, no DNET/SNET
@@ -297,9 +301,9 @@ class TestBACnetIAmParsing:
         # Rebuild with a 1-byte vendor tag (ctx tag 3, len 1 -> 0x31)
         obj_id = (8 << 22) | 7
         iam = bytes([0x0C]) + struct.pack(">I", obj_id)
-        iam += bytes([0x11, 0x05])
-        iam += bytes([0x21, 0x00])
-        iam += bytes([0x31, 15])  # vendor id 15 (Honeywell), single byte
+        iam += bytes([0x19, 0x05])  # ctx tag 1 (Max APDU), len 1
+        iam += bytes([0x29, 0x00])  # ctx tag 2 (Segmentation), len 1
+        iam += bytes([0x39, 15])  # ctx tag 3, len 1 -> vendor id 15 (Honeywell)
         apdu = bytes([0x10, 0x00]) + iam
         npdu = bytes([0x01, 0x00])
         bvlc = bytes([0x81, 0x0A]) + struct.pack(">H", 4 + len(npdu) + len(apdu))
