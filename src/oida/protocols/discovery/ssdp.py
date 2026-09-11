@@ -458,7 +458,8 @@ class SSDPPassiveListener(PassiveListenerBase):
                 # Use MAC as key if available, otherwise fall back to IP
                 device_key = src_mac if src_mac else f"ssdp:{src_ip}"
 
-                if device_key not in self.discovered_devices:
+                is_new = device_key not in self.discovered_devices
+                if is_new:
                     device = DiscoveredDevice(
                         mac_address=src_mac,
                         ip_addresses=[src_ip],
@@ -470,26 +471,37 @@ class SSDPPassiveListener(PassiveListenerBase):
                         first_seen=datetime.now().isoformat(),
                         last_seen=datetime.now().isoformat(),
                     )
-
-                    device.ssdp_data = {
-                        "msg_type": msg_type,
-                        "location": ssdp_info.get("location"),
-                        "server": ssdp_info.get("server"),
-                        "usn": ssdp_info.get("usn"),
-                        "nt": ssdp_info.get("nt"),
-                        "nts": ssdp_info.get("nts"),
-                        "st": ssdp_info.get("st"),
-                        "cache_control": ssdp_info.get("cache-control"),
-                        "multicast_dst": dst_ip,
-                        "protocol": "SSDP/UDP",
-                    }
-
                     self.discovered_devices[device_key] = device
+                else:
+                    device = self.discovered_devices[device_key]
+                    device.last_seen = datetime.now().isoformat()
 
+                # Refresh on every packet, not just the first: a later NOTIFY can
+                # carry a changed LOCATION/USN, and an ssdp:byebye must be
+                # reflected rather than leaving a stale "alive" record forever.
+                # Prefer newly-seen non-empty values but keep prior ones when
+                # this packet omits a field.
+                existing = getattr(device, "ssdp_data", None) or {}
+
+                def _prefer(key: str, new_val):
+                    return new_val if new_val else existing.get(key)
+
+                device.ssdp_data = {
+                    "msg_type": msg_type,
+                    "location": _prefer("location", ssdp_info.get("location")),
+                    "server": _prefer("server", ssdp_info.get("server")),
+                    "usn": _prefer("usn", ssdp_info.get("usn")),
+                    "nt": _prefer("nt", ssdp_info.get("nt")),
+                    "nts": _prefer("nts", ssdp_info.get("nts")),
+                    "st": _prefer("st", ssdp_info.get("st")),
+                    "cache_control": _prefer("cache_control", ssdp_info.get("cache-control")),
+                    "multicast_dst": _prefer("multicast_dst", dst_ip),
+                    "protocol": "SSDP/UDP",
+                }
+
+                if is_new:
                     nt = ssdp_info.get("nt", ssdp_info.get("st", "?"))
                     logger.debug(f"SSDP: {src_ip} {msg_type} {nt}")
-                else:
-                    self.discovered_devices[device_key].last_seen = datetime.now().isoformat()
 
         except Exception as e:
             logger.debug(f"SSDP parse error: {e}")
