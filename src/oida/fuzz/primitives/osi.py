@@ -15,6 +15,22 @@ import struct
 from typing import Optional
 from dataclasses import dataclass
 
+from oida.utils.exceptions import ProtocolError
+
+# RFC 1006: TPKT total length is a 16-bit field that includes the 4-byte
+# header, so the largest payload (COTP + upper layers) that still fits is
+# 65535 - 4.
+TPKT_MAX_PAYLOAD_LENGTH = 65531
+
+# ISO 8327-1: both the outer SPDU length indicator (LI) and the PI=0xC1
+# user-data sub-parameter length use a 1-byte short form for values below
+# 254, and a long form (marker octet 0xFF followed by a 2-byte big-endian
+# length) above that. The 2-byte length field itself caps the representable
+# length at 65535.
+ISO8327_SHORT_LI_LIMIT = 254
+ISO8327_LONG_LI_MARKER = 0xFF
+ISO8327_MAX_LONG_LENGTH = 0xFFFF
+
 
 @dataclass
 class TPKTHeader:
@@ -40,6 +56,13 @@ class TPKTHeader:
         Returns:
             4-byte TPKT header
         """
+        if payload_length < 0 or payload_length > TPKT_MAX_PAYLOAD_LENGTH:
+            raise ProtocolError(
+                f"TPKT payload length {payload_length} out of range "
+                f"(0-{TPKT_MAX_PAYLOAD_LENGTH}); RFC 1006 total length "
+                "(4-byte header + payload) must fit in a 16-bit field",
+                protocol="OSI/TPKT",
+            )
         total_length = 4 + payload_length  # TPKT header is 4 bytes
         return struct.pack(">BBH", self.version, self.reserved, total_length)
 
@@ -222,13 +245,20 @@ class SessionConnectSPDU:
 
         # PI=0xC1: Session User Data (Presentation layer)
         if user_data:
+            if len(user_data) > ISO8327_MAX_LONG_LENGTH:
+                raise ProtocolError(
+                    f"Session user_data length {len(user_data)} exceeds the "
+                    f"ISO 8327-1 2-byte extended-length maximum of "
+                    f"{ISO8327_MAX_LONG_LENGTH}",
+                    protocol="OSI/Session",
+                )
             parameters.append(0xC1)
-            if len(user_data) < 254:
+            if len(user_data) < ISO8327_SHORT_LI_LIMIT:
                 parameters.append(len(user_data))
             else:
                 # Extended length encoding
                 length_bytes = len(user_data).to_bytes(2, "big")
-                parameters.append(0xFF)
+                parameters.append(ISO8327_LONG_LI_MARKER)
                 parameters.extend(length_bytes)
             parameters.extend(user_data)
 
@@ -236,7 +266,20 @@ class SessionConnectSPDU:
         si = spdu_type
         li = len(parameters)
 
-        return bytes([si, li]) + bytes(parameters)
+        if li > ISO8327_MAX_LONG_LENGTH:
+            raise ProtocolError(
+                f"Session SPDU parameter length {li} exceeds the ISO 8327-1 "
+                f"2-byte extended-length maximum of {ISO8327_MAX_LONG_LENGTH}",
+                protocol="OSI/Session",
+            )
+
+        if li < ISO8327_SHORT_LI_LIMIT:
+            return bytes([si, li]) + bytes(parameters)
+
+        # Extended-length outer SPDU header: LI octet set to the 0xFF marker,
+        # followed by a 2-byte big-endian length, matching the PI=0xC1
+        # sub-parameter's long-form encoding above.
+        return bytes([si, ISO8327_LONG_LI_MARKER]) + li.to_bytes(2, "big") + bytes(parameters)
 
 
 # Presentation Layer Primitives (ISO 8823)
