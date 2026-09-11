@@ -246,8 +246,14 @@ _IIN2_ERROR_BITS = (
 
 def _decode_iin(iin_value: int) -> str:
     """Decode IIN 16-bit value into human-readable flags."""
-    iin1 = iin_value & 0xFF
-    iin2 = (iin_value >> 8) & 0xFF
+    # ``dnp3.al.iin`` is a single big-endian FT_UINT16: IIN1 is the HIGH byte
+    # and IIN2 the LOW byte.  Verified against tshark's own per-bit subfields,
+    # e.g. iin==0x8000 sets dnp3.al.iin.rst (Device Restart, IIN1 bit 0x80)
+    # and iin==0x1001 sets dnp3.al.iin.fcni (Func Code Not Impl, IIN2 bit
+    # 0x01).  The two bytes used to be swapped here, so every decoded flag
+    # name was wrong.
+    iin1 = (iin_value >> 8) & 0xFF
+    iin2 = iin_value & 0xFF
     flags = []
     for byte_idx, mask, name in _IIN_FLAGS:
         byte_val = iin1 if byte_idx == 0 else iin2
@@ -566,7 +572,11 @@ class DNP3PassiveListener(PySharkListenerBase):
 
         # Classify rw based on function code and IIN error bits
         if is_response and iin_raw is not None:
-            iin2 = (iin_raw >> 8) & 0xFF
+            # IIN2 is the LOW byte of the big-endian 16-bit IIN (see
+            # _decode_iin).  Reading the high byte here tested IIN1's
+            # class/restart bits against IIN2 error masks, producing both
+            # false "error" results and missed real ones.
+            iin2 = iin_raw & 0xFF
             if iin2 & _IIN2_ERROR_BITS:
                 details["rw"] = "error"
         if "rw" not in details and not is_response:
@@ -1058,14 +1068,22 @@ class DNP3PassiveListener(PySharkListenerBase):
         return []
 
     def _parse_int_field(self, layer, *field_names) -> Optional[int]:
-        """Try to parse an integer from multiple possible field names."""
+        """Try to parse an integer from multiple possible field names.
+
+        Must go through ``_parse_int``, not bare ``int()``: several DNP3 fields
+        are declared BASE_HEX by the tshark dissector (notably ``dnp3.al.iin``,
+        FT_UINT16/BASE_HEX), so in pyshark's XML mode -- which is what the
+        LiveCapture path uses -- the value arrives rendered as ``"0x9000"``.
+        ``int("0x9000")`` raises, the exception was swallowed, and the field
+        silently became None.
+        """
         for name in field_names:
             raw = self.get_field(layer, name, None)
             if raw is not None:
-                try:
-                    return int(raw)
-                except (ValueError, TypeError) as e:
-                    self.logger.debug(f"int conversion failed: {e}")
+                parsed = self._parse_int(raw, None)
+                if parsed is not None:
+                    return parsed
+                self.logger.debug(f"int conversion failed for field {name}: {raw!r}")
         return None
 
     @staticmethod
