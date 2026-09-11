@@ -110,6 +110,34 @@ class FuzzMixin:
                 self.logger.warning(f"Node {node_id} is not a Variable, skipping")
                 return None
 
+            # Determine Float (32-bit) vs Double (64-bit) so a Double node's
+            # captured value is not silently round-tripped through float32,
+            # which would write a precision-truncated value back on restore.
+            try:
+                _variant_type = await node.read_data_type_as_variant_type()
+            except Exception:
+                _variant_type = None
+            is_double = _variant_type == ua.VariantType.Double
+            _float_fmt = "<d" if is_double else "<f"
+            _float_width = 8 if is_double else 4
+
+            # Integers need the same treatment as floats above: a hardcoded
+            # 4-byte signed encoding raises OverflowError for any UInt32 >= 2**31
+            # (counters, IDs, timestamps) and for every Int64/UInt64, which the
+            # caller's except-block turns into "node silently not fuzzed"; it
+            # also narrows an Int64 on restore (5000000000 -> 705032704).
+            _INT_WIDTHS = {
+                ua.VariantType.SByte: (1, True),
+                ua.VariantType.Byte: (1, False),
+                ua.VariantType.Int16: (2, True),
+                ua.VariantType.UInt16: (2, False),
+                ua.VariantType.Int32: (4, True),
+                ua.VariantType.UInt32: (4, False),
+                ua.VariantType.Int64: (8, True),
+                ua.VariantType.UInt64: (8, False),
+            }
+            _int_width, _int_signed = _INT_WIDTHS.get(_variant_type, (4, True))
+
             def encode_value(value) -> bytes:
                 """Encode a typed OPC UA value to its canonical byte form."""
                 if isinstance(value, bytes):
@@ -119,9 +147,16 @@ class FuzzMixin:
                 elif isinstance(value, bool):
                     return bytes([1 if value else 0])
                 elif isinstance(value, int):
-                    return value.to_bytes(4, byteorder="little", signed=True)
+                    try:
+                        return value.to_bytes(_int_width, byteorder="little", signed=_int_signed)
+                    except OverflowError:
+                        # Value does not fit the node's declared width (server
+                        # reported a narrower type than it serves). Wrap rather
+                        # than abort the whole node.
+                        mask = (1 << (8 * _int_width)) - 1
+                        return (value & mask).to_bytes(_int_width, byteorder="little")
                 elif isinstance(value, float):
-                    return struct.pack("<f", value)
+                    return struct.pack(_float_fmt, value)
                 elif value is None:
                     return b""
                 else:
@@ -133,12 +168,16 @@ class FuzzMixin:
                     return bool(data[0]) if data else False
                 elif isinstance(template, int):
                     return int.from_bytes(
-                        data[:4].ljust(4, b"\x00"), byteorder="little", signed=True
+                        data[:_int_width].ljust(_int_width, b"\x00"),
+                        byteorder="little",
+                        signed=_int_signed,
                     )
                 elif isinstance(template, float):
                     return (
-                        struct.unpack("<f", data[:4].ljust(4, b"\x00"))[0]
-                        if len(data) >= 4
+                        struct.unpack(_float_fmt, data[:_float_width].ljust(_float_width, b"\x00"))[
+                            0
+                        ]
+                        if len(data) >= _float_width
                         else 0.0
                     )
                 elif isinstance(template, str):
@@ -195,8 +234,15 @@ class FuzzMixin:
             # Restore original. read_value() always returns bytes (b"" for an
             # empty/None-valued node), so guard on `is not None`, not truthiness,
             # to avoid leaving an empty-but-valid node holding the last payload.
+            restore_failures = 0
             if original is not None:
-                await write_value(original)
+                restored = await write_value(original)
+                if restored is None:
+                    restore_failures = 1
+                    self.logger.fail(
+                        f"Failed to restore original value on {node_id} after fuzzing "
+                        f"(device left in modified state, original value: {original!r})"
+                    )
 
             status = "+" if crashes == 0 and anomalies == 0 else "!"
             self.logger.display(
@@ -209,6 +255,7 @@ class FuzzMixin:
                 "writes": successful,
                 "anomalies": anomalies,
                 "crashes": crashes,
+                "restore_failures": restore_failures,
             }
 
         except Exception as e:

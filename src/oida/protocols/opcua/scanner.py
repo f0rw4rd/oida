@@ -22,7 +22,6 @@ from ...utils import (
 )
 from ...utils.protocol_helpers import ConnectionHelper
 from ...utils.default_credentials import load_credentials
-from oida.utils.common_types import Category
 
 from .helpers import (
     _asyncua,
@@ -98,6 +97,52 @@ protocol_options = {
         "default": False,
     },
 }
+
+
+def _security_policy_names() -> Dict[str, str]:
+    """Map normalised policy names -> the exact suffix asyncua expects.
+
+    Derived from the installed asyncua at runtime rather than hardcoded, so
+    the table cannot drift out of sync with the library.
+    """
+    from asyncua.crypto import security_policies
+
+    names: Dict[str, str] = {}
+    for attr in dir(security_policies):
+        if not attr.startswith("SecurityPolicy"):
+            continue
+        suffix = attr[len("SecurityPolicy") :]
+        # "SecurityPolicy" itself plus the non-policy helpers.
+        if not suffix or suffix in ("Type", "Factory"):
+            continue
+        names[suffix.replace("_", "").lower()] = suffix
+    return names
+
+
+def _supported_security_policies() -> List[str]:
+    return sorted(_security_policy_names().values())
+
+
+def _canonical_security_policy(name: str) -> Any:
+    """Resolve a user-supplied policy name to asyncua's exact spelling."""
+    if not name:
+        return None
+    return _security_policy_names().get(str(name).replace("-", "").replace("_", "").lower())
+
+
+def _security_mode_names() -> Dict[str, str]:
+    return {m.name.replace("_", "").lower(): m.name for m in ua.MessageSecurityMode}
+
+
+def _supported_security_modes() -> List[str]:
+    return sorted(_security_mode_names().values())
+
+
+def _canonical_security_mode(name: str) -> Any:
+    """Resolve a user-supplied security mode to asyncua's exact spelling."""
+    if not name:
+        return None
+    return _security_mode_names().get(str(name).replace("-", "").replace("_", "").lower())
 
 
 @register_protocol(
@@ -206,9 +251,11 @@ class OPCUAScanner(NetworkScanner):
         # Create client
         client = Client(url=url, timeout=self.timeout)
 
-        # Set security settings if specified
-        if self.security_policy != "none":
-            self._configure_security(client)
+        # NOTE: security settings are applied in the async path
+        # (_async_discover, before client.connect()) because
+        # set_security_string() is a coroutine and must be awaited; calling it
+        # from this sync method silently discarded the coroutine, leaving an
+        # unencrypted, cert-less channel.
 
         return client
 
@@ -261,6 +308,10 @@ class OPCUAScanner(NetworkScanner):
         results = {}
 
         try:
+            # Apply security (cert/policy) before connecting -- must be awaited.
+            if self.security_policy != "none":
+                await self._configure_security(client)
+
             # Connect
             self.logger.debug("Connecting to OPC UA server...")
             await client.connect()
@@ -644,7 +695,11 @@ class OPCUAScanner(NetworkScanner):
             try:
                 children = await node.get_children()
                 for child in children:
-                    if len(self.nodes) < max_nodes:
+                    # max_nodes <= 0 means "unlimited", matching the guards at
+                    # the top of this method (`max_depth > 0` / `max_nodes > 0`).
+                    # A bare `len(self.nodes) < max_nodes` was False for 0, so
+                    # --max-nodes 0 explored the root node and nothing else.
+                    if max_nodes <= 0 or len(self.nodes) < max_nodes:
                         await self._explore_node(
                             child,
                             max_nodes,
@@ -661,20 +716,55 @@ class OPCUAScanner(NetworkScanner):
         except Exception as e:
             self.logger.debug(f"Error exploring node: {e}")
 
-    def _configure_security(self, client: "Client") -> None:
-        """Configure security settings for the client"""
+    async def _configure_security(self, client: "Client") -> None:
+        """Configure security settings for the client.
+
+        ``client.set_security_string()`` is a coroutine (asyncua); the previous
+        sync call constructed and discarded it (never-awaited RuntimeWarning),
+        so any non-none security policy silently yielded an unencrypted,
+        cert-less channel. Must be awaited from the async path.
+
+        asyncua resolves the policy/mode by exact attribute lookup
+        (``getattr(security_policies, f"SecurityPolicy{name}")`` and
+        ``getattr(ua.MessageSecurityMode, mode)``), so it only accepts
+        PascalCase.  Our own ``protocol_options`` schema documents lowercase
+        values ("basic256sha256", "sign"), which used to raise AttributeError
+        inside asyncua; that was swallowed here at debug level and the scan
+        proceeded UNENCRYPTED.  Normalise case-insensitively and fail loudly
+        instead of silently downgrading the channel.
+        """
+        if not (self.certificate_path and self.private_key_path):
+            self.logger.warning(
+                f"Security policy '{self.security_policy}' requested but no "
+                "certificate-path/private-key-path given; connection will be "
+                "unencrypted"
+            )
+            return
+
+        policy = _canonical_security_policy(self.security_policy)
+        if policy is None:
+            raise ValueError(
+                f"Unknown OPC UA security policy '{self.security_policy}'. "
+                f"Supported: {', '.join(_supported_security_policies())}"
+            )
+        mode = _canonical_security_mode(self.security_mode)
+        if mode is None:
+            raise ValueError(
+                f"Unknown OPC UA security mode '{self.security_mode}'. "
+                f"Supported: {', '.join(_supported_security_modes())}"
+            )
+
+        security_string = (
+            f"{policy},{mode},{self.certificate_path},{self.private_key_path}"
+        )
         try:
-            if self.certificate_path and self.private_key_path:
-                security_string = (
-                    f"{self.security_policy},{self.security_mode},"
-                    f"{self.certificate_path},{self.private_key_path}"
-                )
-                client.set_security_string(security_string)
-                self.logger.debug(
-                    f"Configured security: {self.security_policy}, {self.security_mode}"
-                )
+            await client.set_security_string(security_string)
         except Exception as e:
-            self.logger.debug(f"Error configuring security: {e}")
+            # Never fall through to an unencrypted connect: the caller asked
+            # for a secure channel and did not get one.
+            self.logger.fail(f"Failed to configure OPC UA security: {e}")
+            raise
+        self.logger.debug(f"Configured security: {policy}, {mode}")
 
     def _analyze_security(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze security configuration"""
@@ -717,9 +807,7 @@ class OPCUAScanner(NetworkScanner):
                 severity="high",
             )
             # Centralized security finding
-            self.logger.security_finding(
-                "Anonymous access allowed", category=Category.AUTHENTICATION
-            )
+            self.logger.security_finding("Anonymous access allowed")
 
         # Check encryption support
         endpoints = results.get("endpoints", [])
@@ -729,7 +817,6 @@ class OPCUAScanner(NetworkScanner):
         if not has_encryption:
             self.logger.security_finding(
                 "No encryption",
-                category=Category.ENCRYPTION,
                 detail="No secure endpoints available",
             )
 
@@ -755,7 +842,6 @@ class OPCUAScanner(NetworkScanner):
             # Centralized security finding
             self.logger.security_finding(
                 "Writable access",
-                category=Category.ACCESS_CONTROL,
                 detail=f"{len(writable_nodes)} writable nodes",
             )
 
