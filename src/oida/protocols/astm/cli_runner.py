@@ -10,16 +10,11 @@ from ...connection import NetworkConnection
 from ...utils.protocol_helpers import ConnectionHelper
 from .records import (
     ASTMRecordBuilder,
-    STX,
-    EOT,
     ENQ,
     ACK,
-    CR,
-    LF,
-    ASTM_VENDOR_MAP,
+    identify_vendor_from_name,
 )
 from .mixins import FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin
-from oida.utils.common_types import Category
 
 
 class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkConnection):
@@ -144,19 +139,14 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
             self.results["data"]["tls_enabled"] = use_tls
             return True
 
-        except TimeoutError as e:
+        except Exception as e:  # noqa: BLE001 — report any connect failure and move to the next host
             self.logger.debug("create conn obj failed: %s", e)
-            self.logger.fail("Connection timed out")
-            self.results["data"]["connected"] = False
-            return False
-        except ConnectionRefusedError as e:
-            self.logger.debug("create conn obj failed: %s", e)
-            self.logger.fail("Connection refused")
-            self.results["data"]["connected"] = False
-            return False
-        except Exception as e:
-            self.logger.debug("create conn obj failed: %s", e)
-            self.logger.fail(f"Connection failed: {e}")
+            if isinstance(e, TimeoutError):
+                self.logger.fail("Connection timed out")
+            elif isinstance(e, ConnectionRefusedError):
+                self.logger.fail("Connection refused")
+            else:
+                self.logger.fail(f"Connection failed: {e}")
             self.results["data"]["connected"] = False
             return False
 
@@ -222,7 +212,7 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
             # Now wait for server response (server sends after we finish)
             self.conn.settimeout(2)
             try:
-                data = self.conn.recv(1)
+                data = self._buf_recv(1)
                 if data == ENQ:
                     # Server wants to send data - ACK and receive full response
                     self.conn.sendall(ACK)
@@ -238,51 +228,20 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
             self.logger.debug("identify server failed: %s", e)
 
     def _receive_server_response(self):
-        """Receive server response frames and extract analyzer info"""
+        """Receive server response frames and extract analyzer info.
+
+        Delegates the actual wire parsing to FramingMixin._read_frames_until_eot,
+        which buffers across recv() calls so frames coalesced into one recv() (or
+        split across several) are all parsed, checksum-validated, and ACKed/NAKed
+        individually instead of only the first one being seen.
+        """
         if not self.conn:
             return
 
-        MAX_FRAMES = 100
-        MAX_FRAME_SIZE = 64 * 1024  # 64KB per frame (ASTM frames are small)
         try:
-            self.conn.settimeout(2)
-            for _frame_count in range(MAX_FRAMES):
-                # Receive frame data
-                frame_data = bytearray()
-                while True:
-                    chunk = self.conn.recv(1024)
-                    if not chunk:
-                        break
-                    frame_data.extend(chunk)
-                    if len(frame_data) > MAX_FRAME_SIZE:
-                        self.logger.debug(
-                            "Frame data exceeded %d bytes, truncating", MAX_FRAME_SIZE
-                        )
-                        break
-                    # Check if we have complete frame (ends with CR LF) or EOT
-                    if CR + LF in frame_data or EOT in frame_data:
-                        break
-
-                if not frame_data:
-                    break
-
-                frame_bytes = bytes(frame_data)
-
-                # Check for EOT - end of server transmission
-                if frame_bytes == EOT or frame_bytes.endswith(EOT):
-                    # Extract info from any data before EOT
-                    if len(frame_bytes) > 1:
-                        self._extract_analyzer_info(frame_bytes)
-                    break
-
-                # Parse frame and send ACK. ACK every received data frame (not
-                # only those whose STX landed in this chunk) so a strict
-                # analyzer that waits for a per-frame ACK before sending the
-                # next frame doesn't stall.
-                if STX in frame_bytes:
-                    self._extract_analyzer_info(frame_bytes)
-                self.conn.sendall(ACK)
-
+            frames = self._read_frames_until_eot(timeout=2)
+            for frame_bytes in frames:
+                self._extract_analyzer_info(frame_bytes)
         except Exception as e:
             self.logger.debug("receive server response failed: %s", e)
 
@@ -293,13 +252,16 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
 
             # Look for header record pattern: H|...|SenderName^Vendor|...
             if "H|" in text:
-                # Find header record
+                # Find header record. The record proper ends at whichever of
+                # CR (record terminator) or ETX (frame terminator) comes
+                # first - a well-formed frame has CR immediately before ETX,
+                # so stopping at ETX alone would leave a trailing "\r" stuck
+                # on the last field.
                 h_start = text.find("H|")
-                h_end = text.find("\x03", h_start)  # ETX
-                if h_end == -1:
-                    h_end = text.find("\x0d", h_start)  # CR
-                if h_end == -1:
-                    h_end = len(text)
+                etx_pos = text.find("\x03", h_start)
+                cr_pos = text.find("\x0d", h_start)
+                candidates = [p for p in (etx_pos, cr_pos) if p != -1]
+                h_end = min(candidates) if candidates else len(text)
 
                 header_record = text[h_start:h_end]
                 fields = header_record.split("|")
@@ -319,23 +281,26 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
 
                     # Try vendor lookup if vendor not in response
                     if "vendor" not in analyzer_info:
-                        name_upper = parts[0].upper()
-                        for pattern, (vendor, product) in ASTM_VENDOR_MAP.items():
-                            if pattern in name_upper:
-                                analyzer_info["vendor"] = vendor
-                                analyzer_info["product"] = product
-                                break
+                        match = identify_vendor_from_name(parts[0])
+                        if match:
+                            analyzer_info["vendor"], analyzer_info["product"] = match
 
-                # Field 12: Analyzer type (Chemistry, Hematology, etc.)
+                # Field 9 (H-9): Sender/analyzer characteristics
+                if len(fields) > 8 and fields[8]:
+                    analyzer_info["characteristics"] = fields[8]
+
+                # Field 12 (H-12): Processing ID (P=Production, D=Debug, T=Training)
                 if len(fields) > 11 and fields[11]:
-                    analyzer_info["type"] = fields[11]
+                    analyzer_info["processing_id"] = fields[11]
 
-                # Field 14: Protocol version (may contain software version)
-                if len(fields) > 13 and fields[13]:
-                    version_field = fields[13]
+                # Field 13 (H-13): Version Number (may contain software version)
+                if len(fields) > 12 and fields[12]:
+                    version_field = fields[12]
                     if "-" in version_field and "version" not in analyzer_info:
                         # Format: E1394-8.1.2
                         analyzer_info["version"] = version_field.split("-", 1)[1]
+                    elif "version" not in analyzer_info:
+                        analyzer_info["version"] = version_field
 
                 if analyzer_info:
                     self.results["data"]["analyzer_info"] = analyzer_info
@@ -377,7 +342,6 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
         else:
             self.logger.security_finding(
                 "No encryption",
-                category=Category.ENCRYPTION,
                 detail="ASTM communication is unencrypted (plaintext)",
             )
 

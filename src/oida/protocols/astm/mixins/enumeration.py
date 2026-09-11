@@ -50,7 +50,6 @@ class EnumerationMixin:
                 self.logger.success("Test query accepted (application reply received)")
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "MEDIUM",
                         "operation": "Test Enumeration",
                         "issue": "Test Catalog Accessible",
                         "description": "Lab test catalog can be enumerated "
@@ -63,7 +62,6 @@ class EnumerationMixin:
                 )
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "LOW",
                         "operation": "Test Enumeration",
                         "issue": "Test Query Frame Accepted (Link-Level)",
                         "description": "Endpoint accepted the test query frame at link level "
@@ -145,7 +143,6 @@ class EnumerationMixin:
                 self.logger.success("Patient query accepted - PHI EXPOSURE RISK")
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "HIGH",
                         "operation": "Patient Enumeration",
                         "issue": "Patient Data Exposure",
                         "description": "Endpoint returned patient data to a wildcard query "
@@ -158,7 +155,6 @@ class EnumerationMixin:
                 )
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "LOW",
                         "operation": "Patient Enumeration",
                         "issue": "Patient Query Frame Accepted (Link-Level)",
                         "description": "Endpoint accepted the wildcard patient query frame at link "

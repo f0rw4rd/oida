@@ -53,7 +53,6 @@ class RecordsMixin:
                 self.logger.success("Query record accepted (application reply received)")
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "MEDIUM",
                         "operation": "Query",
                         "issue": "Query Access Available",
                         "description": "Endpoint returns query results to an unknown sender "
@@ -66,7 +65,6 @@ class RecordsMixin:
                 )
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "LOW",
                         "operation": "Query",
                         "issue": "Query Frame Accepted (Link-Level)",
                         "description": "Endpoint accepted the query frame at link level "
@@ -114,7 +112,6 @@ class RecordsMixin:
                 self.logger.success("Patient record accepted - PATIENT INJECTION POSSIBLE")
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "HIGH",
                         "operation": "Patient",
                         "issue": "Patient Injection Possible",
                         "description": "LIS application accepted patient record (application-level "
@@ -127,7 +124,6 @@ class RecordsMixin:
                 )
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "LOW",
                         "operation": "Patient",
                         "issue": "Patient Frame Accepted (Link-Level)",
                         "description": "Endpoint accepted the patient frame at link level "
@@ -209,7 +205,6 @@ class RecordsMixin:
                     desc = "LIS application accepted order record - test orders can be injected"
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "CRITICAL",
                         "operation": f"Order ({action_desc})",
                         "issue": issue,
                         "description": desc + " (application-level acknowledgement observed)",
@@ -221,7 +216,6 @@ class RecordsMixin:
                 )
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "LOW",
                         "operation": f"Order ({action_desc})",
                         "issue": "Order Frame Accepted (Link-Level)",
                         "description": "Endpoint accepted the order frame at link level "
@@ -322,7 +316,6 @@ class RecordsMixin:
                     desc = "LIS application accepted result record - lab results can be falsified"
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "CRITICAL",
                         "operation": f"Result ({status_desc})",
                         "issue": issue,
                         "description": desc + " (application-level acknowledgement observed)",
@@ -334,7 +327,6 @@ class RecordsMixin:
                 )
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "LOW",
                         "operation": f"Result ({status_desc})",
                         "issue": "Result Frame Accepted (Link-Level)",
                         "description": "Endpoint accepted the result frame at link level "

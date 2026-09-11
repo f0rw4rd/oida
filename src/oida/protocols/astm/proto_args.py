@@ -11,7 +11,6 @@ from ...utils.proto_args_factory import (
     add_network_options,
     add_tls_options,
     add_dangerous_options,
-    add_discovery_options,
 )
 
 
@@ -26,7 +25,6 @@ def proto_args(parser, parents):
         epilog="""
 Examples:
   oida astm 192.168.1.100                     # Basic discovery
-  oida astm 192.168.1.100 --quick             # Quick scan
   oida astm 192.168.1.100 --probe-ops         # Probe supported record types
   oida astm 192.168.1.100 --enum-tests        # Enumerate available tests
   oida astm 192.168.1.100 --enum-instruments  # Enumerate connected analyzers
@@ -46,8 +44,12 @@ Examples:
     # and does not switch ports for --tls, so the help must not claim it does.
     add_tls_options(astm_parser)
 
-    # Discovery Options (--discover, --quick, --full, --deep-scan)
-    add_discovery_options(astm_parser)
+    # NOTE: --discover/--quick/--full/--deep-scan were removed. They were
+    # accepted by argparse but never consumed by this protocol's cli_runner
+    # (nothing under src/oida/protocols/astm/ or central CLI code read their
+    # dests), and --quick was falsely advertised above as a real scan mode.
+    # Rather than silently keep advertising modes with no effect, the flags
+    # are gone; a default scan is the only mode.
 
     # NOTE: Output options (--output, --format, --verbose, --debug) are
     # provided by the main parser and must NOT be re-added here.

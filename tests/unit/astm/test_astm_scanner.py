@@ -119,7 +119,9 @@ class _AppAcceptingSocket:
 
     def __init__(self, app_reply=None):
         self._app_reply = (
-            app_reply if app_reply is not None else (STX + b"1C|1|Accepted" + ETX + b"00" + CR + LF)
+            app_reply
+            if app_reply is not None
+            else (STX + b"1C|1|Accepted" + CR + ETX + b"C6" + CR + LF)
         )
         self._after_eot = False
         self.sent = []
@@ -378,6 +380,10 @@ class TestSendFrame:
         assert sent_data.startswith(STX)
         assert sent_data.endswith(CR + LF)
         assert ETX in sent_data
+        # ASTM E1394 record text is CR-terminated; that CR must land inside
+        # the checksummed span, immediately before the frame's ETX.
+        etx_idx = sent_data.index(ETX)
+        assert sent_data[etx_idx - 1 : etx_idx] == CR
 
     def test_frame_rejected(self):
         mock_sock = _make_mock_socket([NAK])
@@ -470,14 +476,15 @@ class TestExtractAnalyzerInfo:
     def test_extract_version_from_field14(self):
         scanner = _instantiate_scanner(_make_args())
 
-        # Header with version in field 14 (index 13)
+        # Header with version in field 13 (index 12) - per LIS02-A2, H-13 is
+        # the Processing ID / Version Number field; H-14 (index 13) is the
+        # date/time of message, not a version.
         fields = [
             "H",
             "\\^&",
             "",
             "",
             "TestAnalyzer",
-            "",
             "",
             "",
             "",
@@ -497,13 +504,16 @@ class TestExtractAnalyzerInfo:
     def test_extract_analyzer_type_field12(self):
         scanner = _instantiate_scanner(_make_args())
 
+        # H-12 (index 11) is the Processing ID field per LIS02-A2, not an
+        # analyzer "type" - the code stores it as processing_id and does not
+        # set a "type" key.
         fields = ["H", "\\^&", "", "", "MyAnalyzer", "", "", "", "", "", "", "Chemistry", "", ""]
         data = ("|".join(fields) + "\x03").encode()
         scanner._extract_analyzer_info(data)
 
         info = scanner.results["data"].get("analyzer_info")
         assert info is not None
-        assert info["type"] == "Chemistry"
+        assert info["processing_id"] == "Chemistry"
 
     def test_extract_handles_malformed_data(self):
         scanner = _instantiate_scanner(_make_args())
@@ -530,8 +540,9 @@ class TestReceiveServerResponse:
         scanner = _instantiate_scanner(_make_args())
         mock_sock = MagicMock()
         mock_sock.settimeout.return_value = None
-        # First recv returns a frame with STX, second returns EOT
-        frame = STX + b"1H|\\^&|||TestLIS" + ETX + b"00" + CR + LF
+        # First recv returns a frame with STX, second returns EOT. Checksum
+        # E1 is the correct modulo-256 checksum over "1H|\^&|||TestLIS" + CR + ETX.
+        frame = STX + b"1H|\\^&|||TestLIS" + CR + ETX + b"E1" + CR + LF
         mock_sock.recv.side_effect = [frame, EOT]
         scanner.conn = mock_sock
 
@@ -762,8 +773,16 @@ class TestProbeOperations:
 
     def test_probe_all_rejected(self):
         mock_sock = MagicMock()
-        # ENQ -> ACK, then header -> NAK for each record type
-        mock_sock.recv.side_effect = [ACK, NAK] * 6
+
+        # ENQ -> ACK, any data frame -> NAK (every retry attempt, for every
+        # record type). Keyed off the last sendall() payload rather than a
+        # fixed-length list, since a NAKed frame is now retried per ASTM
+        # E1381 before being reported as rejected.
+        def _recv_side_effect(*_args, **_kwargs):
+            sent = mock_sock.sendall.call_args[0][0]
+            return ACK if sent == ENQ else NAK
+
+        mock_sock.recv.side_effect = _recv_side_effect
         scanner = _instantiate_scanner(_make_args(confirm=True), mock_sock)
 
         scanner._probe_operations()
