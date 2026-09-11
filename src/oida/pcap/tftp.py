@@ -66,6 +66,11 @@ class TFTPPassiveListener(PySharkListenerBase):
         # direction: RRQ download => server sends DATA; WRQ upload => client
         # sends DATA. Keyed by the direction-independent flow_id.
         self._flow_server_ip: Dict[str, str] = {}
+        # Server IP scoped to the endpoint pair (frozenset of the two IPs), so a
+        # host that is the server in one transfer is not assumed to be the server
+        # in an unrelated transfer where it is the client. DATA/ACK arrive on a
+        # fresh ephemeral-TID flow, so per-flow correlation alone never matches.
+        self._pair_server_ip: Dict[frozenset, str] = {}
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         """Format TFTP interaction as protocol-specific table columns."""
@@ -173,6 +178,7 @@ class TFTPPassiveListener(PySharkListenerBase):
         # The request destination is the TFTP server for this flow.
         if flow_id:
             self._flow_server_ip[flow_id] = dst_ip
+        self._pair_server_ip[frozenset((src_ip, dst_ip))] = dst_ip
 
         filename = self.get_field(tftp, "source_file", "")
         filename = str(filename).strip() if filename else ""
@@ -226,6 +232,7 @@ class TFTPPassiveListener(PySharkListenerBase):
         # The request destination is the TFTP server for this flow.
         if flow_id:
             self._flow_server_ip[flow_id] = dst_ip
+        self._pair_server_ip[frozenset((src_ip, dst_ip))] = dst_ip
 
         filename = self.get_field(tftp, "destination_file", "")
         filename = str(filename).strip() if filename else ""
@@ -279,14 +286,14 @@ class TFTPPassiveListener(PySharkListenerBase):
         client->server on WRQ upload)."""
         # Determine DATA direction from the transfer learned at RRQ/WRQ time.
         # The TFTP server replies from an ephemeral TID port, so the DATA flow_id
-        # need not match the request's; correlate by the server IP (the request
-        # destination) instead. If either endpoint of this DATA packet is a known
-        # server, the server is whichever endpoint matches; otherwise fall back to
-        # the common RRQ-download case of server-as-source.
-        known_servers = set(self._flow_server_ip.values())
-        if src_ip in known_servers:
+        # need not match the request's; correlate by the server IP recorded for
+        # THIS endpoint pair (not a global set of every server ever seen, which
+        # mislabels a host that is a server in one transfer and a client in
+        # another). Fall back to the common RRQ-download case of server-as-source.
+        pair_server = self._pair_server_ip.get(frozenset((src_ip, dst_ip)))
+        if pair_server == src_ip:
             server_is_src = True
-        elif dst_ip in known_servers:
+        elif pair_server == dst_ip:
             server_is_src = False
         else:
             server_is_src = True
