@@ -11,7 +11,6 @@ from ..constants import (
     OBJECT_TYPES,
 )
 from ..service_catalog import SERVICE_NAMES, by_name
-from oida.utils.common_types import Category
 
 
 def _is_callable(service_name: str) -> bool:
@@ -251,7 +250,11 @@ class ObjectsMixin:
                                 # Decode table is the catalog's ordered names, so
                                 # detection and --call invocation never drift.
                                 service_names = SERVICE_NAMES
-                                for i, byte in enumerate(data[1:] if len(data) > 1 else data):
+                                # BACnet bitString: data[0] is the unused-bits count,
+                                # never content. data[1:] is already b"" for a
+                                # content-less payload — decoding data itself would
+                                # read the count byte as service bits.
+                                for i, byte in enumerate(data[1:]):
                                     for bit in range(8):
                                         if byte & (1 << (7 - bit)):
                                             idx = i * 8 + bit
@@ -298,7 +301,8 @@ class ObjectsMixin:
                                     break
                             if data:
                                 obj_types = []
-                                for i, byte in enumerate(data[1:] if len(data) > 1 else data):
+                                # Same bitString prefix rule as the services decode.
+                                for i, byte in enumerate(data[1:]):
                                     for bit in range(8):
                                         if byte & (1 << (7 - bit)):
                                             idx = i * 8 + bit
@@ -538,8 +542,13 @@ class ObjectsMixin:
                 self.logger.warning(f"  Reached walk limit ({max_walk}), stopping property reads")
                 break
 
-            type_name = OBJECT_TYPES.get(obj_type, f"type-{obj_type}")
-            obj_id = ObjectIdentifier((type_name, obj_instance))
+            # Proprietary object types (128-1023) are legal and shipped by real
+            # devices, but bacpypes3 rejects the synthetic "type-NNN" name with
+            # ValueError. Address unknown types numerically, exactly as the
+            # proprietary-type probe in discovery.py does.
+            known_type = obj_type in OBJECT_TYPES
+            type_name = OBJECT_TYPES[obj_type] if known_type else f"type-{obj_type}"
+            obj_id = ObjectIdentifier((type_name if known_type else obj_type, obj_instance))
             obj_info = {"type": type_name, "instance": obj_instance}
 
             # Read key properties
@@ -1047,7 +1056,6 @@ class ObjectsMixin:
         if security_concerns:
             self.logger.security_finding(
                 "Insecure configuration",
-                category=Category.ACCESS_CONTROL,
                 detail=f"{len(security_concerns)} program security concern(s)",
             )
             for concern in security_concerns:
@@ -1061,7 +1069,6 @@ class ObjectsMixin:
             if exposed_count > 0:
                 self.logger.security_finding(
                     "Program control exposed",
-                    category=Category.ACCESS_CONTROL,
                     detail=f"{exposed_count} program object(s) expose a readable programChange property; "
                     "if write access is unauthenticated this would allow unauthorized "
                     "RUN/HALT/RESTART state transitions",
