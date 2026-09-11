@@ -356,12 +356,21 @@ class SVPassiveListener(PySharkListenerBase):
         # Detect sample gaps (missing smpCnt values)
         if stream.last_smp_cnt >= 0 and smp_cnt != stream.last_smp_cnt:
             expected_next = stream.last_smp_cnt + 1
-            # Handle wrap-around: smpCnt resets to 0 at smpRate boundary
-            max_cnt = max(stream.smp_rates) if stream.smp_rates else 4000
-            if expected_next >= max_cnt:
-                expected_next = 0
-            if smp_cnt != expected_next:
-                stream.sample_gaps += 1
+            if stream.smp_rates:
+                # Rate is known: smpCnt resets to 0 at the smpRate boundary.
+                max_cnt = max(stream.smp_rates)
+                if expected_next >= max_cnt:
+                    expected_next = 0
+                if smp_cnt != expected_next:
+                    stream.sample_gaps += 1
+            else:
+                # Rate unknown (smpRate is often absent from the ASDU and lives
+                # only in the SV config). Don't assume 4000 -- that flags a
+                # false gap on every 4800-sample (60 Hz) stream once smpCnt
+                # passes 4000. Treat any decrease as a legitimate wrap-around
+                # and count only forward skips.
+                if smp_cnt > expected_next:
+                    stream.sample_gaps += 1
         stream.last_smp_cnt = smp_cnt
 
         if simulated:
