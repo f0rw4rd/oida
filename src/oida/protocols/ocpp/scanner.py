@@ -483,7 +483,11 @@ class OCPPScanner(NetworkScanner):
                 # This is a CALLRESULT or CALLERROR -- return it
                 _resp_type = (
                     "CALLRESULT"
-                    if (isinstance(data, list) and data[0] == MessageType.CALLRESULT)
+                    if (
+                        isinstance(data, list)
+                        and len(data) >= 2
+                        and data[0] == MessageType.CALLRESULT
+                    )
                     else "CALLERROR"
                 )
                 self.logger.debug(f"Received {_resp_type} ({len(raw)} bytes)")
