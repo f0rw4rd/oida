@@ -573,6 +573,11 @@ class TACACSPassiveListener(PySharkListenerBase):
         if ptype != 0x01:  # only AUTHEN (the 16100 known-plaintext case)
             return
         length = int.from_bytes(body[8:12], "big")
+        # The captured segment must carry the whole declared body. A TACACS+
+        # record split across TCP segments would otherwise yield a silently
+        # truncated cipher, and a mode-16100 hash built from it can never crack.
+        if 12 + length > len(body):
+            return
         cipher = body[12 : 12 + length]
         if len(cipher) < 6:
             return
