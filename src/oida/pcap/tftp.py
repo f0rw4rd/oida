@@ -319,11 +319,16 @@ class TFTPPassiveListener(PySharkListenerBase):
         if filename:
             summary += f" ({filename})"
 
+        # The server's packets are responses, the client's are requests. For a
+        # download the server sources DATA (response); for a WRQ upload the
+        # client sources it (request) -- so the direction tracks server_is_src.
+        direction = "response" if server_is_src else "request"
+
         self._record_interaction(
             now,
             src_ip,
             dst_ip,
-            "response",
+            direction,
             "TFTP DATA",
             details,
             summary,
@@ -354,11 +359,18 @@ class TFTPPassiveListener(PySharkListenerBase):
             block = "?"
             self.logger.debug(f"Missing block number in TFTP ACK from {src_ip} -> {dst_ip}")
 
+        # ACK is sent by the receiver: the client ACKs a download (request), the
+        # server ACKs a WRQ upload (response). Resolve the server per endpoint
+        # pair, same as _process_data, rather than hardcoding a direction.
+        pair_server = self._pair_server_ip.get(frozenset((src_ip, dst_ip)))
+        server_is_src = pair_server == src_ip
+        direction = "response" if server_is_src else "request"
+
         self._record_interaction(
             now,
             src_ip,
             dst_ip,
-            "request",
+            direction,
             "TFTP ACK",
             {"operation": "ACK", "block": block},
             f"TFTP ACK block {block}",
@@ -367,6 +379,7 @@ class TFTPPassiveListener(PySharkListenerBase):
             dst_port=dst_port,
         )
 
+        self._track_devices(src_ip, dst_ip, src_mac, dst_mac, server_is_src=server_is_src)
         self.logger.debug(f"TFTP: ACK block {block} ({src_ip} -> {dst_ip})")
 
     def _process_error(
