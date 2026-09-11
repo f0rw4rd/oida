@@ -147,7 +147,16 @@ class ContinuationMixin:
         header_added = False
 
         for fragment in fragments:
-            segments = HL7SegmentParser.split_message(fragment)
+            # A continuation pointer is detected by plain string match on the
+            # DSC segment, so a hostile/broken server can hand out a pointer
+            # and then answer the QCN request with a frame hl7apy refuses to
+            # parse. Skip such a fragment instead of letting ParserError abort
+            # the whole query path.
+            try:
+                segments = HL7SegmentParser.split_message(fragment)
+            except Exception as e:
+                self.logger.debug(f"Skipping unparseable HL7 continuation fragment: {e}")
+                continue
             for segment in segments:
                 # Keep MSH, MSA, QAK from first fragment only
                 if segment.startswith(("MSH|", "MSA|", "QAK|")):
@@ -160,5 +169,11 @@ class ContinuationMixin:
                     result_segments.append(segment)
 
             header_added = True
+
+        if not result_segments:
+            # Nothing survived parsing -- fall back to the first frame so the
+            # caller still sees what a plain single-shot send would have
+            # returned rather than an empty response.
+            return fragments[0]
 
         return "\r".join(result_segments).encode("utf-8")

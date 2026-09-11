@@ -285,6 +285,13 @@ Examples:
     )
 
     mfn_group.add_argument(
+        "--department",
+        type=str,
+        metavar="DEPT",
+        help="Department (STF-11) for MFN^M02 messages",
+    )
+
+    mfn_group.add_argument(
         "--charge-code",
         type=str,
         metavar="CODE",

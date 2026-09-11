@@ -14,7 +14,7 @@ from typing import Optional
 from hl7apy.core import Message, Segment
 
 from .. import MDC_CODES, PCD_DEVICE_TYPES, PCD_ALARM_TYPES
-from ._helpers import populate_msh
+from ._helpers import ack_accepted, populate_msh
 
 
 class DeviceMixin:
@@ -58,7 +58,7 @@ class DeviceMixin:
 
             # Security finding if accepted
             ack = self.results["data"].get("ack_code", "")
-            if ack == "AA":
+            if ack_accepted(ack):
                 device_type = getattr(self.args, "device_type", "lvp")
                 self.results["data"].setdefault("security_findings", []).append(
                     {
@@ -115,7 +115,7 @@ class DeviceMixin:
             # PV1 segment
             pv1 = self.segment_builder.build_pv1(
                 patient_class="I",
-                location=getattr(self.args, "location", "ICU^101^A"),
+                location=(getattr(self.args, "location", None) or "ICU^101^A"),
             )
             if pv1:
                 msg.add(pv1)
@@ -244,8 +244,8 @@ class DeviceMixin:
 
             # Security finding if accepted
             ack = self.results["data"].get("ack_code", "")
-            if ack == "AA":
-                drug = getattr(self.args, "drug_name", "Unknown")
+            if ack_accepted(ack):
+                drug = getattr(self.args, "drug_name", None) or "Unknown"
                 self.results["data"].setdefault("security_findings", []).append(
                     {
                         "operation": "PCD-03",
@@ -287,10 +287,12 @@ class DeviceMixin:
                 msg.add(orc)
 
             # RXG segment (Give)
-            drug_name = getattr(self.args, "drug_name", None) or getattr(
-                self.args, "rx_drug", "Morphine"
+            drug_name = getattr(self.args, "drug_name", None) or (
+                getattr(self.args, "rx_drug", None) or "Morphine"
             )
-            flow_rate = getattr(self.args, "flow_rate", None) or getattr(self.args, "rx_dose", "10")
+            flow_rate = getattr(self.args, "flow_rate", None) or (
+                getattr(self.args, "rx_dose", None) or "10"
+            )
             vtbi = getattr(self.args, "vtbi", None)
             drug_conc = getattr(self.args, "drug_concentration", None)
 
@@ -299,7 +301,7 @@ class DeviceMixin:
             rxg.rxg_2 = "1"  # Dispense sub-ID
             rxg.rxg_4 = f"^{drug_name}^NDC"  # Give code
             rxg.rxg_5 = str(flow_rate)  # Give amount
-            rxg.rxg_7 = getattr(self.args, "rx_units", "mg")  # Give units
+            rxg.rxg_7 = getattr(self.args, "rx_units", None) or "mg"  # Give units
 
             # Include concentration if provided
             if drug_conc:
@@ -331,7 +333,7 @@ class DeviceMixin:
             self.logger.fail("PCD Alarm message is a write operation. Use --confirm to proceed.")
             return
 
-        alarm_type = getattr(self.args, "alarm_type", "generic")
+        alarm_type = getattr(self.args, "alarm_type", None) or "generic"
         self.logger.display(f"Sending PCD-10 Device Alarm ({alarm_type})...")
 
         msg = self._create_pcd_alarm_message()
@@ -347,7 +349,7 @@ class DeviceMixin:
 
             # Security finding if accepted
             ack = self.results["data"].get("ack_code", "")
-            if ack == "AA":
+            if ack_accepted(ack):
                 self.results["data"].setdefault("security_findings", []).append(
                     {
                         "operation": "PCD-10",
@@ -405,7 +407,7 @@ class DeviceMixin:
             obx1.obx_3 = f"{alarm_event[0]}^{alarm_event[1]}^MDC"
 
             # Get specific alarm type
-            alarm_type = getattr(self.args, "alarm_type", "generic")
+            alarm_type = getattr(self.args, "alarm_type", None) or "generic"
             alarm_mdc = PCD_ALARM_TYPES.get(alarm_type, MDC_CODES["EVT_ALARM"])
             obx1.obx_5 = f"{alarm_mdc[0]}^{alarm_mdc[1]}^MDC"
             obx1.obx_11 = "F"

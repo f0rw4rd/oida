@@ -13,7 +13,7 @@ from typing import Optional
 
 from hl7apy.core import Message, Segment
 
-from ._helpers import build_qrd, build_rcp, populate_msh
+from ._helpers import ack_accepted, build_qrd, build_rcp, populate_msh
 
 
 class QueryMixin:
@@ -40,7 +40,8 @@ class QueryMixin:
                 # Try to extract patient data from response
                 self._extract_query_results(response)
 
-                if enum_patients:
+                ack = self._extract_ack_code(response)
+                if enum_patients and ack_accepted(ack):
                     self.results["data"].setdefault("security_findings", []).append(
                         {
                             "operation": "QRY (wildcard)",

@@ -14,7 +14,7 @@ from typing import Optional
 from hl7apy.core import Message, Segment
 
 from ..segments import HL7SegmentParser
-from ._helpers import populate_msh
+from ._helpers import ack_accepted, populate_msh
 
 
 class FinancialMixin:
@@ -39,10 +39,9 @@ class FinancialMixin:
                 self._extract_financial_results(response)
 
                 ack = self.results["data"].get("ack_code", "")
-                if ack == "AA":
+                if ack_accepted(ack):
                     self.results["data"].setdefault("security_findings", []).append(
                         {
-                            "severity": "HIGH",
                             "operation": "BAR^P01",
                             "issue": "Billing Account Creation Accepted",
                             "description": "Server accepted billing account from unknown source",
@@ -72,11 +71,10 @@ class FinancialMixin:
                 self._extract_financial_results(response)
 
                 ack = self.results["data"].get("ack_code", "")
-                if ack == "AA":
-                    amount = getattr(self.args, "transaction_amount", "Unknown")
+                if ack_accepted(ack):
+                    amount = getattr(self.args, "transaction_amount", None) or "Unknown"
                     self.results["data"].setdefault("security_findings", []).append(
                         {
-                            "severity": "HIGH",
                             "operation": "DFT^P03",
                             "issue": "Financial Transaction Accepted",
                             "description": f"Server accepted financial transaction (${amount}) from unknown source",
@@ -120,8 +118,8 @@ class FinancialMixin:
 
         # PV1 segment
         pv1 = self.segment_builder.build_pv1(
-            patient_class=getattr(self.args, "patient_class", "O"),
-            visit_number=getattr(self.args, "visit_number", f"VIS{int(time.time())}"),
+            patient_class=(getattr(self.args, "patient_class", None) or "O"),
+            visit_number=(getattr(self.args, "visit_number", None) or f"VIS{int(time.time())}"),
         )
         if pv1:
             msg.add(pv1)
@@ -152,11 +150,13 @@ class FinancialMixin:
 
             # GT1 segment (Guarantor)
             gt1 = self.segment_builder.build_gt1(
-                guarantor_number=getattr(self.args, "account_number", f"GT{int(time.time())}"),
-                guarantor_name=getattr(
-                    self.args, "guarantor_name", patient_name or "TEST^GUARANTOR"
+                guarantor_number=(
+                    getattr(self.args, "account_number", None) or f"GT{int(time.time())}"
                 ),
-                guarantor_phone=getattr(self.args, "guarantor_phone", ""),
+                guarantor_name=(
+                    getattr(self.args, "guarantor_name", None) or patient_name or "TEST^GUARANTOR"
+                ),
+                guarantor_phone=(getattr(self.args, "guarantor_phone", None) or ""),
             )
             if gt1:
                 msg.add(gt1)
@@ -166,8 +166,8 @@ class FinancialMixin:
             if insurance_company:
                 in1 = self.segment_builder.build_in1(
                     insurance_company_name=insurance_company,
-                    group_number=getattr(self.args, "insurance_group", ""),
-                    policy_number=getattr(self.args, "policy_number", ""),
+                    group_number=(getattr(self.args, "insurance_group", None) or ""),
+                    policy_number=(getattr(self.args, "policy_number", None) or ""),
                 )
                 if in1:
                     msg.add(in1)
@@ -204,13 +204,13 @@ class FinancialMixin:
             ft1 = self.segment_builder.build_ft1(
                 transaction_id=f"FT{int(time.time())}",
                 transaction_type=getattr(self.args, "transaction_type", "CG"),
-                transaction_code=getattr(self.args, "transaction_code", "99213"),
+                transaction_code=(getattr(self.args, "transaction_code", None) or "99213"),
                 transaction_description=getattr(self.args, "transaction_description", None)
                 or "Office Visit",
-                transaction_amount=getattr(self.args, "transaction_amount", "100.00"),
+                transaction_amount=(getattr(self.args, "transaction_amount", None) or "100.00"),
                 patient_id=patient_id or "DFT_TEST001",
-                diagnosis_code=getattr(self.args, "dx_code", ""),
-                procedure_code=getattr(self.args, "pr_code", ""),
+                diagnosis_code=(getattr(self.args, "dx_code", None) or ""),
+                procedure_code=(getattr(self.args, "pr_code", None) or ""),
             )
             if ft1:
                 msg.add(ft1)

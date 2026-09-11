@@ -11,6 +11,28 @@ from datetime import datetime
 from hl7apy.core import Message, Segment
 
 
+def ack_accepted(ack: str | None) -> bool:
+    """Return True if an MSA-1 acknowledgement code indicates acceptance.
+
+    Covers both original-mode ("AA" Application Accept) and enhanced-mode
+    ("CA" Commit Accept) acknowledgements, mirroring the classification
+    already used by ``ProbeMixin._probe_operations``.
+    """
+    return ack in ("AA", "CA")
+
+
+def _str_arg(args, name: str) -> str:
+    """Return args.<name> only if it is genuinely a string.
+
+    CLI args are always strings; this guard exists so that test doubles
+    (e.g. bare ``unittest.mock.Mock()`` without a spec) that auto-vivify
+    non-string attributes don't get mistaken for a real operator-supplied
+    value and passed into an hl7apy field assignment.
+    """
+    val = getattr(args, name, "")
+    return val if isinstance(val, str) else ""
+
+
 def populate_msh(
     msg: Message,
     args,
@@ -31,16 +53,18 @@ def populate_msh(
         version: HL7 version string.
         msg_type: Message type string for MSH-9 (e.g. "QRY^Q01").
         control_prefix: Prefix for MSH-10 control ID (e.g. "QRY").
-        receiving_app: MSH-5 value.
-        receiving_facility: MSH-6 value.
+        receiving_app: MSH-5 value (contextual default; overridden by
+            args.receiving_app when the operator supplies -R/--receiving-app).
+        receiving_facility: MSH-6 value (contextual default; overridden by
+            args.receiving_facility when the operator supplies --receiving-facility).
         sending_app: Override for MSH-3 (defaults to args.sending_app or "OIDA").
         sending_facility: Override for MSH-4 (defaults to args.sending_facility or "SECURITY").
     """
     msh = msg.msh
     msh.msh_3 = sending_app or getattr(args, "sending_app", "OIDA")
     msh.msh_4 = sending_facility or getattr(args, "sending_facility", "SECURITY")
-    msh.msh_5 = receiving_app
-    msh.msh_6 = receiving_facility
+    msh.msh_5 = _str_arg(args, "receiving_app") or receiving_app
+    msh.msh_6 = _str_arg(args, "receiving_facility") or receiving_facility
     msh.msh_7 = datetime.now().strftime("%Y%m%d%H%M%S")
     msh.msh_9 = msg_type
     msh.msh_10 = f"{control_prefix}{int(time.time())}"

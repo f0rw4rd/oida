@@ -13,7 +13,7 @@ from typing import Optional
 from hl7apy.core import Message
 
 from ..segments import HL7SegmentParser
-from ._helpers import build_qrd, populate_msh
+from ._helpers import ack_accepted, build_qrd, populate_msh
 
 
 class MasterFileMixin:
@@ -50,10 +50,9 @@ class MasterFileMixin:
 
                 # Security check - master file modification accepted
                 ack = self.results["data"].get("ack_code", "")
-                if ack == "AA":
+                if ack_accepted(ack):
                     self.results["data"].setdefault("security_findings", []).append(
                         {
-                            "severity": "HIGH",
                             "operation": f"MFN^{mfn_type}",
                             "issue": f"Master File Modification Accepted ({desc})",
                             "description": "Server accepted master file update from unknown source",
@@ -97,7 +96,7 @@ class MasterFileMixin:
                 record_level_event_code="MAD",
                 mfn_control_id=f"MFE{int(time.time())}",
                 primary_key_value=getattr(self.args, "staff_id", None)
-                or getattr(self.args, "charge_code", "TEST001"),
+                or (getattr(self.args, "charge_code", None) or "TEST001"),
             )
             if mfe:
                 msg.add(mfe)
@@ -106,9 +105,9 @@ class MasterFileMixin:
             if mfn_type == "M02":
                 # STF segment (Staff Identification)
                 stf = self.segment_builder.build_stf(
-                    staff_id=getattr(self.args, "staff_id", "STF001"),
-                    staff_name=getattr(self.args, "staff_name", "TEST^STAFF"),
-                    staff_type=getattr(self.args, "staff_type", "MD"),
+                    staff_id=(getattr(self.args, "staff_id", None) or "STF001"),
+                    staff_name=(getattr(self.args, "staff_name", None) or "TEST^STAFF"),
+                    staff_type=(getattr(self.args, "staff_type", None) or "MD"),
                     department=getattr(self.args, "department", ""),
                     active_inactive="A",
                 )
@@ -117,8 +116,8 @@ class MasterFileMixin:
 
                 # PRA segment (Practitioner Detail)
                 pra = self.segment_builder.build_pra(
-                    practitioner_id=getattr(self.args, "staff_id", "STF001"),
-                    practitioner_category=getattr(self.args, "staff_type", "MD"),
+                    practitioner_id=(getattr(self.args, "staff_id", None) or "STF001"),
+                    practitioner_category=(getattr(self.args, "staff_type", None) or "MD"),
                 )
                 if pra:
                     msg.add(pra)
@@ -126,8 +125,8 @@ class MasterFileMixin:
             elif mfn_type == "M04":
                 # PRC segment (Pricing/Charge Description)
                 prc = self.segment_builder.build_prc(
-                    charge_code=getattr(self.args, "charge_code", "CHG001"),
-                    price=getattr(self.args, "charge_price", "100.00"),
+                    charge_code=(getattr(self.args, "charge_code", None) or "CHG001"),
+                    price=(getattr(self.args, "charge_price", None) or "100.00"),
                     active_inactive="A",
                 )
                 if prc:

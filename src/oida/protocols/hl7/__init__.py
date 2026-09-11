@@ -492,19 +492,14 @@ class hl7(
             self.results["data"]["connected"] = True
             self.results["data"]["tls_enabled"] = use_tls
             return True
-        except TimeoutError as e:
+        except Exception as e:  # noqa: BLE001 — report any connect failure and move to the next host
             self.logger.debug(f"create conn obj failed: {e}")
-            self.logger.fail("Connection timed out")
-            self.results["data"]["connected"] = False
-            return False
-        except ConnectionRefusedError as e:
-            self.logger.debug(f"create conn obj failed: {e}")
-            self.logger.fail("Connection refused")
-            self.results["data"]["connected"] = False
-            return False
-        except Exception as e:
-            self.logger.debug(f"create conn obj failed: {e}")
-            self.logger.fail(f"Connection failed: {e}")
+            if isinstance(e, TimeoutError):
+                self.logger.fail("Connection timed out")
+            elif isinstance(e, ConnectionRefusedError):
+                self.logger.fail("Connection refused")
+            else:
+                self.logger.fail(f"Connection failed: {e}")
             self.results["data"]["connected"] = False
             return False
 
@@ -561,12 +556,29 @@ class hl7(
 
         if data.get("ack_code"):
             ack = data["ack_code"]
-            if ack == "AA":
-                self.logger.success("  ACK: Application Accept (AA)")
-            elif ack == "AE":
-                self.logger.warning("  ACK: Application Error (AE)")
-            elif ack == "AR":
-                self.logger.fail("  ACK: Application Reject (AR)")
+            # Original ("Ax") and enhanced ("Cx") acknowledgement modes are both
+            # valid MSA-1 values (HL7 v2.x table 0008). Treating only the "Ax"
+            # set as known made every enhanced-mode commit ack fall through to
+            # the generic branch, so a successful CA looked no different from an
+            # unparsable value.
+            accept = {
+                "AA": "Application Accept (AA)",
+                "CA": "Commit Accept (CA)",
+            }
+            error = {
+                "AE": "Application Error (AE)",
+                "CE": "Commit Error (CE)",
+            }
+            reject = {
+                "AR": "Application Reject (AR)",
+                "CR": "Commit Reject (CR)",
+            }
+            if ack in accept:
+                self.logger.success(f"  ACK: {accept[ack]}")
+            elif ack in error:
+                self.logger.warning(f"  ACK: {error[ack]}")
+            elif ack in reject:
+                self.logger.fail(f"  ACK: {reject[ack]}")
             else:
                 self.logger.display(f"  ACK: {ack}")
 
@@ -645,6 +657,16 @@ class hl7(
         timestamp = datetime.now().strftime("%Y%m%d%H%M%S")
         msg_id = f"MSG{int(time.time())}"
 
+        # Honour operator-supplied -R/--receiving-app and --receiving-facility
+        # (the isinstance guard keeps bare-Mock test doubles from leaking
+        # non-string values into hl7apy field assignments).
+        receiving_app = getattr(self.args, "receiving_app", "")
+        if not isinstance(receiving_app, str) or not receiving_app:
+            receiving_app = "TARGET"
+        receiving_facility = getattr(self.args, "receiving_facility", "")
+        if not isinstance(receiving_facility, str) or not receiving_facility:
+            receiving_facility = "FACILITY"
+
         # Try hl7apy first for supported message types
         try:
             from hl7apy.core import Message
@@ -653,8 +675,8 @@ class hl7(
             msh = msg.msh
             msh.msh_3 = "OIDA"
             msh.msh_4 = "SECURITY"
-            msh.msh_5 = "TARGET"
-            msh.msh_6 = "FACILITY"
+            msh.msh_5 = receiving_app
+            msh.msh_6 = receiving_facility
             msh.msh_7 = timestamp
             msh.msh_9 = f"{msg_type}^{trigger_event}"
             msh.msh_10 = msg_id
@@ -665,7 +687,7 @@ class hl7(
             self.logger.debug("create test message failed: %s", e)
 
         # Fallback: create raw HL7 message for unsupported types
-        msh = f"MSH|^~\\&|OIDA|SECURITY|TARGET|FACILITY|{timestamp}||{msg_type}^{trigger_event}|{msg_id}|P|{version}"
+        msh = f"MSH|^~\\&|OIDA|SECURITY|{receiving_app}|{receiving_facility}|{timestamp}||{msg_type}^{trigger_event}|{msg_id}|P|{version}"
 
         # Add required segments based on message type
         segments = [msh]
@@ -688,6 +710,12 @@ class hl7(
             return None
 
         try:
+            msh_fields = message.split("\r", 1)[0].split("|")
+            if len(msh_fields) > 5:
+                self.logger.debug(
+                    f"Outgoing MSH: sending={msh_fields[2]}/{msh_fields[3]} "
+                    f"receiving={msh_fields[4]}/{msh_fields[5]}"
+                )
             self.conn.sendall(wrap_mllp(message))
 
             # Receive response with a hard cap so a hostile peer can't drive

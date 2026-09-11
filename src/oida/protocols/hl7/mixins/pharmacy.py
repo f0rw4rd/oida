@@ -13,7 +13,7 @@ from typing import Optional
 
 from hl7apy.core import Message
 
-from ._helpers import populate_msh
+from ._helpers import ack_accepted, populate_msh
 
 
 class PharmacyMixin:
@@ -41,7 +41,7 @@ class PharmacyMixin:
             self._extract_detailed_response(response, msg_type)
 
             ack = self.results["data"].get("ack_code", "")
-            if ack == "AA":
+            if ack_accepted(ack):
                 self.results["data"].setdefault("security_findings", []).append(
                     {
                         "operation": msg_type,
@@ -54,7 +54,7 @@ class PharmacyMixin:
 
     def _send_rx_message(self):
         """Send RDE^O11 (Pharmacy Order) message with prescription data"""
-        drug = getattr(self.args, "rx_drug", "Unknown")
+        drug = getattr(self.args, "rx_drug", None) or "Unknown"
         self._send_pharmacy_confirmed(
             msg_type="RDE^O11",
             label="Pharmacy/Treatment Order",
@@ -113,8 +113,8 @@ class PharmacyMixin:
             pid = self.segment_builder.build_pid(
                 patient_id=patient_id or "RX_TEST001",
                 patient_name=patient_name or "TEST^PATIENT",
-                dob=getattr(self.args, "patient_dob", "19800101"),
-                sex=getattr(self.args, "patient_sex", "U"),
+                dob=(getattr(self.args, "patient_dob", None) or "19800101"),
+                sex=(getattr(self.args, "patient_sex", None) or "U"),
             )
             if pid:
                 msg.add(pid)
@@ -127,15 +127,15 @@ class PharmacyMixin:
                 msg.add(orc)
 
             rxo = self.segment_builder.build_rxo(
-                drug_code=getattr(self.args, "rx_code", ""),
-                drug_name=getattr(self.args, "rx_drug", "Test Drug"),
-                requested_dose=getattr(self.args, "rx_dose", "10"),
-                requested_units=getattr(self.args, "rx_units", "mg"),
-                requested_route=getattr(self.args, "rx_route", "PO"),
-                admin_instructions=getattr(self.args, "rx_instructions", ""),
-                dispense_amount=getattr(self.args, "rx_quantity", "30"),
-                refills=getattr(self.args, "rx_refills", "0"),
-                ordering_provider=getattr(self.args, "rx_provider", ""),
+                drug_code=(getattr(self.args, "rx_code", None) or ""),
+                drug_name=(getattr(self.args, "rx_drug", None) or "Test Drug"),
+                requested_dose=(getattr(self.args, "rx_dose", None) or "10"),
+                requested_units=(getattr(self.args, "rx_units", None) or "mg"),
+                requested_route=(getattr(self.args, "rx_route", None) or "PO"),
+                admin_instructions=(getattr(self.args, "rx_instructions", None) or ""),
+                dispense_amount=(getattr(self.args, "rx_quantity", None) or "30"),
+                refills=(getattr(self.args, "rx_refills", None) or "0"),
+                ordering_provider=(getattr(self.args, "rx_provider", None) or ""),
             )
             if rxo:
                 msg.add(rxo)
@@ -175,15 +175,17 @@ class PharmacyMixin:
             if orc:
                 msg.add(orc)
 
-            admin_code = getattr(self.args, "admin_code", "") or getattr(self.args, "rx_code", "")
-            admin_amount = getattr(self.args, "admin_amount", "") or getattr(
-                self.args, "rx_dose", ""
+            admin_code = (getattr(self.args, "admin_code", None) or "") or (
+                getattr(self.args, "rx_code", None) or ""
+            )
+            admin_amount = (getattr(self.args, "admin_amount", None) or "") or (
+                getattr(self.args, "rx_dose", None) or ""
             )
             rxa = self.segment_builder.build_rxa(
                 admin_code=admin_code,
                 admin_amount=admin_amount,
-                admin_units=getattr(self.args, "admin_units", "")
-                or getattr(self.args, "rx_units", "mg"),
+                admin_units=(getattr(self.args, "admin_units", None) or "")
+                or (getattr(self.args, "rx_units", None) or "mg"),
                 completion_status=getattr(self.args, "completion_status", "CP"),
             )
             if rxa:
@@ -224,16 +226,19 @@ class PharmacyMixin:
             if orc:
                 msg.add(orc)
 
-            give_code = getattr(self.args, "admin_code", "") or getattr(self.args, "rx_code", "")
-            give_amount = getattr(self.args, "admin_amount", "") or getattr(
-                self.args, "rx_dose", ""
+            give_code = (getattr(self.args, "admin_code", None) or "") or (
+                getattr(self.args, "rx_code", None) or ""
+            )
+            give_amount = (getattr(self.args, "admin_amount", None) or "") or (
+                getattr(self.args, "rx_dose", None) or ""
             )
             rxg = self.segment_builder.build_rxg(
                 give_code=give_code,
+                drug_name=(getattr(self.args, "rx_drug", None) or ""),
                 give_amount=give_amount,
-                give_units=getattr(self.args, "admin_units", "")
-                or getattr(self.args, "rx_units", "mg"),
-                give_dosage_form=getattr(self.args, "rx_route", ""),
+                give_units=(getattr(self.args, "admin_units", None) or "")
+                or (getattr(self.args, "rx_units", None) or "mg"),
+                give_dosage_form=(getattr(self.args, "rx_route", None) or ""),
             )
             if rxg:
                 msg.add(rxg)
@@ -273,19 +278,19 @@ class PharmacyMixin:
             if orc:
                 msg.add(orc)
 
-            dispense_code = getattr(self.args, "admin_code", "") or getattr(
-                self.args, "rx_code", ""
+            dispense_code = (getattr(self.args, "admin_code", None) or "") or (
+                getattr(self.args, "rx_code", None) or ""
             )
-            dispense_amount = getattr(self.args, "dispense_amount", "") or getattr(
-                self.args, "rx_quantity", ""
+            dispense_amount = (getattr(self.args, "dispense_amount", None) or "") or (
+                getattr(self.args, "rx_quantity", None) or ""
             )
             rxd = self.segment_builder.build_rxd(
                 dispense_code=dispense_code,
                 actual_amount=dispense_amount,
-                actual_units=getattr(self.args, "dispense_units", "")
-                or getattr(self.args, "rx_units", ""),
+                actual_units=(getattr(self.args, "dispense_units", None) or "")
+                or (getattr(self.args, "rx_units", None) or ""),
                 prescription_number=f"RX{int(time.time())}",
-                refills_remaining=getattr(self.args, "rx_refills", "0"),
+                refills_remaining=(getattr(self.args, "rx_refills", None) or "0"),
             )
             if rxd:
                 msg.add(rxd)

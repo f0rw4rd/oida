@@ -16,7 +16,7 @@ from typing import Optional
 
 from hl7apy.core import Message
 
-from ._helpers import populate_msh
+from ._helpers import ack_accepted, populate_msh
 
 
 class MessageMixin:
@@ -71,7 +71,7 @@ class MessageMixin:
 
             # Security finding for dangerous operations
             ack = self.results["data"].get("ack_code", "")
-            if ack == "AA" and trigger in ["A03", "A40"]:
+            if ack_accepted(ack) and trigger in ["A03", "A40"]:
                 self.results["data"].setdefault("security_findings", []).append(
                     {
                         "operation": f"ADT^{trigger}",
@@ -151,7 +151,7 @@ class MessageMixin:
 
             # Security check - order accepted
             ack = self.results["data"].get("ack_code", "")
-            if ack == "AA":
+            if ack_accepted(ack):
                 self.results["data"].setdefault("security_findings", []).append(
                     {
                         "operation": "ORM",
@@ -228,11 +228,11 @@ class MessageMixin:
                 pid = self.segment_builder.build_pid(
                     patient_id=patient_id,
                     patient_name=patient_name,
-                    dob=getattr(self.args, "patient_dob", ""),
-                    sex=getattr(self.args, "patient_sex", ""),
-                    address=getattr(self.args, "patient_address", ""),
-                    phone=getattr(self.args, "patient_phone", ""),
-                    ssn=getattr(self.args, "ssn", "") or "",
+                    dob=(getattr(self.args, "patient_dob", None) or ""),
+                    sex=(getattr(self.args, "patient_sex", None) or ""),
+                    address=(getattr(self.args, "patient_address", None) or ""),
+                    phone=(getattr(self.args, "patient_phone", None) or ""),
+                    ssn=(getattr(self.args, "ssn", None) or "") or "",
                 )
                 if pid:
                     msg.add(pid)
@@ -245,7 +245,7 @@ class MessageMixin:
                 pv1 = self.segment_builder.build_pv1(
                     patient_class=patient_class or "O",
                     visit_number=visit_number or "",
-                    admit_date=getattr(self.args, "admit_date", ""),
+                    admit_date=(getattr(self.args, "admit_date", None) or ""),
                     location=location or "",
                 )
                 if pv1:
@@ -280,7 +280,7 @@ class MessageMixin:
                         value_type=getattr(self.args, "obx_type", "NM"),
                         observation_id=obx_id or "12345-6",
                         observation_value=obx_value or "100",
-                        units=getattr(self.args, "obx_units", "mg/dL"),
+                        units=(getattr(self.args, "obx_units", None) or "mg/dL"),
                     )
                     if obx:
                         msg.add(obx)
@@ -311,8 +311,8 @@ class MessageMixin:
                     diagnosis_code=dx_code or "",
                     diagnosis_description=dx_description or "",
                     diagnosis_type=getattr(self.args, "dx_type", "A"),
-                    diagnosis_priority=getattr(self.args, "dx_priority", "1"),
-                    diagnosing_clinician=getattr(self.args, "dx_clinician", ""),
+                    diagnosis_priority=(getattr(self.args, "dx_priority", None) or "1"),
+                    diagnosing_clinician=(getattr(self.args, "dx_clinician", None) or ""),
                 )
                 if dg1:
                     msg.add(dg1)
@@ -324,8 +324,8 @@ class MessageMixin:
                 pr1 = self.segment_builder.build_pr1(
                     procedure_code=pr_code or "",
                     procedure_description=pr_description or "",
-                    procedure_type=getattr(self.args, "pr_type", ""),
-                    procedure_practitioner=getattr(self.args, "pr_practitioner", ""),
+                    procedure_type=(getattr(self.args, "pr_type", None) or ""),
+                    procedure_practitioner=(getattr(self.args, "pr_practitioner", None) or ""),
                 )
                 if pr1:
                     msg.add(pr1)
@@ -363,9 +363,9 @@ class MessageMixin:
 
             # Add MRG segment (patient being merged FROM)
             mrg = self.segment_builder.build_mrg(
-                prior_patient_id=getattr(self.args, "merge_patient_id", "MERGE_FROM001"),
-                prior_patient_name=getattr(self.args, "merge_patient_name", ""),
-                prior_visit_number=getattr(self.args, "merge_visit", ""),
+                prior_patient_id=(getattr(self.args, "merge_patient_id", None) or "MERGE_FROM001"),
+                prior_patient_name=(getattr(self.args, "merge_patient_name", None) or ""),
+                prior_visit_number=(getattr(self.args, "merge_visit", None) or ""),
             )
             if mrg:
                 msg.add(mrg)

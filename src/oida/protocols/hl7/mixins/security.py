@@ -7,6 +7,8 @@ Handles security analysis:
 - Encryption status checking
 """
 
+from ._helpers import ack_accepted
+
 
 class SecurityMixin:
     """Mixin providing HL7 security analysis."""
@@ -26,7 +28,7 @@ class SecurityMixin:
         )
 
         # Check if endpoint accepts any message
-        if self.results["data"].get("ack_code") == "AA":
+        if ack_accepted(self.results["data"].get("ack_code")):
             issues.append(
                 {
                     "flag": "ACCESS",

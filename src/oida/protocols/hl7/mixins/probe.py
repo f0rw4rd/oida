@@ -128,7 +128,6 @@ class ProbeMixin:
             if trigger in dangerous_triggers or risk == "HIGH":
                 self.results["data"].setdefault("security_findings", []).append(
                     {
-                        "severity": "HIGH" if risk == "HIGH" else "MEDIUM",
                         "operation": f"{msg_type}^{trigger}",
                         "issue": f"Dangerous Operation Accepted ({desc})",
                         "description": f"Server accepts {desc} messages from unknown sender",
