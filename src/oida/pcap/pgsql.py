@@ -121,6 +121,12 @@ class PostgreSQLCredential:
             if digest.startswith("md5"):
                 digest = digest[3:]
             salt = self.salt.replace(":", "").replace(",", "").lower()
+            # A truthiness check on self.salt is not enough: when pgsql.salt is
+            # absent the handler stores the placeholder "?", which is truthy and
+            # produced a plausible-looking but uncrackable line such as
+            # "$postgres$oida*?*dede...".  Only emit a line for a real hex salt.
+            if not salt or any(c not in "0123456789abcdef" for c in salt):
+                return ""
             return f"$postgres${self.username}*{salt}*{digest}"
         return ""
 
@@ -829,14 +835,22 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
         if password:
             session.password_or_hash = str(password)
         else:
-            session.password_or_hash = "?"
+            # No secret captured (e.g. field not dissected). Leave
+            # password_or_hash empty rather than a "?" placeholder so it is
+            # never mistaken for -- or harvested as -- a real credential.
+            session.password_or_hash = ""
             self.logger.debug(
                 f"Missing password field in PasswordMessage from {client_ip} -> {server_ip}"
             )
 
         # Determine if this is MD5 hash or cleartext
         is_md5 = session.password_or_hash.startswith("md5")
-        cred_display = "MD5 hash" if is_md5 else "password"
+        if not password:
+            cred_display = "unknown (not captured)"
+        elif is_md5:
+            cred_display = "MD5 hash"
+        else:
+            cred_display = "password"
 
         details: Dict[str, Any] = {
             "msg_type": "Password message",
@@ -859,8 +873,11 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
             stream_id=stream_id,
         )
 
-        # Record credential on password receipt (success=None until AUTH_OK/ERR)
-        if session.username and session.username != "?":
+        # Record credential on password receipt (success=None until AUTH_OK/ERR).
+        # Only harvest when a real secret was captured -- an empty/missing
+        # password field is not a credential (see convention in ftp.py,
+        # pop3.py, telnet.py: "if session.username and session.password:").
+        if session.username and session.username != "?" and session.password_or_hash:
             self._record_credential(session, success=None)
 
         self.logger.debug(
