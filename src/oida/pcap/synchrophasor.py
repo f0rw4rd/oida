@@ -359,8 +359,11 @@ class SynchrophasorPassiveListener(PySharkListenerBase):
                 stat_flags.append(f"ERR:{error_desc}")
                 pmu.data_error_count += 1
 
+        # STAT bit 13 is set when synchronization is LOST -- the dissector's TFS
+        # reads "Synchronization lost" / "Clock is synchronized", so a True value
+        # is the error case (unlike data_trigger below, which is set-means-set).
         sync_raw = self.get_field(syn, "data_sync", None)
-        if sync_raw is not None and not self._parse_bool(sync_raw):
+        if sync_raw is not None and self._parse_bool(sync_raw):
             stat_flags.append("UNSYNC")
             pmu.unsync_count += 1
 
