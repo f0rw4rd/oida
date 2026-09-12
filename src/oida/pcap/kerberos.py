@@ -802,11 +802,6 @@ class KerberosPassiveListener(PySharkListenerBase):
         """Process AS-REP to extract ticket hash (AS-REP roasting)."""
         _f = self._get_layer_field
 
-        etype_str = _f(krb_layer, "etype")
-        etype = self._has_crackable_etype(etype_str)
-        if not etype:
-            return
-
         username = self._parse_principal(_f(krb_layer, "CNameString"))
         if not username:
             return
@@ -823,6 +818,16 @@ class KerberosPassiveListener(PySharkListenerBase):
             return
 
         hash_value = ciphers[-1]
+
+        # Pair the etype to the SAME occurrence as the selected cipher blob.
+        # When the ticket and KDC-REP enc-parts use different etypes, taking the
+        # first crackable etype could label this blob with the wrong etype and
+        # mis-split the hash into an uncrackable-but-valid-looking line.
+        etype_occ = self._cipher_occurrences(krb_layer, "etype")
+        etype_src = etype_occ[-1] if len(etype_occ) == len(ciphers) else _f(krb_layer, "etype")
+        etype = self._has_crackable_etype(etype_src)
+        if not etype:
+            return
 
         if self._is_duplicate_hash("AS-REP", username, realm, hash_value):
             return
@@ -847,11 +852,6 @@ class KerberosPassiveListener(PySharkListenerBase):
         """Process TGS-REP to extract service ticket hash (Kerberoasting)."""
         _f = self._get_layer_field
 
-        etype_str = _f(krb_layer, "etype")
-        etype = self._has_crackable_etype(etype_str)
-        if not etype:
-            return
-
         username = self._parse_principal(_f(krb_layer, "CNameString"))
         if not username:
             return
@@ -868,6 +868,13 @@ class KerberosPassiveListener(PySharkListenerBase):
             return
 
         hash_value = ciphers[0]
+
+        # Pair the etype to the SAME (first) occurrence as the selected cipher.
+        etype_occ = self._cipher_occurrences(krb_layer, "etype")
+        etype_src = etype_occ[0] if len(etype_occ) == len(ciphers) else _f(krb_layer, "etype")
+        etype = self._has_crackable_etype(etype_src)
+        if not etype:
+            return
 
         if self._is_duplicate_hash("TGS-REP", username, realm, hash_value):
             return

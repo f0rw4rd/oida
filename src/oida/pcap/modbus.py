@@ -87,6 +87,7 @@ class ModbusSession:
     last_seen: str = ""
     trans_id_min: Optional[int] = None
     trans_id_max: Optional[int] = None
+    protocol: str = "Modbus/TCP"  # transport variant: TCP / UDP / RTU-over-TCP
 
 
 class ModbusPassiveListener(PySharkListenerBase):
@@ -128,10 +129,21 @@ class ModbusPassiveListener(PySharkListenerBase):
     """
 
     PROTOCOL_NAME = "modbus"
-    DISPLAY_FILTER = "mbtcp"  # Modbus/TCP protocol
-    REQUIRED_LAYERS = ("mbtcp",)
+    # Cover all three Modbus transports tshark can dissect: Modbus/TCP (mbtcp),
+    # Modbus/UDP (mbudp -- same MBAP over UDP) and Modbus RTU framed over a
+    # stream (mbrtu -- no MBAP, unit id + CRC16).
+    DISPLAY_FILTER = "mbtcp || mbudp || mbrtu"
+    REQUIRED_LAYERS = ("mbtcp", "mbudp", "mbrtu")
     OVERRIDE_PREFS = {"mbtcp.tcp.port": "502"}
     SERVER_PORTS = (502,)
+
+    # transport layer -> (field-layer name get_field resolves against, label).
+    # mbudp reuses the mbtcp_* field names, so its fields resolve under "mbtcp".
+    _TRANSPORTS = {
+        "mbtcp": ("mbtcp", "Modbus/TCP"),
+        "mbudp": ("mbtcp", "Modbus/UDP"),
+        "mbrtu": ("mbrtu", "Modbus/RTU"),
+    }
     PROTOCOL_COLUMNS = ("tx_id", "unit", "fc", "function", "address", "count", "data")
 
     def __init__(
@@ -147,9 +159,18 @@ class ModbusPassiveListener(PySharkListenerBase):
         # FIFO queues of request address info per connection for correlating
         # with responses (pop when a response without address info arrives).
         self._req_addr_q: Dict[Tuple[str, str], Deque[Tuple[int, int]]] = {}
+        # Transport of the packet currently being processed (stamped onto the
+        # session so device data reports TCP / UDP / RTU correctly).
+        self._current_transport = "Modbus/TCP"
 
     def process_packet(self, packet) -> None:
-        """Process Modbus TCP packet using PyShark dissection.
+        """Process a Modbus packet (TCP / UDP / RTU) using PyShark dissection.
+
+        The MBAP header layer differs by transport -- ``mbtcp`` (TCP),
+        ``mbudp`` (UDP, same MBAP fields) or ``mbrtu`` (RTU framing, no MBAP,
+        just unit id + CRC) -- but all expose the same fields that
+        :meth:`_process_single_pdu` reads, so every transport is normalised to
+        a synthetic header layer and routed through the *one* processing path.
 
         Handles multi-PDU TCP segments where tshark dissects multiple Modbus
         messages in one frame.  In EK mode these produce ``_fields_dict`` as a
@@ -157,9 +178,11 @@ class ModbusPassiveListener(PySharkListenerBase):
         resolve field names in that case, so we iterate the raw dicts and
         create synthetic EkLayer objects for each PDU.
         """
-        # Check for Modbus TCP layer
-        if not hasattr(packet, "mbtcp"):
+        # Resolve which Modbus transport this packet uses.
+        header_raw, field_layer, transport = self._resolve_transport(packet)
+        if header_raw is None:
             return
+        self._current_transport = transport
 
         # Get IP and port info (shared across all PDUs in the segment)
         src_ip, dst_ip = self.get_ip_info(packet)
@@ -171,27 +194,28 @@ class ModbusPassiveListener(PySharkListenerBase):
         flow_id = self.get_flow_id(packet)
         stream_id = self.get_stream_id(packet)
 
+        from pyshark.packet.layers.ek_layer import EkLayer as _EkLayer
+
         # Detect multi-PDU EK mode: _fields_dict is a list of dicts
-        mbtcp_dicts = self._get_ek_layer_dicts(packet.mbtcp)
+        header_dicts = self._get_ek_layer_dicts(header_raw)
         modbus_dicts = (
             self._get_ek_layer_dicts(packet.modbus) if hasattr(packet, "modbus") else None
         )
 
-        if mbtcp_dicts is not None:
-            # Multi-PDU TCP segment -- iterate each PDU
-            from pyshark.packet.layers.ek_layer import EkLayer as _EkLayer
-
-            n_mbtcp = len(mbtcp_dicts)
+        if header_dicts is not None:
+            # Multi-PDU segment -- iterate each PDU.  Wrap each header dict under
+            # ``field_layer`` ("mbtcp" even for mbudp) so get_field() resolves.
+            n_header = len(header_dicts)
             n_modbus = len(modbus_dicts) if modbus_dicts else 0
 
-            for i in range(n_mbtcp):
-                mbtcp_syn = _EkLayer(packet.mbtcp._layer_name, mbtcp_dicts[i])
+            for i in range(n_header):
+                header_syn = _EkLayer(field_layer, header_dicts[i])
                 if modbus_dicts and i < n_modbus:
                     modbus_syn = _EkLayer(packet.modbus._layer_name, modbus_dicts[i])
                 else:
                     modbus_syn = None
                 self._process_single_pdu(
-                    mbtcp_syn,
+                    header_syn,
                     modbus_syn,
                     src_ip,
                     dst_ip,
@@ -204,10 +228,17 @@ class ModbusPassiveListener(PySharkListenerBase):
                     packet,
                 )
         else:
-            # Normal single-PDU path
+            # Single-PDU path.  Wrap the header fields under ``field_layer`` so
+            # get_field() resolves regardless of the raw layer's own name
+            # (mbudp's fields are named mbtcp_*).
+            try:
+                header_fd = object.__getattribute__(header_raw, "_fields_dict")
+                header_layer = _EkLayer(field_layer, header_fd)
+            except AttributeError:
+                header_layer = header_raw
             modbus_layer = packet.modbus if hasattr(packet, "modbus") else None
             self._process_single_pdu(
-                packet.mbtcp,
+                header_layer,
                 modbus_layer,
                 src_ip,
                 dst_ip,
@@ -219,6 +250,19 @@ class ModbusPassiveListener(PySharkListenerBase):
                 stream_id,
                 packet,
             )
+
+    def _resolve_transport(self, packet):
+        """Return ``(raw_header_layer, field_layer_name, label)`` for the packet.
+
+        ``field_layer_name`` is the layer name get_field() must resolve field
+        names against -- "mbtcp" for both TCP and UDP (mbudp reuses the mbtcp_*
+        field names), "mbrtu" for RTU.  Returns ``(None, None, None)`` when the
+        packet carries no recognised Modbus transport.
+        """
+        for layer_name, (field_layer, label) in self._TRANSPORTS.items():
+            if hasattr(packet, layer_name):
+                return getattr(packet, layer_name), field_layer, label
+        return None, None, None
 
     # ------------------------------------------------------------------
     # EK multi-PDU helper
@@ -408,7 +452,8 @@ class ModbusPassiveListener(PySharkListenerBase):
                 is_request and function_code in WRITE_FUNCTION_CODES
             )
             if want_values:
-                values = self._extract_values(modbus_layer, function_code)
+                quantity = address_info[1] if address_info else None
+                values = self._extract_values(modbus_layer, function_code, quantity)
             # Detect tshark decode failure
             cc = self.get_field(mbtcp_layer, "cannot_classify")
             if cc is not None:
@@ -552,9 +597,11 @@ class ModbusPassiveListener(PySharkListenerBase):
                 server_ip=server_ip,
                 first_seen=now,
                 last_seen=now,
+                protocol=self._current_transport,
             )
         else:
             self.sessions[session_key].last_seen = now
+        self.sessions[session_key].protocol = self._current_transport
         self.sessions[session_key].unit_ids.add(unit_id)
 
         self._update_devices(client_ip, client_mac, server_ip, server_mac, session_key)
@@ -620,7 +667,9 @@ class ModbusPassiveListener(PySharkListenerBase):
 
         return (starting_addr, quantity)
 
-    def _extract_values(self, modbus_layer, function_code: int) -> List[str]:
+    def _extract_values(
+        self, modbus_layer, function_code: int, quantity: Optional[int] = None
+    ) -> List[str]:
         """Extract register/coil values from a PyShark modbus layer.
 
         Tries ``modbus.regval_uint16`` (register values) and
@@ -659,12 +708,12 @@ class ModbusPassiveListener(PySharkListenerBase):
         if not vals and function_code in (0x05, 0x0F):
             raw = self.get_field(modbus_layer, "data")
             if raw is not None:
-                vals = self._parse_coil_data(raw, function_code)
+                vals = self._parse_coil_data(raw, function_code, quantity)
 
         return vals
 
     @staticmethod
-    def _parse_coil_data(raw: str, function_code: int) -> List[str]:
+    def _parse_coil_data(raw: str, function_code: int, quantity: Optional[int] = None) -> List[str]:
         """Decode modbus.data hex bytes into coil ON/OFF values.
 
         FC5 Write Single Coil: 2 bytes — ``FF00`` = ON, ``0000`` = OFF.
@@ -680,11 +729,15 @@ class ModbusPassiveListener(PySharkListenerBase):
             return []
         if function_code == 0x05:
             return ["ON" if data_bytes[0] == 0xFF else "OFF"]
-        # FC15: each bit is a coil, LSB first per byte
+        # FC15: each bit is a coil, LSB first per byte. byte_count is
+        # ceil(quantity/8), so when quantity % 8 != 0 the trailing padding
+        # bits in the last byte are not real coils -- clip to quantity.
         vals: List[str] = []
         for byte in data_bytes:
             for bit in range(8):
                 vals.append("1" if byte & (1 << bit) else "0")
+        if quantity and quantity > 0:
+            vals = vals[:quantity]
         return vals
 
     @staticmethod
@@ -738,9 +791,11 @@ class ModbusPassiveListener(PySharkListenerBase):
                 server_ip=session_key[1],
                 first_seen=now,
                 last_seen=now,
+                protocol=self._current_transport,
             )
 
         session = self.sessions[session_key]
+        session.protocol = self._current_transport
         session.last_seen = now
         session.unit_ids.add(unit_id)
         session.function_codes.add(function_code)
@@ -865,7 +920,7 @@ class ModbusPassiveListener(PySharkListenerBase):
             "write_ranges": write_ranges,
             "write_operations": session.write_count,
             "read_operations": session.read_count,
-            "protocol": "Modbus/TCP",
+            "protocol": session.protocol,
             "first_seen": session.first_seen,
             "last_seen": session.last_seen,
         }

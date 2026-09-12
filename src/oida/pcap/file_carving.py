@@ -161,6 +161,10 @@ class FileCarvingListener(FileCarvingMixin, PySharkListenerBase):
         """Process packet and accumulate stream data."""
         src_ip, dst_ip = self.get_ip_info(packet)
         if not src_ip or not dst_ip:
+            # Rare (get_ip_info has a raw fallback), but on unusual encapsulation
+            # this discards payload bytes -- leave a breadcrumb like the data-only
+            # drop branch below does, rather than dropping with no trace.
+            self.logger.debug("file-carving: dropping frame with no resolvable src/dst IP")
             return
 
         src_mac, dst_mac = self.get_mac_info(packet)

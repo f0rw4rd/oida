@@ -108,7 +108,11 @@ class WSDiscoveryPassiveListener(PySharkListenerBase):
 
     PROTOCOL_NAME = "wsdiscovery"
     # WS-Discovery is dissected as XML on UDP port 3702 by tshark
-    DISPLAY_FILTER = "xml && udp.port == 3702"
+    # Include the native wsdiscovery-layer path: an "xml && ..."-only filter
+    # excludes packets tshark dissects as the native wsdiscovery layer (which
+    # lack an xml layer) during LIVE capture, so should_process_packet's native
+    # branch was unreachable live. Let should_process_packet do the final gating.
+    DISPLAY_FILTER = "wsdiscovery || (xml && udp.port == 3702)"
     REQUIRED_LAYERS = ()  # Handled by should_process_packet
     PROTOCOL_COLUMNS = (
         "action",
@@ -262,12 +266,107 @@ class WSDiscoveryPassiveListener(PySharkListenerBase):
         if layer is not None:
             return self._extract_from_native_layer(layer, packet)
 
-        # Fallback: parse XML layer on port 3702
+        # Fallback: parse XML on port 3702. Parse the raw SOAP payload
+        # (udp.payload) directly -- tshark's flattened xml.tag/xml.cdata field
+        # lists are NOT index-aligned (container elements emit a tag but no
+        # cdata, so a positional zip shifts every leaf's text onto the wrong
+        # element), and the default PDML live capture collapses those repeated
+        # fields to a single value, extracting nothing at all. The raw UDP
+        # payload carries the whole envelope in every dissection mode.
+        parsed = self._extract_from_soap_payload(packet)
+        if parsed is not None:
+            return parsed
+
         xml_layer = getattr(packet, "xml", None)
         if xml_layer is not None:
             return self._extract_from_xml_layer(xml_layer)
 
         return None
+
+    @staticmethod
+    def _hex_field_to_bytes(value: Any) -> bytes:
+        """Decode a tshark hex field (``3c:3f:78`` / ``3c3f78`` / spaced) to bytes."""
+        if value is None:
+            return b""
+        s = str(value)
+        hex_str = "".join(ch for ch in s if ch in "0123456789abcdefABCDEF")
+        if len(hex_str) % 2:
+            hex_str = hex_str[:-1]
+        try:
+            return bytes.fromhex(hex_str)
+        except ValueError:
+            return b""
+
+    def _extract_from_soap_payload(self, packet) -> Optional[Dict[str, str]]:
+        """Parse the raw SOAP/UDP payload as XML and extract WSD fields.
+
+        Robust across tshark dissection modes because it reads the full envelope
+        from udp.payload rather than the mis-aligned/collapsed xml.tag+xml.cdata
+        field pair (see _extract_wsd_fields). Returns None when no payload or no
+        useful field could be recovered, so callers can fall back.
+        """
+        import xml.etree.ElementTree as ET
+
+        udp_layer = getattr(packet, "udp", None)
+        if udp_layer is None:
+            return None
+        raw = self._hex_field_to_bytes(self.get_field_any(udp_layer, "payload", default=""))
+        if not raw:
+            return None
+        text = raw.decode("utf-8", "replace")
+        start = text.find("<")
+        if start < 0:
+            return None
+        try:
+            root = ET.fromstring(text[start:])
+        except ET.ParseError:
+            return None
+
+        def _local(tag: str) -> str:
+            return tag.rsplit("}", 1)[-1] if "}" in tag else tag
+
+        fields: Dict[str, str] = {}
+        endpoint_ref = ""
+        action_text = ""
+        action_elems: List[str] = []
+        for el in root.iter():
+            name = _local(el.tag)
+            val = (el.text or "").strip()
+            if name in WSD_ACTIONS:
+                action_elems.append(name)
+            if name == "Action":
+                action_text = val
+            elif name == "Address" and not endpoint_ref and val:
+                endpoint_ref = val
+            elif name in ("Types", "Scopes", "XAddrs", "MetadataVersion") and val:
+                fields.setdefault(name, val)
+
+        # Action: longest key first so "ProbeMatches" wins over "Probe".
+        haystack = action_text + " " + " ".join(action_elems)
+        action = "Unknown"
+        for action_key, action_name in WSD_ACTIONS_BY_LEN:
+            if action_key in haystack:
+                action = action_name
+                break
+
+        if endpoint_ref and (
+            "schemas-xmlsoap-org" in endpoint_ref or "role/anonymous" in endpoint_ref
+        ):
+            endpoint_ref = ""
+
+        result = {
+            "action": action,
+            "types": fields.get("Types", ""),
+            "endpoint_reference": endpoint_ref,
+            "scopes": fields.get("Scopes", ""),
+            "xaddrs": fields.get("XAddrs", ""),
+            "metadata_version": fields.get("MetadataVersion", ""),
+        }
+        if action == "Unknown" and not any(
+            result[k] for k in ("types", "endpoint_reference", "xaddrs")
+        ):
+            return None
+        return result
 
     def _extract_from_native_layer(self, layer, packet) -> Optional[Dict[str, str]]:
         """Extract fields from native wsdiscovery tshark layer."""
@@ -297,63 +396,81 @@ class WSDiscoveryPassiveListener(PySharkListenerBase):
 
         return result
 
+    def _xml_tag_text_map(self, xml_layer) -> Dict[str, str]:
+        """Map each XML element tag to its character-data text.
+
+        tshark's XML dissector exposes element tags (xml.tag) and their text
+        (xml.chardata) as parallel, index-aligned occurrences. pyshark's flat
+        field VALUES do NOT contain the surrounding <tag>...</tag> markup, so we
+        must zip the discrete tag/text field lists rather than regex a
+        reconstructed string (which almost never has the < > delimiters).
+        """
+
+        def _as_list(field: str) -> list:
+            raw = self._resolve_value(getattr(xml_layer, field, None), None)
+            if raw is None:
+                return []
+            return list(raw) if isinstance(raw, (list, tuple)) else [raw]
+
+        tags = _as_list("tag")
+        texts = _as_list("chardata") or _as_list("value") or _as_list("cdata")
+
+        mapping: Dict[str, str] = {}
+        for tag, text in zip(tags, texts):
+            t = str(self._resolve_value(tag, "")).strip()
+            if t and not mapping.get(t):
+                mapping[t] = str(self._resolve_value(text, "")).strip()
+        return mapping
+
     def _extract_from_xml_layer(self, xml_layer) -> Optional[Dict[str, str]]:
         """Extract WS-Discovery fields from XML tags on port 3702.
 
-        When tshark dissects WS-Discovery as plain XML, the SOAP envelope
-        tags are available via xml.tag.  We parse these to identify the
-        WSD action and extract device metadata.
+        When tshark dissects WS-Discovery as plain XML, the SOAP envelope tags
+        are available via xml.tag with text in xml.chardata. We map tag->text
+        from those discrete fields (see _xml_tag_text_map) to identify the WSD
+        action and extract device metadata.
         """
         result: Dict[str, str] = {}
 
-        # Get all XML fields to look for wsd: prefixed tags
-        all_fields = self.get_all_fields(xml_layer)
+        tag_text = self._xml_tag_text_map(xml_layer)
 
-        # Also try xml.tag field which contains comma-separated tag list
-        tags_str = str(self.get_field(xml_layer, "tag", "") or "")
-        # xml.value or xml.cdata may contain text content
-        value_str = str(self.get_field(xml_layer, "value", "") or "")
-        cdata = str(self.get_field(xml_layer, "cdata", "") or "")
-
-        # Combine all text content for searching
-        all_text = ""
-        for _key, val in all_fields.items():
+        # For action detection: the verb lives in a wsa:Action element text
+        # (a discovery/<verb> URI) or a tag name; search both plus the raw
+        # field dump as a safety net.
+        all_text = " ".join(tag_text.keys()) + " " + " ".join(tag_text.values())
+        for val in self.get_all_fields(xml_layer).values():
             all_text += " " + str(val)
-        all_text += " " + tags_str + " " + value_str + " " + cdata
 
         # Determine action from SOAP Action header or element names
         action = "Unknown"
         for action_key, action_name in WSD_ACTIONS_BY_LEN:
-            # Check for action in wsa:Action text or element name
             if f"discovery/{action_key}" in all_text or f"wsd:{action_key}" in all_text:
                 action = action_name
                 break
         result["action"] = action
 
-        # Extract device types from wsd:Types element content
-        types = self._extract_xml_element_text(all_text, "wsd:Types")
-        result["types"] = types
+        def _elem(name: str) -> str:
+            # Discrete field first (prefixed then short tag), then a last-resort
+            # markup regex for the rare pyshark build that exposes it.
+            short = name.split(":")[-1] if ":" in name else name
+            for key in (name, short):
+                if tag_text.get(key):
+                    return tag_text[key]
+            return self._extract_xml_element_text(all_text, name)
 
-        # Extract endpoint reference from wsa:Address inside EndpointReference
-        endpoint_ref = self._extract_xml_element_text(all_text, "wsa:Address")
+        result["types"] = _elem("wsd:Types")
+
+        endpoint_ref = _elem("wsa:Address")
         # Filter out well-known non-device addresses
-        if endpoint_ref and "schemas-xmlsoap-org" in endpoint_ref:
-            endpoint_ref = ""
-        if endpoint_ref and "role/anonymous" in endpoint_ref:
+        if endpoint_ref and (
+            "schemas-xmlsoap-org" in endpoint_ref or "role/anonymous" in endpoint_ref
+        ):
             endpoint_ref = ""
         result["endpoint_reference"] = endpoint_ref
 
-        # Extract scopes
-        scopes = self._extract_xml_element_text(all_text, "wsd:Scopes")
-        result["scopes"] = scopes
-
-        # Extract XAddrs
-        xaddrs = self._extract_xml_element_text(all_text, "wsd:XAddrs")
-        result["xaddrs"] = xaddrs
-
-        # Extract MetadataVersion
-        metadata_version = self._extract_xml_element_text(all_text, "wsd:MetadataVersion")
-        result["metadata_version"] = metadata_version
+        result["scopes"] = _elem("wsd:Scopes")
+        result["xaddrs"] = _elem("wsd:XAddrs")
+        result["metadata_version"] = _elem("wsd:MetadataVersion")
 
         # Verify we got something useful
         if action == "Unknown" and not any(

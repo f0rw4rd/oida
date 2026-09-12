@@ -403,6 +403,11 @@ class PROFINETPassiveListener(PySharkListenerBase):
         elif hasattr(packet, "pn_rt"):
             # RT frame without pn_io/pn_dcp -- cyclic IO data, alarm, PTCP, or fragment
             self._process_rt_only(packet, src_mac, dst_mac)
+        elif hasattr(packet, "pn_ptcp"):
+            # PTCP (clock sync) normally rides on a pn_rt header handled above;
+            # a bare pn_ptcp frame has no pn_rt sub-layer for _process_rt_only.
+            # Leave a breadcrumb rather than silently dropping a matched packet.
+            self.logger.debug("PROFINET pn_ptcp-only frame (no pn_rt) -- not processed")
 
     # ------------------------------------------------------------------
     # DCP processing

@@ -507,13 +507,31 @@ class HTTPPassiveListener(PySharkListenerBase):
             if device.http_passive_data and request_version:
                 if request_version not in device.http_passive_data.get("http_versions", []):
                     device.http_passive_data.setdefault("http_versions", []).append(request_version)
-        # Update server with virtual host info
+        # Update server with virtual host info. Ensure the http-server device
+        # exists even in a request-only / one-direction capture: the request's
+        # server_ip/server_port identify the server, and previously the server
+        # (and any Host header seen before the first response) was dropped
+        # entirely if no response had been processed yet. A later response
+        # enriches this device via the update branch in _process_http_response.
         server_key = f"http-server:{server_ip}"
-        if server_key in self.discovered_devices:
-            server_device = self.discovered_devices[server_key]
-            if server_device.http_passive_data and host:
-                if host not in server_device.http_passive_data.get("virtual_hosts", []):
-                    server_device.http_passive_data.setdefault("virtual_hosts", []).append(host)
+        server_device, _ = self._ensure_device(
+            server_key,
+            server_ip,
+            name="HTTP Server",
+            device_type="Web Server",
+        )
+        if server_device.http_passive_data is None:
+            server_device.http_passive_data = {
+                "role": "server",
+                "virtual_hosts": [],
+                "ports": [server_port],
+                "protocol": "HTTP/TCP",
+            }
+            self._servers[server_ip] = server_device.http_passive_data
+        if server_port not in server_device.http_passive_data.get("ports", []):
+            server_device.http_passive_data.setdefault("ports", []).append(server_port)
+        if host and host not in server_device.http_passive_data.get("virtual_hosts", []):
+            server_device.http_passive_data.setdefault("virtual_hosts", []).append(host)
 
     def _try_extract_credentials(
         self,
