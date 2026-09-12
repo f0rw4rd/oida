@@ -45,7 +45,7 @@ class MockOCPPServer:
     - GetConfiguration -> sample config keys
     - DataTransfer -> Accepted
     - StatusNotification -> empty response
-    - Other actions -> FormationViolation or NotImplemented
+    - Other known actions -> FormationViolation; unknown actions -> NotSupported
     """
 
     KNOWN_ACTIONS = {
@@ -77,12 +77,9 @@ class MockOCPPServer:
         "SendLocalList",
     }
 
-    UNIMPLEMENTED_ACTIONS: set = set()
-
-    def __init__(self, host="127.0.0.1", port=0, require_auth=False):
+    def __init__(self, host="127.0.0.1", port=0):
         self.host = host
         self.port = port or _find_free_port()
-        self.require_auth = require_auth
         self._server = None
         self._loop = None
         self._thread = None
@@ -161,7 +158,6 @@ class MockOCPPServer:
             return [3, msg_id, {"status": "Accepted"}]
 
         elif action == "Reset":
-            payload.get("type", "Soft")
             return [3, msg_id, {"status": "Accepted"}]
 
         elif action == "UnlockConnector":
@@ -182,7 +178,6 @@ class MockOCPPServer:
 
         elif action == "ChangeConfiguration":
             key = payload.get("key", "")
-            payload.get("value", "")
             # Accept HeartbeatInterval, reject security-sensitive keys
             if key in ("HeartbeatInterval", "AllowOfflineTxForUnknownId"):
                 return [3, msg_id, {"status": "Accepted"}]
@@ -254,9 +249,6 @@ class MockOCPPServer:
         ):
             return [3, msg_id, {"status": "Accepted"}]
 
-        elif action in self.UNIMPLEMENTED_ACTIONS:
-            return [4, msg_id, "NotImplemented", f"{action} not implemented", {}]
-
         elif action in self.KNOWN_ACTIONS:
             # Known but payload validation error
             return [4, msg_id, "FormationViolation", "Invalid payload", {}]
@@ -297,6 +289,8 @@ class MockOCPPServer:
     def stop(self):
         """Stop the mock server."""
         if self._loop and not self._loop.is_closed():
+            if self._server is not None:
+                self._loop.call_soon_threadsafe(self._server.close)
             self._loop.call_soon_threadsafe(self._loop.stop)
         if self._thread:
             self._thread.join(timeout=5)
@@ -329,12 +323,6 @@ def ocpp_server():
 def ws_url(ocpp_server):
     """WebSocket URL for the mock OCPP server."""
     return ocpp_server.ws_url
-
-
-@pytest.fixture
-def ws_port(ocpp_server):
-    """Port number of the mock OCPP server."""
-    return ocpp_server.port
 
 
 @pytest.fixture
@@ -831,6 +819,11 @@ class TestOCPPNewFeaturesIntegration:
         obj.scanner = scanner
         obj.args = Mock()
         obj.args.username = None
+        # A bare Mock() returns a truthy Mock for any unset attribute, so
+        # create_conn_obj()'s `getattr(args, "tls_cert", None)` would read as a
+        # (fake) client cert and suppress the "Anonymous access" finding. A real
+        # argparse Namespace has tls_cert=None here.
+        obj.args.tls_cert = None
         obj.args.timeout = 5
         obj.args.verbose = 0
         obj.args.connector_id = 1
@@ -1076,15 +1069,12 @@ class TestOCPPMixinIntegration:
 # ---------------------------------------------------------------------------
 # Security Finding Tests
 # ---------------------------------------------------------------------------
-# Tests for ALL security findings in the OCPP protocol module.
-#
-# Test Classification Summary
-# ---------------------------------------------------------------------------
-# Category A (strict -- mock supports, assert success + validate finding):   20 tests
-# Category B (conditional -- mock may not support, validate attempt):         3 tests
-# Category C (error handling -- assert graceful failure):                     2 tests
-# Skipped (untestable -- requires 2.0.1 mock or custom setup):               5 tests
-# Total:                                                                     30 tests
+# Tests for the security findings in the OCPP protocol module. Each test is
+# tagged in its docstring with one of:
+#   [Category A] strict -- mock supports it, assert success + validate finding
+#   [Category B] conditional -- mock may not support it, validate the attempt
+#   [Category C] error handling -- assert graceful failure
+# (No hard-coded totals here: they rot as tests are added/removed.)
 # ---------------------------------------------------------------------------
 
 
@@ -1127,6 +1117,11 @@ class TestOCPPSecurityFindings:
         obj.scanner = scanner
         obj.args = Mock()
         obj.args.username = None
+        # A bare Mock() returns a truthy Mock for any unset attribute, so
+        # create_conn_obj()'s `getattr(args, "tls_cert", None)` would read as a
+        # (fake) client cert and suppress the "Anonymous access" finding. A real
+        # argparse Namespace has tls_cert=None here.
+        obj.args.tls_cert = None
         obj.args.timeout = 5
         obj.args.verbose = 0
         obj.args.connector_id = 1
@@ -1149,11 +1144,43 @@ class TestOCPPSecurityFindings:
     # ========================================================================
 
     @pytest.mark.security
-    def test_finding_anonymous_access_check_auth(self, ocpp_server):
-        """Test --check-auth finding: anonymous WebSocket connection allowed. [Category A]
+    def test_finding_anonymous_access_reported_on_connect(self, ocpp_server):
+        """Anonymous WebSocket connection is flagged at connect time. [Category A]
 
-        Trigger: _handle_check_auth() when no username is set.
-        Expected finding: "Anonymous WebSocket connection allowed"
+        The "Anonymous access" finding is emitted by create_conn_obj() when a
+        connection succeeds without credentials. _handle_check_auth() deliberately
+        does NOT re-report it (see SecurityMixin._handle_check_auth docstring), so
+        the real behaviour must be exercised through create_conn_obj().
+        """
+        from oida.protocols.ocpp import ocpp as ocpp_cls
+
+        obj, scanner, conn = self._make_test_obj(ocpp_server)
+        try:
+            obj.args.username = None
+            obj._target_url = ocpp_server.ws_url
+            obj.conn = None
+
+            # create_conn_obj lives on the ocpp connection class, not the mixins;
+            # call it unbound against the mixin-built FakeOCPP object.
+            ocpp_cls.create_conn_obj(obj)
+
+            assert obj.conn is not None, "create_conn_obj should connect to the mock"
+            finding_texts = [str(c).lower() for c in obj.logger.security_finding.call_args_list]
+            assert any("anonymous access" in t for t in finding_texts), (
+                f"Expected an 'Anonymous access' security_finding call, got: {finding_texts}"
+            )
+        finally:
+            if obj.conn is not None:
+                scanner.disconnect(obj.conn)
+            scanner.disconnect(conn)
+
+    @pytest.mark.security
+    def test_finding_check_auth_does_not_double_report(self, ocpp_server):
+        """_handle_check_auth() must not re-report anonymous access. [Category A]
+
+        create_conn_obj() already reports "Anonymous access" on connect, so
+        _handle_check_auth() logs only and adds no finding -- guarding against the
+        duplicate-finding regression its docstring describes.
         """
         obj, scanner, conn = self._make_test_obj(ocpp_server)
         try:
@@ -1161,17 +1188,10 @@ class TestOCPPSecurityFindings:
             obj._handle_check_auth()
 
             issues = self._get_finding_issues(obj)
-            assert any("anonymous" in i.lower() for i in issues), (
-                f"Expected 'Anonymous WebSocket connection allowed' finding, got: {issues}"
+            assert not any("anonymous" in i.lower() for i in issues), (
+                f"_handle_check_auth must not add an anonymous finding, got: {issues}"
             )
-
-            # Validate the security_finding logger call
-            obj.logger.security_finding.assert_called()
-            call_args = obj.logger.security_finding.call_args_list
-            finding_texts = [str(c) for c in call_args]
-            assert any("anonymous" in t.lower() for t in finding_texts), (
-                f"Expected security_finding call with 'Anonymous', got: {finding_texts}"
-            )
+            obj.logger.security_finding.assert_not_called()
         finally:
             scanner.disconnect(conn)
 
@@ -1368,11 +1388,12 @@ class TestOCPPSecurityFindings:
                 f"Expected charging profile write finding, got: {issues}"
             )
 
-            # Validate severity is HIGH
+            # Validate the finding is well-formed (findings carry issue + description,
+            # no severity field in this data model).
             findings = self._get_findings(obj)
-            cp_findings = [f for f in findings if "charging profile" in f["issue"].lower()]
-            assert cp_findings[0]["severity"] == "HIGH", (
-                f"Charging profile finding should be HIGH severity, got: {cp_findings}"
+            matched = [f for f in findings if "charging profile" in f["issue"].lower()]
+            assert matched and matched[0]["description"], (
+                f"Expected a well-formed charging-profile finding with a description, got: {findings}"
             )
         finally:
             scanner.disconnect(conn)
@@ -1433,8 +1454,10 @@ class TestOCPPSecurityFindings:
             )
 
             findings = self._get_findings(obj)
-            reset_findings = [f for f in findings if "reset" in f["issue"].lower()]
-            assert reset_findings[0]["severity"] == "HIGH"
+            matched = [f for f in findings if "reset" in f["issue"].lower()]
+            assert matched and matched[0]["description"], (
+                f"Expected a well-formed reset finding with a description, got: {findings}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1465,8 +1488,10 @@ class TestOCPPSecurityFindings:
             )
 
             findings = self._get_findings(obj)
-            unlock_findings = [f for f in findings if "unlock" in f["issue"].lower()]
-            assert unlock_findings[0]["severity"] == "HIGH"
+            matched = [f for f in findings if "unlock" in f["issue"].lower()]
+            assert matched and matched[0]["description"], (
+                f"Expected a well-formed unlock finding with a description, got: {findings}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1497,9 +1522,9 @@ class TestOCPPSecurityFindings:
             ), f"Expected firmware update finding, got: {issues}"
 
             findings = self._get_findings(obj)
-            fw_findings = [f for f in findings if "firmware" in f["issue"].lower()]
-            assert fw_findings[0]["severity"] == "CRITICAL", (
-                f"Firmware update finding should be CRITICAL, got: {fw_findings}"
+            matched = [f for f in findings if "firmware" in f["issue"].lower()]
+            assert matched and matched[0]["description"], (
+                f"Expected a well-formed firmware finding with a description, got: {findings}"
             )
         finally:
             scanner.disconnect(conn)
@@ -1531,8 +1556,10 @@ class TestOCPPSecurityFindings:
             ), f"Expected ChangeAvailability finding, got: {issues}"
 
             findings = self._get_findings(obj)
-            avail_findings = [f for f in findings if "availability" in f["issue"].lower()]
-            assert avail_findings[0]["severity"] == "HIGH"
+            matched = [f for f in findings if "availability" in f["issue"].lower()]
+            assert matched and matched[0]["description"], (
+                f"Expected a well-formed availability finding with a description, got: {findings}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1561,12 +1588,14 @@ class TestOCPPSecurityFindings:
             )
 
             findings = self._get_findings(obj)
-            cache_findings = [
+            matched = [
                 f
                 for f in findings
                 if "clearcache" in f["issue"].lower() or "clear cache" in f["issue"].lower()
             ]
-            assert cache_findings[0]["severity"] == "MEDIUM"
+            assert matched and matched[0]["description"], (
+                f"Expected a well-formed ClearCache finding with a description, got: {findings}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1598,8 +1627,10 @@ class TestOCPPSecurityFindings:
             )
 
             findings = self._get_findings(obj)
-            diag_findings = [f for f in findings if "ssrf" in f["issue"].lower()]
-            assert diag_findings[0]["severity"] == "HIGH"
+            matched = [f for f in findings if "ssrf" in f["issue"].lower()]
+            assert matched and matched[0]["description"], (
+                f"Expected a well-formed SSRF finding with a description, got: {findings}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1630,12 +1661,14 @@ class TestOCPPSecurityFindings:
             ), f"Expected RemoteStopTransaction finding, got: {issues}"
 
             findings = self._get_findings(obj)
-            stop_findings = [
+            matched = [
                 f
                 for f in findings
                 if "remotestop" in f["issue"].lower() or "remote stop" in f["issue"].lower()
             ]
-            assert stop_findings[0]["severity"] == "HIGH"
+            assert matched and matched[0]["description"], (
+                f"Expected a well-formed RemoteStop finding with a description, got: {findings}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1666,8 +1699,10 @@ class TestOCPPSecurityFindings:
             )
 
             findings = self._get_findings(obj)
-            reserve_findings = [f for f in findings if "reserve" in f["issue"].lower()]
-            assert reserve_findings[0]["severity"] == "MEDIUM"
+            matched = [f for f in findings if "reserve" in f["issue"].lower()]
+            assert matched and matched[0]["description"], (
+                f"Expected a well-formed reserve finding with a description, got: {findings}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1721,8 +1756,10 @@ class TestOCPPSecurityFindings:
             )
 
             findings = self._get_findings(obj)
-            sll_findings = [f for f in findings if "sendlocallist" in f["issue"].lower()]
-            assert sll_findings[0]["severity"] == "CRITICAL"
+            matched = [f for f in findings if "sendlocallist" in f["issue"].lower()]
+            assert matched and matched[0]["description"], (
+                f"Expected a well-formed SendLocalList finding with a description, got: {findings}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1751,13 +1788,15 @@ class TestOCPPSecurityFindings:
             ), f"Expected authorize bypass finding, got: {issues}"
 
             findings = self._get_findings(obj)
-            auth_findings = [
+            matched = [
                 f
                 for f in findings
                 if "authorization bypass" in f["issue"].lower()
                 or "fake idtag" in f["issue"].lower()
             ]
-            assert auth_findings[0]["severity"] == "HIGH"
+            assert matched and matched[0]["description"], (
+                f"Expected a well-formed authorization-bypass finding with a description, got: {findings}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1787,8 +1826,10 @@ class TestOCPPSecurityFindings:
             ), f"Expected unauthorized charging session finding, got: {issues}"
 
             findings = self._get_findings(obj)
-            session_findings = [f for f in findings if "charging session" in f["issue"].lower()]
-            assert session_findings[0]["severity"] == "HIGH"
+            matched = [f for f in findings if "charging session" in f["issue"].lower()]
+            assert matched and matched[0]["description"], (
+                f"Expected a well-formed charging-session finding with a description, got: {findings}"
+            )
         finally:
             scanner.disconnect(conn)
 
@@ -1974,14 +2015,15 @@ class TestOCPPSecurityFindings:
             scanner.disconnect(conn)
 
     @pytest.mark.security
-    def test_finding_default_credentials(self, ocpp_server):
-        """Test default credentials finding via HTTP Basic Auth brute force. [Category A]
+    def test_finding_default_credentials_skipped_when_unenforced(self, ocpp_server):
+        """HTTP Basic Auth brute is skipped against a non-enforcing endpoint. [Category A]
 
-        Trigger: _brute_force_http_auth() when a credential pair yields an
-        accepted WebSocket connection.
-        Mock behavior: the insecure CSMS (port 9000) accepts every connection
-        regardless of credentials, so the first tested pair is reported valid.
-        Expected finding: "Valid HTTP Basic Auth credentials found".
+        The mock CSMS accepts every WebSocket upgrade regardless of the
+        Authorization header. _brute_force_http_auth()'s enforcement pre-check
+        detects that Basic Auth is not gated and skips the brute entirely,
+        reporting enforced=False with zero attempts -- rather than flagging every
+        credential pair as "valid" (the snap7 brute false-positive fix). Reporting
+        valid credentials here would be a false positive.
         """
         obj, scanner, conn = self._make_test_obj(ocpp_server)
         try:
@@ -1991,25 +2033,18 @@ class TestOCPPSecurityFindings:
             obj._brute_force_http_auth(["admin"], ["admin"])
 
             brute = obj.results["data"].get("brute_force", {}).get("http_auth", {})
-            assert brute.get("tested", 0) >= 1, f"Expected at least one attempt, got: {brute}"
-            assert len(brute.get("valid", [])) >= 1, (
-                f"Insecure mock accepts any credentials; expected a valid pair, got: {brute}"
+            assert brute.get("enforced") is False, (
+                f"Non-enforcing mock should be detected as unenforced, got: {brute}"
+            )
+            assert brute.get("tested") == 0, f"Brute must be skipped when unenforced, got: {brute}"
+            assert brute.get("valid") == [], (
+                f"No credentials should be reported valid when unenforced, got: {brute}"
             )
 
+            # No false-positive "credentials found" finding must be recorded.
             issues = self._get_finding_issues(obj)
-            assert any("http basic auth credentials found" in i.lower() for i in issues), (
-                f"Expected default-credentials finding, got: {issues}"
-            )
-
-            findings = self._get_findings(obj)
-            cred_findings = [f for f in findings if "credentials found" in f["issue"].lower()]
-            assert cred_findings[0]["severity"] == "CRITICAL"
-
-            # Per-hit finding is emitted via the logger facade.
-            obj.logger.security_finding.assert_called()
-            finding_texts = [str(c).lower() for c in obj.logger.security_finding.call_args_list]
-            assert any("default credentials" in t for t in finding_texts), (
-                f"Expected 'Default credentials' security_finding call, got: {finding_texts}"
+            assert not any("credentials found" in i.lower() for i in issues), (
+                f"Should not report valid credentials against an unenforced endpoint, got: {issues}"
             )
         finally:
             scanner.disconnect(conn)
@@ -2103,93 +2138,3 @@ class TestOCPPSecurityFindings:
         assert any(term in output for term in probe_terms), (
             f"Expected active probe output with --confirm, got: {output[:800]}"
         )
-
-    # ========================================================================
-    # Finding Severity Validation
-    # ========================================================================
-
-    @pytest.mark.security
-    def test_finding_severity_hierarchy(self, ocpp_server):
-        """Test that security findings use correct severity levels. [Category A]
-
-        Runs multiple probes and validates the severity hierarchy:
-        - CRITICAL: firmware update, SendLocalList, network profile redirect
-        - HIGH: reset, unlock, charging profile, remote stop, availability
-        - MEDIUM: boot accepted, config write, ClearCache, ReserveNow
-        - LOW: local list version disclosed
-        """
-        obj, scanner, conn = self._make_test_obj(ocpp_server)
-        try:
-            # Run a mix of probes to generate findings
-            obj._handle_boot_notification()
-            obj._handle_check_boot()
-            obj.test_firmware_update()
-            obj.test_reset_command()
-            obj.test_clear_cache()
-            obj.test_local_list()
-
-            findings = self._get_findings(obj)
-            assert len(findings) >= 4, (
-                f"Expected at least 4 findings from mixed probes, got {len(findings)}: "
-                f"{[f['issue'] for f in findings]}"
-            )
-
-            severity_map = {f["issue"]: f["severity"] for f in findings}
-
-            # Verify CRITICAL for firmware
-            fw_key = next((k for k in severity_map if "firmware" in k.lower()), None)
-            if fw_key:
-                assert severity_map[fw_key] == "CRITICAL", (
-                    f"Firmware finding should be CRITICAL, got: {severity_map[fw_key]}"
-                )
-
-            # Verify HIGH for reset
-            reset_key = next((k for k in severity_map if "reset" in k.lower()), None)
-            if reset_key:
-                assert severity_map[reset_key] == "HIGH", (
-                    f"Reset finding should be HIGH, got: {severity_map[reset_key]}"
-                )
-
-            # Verify MEDIUM for ClearCache
-            cache_key = next(
-                (
-                    k
-                    for k in severity_map
-                    if "clearcache" in k.lower() or "clear cache" in k.lower()
-                ),
-                None,
-            )
-            if cache_key:
-                assert severity_map[cache_key] == "MEDIUM", (
-                    f"ClearCache finding should be MEDIUM, got: {severity_map[cache_key]}"
-                )
-
-            # Verify CRITICAL for SendLocalList
-            sll_key = next((k for k in severity_map if "sendlocallist" in k.lower()), None)
-            if sll_key:
-                assert severity_map[sll_key] == "CRITICAL", (
-                    f"SendLocalList finding should be CRITICAL, got: {severity_map[sll_key]}"
-                )
-
-            # Verify LOW for local list version
-            llv_key = next(
-                (k for k in severity_map if "version" in k.lower() and "disclosed" in k.lower()),
-                None,
-            )
-            if llv_key:
-                assert severity_map[llv_key] == "LOW", (
-                    f"List version disclosure should be LOW, got: {severity_map[llv_key]}"
-                )
-        finally:
-            scanner.disconnect(conn)
-
-
-# ---------------------------------------------------------------------------
-# Pytest markers registration
-# ---------------------------------------------------------------------------
-
-
-def pytest_configure(config):
-    """Register OCPP marker."""
-    config.addinivalue_line("markers", "ocpp: OCPP protocol tests")
-    config.addinivalue_line("markers", "security: Security analysis tests")
