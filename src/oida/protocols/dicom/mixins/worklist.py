@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..cli_runner import _new_dataset, _sop
-from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -112,7 +111,6 @@ class WorklistMixin(_ScannerBase):
                 if not modality_filter and not date_filter and not station_filter:
                     self.logger.security_finding(
                         "Unrestricted worklist access",
-                        category=Category.ACCESS_CONTROL,
                         detail=f"Worklist query returned {count} scheduled procedures without filters",
                     )
 

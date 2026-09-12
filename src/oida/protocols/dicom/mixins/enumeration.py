@@ -20,7 +20,6 @@ from ..cli_runner import (
     _sop,
 )
 from ....utils.platform_compat import _pkg_root
-from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -49,7 +48,10 @@ class EnumerationMixin(_ScannerBase):
         # create_conn_obj() runs, so its resolution never applies).
         use_tls = getattr(self.args, "tls", False)
         port = getattr(self.args, "port", None) or (2762 if use_tls else self.default_port)
-        timeout = getattr(self.args, "timeout", 5)  # Shorter timeout for brute force
+        # Cap the per-AET timeout so a ~55-entry wordlist doesn't stall for
+        # minutes at the full --timeout (default 10s). --timeout always exists,
+        # so the old getattr default of 5 was dead and the brute ran at 10s/AET.
+        timeout = min(getattr(self.args, "timeout", 10) or 10, 5)
 
         # Load wordlist - priority: --ae-wordlist FILE > --aet-brute FILE > file fallback > defaults
         wordlist_file = None
@@ -98,6 +100,30 @@ class EnumerationMixin(_ScannerBase):
 
         self.logger.display(f"Testing {len(aet_list)} AE Titles against {self.ip}:{port}...")
 
+        # When --tls resolves the port to 2762, the associations MUST be TLS.
+        # Without tls_args every handshake was plaintext against a TLS listener,
+        # so all AETs landed in rejected -> misleading "0 valid AE Titles" for a
+        # possibly-open server. Build the TLS args once and reuse across the loop.
+        tls_args = None
+        if use_tls:
+            from ....utils.socket_helpers import build_tls_context
+
+            tls_ca = getattr(self.args, "tls_ca", None)
+            tls_insecure = getattr(self.args, "tls_insecure", False)
+            ssl_cx = build_tls_context(
+                {
+                    "tls-cert": getattr(self.args, "tls_cert", None),
+                    "tls-key": getattr(self.args, "tls_key", None),
+                    "tls-ca": tls_ca,
+                    "tls-insecure": tls_insecure,
+                },
+                logger=self.logger,
+            )
+            if tls_ca and not tls_insecure:
+                ssl_cx.check_hostname = True
+            tls_args = (ssl_cx, self.ip)
+            self.logger.display("Using DICOM TLS for AE Title brute-force")
+
         valid_aets = []
         rejected_aets = []
 
@@ -113,7 +139,7 @@ class EnumerationMixin(_ScannerBase):
                 ae.connection_timeout = timeout
                 ae.add_requested_context(sop["Verification"])
 
-                assoc = ae.associate(self.ip, port, ae_title=self.called_aet)
+                assoc = ae.associate(self.ip, port, ae_title=self.called_aet, tls_args=tls_args)
 
                 if assoc.is_established:
                     # Test with C-ECHO. Release/abort no matter what --
@@ -157,7 +183,6 @@ class EnumerationMixin(_ScannerBase):
         if len(valid_aets) > 5 or "ANY" in valid_aets or "*" in valid_aets:
             self.logger.security_finding(
                 "No authentication",
-                category=Category.AUTHENTICATION,
                 detail="Server accepts many AE Titles - weak AET whitelist",
             )
 
@@ -326,6 +351,7 @@ class EnumerationMixin(_ScannerBase):
         institutions = set()
 
         max_series = 1000
+        max_study_uids = 500
 
         def _build_series_ds(study_uid: str):
             ds = _new_dataset()
@@ -390,6 +416,12 @@ class EnumerationMixin(_ScannerBase):
                         suid = str(getattr(identifier, "StudyInstanceUID", "")).strip()
                         if suid:
                             study_uids.append(suid)
+                            # A hostile/broken SCP can stream Pending (0xFF00)
+                            # identifiers forever; bound the collection so the
+                            # fallback cannot hang or exhaust memory.
+                            if len(study_uids) >= max_study_uids:
+                                self.logger.warning(f"Reached study limit ({max_study_uids})")
+                                break
 
                 stop = False
                 for suid in study_uids:

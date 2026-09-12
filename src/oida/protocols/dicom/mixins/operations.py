@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import TYPE_CHECKING
 
 from ..cli_runner import _get_dcmread, _new_dataset, _sop
-from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -30,6 +29,7 @@ class OperationsMixin(_ScannerBase):
         output_dir = getattr(self.args, "output_dir", "./dicom_output")
         max_patients = getattr(self.args, "max_patients", 10)
         max_studies = getattr(self.args, "max_studies", 50)
+        max_series = getattr(self.args, "max_series", 500)
 
         output_path = Path(output_dir)
         output_path.mkdir(parents=True, exist_ok=True)
@@ -143,6 +143,7 @@ class OperationsMixin(_ScannerBase):
                     _sop("PatientRootQueryRetrieveInformationModelFind"),
                 )
 
+                series_count = 0
                 for status, identifier in responses:
                     if status and status.Status in (0xFF00, 0xFF01) and identifier:
                         series_uid = str(getattr(identifier, "SeriesInstanceUID", ""))
@@ -158,6 +159,16 @@ class OperationsMixin(_ScannerBase):
                                     ),
                                 }
                             )
+                            series_count += 1
+                            # A hostile/broken SCP can stream Pending (0xFF00)
+                            # identifiers forever; cap like the patient/study
+                            # steps so the export cannot hang or exhaust memory.
+                            if series_count >= max_series:
+                                self.logger.warning(
+                                    f"Reached series limit ({max_series}) for study "
+                                    f"{study['study_uid'][:20]}"
+                                )
+                                break
 
             except Exception as e:
                 self.logger.debug(
@@ -207,7 +218,6 @@ class OperationsMixin(_ScannerBase):
         if total_stats["images"] > 0:
             self.logger.security_finding(
                 "Mass data exfiltration",
-                category=Category.ACCESS_CONTROL,
                 detail=f"Exported {total_stats['images']} images from {total_stats['patients']} patients",
             )
 
@@ -280,7 +290,6 @@ class OperationsMixin(_ScannerBase):
             if len(self._cget_received_files) > 0:
                 self.logger.security_finding(
                     "Bulk image retrieval",
-                    category=Category.ACCESS_CONTROL,
                     detail=f"Retrieved {len(self._cget_received_files)} images without additional auth",
                 )
 
@@ -313,7 +322,13 @@ class OperationsMixin(_ScannerBase):
             files_to_upload.append(Path(store_file))
         if store_dir:
             store_path = Path(store_dir)
-            files_to_upload.extend(store_path.glob("**/*.dcm"))
+            # Match .dcm case-insensitively -- a bare "**/*.dcm" glob is
+            # case-sensitive on Linux and silently skipped .DCM / .Dcm exports.
+            seen = set()
+            for f in store_path.glob("**/*"):
+                if f.is_file() and f.suffix.lower() == ".dcm" and f not in seen:
+                    seen.add(f)
+                    files_to_upload.append(f)
 
         if not files_to_upload:
             self.logger.fail("No DICOM files found to upload")
@@ -360,7 +375,6 @@ class OperationsMixin(_ScannerBase):
         if success_count > 0:
             self.logger.security_finding(
                 "Unrestricted upload",
-                category=Category.ACCESS_CONTROL,
                 detail=f"Server accepted {success_count} file uploads from unknown source",
             )
 
@@ -450,7 +464,6 @@ class OperationsMixin(_ScannerBase):
             if completed > 0:
                 self.logger.security_finding(
                     "Open transfer",
-                    category=Category.ACCESS_CONTROL,
                     detail=f"Server transferred {completed} images to external AET '{dest_aet}'",
                 )
 

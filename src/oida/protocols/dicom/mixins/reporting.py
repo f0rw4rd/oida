@@ -9,7 +9,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ..cli_runner import DICOM_VENDOR_MAP
-from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -416,7 +415,6 @@ class ReportingMixin(_ScannerBase):
             if self.calling_aet in ["ANY", "*", "ANYSCU", "OIDA"]:
                 self.logger.security_finding(
                     "Weak AET whitelist",
-                    category=Category.AUTHENTICATION,
                     detail=f"Server accepted non-specific AE Title: {self.calling_aet}",
                 )
 
@@ -426,16 +424,20 @@ class ReportingMixin(_ScannerBase):
             if len(aet_brute["valid"]) > 5:
                 self.logger.security_finding(
                     "Permissive AET policy",
-                    category=Category.AUTHENTICATION,
                     detail=f"Server accepts {len(aet_brute['valid'])} different AE Titles",
                 )
 
-        # Check wildcard query results
+        # Check wildcard query results. Only a PATIENT/STUDY-level query actually
+        # sends PatientName; SERIES/IMAGE queries key on UIDs, so a targeted UID
+        # lookup returning rows must NOT be mislabelled a wildcard patient dump.
         cfind = data.get("cfind_results", {})
-        if cfind.get("query", {}).get("PatientName") == "*" and cfind.get("count", 0) > 0:
+        if (
+            cfind.get("query_level") in ("PATIENT", "STUDY")
+            and cfind.get("query", {}).get("PatientName") == "*"
+            and cfind.get("count", 0) > 0
+        ):
             self.logger.security_finding(
                 "Unrestricted query access",
-                category=Category.ACCESS_CONTROL,
                 detail=f"Wildcard query returned {cfind['count']} patient records",
             )
 
@@ -444,7 +446,6 @@ class ReportingMixin(_ScannerBase):
         if cget.get("files_retrieved", 0) > 0:
             self.logger.security_finding(
                 "Unrestricted image retrieval",
-                category=Category.ACCESS_CONTROL,
                 detail=f"Retrieved {cget['files_retrieved']} images via C-GET",
             )
 
@@ -453,7 +454,6 @@ class ReportingMixin(_ScannerBase):
         if cstore.get("files_uploaded", 0) > 0:
             self.logger.security_finding(
                 "Unrestricted upload",
-                category=Category.ACCESS_CONTROL,
                 detail=f"Server accepted {cstore['files_uploaded']} file uploads",
             )
 
@@ -462,7 +462,6 @@ class ReportingMixin(_ScannerBase):
         if cmove.get("completed", 0) > 0:
             self.logger.security_finding(
                 "Open transfer policy",
-                category=Category.ACCESS_CONTROL,
                 detail=f"Transferred {cmove['completed']} images to external AET '{cmove.get('dest_aet', '')}'",
             )
 
@@ -481,7 +480,6 @@ class ReportingMixin(_ScannerBase):
         if named_personnel > 0:
             self.logger.security_finding(
                 "Personnel exposure",
-                category=Category.INFO_DISCLOSURE,
                 detail=f"{named_personnel} staff names (operators/physicians) readable via metadata",
             )
 
@@ -491,7 +489,6 @@ class ReportingMixin(_ScannerBase):
         if retention_days > 365 * 10:
             self.logger.security_finding(
                 "Excessive data retention",
-                category=Category.INFO_DISCLOSURE,
                 detail=f"{retention_days // 365} years of historical PHI retained (oldest: {time_analysis.get('oldest_study', '')})",
             )
 
@@ -499,6 +496,5 @@ class ReportingMixin(_ScannerBase):
         if not getattr(self.args, "tls", False):
             self.logger.security_finding(
                 "No encryption",
-                category=Category.ENCRYPTION,
                 detail="DICOM traffic transmitted in plaintext (PHI exposure)",
             )
