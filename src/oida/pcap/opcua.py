@@ -361,6 +361,15 @@ class OPCUAPassiveListener(PySharkListenerBase):
     REQUIRED_LAYERS = ("opcua",)
     PROTOCOL_COLUMNS = ("service", "detail")
 
+    # Hard cap on the number of messages recovered from a single raw TCP
+    # payload in _recover_from_tcp_payload(). Without this a single crafted
+    # packet with many concatenated minimal (8-byte) message headers could
+    # drive thousands of interaction/session records per packet -- a
+    # memory/CPU amplification DoS. Legitimate reassembled multi-message TCP
+    # segments carry at most a handful of OPC UA messages, so this comfortably
+    # covers real traffic while bounding worst-case amplification.
+    MAX_RECOVERED_MSGS_PER_PAYLOAD = 64
+
     def __init__(
         self,
         interface: str,
@@ -1140,14 +1149,22 @@ class OPCUAPassiveListener(PySharkListenerBase):
         stream_id = self.get_stream_id(packet)
 
         offset = 0
+        recovered_count = 0
         while offset <= len(payload_bytes) - 8:
+            if recovered_count >= self.MAX_RECOVERED_MSGS_PER_PAYLOAD:
+                self.logger.debug(
+                    f"OPC UA: recovery cap ({self.MAX_RECOVERED_MSGS_PER_PAYLOAD}) hit for "
+                    f"{src_ip}->{dst_ip}, stopping recovery for this payload"
+                )
+                break
+
             try:
                 msg_type = payload_bytes[offset : offset + 3].decode("ascii", errors="replace")
                 msg_size = int.from_bytes(payload_bytes[offset + 4 : offset + 8], "little")
             except Exception:
                 break
 
-            if msg_size < 8 or offset + msg_size > len(payload_bytes) + 1:
+            if msg_size < 8 or offset + msg_size > len(payload_bytes):
                 break
 
             # Determine service name
@@ -1155,15 +1172,15 @@ class OPCUAPassiveListener(PySharkListenerBase):
             if msg_type == "MSG" and msg_size > 24:
                 # Parse service node ID from the Encodeable Object TypeId
                 svc_offset = offset + 24
-                if svc_offset + 1 <= offset + msg_size:
+                if svc_offset + 1 <= len(payload_bytes):
                     encoding_mask = payload_bytes[svc_offset] & 0x0F
-                    if encoding_mask == 0x01 and svc_offset + 4 <= offset + msg_size:
+                    if encoding_mask == 0x01 and svc_offset + 4 <= len(payload_bytes):
                         # Four-byte numeric NodeId
                         node_id = int.from_bytes(
                             payload_bytes[svc_offset + 2 : svc_offset + 4], "little"
                         )
                         service_name = OPCUA_SERVICES.get(node_id, f"Service_{node_id}")
-                    elif encoding_mask == 0x00 and svc_offset + 2 <= offset + msg_size:
+                    elif encoding_mask == 0x00 and svc_offset + 2 <= len(payload_bytes):
                         # Two-byte numeric NodeId
                         node_id = payload_bytes[svc_offset + 1]
                         service_name = OPCUA_SERVICES.get(node_id, f"Service_{node_id}")
@@ -1204,6 +1221,7 @@ class OPCUAPassiveListener(PySharkListenerBase):
                 server_port_val,
             )
 
+            recovered_count += 1
             offset += msg_size
 
     def _extract_certificates(

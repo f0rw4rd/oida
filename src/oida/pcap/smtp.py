@@ -109,6 +109,16 @@ class SMTPPassiveListener(PySharkListenerBase):
     )
     SMTP_PORTS = (25, 587, 465)
 
+    # Bound the per-session CRAM-MD5 accumulation buffer. Once "CRAM-MD5" has
+    # appeared anywhere in data_buffer, every subsequent command/response
+    # packet on the session is appended and the full buffer is re-scanned by
+    # SMTP_CRAM_MD5_REGEX.search() -- and the buffer is only ever reset on a
+    # *successful AUTH LOGIN* extraction, which a CRAM-MD5 session never
+    # reaches. Capping the buffer turns the per-packet re-scan from O(n^2) /
+    # unbounded-memory (peer-controlled wire traffic) into bounded work,
+    # closing the passive-capture DoS vector (mirrors imap.py's MAX_BUFFER).
+    MAX_BUFFER = 8192
+
     # Well-known Base64 prompts
     USERNAME_PROMPT_B64 = "VXNlcm5hbWU6"  # Base64 of the AUTH LOGIN Username prompt
     PASSWORD_PROMPT_B64 = "UGFzc3dvcmQ6"  # Base64 of the AUTH LOGIN Password prompt
@@ -185,6 +195,21 @@ class SMTPPassiveListener(PySharkListenerBase):
             banner,
         ]
 
+    def should_process_packet(self, packet) -> bool:
+        """Accept only genuine SMTP frames despite the empty REQUIRED_LAYERS.
+
+        REQUIRED_LAYERS is deliberately empty (see the class note) so the
+        ICMP-encapsulated category-4 path is reachable, but that means the base
+        gate would pass EVERY packet on the file/feed path (no display filter),
+        turning arbitrary traffic into "SMTP" interactions. Mirror exactly what
+        process_packet() accepts: a frame with a pyshark ``smtp`` layer, or an
+        ICMP/ICMPv6 error packet (which can quote an SMTP TCP segment). A plain
+        TCP/UDP frame with no smtp layer is not SMTP and is dropped here.
+        """
+        if hasattr(packet, "smtp"):
+            return True
+        return hasattr(packet, "icmp") or hasattr(packet, "icmpv6")
+
     def process_packet(self, packet) -> None:
         """Process SMTP packet -- extract credentials, banners, emails, STARTTLS.
 
@@ -212,7 +237,23 @@ class SMTPPassiveListener(PySharkListenerBase):
         # returns (0, 0).  tshark still counts them under the "smtp" filter
         # because the ICMP payload contains the original SMTP TCP segment.
         if not hasattr(packet, "smtp"):
-            self.logger.debug(f"SMTP frame with no smtp layer (encapsulated?) {src_ip} -> {dst_ip}")
+            # tshark counts ICMP error packets that quote an SMTP TCP segment
+            # under the "smtp" display filter, so in LIVE capture a layer-less
+            # frame here is a genuine encapsulated SMTP packet. But on the
+            # file/feed path there is no display filter and REQUIRED_LAYERS is
+            # empty, so EVERY packet reaches here -- recording unconditionally
+            # turned arbitrary HTTP/modbus/iec104 traffic into "SMTP" interactions
+            # (50 false positives per alien pcap in test_false_positives.py).
+            # Gate on the real encapsulation signal: an ICMP/ICMPv6 layer. A
+            # plain TCP/UDP packet with no smtp layer is not SMTP -- drop it.
+            if not (hasattr(packet, "icmp") or hasattr(packet, "icmpv6")):
+                self.logger.debug(
+                    f"Dropping non-ICMP frame with no smtp layer (not SMTP) {src_ip} -> {dst_ip}"
+                )
+                return
+            self.logger.debug(
+                f"SMTP frame with no smtp layer (ICMP-encapsulated) {src_ip} -> {dst_ip}"
+            )
             # Determine best-effort direction from ports (may both be 0)
             direction = "request"
             if src_port in self.SMTP_PORTS:
@@ -524,6 +565,12 @@ class SMTPPassiveListener(PySharkListenerBase):
             payload = "".join(payload_parts)
             if "CRAM-MD5" in session.data_buffer or "CRAM-MD5" in payload:
                 session.data_buffer += payload
+                # Cap to a bounded sliding window: keep only the most recent
+                # MAX_BUFFER bytes so a long-lived / high-volume session
+                # cannot grow it without limit nor force ever-larger DOTALL
+                # scans.
+                if len(session.data_buffer) > self.MAX_BUFFER:
+                    session.data_buffer = session.data_buffer[-self.MAX_BUFFER :]
                 self._try_cram_md5(session, session.data_buffer)
 
         # --- Catch-all: record interaction for any packet not yet accounted ---

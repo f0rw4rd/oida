@@ -208,6 +208,14 @@ class S7commPassiveListener(PySharkListenerBase):
     # S7comm write function codes (security-relevant)
     WRITE_FUNC_CODES = {0x05, 0x28, 0x29, 0x1A, 0x1B, 0x1C}
 
+    # Caps on retained in-flight block-transfer state (self._block_transfers),
+    # keyed by flow_id. Without a bound, a stream of Download Block (0x1B) PDUs
+    # that never sends a terminating Download Ended (0x1C) grows RSS without
+    # limit. Real S7 blocks (DB/OB/FC/FB/SDB) are at most a few hundred KB, so
+    # these caps comfortably cover any legitimate transfer.
+    MAX_BLOCK_SEGMENTS = 2000
+    MAX_BLOCK_BYTES = 4 * 1024 * 1024  # 4 MiB retained per in-flight transfer
+
     def __init__(
         self,
         interface: str,
@@ -784,12 +792,26 @@ class S7commPassiveListener(PySharkListenerBase):
             transfer_key,
             {
                 "segments": [],
+                "retained_bytes": 0,
                 "src_ip": src_ip,
                 "dst_ip": dst_ip,
                 "direction": "download" if func_code == 0x1B else "upload",
             },
         )
-        transfer["segments"].append(payload)
+
+        # Bound retained segment count/bytes per transfer so an unterminated
+        # (or never-ending) block download can't grow memory without limit.
+        # Header/string extraction below still runs on this call's payload
+        # even once the cap is hit, but the raw bytes are no longer retained.
+        segments = transfer["segments"]
+        if (
+            len(segments) < self.MAX_BLOCK_SEGMENTS
+            and transfer["retained_bytes"] + len(payload) <= self.MAX_BLOCK_BYTES
+        ):
+            segments.append(payload)
+            transfer["retained_bytes"] += len(payload)
+        else:
+            transfer["truncated"] = True
 
         # Parse block header from first segment (starts with 0x7070)
         if len(payload) >= 36 and payload[0:2] == b"\x70\x70":
