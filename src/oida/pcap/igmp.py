@@ -26,7 +26,7 @@ PyShark IGMP field reference (packet.igmp.*):
 - max_resp: Maximum response time
 - maddr: Multicast group address
 - checksum: IGMP checksum value
-- checksum_status: Checksum validation (1=Good, 2=Bad)
+- checksum_status: Checksum validation (0=Bad, 1=Good per tshark convention)
 - num_grp_recs: Number of group records (v3)
 - record_type: Group record type (v3)
 - qrv: Querier's Robustness Value (v3 query)
@@ -163,9 +163,12 @@ class IGMPPassiveListener(PySharkListenerBase):
         # Get MAC info
         src_mac, _ = self.get_mac_info(packet)
 
-        # Skip local/invalid IPs
-        if not is_valid_discovered_ip(src_ip):
-            return
+        # NOTE: the src_ip validity gate is applied later (only around device
+        # registration / membership tracking), NOT here. IGMP-snooping switches
+        # and RFC-compliant startup General Queries are sourced from 0.0.0.0,
+        # which is_valid_discovered_ip() rejects; returning early would drop the
+        # queried group and the querier's presence entirely (no interaction, no
+        # debug log). We still record the interaction below.
 
         # Parse IGMP fields
         igmp_info = self._parse_igmp(igmp, dst_ip)
@@ -226,8 +229,14 @@ class IGMPPassiveListener(PySharkListenerBase):
                 }
             )
 
-        # Track multicast memberships
+        # Device registration and membership tracking require a real, routable
+        # source. A 0.0.0.0-sourced query is recorded as an interaction above but
+        # is not a discoverable device.
         group = igmp_info.get("group_address")
+        if not is_valid_discovered_ip(src_ip):
+            return
+
+        # Track multicast memberships
         if group and group != "0.0.0.0":
             if src_ip not in self.multicast_memberships:
                 self.multicast_memberships[src_ip] = set()
@@ -304,10 +313,14 @@ class IGMPPassiveListener(PySharkListenerBase):
             checksum_status_raw = self.get_field(igmp, "checksum_status", None)
             checksum_status = "?"
             if checksum_status_raw is not None:
+                # Wireshark checksum-status fields emit 0 = Bad, 1 = Good.
+                # (2 was never emitted by tshark; treating it as "Bad" made
+                # every real bad checksum fall through to the literal string
+                # "0" and the forgery alert below unreachable.)
                 cs_int = self._parse_int(checksum_status_raw, -1)
                 if cs_int == 1:
                     checksum_status = "Good"
-                elif cs_int == 2:
+                elif cs_int == 0:
                     checksum_status = "Bad"
                 else:
                     checksum_status = str(checksum_status_raw)
@@ -340,11 +353,11 @@ class IGMPPassiveListener(PySharkListenerBase):
             elif msg_type == IGMP_V3_MEMBERSHIP_REPORT:
                 type_name = "Report"
                 version = 3
-                # For v3 reports, try to get group from record
-                record_maddr = self.get_field(igmp, "record_maddr", None)
-                if record_maddr is not None:
-                    group_address = str(record_maddr)
-                elif group_address == "0.0.0.0":
+                # The v3 report group address is the (repeated) igmp.maddr field,
+                # already read into group_address above -- there is no
+                # igmp.record_maddr field. Fall back to the destination group
+                # when nothing was dissected.
+                if group_address == "0.0.0.0":
                     group_address = dst_ip
 
             # Prefer tshark-dissected version when available
