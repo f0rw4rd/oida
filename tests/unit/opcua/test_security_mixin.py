@@ -13,7 +13,6 @@ from types import SimpleNamespace
 from unittest.mock import AsyncMock, MagicMock, patch
 
 from oida.protocols.opcua.mixins.security import SecurityMixin
-from oida.utils.common_types import Category
 from oida.utils.ics_logger import ICSLogger
 
 
@@ -79,7 +78,6 @@ class TestCheckServerSecurityAuditing(unittest.IsolatedAsyncioTestCase):
         titles = {f["title"] for f in findings}
         self.assertIn("Insecure configuration", titles)
         f = next(x for x in findings if x["title"] == "Insecure configuration")
-        self.assertEqual(f["category"], str(Category.CONFIGURATION))
         self.assertIn("Auditing", f["detail"])
 
     async def test_auditing_enabled_no_finding(self):

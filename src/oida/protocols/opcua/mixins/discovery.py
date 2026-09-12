@@ -45,8 +45,13 @@ class DiscoveryMixin:
                 # gds_client.timeout afterwards was a silent no-op.
                 gds_client = Client(gds_url, timeout=getattr(self.args, "timeout", 5))
                 await gds_client.connect()
-                servers = await gds_client.find_servers_on_network()
-                await gds_client.disconnect()
+                try:
+                    servers = await gds_client.find_servers_on_network()
+                finally:
+                    try:
+                        await gds_client.disconnect()
+                    except Exception as disc_err:
+                        self.logger.debug(f"GDS client disconnect failed: {disc_err}")
             else:
                 # Use current client's discovery service
                 servers = await self._client.find_servers_on_network()

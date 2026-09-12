@@ -6,7 +6,6 @@ Provides credential testing, RBAC analysis, and brute force functionality.
 
 import asyncio
 
-from oida.utils.common_types import Category
 
 from ..helpers import _get_client_class, ua
 
@@ -71,7 +70,6 @@ class CredentialsMixin:
                 # Success
                 self.logger.security_finding(
                     "Default credentials",
-                    category=Category.AUTHENTICATION,
                     detail=f"Valid OPC UA credentials: {username}:{password}",
                 )
                 valid_creds.append({"username": username, "password": password})
@@ -307,7 +305,6 @@ class CredentialsMixin:
             if all_same_read and all_same_write:
                 self.logger.security_finding(
                     "No authentication",
-                    category=Category.AUTHENTICATION,
                     detail="NO RBAC DETECTED - All auth methods have same access (may indicate missing access control)",
                 )
             else:
@@ -325,7 +322,6 @@ class CredentialsMixin:
                     if anon_read >= user_read:
                         self.logger.security_finding(
                             "Anonymous access",
-                            category=Category.AUTHENTICATION,
                             detail=f"Anonymous has same/more access than {name}",
                         )
 

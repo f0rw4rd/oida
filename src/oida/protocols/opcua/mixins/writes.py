@@ -4,8 +4,6 @@ OPC UA Writes Mixin
 Provides write operations and write access testing functionality.
 """
 
-from oida.utils.common_types import Category
-
 from ..helpers import ua
 
 
@@ -224,7 +222,6 @@ class WritesMixin:
         if writable_nodes:
             self.logger.security_finding(
                 "Writable access",
-                category=Category.ACCESS_CONTROL,
                 detail=f"Found {len(writable_nodes)} writable nodes",
             )
         else:

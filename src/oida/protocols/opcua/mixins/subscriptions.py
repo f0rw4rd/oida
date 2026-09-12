@@ -24,41 +24,46 @@ class SubscriptionsMixin:
         handler = DataChangeHandler(self.logger)
         sub = await self._client.create_subscription(interval, handler)
 
-        # Get all variable nodes up to a limit
-        objects = self._client.get_objects_node()
-        variables = []
+        try:
+            # Get all variable nodes up to a limit
+            objects = self._client.get_objects_node()
+            variables = []
 
-        async def find_variables(node, depth=0):
-            if depth > 3 or len(variables) >= 50:
-                return
+            async def find_variables(node, depth=0):
+                if depth > 3 or len(variables) >= 50:
+                    return
+                try:
+                    children = await node.get_children()
+                    for child in children:
+                        try:
+                            nc = await child.read_node_class()
+                            if nc.name == "Variable" and len(variables) < 50:
+                                variables.append(child)
+                            await find_variables(child, depth + 1)
+                        except Exception as e:
+                            self.logger.debug("find variables failed: %s", e)
+                            pass
+                except Exception as e:
+                    self.logger.debug("find variables failed: %s", e)
+                    pass
+
+            await find_variables(objects)
+
+            if variables:
+                await sub.subscribe_data_change(variables)
+                self.logger.display(f"Monitoring {len(variables)} variables...")
+
+                await asyncio.sleep(duration)
+
+                self.logger.display(f"Captured {len(handler.changes)} changes")
+                self.results["data"]["subscription_changes"] = handler.changes
+            else:
+                self.logger.display("No variables found to subscribe to")
+        finally:
             try:
-                children = await node.get_children()
-                for child in children:
-                    try:
-                        nc = await child.read_node_class()
-                        if nc.name == "Variable" and len(variables) < 50:
-                            variables.append(child)
-                        await find_variables(child, depth + 1)
-                    except Exception as e:
-                        self.logger.debug("find variables failed: %s", e)
-                        pass
+                await sub.delete()
             except Exception as e:
-                self.logger.debug("find variables failed: %s", e)
-                pass
-
-        await find_variables(objects)
-
-        if variables:
-            await sub.subscribe_data_change(variables)
-            self.logger.display(f"Monitoring {len(variables)} variables...")
-
-            await asyncio.sleep(duration)
-            await sub.delete()
-
-            self.logger.display(f"Captured {len(handler.changes)} changes")
-            self.results["data"]["subscription_changes"] = handler.changes
-        else:
-            self.logger.display("No variables found to subscribe to")
+                self.logger.debug("subscription delete failed: %s", e)
 
     async def _subscribe_events(self):
         """Subscribe to server events with EventNotifier permission check"""

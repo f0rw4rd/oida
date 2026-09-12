@@ -8,7 +8,6 @@ import asyncio
 
 import logging
 
-from oida.utils.common_types import Category
 
 logger = logging.getLogger(__name__)
 
@@ -296,7 +295,6 @@ class BrowseMixin:
         if writable_nodes and mode != "write":
             self.logger.security_finding(
                 "Writable access",
-                category=Category.ACCESS_CONTROL,
                 detail=f"Found {len(writable_nodes)} writable variable(s)",
             )
             for wn in writable_nodes[:5]:

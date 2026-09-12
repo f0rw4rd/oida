@@ -15,7 +15,6 @@ from asyncua import ua
 
 from oida.protocols.opcua.helpers import _asyncua
 from oida.protocols.opcua.mixins.browse import BrowseMixin
-from oida.utils.common_types import Category
 
 
 def _skip_if_no_asyncua():
@@ -246,7 +245,6 @@ class TestDumpFullMode(unittest.IsolatedAsyncioTestCase):
         titles = {f["title"] for f in findings}
         self.assertIn("Writable access", titles)
         wf = next(f for f in findings if f["title"] == "Writable access")
-        self.assertEqual(wf["category"], str(Category.ACCESS_CONTROL))
         self.assertIn("writable", wf["detail"])
 
 

@@ -7,7 +7,6 @@ Provides security analysis, auditing checks, and certificate validation function
 import asyncio
 import os
 
-from oida.utils.common_types import Category
 
 from ....utils.lazy_import import lazy_import
 
@@ -46,7 +45,6 @@ class SecurityMixin:
             if not auditing_enabled:
                 self.logger.security_finding(
                     "Insecure configuration",
-                    category=Category.CONFIGURATION,
                     detail="Auditing disabled - no activity logging",
                 )
             else:
@@ -294,6 +292,13 @@ class SecurityMixin:
             os.close(cert_fd)
             key_fd, key_name = tempfile.mkstemp(prefix="oida_client_", suffix=".pem")
             os.close(key_fd)
+            # mkstemp reserves a unique name but CREATES the (empty) file;
+            # setup_self_signed_certificate only generates when the files are
+            # ABSENT and otherwise tries to load them -- an empty file raises
+            # "Unable to load PEM file (MalformedFraming)". Remove them so the
+            # cert/key are freshly generated at these unique paths.
+            os.unlink(cert_name)
+            os.unlink(key_name)
             cert_path = Path(cert_name)
             key_path = Path(key_name)
 
@@ -375,6 +380,10 @@ class SecurityMixin:
             key_fd, key_name = tempfile.mkstemp(prefix="oida_test_", suffix=".pem")
             os.close(cert_fd)
             os.close(key_fd)
+            # See note in _test_self_signed_cert_acceptance: remove the empty
+            # mkstemp files so setup_self_signed_certificate regenerates them.
+            os.unlink(cert_name)
+            os.unlink(key_name)
             cert_path = Path(cert_name)
             key_path = Path(key_name)
 
@@ -416,15 +425,22 @@ class SecurityMixin:
                 )
 
                 await test_client.connect()
-                await test_client.disconnect()
 
                 # If we got here, server accepted untrusted cert - vulnerability!
+                # Record the verdict BEFORE attempting disconnect: a disconnect-time
+                # error must never be allowed to fall through to the outer except
+                # and get misread as a clean rejection.
                 result["accepts_untrusted_client_cert"] = True
                 result["tested"] = True
                 self.logger.warning("Server ACCEPTS untrusted client certificates!")
                 self.logger.warning(
                     "  Attackers can establish secure channels without registration"
                 )
+
+                try:
+                    await test_client.disconnect()
+                except Exception as disc_err:
+                    self.logger.debug(f"Disconnect after cert test failed: {disc_err}")
 
             except asyncio.TimeoutError:
                 # A timeout (firewall drop, packet loss, slow/overloaded server)
@@ -480,7 +496,7 @@ class SecurityMixin:
                     result["error"] = str(e)[:100]
                     self.logger.warning(
                         "Secure channel established with untrusted client cert, but no "
-                        "anonymous session — rerun with -u/-p to confirm app-cert trust"
+                        "anonymous session — rerun with -u/-P to confirm app-cert trust"
                     )
                 else:
                     # Unrelated/ambiguous error — cannot conclude either way.
@@ -582,6 +598,10 @@ class SecurityMixin:
             key_fd, key_name = tempfile.mkstemp(prefix="oida_user_", suffix=".pem")
             os.close(cert_fd)
             os.close(key_fd)
+            # See note in _test_self_signed_cert_acceptance: remove the empty
+            # mkstemp files so setup_self_signed_certificate regenerates them.
+            os.unlink(cert_name)
+            os.unlink(key_name)
             cert_path = Path(cert_name)
             key_path = Path(key_name)
             host_name = socket.gethostname()
@@ -631,6 +651,11 @@ class SecurityMixin:
                     )
                     os.close(app_cert_fd)
                     os.close(app_key_fd)
+                    # Remove the empty mkstemp files so
+                    # setup_self_signed_certificate regenerates them (see note
+                    # in _test_self_signed_cert_acceptance).
+                    os.unlink(app_cert_name)
+                    os.unlink(app_key_name)
                     app_cert_path = Path(app_cert_name)
                     app_key_path = Path(app_key_name)
                     await setup_self_signed_certificate(
@@ -653,17 +678,23 @@ class SecurityMixin:
                 await test_client.load_private_key(str(key_path))
 
                 await test_client.connect()
-                await test_client.disconnect()
 
                 # Session activated with an untrusted self-signed user cert.
+                # Record the verdict BEFORE attempting disconnect: a disconnect-time
+                # error must never be allowed to fall through to the outer except
+                # and get misread as a clean rejection.
                 result["accepts_untrusted_user_cert"] = True
                 result["tested"] = True
                 self.logger.security_finding(
                     "Self-signed user certificate accepted",
-                    category=Category.AUTHENTICATION,
                     detail="Server activates sessions with untrusted self-signed X509 user "
                     "identity tokens (no user-cert trust validation)",
                 )
+
+                try:
+                    await test_client.disconnect()
+                except Exception as disc_err:
+                    self.logger.debug(f"Disconnect after user-cert test failed: {disc_err}")
 
             except asyncio.TimeoutError:
                 result["tested"] = False

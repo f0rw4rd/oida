@@ -233,12 +233,19 @@ class opcua(
         auto_cert_path: str,
         requested_mode: str,
     ):
-        """Setup authentication based on provided credentials"""
+        """Setup authentication based on provided credentials.
+
+        Returns the security mode ACTUALLY applied to the channel, which may
+        differ from the requested mode (cert auth silently upgrades an unset
+        'None' mode to SignAndEncrypt). Callers must record this, not the
+        requested mode, so results['security_mode'] doesn't report unencrypted.
+        """
         if use_anonymous:
             if needs_secure_channel and auto_cert_path:
                 self.logger.display(f"Authenticating: Anonymous ({requested_mode})")
-            else:
-                self.logger.display("Authenticating: Anonymous (auto)")
+                return requested_mode
+            self.logger.display("Authenticating: Anonymous (auto)")
+            return "None"
         elif usernames and passwords:
             self._client.set_user(usernames[0])
             self._client.set_password(passwords[0])
@@ -246,8 +253,9 @@ class opcua(
                 self.logger.display(
                     f"Authenticating: {usernames[0]}:{passwords[0]} ({requested_mode})"
                 )
-            else:
-                self.logger.display(f"Authenticating: {usernames[0]}:{passwords[0]}")
+                return requested_mode
+            self.logger.display(f"Authenticating: {usernames[0]}:{passwords[0]}")
+            return "None"
         elif cert_path and key_path:
             # args.mode/args.policy always exist (argparse defaults both to
             # "None" -- see proto_args.py), so the getattr(...) fallbacks
@@ -278,6 +286,9 @@ class opcua(
             self.logger.display(
                 f"Authenticating: Certificate ({cert_path}, {security_mode}/{security_policy})"
             )
+            return security_mode
+
+        return "None"
 
     def _store_security_info(
         self,
@@ -429,6 +440,13 @@ class opcua(
             usernames, u_is_file = parse_credential_input(username_input)
             passwords, p_is_file = parse_credential_input(password_input)
 
+            # An explicit empty password (-P '') is a valid credential for a
+            # passwordless account. parse_credential_input() collapses '' to
+            # [], so restore it as a single empty password here rather than
+            # letting it trip the "no password" guard below.
+            if password_input is not None and not p_is_file and not passwords:
+                passwords = [""]
+
             # Handle RBAC test mode (early return)
             if getattr(self.args, "test_rbac", False):
                 self.logger.debug("Starting RBAC comparison test...")
@@ -462,7 +480,10 @@ class opcua(
             key_path = getattr(self.args, "privatekey", None)
 
             if usernames and not passwords:
-                self.logger.fail(f"Username '{usernames[0]}' provided but no password (-p)")
+                self.logger.fail(
+                    f"Username '{usernames[0]}' provided but no password. "
+                    "Use -P '' for a passwordless account, or -P <password>."
+                )
                 self._restore_asyncua_logging(_orig_levels)
                 self._client = None
                 self.results["success"] = False
@@ -520,8 +541,10 @@ class opcua(
                     auto_cert_path, auto_key_path, requested_mode, requested_policy
                 )
 
-            # Setup authentication
-            await self._setup_authentication(
+            # Setup authentication. Use the mode ACTUALLY applied (cert auth
+            # upgrades an unset 'None' mode to SignAndEncrypt) rather than the
+            # requested mode, so the reported security_mode isn't a false 'None'.
+            applied_mode = await self._setup_authentication(
                 usernames,
                 passwords,
                 cert_path,
@@ -540,16 +563,10 @@ class opcua(
             self._restore_asyncua_logging(_orig_levels)
             self.logger.success("Connected")
 
-            # Store security info. A secure channel is only in effect when a
-            # Sign/SignAndEncrypt mode was requested AND a certificate was
-            # available (auto-generated or user-supplied); otherwise the
-            # session is unencrypted regardless of the requested mode.
-            applied_secure_channel = bool(
-                (needs_secure_channel and auto_cert_path) or (cert_path and key_path)
-            )
-            effective_mode = requested_mode if applied_secure_channel else "None"
+            # Store the security mode actually negotiated (applied_mode), which
+            # already accounts for the cert-auth 'None' -> SignAndEncrypt upgrade.
             self._store_security_info(
-                usernames, passwords, cert_path, key_path, security_mode=effective_mode
+                usernames, passwords, cert_path, key_path, security_mode=applied_mode
             )
 
             # Post-auth operations
