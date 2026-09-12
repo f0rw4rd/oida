@@ -231,8 +231,10 @@ class TestMMSRequestDefinitions:
 
         definitions = MMSFuzzer.get_request_definitions()
         # 14 original + 4 (DeleteNamedVariableList, BitString_UnusedBits,
-        # OctetString_Length_Lie, Structured_Nesting).
-        assert len(definitions) == 18
+        # OctetString_Length_Lie, Structured_Nesting) + 4 libIEC61850 real-crash
+        # (Initiate_Negotiation, Presentation_NormalMode, Write_EmptyVarList,
+        # BER_Length_OOB).
+        assert len(definitions) == 22
 
         for defn in definitions:
             assert defn.requires_state is not None, f"Request '{defn.name}' missing requires_state"
@@ -251,6 +253,7 @@ class TestMMSRequestDefinitions:
             "MMS_OSI_Layer",
             "MMS_Malformed_PDU",
             "MMS_ACSE_Auth",
+            "MMS_Presentation_NormalMode",
         }
         assert connected_names == expected
 
@@ -265,6 +268,7 @@ class TestMMSRequestDefinitions:
             "MMS_Invoke_ID",
             "MMS_IEC61850_Attacks",
             "MMS_Session_Mgmt",
+            "MMS_Initiate_Negotiation",
         }
         assert cotp_names == expected
 
@@ -286,6 +290,8 @@ class TestMMSRequestDefinitions:
             "MMS_BitString_UnusedBits",
             "MMS_OctetString_Length_Lie",
             "MMS_Structured_Nesting",
+            "MMS_Write_EmptyVarList",
+            "MMS_BER_Length_OOB",
         }
         assert assoc_names == expected
 

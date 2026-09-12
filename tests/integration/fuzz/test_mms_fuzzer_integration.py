@@ -171,17 +171,17 @@ class TestMMSRequestDefinitions:
     """Tests for MMS request definitions and their state requirements."""
 
     def test_all_requests_have_requires_state(self):
-        """All 14 request definitions have requires_state set."""
+        """All 22 request definitions have requires_state set."""
         from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
-        assert len(definitions) == 14
+        assert len(definitions) == 22
 
         for defn in definitions:
             assert defn.requires_state is not None, f"Request '{defn.name}' missing requires_state"
 
     def test_connected_state_requests(self):
-        """Verify 6 requests require CONNECTED state."""
+        """Verify 7 requests require CONNECTED state."""
         from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
@@ -194,11 +194,12 @@ class TestMMSRequestDefinitions:
             "MMS_OSI_Layer",
             "MMS_Malformed_PDU",
             "MMS_ACSE_Auth",
+            "MMS_Presentation_NormalMode",
         }
         assert connected_names == expected
 
     def test_cotp_established_state_requests(self):
-        """Verify 3 requests require COTP_ESTABLISHED state."""
+        """Verify 4 requests require COTP_ESTABLISHED state."""
         from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
@@ -208,11 +209,12 @@ class TestMMSRequestDefinitions:
             "MMS_Invoke_ID",
             "MMS_IEC61850_Attacks",
             "MMS_Session_Mgmt",
+            "MMS_Initiate_Negotiation",
         }
         assert cotp_names == expected
 
     def test_mms_associated_state_requests(self):
-        """Verify 5 requests require MMS_ASSOCIATED state."""
+        """Verify the requests that require MMS_ASSOCIATED state."""
         from oida.fuzz.protocols.mms import MMSFuzzer
 
         definitions = MMSFuzzer.get_request_definitions()
@@ -224,6 +226,12 @@ class TestMMSRequestDefinitions:
             "MMS_File_Services",
             "MMS_Read_Operations",
             "MMS_Reports",
+            "MMS_BitString_UnusedBits",
+            "MMS_DeleteNamedVariableList",
+            "MMS_OctetString_Length_Lie",
+            "MMS_Structured_Nesting",
+            "MMS_Write_EmptyVarList",
+            "MMS_BER_Length_OOB",
         }
         assert assoc_names == expected
 
