@@ -343,9 +343,14 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=30,
         )
 
-        assert result.returncode in [0, 1]
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
+        assert result.success, f"Custom receiving app failed: {result.stderr}"
+        _assert_log_has_events(result)
+        messages = _all_messages(result.scan_log)
+        assert "target_emr" in messages and "remote_hospital" in messages, (
+            f"Expected custom receiving app 'TARGET_EMR'/'REMOTE_HOSPITAL' in output "
+            f"(MSH-5/MSH-6 must reflect -R/--receiving-app and --receiving-facility), "
+            f"got: {messages[:300]}"
+        )
 
     # ========================================================================
     # Probe Operations Tests
