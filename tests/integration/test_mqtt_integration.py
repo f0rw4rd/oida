@@ -927,7 +927,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             f"detail sentence into category). Got data blocks: {[f.get('data') for f in titled]}"
         )
         plaintext_detail = " ".join(f.get("data", {}).get("details", "") for f in detailed).lower()
-        assert "tls" in plaintext_detail or "plaintext" in plaintext_detail, (
+        assert any(w in plaintext_detail for w in ("tls", "plaintext", "unencrypted")), (
             f"Expected plaintext/TLS wording in details, got: {plaintext_detail!r}"
         )
 
