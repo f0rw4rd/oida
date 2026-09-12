@@ -16,8 +16,8 @@ tshark recognizes it via the "TSH " (Transmission Segment Header) magic bytes
 and dissects it as the ``mq`` protocol layer.
 
 Key tshark MQ fields:
-- mq.tsh.type: TSH segment type (0x01=INITIAL_DATA, 0x81=CONN, 0x82=CONN_REPLY,
-  0x85=DISC, 0x86=OPEN, 0x87=OPEN_REPLY, 0x91=PUT, 0x93=GET, etc.)
+- mq.tsh.type: TSH segment type (0x01=INITIAL_DATA, 0x81=MQCONN, 0x82=MQDISC,
+  0x83=MQOPEN, 0x85=MQGET, 0x86=MQPUT, 0x91=MQCONN_REPLY, etc.)
 - mq.tsh.seglength: Segment length
 - mq.tsh.cflags1: Control flags 1
 - mq.tsh.cflags2: Control flags 2
@@ -34,23 +34,15 @@ Key tshark MQ fields:
 - mq.api.reasoncode: API reason code
 - mq.api.hobj: Object handle
 
-MQ segment types:
-- 0x01: INITIAL_DATA (ID exchange)
-- 0x81: MQ_CONN
-- 0x82: MQ_CONN_REPLY
-- 0x83: MQ_MSG
-- 0x84: MQ_MSG_REPLY
-- 0x85: MQ_DISC
-- 0x86: MQ_OPEN
-- 0x87: MQ_OPEN_REPLY
-- 0x88: MQ_CLOSE
-- 0x89: MQ_CLOSE_REPLY
-- 0x91: MQ_PUT
-- 0x92: MQ_PUT_REPLY
-- 0x93: MQ_GET
-- 0x94: MQ_GET_REPLY
-- 0x95: MQ_INQ
-- 0x96: MQ_INQ_REPLY
+MQ segment types (authority: `tshark -G values | grep mq.tsh.type`, which
+mirrors IBM's TSH_* constants -- the request codes are 0x81-0x8f and the XA
+block 0xa1-0xaa; each reply is the request code + 0x10):
+- 0x01-0x0f: channel-negotiation segments (INITIAL_DATA, SECURITY_DATA, ...)
+- 0x81: MQCONN    0x82: MQDISC   0x83: MQOPEN   0x84: MQCLOSE  0x85: MQGET
+- 0x86: MQPUT     0x87: MQPUT1   0x88: MQSET    0x89: MQINQ    0x8a: MQCMIT
+- 0x8b: MQBACK    0x8c: SPI      0x8d: MQSTAT   0x8e: MQSUB    0x8f: MQSUBRQ
+- 0x91-0x9f: the matching *_REPLY codes
+- 0xa1-0xaa: XA_START..XA_COMPLETE; 0xb1-0xba: their replies
 
 Reference: IBM MQ protocol specification
 """
@@ -64,39 +56,75 @@ from ..protocols.discovery.core import (
 )
 
 
-# TSH segment type names
+# TSH segment type names -- verbatim from `tshark -G values` (field mq.tsh.type).
+# The previous table was invented (0x86=MQOPEN, 0x91=MQPUT, 0x83=MQMSG, ...)
+# and mislabelled every API verb *and* drove the handler dispatch below.
 TSH_TYPE_NAMES = {
     "0x01": "INITIAL_DATA",
-    "0x02": "RESYNC",
+    "0x02": "RESYNC_DATA",
+    "0x03": "RESET_DATA",
+    "0x04": "MESSAGE_DATA",
+    "0x05": "STATUS_DATA",
+    "0x06": "SECURITY_DATA",
+    "0x07": "PING_DATA",
+    "0x08": "USERID_DATA",
+    "0x09": "HEARTBEAT",
+    "0x0a": "CONAUTH_INFO",
+    "0x0b": "RENEGOTIATE_DATA",
+    "0x0c": "SOCKET_ACTION",
+    "0x0d": "ASYNC_MESSAGE",
+    "0x0e": "REQUEST_MSGS",
+    "0x0f": "NOTIFICATION",
     "0x81": "MQCONN",
-    "0x82": "MQCONN_REPLY",
-    "0x83": "MQMSG",
-    "0x84": "MQMSG_REPLY",
-    "0x85": "MQDISC",
-    "0x86": "MQOPEN",
-    "0x87": "MQOPEN_REPLY",
-    "0x88": "MQCLOSE",
-    "0x89": "MQCLOSE_REPLY",
-    "0x8a": "MQPUT1",
-    "0x8b": "MQPUT1_REPLY",
-    "0x91": "MQPUT",
-    "0x92": "MQPUT_REPLY",
-    "0x93": "MQGET",
-    "0x94": "MQGET_REPLY",
-    "0x95": "MQINQ",
-    "0x96": "MQINQ_REPLY",
-    "0x97": "MQSET",
+    "0x82": "MQDISC",
+    "0x83": "MQOPEN",
+    "0x84": "MQCLOSE",
+    "0x85": "MQGET",
+    "0x86": "MQPUT",
+    "0x87": "MQPUT1",
+    "0x88": "MQSET",
+    "0x89": "MQINQ",
+    "0x8a": "MQCMIT",
+    "0x8b": "MQBACK",
+    "0x8c": "SPI",
+    "0x8d": "MQSTAT",
+    "0x8e": "MQSUB",
+    "0x8f": "MQSUBRQ",
+    "0x91": "MQCONN_REPLY",
+    "0x92": "MQDISC_REPLY",
+    "0x93": "MQOPEN_REPLY",
+    "0x94": "MQCLOSE_REPLY",
+    "0x95": "MQGET_REPLY",
+    "0x96": "MQPUT_REPLY",
+    "0x97": "MQPUT1_REPLY",
     "0x98": "MQSET_REPLY",
-    "0xa1": "MQCMIT",
-    "0xa2": "MQCMIT_REPLY",
-    "0xa3": "MQBACK",
-    "0xa4": "MQBACK_REPLY",
-    "0xa5": "MQSTAT",
-    "0xa6": "MQSTAT_REPLY",
-    "0xa7": "MQSUB",
-    "0xa8": "MQSUB_REPLY",
-    "0xa9": "MQSUBRQ",
-    "0xaa": "MQSUBRQ_REPLY",
+    "0x99": "MQINQ_REPLY",
+    "0x9a": "MQCMIT_REPLY",
+    "0x9b": "MQBACK_REPLY",
+    "0x9c": "SPI_REPLY",
+    "0x9d": "MQSTAT_REPLY",
+    "0x9e": "MQSUB_REPLY",
+    "0x9f": "MQSUBRQ_REPLY",
+    "0xa1": "XA_START",
+    "0xa2": "XA_END",
+    "0xa3": "XA_OPEN",
+    "0xa4": "XA_CLOSE",
+    "0xa5": "XA_PREPARE",
+    "0xa6": "XA_COMMIT",
+    "0xa7": "XA_ROLLBACK",
+    "0xa8": "XA_FORGET",
+    "0xa9": "XA_RECOVER",
+    "0xaa": "XA_COMPLETE",
+    "0xb1": "XA_START_REPLY",
+    "0xb2": "XA_END_REPLY",
+    "0xb3": "XA_OPEN_REPLY",
+    "0xb4": "XA_CLOSE_REPLY",
+    "0xb5": "XA_PREPARE_REPLY",
+    "0xb6": "XA_COMMIT_REPLY",
+    "0xb7": "XA_ROLLBACK_REPLY",
+    "0xb8": "XA_FORGET_REPLY",
+    "0xb9": "XA_RECOVER_REPLY",
+    "0xba": "XA_COMPLETE_REPLY",
 }
 
 # Completion codes
@@ -106,23 +134,35 @@ COMPLETION_CODES = {
     "2": "FAILED",
 }
 
-# Request segment types (client -> server)
+# Request segment types (client -> server): the 0x8x API verbs and the
+# 0xax XA block. Replies are request+0x10 (0x9x / 0xbx) and the 0x0x
+# negotiation segments flow in both directions, so they are not listed.
 REQUEST_TYPES = {
-    "0x01",
-    "0x81",
-    "0x85",
-    "0x86",
-    "0x88",
-    "0x91",
-    "0x93",
-    "0x95",
-    "0x97",
-    "0x8a",
-    "0xa1",
-    "0xa3",
-    "0xa5",
-    "0xa7",
-    "0xa9",
+    "0x81",  # MQCONN
+    "0x82",  # MQDISC
+    "0x83",  # MQOPEN
+    "0x84",  # MQCLOSE
+    "0x85",  # MQGET
+    "0x86",  # MQPUT
+    "0x87",  # MQPUT1
+    "0x88",  # MQSET
+    "0x89",  # MQINQ
+    "0x8a",  # MQCMIT
+    "0x8b",  # MQBACK
+    "0x8c",  # SPI
+    "0x8d",  # MQSTAT
+    "0x8e",  # MQSUB
+    "0x8f",  # MQSUBRQ
+    "0xa1",  # XA_START
+    "0xa2",  # XA_END
+    "0xa3",  # XA_OPEN
+    "0xa4",  # XA_CLOSE
+    "0xa5",  # XA_PREPARE
+    "0xa6",  # XA_COMMIT
+    "0xa7",  # XA_ROLLBACK
+    "0xa8",  # XA_FORGET
+    "0xa9",  # XA_RECOVER
+    "0xaa",  # XA_COMPLETE
 }
 
 MQ_DEFAULT_PORT = 1414
@@ -365,13 +405,14 @@ class IBMMQPassiveListener(PySharkListenerBase):
         # Extract protocol-specific fields based on segment type
         if seg_type_str == "0x01":  # INITIAL_DATA (ID exchange)
             self._handle_initial_data(details, mq_layer, src_ip, dst_ip)
-        elif seg_type_str in ("0x81", "0x82"):  # MQCONN / MQCONN_REPLY
+        elif seg_type_str in ("0x81", "0x91"):  # MQCONN / MQCONN_REPLY
             self._handle_conn(details, mq_layer, src_ip, dst_ip, is_request)
-        elif seg_type_str in ("0x86", "0x87"):  # MQOPEN / MQOPEN_REPLY
+        elif seg_type_str in ("0x83", "0x93"):  # MQOPEN / MQOPEN_REPLY
             self._handle_open(details, mq_layer, src_ip, dst_ip, is_request)
-        elif seg_type_str in ("0x91", "0x92"):  # MQPUT / MQPUT_REPLY
+        elif seg_type_str in ("0x86", "0x96", "0x87", "0x97"):
+            # MQPUT / MQPUT_REPLY / MQPUT1 / MQPUT1_REPLY
             self._handle_put(details, mq_layer, src_ip, dst_ip, is_request, now)
-        elif seg_type_str in ("0x93", "0x94"):  # MQGET / MQGET_REPLY
+        elif seg_type_str in ("0x85", "0x95"):  # MQGET / MQGET_REPLY
             self._handle_get(details, mq_layer)
 
         # Extract API header fields (common to most types)
@@ -500,8 +541,10 @@ class IBMMQPassiveListener(PySharkListenerBase):
         now: str,
     ) -> None:
         """Extract put application name and track write operations."""
-        # md.putapplname is available in message descriptor
-        put_app = self.get_field(mq_layer, "md_putapplname", "")
+        # md.applname is the real tshark field (md.putapplname does not
+        # exist in the mq dissector); keep the old name as a fallback in
+        # case a future tshark version reintroduces it.
+        put_app = self.get_field_any(mq_layer, "md_applname", "md_putapplname", default="")
         if put_app:
             put_app = str(put_app).strip()
             if put_app:
