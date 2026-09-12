@@ -28,8 +28,8 @@ a predefined allocation of CAN IDs (COB-IDs) to multiplex services:
 - 0x580-0x5FF: SDO server (tx) (0x580 + node_id)
 - 0x600-0x67F: SDO client (rx) (0x600 + node_id)
 - 0x700-0x77F: NMT Error Control / Heartbeat (0x700 + node_id)
-- 0x7E4:       LSS request
-- 0x7E5:       LSS response
+- 0x7E5:       LSS request  (master -> slave, CiA 305)
+- 0x7E4:       LSS response (slave -> master)
 
 Security considerations:
 - CANopen has NO authentication -- any CAN node can issue NMT commands
@@ -585,7 +585,10 @@ class CANopenPassiveListener(PySharkListenerBase):
     ) -> None:
         """Process LSS (Layer Setting Services) message."""
         cs = self._parse_int(self.get_field(layer, "lss_cs"), 0)
-        is_request = cob_id == 0x7E4
+        # CiA 305 / packet-canopen.c: LSS_MASTER_CAN_ID 0x7E5 carries the
+        # master->slave REQUEST, LSS_SLAVE_CAN_ID 0x7E4 the slave->master
+        # response.  These were previously swapped.
+        is_request = cob_id == 0x7E5
         direction = "request" if is_request else "response"
 
         details: Dict[str, Any] = {

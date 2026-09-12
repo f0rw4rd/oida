@@ -218,7 +218,9 @@ class AJPPassiveListener(PySharkListenerBase):
                 now,
                 src_ip,
                 dst_ip,
-                "request" if code_raw in (AJP_SHUTDOWN, AJP_CPING) else "response",
+                # PING/CPING/SHUTDOWN are all web-server -> container (request);
+                # only CPONG is the container's reply (response).
+                "request" if code_raw in (AJP_SHUTDOWN, AJP_CPING, AJP_PING) else "response",
                 f"AJP {code_name}",
                 {"code": code_raw, "code_name": code_name},
                 f"AJP {code_name} {src_ip} -> {dst_ip}",

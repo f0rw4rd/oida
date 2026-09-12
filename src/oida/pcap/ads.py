@@ -400,8 +400,13 @@ class ADSPassiveListener(PySharkListenerBase):
         else:
             rw = ""
 
-        # Build details dict
-        direction = "response" if is_response else "request"
+        # Build details dict. An unsolicited DeviceNotification push (cmd 0x0008)
+        # is server-initiated even without the response bit set, so force
+        # notify/response direction rather than mislabelling it a client request.
+        if cmd_id == 0x0008:
+            direction = "response"
+        else:
+            direction = "response" if is_response else "request"
         now = datetime.now().isoformat()
 
         details: Dict[str, Any] = {

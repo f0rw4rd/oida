@@ -57,6 +57,7 @@ class RDPPassiveListener(PySharkListenerBase):
     DISPLAY_FILTER = "rdp"
     REQUIRED_LAYERS = ("rdp",)
     PROTOCOL_COLUMNS = ("source", "username", "password")
+    SERVER_PORTS = frozenset({3389})
 
     def __init__(
         self,
@@ -110,11 +111,24 @@ class RDPPassiveListener(PySharkListenerBase):
                 detail = "RDP handshake"
 
             now = datetime.now().isoformat()
+            # No native request/response field here, so fall through to the
+            # known-server-port (3389) / lower-port heuristic instead of
+            # hardcoding "request" -- a server-originated PDU (negotiation
+            # response, licensing) would otherwise be mislabelled client->server.
+            d = self.resolve_direction(
+                packet,
+                native=None,
+                src_ip=src_ip,
+                dst_ip=dst_ip,
+                src_port=src_port,
+                dst_port=dst_port,
+                flow_id=flow_id,
+            )
             self._record_interaction(
                 now,
                 src_ip,
                 dst_ip,
-                "request",
+                d.direction,
                 "RDP Connection",
                 {
                     "username": cookie_user,

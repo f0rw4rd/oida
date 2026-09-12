@@ -384,8 +384,17 @@ class COTPPassiveListener(PySharkListenerBase):
     def _handle_dr(self, src_ip: str, dst_ip: str, src_ref: int, dst_ref: int) -> None:
         """Handle Disconnect Request (DR)."""
         conn = self._find_connection(src_ip, dst_ip, src_ref, dst_ref)
-        if conn:
-            conn.dr_seen = True
+        if conn is None:
+            # A DR with no matching CR/CC is exactly the connection-probing case
+            # the DR alert targets. Track it (cr_seen/cc_seen stay False) so the
+            # probe is not silently dropped -- previously _handle_dr only marked
+            # pre-existing connections, so a standalone DR created nothing.
+            conn_key = f"{src_ip}:{src_ref}->{dst_ip}"
+            conn = self.connections.setdefault(
+                conn_key,
+                COTPConnection(src_ip=src_ip, dst_ip=dst_ip, src_ref=src_ref, dst_ref=dst_ref),
+            )
+        conn.dr_seen = True
 
     def _find_connection(
         self, src_ip: str, dst_ip: str, src_ref: int, dst_ref: int
@@ -499,9 +508,12 @@ class COTPPassiveListener(PySharkListenerBase):
                     }
                 )
 
-        # Alert: DR without prior CC (connection probing)
+        # Alert: DR without a completed connection (connection probing). The
+        # signal is "no CC" (session never established); a standalone DR (also
+        # no CR) is now tracked by _handle_dr. The old extra `not cr_seen` clause
+        # was unsatisfiable for any tracked connection and made this dead.
         for conn in self.connections.values():
-            if conn.dr_seen and not conn.cc_seen and not conn.cr_seen:
+            if conn.dr_seen and not conn.cc_seen:
                 result["alerts"].append(
                     {
                         "level": "highlight",

@@ -297,6 +297,12 @@ class CoAPPassiveListener(PySharkListenerBase):
             direction = "request"
             method = code_name or f"Code({code_val})"
 
+        # Role for session/device attribution. Use the resolved direction, not
+        # is_request: an empty CON ping (code 0) is is_request=False but is
+        # client->server, so keying roles off is_request inverted client/server
+        # for empty messages.
+        is_req_role = direction == "request"
+
         # Detect encryption from port
         is_encrypted = dst_port == self.COAPS_PORT or src_port == self.COAPS_PORT
 
@@ -376,7 +382,7 @@ class CoAPPassiveListener(PySharkListenerBase):
         )
 
         # Update session tracking
-        if is_request:
+        if is_req_role:
             session = self._get_session(src_ip, dst_ip, now)
         else:
             session = self._get_session(dst_ip, src_ip, now)
@@ -414,8 +420,9 @@ class CoAPPassiveListener(PySharkListenerBase):
             has_oscore,
         )
 
-        # Update device entries
-        self._update_devices(src_ip, dst_ip, is_request, uri_path, content_format)
+        # Update device entries (use the direction-based role so empty pings
+        # attribute client/server correctly).
+        self._update_devices(src_ip, dst_ip, is_req_role, uri_path, content_format)
 
     def _check_security(
         self,

@@ -790,11 +790,18 @@ class TLSPassiveListener(PySharkListenerBase):
                 version_raw = self.get_field(tls_layer, "record_version", None)
             tls_version = _resolve_tls_version(version_raw) if version_raw else ""
 
-            # Determine if server or client cert based on port direction.
-            # TLS services on non-standard ports are common in ICS/OT, so a
-            # server cert is only misread as a client cert when the source is
-            # genuinely a client (dst is a known server port, src is not).
-            is_server_cert = src_port in self._SERVER_PORTS or dst_port not in self._SERVER_PORTS
+            # Determine if server or client cert based on port direction. TLS
+            # services on non-standard ports are common in ICS/OT, so when
+            # neither side is a known server port fall back to "lower port is the
+            # server" (well-known < ephemeral) instead of blindly assuming the
+            # source is the server -- which mislabelled a genuine client cert as
+            # a server cert (and spawned a phantom TLS-Server device).
+            if src_port in self._SERVER_PORTS:
+                is_server_cert = True
+            elif dst_port in self._SERVER_PORTS:
+                is_server_cert = False
+            else:
+                is_server_cert = src_port <= dst_port
 
             if is_server_cert:
                 server_ip, client_ip = src_ip, dst_ip

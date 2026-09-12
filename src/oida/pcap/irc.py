@@ -94,7 +94,19 @@ class IRCPassiveListener(PySharkListenerBase):
         command = self.get_field(irc, "request_command", "") or ""
         parameter = self.get_field(irc, "request_command_parameter", "") or ""
 
+        # tshark tags server->client frames with irc.response.command (numeric
+        # replies 001/375/433, NOTICE, PING, relayed PRIVMSG). Reading only
+        # request_command dropped every server frame silently. Resolve direction
+        # from whichever side carried the command.
+        if command:
+            direction = "request"
+        else:
+            command = self.get_field(irc, "response_command", "") or ""
+            parameter = self.get_field(irc, "response_command_parameter", "") or ""
+            direction = "response"
+
         if not command:
+            self.logger.debug(f"IRC frame with no request/response command {src_ip} -> {dst_ip}")
             return
 
         command_upper = str(command).upper().strip()
@@ -110,7 +122,7 @@ class IRCPassiveListener(PySharkListenerBase):
             now,
             src_ip,
             dst_ip,
-            "request",
+            direction,
             f"IRC {command_upper}",
             {"command": command_upper, "parameter": display_param},
             f"IRC {command_upper} {display_param}".strip(),
@@ -118,6 +130,12 @@ class IRCPassiveListener(PySharkListenerBase):
             src_port=src_port,
             dst_port=dst_port,
         )
+
+        # Session tracking and credential extraction below assume the CLIENT is
+        # the source (PASS/NICK/USER are client->server commands). Skip them for
+        # server->client responses, whose src_ip is the server.
+        if direction != "request":
+            return
 
         # Get or create session tracker
         if src_ip not in self._sessions:
@@ -242,8 +260,15 @@ class IRCPassiveListener(PySharkListenerBase):
         """
         result = []
         for cred in self.credentials:
-            # For PASS credentials, username is the nick or user; value is the password
-            username = cred.nick or cred.username or cred.value
+            # For PASS credentials, username is the nick or user; value is the
+            # PASSWORD -- so it must never be used as the username fallback.
+            # RFC 2812 sec. 3.1 registers as PASS -> NICK -> USER, so a PASS
+            # seen first has neither nick nor user yet; leave the identity
+            # blank rather than printing the password in the username column.
+            if cred.credential_type == "plaintext":
+                username = cred.nick or cred.username or ""
+            else:
+                username = cred.nick or cred.username or cred.value
             entry: Dict[str, Any] = {
                 "protocol": "IRC",
                 "credential_type": cred.credential_type,
