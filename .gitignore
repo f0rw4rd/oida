@@ -43,14 +43,18 @@ docker/mocks/.env
 *.db-shm
 boofuzz-results/
 
-# Agent/session scratch. NOT a blanket `.claude/` ignore: agent and workflow
-# definitions under .claude/agents/ and .claude/workflows/ are versioned on
-# purpose (19 tracked files). Only the per-session transient state is ignored.
-.claude/projects/
-.claude/scheduled_tasks.lock
-# Throwaway git worktrees created by agent sessions. They hold a full copy of
-# the tree, so leaving them untracked-but-visible buries real changes in noise.
-.claude/worktrees/
+# AI-coding-workflow tooling and internal docs — kept on disk for local use but
+# deliberately untracked (also purged from git history). Not part of the repo.
+CLAUDE.md
+.claude/
+docker/mocks/CLAUDE.md
+docker/mocks/.claude/
+.slop-full.workflow.js
+scripts/test-agent-docker.sh
+scripts/code_review.sh
+docker/agent-test/
+.github/workflows/agent-integration.yml
+docs/
 .claude-work/
 tmp.*
 /results/
