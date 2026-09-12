@@ -32,6 +32,7 @@ class MonitoringMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types.get("ErrorRejectAbortNack", _UnraisableSentinel)
 
         self.logger.display("\n[Schedule Security Check]")
 
@@ -69,7 +70,7 @@ class MonitoringMixin:
                         ):
                             findings.append(f"Schedule:{instance} - {display_name} readable")
                             break
-                    except asyncio.TimeoutError as e:
+                    except (asyncio.TimeoutError, ErrorRejectAbortNack) as e:
                         self.logger.debug(f"bacpypes3 check schedules failed: {e}")
                         continue
                 except Exception as e:
@@ -94,6 +95,7 @@ class MonitoringMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types.get("ErrorRejectAbortNack", _UnraisableSentinel)
 
         self.logger.display("\n[Calendar Security Check]")
 
@@ -122,7 +124,7 @@ class MonitoringMixin:
                         response, (AbortPDU, ErrorPDU, RejectPDU, Error)
                     ):
                         findings.append(f"Calendar:{instance} - dateList readable")
-                except asyncio.TimeoutError as e:
+                except (asyncio.TimeoutError, ErrorRejectAbortNack) as e:
                     self.logger.debug(f"bacpypes3 check calendars failed: {e}")
                     continue
             except Exception as e:
@@ -147,6 +149,7 @@ class MonitoringMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types.get("ErrorRejectAbortNack", _UnraisableSentinel)
 
         self.logger.display("\n[Alarm/Notification Security Check]")
 
@@ -186,7 +189,7 @@ class MonitoringMixin:
                                 f"NotificationClass:{instance} - {display_name} readable"
                             )
                             break
-                    except asyncio.TimeoutError as e:
+                    except (asyncio.TimeoutError, ErrorRejectAbortNack) as e:
                         self.logger.debug(f"bacpypes3 check alarms failed: {e}")
                         continue
                 except Exception as e:
@@ -213,6 +216,7 @@ class MonitoringMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types.get("ErrorRejectAbortNack", _UnraisableSentinel)
 
         self.logger.display("\n[Trend Log Security Check]")
 
@@ -256,7 +260,7 @@ class MonitoringMixin:
                                         findings.append(f"TrendLog:{instance} - {count} records")
                                         total_records += count
                                         break
-                except asyncio.TimeoutError as e:
+                except (asyncio.TimeoutError, ErrorRejectAbortNack) as e:
                     self.logger.debug(f"bacpypes3 check trendlogs failed: {e}")
                     continue
             except Exception as e:
@@ -282,6 +286,7 @@ class MonitoringMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types.get("ErrorRejectAbortNack", _UnraisableSentinel)
 
         self.logger.display("\n[Priority Array Security Check]")
         self.logger.display("  Testing if priority array is readable/writable...")
@@ -317,7 +322,7 @@ class MonitoringMixin:
                         response, (AbortPDU, ErrorPDU, RejectPDU, Error)
                     ):
                         findings.append(f"{obj_type}:{instance} - Priority array readable")
-                except asyncio.TimeoutError as e:
+                except (asyncio.TimeoutError, ErrorRejectAbortNack) as e:
                     self.logger.debug(f"bacpypes3 check priority failed: {e}")
                     continue
             except Exception as e:
@@ -340,7 +345,7 @@ class MonitoringMixin:
                         response, (AbortPDU, ErrorPDU, RejectPDU, Error)
                     ):
                         findings.append(f"{obj_type}:{instance} - Relinquish default readable")
-                except asyncio.TimeoutError as e:
+                except (asyncio.TimeoutError, ErrorRejectAbortNack) as e:
                     self.logger.debug(f"bacpypes3 check priority failed: {e}")
                     continue
             except Exception as e:
@@ -455,6 +460,7 @@ class MonitoringMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types.get("ErrorRejectAbortNack", _UnraisableSentinel)
 
         self.logger.display("\n[Life Safety Mode Check]")
 
@@ -493,7 +499,7 @@ class MonitoringMixin:
                             findings.append(
                                 f"LifeSafetyPoint:{instance} - {display_name} accessible"
                             )
-                    except asyncio.TimeoutError as e:
+                    except (asyncio.TimeoutError, ErrorRejectAbortNack) as e:
                         self.logger.debug(f"bacpypes3 check life safety failed: {e}")
                         continue
                 except Exception as e:
