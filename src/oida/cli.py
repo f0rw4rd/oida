@@ -38,7 +38,7 @@ from oida.loader import ProtocolLoader
 from oida.targets import parse_targets
 from oida.serial_cli import serial_args, handle_serial_command
 from oida.fuzz_cli import fuzz_args, handle_fuzz_command
-from oida.utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger, ICSLogger
 from oida.utils.export_utils import configure_from_args, _write_xml
 from oida.utils.ics_logger import get_module_logger
 from oida import __version__
@@ -1530,15 +1530,16 @@ def main(argv: Optional[List[str]] = None):
     # Export results if requested (or fall back to a temp dir if the user
     # asked for a --format but never gave -o, so results aren't silently lost)
     output_path = args.output
-    used_temp_dir = False
     if not output_path and args.format != "console":
         output_path = tempfile.mkdtemp(prefix="oida-")
-        used_temp_dir = True
 
     if output_path:
         fmt = args.format if args.format != "console" else "json"
         default_port = getattr(args, "port", None) or getattr(protocol_class, "default_port", 0)
-        export_logger = get_logger(protocol_name.upper(), "", default_port)
+        # A fresh ICSLogger, not get_logger(): the cache key collides with the
+        # scan's migrated logger whose thread-local extra still seeds host
+        # with the raw target (the pcap file path), leaking into the prefix.
+        export_logger = ICSLogger(protocol_name.upper(), "", default_port)
         try:
             export_results(results, output_path, fmt, protocol_name, nxc_logger=export_logger)
         except Exception as e:
@@ -1547,8 +1548,7 @@ def main(argv: Optional[List[str]] = None):
         if not args.quiet:
             # Per-file writes inside export_results are debug-level, so say
             # where the output landed at info level or users can't find it.
-            fallback_note = "--format given without -o; " if used_temp_dir else ""
-            export_logger.display(f"{fallback_note}results written to {output_path}")
+            export_logger.display(f"results written to {output_path}")
 
     return 0 if failed == 0 else 1
 
