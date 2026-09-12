@@ -640,10 +640,11 @@ class OPCUAFuzzer(BaseFuzzer):
             self.secure_channel_id = conn.security_token.ChannelId
             self.token_id = conn.security_token.TokenId
             self.auth_token = protocol.authentication_token
-            # Store state in context for cross-state access
+            # Store the auth token in context for cross-state access (read by
+            # session-creation states and replay). SecureChannelId / TokenId are
+            # NOT stored here: fuzzed messages read them from self.* directly
+            # (DynamicDWord lambdas), so a ctx copy would only ever be a dead write.
             ctx = self._state_context
-            ctx.set("secure_channel_id", self.secure_channel_id)
-            ctx.set("token_id", self.token_id)
             ctx.set("auth_token", self.auth_token)
 
             # Use CryptoStateManager for nonce tracking. asyncua exposes the
@@ -4145,7 +4146,6 @@ class OPCUAFuzzer(BaseFuzzer):
         # ============================================================
         # Optimization strategy based on OPC UA CVE patterns:
         # - CVE-2024-42513: Resource exhaustion via large allocations
-        # - CVE-2024-10085: DoS via excessive requests
         # - CVE-2025-1468: Buffer overflow in parsing
         # - CVE-2024-42512: Write operation vulnerabilities
         #
@@ -4214,10 +4214,10 @@ class OPCUAFuzzer(BaseFuzzer):
         # ============================================================
         # PHASE 2: HIGH-CRASH TESTS (~90 seconds)
         # Buffer overflow, memory corruption, resource exhaustion
-        # These patterns match CVE-2024-42513, CVE-2024-10085
+        # These patterns match CVE-2024-42513
         # ============================================================
 
-        # Large array allocation attack - CVE-2024-10085 pattern
+        # Large array allocation attack - CVE-2024-42513 pattern
         # Claims massive array size, triggers memory allocation bugs
         if self.is_request_enabled("OPCUA_Malformed"):
             self.session.connect(large_array)

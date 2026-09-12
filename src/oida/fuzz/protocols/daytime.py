@@ -74,6 +74,10 @@ class DaytimeFuzzer(BaseFuzzer):
             # Phase 5: Deep fuzzing
             RequestInfo("Daytime_Binary", "Random binary data fuzzing", "deep"),
             RequestInfo("Daytime_LineEndings", "Line ending variations", "deep"),
+            # UDP-mode requests (only connected when use_udp): listed so they are
+            # visible to --list-requests and honor --enable/--disable.
+            RequestInfo("UDP_MTU_Boundary", "UDP MTU boundary datagrams", "boundary"),
+            RequestInfo("UDP_Oversized", "UDP oversized datagrams", "boundary"),
         ]
 
     def _create_socket(self):
@@ -428,5 +432,7 @@ class DaytimeFuzzer(BaseFuzzer):
             ),
         )
 
-        self.session.connect(mtu_boundary)
-        self.session.connect(oversized)
+        if self.is_request_enabled("UDP_MTU_Boundary"):
+            self.session.connect(mtu_boundary)
+        if self.is_request_enabled("UDP_Oversized"):
+            self.session.connect(oversized)

@@ -89,6 +89,12 @@ class EchoFuzzer(BaseFuzzer):
             RequestInfo("Echo_Text", "Standard text fuzzing", "standard"),
             RequestInfo("Echo_Binary", "Binary data fuzzing", "standard"),
             RequestInfo("Echo_Fragmented", "Fragmented packet testing", "standard", slow=True),
+            # UDP-mode requests (only connected when use_udp): listed so they are
+            # visible to --list-requests and honor --enable/--disable.
+            RequestInfo("UDP_Fragmentation_Attack", "UDP fragmentation attack", "boundary"),
+            RequestInfo("UDP_Amplification", "UDP amplification probe", "boundary"),
+            RequestInfo("UDP_MTU_Boundary", "UDP MTU boundary datagrams", "boundary"),
+            RequestInfo("UDP_Zero_Length", "UDP zero-length / single-byte datagrams", "boundary"),
         ]
 
     def _create_socket(self):
@@ -462,8 +468,13 @@ class EchoFuzzer(BaseFuzzer):
             ),
         )
 
-        self.session.connect(fragmentation)
-        if self.config.get_option("test_amplification", True):
+        if self.is_request_enabled("UDP_Fragmentation_Attack"):
+            self.session.connect(fragmentation)
+        if self.config.get_option("test_amplification", True) and self.is_request_enabled(
+            "UDP_Amplification"
+        ):
             self.session.connect(amplification)
-        self.session.connect(mtu_boundary)
-        self.session.connect(zero_length)
+        if self.is_request_enabled("UDP_MTU_Boundary"):
+            self.session.connect(mtu_boundary)
+        if self.is_request_enabled("UDP_Zero_Length"):
+            self.session.connect(zero_length)

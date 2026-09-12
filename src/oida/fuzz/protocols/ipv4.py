@@ -9,7 +9,7 @@ Optimized test ordering for maximum early coverage and crash detection:
 
 CVE Coverage:
 - CVE-1999-0128 (Ping of Death)
-- CVE-1997-0124 (Teardrop)
+- CVE-1999-0015 (Teardrop)
 - CVE-2019-12256 (IPnet option parsing)
 - CVE-2020-11896 (Ripple20 - Treck TCP/IP)
 - CVE-2020-11900 (Ripple20 - double free)
@@ -115,7 +115,7 @@ class IPv4Fuzzer(BaseFuzzer):
             # Phase 2: High-crash CVE exploits (prioritized early)
             RequestInfo(
                 "IPv4_Fragment_Exploits",
-                "Fragment attacks: Ping of Death, Teardrop (CVE-1999-0128, CVE-1997-0124)",
+                "Fragment attacks: Ping of Death, Teardrop (CVE-1999-0128, CVE-1999-0015)",
                 "exploit",
             ),
             RequestInfo(
@@ -1020,7 +1020,7 @@ class IPv4Fuzzer(BaseFuzzer):
                             self._ip_to_bytes(dest_ip),
                         )
                         + b"PINGDEATH",
-                        # Teardrop attack - Overlapping fragments (CVE-1997-0124)
+                        # Teardrop attack - Overlapping fragments (CVE-1999-0015)
                         # Fragment 1: offset 0, length 40
                         struct.pack(
                             ">BBHHHBBH4s4s",
@@ -1422,7 +1422,7 @@ class IPv4Fuzzer(BaseFuzzer):
         # ==================== PHASE 2: HIGH-CRASH CVE EXPLOITS (~3 min) ====================
         # Critical CVE attacks that historically cause crashes/RCE
         if self.is_request_enabled("IPv4_Fragment_Exploits"):
-            self.session.connect(ipv4_fragment_exploits)  # CVE-1999-0128, CVE-1997-0124
+            self.session.connect(ipv4_fragment_exploits)  # CVE-1999-0128, CVE-1999-0015
 
         if self.is_request_enabled("IPv4_Option_Exploits"):
             self.session.connect(ipv4_option_exploits)  # CVE-2019-12256 pattern

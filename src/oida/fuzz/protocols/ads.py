@@ -2110,8 +2110,10 @@ class ADSFuzzer(BaseFuzzer):
             self.session.connect(ads_read)
             self.session.connect(ads_read_memory)
             self.session.connect(ads_read_io)
-            self.session.connect(ads_port_enumeration)
-            self.session.connect(ads_sum_readwrite)
+            # ads_port_enumeration / ads_sum_readwrite are connected below under
+            # their own ADS_Port_Enumeration / ADS_SumReadWrite gates. Connecting
+            # them here too double-walked the edge and made --disable of those
+            # groups ineffective.
 
         if self.is_request_enabled("ADS_Notification"):
             self.session.connect(ads_add_notification)
