@@ -576,14 +576,19 @@ class ISCSIPassiveListener(PySharkListenerBase):
         separate PDUs, so we correlate them per ``flow_id``.
         """
         # Gather candidate text from named keyvalue fields and the data segment.
+        # Field names verified via `tshark -G fields | grep -P '\tiscsi\.'`:
+        # the login/text KeyValue field is always "iscsi.keyvalue" (there is
+        # no separate login_keyvalue / text_keyvalue field), there is no
+        # iscsi.data or iscsi.datasegment field at all, and the ping payload
+        # field sanitizes to "pingdata" (not "ping_data"). The remaining
+        # byte-content fields that could plausibly carry raw text in other
+        # PDU types are "immediatedata" and "vendorspecificdata".
         candidates: List[str] = []
         for fname in (
             "keyvalue",
-            "login_keyvalue",
-            "text_keyvalue",
-            "data",
-            "datasegment",
-            "ping_data",
+            "pingdata",
+            "immediatedata",
+            "vendorspecificdata",
         ):
             val = self.get_field(iscsi, fname, None)
             if val:
@@ -619,6 +624,18 @@ class ISCSIPassiveListener(PySharkListenerBase):
 
         username = state.get("N", "")
         response = state.get("R", "")
+        chap_id = state.get("I", "")
+        challenge = state.get("C", "")
+        algorithm = state.get("A", "")
+        # Clear the per-flow accumulator now that a full challenge/response
+        # exchange has been captured. Without this the dict grows unbounded
+        # across a long capture with many flows, and -- since RFC 7143
+        # permits more than one login phase on the same connection -- a
+        # second CHAP exchange on the same flow that omits CHAP_N would
+        # otherwise incorrectly pair the stale username from the first
+        # exchange with the new CHAP_R.
+        del self._chap_state[flow_id]
+
         dedup = (username, server_ip, response)
         if dedup in self._seen_creds:
             return
@@ -626,10 +643,10 @@ class ISCSIPassiveListener(PySharkListenerBase):
 
         cred = ISCSICredential(
             username=username,
-            chap_id=state.get("I", ""),
-            challenge=state.get("C", ""),
+            chap_id=chap_id,
+            challenge=challenge,
             response=response,
-            algorithm=state.get("A", ""),
+            algorithm=algorithm,
             server_ip=server_ip,
             server_port=server_port,
             client_ip=client_ip,
