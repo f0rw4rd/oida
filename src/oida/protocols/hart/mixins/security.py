@@ -5,13 +5,11 @@ Handles security testing and authentication:
 - Device lock state reading (Command 76)
 - Lock/unlock operations (Command 71)
 - Lock code brute-force
-- Lock security analysis
 - Comprehensive security analysis (write/calibration commands, encryption)
 """
 
 from __future__ import annotations
 
-import time
 from typing import TYPE_CHECKING, Any, Dict, List
 
 if TYPE_CHECKING:
@@ -163,88 +161,30 @@ class SecurityMixin(_ScannerBase):
             "tested": result.get("tested", 0),
         }
 
-    def lock_security_analysis(self) -> List[Dict[str, Any]]:
-        """Analyze device lock security."""
-        from ..scanner import LockState
+    def security_analysis(self, probe_categories=None) -> List[Dict[str, Any]]:
+        """Perform security analysis of HART device.
 
-        findings = []
-
-        if not self.client:
-            return [{"severity": "error", "issue": "Not connected"}]
-
-        lock_state = self.read_lock_state()
-
-        if lock_state == LockState.NOT_SUPPORTED:
-            findings.append(
-                {
-                    "id": "HART-LOCK-001",
-                    "severity": "info",
-                    "issue": "Device lock not supported",
-                    "description": "Device does not support lock feature (likely HART 5)",
-                }
-            )
-        elif lock_state == LockState.UNLOCKED:
-            findings.append(
-                {
-                    "id": "HART-LOCK-002",
-                    "severity": "high",
-                    "issue": "Device lock disabled",
-                    "description": "Device is not locked - configuration can be changed",
-                    "recommendation": "Enable device lock via Command 77",
-                }
-            )
-        elif lock_state == LockState.LOCKED:
-            findings.append(
-                {
-                    "id": "HART-LOCK-003",
-                    "severity": "info",
-                    "issue": "Device lock enabled",
-                    "description": "Device is locked - configuration protected",
-                }
-            )
-
-            quick_codes = ["", "00000000", "12345678"]
-            for code in quick_codes:
-                if self.try_unlock(code):
-                    findings.append(
-                        {
-                            "id": "HART-LOCK-004",
-                            "severity": "critical",
-                            "issue": "Default lock code in use",
-                            "description": (
-                                f"Device unlocked with default code: "
-                                f"'{code if code else '(empty)'}'"
-                            ),
-                            "recommendation": "Change lock code to a strong, unique value",
-                        }
-                    )
-                    break
-                time.sleep(0.1)
-
-        elif lock_state == LockState.PERMANENTLY_LOCKED:
-            findings.append(
-                {
-                    "id": "HART-LOCK-005",
-                    "severity": "info",
-                    "issue": "Device permanently locked",
-                    "description": "Device is permanently locked - cannot be unlocked",
-                }
-            )
-
-        return findings
-
-    def security_analysis(self) -> List[Dict[str, Any]]:
-        """Perform security analysis of HART device."""
+        Args:
+            probe_categories: which mutating command groups to actually transmit
+                under --confirm. None (default, e.g. --security/full) probes all
+                groups. Otherwise a subset of {"write", "dangerous"} so a
+                category-scoped caller (--probe-write vs --probe-calibration)
+                only puts its own commands on the wire -- e.g. --probe-write
+                must not transmit Cmd 42 Master Reset.
+        """
         from ..hartip import HARTResponseCode
 
         findings = []
 
         if not self.client:
-            return [{"severity": "error", "issue": "Not connected"}]
+            return [{"issue": "Not connected"}]
+
+        probe_all = probe_categories is None
+        probe_write = probe_all or "write" in probe_categories
+        probe_dangerous = probe_all or "dangerous" in probe_categories
 
         findings.append(
             {
-                "severity": "high",
                 "issue": "No authentication",
                 "description": "HART protocol has no authentication mechanism. "
                 "Anyone with network access can read/write device.",
@@ -257,7 +197,7 @@ class SecurityMixin(_ScannerBase):
         # these accessibility probes are gated behind --confirm exactly like the
         # named write / master-reset / fuzz paths. Without --confirm the analysis
         # is limited to non-mutating reachability/status reads below.
-        if getattr(self, "confirm", False):
+        if self.confirm and probe_write:
             write_commands = [
                 (6, "Write Polling Address"),
                 (17, "Write Message"),
@@ -267,7 +207,7 @@ class SecurityMixin(_ScannerBase):
                 (44, "Write Primary Variable Units"),
                 (45, "Trim Loop Current Zero"),
                 (46, "Trim Loop Current Gain"),
-                (50, "Write Damping Value"),
+                (34, "Write Damping Value"),
             ]
 
             for cmd, name in write_commands:
@@ -279,7 +219,6 @@ class SecurityMixin(_ScannerBase):
                     ]:
                         findings.append(
                             {
-                                "severity": "medium",
                                 "issue": f"Write command accessible: {name}",
                                 "description": f"Command {cmd} ({name}) is accessible and may allow "
                                 "configuration changes.",
@@ -289,6 +228,7 @@ class SecurityMixin(_ScannerBase):
                 except Exception as e:
                     self.logger.debug(f"Write-command probe (cmd {cmd}) failed: {e}")
 
+        if self.confirm and probe_dangerous:
             dangerous_commands = [
                 (42, "Master Reset"),
                 (43, "Set Device Variable Zero"),
@@ -306,7 +246,6 @@ class SecurityMixin(_ScannerBase):
                     ]:
                         findings.append(
                             {
-                                "severity": "critical",
                                 "issue": f"Dangerous command accessible: {name}",
                                 "description": f"Command {cmd} ({name}) could cause device "
                                 "malfunction or calibration loss.",
@@ -315,10 +254,10 @@ class SecurityMixin(_ScannerBase):
                         )
                 except Exception as e:
                     self.logger.debug(f"Dangerous-command probe (cmd {cmd}) failed: {e}")
-        else:
+
+        if not self.confirm:
             findings.append(
                 {
-                    "severity": "info",
                     "issue": "Write/calibration accessibility probes skipped",
                     "description": "Active probing of write and dangerous commands "
                     "(Cmd 6/17/18/42 Master Reset, 45/46 trim) requires --confirm. "
@@ -326,16 +265,15 @@ class SecurityMixin(_ScannerBase):
                 }
             )
 
-        # Cmd 38 (Reset Config Changed Flag) is itself a mutating write; only
-        # probe it when --confirm is supplied (it is used here purely to detect
-        # write-protect via the IN_WRITE_PROTECT_MODE response).
-        if getattr(self, "confirm", False):
+        # Cmd 38 (Reset Config Changed Flag) is itself a mutating write; probe it
+        # only under --confirm and only when the write group is in scope (it is
+        # used here purely to detect write-protect via IN_WRITE_PROTECT_MODE).
+        if self.confirm and probe_write:
             try:
                 response = self.client.send_command(38, self.poll_address, b"")
                 if response.response_code == HARTResponseCode.IN_WRITE_PROTECT_MODE:
                     findings.append(
                         {
-                            "severity": "info",
                             "issue": "Write protect enabled",
                             "description": "Device has write protection enabled, "
                             "limiting remote configuration changes.",
@@ -344,7 +282,6 @@ class SecurityMixin(_ScannerBase):
                 else:
                     findings.append(
                         {
-                            "severity": "high",
                             "issue": "Write protect disabled",
                             "description": "Device does not have write protection enabled. "
                             "Configuration can be modified remotely.",
@@ -358,7 +295,6 @@ class SecurityMixin(_ScannerBase):
             findings.append(
                 {
                     "id": "HART-SEC-010",
-                    "severity": "high",
                     "issue": "HART-IP v1 server (no TLS support)",
                     "description": "Server only supports HART-IP v1 (plaintext). "
                     "All communication is unencrypted and unauthenticated.",
@@ -376,7 +312,6 @@ class SecurityMixin(_ScannerBase):
                     findings.append(
                         {
                             "id": "HART-SEC-011",
-                            "severity": "medium",
                             "issue": "Device status flags active",
                             "description": f"Active status flags: {', '.join(alerts)}",
                         }

@@ -47,7 +47,6 @@ def analyze_protocol_security(
         findings.append(
             {
                 "id": "HART-SEC-001",
-                "severity": "critical",
                 "finding": f"Legacy HART revision {revision} - no encryption or authentication",
                 "recommendation": "Upgrade to HART 7 or implement network-level security",
             }
@@ -56,7 +55,6 @@ def analyze_protocol_security(
         findings.append(
             {
                 "id": "HART-SEC-001",
-                "severity": "high",
                 "finding": f"HART revision {revision} - no encryption, optional device lock",
                 "recommendation": "Enable device lock, consider upgrade to HART 7",
             }
@@ -66,7 +64,6 @@ def analyze_protocol_security(
         findings.append(
             {
                 "id": "HART-SEC-002",
-                "severity": "critical",
                 "finding": "Write protection disabled - device configuration can be modified",
                 "recommendation": "Enable write protection mode",
             }
@@ -76,7 +73,6 @@ def analyze_protocol_security(
         findings.append(
             {
                 "id": "HART-SEC-003",
-                "severity": "high",
                 "finding": "Device lock not enabled (HART 6+ feature)",
                 "recommendation": "Enable device lock via Command 77",
             }
@@ -85,7 +81,6 @@ def analyze_protocol_security(
     findings.append(
         {
             "id": "HART-SEC-004",
-            "severity": "high",
             "finding": "HART-IP traffic is unencrypted",
             "recommendation": "Use VPN or network segmentation for HART-IP",
         }

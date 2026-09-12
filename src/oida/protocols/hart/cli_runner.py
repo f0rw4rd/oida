@@ -3,10 +3,10 @@
 """HART NXC-style callable class."""
 
 from ...connection import NetworkConnection
-from ...utils.common_types import Category
 from ...utils.lazy_import import lazy_import
 from .scanner import HARTScanner, PhysicalSignaling
 from .hartip import get_device_type_name
+from .mixins.enumeration import parse_command_range
 
 _hartip = lazy_import("hartip", "HART")
 
@@ -296,20 +296,17 @@ class hart(NetworkConnection):
             if protocol_rev <= 5:
                 self.logger.security_finding(
                     "Outdated protocol version",
-                    category=Category.PROTOCOL_EXPOSURE,
                     detail=f"HART rev {protocol_rev} - NO encryption or authentication",
                 )
             elif protocol_rev == 6:
                 self.logger.security_finding(
                     "Outdated protocol version",
-                    category=Category.PROTOCOL_EXPOSURE,
                     detail="HART 6 - No encryption, optional device lock",
                 )
 
             if not write_protected:
                 self.logger.security_finding(
                     "Writable access",
-                    category=Category.ACCESS_CONTROL,
                     detail="Write protection DISABLED - device is writable",
                 )
         else:
@@ -340,7 +337,6 @@ class hart(NetworkConnection):
                 self.logger.fail("  [!] NO ENCRYPTION - plaintext HART-IP")
                 self.logger.security_finding(
                     "No encryption",
-                    category=Category.ENCRYPTION,
                     detail="No TLS/DTLS - plaintext HART-IP (required for conformance since 2020)",
                 )
 
@@ -460,8 +456,21 @@ class hart(NetworkConnection):
                 self.logger.warning("Could not read additional status (Command 48)")
 
     def _handle_enumerate_device_specific(self):
-        """Enumerate device-specific commands (128-253)."""
+        """Enumerate device-specific commands (128-253).
+
+        Gated behind --confirm: device-specific command semantics are
+        vendor-defined and commonly include mutating writes/trims/resets, so a
+        blind empty-payload sweep can invoke destructive operations (same class
+        as universal Master Reset enumeration).
+        """
         if not self.scanner:
+            return
+
+        if not getattr(self.args, "confirm", False):
+            self.logger.fail(
+                "--enumerate-device-specific blind-probes vendor-defined commands "
+                "(128-253) that may write/trim/reset the device — requires --confirm"
+            )
             return
 
         # --command-range defaults to "0-48" (shared with other actions), which
@@ -471,12 +480,13 @@ class hart(NetworkConnection):
         cmd_range = getattr(self.args, "command_range", "0-48")
         if str(cmd_range) == "0-48":
             cmd_range = "128-253"
-        if "-" in str(cmd_range):
-            start, end = map(int, str(cmd_range).split("-"))
-        else:
-            start = end = int(cmd_range)
-        start = max(128, start)
-        end = min(253, end)
+        try:
+            parsed = parse_command_range(cmd_range)
+        except ValueError as e:
+            self.logger.fail(f"Invalid --command-range: {e}")
+            return
+        start = max(128, min(parsed))
+        end = min(253, max(parsed))
 
         self.logger.display(f"Enumerating device-specific commands ({start}-{end})...")
         supported = self.scanner.enumerate_device_specific_commands(start=start, end=end)
@@ -492,7 +502,7 @@ class hart(NetworkConnection):
         """Probe calibration/write command accessibility via security analysis.
 
         --probe-write surfaces "Write command accessible" findings (Cmd 6/17/18/
-        19/35/44/50); --probe-calibration surfaces "Dangerous command accessible"
+        19/34/35/44); --probe-calibration surfaces "Dangerous command accessible"
         findings (Cmd 42 Master Reset/43/45/46 trim). Both are sourced from the
         same security_analysis() probe pass but filtered to the requested
         category so the two flags are no longer functional duplicates. Gated
@@ -511,7 +521,14 @@ class hart(NetworkConnection):
             return
 
         self.logger.display("Probing write/calibration command accessibility...")
-        findings = self.scanner.security_analysis()
+        # Only transmit the requested category so --probe-write does not put
+        # Master Reset / trim commands on the wire (and vice versa).
+        categories = set()
+        if write:
+            categories.add("write")
+        if calibration:
+            categories.add("dangerous")
+        findings = self.scanner.security_analysis(probe_categories=categories)
 
         probe_findings = []
         if write:
@@ -526,7 +543,7 @@ class hart(NetworkConnection):
 
         if probe_findings:
             for f in probe_findings:
-                self.logger.warning(f"  [{f.get('severity', '').upper()}] {f.get('issue')}")
+                self.logger.warning(f"  {f.get('issue')}")
         else:
             self.logger.success("No accessible write/calibration commands detected")
 
@@ -614,25 +631,10 @@ class hart(NetworkConnection):
         self.results["data"]["security_findings"] = findings
 
         if findings:
-            critical = sum(1 for f in findings if f.get("severity") == "critical")
-            high = sum(1 for f in findings if f.get("severity") == "high")
-            medium = sum(1 for f in findings if f.get("severity") == "medium")
-            info = sum(1 for f in findings if f.get("severity") == "info")
-
             self.logger.display(f"Security Findings: {len(findings)} total")
-            if critical:
-                self.logger.fail(f"  Critical: {critical}")
-            if high:
-                self.logger.warning(f"  High: {high}")
-            if medium:
-                self.logger.display(f"  Medium: {medium}")
-            if info:
-                self.logger.display(f"  Info: {info}")
-
             for finding in findings:
-                severity = finding.get("severity", "info").upper()
-                issue = finding.get("issue", "")
-                self.logger.debug(f"  [{severity}] {issue}")
+                issue = finding.get("issue") or finding.get("finding", "")
+                self.logger.debug(f"  {issue}")
         else:
             self.logger.success("No security issues detected")
 
@@ -726,7 +728,6 @@ class hart(NetworkConnection):
         if lock_state == LockState.UNLOCKED:
             self.logger.security_finding(
                 "No authentication",
-                category=Category.AUTHENTICATION,
                 detail="Device is UNLOCKED - configuration writable",
             )
         elif lock_state == LockState.LOCKED:
@@ -762,7 +763,6 @@ class hart(NetworkConnection):
             code = result.get("password", "")
             self.logger.security_finding(
                 "Weak password",
-                category=Category.AUTHENTICATION,
                 detail=f"Device lock code found: '{code}'",
             )
         elif result.get("error"):
@@ -822,7 +822,10 @@ class hart(NetworkConnection):
             if not confirm:
                 self.logger.fail("--write-tag requires --confirm flag")
             else:
-                descriptor = getattr(self.args, "write_descriptor", "")
+                # argparse sets write_descriptor to None when --write-descriptor
+                # is absent, so the getattr default never applies; write_tag()
+                # declares `descriptor: str = ""` and packs it as ASCII.
+                descriptor = getattr(self.args, "write_descriptor", None) or ""
                 self.logger.display(f"Writing tag: {new_tag}")
                 if self.scanner.write_tag(new_tag, descriptor):
                     self.logger.success("Tag written successfully")

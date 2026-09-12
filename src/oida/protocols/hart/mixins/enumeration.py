@@ -21,6 +21,41 @@ else:
     _ScannerBase = object
 
 
+def parse_command_range(range_str: str) -> List[int]:
+    """Parse a ``--command-range`` value into a sorted list of command numbers.
+
+    Accepts comma-separated segments of either a single command number ("N")
+    or an inclusive range ("N-M"). Raises ``ValueError`` with a human-readable
+    message on malformed input (non-numeric, more than two "-"-separated
+    parts, negative numbers, or start > end) instead of the raw ``int()`` /
+    unpack ``ValueError`` that split("-") + map(int, ...) would otherwise
+    surface to the operator.
+    """
+    commands: List[int] = []
+    for part in str(range_str).split(","):
+        part = part.strip()
+        if "-" in part:
+            bounds = part.split("-")
+            if len(bounds) != 2 or not all(b.isdigit() for b in bounds):
+                raise ValueError(f"invalid --command-range segment: {part!r}")
+            start, end = int(bounds[0]), int(bounds[1])
+            if start > end:
+                raise ValueError(f"invalid --command-range segment: {part!r} (start > end)")
+            commands.extend(range(start, end + 1))
+        else:
+            if not part.isdigit():
+                raise ValueError(f"invalid --command-range segment: {part!r}")
+            commands.append(int(part))
+    return commands
+
+
+# Command 85 returns a 16-bit sub-device count that the peer fully controls.
+# Each sub-device then costs one Command-84 round trip plus a pacing sleep, so
+# an unbounded count (0xFFFF) would pin the scanner for hours. Real
+# WirelessHART gateways top out in the low hundreds of devices.
+MAX_SUB_DEVICES = 512
+
+
 class EnumerationMixin(_ScannerBase):
     """Mixin providing WirelessHART, sub-device, address scan, and command enumeration."""
 
@@ -96,7 +131,6 @@ class EnumerationMixin(_ScannerBase):
             result["security_findings"].append(
                 {
                     "id": "HART-WIRELESS-001",
-                    "severity": "info",
                     "finding": "WirelessHART device detected",
                     "details": f"Detection: {', '.join(result['detection_method'])}",
                 }
@@ -106,7 +140,6 @@ class EnumerationMixin(_ScannerBase):
                 result["security_findings"].append(
                     {
                         "id": "HART-WIRELESS-002",
-                        "severity": "medium",
                         "finding": (
                             f"WirelessHART Gateway with "
                             f"{result['sub_device_count']} connected devices"
@@ -119,7 +152,6 @@ class EnumerationMixin(_ScannerBase):
             result["security_findings"].append(
                 {
                     "id": "HART-WIRELESS-003",
-                    "severity": "medium",
                     "finding": "WirelessHART network security",
                     "details": "WirelessHART uses AES-128-CCM* encryption with join/session keys",
                     "recommendation": "Ensure join keys are unique and rotated regularly",
@@ -155,6 +187,13 @@ class EnumerationMixin(_ScannerBase):
                 return []
 
             self.logger.debug(f"Found {count} sub-devices")
+
+            if count > MAX_SUB_DEVICES:
+                self.logger.warning(
+                    f"Gateway reports {count} sub-devices; enumerating only the first "
+                    f"{MAX_SUB_DEVICES} (use a smaller scope if this is a real network)"
+                )
+                count = MAX_SUB_DEVICES
 
         except Exception as e:
             self.logger.debug(f"Error reading sub-device count: {e}")
@@ -260,10 +299,33 @@ class EnumerationMixin(_ScannerBase):
         progress.finish()
         return sorted(results, key=lambda x: x["address"])
 
+    # Universal / common-practice HART commands that MUTATE device state.
+    # Blindly probing these with an empty payload transmits a complete,
+    # well-formed request on devices where the command takes no request bytes
+    # -- e.g. Command 42 (Perform Master Reset) factory-resets a live
+    # instrument, 41 runs a ~30s self-test, 38 clears the config-changed flag,
+    # 36/37 (Set Upper/Lower Range Value) take NO write data at all and
+    # immediately recalibrate the range to the live loop reading (equivalent
+    # to remotely pushing the device's SPAN/ZERO button), and 40 (Enter/Exit
+    # Fixed Current Mode) freezes the 4-20mA loop output. They are skipped
+    # during enumeration unless the operator passes --confirm (matching
+    # security_analysis()'s gate).
+    #
+    # Note: Command 50 (Read Dynamic Variable Assignments) is a READ command
+    # per the HART spec, not a write -- it must NOT be in this set.
+    MUTATING_UNIVERSAL_COMMANDS = frozenset(
+        {6, 17, 18, 19, 34, 35, 36, 37, 38, 40, 41, 42, 44, 45, 46}
+    )
+
     def enumerate_commands(
         self, command_range: str = "0-48", timeout: float = 2.0
     ) -> Dict[str, Any]:
-        """Enumerate supported HART commands."""
+        """Enumerate supported HART commands.
+
+        Mutating universal commands (Master Reset, Self-Test, writes, trims) are
+        skipped unless --confirm is set, so a plain ``--enumerate-commands`` /
+        ``--full`` run cannot alter or factory-reset live instrumentation.
+        """
         from ..hartip import HARTResponseCode, HARTIPTimeoutError
         from ....utils.protocol_helpers import ProgressTracker
 
@@ -271,15 +333,33 @@ class EnumerationMixin(_ScannerBase):
         if not client:
             return {"error": ["Not connected"]}
 
-        commands = []
-        for part in command_range.split(","):
-            if "-" in part:
-                start, end = map(int, part.split("-"))
-                commands.extend(range(start, end + 1))
-            else:
-                commands.append(int(part))
+        try:
+            commands = parse_command_range(command_range)
+        except ValueError as e:
+            return {"error": [f"Invalid --command-range: {e}"]}
 
-        results: Dict[str, Any] = {"supported": [], "unsupported": [], "error": [], "details": {}}
+        results: Dict[str, Any] = {
+            "supported": [],
+            "unsupported": [],
+            "error": [],
+            "skipped": [],
+            "details": {},
+        }
+
+        confirm = getattr(self, "confirm", False)
+        if not confirm:
+            skipped = [c for c in commands if c in self.MUTATING_UNIVERSAL_COMMANDS]
+            if skipped:
+                results["skipped"] = skipped
+                for c in skipped:
+                    results["details"][c] = "skipped (mutating; requires --confirm)"
+                self.logger.warning(
+                    "Skipping %d mutating command(s) without --confirm "
+                    "(e.g. 42 Master Reset, 41 Self-Test): %s",
+                    len(skipped),
+                    ", ".join(str(c) for c in skipped),
+                )
+            commands = [c for c in commands if c not in self.MUTATING_UNIVERSAL_COMMANDS]
 
         progress = ProgressTracker(len(commands), threshold=1.0, interval=0.5)
 
