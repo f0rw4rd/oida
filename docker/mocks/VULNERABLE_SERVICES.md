@@ -63,7 +63,6 @@ docker-compose --profile vuln-dnp3 up -d
 ```
 | Port | Service | CVE | Vulnerability |
 |------|---------|-----|---------------|
-| 20005 | dnp3-cve-2020-28875 | CVE-2020-28875 | Stack overflow in link layer |
 | 20006 | dnp3-cve-2019-18996 | CVE-2019-18996 | Heap corruption in transport |
 | 20007 | dnp3-cve-2017-7938 | CVE-2017-7938 | Buffer overflow in object parsing |
 
@@ -75,7 +74,6 @@ docker-compose --profile vuln-mms up -d
 |------|---------|-----|---------------|
 | 10103 | mms-cve-2022-24760 | CVE-2022-24760 | Buffer overflow in MMS PDU |
 | 10104 | mms-cve-2019-6138 | CVE-2019-6138 | Heap overflow in GOOSE |
-| 10105 | mms-cve-2018-12731 | CVE-2018-12731 | Stack overflow in ASN.1 decode |
 
 ### BACnet
 ```bash
@@ -194,7 +192,6 @@ docker-compose --profile vuln-hl7 up -d
 ```
 | Port | Service | CVE | Vulnerability |
 |------|---------|-----|---------------|
-| 2576 | hl7-cve-2020-14964 | CVE-2020-14964 | Mirth XXE in HL7 parsing |
 | 2577 | hl7-cve-2019-17564 | CVE-2019-17564 | RCE |
 | 2578 | hl7-cve-2018-11797 | CVE-2018-11797 | DoS via malformed messages |
 

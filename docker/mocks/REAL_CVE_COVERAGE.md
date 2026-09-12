@@ -62,7 +62,7 @@ memory-corruption CVEs, and we report that honestly rather than padding:
 | iec104 | lib60870-C 2.0/2.2/2.3.5 | GHSA-75pr (b), GHSA-7v97-class (a), handleASDU-null (b) | NULL-deref + heap OOB read |
 | mms | libIEC61850 1.4.0 | CVE-2020-7054 (a), CVE-2019-19931 (a), CVE-2020-15158 (a) | heap overflows + COTP underflow |
 | ethernetip | OpENer 58ee13c | CVE-2022-43604 (a), CVE-2022-43605 (a), CVE-2022-43606 (b) | stack-overflow + NULL call |
-| dnp3 | opendnp3 1.1.0 | CVE-2020-28875, CVE-2019-18996, CVE-2017-7938 (all c) | aegis APDU over-read family, poison-fence |
+| dnp3 | opendnp3 1.1.0 | CVE-2019-18996, CVE-2017-7938 (both c) | aegis APDU over-read family, poison-fence |
 | opcua | open62541 1.0.1/1.5.0-rc2 | CVE-2020-36429 (a), CVE-2026-1301 (a) | JSON-encode + JSON-PubSub-decode heap OOB writes — **2 genuine**, open62541 hardened (no 3rd) |
 | mqtt | mosquitto 1.6.5/2.0.7/2.0.18 | CVE-2021-34432 (b), CVE-2019-11779 (a), CVE-2024-8376 (b) | NULL-deref / stack-overflow / UAF |
 | dicom | DCMTK 3.6.3/3.6.8 | CVE-2024-34508 (b), CVE-2019-1010228 (a), CVE-2024-47796 (a) | DIMSE NULL + RLE/render OOB |

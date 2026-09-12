@@ -197,30 +197,66 @@ class CustomUserManager:
         }
         self.cert_mode = cert_mode
         self.trusted_cert_der = trusted_cert_der
+        # DER bytes of certificates that actually arrived as an X509 *user
+        # identity token* (populated by the verify_x509_token hook installed in
+        # install_x509_hook). Needed because asyncua hands get_user the same
+        # ``certificate`` kwarg for two very different things -- see get_user.
+        self.user_token_ders = set()
+
+    def install_x509_hook(self, iserver):
+        """Wrap iserver.verify_x509_token to record genuine user-token certs.
+
+        asyncua calls verify_x509_token ONLY for an X509 user identity token,
+        returning the token's DER. We record that DER so get_user can tell a
+        real X509 user cert apart from the application/channel cert that an
+        anonymous (or username/password) session carries on a secure channel --
+        both reach get_user as the same ``certificate=<DER bytes>`` kwarg.
+        """
+        _orig = iserver.verify_x509_token
+
+        def _hooked(isession, token, signature):
+            der = _orig(isession, token, signature)
+            try:
+                self.user_token_ders.add(der)
+            except Exception:
+                pass
+            return der
+
+        iserver.verify_x509_token = _hooked
 
     def get_user(self, iserver, username=None, password=None, certificate=None):
         """Authenticate user and return User object or None."""
-        # X509 user-identity token: asyncua passes the verified peer cert here
-        # (its signature already proven) and leaves username/password None.
-        #
-        # NB: asyncua >= 2.0 ALSO passes the session's peer certificate as
-        # ``certificate`` for username/password auth (the client sends an app
-        # instance cert at session creation, even over SecurityPolicy None). So
-        # the X509-identity path must be gated on there being NO username --
-        # otherwise valid username/password logins are misrouted to the
-        # cert-trust check and rejected with BadUserAccessDenied.
-        if username is None and certificate is not None:
+        # X509 user-identity token: asyncua passes the verified user-token DER
+        # here (its signature already proven) with username/password None. But
+        # asyncua ALSO passes the session's app/channel certificate as
+        # ``certificate`` for anonymous and username/password sessions on a
+        # secure channel (both reach us as DER bytes, indistinguishable by
+        # type/value). Only treat this as a user-cert trust decision when the
+        # DER actually arrived via an X509 user token (recorded by our
+        # verify_x509_token hook) -- otherwise an anonymous session over a
+        # signed channel would be misrouted here and wrongly rejected.
+        if username is None and certificate is not None and certificate in self.user_token_ders:
             return self._get_cert_user(certificate)
 
-        log.info(f"Authentication attempt: user='{username}'")
-        if username in self.users:
-            expected_password, role = self.users[username]
-            if password == expected_password:
-                log.info(f"Authentication successful: {username} (role={role})")
-                return User(role=role, name=username)
+        # Username/password auth.
+        if username is not None:
+            log.info(f"Authentication attempt: user='{username}'")
+            if username in self.users:
+                expected_password, role = self.users[username]
+                if password == expected_password:
+                    log.info(f"Authentication successful: {username} (role={role})")
+                    return User(role=role, name=username)
+            log.warning(f"Authentication failed: {username}")
+            return None
 
-        log.warning(f"Authentication failed: {username}")
-        return None
+        # Anonymous: no username and no X509 user token. The server advertises
+        # an Anonymous endpoint, so allow it with read access (UserRole.User) --
+        # an anonymous-enabled OPC UA server lets anonymous clients browse/read.
+        # An app/channel certificate present on a secure channel is NOT a user
+        # identity and must not gate this. (UserRole.Anonymous would activate the
+        # session but asyncua then denies attribute reads with BadUserAccessDenied.)
+        log.info("Anonymous session activated")
+        return User(role=UserRole.User, name="anonymous")
 
     def _get_cert_user(self, certificate):
         """Trust decision for an X509 user-identity certificate."""
@@ -732,9 +768,17 @@ async def main():
         )
     else:
         server = Server()
+        user_manager = None
         log.info("Anonymous access only")
 
     await server.init()
+
+    # Let the user manager distinguish a real X509 user-identity token from the
+    # app/channel cert an anonymous or username/password session carries on a
+    # secure channel (asyncua hands both to get_user as the same certificate
+    # kwarg). Must run after init(), which builds server.iserver.
+    if user_manager is not None:
+        user_manager.install_x509_hook(server.iserver)
 
     # Configure server
     server.set_endpoint(f"opc.tcp://0.0.0.0:{port}/freeopcua/server/")
