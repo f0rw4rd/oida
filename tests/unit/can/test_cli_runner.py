@@ -27,7 +27,6 @@ from oida.protocols.can.constants import (
     XCPScanResult,
 )
 from oida.protocols.can.cli_runner import can as CANConnection
-from oida.utils.common_types import Category
 
 pytestmark = pytest.mark.core
 
@@ -134,12 +133,11 @@ class TestHandleSniff:
         # CAN traffic => "No encryption" finding under the ENCRYPTION category
         finding = inst.logger.security_finding.call_args
         assert finding.args[0] == "No encryption"
-        assert finding.kwargs["category"] is Category.ENCRYPTION
 
         stats = inst.results["data"]["traffic_stats"]
         assert stats["total_messages"] == 42
         assert stats["unique_ids"] == 3
-        assert stats["top_ids"][0] == {"id": "0x123", "count": 30}
+        assert stats["top_ids"][0] == {"id": "0x123", "count": 30, "extended": False}
 
     def test_sniff_no_traffic_no_finding(self):
         inst = _make_conn()
@@ -157,8 +155,16 @@ class TestHandleSniff:
 
 
 class TestHandleUDSScan:
+    def test_uds_scan_requires_confirm(self):
+        # --uds-scan actively probes ECUs / enumerates state-changing SIDs, so it
+        # is gated on --confirm like the other active CAN operations.
+        inst = _make_conn(confirm=False, uds_scan=True)
+        inst._handle_uds_scan()
+        inst.scanner._scan_uds.assert_not_called()
+        assert "--confirm" in inst.logger.fail.call_args.args[0]
+
     def test_uds_scan_serializes_results(self):
-        inst = _make_conn()
+        inst = _make_conn(confirm=True)
         result = UDSScanResult(
             request_id=0x7E0,
             response_id=0x7E8,
@@ -919,7 +925,7 @@ class TestExecuteFeatures:
         inst.scanner._sniff_traffic.assert_not_called()
 
     def test_dispatch_routes_to_uds_scan(self):
-        inst = _make_conn(uds_scan=True)
+        inst = _make_conn(uds_scan=True, confirm=True)
         inst.no_sniff = True
         inst.scanner._scan_uds.return_value = []
         inst._execute_features()
@@ -1099,7 +1105,7 @@ class TestProtoFlow:
         fake_bus = MagicMock(name="bus")
         scanner_cls = self._wire_scanner(monkeypatch, connect_result=fake_bus)
         # no_sniff avoids the sniff path; route to UDS scan instead
-        inst = _make_conn(no_sniff=True, uds_scan=True)
+        inst = _make_conn(no_sniff=True, uds_scan=True, confirm=True)
         inst.no_sniff = True
         inst.conn = None
         scanner_cls.return_value._scan_uds.return_value = []

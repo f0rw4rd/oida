@@ -38,6 +38,14 @@ def _get_python_can() -> Any:
     return _python_can
 
 
+# ISO 14229-1 timing for NRC 0x78 (requestCorrectlyReceived-ResponsePending):
+# after a pending reply the client must keep waiting for the final response
+# under the extended P2* timer rather than treating 0x78 as a rejection.
+UDS_NRC_RESPONSE_PENDING = 0x78
+UDS_P2_STAR_TIMEOUT = 5.0  # seconds; typical P2*_server_max is 5 s
+UDS_MAX_PENDING_RESPONSES = 10  # cap consecutive 0x78s so a stuck ECU can't hang us
+
+
 class UDSMixin:
     """Mixin providing UDS (ISO 14229) service discovery and enumeration."""
 
@@ -139,11 +147,42 @@ class UDSMixin:
             sends the required Flow Control).
         """
         expected_resp = COMMON_UDS_PAIRS.get(request_id, request_id + 0x08)
-        result = self.isotp_recv(bus, request_id, expected_resp, timeout=timeout)
-        if result is None:
-            return None
-        source_id, payload = result
-        return (source_id, payload)
+        pendings_seen = 0
+        deadline = time.monotonic() + timeout
+        while True:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                return None
+            result = self.isotp_recv(bus, request_id, expected_resp, timeout=remaining)
+            if result is None:
+                return None
+            source_id, payload = result
+
+            # ISO 14229-1 NRC 0x78 (requestCorrectlyReceived-ResponsePending)
+            # is NOT a rejection: the server accepted the request and will send
+            # the real response shortly. A conformant client must keep waiting
+            # (P2* extended timing) instead of reporting the operation rejected
+            # or the service unsupported. Bounded by both the P2* timer and a
+            # cap on consecutive pendings so a misbehaving ECU cannot hang the
+            # scanner.
+            if (
+                len(payload) >= 3
+                and payload[0] == UDS_NEGATIVE_RESPONSE
+                and payload[2] == UDS_NRC_RESPONSE_PENDING
+            ):
+                pendings_seen += 1
+                self.logger.debug(
+                    f"  0x{request_id:03X}: NRC 0x78 responsePending "
+                    f"({pendings_seen}/{UDS_MAX_PENDING_RESPONSES}) - waiting for final response"
+                )
+                if pendings_seen >= UDS_MAX_PENDING_RESPONSES:
+                    self.logger.debug(f"  0x{request_id:03X}: pending cap reached - giving up")
+                    return None
+                # Extend the wait into the P2* window for the final response.
+                deadline = max(deadline, time.monotonic() + UDS_P2_STAR_TIMEOUT)
+                continue
+
+            return (source_id, payload)
 
     def _selected_uds_services(self) -> Dict[int, str]:
         """Return the UDS services to probe, honouring ``--uds-services``.

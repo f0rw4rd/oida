@@ -340,7 +340,15 @@ class XCPMixin:
         end_time = time.time() + timeout
         while time.time() < end_time:
             remaining = end_time - time.time()
-            msg = bus.recv(timeout=min(remaining, 0.02))
+            # Guard against a (near-)zero/negative timeout: select-based can
+            # backends raise on a negative recv timeout, which would abort the
+            # scan. Also tolerate a transient transport decode error.
+            if remaining <= 0:
+                break
+            try:
+                msg = bus.recv(timeout=min(remaining, 0.02))
+            except Exception:
+                break
             if msg is None:
                 continue
             data = bytes(msg.data)
@@ -474,7 +482,13 @@ class XCPMixin:
         end_time = time.time() + timeout
         while time.time() < end_time:
             remaining = end_time - time.time()
-            msg = bus.recv(timeout=min(remaining, 0.02))
+            # See _recv_xcp_response: guard the negative-timeout / recv-error case.
+            if remaining <= 0:
+                break
+            try:
+                msg = bus.recv(timeout=min(remaining, 0.02))
+            except Exception:
+                break
             if msg is None:
                 continue
             if msg.arbitration_id == dto_id:

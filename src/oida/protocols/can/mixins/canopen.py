@@ -415,7 +415,14 @@ class CANopenMixin:
             if msg is None:
                 continue
             if msg.arbitration_id == sdo_tx_id and not msg.is_remote_frame:
-                return bytes(msg.data)
+                data = bytes(msg.data)
+                # An SDO frame is always 8 bytes; a DLC=0 data frame on the
+                # SDO TX COB-ID carries no command specifier. Returning it
+                # would IndexError in every caller's `resp[0]`, so keep
+                # waiting for a real response instead.
+                if not data:
+                    continue
+                return data
         return None
 
     def canopen_device_info(self, bus: Any, node_id: int) -> CANopenNode:
@@ -533,7 +540,8 @@ class CANopenMixin:
             bus: python-can Bus instance
             node_id: Target node ID (1-127)
             index_range: (start, end) index range.
-                         Default: (0x1000, 0x1FFF) communication profile area.
+                         Default: (0x1000, 0x1029) mandatory communication-profile
+                         objects (matches the code below).
 
         Returns:
             List of (index, subindex, data) tuples for existing entries

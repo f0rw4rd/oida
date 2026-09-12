@@ -124,6 +124,11 @@ class ISOTPMixin:
         # 3. First Frame: send Flow Control, then collect Consecutive Frames.
         # ------------------------------------------------------------------
         if frame_type == ISOTP_FIRST_FRAME:
+            # The 12-bit length spans both PCI bytes, so a First Frame shorter
+            # than 2 bytes has no declared length -- a hostile/truncated ECU
+            # reply like b"\x10" would IndexError here. Treat it as unusable.
+            if len(first) < 2:
+                return None
             total_length = ((first[0] & 0x0F) << 8) | first[1]
             self._send_flow_control(bus, request_id)
 
@@ -206,7 +211,10 @@ class ISOTPMixin:
             return first[1 : 1 + length]
 
         elif frame_type == 0x1:
-            # First frame + consecutive frames
+            # First frame + consecutive frames. A 1-byte FF carries no length
+            # nibble pair and cannot be reassembled (see isotp_recv).
+            if len(first) < 2:
+                return None
             total_length = ((first[0] & 0x0F) << 8) | first[1]
             assembled = bytearray(first[2:])
 
