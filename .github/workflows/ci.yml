@@ -3,7 +3,7 @@ name: CI
 on:
   # CI runs automatically. It was previously manual-only, and the result was
   # that it never ran at all: 628k LOC landed with no automated check, and the
-  # vulture gate sat red on committed code unnoticed. See AI_SLOP_AUDIT.md.
+  # vulture gate sat red on committed code unnoticed.
   push:
     branches: [main]
   pull_request:

@@ -6,8 +6,6 @@
 # still have thousands of pre-existing violations — to changed files only, so
 # new code meets the standard while old code is paid down in waves.
 #
-# See AI_SLOP_REMEDIATION_PLAN.md for the wave schedule.
-#
 # Usage:
 #   scripts/quality/lint-changed.sh              # vs origin/main
 #   scripts/quality/lint-changed.sh HEAD~1       # vs an explicit base
@@ -33,8 +31,8 @@ if ! ruff check --no-cache --select "$STRICT" "${FILES[@]}"; then
 
 These rules are enforced on changed files only. Fix them here rather than
 widening an except or adding a noqa: a blind `except Exception` around a
-security check is how AI_SLOP_AUDIT.md F11-F13 shipped (a crashed check
-reported as "clean").
+security check is how crashed security checks once shipped reported as
+"clean" — a false negative, the worst output a security tool can give.
 EOF
     exit 1
 fi

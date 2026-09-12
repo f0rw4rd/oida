@@ -2,7 +2,7 @@
 """Vulture at --min-confidence 60, gated against a shrinking baseline.
 
 The project gate previously ran at confidence 80, which reports only unused
-variables. Every dead-code finding in AI_SLOP_AUDIT.md (247 unused methods,
+variables. Every dead-code finding in this codebase (247 unused methods,
 95 unused classes) sits in the 60-79 band that 80 excludes.
 
 Running at 60 outright would report ~1,366 findings, so this wraps it in a

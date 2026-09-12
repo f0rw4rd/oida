@@ -1,6 +1,14 @@
 # Claude Code local machine-specific settings — keep local
 .claude/settings.local.json
 
+# Bug-hunt campaign scratch notes — local working material, never ship
+.bughunt/
+
+# Core dumps. Anchored and suffixed so it can never swallow a future core.py
+# or a core/ package directory.
+/core
+/core.[0-9]*
+
 # Internal review artifacts — enumerate findings/vulns; keep LOCAL, never ship
 CODE_REVIEW.md
 TEST_GAP_AUDIT.md
@@ -8,6 +16,11 @@ TEST_GAP_AUDIT.md
 
 # Per-protocol research material — kept local
 ref/
+
+# Serena MCP (LSP code-intelligence) local state — symbol cache, project config,
+# logs. Machine-specific; the symbol cache is large (~100MB) and regenerable via
+# `serena project index`. Keep LOCAL, never commit.
+.serena/
 
 # Per-developer pyenv pin — uv/CI manage the interpreter; don't force a version
 .python-version
@@ -35,6 +48,9 @@ boofuzz-results/
 # purpose (19 tracked files). Only the per-session transient state is ignored.
 .claude/projects/
 .claude/scheduled_tasks.lock
+# Throwaway git worktrees created by agent sessions. They hold a full copy of
+# the tree, so leaving them untracked-but-visible buries real changes in noise.
+.claude/worktrees/
 .claude-work/
 tmp.*
 /results/
