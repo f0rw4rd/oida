@@ -798,17 +798,35 @@ class PcapScanner:
 
         # --- Unified credential table (central) ---
         if all_cred_rows:
+            cred_headers = ["Protocol", "Type", "Username", "Server", "Client", "Secret"]
             cred_title = f"Credentials ({len(all_cred_rows)})"
+            # Console shows only a secret preview (hashcat strings run to 400+
+            # chars); the export table below keeps the full value so CSV/JSON
+            # carry complete crackable material.
+            SECRET_PREVIEW = 48
+            display_rows = [
+                (
+                    row[:5]
+                    + [
+                        (
+                            row[5][:SECRET_PREVIEW] + "…"
+                            if len(row) > 5 and len(row[5] or "") > SECRET_PREVIEW
+                            else (row[5] if len(row) > 5 else "")
+                        )
+                    ]
+                )
+                for row in all_cred_rows
+            ]
             export_data(
-                data=all_cred_rows,
-                headers=["Protocol", "Type", "Username", "Server", "Client"],
+                data=display_rows,
+                headers=cred_headers,
                 output_format="console",
                 title=cred_title,
                 logger=self.logger,
             )
             all_tables.append(
                 {
-                    "headers": ["Protocol", "Type", "Username", "Server", "Client"],
+                    "headers": cred_headers,
                     "rows": all_cred_rows,
                     "title": cred_title,
                 }

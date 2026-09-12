@@ -866,9 +866,11 @@ class PySharkListenerBase(ABC):
     # -------------------------------------------------------------------------
 
     def _collect_credentials(self) -> List[List[str]]:
-        """Normalize raw cred dicts into rows: [protocol, type, username, server, client].
+        """Normalize raw cred dicts into rows: [protocol, type, username, server, client, secret].
 
-        Called by the scanner to build the unified credential table.
+        Called by the scanner to build the unified credential table. The
+        *secret* column carries the actual credential material (password,
+        community string, ...) so file export includes it, not just console.
         """
         if not hasattr(self, "get_credentials_summary"):
             return []
@@ -888,6 +890,16 @@ class PySharkListenerBase(ABC):
                 or c.get("auth_value")
                 or ""
             )
+            secret = (
+                c.get("password")
+                or c.get("community_or_username")
+                or c.get("secret")
+                or c.get("hash_value")
+                or ""
+            )
+            # Avoid echoing the username back as its own "secret"
+            if secret == username:
+                secret = ""
             server = (
                 c.get("server_ip")
                 or c.get("server")
@@ -908,13 +920,15 @@ class PySharkListenerBase(ABC):
                 or c.get("local_ip")
                 or ""
             )
-            rows.append([c.get("protocol", proto), cred_type, username, server, client])
+            rows.append([c.get("protocol", proto), cred_type, username, server, client, secret])
         return rows
 
     def _collect_hashes(self) -> List[List[str]]:
-        """Normalize raw hash dicts into rows: [protocol, type, username, server, client].
+        """Normalize raw hash dicts into rows: [protocol, type, username, server, client, secret].
 
-        Called by the scanner to build the unified credential table.
+        Called by the scanner to build the unified credential table. The
+        *secret* column carries the crackable hash (hashcat string when
+        available) so file export includes it, not just console.
         """
         if not hasattr(self, "get_hashes_summary"):
             return []
@@ -931,7 +945,17 @@ class PySharkListenerBase(ABC):
                 username = f"{domain}\\{username}" if username else domain
             server = h.get("server_ip", "")
             client = h.get("client_ip", "")
-            rows.append([h.get("protocol", proto), hash_type, username, server, client])
+            # Prefer the ready-to-crack hashcat string; fall back to the raw
+            # hash value. Incomplete captures (e.g. NTLM without Type 2
+            # challenge) surface their INCOMPLETE marker instead.
+            secret = (
+                h.get("hashcat_format")
+                or h.get("hash_value")
+                or h.get("response")
+                or h.get("challenge_response")
+                or ""
+            )
+            rows.append([h.get("protocol", proto), hash_type, username, server, client, secret])
         return rows
 
     # -------------------------------------------------------------------------
