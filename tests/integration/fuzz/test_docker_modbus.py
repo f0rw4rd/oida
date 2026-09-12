@@ -33,7 +33,16 @@ from .conftest import (
 )
 from ..conftest import MOCK_HOST
 
-pytestmark = [pytest.mark.modbus, pytest.mark.fuzz, pytest.mark.slow]
+# These tests each fuzz a live target on MOCK_HOST:502; running them concurrently
+# under `-n --dist loadgroup` lets parallel fuzz sessions contend for the same port
+# and miscount crashes. The shared xdist_group co-locates them on one worker so they
+# serialize relative to each other (they pass reliably when not run in parallel).
+pytestmark = [
+    pytest.mark.modbus,
+    pytest.mark.fuzz,
+    pytest.mark.slow,
+    pytest.mark.xdist_group("fuzz_modbus_docker"),
+]
 
 
 def _get_request_names(protocol_name):

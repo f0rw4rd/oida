@@ -273,7 +273,7 @@ class TestBinarySmoke:
             f"Bundle size {size_mb:.1f}MB outside expected range [30MB, 500MB]"
         )
 
-    def test_json_output_format(self, oida_bin):
+    def test_json_output_format(self, oida_bin, tmp_path):
         """oida modbus 127.0.0.1 --format json produces parseable JSON structure."""
         result = _run(
             oida_bin,
@@ -283,18 +283,15 @@ class TestBinarySmoke:
             "1",
             "--format",
             "json",
-            "-o",
-            "/tmp",
+            "--output",
+            str(tmp_path),
         )
-        # Even on connection failure, check if a JSON file was produced
-        json_files = list(Path("/tmp").glob("oida_modbus_*.json"))
+        # --output is a directory; the JSON export lands there as <protocol>.json.
+        json_files = list(tmp_path.glob("*.json"))
         if json_files:
             latest = max(json_files, key=lambda p: p.stat().st_mtime)
-            try:
-                data = json.loads(latest.read_text())
-                assert isinstance(data, (dict, list)), f"JSON root is {type(data).__name__}"
-            finally:
-                latest.unlink(missing_ok=True)
+            data = json.loads(latest.read_text())
+            assert isinstance(data, (dict, list)), f"JSON root is {type(data).__name__}"
         else:
             # No JSON file — check stdout
             stdout = result.stdout.strip()

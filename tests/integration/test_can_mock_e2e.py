@@ -248,7 +248,10 @@ def _make_e2e_args(channel: str, **kwargs) -> argparse.Namespace:
         "duration": None,
         "on_change": False,
         "log_file": None,
-        "confirm": False,
+        # E2E tests target an in-process mock, so the disruptive-bus safety gate
+        # (cli_runner refuses active UDS/OBD2/CANopen probes without --confirm) is
+        # irrelevant here; enable it so active-probe scans actually run.
+        "confirm": True,
         "fuzz": False,
         "fuzz_id": None,
         "fuzz_mode": "random",

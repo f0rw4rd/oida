@@ -1103,7 +1103,14 @@ def _skip_unless_docker_ethercat():
     Returns (bridge_interface, needs_sudo) tuple.
     Delegates to the generic skip_unless_l2_docker() helper.
     """
-    return skip_unless_l2_docker("ethercat-slave-veth", profile_hint="ethercat")
+    bridge_iface, _needs_sudo = skip_unless_l2_docker(
+        "ethercat-slave-veth", profile_hint="ethercat"
+    )
+    # pysoem opens the NIC through libpcap, which requires root to bind a Docker
+    # bridge even in environments where AF_PACKET raw sockets are directly
+    # available (so the generic strategy reports needs_sudo=False). Without root
+    # the scan reports "could not open interface"; force sudo for the bridge scan.
+    return bridge_iface, True
 
 
 def _run_docker_ethercat(

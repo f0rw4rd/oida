@@ -378,6 +378,12 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             str(port),
             "--tcp",
             "--gateway-scan",
+            # Bound the post-discovery device read-access sweep; the default range
+            # (255 addresses at the 5s connect timeout) cannot finish within 30s.
+            "--scan-range",
+            "1.1.1-1.1.1",
+            "--timeout",
+            "2",
             format="json",
             json_log=True,
             timeout=30,
