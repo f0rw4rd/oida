@@ -15,7 +15,6 @@ from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
 from ...connection import NetworkConnection
-from oida.utils.common_types import Category
 
 from .helpers import (
     FHIR_SECURITY_MODES,
@@ -61,10 +60,10 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
 
         scheme = "https" if use_tls else "http"
 
-        # Only append a genuinely non-standard port. args.port carries the
-        # default_port (443) even with --no-tls, so a naive "port != 80" check
-        # appended a spurious ":443" to an http:// URL; and a target that already
-        # embeds host:port keeps it without a doubled port.
+        # Only append a genuinely non-standard port. The FHIR CLI has no --port
+        # flag (so from the CLI `port` is always default_port=443 and this branch
+        # is inert), but a library caller may set args.port; honour it, while
+        # avoiding a spurious ":443"/":80" on the standard scheme.
         if port and port not in (80, 443):
             return f"{scheme}://{target}:{port}"
 
@@ -362,7 +361,6 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             if not self.results["data"].get("tls_enabled", True):
                 self.logger.security_finding(
                     "No encryption",
-                    category=Category.ENCRYPTION,
                     detail="FHIR server accessed over HTTP -- PHI transmitted in cleartext (no TLS)",
                 )
 
@@ -563,7 +561,6 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
         else:
             self.logger.security_finding(
                 "No authentication",
-                category=Category.AUTHENTICATION,
                 detail="No security services configured (anonymous access)",
             )
 

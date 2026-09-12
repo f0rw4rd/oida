@@ -7,7 +7,6 @@ Provides authentication testing, credential brute forcing, and security analysis
 import time
 from typing import Optional
 
-from oida.utils.common_types import Category
 
 from ..helpers import (
     fhirclient,
@@ -44,7 +43,6 @@ class SecurityMixin:
                 auth_results["anonymous_access"] = True
                 self.logger.security_finding(
                     "Anonymous access",
-                    category=Category.AUTHENTICATION,
                     detail="Anonymous access allowed - returned patient data",
                 )
                 self.results["data"].setdefault("security_findings", []).append(
@@ -84,7 +82,6 @@ class SecurityMixin:
                 auth_results["invalid_token_rejected"] = False
                 self.logger.security_finding(
                     "No authentication",
-                    category=Category.AUTHENTICATION,
                     detail="Invalid bearer token accepted by server",
                 )
                 self.results["data"].setdefault("security_findings", []).append(
@@ -133,9 +130,34 @@ class SecurityMixin:
         else:
             self.logger.security_finding(
                 "Insecure configuration",
-                category=Category.CONFIGURATION,
                 detail="No SMART/OAuth detected - scope may not be enforced",
             )
+
+    def _tls_requests_session(self):
+        """Build a requests.Session honoring the full TLS config.
+
+        The raw brute-force / OAuth2 probes previously used bare requests calls
+        that honored only --tls-insecure, so against a private/enterprise-CA or
+        mTLS FHIR server every request raised SSLError, no credential was ever
+        tested, and the run reported "0 valid" as an authoritative negative.
+        This mirrors _apply_session_config's cert/verify precedence.
+        """
+        import requests
+        from ..helpers import validate_credential_path
+
+        session = requests.Session()
+        tls_cert = getattr(self.args, "tls_cert", None)
+        tls_key = getattr(self.args, "tls_key", None)
+        if tls_cert:
+            cert_path = validate_credential_path(tls_cert)
+            session.cert = (cert_path, validate_credential_path(tls_key)) if tls_key else cert_path
+        if getattr(self.args, "tls_insecure", False):
+            session.verify = False
+        else:
+            tls_ca = getattr(self.args, "tls_ca", None)
+            if tls_ca:
+                session.verify = validate_credential_path(tls_ca)
+        return session
 
     def _brute_force_credentials(self):
         """Brute force HTTP Basic Auth or OAuth2 credentials"""
@@ -147,6 +169,8 @@ class SecurityMixin:
             return
         import requests
         from requests.auth import HTTPBasicAuth
+
+        session = self._tls_requests_session()
 
         brute_method = getattr(self.args, "brute_method", "basic")
         self.logger.display(f"Starting credential brute force ({brute_method} auth)...")
@@ -161,14 +185,13 @@ class SecurityMixin:
         test_url = f"{base_url}/Patient?_count=1"
         delay = getattr(self.args, "brute_rate", 0.5)
         continue_on_success = getattr(self.args, "continue_on_success", False)
-        tls_insecure = getattr(self.args, "tls_insecure", False)
 
         # Baseline: if the endpoint serves data WITHOUT authentication, every
         # credential pair below would return 200 and be falsely reported as
         # valid. Detect that first and skip the brute force — it's an
         # anonymous-access finding, not a credentials finding.
         try:
-            baseline = requests.get(test_url, timeout=10, verify=not tls_insecure)
+            baseline = session.get(test_url, timeout=10)
             if baseline.status_code == 200:
                 self.logger.warning(
                     "  Endpoint returns 200 without authentication — skipping brute force "
@@ -176,13 +199,24 @@ class SecurityMixin:
                 )
                 self.logger.security_finding(
                     "Anonymous access",
-                    category=Category.AUTHENTICATION,
                     detail="Endpoint serves data without authentication (brute force skipped)",
                 )
                 self.results["data"]["brute_force"] = {
                     "skipped": "endpoint allows unauthenticated access"
                 }
                 return
+        except requests.exceptions.SSLError as e:
+            # A TLS failure means every subsequent credential attempt will fail
+            # identically -> a "0 valid" result that is not an authoritative
+            # negative. Surface it loudly instead of a silent debug log.
+            self.logger.warning(
+                "  TLS handshake to the FHIR server failed: %s. Supply --tls-ca "
+                "(private CA), --tls-cert/--tls-key (mTLS), or --tls-insecure. "
+                "Brute-force results would be meaningless; skipping.",
+                e,
+            )
+            self.results["data"]["brute_force"] = {"skipped": f"TLS error: {e}"}
+            return
         except requests.RequestException as e:
             self.logger.debug(f"  Baseline anonymous check failed, proceeding: {e}")
 
@@ -199,17 +233,15 @@ class SecurityMixin:
                 tested += 1
                 try:
                     if brute_method in ("basic", "both"):
-                        response = requests.get(
+                        response = session.get(
                             test_url,
                             auth=HTTPBasicAuth(username, password),
                             timeout=10,
-                            verify=not tls_insecure,
                         )
 
                         if response.status_code == 200:
                             self.logger.security_finding(
                                 "Default credentials",
-                                category=Category.AUTHENTICATION,
                                 detail=f"Valid Basic Auth: {username}:{password}",
                             )
                             valid_creds.append(
@@ -232,7 +264,7 @@ class SecurityMixin:
                     if brute_method in ("oauth2", "both") and (
                         continue_on_success or not valid_creds
                     ):
-                        oauth_result = self._test_oauth2_credentials(username, password)
+                        oauth_result = self._test_oauth2_credentials(username, password, session)
                         if oauth_result:
                             valid_creds.append(
                                 {
@@ -261,7 +293,6 @@ class SecurityMixin:
         if valid_creds:
             self.results["data"].setdefault("security_findings", []).append(
                 {
-                    "category": "AUTHENTICATION",
                     "issue": "Valid Credentials Found",
                     "description": f"Found {len(valid_creds)} valid credential(s)",
                 }
@@ -360,10 +391,14 @@ class SecurityMixin:
 
         return usernames, passwords
 
-    def _test_oauth2_credentials(self, username: str, password: str) -> Optional[str]:
-        """Test OAuth2 resource owner password grant"""
-        import requests
+    def _test_oauth2_credentials(self, username: str, password: str, session=None) -> Optional[str]:
+        """Test OAuth2 resource owner password grant.
 
+        Reuses the caller's brute-force session (single connection pool) instead
+        of building a fresh, never-closed requests.Session per credential pair —
+        which leaked one pooled session/socket set per attempt across a wordlist.
+        Falls back to a throwaway session for standalone callers.
+        """
         server_info = self.results.get("data", {}).get("server_info", {})
         security = server_info.get("security", {})
         oauth_endpoints = security.get("oauth_endpoints", {})
@@ -383,8 +418,13 @@ class SecurityMixin:
         client_secret = getattr(self.args, "client_secret", None) or ""
         scope = getattr(self.args, "scope", None) or "patient/*.read"
 
+        # Reuse the caller's session; only own (and close) one if called standalone.
+        own_session = session is None
+        if own_session:
+            session = self._tls_requests_session()
+
         try:
-            response = requests.post(
+            response = session.post(
                 token_url,
                 data={
                     "grant_type": "password",
@@ -395,7 +435,6 @@ class SecurityMixin:
                     "scope": scope,
                 },
                 timeout=10,
-                verify=not getattr(self.args, "tls_insecure", False),
             )
 
             if response.status_code == 200:
@@ -404,13 +443,15 @@ class SecurityMixin:
                 if access_token:
                     self.logger.security_finding(
                         "Default credentials",
-                        category=Category.AUTHENTICATION,
                         detail=f"Valid OAuth2: {username}:{password}",
                     )
                     return access_token
 
         except Exception as e:
             self.logger.debug(f"OAuth2 test failed for {username}: {e}")
+        finally:
+            if own_session:
+                session.close()
 
         return None
 
@@ -422,7 +463,6 @@ class SecurityMixin:
         if not self.results["data"].get("tls_enabled", True):
             findings.append(
                 {
-                    "category": "ENCRYPTION",
                     "issue": "No TLS/HTTPS",
                     "description": "Connection is not encrypted",
                 }
@@ -435,7 +475,6 @@ class SecurityMixin:
         if not security.get("security_services"):
             findings.append(
                 {
-                    "category": "AUTHENTICATION",
                     "issue": "No Security Services Configured",
                     "description": "CapabilityStatement shows no security services",
                 }
@@ -445,7 +484,6 @@ class SecurityMixin:
         if security.get("cors_enabled"):
             findings.append(
                 {
-                    "category": "CONFIGURATION",
                     "issue": "CORS Enabled",
                     "description": "Cross-origin requests allowed - verify origins are restricted",
                 }
@@ -459,7 +497,6 @@ class SecurityMixin:
         for finding in getattr(self, "_cert_findings", []):
             findings.append(
                 {
-                    "category": finding.get("category", "CERTIFICATE"),
                     "issue": finding.get("title", ""),
                     "description": finding.get("detail", ""),
                 }
@@ -471,7 +508,6 @@ class SecurityMixin:
         if findings:
             self.logger.display("\nSecurity Findings:")
             for finding in findings:
-                category = finding.get("category", "GENERAL")
                 issue = finding.get("issue", "Unknown")
                 desc = finding.get("description", "")
-                self.logger.display(f"  [{category}] {issue}: {desc}")
+                self.logger.display(f"  {issue}: {desc}")

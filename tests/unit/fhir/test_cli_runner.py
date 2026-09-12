@@ -624,9 +624,7 @@ class TestProtoFlow(unittest.TestCase):
         """Test proto_flow aborts when fhirclient not available"""
         from oida.protocols.fhir import fhir
 
-        with patch(
-            "oida.protocols.fhir.cli_runner.is_fhirclient_available", return_value=False
-        ):
+        with patch("oida.protocols.fhir.cli_runner.is_fhirclient_available", return_value=False):
             scanner = fhir(_make_mock_args(), None, "https://fhir.example.com/r4")
 
         self.assertIn("error", scanner.results)

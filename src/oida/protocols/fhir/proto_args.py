@@ -30,9 +30,9 @@ Examples:
   oida fhir https://fhir.example.com/r4 -E                 # Enumerate all resources
 
   # Patient Search
-  oida fhir https://fhir.example.com/r4 -p                 # List patients
-  oida fhir https://fhir.example.com/r4 -p -N "Doe"        # Filter by name
-  oida fhir https://fhir.example.com/r4 -p -W -n 50        # Wildcard, max 50
+  oida fhir https://fhir.example.com/r4 --search-patients          # List patients
+  oida fhir https://fhir.example.com/r4 --search-patients -N "Doe" # Filter by name
+  oida fhir https://fhir.example.com/r4 --search-patients -W -n 50 # Wildcard, max 50
 
   # Clinical Data Search
   oida fhir https://fhir.example.com/r4 -O -I PT001        # Observations for patient
@@ -48,19 +48,19 @@ Examples:
   oida fhir https://fhir.example.com/r4 -x -I PT001        # Test cross-patient access
 
   # Authenticated Access
-  oida fhir https://fhir.example.com/r4 -T "Bearer xxx" -p
-  oida fhir https://fhir.example.com/r4 -u admin -P pass -p
+  oida fhir https://fhir.example.com/r4 -T "Bearer xxx" --search-patients
+  oida fhir https://fhir.example.com/r4 -u admin -P pass --search-patients
 
   # Credential Testing (Brute Force)
   oida fhir https://fhir.example.com/r4 --brute --default-creds
   oida fhir https://fhir.example.com/r4 --brute -u admin --wordlist passwords.txt
 
   # Export Results
-  oida fhir https://fhir.example.com/r4 -p -o ./results -f json
+  oida fhir https://fhir.example.com/r4 --search-patients -o ./results -f json
 
   # Public Test Servers
   oida fhir https://hapi.fhir.org/baseR4 -C
-  oida fhir https://hapi.fhir.org/baseR4 -p -n 10
+  oida fhir https://hapi.fhir.org/baseR4 --search-patients -n 10
 """,
     )
 
@@ -214,7 +214,6 @@ Examples:
     search_group = fhir_parser.add_argument_group("Resource Search")
 
     search_group.add_argument(
-        "-p",
         "--search-patients",
         action="store_true",
         help="Search for Patient resources",

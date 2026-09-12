@@ -37,6 +37,9 @@ class MockSecurityHost(SecurityMixin):
             client_secret=None,
             scope=None,
             tls_insecure=False,
+            tls_cert=None,
+            tls_key=None,
+            tls_ca=None,
             brute=False,
             brute_method="basic",
             brute_rate=0,
@@ -317,7 +320,7 @@ class TestTestOAuth2Credentials(unittest.TestCase):
         result = host._test_oauth2_credentials("admin", "pass")
         self.assertIsNone(result)
 
-    @patch("requests.post")
+    @patch("requests.Session.post")
     def test_successful_auth(self, mock_post):
         """Test successful OAuth2 authentication returns token"""
         host = MockSecurityHost(token_url="https://auth.example.com/token")
@@ -332,7 +335,7 @@ class TestTestOAuth2Credentials(unittest.TestCase):
         self.assertEqual(result, "valid_token_abc")
         host.logger.security_finding.assert_called()
 
-    @patch("requests.post")
+    @patch("requests.Session.post")
     def test_failed_auth(self, mock_post):
         """Test failed OAuth2 authentication returns None"""
         host = MockSecurityHost(token_url="https://auth.example.com/token")
@@ -345,7 +348,7 @@ class TestTestOAuth2Credentials(unittest.TestCase):
         result = host._test_oauth2_credentials("admin", "wrong")
         self.assertIsNone(result)
 
-    @patch("requests.post")
+    @patch("requests.Session.post")
     def test_exception_returns_none(self, mock_post):
         """Test exception during OAuth2 returns None"""
         host = MockSecurityHost(token_url="https://auth.example.com/token")
@@ -356,7 +359,40 @@ class TestTestOAuth2Credentials(unittest.TestCase):
         result = host._test_oauth2_credentials("admin", "pass")
         self.assertIsNone(result)
 
-    @patch("requests.post")
+    def test_reuses_caller_session_without_closing(self):
+        """A passed-in session is used and NOT closed (caller owns it).
+
+        Regression guard: previously a fresh, never-closed requests.Session was
+        built per credential attempt, leaking one pooled session/socket set per
+        pair across a wordlist.
+        """
+        host = MockSecurityHost(token_url="https://auth.example.com/token")
+        host.results["data"]["server_info"] = {"security": {"oauth_endpoints": {}}}
+
+        session = Mock()
+        response = Mock()
+        response.status_code = 401
+        session.post.return_value = response
+
+        result = host._test_oauth2_credentials("admin", "wrong", session)
+        self.assertIsNone(result)
+        session.post.assert_called_once()
+        session.close.assert_not_called()
+
+    def test_standalone_closes_own_session(self):
+        """With no caller session, the throwaway session is closed after use."""
+        host = MockSecurityHost(token_url="https://auth.example.com/token")
+        host.results["data"]["server_info"] = {"security": {"oauth_endpoints": {}}}
+
+        own = Mock()
+        own.post.return_value = Mock(status_code=401)
+        with patch.object(host, "_tls_requests_session", return_value=own):
+            result = host._test_oauth2_credentials("admin", "wrong")
+
+        self.assertIsNone(result)
+        own.close.assert_called_once()
+
+    @patch("requests.Session.post")
     def test_token_url_from_oauth_endpoints(self, mock_post):
         """Test token_url discovered from CapabilityStatement"""
         host = MockSecurityHost(token_url=None)
@@ -387,7 +423,7 @@ class TestAnalyzeSecurity(unittest.TestCase):
         host._analyze_security()
 
         findings = host.results["data"]["security_findings"]
-        tls_findings = [f for f in findings if f.get("category") == "ENCRYPTION"]
+        tls_findings = [f for f in findings if "TLS" in f.get("issue", "")]
         self.assertTrue(len(tls_findings) > 0)
 
     def test_no_security_services_finding(self):
@@ -401,7 +437,7 @@ class TestAnalyzeSecurity(unittest.TestCase):
         host._analyze_security()
 
         findings = host.results["data"]["security_findings"]
-        auth_findings = [f for f in findings if f.get("category") == "AUTHENTICATION"]
+        auth_findings = [f for f in findings if "Security Services" in f.get("issue", "")]
         self.assertTrue(len(auth_findings) > 0)
 
     def test_cors_finding(self):
@@ -418,7 +454,7 @@ class TestAnalyzeSecurity(unittest.TestCase):
         host._analyze_security()
 
         findings = host.results["data"]["security_findings"]
-        cors_findings = [f for f in findings if f.get("category") == "CONFIGURATION"]
+        cors_findings = [f for f in findings if "CORS" in f.get("issue", "")]
         self.assertTrue(len(cors_findings) > 0)
         self.assertIn("CORS", cors_findings[0]["issue"])
 
@@ -439,7 +475,7 @@ class TestAnalyzeSecurity(unittest.TestCase):
         host._analyze_security()
 
         findings = host.results["data"]["security_findings"]
-        cert_findings = [f for f in findings if f.get("category") == "CERTIFICATE"]
+        cert_findings = [f for f in findings if "cert" in f.get("issue", "").lower()]
         self.assertTrue(len(cert_findings) > 0)
         self.assertEqual(cert_findings[0]["issue"], "Self-signed cert")
 
@@ -477,7 +513,7 @@ class TestAnalyzeSecurity(unittest.TestCase):
 class TestBruteForceCredentials(unittest.TestCase):
     """Test _brute_force_credentials() method"""
 
-    @patch("requests.get")
+    @patch("requests.Session.get")
     def test_successful_basic_auth(self, mock_get):
         """Test successful basic auth credential found"""
         host = MockSecurityHost(brute=True, brute_method="basic", brute_rate=0, confirm=True)
@@ -494,7 +530,7 @@ class TestBruteForceCredentials(unittest.TestCase):
         self.assertTrue(len(host.results["data"]["brute_force"]["valid"]) > 0)
         host.logger.security_finding.assert_called()
 
-    @patch("requests.get")
+    @patch("requests.Session.get")
     def test_anonymous_access_skips_brute_force(self, mock_get):
         """When the endpoint returns 200 without auth, brute force is skipped
         (every credential would otherwise false-positive)."""
@@ -510,7 +546,7 @@ class TestBruteForceCredentials(unittest.TestCase):
         self.assertIn("skipped", host.results["data"]["brute_force"])
         host.logger.security_finding.assert_called()
 
-    @patch("requests.get")
+    @patch("requests.Session.get")
     def test_failed_basic_auth(self, mock_get):
         """Test no valid credentials found"""
         host = MockSecurityHost(brute=True, brute_method="basic", brute_rate=0, confirm=True)
@@ -533,7 +569,7 @@ class TestBruteForceCredentials(unittest.TestCase):
 
         host.logger.fail.assert_called()
 
-    @patch("requests.get")
+    @patch("requests.Session.get")
     def test_stop_on_success(self, mock_get):
         """Test brute force stops on first valid credential by default"""
         host = MockSecurityHost(
@@ -556,7 +592,7 @@ class TestBruteForceCredentials(unittest.TestCase):
         # Should find only 1 valid credential (stops after first success)
         self.assertEqual(len(host.results["data"]["brute_force"]["valid"]), 1)
 
-    @patch("requests.get")
+    @patch("requests.Session.get")
     def test_timeout_handling(self, mock_get):
         """Test timeout during brute force is handled"""
         import requests as req
