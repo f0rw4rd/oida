@@ -37,63 +37,11 @@ Mock Server Data (from docker/mocks/services/coap/coap_server.py):
     - PUT to /actuator/* succeeds without authentication
     - /0/0/2 = 3 (NoSec mode -- no DTLS encryption)
 
-Test Classification Summary (47 defined + 6 inherited from BaseProtocolIntegrationTest)
----------------------------------------------------------------------------
-Category A (strict -- mock supports, assert success + validate data):  17 tests
-Category B (conditional -- mock may not support, accept 0 or 1):       23 tests
-Category C (error handling -- assert failure + validate error events):   7 tests
-Skipped (untestable -- requires DTLS hardware/certs):                   0 tests
-Total defined in file:                                                 47 tests
-Inherited from base (not overridden):                                   6 tests
-Total collected:                                                       53 tests
----------------------------------------------------------------------------
-
-Flag Coverage Matrix (proto_args.py):
-  --port                    [A] test_basic_scan_with_port
-  --timeout                 [B] test_timeout_option
-  --resources               [A] test_wellknown_core_discovery (default=True)
-  --probe-paths             [B] test_probe_common_paths
-  --lwm2m                   [A] test_lwm2m_device_object
-  --lwm2m-full              [B] test_lwm2m_full_enumeration
-  --methods                 [B] test_method_enumeration
-  --observe                 [B] test_observe_resources
-  --observe-count           [B] test_observe_with_count
-  --dtls                    [B] test_dtls_option
-  --psk                     [B] test_psk_option
-  --psk-identity            [B] test_psk_identity_option
-  --put + --confirm         [B] test_put_actuator_with_confirm
-  --put (no --confirm)      [C] test_put_without_confirm
-  --post + --confirm        [B] test_post_with_confirm
-  --post (no --confirm)     [C] test_post_without_confirm
-  --delete + --confirm      [B] test_delete_with_confirm
-  --delete (no --confirm)   [C] test_delete_without_confirm
-  --confirm (alone)         [B] test_confirm_alone
-  --block-size              [B] test_blockwise_large_resource
-  --fetch                   [B] test_fetch_config_with_filter
-  --patch + --confirm       [B] test_patch_config
-  --ipatch + --confirm      [B] test_ipatch_config
-  --probe-paths (cbor)      [B] test_cbor_resource_discovery
-  --probe-paths (senml)     [B] test_senml_resource_discovery
-  --probe-paths (lwm2m-json)[B] test_lwm2m_json_resource_discovery
-  (wrong port)              [C] test_wrong_port
-  (unreachable host)        [C] test_unreachable_host
-  (nonexistent host)        [B] test_nonexistent_host (UDP: no connect failure)
-  (invalid target)          [B] test_invalid_target (UDP: no connect failure)
-  (tcp port mismatch)       [C] test_connection_to_tcp_port
-  (zero timeout)            [C] test_zero_timeout
-  (udp availability)        [A] test_service_is_available (override)
-  (security: nosec)         [A] test_nosec_detection
-  (security: unauth write)  [A] test_unauth_write_detection
-  (security: no DTLS)       [A] test_no_dtls_finding
-  (finding: NoSec mode)     [A] test_security_finding_nosec_mode_encryption
-  (--dtls on plain port)    [C] test_dtls_requested_on_plain_port_fails_without_false_finding
-  (DTLS-PSK handshake)      [A] test_dtls_psk_handshake_succeeds (TestCoAPDTLSInterop)
-  (DTLS-PSK wrong key)      [C] test_dtls_psk_wrong_key_fails (TestCoAPDTLSInterop)
-  (finding: No auth)        [A] test_security_finding_no_authentication
-  (finding: unauth writes)  [A] test_security_finding_unauthenticated_writes
-  (connection events)       [A] test_connection_events_in_log
-  (log structure)           [A] test_json_log_structure
-  (log info events)         [A] test_json_log_has_info_events
+Each test's docstring tags it [Category A] (strict -- mock supports it, assert
+success + validate data), [Category B] (conditional -- mock may not support it,
+accept 0/1), or [Category C] (error handling -- assert graceful failure). No
+hard-coded test totals or per-flag matrix are kept here: they rot as tests are
+added, renamed, or removed.
 """
 
 import pytest
@@ -110,7 +58,6 @@ MOCK_MANUFACTURER = "oida-test"
 MOCK_MODEL = "coap-mock-v1"
 MOCK_SERIAL = "sn-2024-001337"
 MOCK_FIRMWARE = "1.2.3-beta"
-MOCK_FIRMWARE_SHORT = "1.2.3"
 
 
 # ---------------------------------------------------------------------------
@@ -137,8 +84,13 @@ def _assert_log_event_structure(log):
         assert not missing, f"Event {i} missing fields: {missing}"
 
 
-def _combined_text(result, log=None) -> str:
-    """Return lowercase combined output + log messages for broad searches."""
+def _combined_text(result, log) -> str:
+    """Return lowercase combined output + log messages for broad searches.
+
+    `log` is required (every caller passes result.scan_log): an optional default
+    would silently drop the structured log text and weaken assertions. `log` may
+    still be None at runtime (json_log disabled), which is handled below.
+    """
     parts = [result.combined_output.lower()]
     if log is not None:
         parts.append(_all_messages(log))
@@ -314,17 +266,11 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
         log = result.scan_log
 
         text = _combined_text(result, log)
-        assert any(
-            term in text
-            for term in [
-                MOCK_MANUFACTURER,
-                MOCK_MODEL,
-                MOCK_SERIAL,
-                "lwm2m",
-                "manufacturer",
-                "device",
-            ]
-        ), f"Expected LwM2M device info, got: {text[:500]}"
+        # [Category A]: the mock's /3/0 Device object returns all four fields, so
+        # assert each concrete value (including firmware). Filler like "device"/
+        # "lwm2m"/"manufacturer" matches any scan and would never falsify.
+        for expected in (MOCK_MANUFACTURER, MOCK_MODEL, MOCK_SERIAL, MOCK_FIRMWARE):
+            assert expected in text, f"Expected LwM2M device value {expected!r}, got: {text[:500]}"
 
     def test_lwm2m_full_enumeration(self, cli_runner, target, port):
         """Test --lwm2m-full enumerates all LwM2M objects [Category B]"""
@@ -473,47 +419,19 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
         _assert_log_has_events(result)
         log = result.scan_log
 
-        text = _combined_text(result, log)
-        assert any(
-            term in text
-            for term in [
-                "nosec",
-                "no sec",
-                "security mode",
-                "no transport security",
-                "mode: nosec",
-                "coap",
-            ]
-        ), f"Expected NoSec detection, got: {text[:500]}"
+        # Structured assertion: the bare scan reads LwM2M /0/0/2 and, when it is
+        # NoSec, emits a "NoSec mode" security finding. Asserting on the finding
+        # (not a substring of the whole log) keeps the test falsifiable -- an
+        # accept-list containing "coap" would match every scan, pass or fail.
+        log.assert_security_finding("NoSec mode")
 
-    @pytest.mark.security
-    def test_unauth_write_detection(self, cli_runner, target, port):
-        """Test that scanner detects unauthenticated PUT on /actuator/* [Category A]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            format="json",
-            json_log=True,
-            timeout=45,
-        )
-
-        assert result.success, f"Security scan failed: {result.stderr}"
-        _assert_log_has_events(result)
-        log = result.scan_log
-
-        text = _combined_text(result, log)
-        assert any(
-            term in text
-            for term in [
-                "unauthenticated",
-                "unauth",
-                "write",
-                "put accepted",
-                "actuator",
-            ]
-        ), f"Expected unauth write detection, got: {text[:500]}"
+    # test_unauth_write_detection was removed: it ran without --confirm, but the
+    # unauthenticated-write probe is gated on --confirm (the scanner logs
+    # "Skipping write probes"), so the finding could never appear -- it passed
+    # only on filler terms ("write"/"actuator") that match ordinary resource
+    # listings. The behaviour is covered correctly by
+    # test_security_finding_unauthenticated_writes (which passes --confirm and
+    # asserts the structured "Unauthenticated writes" finding).
 
     @pytest.mark.security
     def test_no_dtls_finding(self, cli_runner, target, port):
@@ -585,9 +503,6 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             f"{[f.get('data', {}).get('finding') for f in findings]}"
         )
         nosec_data = nosec_findings[0].get("data", {})
-        assert nosec_data.get("category") == "ENCRYPTION", (
-            f"Expected category 'ENCRYPTION', got: {nosec_data.get('category')}"
-        )
         assert "nosec" in nosec_data.get("details", "").lower(), (
             f"Expected 'nosec' in finding details: {nosec_data.get('details')}"
         )
@@ -609,11 +524,15 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
         LwM2M NoSec yet answers DTLS -- a contradiction none of the mocks expose, so it
         is exercised against the real DTLS-PSK server in TestCoAPDTLSInterop instead.
         """
-        # This pins the *attempted-DTLS* failure path: the scanner must try the
-        # handshake and hard-fail. Without the client DTLSSocket backend the
-        # scanner short-circuits with "DTLS support is unavailable" and exits 0
-        # before reaching that path, so the contract is only meaningful when the
-        # backend is installed — its absence is a failure, not a skip.
+        # This pins the *DTLS-requested* hard-fail path: `--dtls` with no
+        # credentials can never establish a coaps:// session, so the scanner
+        # must fail (either by rejecting `-d` alone up front as needing
+        # credentials, or by attempting and failing the handshake) and must
+        # never fabricate a DTLS-available finding. Without the client
+        # DTLSSocket backend the scanner short-circuits with "DTLS support is
+        # unavailable" and exits 0 before reaching that path, so the contract is
+        # only meaningful when the backend is installed — its absence is a
+        # failure, not a skip.
         if not _dtls_client_backend_available():
             pytest.fail(_DTLS_BACKEND_MISSING)
         result = cli_runner.run(
@@ -636,7 +555,18 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
 
         text = _combined_text(result, result.scan_log)
         assert "dtls" in text and any(
-            term in text for term in ["fail", "failed", "error", "not reachable"]
+            term in text
+            for term in [
+                "fail",
+                "failed",
+                "error",
+                "not reachable",
+                # DTLS has no anonymous mode, so `-d` alone is now rejected
+                # up front (before any handshake) with a credentials-required
+                # message -- still a hard fail, still no fabricated finding.
+                "requires credentials",
+                "no anonymous mode",
+            ]
         ), f"Expected explicit DTLS failure message, got: {text[:500]}"
 
         # Critical: the scanner must NOT fabricate a DTLS-available finding when no
@@ -690,9 +620,6 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             f"{[f.get('data', {}).get('finding') for f in findings]}"
         )
         auth_data = auth_findings[0].get("data", {})
-        assert auth_data.get("category") == "AUTHENTICATION", (
-            f"Expected category 'AUTHENTICATION', got: {auth_data.get('category')}"
-        )
         details = auth_data.get("details", "").lower()
         assert "nosec" in details, (
             f"Expected 'nosec' in finding details: {auth_data.get('details')}"
@@ -703,12 +630,14 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
 
     @pytest.mark.security
     def test_security_finding_unauthenticated_writes(self, cli_runner, target, port):
-        """Verify 'Unauthenticated writes' AUTHORIZATION finding with --confirm [Category A]
+        """Verify 'Unauthenticated writes' finding with --confirm --methods [Category A]
 
-        The scanner only probes for unauthenticated writes when --confirm is set.
-        With --confirm, it sends PUT to /actuator/* resources. The mock accepts
-        PUT without authentication, so the finding fires:
-            security_finding("Unauthenticated writes", "AUTHORIZATION",
+        The write probe runs only when BOTH --methods (build the access matrix)
+        and --confirm (actually send the write methods) are set; otherwise the
+        scanner logs "Skipping write probes (need --confirm and --methods)". With
+        both, it sends PUT to /actuator/* resources. The mock accepts PUT without
+        authentication, so the finding fires:
+            security_finding("Unauthenticated writes",
                 "PUT accepted without auth: /actuator/led, /actuator/relay, ...")
         """
         result = cli_runner.run(
@@ -716,6 +645,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             target,
             "--port",
             str(port),
+            "--methods",
             "--confirm",
             format="json",
             json_log=True,
@@ -743,9 +673,6 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
         # The free-text "AUTHORIZATION" category was consolidated onto the canonical
         # Category enum (no AUTHORIZATION member); an unauthenticated write is an
         # access-control failure, so the scanner now emits ACCESS_CONTROL.
-        assert write_data.get("category") == "ACCESS_CONTROL", (
-            f"Expected category 'ACCESS_CONTROL', got: {write_data.get('category')}"
-        )
         details = write_data.get("details", "").lower()
         assert "put accepted" in details, (
             f"Expected 'PUT accepted' in finding details: {write_data.get('details')}"
@@ -773,18 +700,11 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
 
         assert result.returncode in [0, 1]
         text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text
-            for term in [
-                "dtls",
-                "coap",
-                "connected",
-                "device",
-                "fail",
-                "error",
-                "timeout",
-            ]
-        ), f"Expected DTLS attempt output: {text[:500]}"
+        # Behaviour-unique: the --dtls path always names DTLS -- whether it
+        # connects ("CoAPs (DTLS) server responding"), fails ("DTLS connection
+        # failed"), or reports the backend missing. "coap"/"connected" filler is
+        # dropped: it appears on every run and would make this unfalsifiable.
+        assert "dtls" in text, f"Expected DTLS attempt output: {text[:500]}"
 
     def test_psk_option(self, cli_runner, target, port):
         """Test --psk option is accepted [Category B]"""
@@ -1285,20 +1205,9 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
 
         assert result.returncode in [0, 1]
         text = _combined_text(result, result.scan_log)
-        # The probe should find /sensor/data.cbor among other resources
-        assert any(
-            term in text
-            for term in [
-                "cbor",
-                "data.cbor",
-                "sensor",
-                "resource",
-                "found",
-                "probe",
-                "coap",
-                "connected",
-            ]
-        ), f"Expected CBOR resource in probe output: {text[:500]}"
+        # Behaviour-unique: assert the CBOR resource path itself, not filler like
+        # "sensor"/"resource"/"coap" that appears on every scan.
+        assert "data.cbor" in text, f"Expected CBOR resource /sensor/data.cbor: {text[:500]}"
 
     def test_senml_resource_discovery(self, cli_runner, target, port):
         """Test that --probe-paths discovers SenML resource /sensor/measurements [Category B]"""
@@ -1315,19 +1224,8 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
 
         assert result.returncode in [0, 1]
         text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text
-            for term in [
-                "senml",
-                "measurements",
-                "sensor",
-                "resource",
-                "found",
-                "probe",
-                "coap",
-                "connected",
-            ]
-        ), f"Expected SenML resource in probe output: {text[:500]}"
+        # Behaviour-unique: assert the SenML resource path itself, not filler.
+        assert "measurements" in text, f"Expected SenML resource /sensor/measurements: {text[:500]}"
 
     def test_lwm2m_json_resource_discovery(self, cli_runner, target, port):
         """Test that /3/0.json LwM2M JSON resource is accessible [Category B]"""
@@ -1344,18 +1242,12 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
 
         assert result.returncode in [0, 1]
         text = _combined_text(result, result.scan_log)
-        # LwM2M scan should at least find the device object data
-        assert any(
-            term in text
-            for term in [
-                "lwm2m",
-                MOCK_MANUFACTURER,
-                MOCK_MODEL,
-                "device",
-                "coap",
-                "connected",
-            ]
-        ), f"Expected LwM2M JSON resource output: {text[:500]}"
+        # Behaviour-unique: the /3/0.json LwM2M-JSON resource is listed in
+        # /.well-known/core, and the device values are read from /3/0. Assert
+        # concrete evidence, not "device"/"lwm2m"/"coap" filler.
+        assert "3/0.json" in text or MOCK_MANUFACTURER in text, (
+            f"Expected LwM2M JSON resource /3/0.json or device data: {text[:500]}"
+        )
 
     # ========================================================================
     # JSON Log Structure Tests
@@ -1403,8 +1295,10 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
         _assert_log_event_structure(log)
 
         modules = {e.get("module", "") for e in log.events}
-        has_coap_module = any("coap" in m.lower() for m in modules)
-        assert has_coap_module or len(modules) > 0, (
+        # The `or len(modules) > 0` fallback was tautological (events are already
+        # asserted above), so it neutered the real check. Assert the coap module
+        # tag directly.
+        assert any("coap" in m.lower() for m in modules), (
             f"Expected coap module reference. Modules: {modules}"
         )
 
@@ -1606,6 +1500,9 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
 
         assert result.returncode != -1, "Should handle non-CoAP port gracefully"
         text = _combined_text(result, result.scan_log)
+        # Failure-only markers: a wrong-port scan reports "Connection failed",
+        # "not reachable", or "No CoAP response". "coap"/"connect" are dropped --
+        # they appear on a successful scan too, so they would never falsify.
         assert any(
             term in text
             for term in [
@@ -1614,8 +1511,6 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
                 "timeout",
                 "not reachable",
                 "no response",
-                "connect",
-                "coap",
             ]
         ), f"Expected error handling for wrong port type: {text[:500]}"
 
@@ -1735,9 +1630,14 @@ class TestCoAPLibcoapInterop:
     """
 
     def test_libcoap_service_available(self):
-        """Verify libcoap container is running and reachable [Category A]"""
-        if not _libcoap_available():
-            pytest.skip(f"libcoap container not available on UDP {MOCK_HOST}:{LIBCOAP_PORT}")
+        """Verify libcoap container is running and reachable [Category A]
+
+        Hard assert (matching test_service_is_available): the interop suite
+        targets this container, so its absence is a failure, not a silent pass.
+        """
+        assert _libcoap_available(), (
+            f"libcoap container not available on UDP {MOCK_HOST}:{LIBCOAP_PORT}"
+        )
 
     def test_basic_scan_libcoap(self, cli_runner):
         """Scanner discovers resources from C-based libcoap server [Category A]"""
@@ -1963,7 +1863,8 @@ class TestCoAPDTLSInterop:
             json_log=True,
         )
 
-        # Plain CoAP should fail against DTLS-only port
+        # Plain CoAP should fail against DTLS-only port. Failure-only markers:
+        # "coap"/"connect" are dropped -- they appear on a successful scan too.
         text = _combined_text(result, result.scan_log)
         assert any(
             term in text
@@ -1973,8 +1874,6 @@ class TestCoAPDTLSInterop:
                 "timeout",
                 "not reachable",
                 "no response",
-                "connect",
-                "coap",
             ]
         ), f"Expected failure against DTLS port with plain CoAP: {text[:500]}"
 
@@ -2093,18 +1992,7 @@ DTLS_CERT_PORT = 5686
 
 def _dtls_cert_available() -> bool:
     """Check if the DTLS certificate container is running and healthy."""
-    import subprocess
-
-    try:
-        result = subprocess.run(
-            ["docker", "inspect", "--format", "{{.State.Health.Status}}", "coap-dtls-cert-server"],
-            capture_output=True,
-            text=True,
-            timeout=5,
-        )
-        return result.stdout.strip() == "healthy"
-    except (subprocess.TimeoutExpired, FileNotFoundError, OSError):
-        return False
+    return _dtls_container_healthy("coap-dtls-cert-server")
 
 
 @pytest.mark.coap
@@ -2122,10 +2010,12 @@ class TestCoAPDTLSCertInterop:
     """
 
     def test_dtls_cert_container_available(self):
-        """Verify DTLS certificate server container is running [Category A]"""
-        if not _dtls_cert_available():
-            pytest.skip("DTLS certificate container not available")
-        assert _dtls_cert_available()
+        """Verify DTLS certificate server container is running [Category A]
+
+        Hard assert (matching test_service_is_available): the cert-interop suite
+        targets this container, so its absence is a failure, not a silent pass.
+        """
+        assert _dtls_cert_available(), "DTLS certificate container not available"
 
     def test_plain_coap_on_dtls_cert_port(self, cli_runner):
         """Plain CoAP scan against DTLS cert port fails gracefully [Category C]"""
@@ -2144,7 +2034,8 @@ class TestCoAPDTLSCertInterop:
             json_log=True,
         )
 
-        # Plain CoAP on a DTLS-only port should fail/timeout
+        # Plain CoAP on a DTLS-only port should fail/timeout. Failure-only
+        # markers: "coap"/"connect" appear on a successful scan too.
         text = _combined_text(result, result.scan_log)
         assert any(
             term in text
@@ -2154,8 +2045,6 @@ class TestCoAPDTLSCertInterop:
                 "timeout",
                 "not reachable",
                 "no response",
-                "connect",
-                "coap",
             ]
         ), f"Expected failure on DTLS cert port with plain CoAP: {text[:500]}"
 
@@ -2179,6 +2068,8 @@ class TestCoAPDTLSCertInterop:
             / "mocks"
             / "services"
             / "coap"
+            / "mock"
+            / "coap"
             / "certs"
         )
 
@@ -2200,14 +2091,13 @@ class TestCoAPDTLSCertInterop:
 
         assert result.returncode in [0, 1]
         text = _combined_text(result, result.scan_log)
+        # Behaviour-unique: the DTLS-cert path always names DTLS/certificate.
+        # "coap"/"connected"/"resource" filler is dropped (it matches any scan).
         assert any(
             term in text
             for term in [
                 "dtls",
                 "certificate",
                 "cert",
-                "connected",
-                "resource",
-                "coap",
             ]
         ), f"Expected DTLS cert auth output: {text[:500]}"

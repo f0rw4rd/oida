@@ -29,7 +29,7 @@ Examples:
   oida coap 192.168.1.100 -M --confirm             # Test all CoAP methods on resources
   oida coap 192.168.1.100 -O -N 10                 # Subscribe to observable resources
   oida coap 192.168.1.100 --put /actuator/led 1 --confirm  # Write value to resource
-  oida coap 192.168.1.100 -D -P secret -u client    # Connect via DTLS-PSK
+  oida coap 192.168.1.100 -D --psk secret --psk-identity client  # Connect via DTLS-PSK
   oida coap 192.168.1.100 --dtls-cert c.pem --dtls-key k.pem  # DTLS certificate auth
   oida coap 192.168.1.100 --fetch /sensor/data     # FETCH resource (RFC 8132)
   oida coap 192.168.1.100 --patch /config '{}' --confirm    # PATCH resource
@@ -114,14 +114,12 @@ Examples:
         help="Use DTLS (CoAPs, port 5684) instead of plain CoAP",
     )
     security_group.add_argument(
-        "-P",
         "--psk",
         type=str,
         metavar="KEY",
         help="Pre-shared key for DTLS-PSK (hex string, or path to wordlist file for bruteforce)",
     )
     security_group.add_argument(
-        "-u",
         "--psk-identity",
         type=str,
         metavar="ID",

@@ -36,7 +36,8 @@ CONTENT_FORMAT_ALIASES = {
 }
 
 # Block size exponents for Block-wise Transfer (RFC 7959)
-# SZX value -> block size in bytes (size = 2^(SZX+4))
+# block size in bytes -> SZX exponent (size = 2^(SZX+4)), the direction the
+# consumer relies on (e.g. 512 -> 5).
 BLOCK_SIZES = {16: 0, 32: 1, 64: 2, 128: 3, 256: 4, 512: 5, 1024: 6}
 VALID_BLOCK_SIZES = sorted(BLOCK_SIZES.keys())
 

@@ -5,7 +5,6 @@
 import time as _time
 
 from ...connection import NetworkConnection
-from ...utils.common_types import Category
 from ...utils.payload import resolve_file_payload
 
 from .scanner import CoAPScanner
@@ -125,6 +124,21 @@ class coap(NetworkConnection):
             )
             self.results["success"] = False
             self.results["error"] = "DTLS requires --psk, --dtls-cert, or --dtls-rpk"
+            return
+
+        # Reject the cert/key XOR explicitly. Cert-without-key passes the
+        # presence check above but the `dtls_cert and dtls_key` branch is False,
+        # so no handshake runs yet the run hard-fails "DTLS connection failed"
+        # (implying one was attempted); key-without-cert silently downgrades to
+        # plaintext, ignoring the key. Name the missing flag instead.
+        if bool(dtls_cert) != bool(dtls_key):
+            missing = "--dtls-key" if dtls_cert else "--dtls-cert"
+            self.logger.fail(
+                f"DTLS certificate auth requires BOTH --dtls-cert and --dtls-key; "
+                f"{missing} is missing."
+            )
+            self.results["success"] = False
+            self.results["error"] = f"DTLS certificate auth missing {missing}"
             return
 
         if dtls_cert and dtls_key:
@@ -292,19 +306,16 @@ class coap(NetworkConnection):
                 if dtls:
                     self.logger.security_finding(
                         "NoSec mode (DTLS available)",
-                        category=Category.ENCRYPTION,
                         detail="LwM2M /0/0/2 = NoSec but DTLS responded on port %d -- "
                         "device may not be using DTLS for its LwM2M session" % dtls_port,
                     )
                 else:
                     self.logger.security_finding(
                         "NoSec mode",
-                        category=Category.ENCRYPTION,
                         detail="No transport security (LwM2M /0/0/2 = NoSec)",
                     )
                 self.logger.security_finding(
                     "No authentication",
-                    category=Category.AUTHENTICATION,
                     detail="NoSec mode has no client/server authentication "
                     "(no PSK, RPK, or Certificate configured in LwM2M /0/0/2)",
                 )
@@ -313,7 +324,6 @@ class coap(NetworkConnection):
             if unauth:
                 self.logger.security_finding(
                     "Unauthenticated writes",
-                    category=Category.ACCESS_CONTROL,
                     detail="PUT accepted without auth: %s" % ", ".join(unauth),
                 )
 

@@ -240,8 +240,20 @@ def parse_link_format(payload: str) -> List[Dict[str, Any]]:
     if not payload or not payload.strip():
         return resources
 
-    # Split on commas that are outside angle brackets
-    entries = re.split(r",\s*(?=<)", payload.strip())
+    # Split on commas that separate entries (outside quoted attribute values).
+    # A comma only starts a new entry when it is immediately followed by '<'
+    # and we are not currently inside a quoted string.
+    entries = []
+    start = 0
+    in_quotes = False
+    text = payload.strip()
+    for i, ch in enumerate(text):
+        if ch == '"':
+            in_quotes = not in_quotes
+        elif ch == "," and not in_quotes and text[i + 1 : i + 2] == "<":
+            entries.append(text[start:i])
+            start = i + 1
+    entries.append(text[start:])
     for entry in entries:
         entry = entry.strip()
         if not entry:
@@ -261,10 +273,11 @@ def parse_link_format(payload: str) -> List[Dict[str, Any]]:
         if ";obs" in attrs_str.lower():
             resource["obs"] = True
 
-        # Key-value attributes: ;key="value" or ;key=value
-        for attr_match in re.finditer(r';(\w+)(?:="?([^";]*)"?)?', attrs_str):
+        # Key-value attributes: ;key="value" (quoted-string, may contain ; or ,)
+        # or ;key=value (bare token, stops at the next ;)
+        for attr_match in re.finditer(r';(\w+)(?:="([^"]*)"|=([^";]*))?', attrs_str):
             key = attr_match.group(1).lower()
-            value = attr_match.group(2)
+            value = attr_match.group(2) if attr_match.group(2) is not None else attr_match.group(3)
             if key == "obs":
                 resource["obs"] = True
             elif key == "ct":
@@ -728,7 +741,9 @@ def parse_payload(
             result["value"] = json.loads(payload.decode("utf-8"))
             result["type"] = "json"
             return result
-        except (json.JSONDecodeError, UnicodeDecodeError) as e:
+        except (json.JSONDecodeError, UnicodeDecodeError, RecursionError) as e:
+            # RecursionError: json.loads() blows the stack on deeply nested
+            # input, and ~1000 nested brackets fit in one CoAP datagram.
             logger.debug(f"JSON decode of CoAP payload failed: {e}")
 
     # Try UTF-8
@@ -767,7 +782,9 @@ def _parse_json_payload(
     try:
         result["value"] = json.loads(payload.decode("utf-8"))
         result["type"] = format_names.get(content_format, "json")
-    except (json.JSONDecodeError, UnicodeDecodeError) as exc:
+    except (json.JSONDecodeError, UnicodeDecodeError, RecursionError) as exc:
+        # RecursionError: deeply nested arrays/objects from a hostile server
+        # exceed the interpreter recursion limit inside json.loads().
         logger.debug("JSON parse failed (cf=%d): %s", content_format, exc)
         result["type"] = "binary"
         result["value"] = payload.hex()

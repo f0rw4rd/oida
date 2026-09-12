@@ -104,6 +104,7 @@ class CoAPScanner(NetworkScanner):
                 "CoAP ping got no response from %s:%s, trying GET fallback", host, port
             )
             # Try a real GET as fallback — some devices ignore empty CON
+            ctx = None
             try:
                 ctx = run_async(create_context())
                 uri = f"{self._scheme}://{host}:{port}/.well-known/core"
@@ -118,6 +119,13 @@ class CoAPScanner(NetworkScanner):
                 run_async(shutdown_context(ctx))
             except Exception as e:
                 self.logger.debug("Fallback GET failed: %s", e)
+                # The context (and its UDP transport) is created before the GET,
+                # so a raising GET would otherwise leak it.
+                if ctx is not None:
+                    try:
+                        run_async(shutdown_context(ctx))
+                    except Exception as se:
+                        self.logger.debug("shutdown_context after fallback GET error: %s", se)
             self.logger.debug("Connection failed after %.2fs", _time.monotonic() - t0)
             return None
 
