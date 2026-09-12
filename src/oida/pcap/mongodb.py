@@ -68,6 +68,9 @@ OPCODE_NAMES = {
 
 # Operations that modify data (security-relevant)
 WRITE_OPCODES = {"OP_UPDATE", "OP_INSERT", "OP_DELETE"}
+# An OP_REPLY returning more documents than this is a possible exfiltration
+# (bulk dump) and is reported once per (client, server) pair.
+LARGE_RESULT_THRESHOLD = 1000
 
 # Legacy opcodes that are always client->server requests.  Setting native=True
 # for these keeps role resolution port-independent so that, on a non-standard
@@ -134,6 +137,8 @@ class MongoDBPassiveListener(PySharkListenerBase):
 
         # Security alerts
         self._alerts: List[Dict[str, str]] = []
+        # (client, server) pairs already warned about large result sets
+        self._exfil_warned: Set[Tuple[str, str]] = set()
 
     def process_packet(self, packet) -> None:
         """Process MongoDB packet and extract database activity."""
@@ -261,6 +266,31 @@ class MongoDBPassiveListener(PySharkListenerBase):
         query_failure = self.get_field(mongo, "reply_flags_queryfailure", None)
         if query_failure and str(query_failure).lower() in ("1", "true"):
             details["query_failure"] = True
+
+        # Data-exfiltration indicator: a single reply returning an
+        # abnormally large result set (bulk dump) from the server.
+        if number_returned:
+            n_docs = self._parse_int(number_returned, 0)
+            if n_docs > LARGE_RESULT_THRESHOLD:
+                details["large_result_set"] = True
+                pair = (client_ip, server_ip)
+                if pair not in self._exfil_warned:
+                    self._exfil_warned.add(pair)
+                    self._alerts.append(
+                        {
+                            "level": "warn",
+                            "category": "exfiltration_alert",
+                            "message": (
+                                f"MongoDB EXFIL: {client_ip} pulled {n_docs} documents "
+                                f"from {server_ip}:{server_port}"
+                                f"{' db=' + database_name if database_name else ''}"
+                            ),
+                        }
+                    )
+                    self.logger.warning(
+                        f"MongoDB: possible exfiltration, {n_docs} documents "
+                        f"{client_ip} <- {server_ip}"
+                    )
 
         summary = f"MongoDB {opcode_name} {client_ip}->{server_ip}"
         if full_collection:
