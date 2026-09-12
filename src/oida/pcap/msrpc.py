@@ -295,20 +295,30 @@ SVCCTL_OPNUMS = {
     "64": "OpenSCManager2",
 }
 
+# Opnums per [MS-SRVS] 3.1.4 (cross-checked against Wireshark's srvsvc.opnum
+# value_string).  Three entries used to be shifted onto the wrong method:
+# 24 was labelled NetrServerDiskEnum (that is 23), 31 was labelled
+# NetrpSetFileSecurity (that is 40) and 48 was labelled NetrShareDelEx (that
+# is 57) -- the last one made a DFS exit-point call look like a share deletion.
 SRVSVC_OPNUMS = {
     "0": "NetrCharDevEnum",
     "8": "NetrConnectionEnum",
     "9": "NetrFileEnum",
+    "12": "NetrSessionEnum",
+    "13": "NetrSessionDel",
     "15": "NetrShareEnum",
     "16": "NetrShareGetInfo",
     "17": "NetrShareSetInfo",
     "18": "NetrShareDel",
     "21": "NetrServerGetInfo",
-    "24": "NetrServerDiskEnum",
+    "23": "NetrServerDiskEnum",
+    "24": "NetrServerStatisticsGet",
     "28": "NetrRemoteTOD",
-    "31": "NetrpSetFileSecurity",
+    "31": "NetprPathCanonicalize",
     "36": "NetrShareEnumSticky",
-    "48": "NetrShareDelEx",
+    "40": "NetrpSetFileSecurity",
+    "48": "NetrDfsCreateExitPoint",
+    "57": "NetrShareDelEx",
 }
 
 NETLOGON_OPNUMS = {
