@@ -11,16 +11,10 @@ works correctly:
 Note: hpack.Decoder.decode() returns list[tuple[str, str]], not bytes tuples.
 """
 
-import pytest
 
-try:
-    import hpack
+from tests.service_gate import require_import, require_service
 
-    HPACK_AVAILABLE = True
-except ImportError:
-    HPACK_AVAILABLE = False
-
-pytestmark = pytest.mark.skipif(not HPACK_AVAILABLE, reason="hpack library not installed")
+hpack = require_import("hpack", reason="hpack library not installed")
 
 
 class TestHpackEncoderBasics:
@@ -212,14 +206,14 @@ class TestHpackHTTP2FuzzerIntegration:
 
             assert callable(_hpack_encode)
         except ImportError:
-            pytest.skip("HTTP/2 fuzzer not available (boofuzz may not be installed)")
+            require_service("HTTP/2 fuzzer not available (boofuzz may not be installed)")
 
     def test_hpack_encode_basic(self):
         """_hpack_encode produces valid HPACK bytes."""
         try:
             from oida.fuzz.protocols.http2 import _hpack_encode
         except ImportError:
-            pytest.skip("HTTP/2 fuzzer not available")
+            require_service("HTTP/2 fuzzer not available")
 
         encoded = _hpack_encode(
             [
@@ -246,7 +240,7 @@ class TestHpackHTTP2FuzzerIntegration:
         try:
             from oida.fuzz.protocols.http2 import _hpack_encode
         except ImportError:
-            pytest.skip("HTTP/2 fuzzer not available")
+            require_service("HTTP/2 fuzzer not available")
 
         encoded = _hpack_encode(
             [
@@ -268,7 +262,7 @@ class TestHpackHTTP2FuzzerIntegration:
         try:
             from oida.fuzz.protocols.http2 import _hpack_encode
         except ImportError:
-            pytest.skip("HTTP/2 fuzzer not available")
+            require_service("HTTP/2 fuzzer not available")
 
         encoded = _hpack_encode([("x-test", "value")])
         assert isinstance(encoded, bytes)
@@ -283,7 +277,7 @@ class TestHpackHTTP2FuzzerIntegration:
         try:
             from oida.fuzz.protocols.http2 import _hpack_encode
         except ImportError:
-            pytest.skip("HTTP/2 fuzzer not available")
+            require_service("HTTP/2 fuzzer not available")
 
         encoded = _hpack_encode([])
         assert isinstance(encoded, bytes)
@@ -297,7 +291,7 @@ class TestHpackHTTP2FuzzerIntegration:
         try:
             from oida.fuzz.protocols.http2 import _hpack_encode
         except ImportError:
-            pytest.skip("HTTP/2 fuzzer not available")
+            require_service("HTTP/2 fuzzer not available")
 
         ua = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36"
         encoded = _hpack_encode(
@@ -319,7 +313,7 @@ class TestHpackHTTP2FuzzerIntegration:
         try:
             from oida.fuzz.protocols.http2 import _hpack_encode
         except ImportError:
-            pytest.skip("HTTP/2 fuzzer not available")
+            require_service("HTTP/2 fuzzer not available")
 
         encoded = _hpack_encode(
             [
@@ -340,7 +334,7 @@ class TestHpackHTTP2FuzzerIntegration:
         try:
             from oida.fuzz.protocols.http2 import _hpack_encode
         except ImportError:
-            pytest.skip("HTTP/2 fuzzer not available")
+            require_service("HTTP/2 fuzzer not available")
 
         token = "Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0NTY3ODkwIn0.abc"
         encoded = _hpack_encode(
@@ -362,7 +356,7 @@ class TestHpackHTTP2FuzzerIntegration:
         try:
             from oida.fuzz.protocols.http2 import _hpack_encode
         except ImportError:
-            pytest.skip("HTTP/2 fuzzer not available")
+            require_service("HTTP/2 fuzzer not available")
 
         encoded = _hpack_encode(
             [
@@ -415,7 +409,7 @@ class TestHpackEdgeCases:
         try:
             from oida.fuzz.protocols.http2 import _hpack_encode
         except ImportError:
-            pytest.skip("HTTP/2 fuzzer not available")
+            require_service("HTTP/2 fuzzer not available")
 
         # _hpack_encode accepts str tuples and converts to bytes
         encoded = _hpack_encode([("x-test", "hello")])

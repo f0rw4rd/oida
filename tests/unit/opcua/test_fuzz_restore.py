@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from oida.protocols.opcua.helpers import _asyncua, ua
 from oida.protocols.opcua.mixins.fuzz import FuzzMixin
+from tests.service_gate import require_service
 
 
 class _FuzzHarness(FuzzMixin):
@@ -39,7 +40,7 @@ def _make_empty_value_node():
 class TestFuzzNodeRestoresEmptyOriginal(unittest.IsolatedAsyncioTestCase):
     async def test_empty_original_is_restored(self):
         if not _asyncua.is_available:
-            self.skipTest("asyncua not available")
+            require_service("asyncua not available")
 
         node = _make_empty_value_node()
         harness = _FuzzHarness(node)

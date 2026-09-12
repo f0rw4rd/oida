@@ -12,6 +12,8 @@ import subprocess
 
 import pytest
 
+from tests.service_gate import require_service
+
 # ---------------------------------------------------------------------------
 # Event loop isolation
 # ---------------------------------------------------------------------------
@@ -83,7 +85,7 @@ except Exception:
 
 def _skip_unless_pyshark():
     if not _pyshark_available:
-        pytest.skip("pyshark or tshark not available")
+        require_service("pyshark or tshark not available")
 
 
 # git-lfs pointer signature -- pcap fixtures stored in LFS are <200-byte text
@@ -130,7 +132,7 @@ def _load_packets(
     from pyshark.capture.capture import TSharkCrashException
 
     if _is_lfs_pointer(pcap_path):
-        pytest.skip(
+        require_service(
             f"pcap fixture is an unfetched git-lfs pointer (run 'git lfs pull'): {pcap_path}"
         )
 

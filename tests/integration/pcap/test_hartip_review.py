@@ -22,6 +22,8 @@ import asyncio
 
 import pytest
 
+from tests.service_gate import require_service
+
 from .conftest import _ek_mode_available, _pcap_path, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
@@ -65,7 +67,7 @@ def test_icmp_embedded_detected_in_xml_mode():
 def test_icmp_embedded_detected_in_ek_mode():
     _skip_unless_pyshark()
     if not _ek_mode_available:
-        pytest.skip("pyshark EK-mode fork not installed (this run: XML mode only)")
+        require_service("pyshark EK-mode fork not installed (this run: XML mode only)")
     pcap = _pcap_path(FIXTURE)
     _devices, listener, _accepted = _run_listener(pcap, use_ek=True)
     assert listener.interactions, "EK mode lost the ICMP-embedded packet (regression)"
@@ -74,7 +76,7 @@ def test_icmp_embedded_detected_in_ek_mode():
 def test_modes_agree_on_icmp_embedded():
     _skip_unless_pyshark()
     if not _ek_mode_available:
-        pytest.skip("pyshark EK-mode fork not installed (this run: XML mode only)")
+        require_service("pyshark EK-mode fork not installed (this run: XML mode only)")
     pcap = _pcap_path(FIXTURE)
     _d, xml_l, _a = _run_listener(pcap, use_ek=False)
     _d, ek_l, _a = _run_listener(pcap, use_ek=True)

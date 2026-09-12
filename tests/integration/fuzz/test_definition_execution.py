@@ -13,6 +13,8 @@ when boofuzz tries to render them during an actual fuzz run.
 
 import pytest
 
+from tests.service_gate import require_import, require_service
+
 from .conftest import FuzzTimeout, create_fuzzer_config, run_fuzz_with_timeout
 from .mock_servers import (
     iec104_server,
@@ -55,12 +57,12 @@ class TestModbusDefinitionExecution:
         if request_name == "skip":
             pytest.skip("No Modbus request definitions found")
 
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
         if not fuzzer_class:
-            pytest.skip("Modbus fuzzer not available")
+            require_service("Modbus fuzzer not available")
 
         with modbus_server() as server:
             config = create_fuzzer_config(
@@ -78,7 +80,7 @@ class TestModbusDefinitionExecution:
             except (ConnectionError, OSError):
                 pass  # Connection issues are acceptable
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
 
 # ============================================================================
@@ -96,12 +98,12 @@ class TestOPCUADefinitionExecution:
         if request_name == "skip":
             pytest.skip("No OPC UA request definitions found")
 
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("opcua")
         if not fuzzer_class:
-            pytest.skip("OPC UA fuzzer not available")
+            require_service("OPC UA fuzzer not available")
 
         with opcua_server() as server:
             config = create_fuzzer_config(
@@ -119,7 +121,7 @@ class TestOPCUADefinitionExecution:
             except (ConnectionError, OSError):
                 pass
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
             except Exception as e:
                 if "No requests specified" in str(e):
                     pytest.skip(f"Request '{request_name}' not loadable: {e}")
@@ -141,12 +143,12 @@ class TestIEC104DefinitionExecution:
         if request_name == "skip":
             pytest.skip("No IEC 104 request definitions found")
 
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("iec104")
         if not fuzzer_class:
-            pytest.skip("IEC 104 fuzzer not available")
+            require_service("IEC 104 fuzzer not available")
 
         with iec104_server() as server:
             config = create_fuzzer_config(
@@ -164,7 +166,7 @@ class TestIEC104DefinitionExecution:
             except (ConnectionError, OSError):
                 pass
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
 
 # ============================================================================
@@ -182,12 +184,12 @@ class TestMMSDefinitionExecution:
         if request_name == "skip":
             pytest.skip("No MMS request definitions found")
 
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("mms")
         if not fuzzer_class:
-            pytest.skip("MMS fuzzer not available")
+            require_service("MMS fuzzer not available")
 
         with mms_server() as server:
             config = create_fuzzer_config(
@@ -210,7 +212,7 @@ class TestMMSDefinitionExecution:
             except (ConnectionError, OSError):
                 pass
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
 
 # ============================================================================
@@ -228,12 +230,12 @@ class TestMQTTDefinitionExecution:
         if request_name == "skip":
             pytest.skip("No MQTT request definitions found")
 
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("mqtt")
         if not fuzzer_class:
-            pytest.skip("MQTT fuzzer not available")
+            require_service("MQTT fuzzer not available")
 
         with mqtt_server() as server:
             config = create_fuzzer_config(
@@ -251,7 +253,7 @@ class TestMQTTDefinitionExecution:
             except (ConnectionError, OSError):
                 pass
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
 
 if __name__ == "__main__":

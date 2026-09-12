@@ -19,6 +19,8 @@ import time
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from typing import List, Tuple
 
+from tests.service_gate import require_import, require_service
+
 
 class RecordingHTTPHandler(BaseHTTPRequestHandler):
     """HTTP handler that records all received requests."""
@@ -110,7 +112,7 @@ class TestReplayBasic:
 
     def test_record_and_list_test_cases(self, temp_session, available_port):
         """Test that fuzzing records test cases that can be listed."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -129,7 +131,7 @@ class TestReplayBasic:
 
             fuzzer_class = PROTOCOL_FUZZERS.get("http")
             if not fuzzer_class:
-                pytest.skip("HTTP fuzzer not available")
+                require_service("HTTP fuzzer not available")
 
             fuzzer = fuzzer_class(config)
 
@@ -162,7 +164,7 @@ class TestReplayBasic:
 
     def test_replay_single_test_case(self, temp_session, available_port):
         """Test replaying a single test case."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -181,7 +183,7 @@ class TestReplayBasic:
 
             fuzzer_class = PROTOCOL_FUZZERS.get("http")
             if not fuzzer_class:
-                pytest.skip("HTTP fuzzer not available")
+                require_service("HTTP fuzzer not available")
 
             fuzzer = fuzzer_class(config)
 
@@ -210,7 +212,7 @@ class TestReplayBasic:
 
     def test_replay_with_response_check(self, temp_session, available_port):
         """Test replaying with response validation."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -229,7 +231,7 @@ class TestReplayBasic:
 
             fuzzer_class = PROTOCOL_FUZZERS.get("http")
             if not fuzzer_class:
-                pytest.skip("HTTP fuzzer not available")
+                require_service("HTTP fuzzer not available")
 
             fuzzer = fuzzer_class(config)
 
@@ -257,7 +259,7 @@ class TestReplayRangeParsing:
 
     def test_parse_single_id(self, temp_session, available_port):
         """Test parsing single test case ID."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -275,7 +277,7 @@ class TestReplayRangeParsing:
 
         fuzzer_class = PROTOCOL_FUZZERS.get("http")
         if not fuzzer_class:
-            pytest.skip("HTTP fuzzer not available")
+            require_service("HTTP fuzzer not available")
 
         fuzzer = fuzzer_class(config)
 
@@ -290,7 +292,7 @@ class TestReplayRangeParsing:
 
     def test_parse_range(self, temp_session, available_port):
         """Test parsing range (1-5)."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -308,7 +310,7 @@ class TestReplayRangeParsing:
 
         fuzzer_class = PROTOCOL_FUZZERS.get("http")
         if not fuzzer_class:
-            pytest.skip("HTTP fuzzer not available")
+            require_service("HTTP fuzzer not available")
 
         fuzzer = fuzzer_class(config)
 
@@ -323,7 +325,7 @@ class TestReplayRangeParsing:
 
     def test_parse_invalid_format(self, temp_session, available_port):
         """Test that invalid format raises ValueError."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -341,7 +343,7 @@ class TestReplayRangeParsing:
 
         fuzzer_class = PROTOCOL_FUZZERS.get("http")
         if not fuzzer_class:
-            pytest.skip("HTTP fuzzer not available")
+            require_service("HTTP fuzzer not available")
 
         fuzzer = fuzzer_class(config)
 
@@ -359,7 +361,7 @@ class TestReplayRangeParsing:
 
     def test_parse_range_bounds(self, temp_session, available_port):
         """Test range boundary cases."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -377,7 +379,7 @@ class TestReplayRangeParsing:
 
         fuzzer_class = PROTOCOL_FUZZERS.get("http")
         if not fuzzer_class:
-            pytest.skip("HTTP fuzzer not available")
+            require_service("HTTP fuzzer not available")
 
         fuzzer = fuzzer_class(config)
 
@@ -402,7 +404,7 @@ class TestReplayLightweightMode:
 
     def test_crc32_consistency(self, temp_session, available_port):
         """Test that regenerated payloads have consistent CRC32."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -421,7 +423,7 @@ class TestReplayLightweightMode:
 
             fuzzer_class = PROTOCOL_FUZZERS.get("http")
             if not fuzzer_class:
-                pytest.skip("HTTP fuzzer not available")
+                require_service("HTTP fuzzer not available")
 
             fuzzer = fuzzer_class(config)
 
@@ -470,7 +472,7 @@ class TestReplayLightweightMode:
 
     def test_regeneration_deterministic(self, temp_session, available_port):
         """Test that payload regeneration is deterministic."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -489,7 +491,7 @@ class TestReplayLightweightMode:
 
             fuzzer_class = PROTOCOL_FUZZERS.get("http")
             if not fuzzer_class:
-                pytest.skip("HTTP fuzzer not available")
+                require_service("HTTP fuzzer not available")
 
             fuzzer = fuzzer_class(config)
 
@@ -533,7 +535,7 @@ class TestReplayMultiple:
 
     def test_replay_range(self, temp_session, available_port):
         """Test replaying a range of test cases."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -552,7 +554,7 @@ class TestReplayMultiple:
 
             fuzzer_class = PROTOCOL_FUZZERS.get("http")
             if not fuzzer_class:
-                pytest.skip("HTTP fuzzer not available")
+                require_service("HTTP fuzzer not available")
 
             fuzzer = fuzzer_class(config)
 
@@ -587,7 +589,7 @@ class TestReplayNonexistent:
 
     def test_replay_nonexistent_returns_false(self, temp_session, available_port):
         """Test that replaying nonexistent test case returns False."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -605,7 +607,7 @@ class TestReplayNonexistent:
 
         fuzzer_class = PROTOCOL_FUZZERS.get("http")
         if not fuzzer_class:
-            pytest.skip("HTTP fuzzer not available")
+            require_service("HTTP fuzzer not available")
 
         fuzzer = fuzzer_class(config)
 
@@ -624,7 +626,7 @@ class TestReplayStoredPayload:
 
     def test_stored_payload_used_for_crash(self, temp_session, available_port):
         """Test that stored payload is used when available (crash case)."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -674,7 +676,7 @@ class TestReplayStoredPayload:
 
             fuzzer_class = PROTOCOL_FUZZERS.get("http")
             if not fuzzer_class:
-                pytest.skip("HTTP fuzzer not available")
+                require_service("HTTP fuzzer not available")
 
             fuzzer = fuzzer_class(config)
 
@@ -710,7 +712,7 @@ class TestReplayEchoProtocol:
 
     def test_echo_replay(self, temp_session, available_port):
         """Test replay with echo protocol."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -760,7 +762,7 @@ class TestReplayEchoProtocol:
 
         try:
             if "echo" not in PROTOCOL_FUZZERS:
-                pytest.skip("Echo fuzzer not available")
+                require_service("Echo fuzzer not available")
 
             config = FuzzerConfig(
                 target_ip="127.0.0.1",

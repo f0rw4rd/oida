@@ -30,9 +30,10 @@ import unittest
 from pathlib import Path
 from unittest.mock import AsyncMock, Mock, patch
 
-import pytest
 
-pytest.importorskip("bacpypes3")
+from tests.service_gate import require_import
+
+require_import("bacpypes3")
 
 from bacpypes3.apdu import AbortPDU, Error, ErrorPDU, RejectPDU  # noqa: E402
 from bacpypes3.basetypes import ErrorClass, ErrorCode  # noqa: E402

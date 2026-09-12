@@ -13,6 +13,7 @@ import pytest
 
 from oida.cli import gen_cli_args
 from oida.loader import ProtocolLoader
+from tests.service_gate import require_service
 
 pytestmark = pytest.mark.core
 
@@ -91,7 +92,7 @@ def _get_registered_protos():
 def test_no_duplicate_flags_in_protocol(main_parser, proto):
     """Each protocol subparser must not have duplicate option strings."""
     if proto not in main_parser._subparsers_action.choices:
-        pytest.skip(f"{proto} not registered (missing optional dep?)")
+        require_service(f"{proto} not registered (missing optional dep?)")
 
     sub = _get_subparser(main_parser, proto)
     flags = _collect_option_strings(sub)
@@ -128,7 +129,7 @@ def test_consolidated_flags_mirrored_consistently(main_parser, proto):
     that.
     """
     if proto not in main_parser._subparsers_action.choices:
-        pytest.skip(f"{proto} not registered (missing optional dep?)")
+        require_service(f"{proto} not registered (missing optional dep?)")
 
     sub = _get_subparser(main_parser, proto)
     main_actions = _option_action_map(main_parser)
@@ -160,7 +161,7 @@ def test_consolidated_flags_mirrored_consistently(main_parser, proto):
 def test_help_does_not_crash(main_parser, proto):
     """Calling --help on each protocol subparser must not raise."""
     if proto not in main_parser._subparsers_action.choices:
-        pytest.skip(f"{proto} not registered (missing optional dep?)")
+        require_service(f"{proto} not registered (missing optional dep?)")
 
     sub = _get_subparser(main_parser, proto)
     with pytest.raises(SystemExit) as exc_info:
@@ -182,7 +183,7 @@ SPECIAL_SUBCOMMANDS = {"serial", "fuzz", "pcap"}
 def test_protocol_has_target_argument(main_parser, proto):
     """Every protocol (except special subcommands) should accept a target."""
     if proto not in main_parser._subparsers_action.choices:
-        pytest.skip(f"{proto} not registered")
+        require_service(f"{proto} not registered")
 
     sub = _get_subparser(main_parser, proto)
     positionals = [a for a in sub._actions if not a.option_strings]
@@ -239,7 +240,7 @@ def _full_parser(monkeypatch, argv):
     proto = next((a for a in argv if not a.startswith("-")), None)
     sub = parser._subparsers_action.choices.get(proto)
     if sub is not None and not any("--timeout" in ac.option_strings for ac in sub._actions):
-        pytest.skip(f"{proto} subparser not fully registered in this env")
+        require_service(f"{proto} subparser not fully registered in this env")
     return parser
 
 
@@ -323,10 +324,10 @@ def test_proto_args_importable(proto):
     try:
         mod = loader.load_proto_args(proto)
     except (ImportError, ModuleNotFoundError, SyntaxError) as exc:
-        pytest.skip(f"Cannot load (optional dep or syntax issue): {exc}")
+        require_service(f"Cannot load (optional dep or syntax issue): {exc}")
 
     if mod is None:
-        pytest.skip(f"{proto}: loader returned None (optional dep not installed)")
+        require_service(f"{proto}: loader returned None (optional dep not installed)")
 
     assert hasattr(mod, "proto_args"), f"{proto}: proto_args.py missing proto_args() function"
 

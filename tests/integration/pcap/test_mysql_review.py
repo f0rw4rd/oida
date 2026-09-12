@@ -19,6 +19,8 @@ import asyncio
 
 import pytest
 
+from tests.service_gate import require_import, require_service
+
 from .conftest import _pcap_path, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
@@ -90,7 +92,7 @@ def _write_mysql_err_pcap(path):
     No MySQL fixture in tests/fixtures/pcap/mysql/ contains an ERR packet, so
     the error-text regression needs a purpose-built capture.
     """
-    scapy_all = pytest.importorskip("scapy.all")
+    scapy_all = require_import("scapy.all")
 
     def pdu(payload: bytes, seq: int) -> bytes:
         n = len(payload)
@@ -168,7 +170,7 @@ class TestMySQLErrorMessageField:
             from .conftest import _ek_mode_available
 
             if not _ek_mode_available:
-                pytest.skip("pyshark EK-mode fork not installed")
+                require_service("pyshark EK-mode fork not installed")
             kwargs["use_ek"] = True
 
         cap = pyshark.FileCapture(**kwargs)

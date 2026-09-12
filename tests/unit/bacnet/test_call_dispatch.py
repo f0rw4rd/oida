@@ -16,12 +16,9 @@ import asyncio
 import unittest
 from unittest.mock import AsyncMock, Mock
 
-try:
-    import bacpypes3  # noqa: F401
+from tests.service_gate import require_import
 
-    _HAS = True
-except ImportError:
-    _HAS = False
+require_import("bacpypes3", reason="bacpypes3 required")
 
 from oida.protocols.bacnet import bacnet
 from tests.unit.bacnet.conftest import create_mock_args, create_mock_logger
@@ -44,7 +41,6 @@ def _simple_ack():
     return type("SimpleAckPDU", (), {})()
 
 
-@unittest.skipUnless(_HAS, "bacpypes3 required")
 class TestParseObjid(unittest.TestCase):
     def setUp(self):
         self.scanner = _create_instance()
@@ -65,7 +61,6 @@ class TestParseObjid(unittest.TestCase):
             self.scanner._parse_objid("AV7")
 
 
-@unittest.skipUnless(_HAS, "bacpypes3 required")
 class TestSplitWriteSpec(unittest.TestCase):
     def setUp(self):
         self.scanner = _create_instance()
@@ -91,7 +86,6 @@ class TestSplitWriteSpec(unittest.TestCase):
             self.scanner._split_write_spec("AV:1:pv")
 
 
-@unittest.skipUnless(_HAS, "bacpypes3 required")
 class TestBuildWriteProperty(unittest.TestCase):
     def setUp(self):
         self.scanner = _create_instance()
@@ -113,7 +107,6 @@ class TestBuildWriteProperty(unittest.TestCase):
         self.assertIsNone(req.priority)
 
 
-@unittest.skipUnless(_HAS, "bacpypes3 required")
 class TestSend(unittest.TestCase):
     def setUp(self):
         self.scanner = _create_instance()
@@ -158,7 +151,6 @@ class TestSend(unittest.TestCase):
         self.assertFalse(ok)
 
 
-@unittest.skipUnless(_HAS, "bacpypes3 required")
 class TestDispatcher(unittest.TestCase):
     def test_no_call_returns_quietly(self):
         scanner = _create_instance(call=None)
@@ -230,7 +222,6 @@ class TestDispatcher(unittest.TestCase):
         self.assertIn("Bad arguments", msg)
 
 
-@unittest.skipUnless(_HAS, "bacpypes3 required")
 class TestReadFamilyHandlers(unittest.TestCase):
     def test_read_property_multiple(self):
         scanner = _create_instance()
@@ -264,7 +255,6 @@ class TestReadFamilyHandlers(unittest.TestCase):
             asyncio.run(scanner._call_read_property(app, Mock(), 1001, 5.0, []))
 
 
-@unittest.skipUnless(_HAS, "bacpypes3 required")
 class TestWriteFamilyHandlers(unittest.TestCase):
     def test_write_property_sends_coerced_value(self):
         scanner = _create_instance()
@@ -427,7 +417,6 @@ class TestWriteFamilyHandlers(unittest.TestCase):
         self.assertEqual(type(sent).__name__, "LifeSafetyOperationRequest")
 
 
-@unittest.skipUnless(_HAS, "bacpypes3 required")
 class TestReadFamilyExtra(unittest.TestCase):
     def test_get_alarm_summary(self):
         scanner = _create_instance()
@@ -462,7 +451,6 @@ class TestReadFamilyExtra(unittest.TestCase):
         self.assertEqual(scanner._bacpypes3_read_file.await_args.args[2], 3)
 
 
-@unittest.skipUnless(_HAS, "bacpypes3 required")
 class TestListServices(unittest.TestCase):
     def test_list_services_prints_callable_catalog(self):
         scanner = _create_instance()

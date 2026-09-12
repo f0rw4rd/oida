@@ -22,6 +22,8 @@ import tempfile
 
 import pytest
 
+from tests.service_gate import require_import, require_service
+
 from .conftest import (
     FuzzTimeout,
     create_fuzzer_config,
@@ -80,12 +82,12 @@ class TestModbusDockerDefinitions:
             pytest.skip("No Modbus request definitions found")
 
         require_docker_mock("modbus")
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
         if not fuzzer_class:
-            pytest.skip("Modbus fuzzer not available")
+            require_service("Modbus fuzzer not available")
 
         config = create_fuzzer_config(
             MOCK_HOST,
@@ -103,7 +105,7 @@ class TestModbusDockerDefinitions:
         except (ConnectionError, OSError):
             pass  # Connection issues are acceptable
         except ImportError as e:
-            pytest.skip(f"Missing dependency: {e}")
+            require_service(f"Missing dependency: {e}")
 
 
 # =============================================================================
@@ -117,13 +119,13 @@ class TestModbusDockerMonitor:
     def test_monitor_runs_and_passes(self, fuzz_session, modbus_port):
         """Monitor should check at least once and find a healthy Docker mock."""
         require_docker_mock("modbus")
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.core.config import MonitorConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
         if not fuzzer_class:
-            pytest.skip("Modbus fuzzer not available")
+            require_service("Modbus fuzzer not available")
 
         config = create_fuzzer_config(
             MOCK_HOST,
@@ -144,7 +146,7 @@ class TestModbusDockerMonitor:
         except (ConnectionError, OSError):
             pass
         except ImportError as e:
-            pytest.skip(f"Missing dependency: {e}")
+            require_service(f"Missing dependency: {e}")
 
         if hasattr(fuzzer, "monitor") and fuzzer.monitor:
             assert fuzzer.monitor.actual_check_count >= 1, (
@@ -158,12 +160,12 @@ class TestModbusDockerMonitor:
     def test_connection_reuse_disabled(self, fuzz_session, modbus_port):
         """Fuzzing with reuse_target_connection=False should not crash."""
         require_docker_mock("modbus")
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
         if not fuzzer_class:
-            pytest.skip("Modbus fuzzer not available")
+            require_service("Modbus fuzzer not available")
 
         config = create_fuzzer_config(
             MOCK_HOST,
@@ -194,12 +196,12 @@ class TestModbusDockerSession:
     def test_session_db_created(self, fuzz_session, modbus_port):
         """Fuzzing 10 cases should create a session .db file."""
         require_docker_mock("modbus")
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
         if not fuzzer_class:
-            pytest.skip("Modbus fuzzer not available")
+            require_service("Modbus fuzzer not available")
 
         config = create_fuzzer_config(
             MOCK_HOST,
@@ -218,7 +220,7 @@ class TestModbusDockerSession:
         except (ConnectionError, OSError):
             pass
         except ImportError as e:
-            pytest.skip(f"Missing dependency: {e}")
+            require_service(f"Missing dependency: {e}")
 
         db_path = f"{fuzz_session}.db"
         assert os.path.exists(db_path), "Session database was not created"
@@ -246,12 +248,12 @@ class TestModbusDockerSession:
     def test_store_all_payloads(self, tmp_path, modbus_port):
         """With store_all_payloads=True, payloads table should have rows."""
         require_docker_mock("modbus")
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
         if not fuzzer_class:
-            pytest.skip("Modbus fuzzer not available")
+            require_service("Modbus fuzzer not available")
 
         session = str(tmp_path / "payload_session")
         config = create_fuzzer_config(
@@ -272,7 +274,7 @@ class TestModbusDockerSession:
         except (ConnectionError, OSError):
             pass
         except ImportError as e:
-            pytest.skip(f"Missing dependency: {e}")
+            require_service(f"Missing dependency: {e}")
 
         db_path = f"{session}.db"
         if not os.path.exists(db_path):
@@ -294,12 +296,12 @@ class TestModbusDockerSession:
     def test_session_metadata_stored(self, tmp_path, modbus_port):
         """Session metadata table should contain schema_version after fuzzing."""
         require_docker_mock("modbus")
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
         if not fuzzer_class:
-            pytest.skip("Modbus fuzzer not available")
+            require_service("Modbus fuzzer not available")
 
         session = str(tmp_path / "metadata_session")
         config = create_fuzzer_config(
@@ -319,7 +321,7 @@ class TestModbusDockerSession:
         except (ConnectionError, OSError):
             pass
         except ImportError as e:
-            pytest.skip(f"Missing dependency: {e}")
+            require_service(f"Missing dependency: {e}")
 
         db_path = f"{session}.db"
         if not os.path.exists(db_path):
@@ -344,12 +346,12 @@ class TestModbusDockerSession:
     def test_test_case_results_valid(self, tmp_path, modbus_port):
         """All test_cases.result values must be in the CHECK constraint set."""
         require_docker_mock("modbus")
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
         if not fuzzer_class:
-            pytest.skip("Modbus fuzzer not available")
+            require_service("Modbus fuzzer not available")
 
         session = str(tmp_path / "results_session")
         config = create_fuzzer_config(
@@ -369,7 +371,7 @@ class TestModbusDockerSession:
         except (ConnectionError, OSError):
             pass
         except ImportError as e:
-            pytest.skip(f"Missing dependency: {e}")
+            require_service(f"Missing dependency: {e}")
 
         db_path = f"{session}.db"
         if not os.path.exists(db_path):
@@ -468,7 +470,9 @@ def populated_modbus_session(tmp_path, modbus_port):
 
     db_path = f"{session}.db"
     if not os.path.exists(db_path):
-        pytest.skip("Failed to create Modbus test session")
+        require_service(
+            "Failed to create Modbus test session — fuzzer may not have run (missing dep?)"
+        )
 
     return session
 
@@ -568,12 +572,12 @@ class TestModbusDockerCapabilities:
     def test_enumeration_api(self, fuzz_session, modbus_port):
         """API: enumerate=True should populate fuzzer.capabilities."""
         require_docker_mock("modbus")
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
         if not fuzzer_class:
-            pytest.skip("Modbus fuzzer not available")
+            require_service("Modbus fuzzer not available")
 
         config = create_fuzzer_config(
             MOCK_HOST,
@@ -592,7 +596,7 @@ class TestModbusDockerCapabilities:
         except (ConnectionError, OSError):
             pass
         except ImportError as e:
-            pytest.skip(f"Missing dependency: {e}")
+            require_service(f"Missing dependency: {e}")
 
         assert hasattr(fuzzer, "capabilities"), "Fuzzer should have a capabilities attribute"
         assert isinstance(fuzzer.capabilities, dict), "capabilities should be a dict"

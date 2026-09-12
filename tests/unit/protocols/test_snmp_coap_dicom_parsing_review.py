@@ -13,6 +13,8 @@ code as it stood, and only then was the minimal fix applied.
 
 import pytest
 
+from tests.service_gate import require_import
+
 pytestmark = [pytest.mark.unit]
 
 
@@ -77,7 +79,7 @@ def test_parse_payload_well_formed_json_unchanged():
 # far more responses than any cap should allow -- that is the hang tripwire.
 # ---------------------------------------------------------------------------
 
-pynetdicom = pytest.importorskip("pynetdicom", reason="pip install -e .[dicom]")
+pynetdicom = require_import("pynetdicom", reason="pip install -e .[dicom]")
 from pydicom.dataset import Dataset  # noqa: E402
 from unittest.mock import Mock  # noqa: E402
 

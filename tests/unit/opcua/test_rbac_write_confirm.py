@@ -17,6 +17,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from oida.protocols.opcua.helpers import _asyncua, ua
 from oida.protocols.opcua.mixins.credentials import CredentialsMixin
+from tests.service_gate import require_service
 
 
 class _RBACHarness(CredentialsMixin):
@@ -73,13 +74,13 @@ class TestRBACWriteConfirmGate(unittest.IsolatedAsyncioTestCase):
 
     async def test_write_back_skipped_without_confirm(self):
         if not _asyncua.is_available:
-            self.skipTest("asyncua not available")
+            require_service("asyncua not available")
         var_node = await self._run(confirm=False)
         var_node.write_value.assert_not_called()
 
     async def test_write_back_runs_with_confirm(self):
         if not _asyncua.is_available:
-            self.skipTest("asyncua not available")
+            require_service("asyncua not available")
         var_node = await self._run(confirm=True)
         var_node.write_value.assert_awaited()
 

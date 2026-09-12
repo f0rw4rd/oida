@@ -21,6 +21,7 @@ Two confirmed defects:
 import pytest
 
 from oida.pcap.pim import _field_to_list
+from tests.service_gate import require_import, require_service
 
 
 class TestFieldToList:
@@ -79,22 +80,20 @@ class TestNeighborsAreRecorded:
         )
 
 
-@pytest.mark.skipif(
-    __import__("shutil").which("tshark") is None, reason="tshark not installed"
-)
+@pytest.mark.usefixtures("_require_pyshark")
 class TestAgainstRealCapture:
     """End-to-end against the checked-in PIM capture (EK mode = production path)."""
 
     def test_register_capture_groups_are_not_concatenated(self):
         import os
 
-        pyshark = pytest.importorskip("pyshark")
+        pyshark = require_import("pyshark")
         from oida.pcap.pim import PIMPassiveListener
 
         root = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
         cap_path = os.path.join(root, "fixtures", "pcap", "pim", "wireshark_pim_register.cap")
         if not os.path.exists(cap_path):
-            pytest.skip("fixture missing")
+            require_service(f"fixture missing: {cap_path}")
 
         listener = PIMPassiveListener(interface="lo")
         cap = pyshark.FileCapture(cap_path, display_filter="pim", use_ek=True)

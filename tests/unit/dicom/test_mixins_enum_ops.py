@@ -22,27 +22,16 @@ from datetime import datetime, timedelta
 from pathlib import Path
 from unittest.mock import Mock
 
-import pytest
+from tests.service_gate import require_import
 
-try:
-    import pynetdicom  # noqa: F401
-    from pydicom.dataset import Dataset
-
-    _PYNETDICOM_AVAILABLE = True
-except ImportError:
-    _PYNETDICOM_AVAILABLE = False
-
+require_import(
+    "pynetdicom", reason="pynetdicom not installed; install via `pip install -e .[dicom]`"
+)
+from pydicom.dataset import Dataset
 
 # Reuse the construction helper / fixtures from the sibling scanner suite so the
 # NXC object is built WITHOUT triggering proto_flow (no real socket opened).
 from .test_scanner import _make_dicom_instance
-
-pytestmark = [
-    pytest.mark.skipif(
-        not _PYNETDICOM_AVAILABLE,
-        reason="pynetdicom not installed; install via `pip install -e .[dicom]`",
-    ),
-]
 
 
 # ---------------------------------------------------------------------------

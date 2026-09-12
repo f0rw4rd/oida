@@ -31,6 +31,13 @@
 #   ./scripts/run-all-tests.sh integration -- -x --lf  # stop at first fail, last-failed
 #   ./scripts/run-all-tests.sh unit --coverage         # unit coverage slice
 #
+# Strict mode (default): a missing mock, missing optional dependency, missing
+# native lib, or unhealthy container makes the depending test FAIL, not skip —
+# so the suite can't go green while whole protocols are silently untested. To
+# run a subset locally without the full mock+dependency matrix, set
+# OIDA_SKIP_MISSING_SERVICES=1 to turn those failures back into skips. This
+# runner intentionally leaves that var unset (CI runs strict).
+#
 # Exit code: 0 only if every lane that ran passed.
 
 set -uo pipefail
@@ -55,6 +62,13 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 rc=0
+
+# Announce the availability-gate mode so a green/red run is unambiguous.
+if [[ -n "${OIDA_SKIP_MISSING_SERVICES:-}" ]]; then
+    echo -e "${YELLOW}OIDA_SKIP_MISSING_SERVICES set — missing mocks/deps will SKIP (non-strict).${NC}"
+else
+    echo -e "${BLUE}Strict mode: missing mocks/deps FAIL (set OIDA_SKIP_MISSING_SERVICES=1 to skip instead).${NC}"
+fi
 
 # Per-lane selection. unit/integration keep the addopts default marker
 # (`not network`); coverage keeps its `coverage` marker. A user -m is ANDed with

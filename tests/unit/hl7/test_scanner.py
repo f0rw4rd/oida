@@ -18,23 +18,13 @@ import unittest
 from unittest.mock import Mock, patch
 import socket
 
-import pytest
 
 from tests.unit.hl7.conftest import _make_hl7_instance
+from tests.service_gate import require_import
 
-try:
-    import hl7apy  # noqa: F401
-
-    _HL7APY_AVAILABLE = True
-except ImportError:
-    _HL7APY_AVAILABLE = False
-
-# Most tests construct real HL7 messages via hl7apy; skip cleanly
+# Most tests construct real HL7 messages via hl7apy; gate cleanly
 # when the optional dep is missing.
-pytestmark = pytest.mark.skipif(
-    not _HL7APY_AVAILABLE,
-    reason="hl7apy not installed; install via `pip install -e .[hl7]`",
-)
+require_import("hl7apy", reason="hl7apy not installed; install via `pip install -e .[hl7]`")
 
 
 # MLLP framing characters

@@ -42,6 +42,8 @@ guard used elsewhere in this codebase (see ftp.py, pop3.py, telnet.py).
 """
 
 import pytest
+
+from tests.service_gate import require_service
 from scapy.all import IP, TCP, Raw, wrpcap
 
 from .conftest import _ek_mode_available, _skip_unless_pyshark
@@ -202,7 +204,7 @@ def test_finding1_scram_mechanism_name_never_harvested_ek_mode(tmp_path):
     """REFUTED: no credential secret equals the SASL mechanism name (EK mode)."""
     _skip_unless_pyshark()
     if not _ek_mode_available:
-        pytest.skip("pyshark fork without use_ek support")
+        require_service("pyshark fork without use_ek support")
 
     listener = _run_scram_pcap(tmp_path, use_ek=True)
 

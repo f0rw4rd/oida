@@ -14,6 +14,8 @@ import socket
 import threading
 import pytest
 
+from tests.service_gate import require_service
+
 
 # ---------------------------------------------------------------------------
 # Mark all tests in this module with "ocpp" marker
@@ -311,7 +313,7 @@ def ocpp_server():
     try:
         import websockets  # noqa: F401
     except ImportError:
-        pytest.skip("websockets library not installed")
+        require_service("websockets library not installed")
 
     server = MockOCPPServer()
     server.start()

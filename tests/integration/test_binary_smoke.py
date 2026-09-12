@@ -18,6 +18,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.service_gate import require_service
+
 # All protocol subcommands exposed by the CLI.
 # NOTE: snap7 is exposed as "s7" in the CLI, so use that name here.
 ALL_PROTOCOLS = [
@@ -300,4 +302,4 @@ class TestBinarySmoke:
                 data = json.loads(stdout)
                 assert isinstance(data, (dict, list))
             else:
-                pytest.skip("No JSON output produced (connection refused, no file written)")
+                require_service("No JSON output produced (connection refused, no file written)")

@@ -19,6 +19,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.service_gate import require_service
+
 from oida.protocols.pcap.scanner import PcapScanner
 
 from .conftest import _pcap_path, _skip_unless_pyshark
@@ -36,7 +38,7 @@ def test_rip_netmd5_matches_jtr_vector_and_cracks():
     _skip_unless_pyshark()
     pcap = _pcap_path("rip", "oida_rip_md5.pcap")
     if not os.path.exists(pcap):
-        pytest.skip(f"fixture missing: {pcap}")
+        require_service(f"fixture missing: {pcap}")
     with tempfile.TemporaryDirectory() as tmp:
         scanner = PcapScanner(
             str(pcap), args={"protocols": "rip", "hashcat": True, "output_dir": tmp}

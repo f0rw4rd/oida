@@ -13,6 +13,7 @@ Skips SSRF, path traversal, logic flaws, crypto weaknesses, auth bypasses.
 import pytest
 
 from oida.fuzz.protocols import PROTOCOL_FUZZERS
+from tests.service_gate import require_service
 
 pytestmark = pytest.mark.core
 
@@ -406,7 +407,7 @@ def test_critical_features_covered(protocol_name):
     """All critical fuzzer-relevant features have at least one covering request."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     request_names = [r.name for r in requests]
@@ -443,7 +444,7 @@ def test_no_empty_request_list(protocol_name):
     """Protocol fuzzers must have at least one request definition."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     assert len(requests) > 0, (
@@ -463,7 +464,7 @@ class TestDNSCritical:
     def test_dns_covers_standard_query_types(self):
         fuzzer_class = PROTOCOL_FUZZERS.get("dns")
         if fuzzer_class is None:
-            pytest.skip("dns not available")
+            require_service("dns not available")
 
         requests = fuzzer_class.get_request_definitions()
         names = [r.name.lower() for r in requests]
@@ -488,7 +489,7 @@ class TestDNSCritical:
     def test_dns_covers_dnssec(self):
         fuzzer_class = PROTOCOL_FUZZERS.get("dns")
         if fuzzer_class is None:
-            pytest.skip("dns not available")
+            require_service("dns not available")
 
         requests = fuzzer_class.get_request_definitions()
         names = [r.name.lower() for r in requests]
@@ -503,7 +504,7 @@ class TestHTTP2Critical:
     def test_http2_rapid_reset(self):
         fuzzer_class = PROTOCOL_FUZZERS.get("http2")
         if fuzzer_class is None:
-            pytest.skip("http2 not available")
+            require_service("http2 not available")
 
         requests = fuzzer_class.get_request_definitions()
         names = [r.name.lower() for r in requests]
@@ -516,7 +517,7 @@ class TestHTTP2Critical:
     def test_http2_continuation(self):
         fuzzer_class = PROTOCOL_FUZZERS.get("http2")
         if fuzzer_class is None:
-            pytest.skip("http2 not available")
+            require_service("http2 not available")
 
         requests = fuzzer_class.get_request_definitions()
         names = [r.name.lower() for r in requests]
@@ -533,7 +534,7 @@ class TestMQTTCritical:
     def test_mqtt_has_auth_category(self):
         fuzzer_class = PROTOCOL_FUZZERS.get("mqtt")
         if fuzzer_class is None:
-            pytest.skip("mqtt not available")
+            require_service("mqtt not available")
 
         requests = fuzzer_class.get_request_definitions()
         cats = {r.category for r in requests}
@@ -542,7 +543,7 @@ class TestMQTTCritical:
     def test_mqtt_has_boundary_category(self):
         fuzzer_class = PROTOCOL_FUZZERS.get("mqtt")
         if fuzzer_class is None:
-            pytest.skip("mqtt not available")
+            require_service("mqtt not available")
 
         requests = fuzzer_class.get_request_definitions()
         cats = {r.category for r in requests}
@@ -555,7 +556,7 @@ class TestSNMPCritical:
     def test_snmpv1_has_get_request(self):
         fuzzer_class = PROTOCOL_FUZZERS.get("snmpv1")
         if fuzzer_class is None:
-            pytest.skip("snmpv1 not available")
+            require_service("snmpv1 not available")
 
         requests = fuzzer_class.get_request_definitions()
         names = [r.name.lower() for r in requests]
@@ -565,7 +566,7 @@ class TestSNMPCritical:
     def test_snmpv1_has_set_request(self):
         fuzzer_class = PROTOCOL_FUZZERS.get("snmpv1")
         if fuzzer_class is None:
-            pytest.skip("snmpv1 not available")
+            require_service("snmpv1 not available")
 
         requests = fuzzer_class.get_request_definitions()
         names = [r.name.lower() for r in requests]
@@ -575,7 +576,7 @@ class TestSNMPCritical:
     def test_snmpv2c_has_getbulk(self):
         fuzzer_class = PROTOCOL_FUZZERS.get("snmpv2c")
         if fuzzer_class is None:
-            pytest.skip("snmpv2c not available")
+            require_service("snmpv2c not available")
 
         requests = fuzzer_class.get_request_definitions()
         names = [r.name.lower() for r in requests]
@@ -609,7 +610,7 @@ class TestLengthFieldCoverage:
         """Protocol must have at least one overflow/boundary request."""
         fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
         if fuzzer_class is None:
-            pytest.skip(f"{protocol_name} not available")
+            require_service(f"{protocol_name} not available")
 
         requests = fuzzer_class.get_request_definitions()
         names = [r.name.lower() for r in requests]
@@ -734,7 +735,7 @@ def test_transport_cve_covered(protocol_name, cve_desc, substrings):
     """Transport/network fuzzer covers wire-level CVE pattern."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available")
+        require_service(f"{protocol_name} not available")
 
     requests = fuzzer_class.get_request_definitions()
     request_names = [r.name for r in requests]

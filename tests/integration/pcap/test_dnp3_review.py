@@ -23,6 +23,8 @@ import subprocess
 
 import pytest
 
+from tests.service_gate import require_service
+
 from .conftest import _pcap_path, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
@@ -60,7 +62,7 @@ def _tshark_iin_values(pcap_path):
         timeout=60,
     )
     if proc.returncode != 0:
-        pytest.skip("tshark could not read the dnp3 fixture")
+        require_service("tshark could not read the dnp3 fixture")
     out = set()
     for line in proc.stdout.split("\n"):
         line = line.strip()
@@ -120,8 +122,7 @@ class TestDNP3IINParsedInXmlMode:
         }
         missing = expected - parsed
         assert not missing, (
-            f"IIN values tshark reports but the listener dropped: "
-            f"{sorted(hex(v) for v in missing)}"
+            f"IIN values tshark reports but the listener dropped: {sorted(hex(v) for v in missing)}"
         )
 
 

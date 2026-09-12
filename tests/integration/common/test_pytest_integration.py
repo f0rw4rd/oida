@@ -9,15 +9,15 @@ import socket
 import sys
 from pathlib import Path
 
-# Try to import docker-py, skip tests if not available or shadowed by local docker/ dir
+from tests.service_gate import require_service
+
+# Try to import docker-py, gate tests if not available or shadowed by local docker/ dir
 try:
     import docker
 
     docker.from_env  # Check if this is the real docker-py
 except (ImportError, AttributeError):
-    pytest.skip(
-        "docker-py not available (possibly shadowed by local docker/ dir)", allow_module_level=True
-    )
+    require_service("docker-py not available (possibly shadowed by local docker/ dir)")
 
 # Add OIDA to path
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -79,7 +79,7 @@ def mock_service():
     except pytest.skip.Exception:
         raise
     except Exception as e:
-        pytest.skip(
+        require_service(
             f"Legacy monolithic mock container unavailable ({e}); "
             "per-protocol test_<proto>_integration.py suites cover these scanners"
         )
@@ -286,7 +286,7 @@ class TestMMS:
 
         # MMS connection may have dependency issues
         if "error" in result and "missing_dependencies" in result["error"]:
-            pytest.skip("MMS dependencies not available")
+            require_service("MMS dependencies not available")
 
     def test_mms_logical_devices(self, mock_service, mock_host):
         """Test MMS logical device discovery"""

@@ -29,13 +29,13 @@ import time
 from contextlib import contextmanager
 from pathlib import Path
 
-import pytest
+from tests.service_gate import require_import, require_service
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 MOCK_SCRIPT = REPO_ROOT / "docker" / "mocks" / "services" / "opcua" / "mock" / "opcua_server.py"
 
 # The mock server needs asyncua; so do the direct-client assertions.
-pytest.importorskip("asyncua", reason="asyncua not installed")
+require_import("asyncua", reason="asyncua not installed")
 
 
 def _free_port() -> int:
@@ -65,7 +65,7 @@ def _mock_server(cert_mode: str = "reject", extra_env: dict = None):
     other mock env vars (e.g. OPCUA_AUTH/OPCUA_SECURITY for the app-cert path).
     """
     if not MOCK_SCRIPT.exists():
-        pytest.skip(f"Mock server script not found: {MOCK_SCRIPT}")
+        require_service(f"Mock server script not found: {MOCK_SCRIPT}")
 
     port = _free_port()
     cert_dir = tempfile.mkdtemp(prefix=f"opcua_{cert_mode}_certs_")
@@ -94,7 +94,7 @@ def _mock_server(cert_mode: str = "reject", extra_env: dict = None):
             proc.terminate()
             log_file.flush()
             tail = Path(log_file.name).read_text(errors="replace")[-2000:]
-            pytest.skip(f"Mock OPC UA server ({cert_mode}) failed to start.\nLog tail:\n{tail}")
+            require_service(f"Mock OPC UA server ({cert_mode}) failed to start.\nLog tail:\n{tail}")
 
         url = f"opc.tcp://localhost:{port}/freeopcua/server/"
         yield url, cert_dir

@@ -16,6 +16,7 @@ import pytest
 
 from oida.fuzz.protocols import PROTOCOL_FUZZERS
 from oida.fuzz.core.base_fuzzer import CommonState
+from tests.service_gate import require_service
 
 pytestmark = pytest.mark.core
 
@@ -122,7 +123,7 @@ def test_stateful_protocol_has_state_requirements(protocol_name, state_config):
     """Stateful protocols must have at least one request with requires_state."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available")
+        require_service(f"{protocol_name} not available")
 
     requests, states_required, _ = _get_state_info(protocol_name)
 
@@ -142,7 +143,7 @@ def test_expected_states_referenced(protocol_name, state_config):
     """All expected states should be referenced by at least one request."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available")
+        require_service(f"{protocol_name} not available")
 
     _, states_required, _ = _get_state_info(protocol_name)
     expected_states = state_config["expected_states"]
@@ -167,7 +168,7 @@ def test_pre_auth_requests_exist(protocol_name, state_config):
     """Protocols with auth must have pre-auth requests for unauthenticated testing."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available")
+        require_service(f"{protocol_name} not available")
 
     requests = fuzzer_class.get_request_definitions()
     pre_auth_states = {"PRE_AUTH", "CONNECTED", "ANY"}
@@ -206,7 +207,7 @@ def test_post_auth_requests_exist(protocol_name, state_config):
     """Protocols with auth must have post-auth requests."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available")
+        require_service(f"{protocol_name} not available")
 
     requests = fuzzer_class.get_request_definitions()
     post_auth_states = {"AUTHENTICATED", "ANY"}
@@ -254,7 +255,7 @@ def test_stateful_fuzzer_is_subclass(protocol_name):
 
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available")
+        require_service(f"{protocol_name} not available")
 
     assert issubclass(fuzzer_class, StatefulFuzzer), (
         f"{protocol_name} should be a StatefulFuzzer subclass but is {fuzzer_class.__bases__}"
@@ -270,7 +271,7 @@ def test_stateful_fuzzer_has_multiple_state_phases(protocol_name):
     """StatefulFuzzer subclasses should have requests in 2+ state phases."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available")
+        require_service(f"{protocol_name} not available")
 
     _, states_required, _ = _get_state_info(protocol_name)
 
@@ -302,7 +303,7 @@ def test_non_stateful_state_references_are_valid(protocol_name):
     """Non-StatefulFuzzer protocols with state refs should use valid state strings."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available")
+        require_service(f"{protocol_name} not available")
 
     _, states_required, _ = _get_state_info(protocol_name)
 
@@ -399,7 +400,7 @@ class TestTCPStateCoverage:
         """TCP fuzzer should have requests with requires_state."""
         fuzzer_class = PROTOCOL_FUZZERS.get("tcp")
         if fuzzer_class is None:
-            pytest.skip("tcp not available")
+            require_service("tcp not available")
 
         requests = fuzzer_class.get_request_definitions()
         stateful = [r for r in requests if r.requires_state]
@@ -412,7 +413,7 @@ class TestTCPStateCoverage:
         """Key TCP states should be referenced by at least one request."""
         fuzzer_class = PROTOCOL_FUZZERS.get("tcp")
         if fuzzer_class is None:
-            pytest.skip("tcp not available")
+            require_service("tcp not available")
 
         requests = fuzzer_class.get_request_definitions()
         referenced_states = {
@@ -430,7 +431,7 @@ class TestTCPStateCoverage:
         """ESTABLISHED state should have multiple requests (data transfer phase)."""
         fuzzer_class = PROTOCOL_FUZZERS.get("tcp")
         if fuzzer_class is None:
-            pytest.skip("tcp not available")
+            require_service("tcp not available")
 
         requests = fuzzer_class.get_request_definitions()
         established_requests = [r for r in requests if str(r.requires_state) == "ESTABLISHED"]
@@ -444,7 +445,7 @@ class TestTCPStateCoverage:
         """CLOSED state should have at least one SYN request."""
         fuzzer_class = PROTOCOL_FUZZERS.get("tcp")
         if fuzzer_class is None:
-            pytest.skip("tcp not available")
+            require_service("tcp not available")
 
         requests = fuzzer_class.get_request_definitions()
         closed_requests = [r for r in requests if str(r.requires_state) == "CLOSED"]
@@ -460,7 +461,7 @@ class TestTCPStateCoverage:
         """Unreferenced states should be in the known passive set."""
         fuzzer_class = PROTOCOL_FUZZERS.get("tcp")
         if fuzzer_class is None:
-            pytest.skip("tcp not available")
+            require_service("tcp not available")
 
         requests = fuzzer_class.get_request_definitions()
         referenced_states = {
@@ -489,7 +490,7 @@ class TestStatelessProtocolsHaveNoStateRequirements:
         """Stateless layer 3/4 protocols should not require specific states."""
         fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
         if fuzzer_class is None:
-            pytest.skip(f"{protocol_name} not available")
+            require_service(f"{protocol_name} not available")
 
         requests = fuzzer_class.get_request_definitions()
         stateful = [r for r in requests if r.requires_state]
@@ -522,7 +523,7 @@ class TestICSStateCoverage:
 
         fuzzer_class = PROTOCOL_FUZZERS.get("iec104")
         if fuzzer_class is None:
-            pytest.skip("iec104 not available")
+            require_service("iec104 not available")
 
         assert issubclass(fuzzer_class, StatefulFuzzer), (
             "IEC 104 should be a StatefulFuzzer subclass for STARTDT/STOPDT handling"
@@ -532,7 +533,7 @@ class TestICSStateCoverage:
         """IEC 104 must have requests that run in CONNECTED state."""
         fuzzer_class = PROTOCOL_FUZZERS.get("iec104")
         if fuzzer_class is None:
-            pytest.skip("iec104 not available")
+            require_service("iec104 not available")
 
         requests = fuzzer_class.get_request_definitions()
         connected_reqs = [
@@ -549,7 +550,7 @@ class TestICSStateCoverage:
         """IEC 104 should have requests usable in ANY state for general fuzzing."""
         fuzzer_class = PROTOCOL_FUZZERS.get("iec104")
         if fuzzer_class is None:
-            pytest.skip("iec104 not available")
+            require_service("iec104 not available")
 
         requests = fuzzer_class.get_request_definitions()
         any_reqs = [
@@ -564,7 +565,7 @@ class TestICSStateCoverage:
         """OPC UA must have requests across all 4 connection phases."""
         fuzzer_class = PROTOCOL_FUZZERS.get("opcua")
         if fuzzer_class is None:
-            pytest.skip("opcua not available")
+            require_service("opcua not available")
 
         requests = fuzzer_class.get_request_definitions()
         states = set()
@@ -588,7 +589,7 @@ class TestICSStateCoverage:
         """SESSION_ACTIVE should have the most requests (main operation phase)."""
         fuzzer_class = PROTOCOL_FUZZERS.get("opcua")
         if fuzzer_class is None:
-            pytest.skip("opcua not available")
+            require_service("opcua not available")
 
         requests = fuzzer_class.get_request_definitions()
         session_reqs = [r for r in requests if str(r.requires_state) == "SESSION_ACTIVE"]
@@ -602,7 +603,7 @@ class TestICSStateCoverage:
         """MMS must have requests across CONNECTED, COTP_ESTABLISHED, MMS_ASSOCIATED."""
         fuzzer_class = PROTOCOL_FUZZERS.get("mms")
         if fuzzer_class is None:
-            pytest.skip("mms not available")
+            require_service("mms not available")
 
         requests = fuzzer_class.get_request_definitions()
         states = set()
@@ -622,7 +623,7 @@ class TestICSStateCoverage:
         """MMS_ASSOCIATED phase should have read, write, and control requests."""
         fuzzer_class = PROTOCOL_FUZZERS.get("mms")
         if fuzzer_class is None:
-            pytest.skip("mms not available")
+            require_service("mms not available")
 
         requests = fuzzer_class.get_request_definitions()
         assoc_reqs = [r for r in requests if str(r.requires_state) == "MMS_ASSOCIATED"]
@@ -641,7 +642,7 @@ class TestICSStateCoverage:
         """ICS protocols without state machines should have no requires_state."""
         fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
         if fuzzer_class is None:
-            pytest.skip(f"{protocol_name} not available")
+            require_service(f"{protocol_name} not available")
 
         requests = fuzzer_class.get_request_definitions()
         stateful = [r for r in requests if r.requires_state]

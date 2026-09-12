@@ -10,6 +10,8 @@ protocol responses.
 
 import pytest
 
+from tests.service_gate import require_import, require_service
+
 from .conftest import FuzzTimeout, create_fuzzer_config, run_fuzz_with_timeout
 from .mock_servers import (
     iec104_server,
@@ -32,13 +34,13 @@ class TestModbusMonitorBaseline:
 
     def test_monitor_runs_checks(self, tmp_path):
         """Monitor should perform at least one check during a short fuzz run."""
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.core.config import MonitorConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
         if not fuzzer_class:
-            pytest.skip("Modbus fuzzer not available")
+            require_service("Modbus fuzzer not available")
 
         with modbus_server() as server:
             config = create_fuzzer_config(
@@ -57,7 +59,7 @@ class TestModbusMonitorBaseline:
             except (FuzzTimeout, ConnectionError, OSError):
                 pass
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
             # The monitor should have run at least one check
             if hasattr(fuzzer, "monitor") and fuzzer.monitor:
@@ -76,13 +78,13 @@ class TestIEC104MonitorBaseline:
     """Verify IEC104Monitor works against a real IEC 104 server."""
 
     def test_monitor_runs_checks(self, tmp_path):
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.core.config import MonitorConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("iec104")
         if not fuzzer_class:
-            pytest.skip("IEC 104 fuzzer not available")
+            require_service("IEC 104 fuzzer not available")
 
         with iec104_server() as server:
             config = create_fuzzer_config(
@@ -101,7 +103,7 @@ class TestIEC104MonitorBaseline:
             except (FuzzTimeout, ConnectionError, OSError):
                 pass
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
             if hasattr(fuzzer, "monitor") and fuzzer.monitor:
                 assert fuzzer.monitor.actual_check_count >= 1, (
@@ -119,13 +121,13 @@ class TestMMSMonitorBaseline:
     """Verify MMSMonitor works against a real MMS server."""
 
     def test_monitor_runs_checks(self, tmp_path):
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.core.config import MonitorConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("mms")
         if not fuzzer_class:
-            pytest.skip("MMS fuzzer not available")
+            require_service("MMS fuzzer not available")
 
         with mms_server() as server:
             config = create_fuzzer_config(
@@ -144,7 +146,7 @@ class TestMMSMonitorBaseline:
             except (FuzzTimeout, ConnectionError, OSError):
                 pass
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
             if hasattr(fuzzer, "monitor") and fuzzer.monitor:
                 assert fuzzer.monitor.actual_check_count >= 1, (
@@ -162,13 +164,13 @@ class TestMQTTMonitorBaseline:
     """Verify MQTTMonitor works against a real MQTT broker."""
 
     def test_monitor_runs_checks(self, tmp_path):
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.core.config import MonitorConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("mqtt")
         if not fuzzer_class:
-            pytest.skip("MQTT fuzzer not available")
+            require_service("MQTT fuzzer not available")
 
         with mqtt_server() as server:
             config = create_fuzzer_config(
@@ -187,7 +189,7 @@ class TestMQTTMonitorBaseline:
             except (FuzzTimeout, ConnectionError, OSError):
                 pass
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
             if hasattr(fuzzer, "monitor") and fuzzer.monitor:
                 assert fuzzer.monitor.actual_check_count >= 1, (
@@ -205,13 +207,13 @@ class TestOPCUAMonitorBaseline:
     """Verify OPCUAMonitor works against a real OPC UA server."""
 
     def test_monitor_runs_checks(self, tmp_path):
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.core.config import MonitorConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("opcua")
         if not fuzzer_class:
-            pytest.skip("OPC UA fuzzer not available")
+            require_service("OPC UA fuzzer not available")
 
         with opcua_server() as server:
             config = create_fuzzer_config(
@@ -230,7 +232,7 @@ class TestOPCUAMonitorBaseline:
             except (FuzzTimeout, ConnectionError, OSError):
                 pass
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
             if hasattr(fuzzer, "monitor") and fuzzer.monitor:
                 assert fuzzer.monitor.actual_check_count >= 1, (

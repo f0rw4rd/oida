@@ -14,9 +14,9 @@ and ``get_interface_networks``) are patched, because they query real interfaces.
 
 from unittest.mock import MagicMock, patch
 
-import pytest
+from tests.service_gate import require_import
 
-scapy_all = pytest.importorskip("scapy.all")
+scapy_all = require_import("scapy.all")
 
 from scapy.all import BOOTP, DHCP, IP, UDP, Ether  # noqa: E402
 

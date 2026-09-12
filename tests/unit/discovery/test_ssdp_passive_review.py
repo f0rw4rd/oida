@@ -10,9 +10,10 @@ import threading
 
 import pytest
 
+from tests.service_gate import require_import
 from oida.protocols.discovery.ssdp import SSDPPassiveListener
 
-scapy_all = pytest.importorskip("scapy.all")
+scapy_all = require_import("scapy.all")
 Ether = scapy_all.Ether
 IP = scapy_all.IP
 UDP = scapy_all.UDP

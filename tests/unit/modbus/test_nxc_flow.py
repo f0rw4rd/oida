@@ -16,14 +16,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-try:
-    import pymodbus  # noqa: F401
+from tests.service_gate import require_import
 
-    PYMODBUS_AVAILABLE = True
-except ImportError:
-    PYMODBUS_AVAILABLE = False
-
-pytestmark = pytest.mark.skipif(not PYMODBUS_AVAILABLE, reason="pymodbus library not installed")
+require_import("pymodbus", reason="pymodbus library not installed")
 
 
 class FakeLogger:

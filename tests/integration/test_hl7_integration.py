@@ -54,7 +54,8 @@ import pytest
 from typing import Optional
 
 from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST, check_port_open
+from .conftest import MOCK_HOST
+from tests.service_gate import require_port
 
 
 # ---------------------------------------------------------------------------
@@ -1821,8 +1822,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
         When --tls is used, the CRYPTO finding should NOT appear.
         Tests against the Python TLS mock on port 2576.
         """
-        if not check_port_open(MOCK_HOST, PYTHON_TLS_PORT, timeout=2):
-            pytest.skip("HL7 TLS mock not available on port 2576")
+        require_port(MOCK_HOST, PYTHON_TLS_PORT, "HL7 TLS mock")
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -2593,8 +2593,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
     @pytest.mark.security
     def test_tls_connection(self, cli_runner, target):
         """Test TLS/MLLPS connection to Python mock [Category A]"""
-        if not check_port_open(MOCK_HOST, PYTHON_TLS_PORT, timeout=2):
-            pytest.skip("HL7 TLS mock not available on port 2576")
+        require_port(MOCK_HOST, PYTHON_TLS_PORT, "HL7 TLS mock")
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -2617,8 +2616,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
     @pytest.mark.security
     def test_tls_certificate_finding(self, cli_runner, target):
         """Test that self-signed cert produces security finding [Category A]"""
-        if not check_port_open(MOCK_HOST, PYTHON_TLS_PORT, timeout=2):
-            pytest.skip("HL7 TLS mock not available on port 2576")
+        require_port(MOCK_HOST, PYTHON_TLS_PORT, "HL7 TLS mock")
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -2902,8 +2900,7 @@ class TestHl7PythonMock(BaseProtocolIntegrationTest):
 
     @pytest.fixture(autouse=True)
     def _check_python_mock(self):
-        if not check_port_open(MOCK_HOST, PYTHON_MOCK_PORT, timeout=2):
-            pytest.skip("Python HL7 mock not available on port 2575")
+        require_port(MOCK_HOST, PYTHON_MOCK_PORT, "Python HL7 mock")
 
     def get_target(self, host: str = MOCK_HOST, port: Optional[int] = None) -> str:
         return host
@@ -2980,8 +2977,7 @@ class TestHl7PythonMock(BaseProtocolIntegrationTest):
 
     def test_python_mock_tls(self, cli_runner, target):
         """Test TLS/MLLPS on Python mock port 2576 [Category A]"""
-        if not check_port_open(MOCK_HOST, PYTHON_TLS_PORT, timeout=2):
-            pytest.skip("Python HL7 TLS not available on port 2576")
+        require_port(MOCK_HOST, PYTHON_TLS_PORT, "Python HL7 TLS mock")
         result = cli_runner.run(
             self.protocol_name,
             target,

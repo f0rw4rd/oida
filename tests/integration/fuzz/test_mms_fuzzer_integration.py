@@ -17,6 +17,8 @@ import socket
 import pytest
 from unittest.mock import patch, MagicMock
 
+from tests.service_gate import require_import
+
 from .conftest import require_docker_mock
 
 # Mark all tests in this module. Shares the capped libiec61850 MMS server
@@ -281,7 +283,7 @@ class TestMMSFuzzerInitialization:
 
     def test_fuzzer_initializes_with_mock_factory(self, mms_fuzzer_config, mock_connection_factory):
         """Fuzzer creates without error using mock factory."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
 
@@ -293,7 +295,7 @@ class TestMMSFuzzerInitialization:
         """Fuzzer creates without error when mock server is available."""
         require_docker_mock("mms")
 
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
         from oida.fuzz.core.connections.base import MockConnectionFactory
@@ -303,7 +305,7 @@ class TestMMSFuzzerInitialization:
 
     def test_fuzzer_defines_protocol(self, mms_fuzzer_config, mock_connection_factory):
         """_define_protocol() runs without errors."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
 
@@ -337,7 +339,7 @@ class TestMMSFuzzerExecution:
         """Test running MMS_Baseline requests against mock."""
         require_docker_mock("mms")
 
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
         from oida.fuzz.core.connections.base import MockConnectionFactory
@@ -363,7 +365,7 @@ class TestMMSFuzzerExecution:
 
     def test_mms_buffer_overflow_fuzz(self, mms_fuzzer_config, mock_connection_factory):
         """Test MMS_Buffer_Overflow request group definition."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
 
@@ -385,7 +387,7 @@ class TestMMSFuzzerExecution:
 
     def test_mms_asn1_attacks_fuzz(self, mms_fuzzer_config, mock_connection_factory):
         """Test MMS_ASN1_Attacks request group definition."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
 
@@ -406,7 +408,7 @@ class TestMMSFuzzerExecution:
 
     def test_mms_osi_layer_fuzz(self, mms_fuzzer_config, mock_connection_factory):
         """Test MMS_OSI_Layer request group definition."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
 
@@ -427,7 +429,7 @@ class TestMMSFuzzerExecution:
 
     def test_mms_write_operations_fuzz(self, mms_fuzzer_config, mock_connection_factory):
         """Test MMS_Write_Operations request group definition."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
 
@@ -448,7 +450,7 @@ class TestMMSFuzzerExecution:
 
     def test_mms_read_operations_fuzz(self, mms_fuzzer_config, mock_connection_factory):
         """Test MMS_Read_Operations request group definition."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
 
@@ -469,7 +471,7 @@ class TestMMSFuzzerExecution:
 
     def test_mms_invoke_id_fuzz(self, mms_fuzzer_config, mock_connection_factory):
         """Test MMS_Invoke_ID request group definition."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
 
@@ -490,7 +492,7 @@ class TestMMSFuzzerExecution:
 
     def test_mms_malformed_pdu_fuzz(self, mms_fuzzer_config, mock_connection_factory):
         """Test MMS_Malformed_PDU request group definition."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
 
@@ -520,7 +522,7 @@ class TestMMSServerInteraction:
 
     def test_fuzzer_handles_server_disconnect(self, mms_fuzzer_config, mock_connection_factory):
         """Graceful handling of server disconnects."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
 
@@ -540,7 +542,7 @@ class TestMMSServerInteraction:
 
     def test_fuzzer_handles_timeout(self, mms_fuzzer_config, mock_connection_factory):
         """Graceful handling of connection timeouts."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
 
@@ -571,7 +573,7 @@ class TestMMSOSIStackIntegration:
 
     def test_legacy_mode_disables_osi_stack(self, mms_fuzzer_config, mock_connection_factory):
         """Legacy mode disables OSI stack."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.protocols.mms import MMSFuzzer
 

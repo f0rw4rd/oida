@@ -91,6 +91,7 @@ Flag Coverage Matrix (oida ethercat -h):
 import pytest
 
 from .conftest import skip_unless_l2_docker
+from tests.service_gate import require_service
 
 
 # ---------------------------------------------------------------------------
@@ -1193,7 +1194,7 @@ class TestEtherCATDocker:
         # is no slave-count report to assert -- the scanner behaved correctly by
         # reporting it couldn't open the interface, so skip rather than fail.
         if "could not open interface" in text:
-            pytest.skip("raw-L2 bridge capture unavailable in this environment")
+            require_service("raw-L2 bridge capture unavailable in this environment")
         assert any(term in text for term in ["slaves", "scan complete", "found"]), (
             f"Expected slave count report in output: {text[:500]}"
         )

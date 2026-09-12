@@ -17,14 +17,14 @@ These drive the real listener via feed_packet() with constructed scapy
 packets -- no pcap fixture needed.
 """
 
-import pytest
+from tests.service_gate import require_import
 
 from oida.protocols.discovery.file_carving import (
     _STREAM_BUFFER_MAX,
     FileCarvingListener,
 )
 
-scapy_all = pytest.importorskip("scapy.all")
+scapy_all = require_import("scapy.all")
 IP = scapy_all.IP
 TCP = scapy_all.TCP
 Ether = scapy_all.Ether

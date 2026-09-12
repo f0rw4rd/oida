@@ -9,15 +9,10 @@ Tests the BACnet scanner module without requiring actual network connections.
 import unittest
 from unittest.mock import Mock, patch
 
-try:
-    import bacpypes3  # noqa: F401
+from tests.service_gate import require_import
 
-    _HAS_BACPYPES3 = True
-except ImportError:
-    _HAS_BACPYPES3 = False
-
-_skip_no_bacpypes3 = unittest.skipUnless(
-    _HAS_BACPYPES3, "bacpypes3 not installed (required for BACnet scanner instantiation)"
+require_import(
+    "bacpypes3", reason="bacpypes3 not installed (required for BACnet scanner instantiation)"
 )
 
 
@@ -719,7 +714,6 @@ class TestBACnetAddressFormat(unittest.TestCase):
         self.assertEqual(int(port), 47808)
 
 
-@_skip_no_bacpypes3
 class TestBACnetClassInitialization(unittest.TestCase):
     """Test BACnet class initialization and setup"""
 
@@ -801,7 +795,6 @@ class TestBACnetClassInitialization(unittest.TestCase):
         self.assertEqual(scanner.default_port, 47808)
 
 
-@_skip_no_bacpypes3
 class TestBACnetParseObjectList(unittest.TestCase):
     """Test _parse_object_list method"""
 
@@ -865,7 +858,6 @@ class TestBACnetParseObjectList(unittest.TestCase):
         self.assertEqual(result, (0, 100))
 
 
-@_skip_no_bacpypes3
 class TestBACnetDeviceDiscovery(unittest.TestCase):
     """Test device discovery logic"""
 
@@ -936,7 +928,6 @@ class TestBACnetDeviceDiscovery(unittest.TestCase):
         self.assertEqual(len(scanner.devices), 0)
 
 
-@_skip_no_bacpypes3
 class TestBACnetObjectEnumerationParsing(unittest.TestCase):
     """Test object enumeration and parsing"""
 
@@ -1026,7 +1017,6 @@ class TestBACnetObjectEnumerationParsing(unittest.TestCase):
         self.assertEqual(len(scanner.objects[1001]["analogInput"]), 2)
 
 
-@_skip_no_bacpypes3
 class TestBACnetNetworkErrorHandling(unittest.TestCase):
     """Test error handling for network failures"""
 
@@ -1117,7 +1107,6 @@ class TestBACnetNetworkErrorHandling(unittest.TestCase):
         scanner.logger.warning.assert_called()
 
 
-@_skip_no_bacpypes3
 class TestBACnetPropertyFormatting(unittest.TestCase):
     """Test property value formatting"""
 
@@ -1175,7 +1164,6 @@ class TestBACnetPropertyFormatting(unittest.TestCase):
         self.assertIn("99999", scanner.devices[1001]["vendor_name"])
 
 
-@_skip_no_bacpypes3
 class TestBACnetPrintHostInfo(unittest.TestCase):
     """Test print_host_info output"""
 
@@ -1234,7 +1222,6 @@ class TestBACnetPrintHostInfo(unittest.TestCase):
         scanner.logger.display.assert_called()
 
 
-@_skip_no_bacpypes3
 class TestBACnetExportResults(unittest.TestCase):
     """Test results export functionality"""
 
@@ -1295,7 +1282,6 @@ class TestBACnetExportResults(unittest.TestCase):
         scanner.logger.success.assert_called()
 
 
-@_skip_no_bacpypes3
 class TestBACnetApplyShortcuts(unittest.TestCase):
     """Test shortcut flag application"""
 
@@ -1375,7 +1361,6 @@ class TestBACnetApplyShortcuts(unittest.TestCase):
         self.assertTrue(scanner.args.services)
 
 
-@_skip_no_bacpypes3
 class TestBACnetHandleEnumerateProperties(unittest.TestCase):
     """Test property enumeration"""
 

@@ -15,11 +15,12 @@ from asyncua import ua
 
 from oida.protocols.opcua.helpers import _asyncua
 from oida.protocols.opcua.mixins.browse import BrowseMixin
+from tests.service_gate import require_service
 
 
 def _skip_if_no_asyncua():
     if not _asyncua.is_available:
-        raise unittest.SkipTest("asyncua not available")
+        require_service("asyncua not available")
 
 
 class _BrowseName:

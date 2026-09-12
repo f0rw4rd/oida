@@ -25,6 +25,7 @@ import pytest
 from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 from oida.fuzz.core.connections import MockConnectionFactory
 from oida.fuzz.protocols import PROTOCOL_FUZZERS
+from tests.service_gate import require_service
 
 pytestmark = pytest.mark.core
 
@@ -208,17 +209,17 @@ def _is_baseline_request(name: str) -> bool:
 def _instantiate(protocol_name: str):
     """Instantiate a fuzzer and return its session, or skip/fail appropriately."""
     if protocol_name in SKIP_PROTOCOLS:
-        pytest.skip(f"{protocol_name} requires special environment")
+        require_service(f"{protocol_name} requires special environment")
 
     cls = PROTOCOL_FUZZERS.get(protocol_name)
     if cls is None:
-        pytest.skip(f"{protocol_name} not registered")
+        require_service(f"{protocol_name} not registered")
 
     try:
         fuzzer = cls(config=_make_config(), connection_factory=MockConnectionFactory())
         return fuzzer.session
     except ImportError as exc:
-        pytest.skip(f"Missing dependency: {exc}")
+        require_service(f"Missing dependency: {exc}")
     except Exception as exc:
         pytest.fail(f"Instantiation failed for {protocol_name}: {exc}")
 

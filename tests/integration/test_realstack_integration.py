@@ -29,7 +29,9 @@ import socket
 
 import pytest
 
-from .conftest import MOCK_HOST, check_port_open
+from tests.service_gate import require_service
+
+from .conftest import MOCK_HOST
 
 pytestmark = pytest.mark.integration
 
@@ -40,10 +42,8 @@ def _require(port: int, name: str) -> None:
     hipflow maps both UDP and TCP on its host port, so a TCP probe is a valid
     liveness gate for every stack wired here.
     """
-    if not check_port_open(MOCK_HOST, port):
-        pytest.skip(
-            f"{name} real-stack mock not reachable on {MOCK_HOST}:{port} (python services.py up)"
-        )
+    s = socket.create_connection((MOCK_HOST, port), timeout=3)
+    s.close()
 
 
 def _require_udp(port: int, name: str) -> None:
@@ -63,7 +63,7 @@ def _require_udp(port: int, name: str) -> None:
         except socket.timeout:
             pass  # no reply expected — reachability is what we gate on
     except ConnectionRefusedError:
-        pytest.skip(
+        require_service(
             f"{name} real-stack mock not reachable on {MOCK_HOST}:{port}/udp (python services.py up)"
         )
     finally:

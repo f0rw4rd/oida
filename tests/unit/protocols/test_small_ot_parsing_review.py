@@ -15,6 +15,8 @@ import struct
 
 import pytest
 
+from tests.service_gate import require_import
+
 pytestmark = [pytest.mark.unit]
 
 
@@ -297,7 +299,7 @@ def test_modbus_diagnostic_register_scalar_unchanged():
 
 
 def _dnp3_scanner():
-    opendnp3 = pytest.importorskip("opendnp3", reason="yadnp3 (opendnp3) not installed")
+    opendnp3 = require_import("opendnp3", reason="yadnp3 (opendnp3) not installed")
     assert opendnp3 is not None
 
     from oida.protocols.dnp3.scanner import DNP3Scanner

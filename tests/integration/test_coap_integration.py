@@ -49,6 +49,7 @@ from typing import Optional
 
 from .base_protocol_test import BaseProtocolIntegrationTest
 from .conftest import MOCK_HOST, check_udp_port_open
+from tests.service_gate import require_service
 
 
 # ---------------------------------------------------------------------------
@@ -1642,7 +1643,7 @@ class TestCoAPLibcoapInterop:
     def test_basic_scan_libcoap(self, cli_runner):
         """Scanner discovers resources from C-based libcoap server [Category A]"""
         if not _libcoap_available():
-            pytest.skip("libcoap container not available")
+            require_service("libcoap container not available")
 
         result = cli_runner.run(
             "coap",
@@ -1672,7 +1673,7 @@ class TestCoAPLibcoapInterop:
     def test_wellknown_core_libcoap(self, cli_runner):
         """/.well-known/core from libcoap returns valid link-format [Category A]"""
         if not _libcoap_available():
-            pytest.skip("libcoap container not available")
+            require_service("libcoap container not available")
 
         result = cli_runner.run(
             "coap",
@@ -1694,7 +1695,7 @@ class TestCoAPLibcoapInterop:
     def test_libcoap_resource_read(self, cli_runner):
         """Scanner reads pre-populated resources from libcoap [Category A]"""
         if not _libcoap_available():
-            pytest.skip("libcoap container not available")
+            require_service("libcoap container not available")
 
         result = cli_runner.run(
             "coap",
@@ -1725,7 +1726,7 @@ class TestCoAPLibcoapInterop:
     def test_libcoap_put_with_confirm(self, cli_runner):
         """Scanner can PUT to libcoap server (with -e echo mode) [Category B]"""
         if not _libcoap_available():
-            pytest.skip("libcoap container not available")
+            require_service("libcoap container not available")
 
         result = cli_runner.run(
             "coap",
@@ -1757,7 +1758,7 @@ class TestCoAPLibcoapInterop:
         plus observe attempt can exceed the timeout budget.
         """
         if not _libcoap_available():
-            pytest.skip("libcoap container not available")
+            require_service("libcoap container not available")
 
         result = cli_runner.run(
             "coap",
@@ -1792,7 +1793,7 @@ class TestCoAPLibcoapInterop:
     def test_libcoap_no_lwm2m(self, cli_runner):
         """libcoap server has no LwM2M paths -- scanner handles gracefully [Category B]"""
         if not _libcoap_available():
-            pytest.skip("libcoap container not available")
+            require_service("libcoap container not available")
 
         result = cli_runner.run(
             "coap",
@@ -2020,7 +2021,7 @@ class TestCoAPDTLSCertInterop:
     def test_plain_coap_on_dtls_cert_port(self, cli_runner):
         """Plain CoAP scan against DTLS cert port fails gracefully [Category C]"""
         if not _dtls_cert_available():
-            pytest.skip("DTLS certificate container not available")
+            require_service("DTLS certificate container not available")
 
         result = cli_runner.run(
             "coap",
@@ -2058,7 +2059,7 @@ class TestCoAPDTLSCertInterop:
         X.509 certificates. The default tinydtls backend only supports PSK.
         """
         if not _dtls_cert_available():
-            pytest.skip("DTLS certificate container not available")
+            require_service("DTLS certificate container not available")
 
         import pathlib
 

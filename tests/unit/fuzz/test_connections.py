@@ -11,6 +11,8 @@ Tests cover:
 
 import pytest
 
+from tests.service_gate import require_import
+
 
 # =============================================================================
 # Test BaseConnection Interface
@@ -642,7 +644,7 @@ class TestScapyRawConnectionProtocol:
     """
 
     def _sent_packet(self, ipv6, data):
-        scapy = pytest.importorskip("scapy.all")
+        scapy = require_import("scapy.all")
         scapy.conf.verb = 0
         from src.oida.fuzz.core.connections.scapy import ScapyRawConnection
 

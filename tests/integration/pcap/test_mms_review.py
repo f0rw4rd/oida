@@ -28,6 +28,8 @@ import datetime
 
 import pytest
 
+from tests.service_gate import require_service
+
 from .conftest import _pcap_path, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
@@ -73,7 +75,7 @@ class TestHasLayerFieldXmlMode:
         """
         _skip_unless_pyshark()
         if not _ek_available():
-            pytest.skip("pyshark EK-mode fork not installed")
+            require_service("pyshark EK-mode fork not installed")
         pcap = _pcap_path(*FIXTURE)
         _, packets = _feed(pcap, use_ek=True)
         names = set()
@@ -117,7 +119,7 @@ class TestHasLayerFieldXmlMode:
         """End-to-end: the two pyshark modes must agree on operations."""
         _skip_unless_pyshark()
         if not _ek_available():
-            pytest.skip("pyshark EK-mode fork not installed")
+            require_service("pyshark EK-mode fork not installed")
         pcap = _pcap_path(*FIXTURE)
 
         xml_listener, _ = _feed(pcap, use_ek=False)

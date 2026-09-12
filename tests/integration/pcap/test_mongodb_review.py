@@ -24,6 +24,8 @@ import asyncio
 
 import pytest
 
+from tests.service_gate import require_service
+
 from .conftest import _ek_mode_available, _pcap_path, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
@@ -112,7 +114,7 @@ def test_xml_mode_agrees(listener):
     """XML mode must raise the same single alert (mode-independence)."""
     _skip_unless_pyshark()
     if not _ek_mode_available:
-        pytest.skip("pyshark EK-mode fork absent; the fixture ran in XML mode already")
+        require_service("pyshark EK-mode fork absent; the fixture ran in XML mode already")
     pcap = _pcap_path("mongodb/wireshark_mongodb.pcap")
     xml = _run_listener(pcap, use_ek=False)
     exfil = [a for a in xml._alerts if a.get("category") == "exfiltration_alert"]

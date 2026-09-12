@@ -2,11 +2,14 @@
 Tests for MDNSScanner class
 """
 
-import pytest
 from unittest.mock import MagicMock
 import threading
 
-zeroconf = pytest.importorskip("zeroconf", reason="zeroconf not installed")
+import pytest
+
+from tests.service_gate import require_import
+
+zeroconf = require_import("zeroconf", reason="zeroconf not installed")
 
 
 @pytest.fixture

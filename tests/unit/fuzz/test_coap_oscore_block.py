@@ -23,6 +23,7 @@ import pytest
 from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 from oida.fuzz.core.connections import MockConnectionFactory
 from oida.fuzz.protocols import PROTOCOL_FUZZERS
+from tests.service_gate import require_service
 
 pytestmark = pytest.mark.core
 
@@ -51,7 +52,7 @@ def _make_config(**overrides):
 def _build(config):
     fuzzer_class = PROTOCOL_FUZZERS["coap"]
     if fuzzer_class is None:
-        pytest.skip("coap fuzzer not available (optional dependency)")
+        require_service("coap fuzzer not available (optional dependency)")
     return fuzzer_class(config=config, connection_factory=MockConnectionFactory())
 
 

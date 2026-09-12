@@ -8,6 +8,8 @@ import importlib
 
 import pytest
 
+from tests.service_gate import require_service
+
 pytestmark = pytest.mark.core
 
 # ---------------------------------------------------------------------------
@@ -108,7 +110,7 @@ def test_protocol_package_importable(proto):
         # SyntaxError would propagate (not caught here) — which is the point.
         # "cannot import name 'X' from 'oida...'" is a cascading failure from
         # a third-party dep not being installed, so we skip those too.
-        pytest.skip(f"Optional dependency not installed: {exc}")
+        require_service(f"Optional dependency not installed: {exc}")
 
 
 # ---------------------------------------------------------------------------

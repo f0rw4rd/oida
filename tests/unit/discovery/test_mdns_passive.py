@@ -12,7 +12,7 @@ the direct-feed test hook.
 import threading
 from unittest.mock import MagicMock, patch
 
-import pytest
+from tests.service_gate import require_import
 
 from oida.protocols.discovery.mdns import (
     MDNS_PORT,
@@ -21,7 +21,7 @@ from oida.protocols.discovery.mdns import (
     MDNSScanner,
 )
 
-scapy = pytest.importorskip("scapy", reason="scapy not installed")
+scapy = require_import("scapy", reason="scapy not installed")
 
 
 # ---------------------------------------------------------------------------

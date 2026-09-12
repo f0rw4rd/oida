@@ -12,6 +12,8 @@ Each test class skips automatically if its Docker mock is unavailable.
 
 import pytest
 
+from tests.service_gate import require_import, require_service
+
 from .conftest import (
     create_fuzzer_config,
     require_docker_mock,
@@ -29,12 +31,12 @@ pytestmark = pytest.mark.integration_fuzzers
 
 def _get_fuzzer_class(protocol_name):
     """Get fuzzer class for a protocol, skipping if unavailable."""
-    pytest.importorskip("boofuzz")
+    require_import("boofuzz")
     from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if not fuzzer_class:
-        pytest.skip(f"{protocol_name} fuzzer not available")
+        require_service(f"{protocol_name} fuzzer not available")
     return fuzzer_class
 
 
@@ -69,7 +71,7 @@ def _create_real_fuzzer(protocol_name, port, session_path, **protocol_options):
         _ = fuzzer.session
         return fuzzer
     except ImportError as e:
-        pytest.skip(f"Missing dependency: {e}")
+        require_service(f"Missing dependency: {e}")
 
 
 def _get_inner_state_machine(fuzzer):

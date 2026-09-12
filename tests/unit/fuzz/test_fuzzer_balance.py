@@ -15,6 +15,7 @@ Thresholds derived from actual category distributions in the codebase.
 import pytest
 
 from oida.fuzz.protocols import PROTOCOL_FUZZERS
+from tests.service_gate import require_service
 
 pytestmark = pytest.mark.core
 
@@ -114,7 +115,7 @@ def test_required_categories_present(protocol_name, required_cats):
     """Protocol fuzzer covers all required categories."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     actual_cats = {r.category for r in requests}
@@ -136,7 +137,7 @@ def test_multi_request_fuzzers_have_category_diversity(protocol_name):
     """Fuzzers with 5+ requests should have at least 2 distinct categories."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     if len(requests) < 5:
@@ -163,7 +164,7 @@ def test_baseline_request_exists(protocol_name):
     """
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     if len(requests) < 3:
@@ -196,7 +197,7 @@ def test_auth_category_for_auth_protocols(protocol_name):
     """Protocols with authentication should have an auth-related category."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     auth_cats = {"auth", "security", "no_auth", "preauth"}
@@ -218,7 +219,7 @@ def test_overflow_or_boundary_category(protocol_name):
     """Protocols with numeric fields should have overflow or boundary testing."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     overflow_cats = {
@@ -273,7 +274,7 @@ def test_transport_required_categories_present(protocol_name, required_cats):
     """Transport/network fuzzers cover all required categories."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     actual_cats = {r.category for r in requests}
@@ -295,7 +296,7 @@ def test_transport_category_diversity(protocol_name):
     """Transport fuzzers with 10+ requests should have at least 3 categories."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     if len(requests) < 10:
@@ -318,7 +319,7 @@ def test_transport_has_overflow_or_boundary(protocol_name):
     """Transport protocols should have overflow/boundary/cve testing."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     overflow_cats = {

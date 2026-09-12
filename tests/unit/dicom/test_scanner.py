@@ -15,26 +15,16 @@ Tests the DICOM protocol scanner for:
 import unittest
 from unittest.mock import Mock, patch
 
-import pytest
-
-try:
-    import pynetdicom  # noqa: F401
-
-    _PYNETDICOM_AVAILABLE = True
-except ImportError:
-    _PYNETDICOM_AVAILABLE = False
+from tests.service_gate import require_import
 
 # The dicom dependency gate is legitimate: without pynetdicom the module-level
 # imports (AE, Dataset, Verification) in oida.protocols.dicom are unavailable.
 # We deliberately do NOT mark this module `network`: _make_dicom_instance below
 # builds the NXC object WITHOUT running proto_flow, so no real socket is opened
 # and the suite runs under the default `-m 'not network'` config.
-pytestmark = [
-    pytest.mark.skipif(
-        not _PYNETDICOM_AVAILABLE,
-        reason="pynetdicom not installed; install via `pip install -e .[dicom]`",
-    ),
-]
+require_import(
+    "pynetdicom", reason="pynetdicom not installed; install via `pip install -e .[dicom]`"
+)
 
 
 def _make_dicom_instance(args, host="192.168.1.100", **overrides):

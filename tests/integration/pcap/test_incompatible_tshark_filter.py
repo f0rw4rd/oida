@@ -23,6 +23,8 @@ import shutil
 
 import pytest
 
+from tests.service_gate import require_service
+
 from oida.protocols.pcap.scanner import PcapScanner
 
 from .conftest import _pcap_path, _skip_unless_pyshark
@@ -56,7 +58,7 @@ def test_full_pipeline_completes_with_all_listeners():
 def test_filter_supported_by_tshark_drops_unknown_protocol():
     """The validator keeps a compilable filter and drops one tshark can't."""
     if not shutil.which("tshark"):
-        pytest.skip("tshark not on PATH")
+        require_service("tshark not on PATH")
     _skip_unless_pyshark()
     pcap = _pcap_path("iec104", "eset_industroyer2_sample1.pcap")
     scanner = PcapScanner(pcap, args={})

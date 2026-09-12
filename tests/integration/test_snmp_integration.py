@@ -15,6 +15,8 @@ Uses structured JSON log assertions for precise validation.
 
 import pytest
 
+from tests.service_gate import require_service
+
 from .conftest import MOCK_HOST, MOCK_PORTS
 
 
@@ -189,7 +191,7 @@ class TestSNMPIntegration:
     def _require_snmp_mock(self, target, port):
         """Skip all tests if the SNMP mock is not reachable."""
         if not _check_snmp_reachable(target, port):
-            pytest.skip(f"SNMP mock not reachable on {target}:{port}")
+            require_service(f"SNMP mock not reachable on {target}:{port}")
 
     # ========================================================================
     # Service Availability
@@ -2369,7 +2371,7 @@ class TestSNMPv3Only:
     def _require_v3only_mock(self, target, port):
         """Skip if v3only mock is not reachable."""
         if not _check_snmp_v3_reachable(target, port):
-            pytest.skip(f"SNMPv3-only mock not reachable on {target}:{port}")
+            require_service(f"SNMPv3-only mock not reachable on {target}:{port}")
 
     def test_v3only_auth_success(self, cli_runner, target, port):
         """Test v3-only mock with valid engineer credentials [Category A]"""
@@ -2700,7 +2702,7 @@ class TestSNMPSwitch:
     def _require_switch_mock(self, target, port):
         """Skip if switch mock is not reachable."""
         if not _check_snmp_reachable(target, port):
-            pytest.skip(f"SNMP switch mock not reachable on {target}:{port}")
+            require_service(f"SNMP switch mock not reachable on {target}:{port}")
 
     # ========================================================================
     # Basic Connectivity
@@ -2990,7 +2992,7 @@ class TestSNMPEnumIPv6:
     @pytest.fixture(autouse=True)
     def _require_snmp_mock(self, target, port):
         if not _check_snmp_reachable(target, port):
-            pytest.skip(f"SNMP mock not reachable on {target}:{port}")
+            require_service(f"SNMP mock not reachable on {target}:{port}")
 
     def test_enum_ipv6_runs(self, cli_runner, target, port):
         """Test --enum ipv6 executes without error [Category B]"""
@@ -3109,7 +3111,7 @@ class TestSNMPEnumExtend:
     @pytest.fixture(autouse=True)
     def _require_snmp_mock(self, target, port):
         if not _check_snmp_reachable(target, port):
-            pytest.skip(f"SNMP mock not reachable on {target}:{port}")
+            require_service(f"SNMP mock not reachable on {target}:{port}")
 
     def test_enum_extend_runs(self, cli_runner, target, port):
         """Test --enum extend executes without error [Category B]"""
@@ -3259,7 +3261,7 @@ class TestSNMPEnumProcessCreds:
     @pytest.fixture(autouse=True)
     def _require_snmp_mock(self, target, port):
         if not _check_snmp_reachable(target, port):
-            pytest.skip(f"SNMP mock not reachable on {target}:{port}")
+            require_service(f"SNMP mock not reachable on {target}:{port}")
 
     def test_enum_creds_includes_process_scan(self, cli_runner, target, port):
         """Test --enum creds walks process args for credential patterns [Category B]
@@ -3436,7 +3438,7 @@ class TestSNMPSecurityFindings:
     @pytest.fixture(autouse=True)
     def _require_snmp_mock(self, target, port):
         if not _check_snmp_reachable(target, port):
-            pytest.skip(f"SNMP mock not reachable on {target}:{port}")
+            require_service(f"SNMP mock not reachable on {target}:{port}")
 
     # ========================================================================
     # Finding: "No encryption" (L3883) — _analyze_security
@@ -4156,7 +4158,7 @@ class TestSNMPSwitchSecurityFindings:
     @pytest.fixture(autouse=True)
     def _require_switch_mock(self, target, port):
         if not _check_snmp_reachable(target, port):
-            pytest.skip(f"SNMP switch mock not reachable on {target}:{port}")
+            require_service(f"SNMP switch mock not reachable on {target}:{port}")
 
     # ========================================================================
     # Finding: H3C credential found (L3274)
@@ -4437,7 +4439,7 @@ class TestSNMPv3OnlySecurityFindings:
     @pytest.fixture(autouse=True)
     def _require_v3only_mock(self, target, port):
         if not _check_snmp_v3_reachable(target, port):
-            pytest.skip(f"SNMP v3only mock not reachable on {target}:{port}")
+            require_service(f"SNMP v3only mock not reachable on {target}:{port}")
 
     @pytest.mark.security
     def test_no_encryption_finding_absent_v3only(self, cli_runner, target, port):
@@ -4555,7 +4557,7 @@ class TestSNMPEnumUsers:
     def _require_v3only_mock(self, target, port):
         """Skip if v3-only mock is not reachable."""
         if not _check_snmp_v3_reachable(target, port):
-            pytest.skip(f"SNMPv3-only mock not reachable on {target}:{port}")
+            require_service(f"SNMPv3-only mock not reachable on {target}:{port}")
 
     # ── Category C: Error handling ──
 

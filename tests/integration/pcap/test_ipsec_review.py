@@ -20,6 +20,8 @@ import asyncio
 
 import pytest
 
+from tests.service_gate import require_service
+
 from .conftest import _ek_mode_available, _pcap_path, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
@@ -74,7 +76,7 @@ def test_ike_version_clean_in_ek_mode(subpath, expected_version):
     """EK mode (file-scan path) must still report v1/v2 after the fix."""
     _skip_unless_pyshark()
     if not _ek_mode_available:
-        pytest.skip("pyshark EK-mode fork not installed (this run: XML mode only)")
+        require_service("pyshark EK-mode fork not installed (this run: XML mode only)")
     pcap = _pcap_path(subpath)
     listener = _run_listener(pcap, use_ek=True)
     versions = {ix.details.get("ike_version") for ix in listener.interactions}
@@ -87,7 +89,7 @@ def test_ike_version_modes_agree(subpath, expected_version):
     """The two pyshark modes must classify IKE version identically."""
     _skip_unless_pyshark()
     if not _ek_mode_available:
-        pytest.skip("pyshark EK-mode fork not installed (this run: XML mode only)")
+        require_service("pyshark EK-mode fork not installed (this run: XML mode only)")
     pcap = _pcap_path(subpath)
     xml = {ix.details.get("ike_version") for ix in _run_listener(pcap, False).interactions}
     ek = {ix.details.get("ike_version") for ix in _run_listener(pcap, True).interactions}

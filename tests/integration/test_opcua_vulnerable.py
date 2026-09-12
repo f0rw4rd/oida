@@ -14,6 +14,8 @@ import sys
 import socket
 from pathlib import Path
 
+from tests.service_gate import require_service
+
 # Add fixtures path to import the vulnerable server
 FIXTURES_DIR = Path(__file__).parent.parent / "fixtures" / "mock_services"
 sys.path.insert(0, str(FIXTURES_DIR))
@@ -46,7 +48,7 @@ def vulnerable_opcua_server(request):
     server_script = FIXTURES_DIR / "opcua_vulnerable.py"
 
     if not server_script.exists():
-        pytest.skip(f"Vulnerable server not found: {server_script}")
+        require_service(f"Vulnerable server not found: {server_script}")
 
     # Use a unique port per test class to avoid conflicts
     port = _find_free_port()
@@ -69,7 +71,7 @@ def vulnerable_opcua_server(request):
         proc.terminate()
         log_file.flush()
         server_log = Path(log_file.name).read_text(errors="replace")[-2000:]
-        pytest.skip(
+        require_service(
             f"Vulnerable OPC UA server failed to start on port {port}. "
             f"Server log tail:\n{server_log}"
         )
@@ -507,7 +509,7 @@ class TestOPCUADirectConnection:
         try:
             from asyncua import Client
         except ImportError:
-            pytest.skip("asyncua not installed")
+            require_service("asyncua not installed")
 
         async def _test():
             async with Client(url=vulnerable_opcua_server) as client:
@@ -523,7 +525,7 @@ class TestOPCUADirectConnection:
         try:
             from asyncua import Client
         except ImportError:
-            pytest.skip("asyncua not installed")
+            require_service("asyncua not installed")
 
         async def _test():
             async with Client(url=vulnerable_opcua_server) as client:

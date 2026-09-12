@@ -17,6 +17,8 @@ from collections import deque
 
 import pytest
 
+from tests.service_gate import require_import, require_service
+
 pytestmark = pytest.mark.core
 
 
@@ -81,7 +83,7 @@ def _mock_opcua_handshake():
 
 def _create_fuzzer(protocol_name, protocol_options, tmp_path):
     """Create a fuzzer instance with MockConnectionFactory for introspection."""
-    boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+    boofuzz = require_import("boofuzz")  # noqa: F841
 
     from oida.fuzz.core.config import FuzzerConfig, MonitorConfig
     from oida.fuzz.core.connections import MockConnectionFactory
@@ -89,7 +91,7 @@ def _create_fuzzer(protocol_name, protocol_options, tmp_path):
 
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if not fuzzer_class:
-        pytest.skip(f"Protocol {protocol_name} not available")
+        require_service(f"Protocol {protocol_name} not available")
 
     config = FuzzerConfig(
         target_ip="127.0.0.1",
@@ -116,7 +118,7 @@ def _create_fuzzer(protocol_name, protocol_options, tmp_path):
         # protocol definitions and state machine setup
         _ = fuzzer.session
     except ImportError as e:
-        pytest.skip(f"Missing dependency for {protocol_name}: {e}")
+        require_service(f"Missing dependency for {protocol_name}: {e}")
     except Exception as e:
         pytest.fail(f"Failed to create {protocol_name} fuzzer: {type(e).__name__}: {e}")
 

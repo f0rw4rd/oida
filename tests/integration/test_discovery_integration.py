@@ -16,6 +16,8 @@ from unittest.mock import patch
 import subprocess
 import sys
 
+from tests.service_gate import require_service
+
 
 @pytest.mark.discovery
 class TestDiscoveryIntegration:
@@ -378,7 +380,7 @@ class TestDiscoveryProtocolLoader:
             protocol_class = loader.get_protocol_class("discovery")
             assert protocol_class is not None, "Protocol class should not be None"
         except Exception as e:
-            pytest.skip(f"Could not load discovery class: {e}")
+            require_service(f"Could not load discovery class: {e}")
 
     def test_proto_args_loadable(self):
         """Test proto_args module can be loaded [Category A]"""

@@ -26,6 +26,7 @@ import importlib.util
 import pathlib
 
 from tests._ast_safe import safe_parse
+from tests.service_gate import require_service
 
 import pytest
 
@@ -267,7 +268,7 @@ def test_function_level_import_symbol_resolves(path, lineno, target, symbol):
     try:
         mod = importlib.import_module(target)
     except Exception as exc:  # noqa: BLE001 - optional dep / import error: inconclusive
-        pytest.skip(f"{target}: cannot import to confirm symbol ({type(exc).__name__}: {exc})")
+        require_service(f"{target}: cannot import to confirm symbol ({type(exc).__name__}: {exc})")
 
     if hasattr(mod, symbol):
         return

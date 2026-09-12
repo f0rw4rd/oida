@@ -14,7 +14,9 @@ from typing import Optional
 
 import pytest
 
-from ..conftest import MOCK_HOST, MOCK_PORTS, check_port_open
+from tests.service_gate import require_port, require_service
+
+from ..conftest import MOCK_HOST, MOCK_PORTS
 
 
 # ============================================================================
@@ -138,10 +140,12 @@ def create_fuzzer_config(host, port, protocol, session_path, **overrides):
 
 
 def require_docker_mock(port_key):
-    """Skip the current test if the Docker mock for *port_key* is not reachable."""
+    """Gate the current test if the Docker mock for *port_key* is not reachable."""
     port = MOCK_PORTS.get(port_key)
-    if not port or not check_port_open(MOCK_HOST, port, timeout=2):
-        pytest.skip(f"Docker mock '{port_key}' not available on port {port}")
+    if not port:
+        require_service(f"Docker mock '{port_key}' has no configured port")
+        return
+    require_port(MOCK_HOST, port, f"Docker mock '{port_key}'")
 
 
 # ============================================================================

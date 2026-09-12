@@ -14,8 +14,10 @@ import socket
 
 import pytest
 
+from tests.service_gate import require_import, require_service
+
 # Skip all tests if yadnp3 is not installed
-opendnp3 = pytest.importorskip("opendnp3", reason="yadnp3 not installed")
+opendnp3 = require_import("opendnp3", reason="yadnp3 not installed")
 
 from oida.protocols.dnp3.scanner import DNP3Scanner
 
@@ -65,7 +67,7 @@ def scanner():
     )
     conn = s.connect()
     if conn is None:
-        pytest.skip("Could not connect to DNP3 mock")
+        require_service("Could not connect to DNP3 mock")
     yield s
     s.disconnect(conn)
 

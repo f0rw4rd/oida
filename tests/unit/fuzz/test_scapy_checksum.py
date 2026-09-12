@@ -15,9 +15,10 @@ Background:
 
 import struct
 
-import pytest
 
-scapy_all = pytest.importorskip("scapy.all")
+from tests.service_gate import require_import
+
+scapy_all = require_import("scapy.all")
 
 from src.oida.fuzz.core.connections.scapy import ScapyRawConnection  # noqa: E402
 

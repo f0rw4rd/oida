@@ -9,15 +9,11 @@ invalid-data-type. Override with an explicit type prefix (bool:/enum:/...).
 
 import unittest
 
-try:
-    import bacpypes3  # noqa: F401
+from tests.service_gate import require_import
 
-    _HAS = True
-except ImportError:
-    _HAS = False
+require_import("bacpypes3", reason="bacpypes3 required")
 
 
-@unittest.skipUnless(_HAS, "bacpypes3 required")
 class TestCoerceAtomic(unittest.TestCase):
     def setUp(self):
         from oida.protocols.bacnet.mixins.call import CallMixin

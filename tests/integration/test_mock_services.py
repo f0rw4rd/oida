@@ -18,6 +18,8 @@ import socket
 import urllib.request
 import urllib.error
 
+from tests.service_gate import require_port, require_service
+
 from .conftest import MOCK_HOST, MOCK_PORTS, check_port_open
 
 
@@ -47,8 +49,7 @@ class TestDNP3MockService:
 
     @pytest.fixture(autouse=True)
     def _require_dnp3_service(self, dnp3_port):
-        if not check_port_open(MOCK_HOST, dnp3_port, timeout=3):
-            pytest.skip(f"DNP3 service not available on port {dnp3_port}")
+        require_port(MOCK_HOST, dnp3_port, "DNP3 service", timeout=3)
 
     @pytest.fixture
     def dnp3_port(self):
@@ -210,7 +211,7 @@ class TestHTTP2MockService:
         if not check_port_open(MOCK_HOST, nghttp2_h2c_port, timeout=3) and not check_port_open(
             MOCK_HOST, python_h2c_port, timeout=3
         ):
-            pytest.skip("No HTTP/2 mock services available")
+            require_service("No HTTP/2 mock services available")
 
     @pytest.fixture
     def nghttp2_h2c_port(self):
@@ -222,13 +223,11 @@ class TestHTTP2MockService:
 
     def test_http2_nghttp2_h2c_available(self, nghttp2_h2c_port, mock_service):
         """Verify nghttp2 h2c service is running."""
-        if not check_port_open(MOCK_HOST, nghttp2_h2c_port, timeout=5):
-            pytest.skip(f"nghttp2 h2c service not available on port {nghttp2_h2c_port}")
+        require_port(MOCK_HOST, nghttp2_h2c_port, "nghttp2 h2c service", timeout=5)
 
     def test_http2_python_h2c_available(self, python_h2c_port, mock_service):
         """Verify Python HTTP/2 h2c service is running."""
-        if not check_port_open(MOCK_HOST, python_h2c_port, timeout=5):
-            pytest.skip(f"Python h2c service not available on port {python_h2c_port}")
+        require_port(MOCK_HOST, python_h2c_port, "Python h2c service", timeout=5)
 
     def test_http2_python_state_endpoint(self, python_h2c_port, mock_service):
         """Test /.well-known/h2/state endpoint returns valid JSON."""
@@ -247,7 +246,7 @@ class TestHTTP2MockService:
                 )
 
         except (urllib.error.URLError, http.client.BadStatusLine) as e:
-            pytest.skip(f"Could not connect to HTTP/2 Python server: {e}")
+            require_service(f"Could not connect to HTTP/2 Python server: {e}")
 
     def test_http2_python_errors_endpoint(self, python_h2c_port, mock_service):
         """Test /.well-known/h2/errors endpoint returns valid JSON."""
@@ -262,7 +261,7 @@ class TestHTTP2MockService:
                 assert isinstance(data, list), "Expected list of errors"
 
         except (urllib.error.URLError, http.client.BadStatusLine) as e:
-            pytest.skip(f"Could not connect to HTTP/2 Python server: {e}")
+            require_service(f"Could not connect to HTTP/2 Python server: {e}")
 
     def test_http2_python_frames_endpoint(self, python_h2c_port, mock_service):
         """Test /.well-known/h2/frames endpoint returns frame log."""
@@ -276,7 +275,7 @@ class TestHTTP2MockService:
                 assert isinstance(data, list), "Expected list of frame events"
 
         except (urllib.error.URLError, http.client.BadStatusLine) as e:
-            pytest.skip(f"Could not connect to HTTP/2 Python server: {e}")
+            require_service(f"Could not connect to HTTP/2 Python server: {e}")
 
     def test_http2_python_hpack_endpoint(self, python_h2c_port, mock_service):
         """Test /.well-known/h2/hpack endpoint returns HPACK state."""
@@ -293,7 +292,7 @@ class TestHTTP2MockService:
                 )
 
         except (urllib.error.URLError, http.client.BadStatusLine) as e:
-            pytest.skip(f"Could not connect to HTTP/2 Python server: {e}")
+            require_service(f"Could not connect to HTTP/2 Python server: {e}")
 
     def test_http2_python_echo_endpoint(self, python_h2c_port, mock_service):
         """Test /echo endpoint echoes request."""
@@ -310,7 +309,7 @@ class TestHTTP2MockService:
                 assert "path" in data, "Expected 'path' in echo response"
 
         except (urllib.error.URLError, http.client.BadStatusLine) as e:
-            pytest.skip(f"Could not connect to HTTP/2 Python server: {e}")
+            require_service(f"Could not connect to HTTP/2 Python server: {e}")
 
     def test_http2_monitor_integration(self, python_h2c_port, mock_service):
         """Test HTTP2Monitor can connect and check health."""
@@ -328,9 +327,9 @@ class TestHTTP2MockService:
                 assert "protocol_errors" in errors
 
         except ImportError:
-            pytest.skip("HTTP2Monitor not available")
+            require_service("HTTP2Monitor not available")
         except Exception as e:
-            pytest.skip(f"HTTP2Monitor test failed: {e}")
+            require_service(f"HTTP2Monitor test failed: {e}")
 
 
 # =============================================================================
@@ -345,8 +344,7 @@ class TestModbusMockService:
 
     @pytest.fixture(autouse=True)
     def _require_modbus_service(self, modbus_port):
-        if not check_port_open(MOCK_HOST, modbus_port, timeout=3):
-            pytest.skip(f"Modbus service not available on port {modbus_port}")
+        require_port(MOCK_HOST, modbus_port, "Modbus service", timeout=3)
 
     @pytest.fixture
     def modbus_port(self):
@@ -413,8 +411,7 @@ class TestOPCUAMockService:
 
     @pytest.fixture(autouse=True)
     def _require_opcua_service(self, opcua_port):
-        if not check_port_open(MOCK_HOST, opcua_port, timeout=3):
-            pytest.skip(f"OPC UA service not available on port {opcua_port}")
+        require_port(MOCK_HOST, opcua_port, "OPC UA service", timeout=3)
 
     @pytest.fixture
     def opcua_port(self):
@@ -475,7 +472,7 @@ class TestBACnetMockService:
         try:
             import bacpypes3  # noqa: F401
         except ImportError:
-            pytest.skip("bacpypes3 not installed")
+            require_service("bacpypes3 not installed")
         # BACnet uses UDP — sendto never fails, so we must wait for a response
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
@@ -484,7 +481,7 @@ class TestBACnetMockService:
             sock.recvfrom(1024)
             sock.close()
         except Exception:
-            pytest.skip(f"BACnet service not available on port {bacnet_port}")
+            require_service(f"BACnet service not available on port {bacnet_port}")
 
     @pytest.fixture
     def bacnet_port(self):
@@ -591,8 +588,7 @@ class TestIEC104MockService:
 
     @pytest.fixture(autouse=True)
     def _require_iec104_service(self, iec104_port):
-        if not check_port_open(MOCK_HOST, iec104_port, timeout=3):
-            pytest.skip(f"IEC 104 service not available on port {iec104_port}")
+        require_port(MOCK_HOST, iec104_port, "IEC 104 service", timeout=3)
 
     @pytest.fixture
     def iec104_port(self):
@@ -671,8 +667,7 @@ class TestIEC104MockService:
 
     def test_iec104_custom_types_server(self, iec104_custom_port, mock_service):
         """Test IEC 104 custom types server availability."""
-        if not check_port_open(MOCK_HOST, iec104_custom_port, timeout=3):
-            pytest.skip("IEC 104 custom types server not running")
+        require_port(MOCK_HOST, iec104_custom_port, "IEC 104 custom types server", timeout=3)
 
         # Just verify it's up
         assert check_port_open(MOCK_HOST, iec104_custom_port, timeout=5)
@@ -704,7 +699,7 @@ class TestMockServicesIntegration:
                 services_available.append(name)
 
         if len(services_available) < 2:
-            pytest.skip(f"Need at least 2 services running, only found: {services_available}")
+            require_service(f"Need at least 2 services running, only found: {services_available}")
 
     def test_services_respond_independently(self, cli_runner):
         """Test that services respond independently without interference."""
@@ -735,7 +730,7 @@ class TestMockServicesIntegration:
                 results[protocol] = responded
 
         if not results:
-            pytest.skip("No mock services available for independent response test")
+            require_service("No mock services available for independent response test")
 
         # At least one should succeed
         assert any(results.values()), f"No services responded: {results}"
@@ -753,8 +748,7 @@ class TestMockDataValidation:
     def test_modbus_register_values(self, cli_runner):
         """Validate Modbus register values match mock configuration."""
         port = MOCK_PORTS.get("modbus", 502)
-        if not check_port_open(MOCK_HOST, port, timeout=2):
-            pytest.skip("Modbus service not available")
+        require_port(MOCK_HOST, port, "Modbus service", timeout=2)
 
         result = cli_runner.run(
             "modbus",
@@ -776,7 +770,7 @@ class TestMockDataValidation:
         try:
             import bacpypes3  # noqa: F401
         except ImportError:
-            pytest.skip("bacpypes3 not installed")
+            require_service("bacpypes3 not installed")
 
         bacnet_port = MOCK_PORTS.get("bacnet", 47808)
         try:
@@ -786,7 +780,7 @@ class TestMockDataValidation:
             sock.recvfrom(1024)
             sock.close()
         except Exception:
-            pytest.skip(f"BACnet service not available on port {bacnet_port}")
+            require_service(f"BACnet service not available on port {bacnet_port}")
 
         result = cli_runner.run(
             "bacnet", MOCK_HOST, "--device-id", "1234", "-e", "--timeout", "20", expect_json=False

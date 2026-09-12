@@ -16,6 +16,7 @@ import pytest
 from oida.fuzz.core.config import FuzzerConfig, MonitorConfig
 from oida.fuzz.core.connections import MockConnectionFactory
 from oida.fuzz.protocols import PROTOCOL_FUZZERS
+from tests.service_gate import require_import, require_service
 
 pytestmark = pytest.mark.core
 # Protocols requiring special dependencies/access
@@ -78,11 +79,11 @@ class TestFuzzerInitialization:
     @pytest.mark.parametrize("protocol_name", TESTABLE_PROTOCOLS)
     def test_fuzzer_initializes(self, protocol_name, temp_session, mock_connection_factory):
         """Test fuzzer initialization without errors."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
         if not fuzzer_class:
-            pytest.skip(f"Protocol {protocol_name} not available")
+            require_service(f"Protocol {protocol_name} not available")
 
         config = create_config(temp_session, protocol_name)
 
@@ -91,7 +92,7 @@ class TestFuzzerInitialization:
             assert fuzzer is not None
             assert fuzzer.config == config
         except ImportError as e:
-            pytest.skip(f"Missing dependency: {e}")
+            require_service(f"Missing dependency: {e}")
         except Exception as e:
             pytest.fail(f"Failed to initialize {protocol_name}: {type(e).__name__}: {e}")
 
@@ -106,18 +107,18 @@ class TestFuzzerProtocolDefinition:
         This test uses mocking to avoid actual network connections while
         verifying that the protocol definition logic is valid.
         """
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
         if not fuzzer_class:
-            pytest.skip(f"Protocol {protocol_name} not available")
+            require_service(f"Protocol {protocol_name} not available")
 
         config = create_config(temp_session, protocol_name)
 
         try:
             fuzzer = fuzzer_class(config=config, connection_factory=mock_connection_factory)
         except ImportError as e:
-            pytest.skip(f"Missing dependency: {e}")
+            require_service(f"Missing dependency: {e}")
         except Exception as e:
             pytest.fail(f"Failed to initialize {protocol_name}: {e}")
 
@@ -152,11 +153,11 @@ class TestFuzzerRequestDefinitions:
     @pytest.mark.parametrize("protocol_name", TESTABLE_PROTOCOLS)
     def test_fuzzer_request_definitions(self, protocol_name):
         """Verify request definitions are valid."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
         if not fuzzer_class:
-            pytest.skip(f"Protocol {protocol_name} not available")
+            require_service(f"Protocol {protocol_name} not available")
 
         requests = fuzzer_class.get_request_definitions()
         assert isinstance(requests, list), f"{protocol_name}: requests not a list"

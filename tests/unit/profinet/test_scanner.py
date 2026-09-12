@@ -1,7 +1,8 @@
 """Tests for profinet protocol scanner."""
 
-import pytest
 from unittest.mock import MagicMock
+
+from tests.service_gate import require_service
 
 
 class TestProfinetImport:
@@ -371,7 +372,7 @@ class TestProfinetVendors:
             name = get_vendor_name(0x002A)
             assert "SIEMENS" in name.upper()
         except ImportError:
-            pytest.skip("profinet library not installed")
+            require_service("profinet library not installed")
 
     def test_unknown_vendor(self):
         """Test unknown vendor ID - use 0xFFFE which is unassigned."""
@@ -382,7 +383,7 @@ class TestProfinetVendors:
             name = get_vendor_name(0xFFFE)
             assert name is None or "Unknown" in name or name == ""
         except ImportError:
-            pytest.skip("profinet library not installed")
+            require_service("profinet library not installed")
 
 
 class TestProfinetDependencies:
@@ -395,7 +396,7 @@ class TestProfinetDependencies:
 
             assert profinet is not None
         except ImportError:
-            pytest.skip("profinet library not installed")
+            require_service("profinet library not installed")
 
     def test_dcp_module_available(self):
         """Test DCP module is available."""
@@ -404,7 +405,7 @@ class TestProfinetDependencies:
 
             assert dcp is not None
         except ImportError:
-            pytest.skip("profinet library not installed")
+            require_service("profinet library not installed")
 
     def test_rpc_module_available(self):
         """Test RPC module is available."""
@@ -413,7 +414,7 @@ class TestProfinetDependencies:
 
             assert rpc is not None
         except ImportError:
-            pytest.skip("profinet library not installed")
+            require_service("profinet library not installed")
 
 
 class TestDCPDeviceDescription:
@@ -445,7 +446,7 @@ class TestDCPDeviceDescription:
             assert device.device_instance == (0, 100)
 
         except ImportError:
-            pytest.skip("profinet library not installed")
+            require_service("profinet library not installed")
 
     def test_parse_minimal_device(self):
         """Test parsing device with minimal blocks."""
@@ -465,7 +466,7 @@ class TestDCPDeviceDescription:
             assert device.device_type == ""
 
         except ImportError:
-            pytest.skip("profinet library not installed")
+            require_service("profinet library not installed")
 
 
 class TestWriteOperationsSocketLifecycle:

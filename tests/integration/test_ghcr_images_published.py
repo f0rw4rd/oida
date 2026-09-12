@@ -33,6 +33,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.service_gate import require_service
+
 pytestmark = pytest.mark.network
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
@@ -144,20 +146,20 @@ def test_core_image_present_on_ghcr(ref):
         # the manifest exists, regardless of public/private visibility.
         basic = _ghcr_basic_from_docker_config()
         if basic is None:
-            pytest.skip(
+            require_service(
                 "OIDA_GHCR_ALLOW_PRIVATE=1 but no ghcr.io login in "
                 "~/.docker/config.json to check presence"
             )
         token, tstatus = _registry_token(repo, basic)
         if tstatus == 0:
-            pytest.skip("cannot reach ghcr.io token endpoint (offline)")
+            require_service("cannot reach ghcr.io token endpoint (offline)")
         assert token is not None, (
             f"ghcr.io/{repo}: no pull token even with auth (HTTP {tstatus}) "
             f"— repo missing or login lacks access"
         )
         status = _manifest_status(repo, tag, token)
         if status == 0:
-            pytest.skip("cannot reach ghcr.io registry (offline)")
+            require_service("cannot reach ghcr.io registry (offline)")
         assert status == 200, (
             f"ghcr.io/{repo}:{tag} not present (HTTP {status}) — image was not pushed"
         )
@@ -166,7 +168,7 @@ def test_core_image_present_on_ghcr(ref):
     # Default: assert anonymous pullability, which proves present AND public.
     token, tstatus = _registry_token(repo, basic=None)
     if tstatus == 0:
-        pytest.skip("cannot reach ghcr.io token endpoint (offline)")
+        require_service("cannot reach ghcr.io token endpoint (offline)")
     assert token is not None and tstatus == 200, (
         f"ghcr.io/{repo}:{tag} not anonymously accessible (token HTTP {tstatus}): "
         "still PRIVATE (flip the package to Public) or MISSING. "
@@ -174,7 +176,7 @@ def test_core_image_present_on_ghcr(ref):
     )
     status = _manifest_status(repo, tag, token)
     if status == 0:
-        pytest.skip("cannot reach ghcr.io registry (offline)")
+        require_service("cannot reach ghcr.io registry (offline)")
     assert status == 200, (
         f"ghcr.io/{repo}:{tag} anon token granted but manifest HTTP {status} "
         "— unexpected (tag missing?)"

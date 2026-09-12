@@ -9,6 +9,7 @@ from oida.utils.socket_helpers import (
     build_tls_context,
     check_tls_certificate,
 )
+from tests.service_gate import require_import
 
 
 @pytest.fixture
@@ -75,7 +76,7 @@ class TestBuildTLSContext:
 
     def test_ca_enables_server_verification(self, tmp_path, mock_logger):
         """A valid --tls-ca bundle switches the context to CERT_REQUIRED (mTLS server check)."""
-        pytest.importorskip("cryptography")
+        require_import("cryptography")
         from cryptography import x509
         from cryptography.hazmat.primitives import hashes, serialization
         from cryptography.hazmat.primitives.asymmetric import rsa

@@ -30,15 +30,15 @@ from boofuzz import Request
 from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 from oida.fuzz.core.connections import MockConnectionFactory
 from oida.fuzz.protocols import PROTOCOL_FUZZERS
+from tests.service_gate import require_service
 
 # ---------------------------------------------------------------------------
 # Skip entire module if tshark is not installed
 # ---------------------------------------------------------------------------
 TSHARK_BIN = shutil.which("tshark")
-pytestmark = [
-    pytest.mark.slow,
-    pytest.mark.skipif(TSHARK_BIN is None, reason="tshark not installed"),
-]
+if TSHARK_BIN is None:
+    require_service("tshark not installed")
+pytestmark = [pytest.mark.slow]
 
 # ---------------------------------------------------------------------------
 # Protocol -> tshark dissector mapping
@@ -330,17 +330,17 @@ def _find_all_requests(session) -> List[Tuple[str, Request]]:
 def _instantiate_fuzzer(protocol_name: str):
     """Instantiate a fuzzer, returning its session. Skips on failure."""
     if protocol_name in SKIP_INSTANTIATE:
-        pytest.skip(f"{protocol_name} requires special environment")
+        require_service(f"{protocol_name} requires special environment")
 
     cls = PROTOCOL_FUZZERS.get(protocol_name)
     if cls is None:
-        pytest.skip(f"{protocol_name} not in PROTOCOL_FUZZERS registry")
+        require_service(f"{protocol_name} not in PROTOCOL_FUZZERS registry")
 
     try:
         fuzzer = cls(config=_make_config(), connection_factory=MockConnectionFactory())
         return fuzzer.session
     except ImportError as exc:
-        pytest.skip(f"Missing dependency: {exc}")
+        require_service(f"Missing dependency: {exc}")
     except Exception as exc:
         pytest.fail(f"Instantiation failed for {protocol_name}: {exc}")
 

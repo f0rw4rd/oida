@@ -51,6 +51,8 @@ from typing import Optional
 
 import pytest
 
+from tests.service_gate import require_service
+
 
 # ---------------------------------------------------------------------------
 # Live-container connection parameters (fixed by the compose service)
@@ -201,7 +203,7 @@ def can_bus_ready(docker_services):
     # the container's 20 traffic threads are actually emitting onto the shared
     # multicast path, so allow time for warm-up.
     if not _wait_for_traffic(timeout=30.0):
-        pytest.skip(
+        require_service(
             "can-mock container is up but no CAN frames observed on "
             f"{CAN_GROUP}:{CAN_PORT} within 30s (host-networking/multicast issue?)"
         )

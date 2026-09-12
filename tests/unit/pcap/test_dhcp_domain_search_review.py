@@ -17,20 +17,17 @@ is why the dead token was easy to miss.
 
 import subprocess
 
-import pytest
-
 from oida.pcap.dhcp import DHCPPassiveListener  # noqa: F401  (import sanity)
+from tests.service_gate import require_service
 
 
 def _tshark_fields() -> set:
     try:
-        r = subprocess.run(
-            ["tshark", "-G", "fields"], capture_output=True, text=True, timeout=90
-        )
+        r = subprocess.run(["tshark", "-G", "fields"], capture_output=True, text=True, timeout=90)
     except (OSError, subprocess.TimeoutExpired):
-        pytest.skip("tshark not installed")
+        require_service("tshark not installed")
     if r.returncode != 0:
-        pytest.skip("tshark -G fields failed")
+        require_service("tshark -G fields failed")
     return {line.split("\t")[2] for line in r.stdout.splitlines() if line.count("\t") >= 3}
 
 

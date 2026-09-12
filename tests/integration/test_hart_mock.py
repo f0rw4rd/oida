@@ -11,6 +11,8 @@ import pytest
 import socket
 import struct
 
+from tests.service_gate import require_service
+
 # Skip all tests if mock server is not running
 pytestmark = [
     pytest.mark.integration,
@@ -58,7 +60,9 @@ def is_mock_running(host: str = "127.0.0.1", port: int = 5091) -> bool:
 @pytest.fixture(scope="module", autouse=True)
 def check_mock_running():
     if not is_mock_running():
-        pytest.skip("HART mock server not responding to HART-IP protocol (run: make mock-start)")
+        require_service(
+            "HART mock server not responding to HART-IP protocol (run: make mock-start)"
+        )
 
 
 class TestHARTMockBasic:
@@ -357,9 +361,9 @@ class TestHARTMockMultidrop:
             result = sock.connect_ex((self.HOST, self.TCP_PORT))
             sock.close()
             if result != 0:
-                pytest.skip("HART multi-drop mock not running")
+                require_service("HART multi-drop mock not running")
         except Exception:
-            pytest.skip("HART multi-drop mock not running")
+            require_service("HART multi-drop mock not running")
 
     def test_multiple_devices(self, skip_if_multidrop_not_running):
         """Test that multiple devices respond on different addresses"""

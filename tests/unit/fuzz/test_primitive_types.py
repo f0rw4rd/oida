@@ -16,6 +16,7 @@ import re
 import pytest
 
 from oida.fuzz.protocols import PROTOCOL_FUZZERS
+from tests.service_gate import require_service
 
 pytestmark = pytest.mark.core
 
@@ -99,7 +100,7 @@ def test_no_raw_string_usage(protocol_name):
     """
     source = _read_fuzzer_source(protocol_name)
     if source is None:
-        pytest.skip(f"Could not read source for {protocol_name}")
+        require_service(f"Could not read source for {protocol_name}")
 
     # Match String( but not SmartString(, ReducedString(, RadamsaString(
     raw_string_matches = re.findall(
@@ -168,7 +169,7 @@ def test_smart_string_has_appropriate_context(protocol_name, expected_contexts):
     """
     source = _read_fuzzer_source(protocol_name)
     if source is None:
-        pytest.skip(f"Could not read source for {protocol_name}")
+        require_service(f"Could not read source for {protocol_name}")
 
     found_contexts = set()
     for ctx in [
@@ -209,7 +210,7 @@ def test_limited_generic_context(protocol_name):
     """
     source = _read_fuzzer_source(protocol_name)
     if source is None:
-        pytest.skip(f"Could not read source for {protocol_name}")
+        require_service(f"Could not read source for {protocol_name}")
 
     generic_count = len(re.findall(r"StringContext\.GENERIC", source))
 
@@ -255,7 +256,7 @@ def test_fuzzer_uses_smart_string(protocol_name):
     """
     source = _read_fuzzer_source(protocol_name)
     if source is None:
-        pytest.skip(f"Could not read source for {protocol_name}")
+        require_service(f"Could not read source for {protocol_name}")
 
     has_smart = "SmartString(" in source or "SmartString " in source
     has_smart_bytes = "SmartBytes(" in source or "SmartBytes " in source
@@ -281,7 +282,7 @@ def test_no_direct_boofuzz_string_import(protocol_name):
     """
     source = _read_fuzzer_source(protocol_name)
     if source is None:
-        pytest.skip(f"Could not read source for {protocol_name}")
+        require_service(f"Could not read source for {protocol_name}")
 
     # Check for "from boofuzz import ... String ..." but not "SmartString"
     boofuzz_imports = re.findall(r"from boofuzz import .*", source)

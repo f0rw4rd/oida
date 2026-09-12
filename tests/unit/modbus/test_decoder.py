@@ -10,16 +10,9 @@ import math
 import struct
 import pytest
 
-# Check for pymodbus availability
-try:
-    from pymodbus.client.mixin import ModbusClientMixin
+from tests.service_gate import require_import
 
-    PYMODBUS_AVAILABLE = True
-except ImportError:
-    PYMODBUS_AVAILABLE = False
-
-# Skip all tests if pymodbus is not available
-pytestmark = pytest.mark.skipif(not PYMODBUS_AVAILABLE, reason="pymodbus library not installed")
+require_import("pymodbus.client.mixin", reason="pymodbus library not installed")
 
 from oida.protocols.modbus.decoder import (
     ModbusDecoder,

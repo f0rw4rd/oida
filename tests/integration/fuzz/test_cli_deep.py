@@ -32,6 +32,8 @@ from typing import List, Tuple
 
 import pytest
 
+from tests.service_gate import require_import, require_service
+
 
 # --------------------------------------------------------------------------- #
 # Shared fixtures (mirrored from test_replay.py to keep tests self-contained)
@@ -140,14 +142,14 @@ def _run_http_fuzzer(
     Returns the constructed ``FuzzerConfig`` so callers can inspect or
     re-use it.
     """
-    pytest.importorskip("boofuzz")
+    require_import("boofuzz")
 
     from oida.fuzz import FuzzerConfig
     from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
     fuzzer_class = PROTOCOL_FUZZERS.get("http")
     if fuzzer_class is None:
-        pytest.skip("HTTP fuzzer not available in registry")
+        require_service("HTTP fuzzer not available in registry")
 
     config_kwargs = dict(
         target_ip="127.0.0.1",
@@ -342,7 +344,7 @@ class TestReplayDeterminism:
 
     def test_replay_payloads_match_recorded(self, temp_session, available_port):
         """Record N requests, replay them, confirm server received same bytes."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz.core.database import SQLAlchemyDatabase
 
@@ -576,7 +578,7 @@ class TestRequestEnableDisable:
 
     def test_enable_single_request(self, temp_session, available_port):
         """Enable only one request → only that request's mutations recorded."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.core.database import SQLAlchemyDatabase
@@ -584,7 +586,7 @@ class TestRequestEnableDisable:
 
         fuzzer_class = PROTOCOL_FUZZERS.get("http")
         if fuzzer_class is None:
-            pytest.skip("http fuzzer unavailable")
+            require_service("http fuzzer unavailable")
 
         with _RecordingServer(available_port) as server:
             config = FuzzerConfig(

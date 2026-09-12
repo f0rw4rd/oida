@@ -22,6 +22,8 @@ import os
 
 import pytest
 
+from tests.service_gate import require_service
+
 from .conftest import FIXTURE_DIR, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
@@ -30,7 +32,7 @@ pytestmark = [pytest.mark.integration]
 def _fins_pcaps():
     paths = sorted(glob.glob(os.path.join(FIXTURE_DIR, "fins", "*.pcap")))
     if not paths:
-        pytest.skip("no FINS fixtures present")
+        require_service("no FINS fixtures present")
     return paths
 
 
@@ -87,7 +89,7 @@ class TestFinsBaseHexParsing:
         from .conftest import _ek_mode_available
 
         if not _ek_mode_available:
-            pytest.skip("pyshark EK-mode fork not installed")
+            require_service("pyshark EK-mode fork not installed")
         xml_dirs, xml_modes = _summarize(_feed_all(use_ek=False))
         ek_dirs, ek_modes = _summarize(_feed_all(use_ek=True))
         assert dict(xml_dirs) == dict(ek_dirs), (

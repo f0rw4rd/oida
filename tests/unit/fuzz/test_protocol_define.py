@@ -12,6 +12,7 @@ import pytest
 from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 from oida.fuzz.core.connections import MockConnectionFactory
 from oida.fuzz.protocols import PROTOCOL_FUZZERS
+from tests.service_gate import require_service
 
 pytestmark = pytest.mark.core
 
@@ -55,12 +56,12 @@ def test_define_protocol_completes(protocol_name, mock_config, mock_factory, tmp
 
     fuzzer_class = PROTOCOL_FUZZERS[protocol_name]
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available (optional dependency)")
+        require_service(f"{protocol_name} not available (optional dependency)")
 
     try:
         fuzzer = fuzzer_class(config=mock_config, connection_factory=mock_factory)
     except ImportError as e:
-        pytest.skip(f"Missing dependency for {protocol_name}: {e}")
+        require_service(f"Missing dependency for {protocol_name}: {e}")
     except Exception as e:
         pytest.fail(f"Failed to instantiate {protocol_name}: {type(e).__name__}: {e}")
 
@@ -68,7 +69,7 @@ def test_define_protocol_completes(protocol_name, mock_config, mock_factory, tmp
     try:
         _ = fuzzer.session
     except ImportError as e:
-        pytest.skip(f"Missing dependency for {protocol_name}: {e}")
+        require_service(f"Missing dependency for {protocol_name}: {e}")
     except Exception as e:
         pytest.fail(f"_define_protocol() failed for {protocol_name}: {type(e).__name__}: {e}")
 
@@ -81,7 +82,7 @@ def test_get_request_definitions(protocol_name):
     """Verify get_request_definitions() returns a non-empty list for each fuzzer."""
     fuzzer_class = PROTOCOL_FUZZERS[protocol_name]
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available")
+        require_service(f"{protocol_name} not available")
 
     if not hasattr(fuzzer_class, "get_request_definitions"):
         pytest.skip(f"{protocol_name} does not implement get_request_definitions")
@@ -96,7 +97,7 @@ def test_get_request_definitions(protocol_name):
     except NotImplementedError:
         pytest.skip(f"{protocol_name} has not implemented get_request_definitions")
     except ImportError as e:
-        pytest.skip(f"Missing dependency: {e}")
+        require_service(f"Missing dependency: {e}")
 
 
 def test_mdns_request_definitions_match_connected(mock_config, mock_factory):
@@ -111,13 +112,13 @@ def test_mdns_request_definitions_match_connected(mock_config, mock_factory):
     """
     fuzzer_class = PROTOCOL_FUZZERS["mdns"]
     if fuzzer_class is None:
-        pytest.skip("mdns fuzzer not available (optional dependency)")
+        require_service("mdns fuzzer not available (optional dependency)")
 
     try:
         fuzzer = fuzzer_class(config=mock_config, connection_factory=mock_factory)
         session = fuzzer.session
     except ImportError as e:
-        pytest.skip(f"Missing dependency for mdns: {e}")
+        require_service(f"Missing dependency for mdns: {e}")
 
     defined = {d.name for d in fuzzer_class.get_request_definitions()}
 
@@ -135,12 +136,12 @@ def _mdns_connected_names(config, factory):
     """Build an mDNS fuzzer and return the set of actually-connected request names."""
     fuzzer_class = PROTOCOL_FUZZERS["mdns"]
     if fuzzer_class is None:
-        pytest.skip("mdns fuzzer not available (optional dependency)")
+        require_service("mdns fuzzer not available (optional dependency)")
     try:
         fuzzer = fuzzer_class(config=config, connection_factory=factory)
         session = fuzzer.session
     except ImportError as e:
-        pytest.skip(f"Missing dependency for mdns: {e}")
+        require_service(f"Missing dependency for mdns: {e}")
     return {node.name for node in session.nodes.values()} - {session.root.name}
 
 
@@ -163,7 +164,7 @@ def test_mdns_disable_excludes_selected(mock_config, mock_factory):
     """--disable (blacklist) must drop the named mDNS requests and keep the rest."""
     fuzzer_class = PROTOCOL_FUZZERS["mdns"]
     if fuzzer_class is None:
-        pytest.skip("mdns fuzzer not available (optional dependency)")
+        require_service("mdns fuzzer not available (optional dependency)")
 
     all_names = {d.name for d in fuzzer_class.get_request_definitions()}
 
@@ -186,7 +187,7 @@ def test_enable_unknown_request_warns(mock_config, mock_factory, monkeypatch):
     """
     fuzzer_class = PROTOCOL_FUZZERS["mdns"]
     if fuzzer_class is None:
-        pytest.skip("mdns fuzzer not available (optional dependency)")
+        require_service("mdns fuzzer not available (optional dependency)")
 
     from oida.utils.ics_logger import ICSLogger
 
@@ -204,7 +205,7 @@ def test_enable_unknown_request_warns(mock_config, mock_factory, monkeypatch):
     try:
         fuzzer_class(config=mock_config, connection_factory=mock_factory)
     except ImportError as e:
-        pytest.skip(f"Missing dependency for mdns: {e}")
+        require_service(f"Missing dependency for mdns: {e}")
 
     typo_warnings = [w for w in warnings if "Circular_Compressio" in w and "not found" in w]
     assert typo_warnings, (
@@ -217,7 +218,7 @@ def test_known_enable_request_does_not_warn(mock_config, mock_factory, monkeypat
     """A valid --enable name must NOT trigger the unknown-request warning."""
     fuzzer_class = PROTOCOL_FUZZERS["mdns"]
     if fuzzer_class is None:
-        pytest.skip("mdns fuzzer not available (optional dependency)")
+        require_service("mdns fuzzer not available (optional dependency)")
 
     from oida.utils.ics_logger import ICSLogger
 
@@ -234,7 +235,7 @@ def test_known_enable_request_does_not_warn(mock_config, mock_factory, monkeypat
     try:
         fuzzer_class(config=mock_config, connection_factory=mock_factory)
     except ImportError as e:
-        pytest.skip(f"Missing dependency for mdns: {e}")
+        require_service(f"Missing dependency for mdns: {e}")
 
     assert not [w for w in warnings if "not found in registry" in w], (
         f"valid --enable name should not warn, got: {warnings}"

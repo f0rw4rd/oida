@@ -12,10 +12,12 @@ import argparse
 
 import pytest
 
+from tests.service_gate import require_import
+
 
 def _build_session(nfields=4):
     """Small in-memory boofuzz Session with `nfields` fuzzable fields, no network."""
-    boofuzz = pytest.importorskip("boofuzz")
+    boofuzz = require_import("boofuzz")
     from boofuzz.connections import TCPSocketConnection
 
     kids = []

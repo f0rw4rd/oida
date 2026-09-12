@@ -10,6 +10,7 @@ import pytest
 from oida.fuzz.protocols import PROTOCOL_FUZZERS
 from oida.fuzz.core.config import FuzzerConfig
 from oida.fuzz.core.connections import MockConnectionFactory
+from tests.service_gate import require_service
 
 
 # Empty: instantiation only builds the boofuzz request tree (no I/O), so it
@@ -52,7 +53,7 @@ def test_fuzzer_instantiation(protocol_name):
     try:
         fuzzer = fuzzer_class(config=config, connection_factory=factory)
     except ImportError as exc:
-        pytest.skip(f"Missing dependency: {exc}")
+        require_service(f"Missing dependency: {exc}")
         return
 
     assert fuzzer is not None, f"{protocol_name} fuzzer returned None"

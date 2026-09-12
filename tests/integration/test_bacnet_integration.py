@@ -58,6 +58,8 @@ from pathlib import Path
 from typing import Optional
 from unittest.mock import Mock, patch
 
+from tests.service_gate import require_service
+
 from .base_protocol_test import BaseProtocolIntegrationTest
 from .conftest import MOCK_HOST
 from .cli_runner import CLIRunner
@@ -409,7 +411,7 @@ class TestBACnetIntegration:
 
         host = os.environ.get("BACNET_TEST_HOST")
         if not host:
-            pytest.skip("BACNET_TEST_HOST not set")
+            require_service("BACNET_TEST_HOST not set")
         return host
 
     def test_who_is_discovery(self, bacnet_host):
@@ -551,7 +553,7 @@ class TestBACnetSecurityFindings(BaseProtocolIntegrationTest):
         We send a proper BACnet Who-Is message instead.
         """
         if not _check_bacnet_mock_alive(MOCK_HOST, MOCK_PORT, timeout=3):
-            pytest.skip(
+            require_service(
                 f"BACnet mock not available on {MOCK_HOST}:{MOCK_PORT} "
                 "(start with: docker compose up -d bacnet-mock)"
             )

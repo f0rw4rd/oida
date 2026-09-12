@@ -9,10 +9,10 @@ and mocked protocol operations.
 import pytest
 
 from oida.utils.exceptions import ConfigurationError
+from tests.service_gate import require_import
 
-
-# Skip all tests if yadnp3 (opendnp3) is not installed
-opendnp3 = pytest.importorskip("opendnp3", reason="yadnp3 (opendnp3) not installed")
+# Gate all tests if yadnp3 (opendnp3) is not installed
+opendnp3 = require_import("opendnp3", reason="yadnp3 (opendnp3) not installed")
 
 
 from oida.protocols.dnp3.scanner import (

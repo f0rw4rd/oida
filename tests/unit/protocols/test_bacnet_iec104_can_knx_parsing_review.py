@@ -13,11 +13,11 @@ import asyncio
 import unittest
 from types import SimpleNamespace
 
-import pytest
 
 from oida.protocols.can.mixins.canopen import CANopenMixin
 from oida.protocols.can.mixins.isotp import ISOTPMixin
 from oida.protocols.can.mixins.uds import UDSMixin
+from tests.service_gate import require_import
 
 
 class _Logger:
@@ -195,7 +195,7 @@ class TestCANopenEmptySDOResponse(unittest.TestCase):
 # BACnet
 # ---------------------------------------------------------------------------
 
-bacpypes3 = pytest.importorskip("bacpypes3")
+bacpypes3 = require_import("bacpypes3")
 
 
 class _Tag:
@@ -289,7 +289,7 @@ class TestBACnetSCFrameSizeCap(unittest.TestCase):
     """
 
     def test_sc_connect_bounds_websocket_message_size(self):
-        pytest.importorskip("websockets")
+        require_import("websockets")
         from unittest import mock
 
         from oida.protocols.bacnet import sc_link
@@ -322,7 +322,7 @@ class TestBACnetSCReaderLoopSurvivesBadNPDU(unittest.TestCase):
     """
 
     def test_reader_survives_a_poisoned_npdu(self):
-        pytest.importorskip("websockets")
+        require_import("websockets")
 
         from oida.protocols.bacnet import sc_link
 

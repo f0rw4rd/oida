@@ -12,6 +12,8 @@ import os
 import tempfile
 from http.server import HTTPServer, BaseHTTPRequestHandler
 
+from tests.service_gate import require_import, require_service
+
 
 class CrashingHTTPHandler(BaseHTTPRequestHandler):
     """HTTP handler that crashes after max_requests."""
@@ -133,7 +135,7 @@ class TestCrashDetection:
     @pytest.mark.timeout(90)
     def test_fuzzer_detects_crash(self, temp_session, available_port):
         """Test that fuzzer detects when target crashes."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -152,7 +154,7 @@ class TestCrashDetection:
 
             fuzzer_class = PROTOCOL_FUZZERS.get("http")
             if not fuzzer_class:
-                pytest.skip("HTTP fuzzer not available")
+                require_service("HTTP fuzzer not available")
 
             fuzzer = fuzzer_class(config)
 
@@ -212,7 +214,7 @@ class TestCrashDetection:
     @pytest.mark.timeout(90)
     def test_fuzzer_reports_crash_count(self, temp_session, available_port):
         """Test that fuzzer crash count is reported correctly."""
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -231,7 +233,7 @@ class TestCrashDetection:
 
             fuzzer_class = PROTOCOL_FUZZERS.get("http")
             if not fuzzer_class:
-                pytest.skip("HTTP fuzzer not available")
+                require_service("HTTP fuzzer not available")
 
             fuzzer = fuzzer_class(config)
 
@@ -270,7 +272,7 @@ class TestActualSendTracking:
         The old test case count was inflated ~100x (e.g., 30,000 reported vs 300 actual).
         With the fix, actual_sends should be within 2x of server count.
         """
-        pytest.importorskip("boofuzz")
+        require_import("boofuzz")
 
         from oida.fuzz import FuzzerConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
@@ -313,7 +315,7 @@ class TestActualSendTracking:
 
             fuzzer_class = PROTOCOL_FUZZERS.get("http")
             if not fuzzer_class:
-                pytest.skip("HTTP fuzzer not available")
+                require_service("HTTP fuzzer not available")
 
             fuzzer = fuzzer_class(config)
 

@@ -69,8 +69,10 @@ Total defined in file (excluding inherited):                            35 tests
 import pytest
 from typing import Optional
 
+from tests.service_gate import require_port
+
 from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST, check_port_open
+from .conftest import MOCK_HOST
 
 
 # ---------------------------------------------------------------------------
@@ -190,8 +192,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
     def test_valid_credentials(self, cli_runner, mock_host, mock_ports, mock_service):
         """Test with valid credentials on auth broker [Category B]"""
         port = mock_ports.get("mqtt_auth", 1884)
-        if not check_port_open(mock_host, port):
-            pytest.skip(f"Auth MQTT broker not available on port {port}")
+        require_port(mock_host, port, "Auth MQTT broker", timeout=3)
 
         result = cli_runner.run(
             self.protocol_name,
@@ -216,8 +217,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
     def test_invalid_credentials(self, cli_runner, mock_host, mock_ports, mock_service):
         """Test with invalid credentials [Category C]"""
         port = mock_ports.get("mqtt_auth", 1884)
-        if not check_port_open(mock_host, port):
-            pytest.skip(f"Auth MQTT broker not available on port {port}")
+        require_port(mock_host, port, "Auth MQTT broker", timeout=3)
 
         result = cli_runner.run(
             self.protocol_name,
@@ -365,8 +365,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
     def test_sparkplug_broker(self, cli_runner, mock_host, mock_ports, mock_service):
         """Test against Sparkplug B broker (via --enumerate) [Category B]"""
         port = mock_ports.get("mqtt_sparkplug", 1885)
-        if not check_port_open(mock_host, port):
-            pytest.skip(f"Sparkplug MQTT broker not available on port {port}")
+        require_port(mock_host, port, "Sparkplug MQTT broker", timeout=3)
 
         result = cli_runner.run(
             self.protocol_name,
@@ -392,8 +391,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
     def test_tls_connection(self, cli_runner, mock_host, mock_ports, mock_service):
         """Test TLS connection [Category B]"""
         port = mock_ports.get("mqtt_tls", 8883)
-        if not check_port_open(mock_host, port):
-            pytest.skip(f"TLS MQTT broker not available on port {port}")
+        require_port(mock_host, port, "TLS MQTT broker", timeout=3)
 
         result = cli_runner.run(
             self.protocol_name,
@@ -416,8 +414,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
     def test_tls_insecure(self, cli_runner, mock_host, mock_ports, mock_service):
         """Test TLS with insecure flag (skip verification) [Category B]"""
         port = mock_ports.get("mqtt_tls", 8883)
-        if not check_port_open(mock_host, port):
-            pytest.skip(f"TLS MQTT broker not available on port {port}")
+        require_port(mock_host, port, "TLS MQTT broker", timeout=3)
 
         result = cli_runner.run(
             self.protocol_name,
@@ -497,8 +494,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
     def test_auth_rejected(self, cli_runner, mock_host, mock_ports, mock_service):
         """Test handling of auth rejection [Category C]"""
         port = mock_ports.get("mqtt_auth", 1884)
-        if not check_port_open(mock_host, port):
-            pytest.skip(f"Auth MQTT broker not available on port {port}")
+        require_port(mock_host, port, "Auth MQTT broker", timeout=3)
 
         result = cli_runner.run(
             self.protocol_name,
@@ -549,8 +545,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
     def test_mtls_connection(self, cli_runner, mock_host, mock_ports, mock_service):
         """Test mutual TLS connection (client cert) [Category C]"""
         port = mock_ports.get("mqtt_mtls", 8884)
-        if not check_port_open(mock_host, port):
-            pytest.skip(f"mTLS MQTT broker not available on port {port}")
+        require_port(mock_host, port, "mTLS MQTT broker", timeout=3)
 
         result = cli_runner.run(
             self.protocol_name,
@@ -578,8 +573,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
     def test_tls_ca_cert(self, cli_runner, mock_host, mock_ports, mock_service):
         """Test TLS with CA certificate [Category B]"""
         port = mock_ports.get("mqtt_tls", 8883)
-        if not check_port_open(mock_host, port):
-            pytest.skip(f"TLS MQTT broker not available on port {port}")
+        require_port(mock_host, port, "TLS MQTT broker", timeout=3)
 
         result = cli_runner.run(
             self.protocol_name,
@@ -1005,8 +999,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
         'No encryption' finding. Tests the negative case. [Category B]
         """
         port = mock_ports.get("mqtt_tls", 8883)
-        if not check_port_open(mock_host, port):
-            pytest.skip(f"TLS MQTT broker not available on port {port}")
+        require_port(mock_host, port, "TLS MQTT broker", timeout=3)
 
         result = cli_runner.run(
             self.protocol_name,
@@ -1053,8 +1046,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
         'Anonymous access'. Tests the negative case. [Category B]
         """
         port = mock_ports.get("mqtt_auth", 1884)
-        if not check_port_open(mock_host, port):
-            pytest.skip(f"Auth MQTT broker not available on port {port}")
+        require_port(mock_host, port, "Auth MQTT broker", timeout=3)
 
         result = cli_runner.run(
             self.protocol_name,
@@ -1293,8 +1285,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
         credentials are found. Auth broker has admin:admin. [Category A]
         """
         port = mock_ports.get("mqtt_auth", 1884)
-        if not check_port_open(mock_host, port):
-            pytest.skip(f"Auth MQTT broker not available on port {port}")
+        require_port(mock_host, port, "Auth MQTT broker", timeout=3)
 
         result = cli_runner.run(
             self.protocol_name,

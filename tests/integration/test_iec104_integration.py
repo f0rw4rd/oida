@@ -18,6 +18,7 @@ Uses structured JSON log assertions for precise validation.
 import pytest
 
 from .conftest import DOCKER_COMPOSE_PATH, MOCK_HOST, MOCK_PORTS, check_port_open
+from tests.service_gate import require_port, require_service
 
 pytestmark = pytest.mark.xdist_group("iec104_service")
 
@@ -162,8 +163,7 @@ class TestIEC104Integration:
     @pytest.fixture(autouse=True)
     def _require_iec104_mock(self, target, port):
         """Skip all tests if the IEC 104 mock is not reachable."""
-        if not check_port_open(target, port):
-            pytest.skip(f"IEC 104 mock not reachable on {target}:{port}")
+        require_port(target, port, "IEC 104 mock not reachable on {target}:{port}")
 
     # ========================================================================
     # P1: Help & Basics
@@ -1258,8 +1258,7 @@ class TestIEC104CustomTypes:
     @pytest.fixture(autouse=True)
     def _require_custom_mock(self, target, port):
         """Skip all tests if the custom types mock is not reachable."""
-        if not check_port_open(target, port):
-            pytest.skip(f"IEC 104 custom types mock not reachable on {target}:{port}")
+        require_port(target, port, "IEC 104 custom types mock not reachable on {target}:{port}")
 
     def test_service_available(self, target, port):
         """Verify custom types mock is running [Category A]"""
@@ -1460,8 +1459,7 @@ class TestIEC104Conpot:
     @pytest.fixture(autouse=True)
     def _require_conpot_mock(self, target, port):
         """Skip all tests if the Conpot mock is not reachable."""
-        if not check_port_open(target, port):
-            pytest.skip(f"IEC 104 Conpot mock not reachable on {target}:{port}")
+        require_port(target, port, "IEC 104 Conpot mock not reachable on {target}:{port}")
 
     def test_service_available(self, target, port):
         """Verify Conpot mock is running [Category A]"""
@@ -1671,8 +1669,7 @@ class TestIEC104TLS:
     @pytest.fixture(autouse=True)
     def _require_tls_mock(self, target, port):
         """Skip all tests if the TLS mock is not reachable."""
-        if not check_port_open(target, port):
-            pytest.skip(f"IEC 104 TLS mock not reachable on {target}:{port}")
+        require_port(target, port, "IEC 104 TLS mock not reachable on {target}:{port}")
 
     # ========================================================================
     # Service Availability (independent of c104)
@@ -1774,7 +1771,7 @@ class TestIEC104TLS:
         client_cert = IEC104_TLS_CERTS / "client.pem"
         client_key = IEC104_TLS_CERTS / "client.key"
         if not client_cert.exists() or not client_key.exists():
-            pytest.skip("Client certificates not generated")
+            require_service("Client certificates not generated")
         result = cli_runner.run(
             "iec104",
             target,
@@ -1864,8 +1861,7 @@ class TestIEC104Fuzz:
     @pytest.fixture(autouse=True)
     def _require_iec104_mock(self, target, port):
         """Skip all tests if the IEC 104 mock is not reachable."""
-        if not check_port_open(target, port):
-            pytest.skip(f"IEC 104 mock not reachable on {target}:{port}")
+        require_port(target, port, "IEC 104 mock not reachable on {target}:{port}")
 
     @pytest.mark.slow
     def test_fuzz_full_cycle(self, cli_runner, target, port):

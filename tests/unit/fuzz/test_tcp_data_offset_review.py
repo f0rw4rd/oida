@@ -16,7 +16,9 @@ Two defects are covered here:
 
 import pytest
 
-boofuzz = pytest.importorskip("boofuzz")
+from tests.service_gate import require_import
+
+boofuzz = require_import("boofuzz")
 
 from boofuzz import Block, Bytes, Request  # noqa: E402
 from boofuzz.mutation_context import MutationContext  # noqa: E402

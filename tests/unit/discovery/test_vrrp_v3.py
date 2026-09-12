@@ -6,13 +6,15 @@ v3 advertisements were silently dropped and never reported. This test builds a
 real VRRPv3 advertisement and asserts the listener parses and reports it.
 """
 
-import pytest
+from tests.service_gate import require_import, require_service
 
-scapy_vrrp = pytest.importorskip("scapy.layers.vrrp")
+scapy_vrrp = require_import("scapy.layers.vrrp")
 VRRPv3 = getattr(scapy_vrrp, "VRRPv3", None)
 
+if VRRPv3 is None:
+    require_service("installed scapy lacks VRRPv3 layer")
 
-@pytest.mark.skipif(VRRPv3 is None, reason="installed scapy lacks VRRPv3 layer")
+
 def test_vrrpv3_advertisement_is_reported():
     """A VRRPv3 advertisement must be parsed and reported, not dropped."""
     from scapy.all import IP, Ether

@@ -33,9 +33,11 @@ from typing import Dict, Any
 
 import pytest
 
+from tests.service_gate import require_import, require_port
+
 pytestmark = pytest.mark.xdist_group("iec104_service")
 
-c104 = pytest.importorskip("c104", reason="c104 library required for IEC 104 integration tests")
+c104 = require_import("c104", reason="c104 library required for IEC 104 integration tests")
 
 from oida.protocols.iec104 import IEC104Scanner  # noqa: E402
 
@@ -96,29 +98,35 @@ def _is_port_open(host: str, port: int, timeout: float = 2.0) -> bool:
 @pytest.fixture
 def require_mock():
     """Skip test if lib60870 mock on port 2404 is not reachable."""
-    if not _is_port_open(MOCK_HOST, MOCK_PORT):
-        pytest.skip(f"IEC 104 mock not reachable at {MOCK_HOST}:{MOCK_PORT}")
+    require_port(MOCK_HOST, MOCK_PORT, f"IEC 104 mock not reachable at {MOCK_HOST}:{MOCK_PORT}")
 
 
 @pytest.fixture
 def require_custom_mock():
     """Skip test if custom-types mock on port 2405 is not reachable."""
-    if not _is_port_open(MOCK_HOST, MOCK_CUSTOM_PORT):
-        pytest.skip(f"IEC 104 custom-types mock not reachable at {MOCK_HOST}:{MOCK_CUSTOM_PORT}")
+    require_port(
+        MOCK_HOST,
+        MOCK_CUSTOM_PORT,
+        f"IEC 104 custom-types mock not reachable at {MOCK_HOST}:{MOCK_CUSTOM_PORT}",
+    )
 
 
 @pytest.fixture
 def require_conpot_mock():
     """Skip test if Conpot mock on port 2409 is not reachable."""
-    if not _is_port_open(MOCK_HOST, MOCK_CONPOT_PORT):
-        pytest.skip(f"IEC 104 Conpot mock not reachable at {MOCK_HOST}:{MOCK_CONPOT_PORT}")
+    require_port(
+        MOCK_HOST,
+        MOCK_CONPOT_PORT,
+        f"IEC 104 Conpot mock not reachable at {MOCK_HOST}:{MOCK_CONPOT_PORT}",
+    )
 
 
 @pytest.fixture
 def require_tls_mock():
     """Skip test if TLS mock on port 19998 is not reachable."""
-    if not _is_port_open(MOCK_HOST, MOCK_TLS_PORT):
-        pytest.skip(f"IEC 104 TLS mock not reachable at {MOCK_HOST}:{MOCK_TLS_PORT}")
+    require_port(
+        MOCK_HOST, MOCK_TLS_PORT, f"IEC 104 TLS mock not reachable at {MOCK_HOST}:{MOCK_TLS_PORT}"
+    )
 
 
 def _base_args(

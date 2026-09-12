@@ -20,6 +20,7 @@ import pytest
 
 from oida.protocols.mqtt import scanner as scanner_mod
 from oida.protocols.mqtt.mixins.connection import ConnectionMixin
+from tests.service_gate import require_import
 
 
 # ---------------------------------------------------------------------------
@@ -288,7 +289,7 @@ class TestV5Properties:
 
     def test_build_publish_properties_full(self, monkeypatch):
         # Use real paho Properties to assert concrete field assignment.
-        pytest.importorskip("paho.mqtt.properties")
+        require_import("paho.mqtt.properties")
         host = MqttHost()
         args = {
             "response_topic": "resp/topic",
@@ -775,7 +776,7 @@ class _CertSocket:
 
 def _make_self_signed_der():
     """Build a minimal self-signed cert DER for display_cert_info to parse."""
-    crypto = pytest.importorskip("cryptography")
+    crypto = require_import("cryptography")
     from cryptography import x509
     from cryptography.hazmat.primitives import hashes, serialization
     from cryptography.hazmat.primitives.asymmetric import rsa

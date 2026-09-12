@@ -14,9 +14,11 @@ code as it stood, and only then was the minimal fix applied.
 
 import pytest
 
+from tests.service_gate import require_import
+
 pytestmark = [pytest.mark.unit]
 
-scapy_all = pytest.importorskip("scapy.all")
+scapy_all = require_import("scapy.all")
 Ether = scapy_all.Ether
 ARP = scapy_all.ARP
 

@@ -22,7 +22,9 @@ from typing import Any, Dict
 
 import pytest
 
-opendnp3 = pytest.importorskip("opendnp3", reason="yadnp3 (opendnp3) not installed")
+from tests.service_gate import require_import
+
+opendnp3 = require_import("opendnp3", reason="yadnp3 (opendnp3) not installed")
 
 from oida.protocols.dnp3.scanner import DNP3Scanner
 

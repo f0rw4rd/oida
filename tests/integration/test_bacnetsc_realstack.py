@@ -26,7 +26,9 @@ import sys
 
 import pytest
 
-from .conftest import MOCK_HOST, check_port_open
+from tests.service_gate import require_port, require_service
+
+from .conftest import MOCK_HOST
 
 pytestmark = [pytest.mark.integration, pytest.mark.bacnetsc]
 
@@ -39,17 +41,13 @@ WEAK_DEVICE_ID = 44005
 
 
 def _require(port: int, name: str) -> None:
-    if not check_port_open(MOCK_HOST, port):
-        pytest.skip(
-            f"{name} BACnet/SC mock not reachable on {MOCK_HOST}:{port} "
-            f"(python services.py up bacnetsc)"
-        )
+    require_port(MOCK_HOST, port, f"{name} BACnet/SC mock")
 
 
 def _copy_certs(container: str, tmp_path):
     """docker cp the minted CA + client cert/key out of the container."""
     if shutil.which("docker") is None:
-        pytest.skip("docker CLI not available to extract mock certs")
+        require_service("docker CLI not available to extract mock certs")
     out = {}
     for fname, key in (
         ("ca.pem", "ca"),
@@ -63,7 +61,7 @@ def _copy_certs(container: str, tmp_path):
             text=True,
         )
         if r.returncode != 0 or not dest.exists():
-            pytest.skip(f"could not extract {fname} from {container}: {r.stderr.strip()}")
+            require_service(f"could not extract {fname} from {container}: {r.stderr.strip()}")
         out[key] = str(dest)
     return out
 

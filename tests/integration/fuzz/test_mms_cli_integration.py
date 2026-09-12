@@ -20,6 +20,8 @@ import tempfile
 
 import pytest
 
+from tests.service_gate import require_service
+
 from .conftest import require_docker_mock, run_fuzz_cli
 
 # Mark all tests in this module
@@ -112,7 +114,7 @@ def populated_session(temp_session, mms_host, mms_port):
     # Session should be created
     db_path = f"{temp_session}.db"
     if not os.path.exists(db_path):
-        pytest.skip("Failed to create test session")
+        require_service("Failed to create test session — fuzzer may not have run (missing dep?)")
 
     return temp_session
 

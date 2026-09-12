@@ -20,6 +20,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from oida.protocols.opcua.helpers import _asyncua, ua
 from oida.protocols.opcua.mixins.fuzz import FuzzMixin
+from tests.service_gate import require_service
 
 
 class _FuzzHarness(FuzzMixin):
@@ -68,7 +69,7 @@ class TestFuzzNodeAnomalyComparison(unittest.IsolatedAsyncioTestCase):
 
     async def test_int_node_faithful_write_is_not_anomaly(self):
         if not _asyncua.is_available:
-            self.skipTest("asyncua not available")
+            require_service("asyncua not available")
         # Raw payload b"\x05" decodes to int 5; readback re-encodes to
         # b"\x05\x00\x00\x00" != raw payload -> old code flagged an anomaly.
         result = await self._run(0, [b"\x05", b"\x2a", b"\xff\xff\xff\x7f"])
@@ -78,14 +79,14 @@ class TestFuzzNodeAnomalyComparison(unittest.IsolatedAsyncioTestCase):
 
     async def test_float_node_faithful_write_is_not_anomaly(self):
         if not _asyncua.is_available:
-            self.skipTest("asyncua not available")
+            require_service("asyncua not available")
         result = await self._run(0.0, [b"\x00\x00\x80\x3f", b"\x00\x00\x00\x40"])
         self.assertEqual(result["writes"], 2)
         self.assertEqual(result["anomalies"], 0)
 
     async def test_str_node_faithful_write_is_not_anomaly(self):
         if not _asyncua.is_available:
-            self.skipTest("asyncua not available")
+            require_service("asyncua not available")
         # Even here, an empty initial encodes to b"" so the original-match arm
         # could mask it; use a non-empty initial so only the expected-match arm
         # can suppress the anomaly.
@@ -95,7 +96,7 @@ class TestFuzzNodeAnomalyComparison(unittest.IsolatedAsyncioTestCase):
 
     async def test_genuine_mismatch_still_flags_anomaly(self):
         if not _asyncua.is_available:
-            self.skipTest("asyncua not available")
+            require_service("asyncua not available")
         # A corrupting node: it stores write+1 instead of the written value, so
         # readback (encoded write+1) differs from both `expected` (encoded
         # written value) AND `original` (the baseline encoding). That is a

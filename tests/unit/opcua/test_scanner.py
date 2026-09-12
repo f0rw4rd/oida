@@ -11,6 +11,7 @@ import asyncio
 import pytest
 
 from oida.protocols.opcua import OPCUAScanner
+from tests.service_gate import require_service
 
 
 class TestOPCUAScannerInit(unittest.TestCase):
@@ -823,7 +824,7 @@ class TestOPCUAWriteAccessTesting(unittest.IsolatedAsyncioTestCase):
         from oida.protocols.opcua.helpers import _asyncua
 
         if not _asyncua.is_available:
-            self.skipTest("asyncua not available")
+            require_service("asyncua not available")
 
         mock_node = Mock()
         mock_node.read_attribute = AsyncMock(
@@ -846,7 +847,7 @@ class TestOPCUAWriteAccessTesting(unittest.IsolatedAsyncioTestCase):
         from oida.protocols.opcua.helpers import _asyncua
 
         if not _asyncua.is_available:
-            self.skipTest("asyncua not available")
+            require_service("asyncua not available")
 
         mock_node = Mock()
         mock_node.read_attribute = AsyncMock(

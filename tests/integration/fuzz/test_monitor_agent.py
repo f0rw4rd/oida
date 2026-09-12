@@ -16,6 +16,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.service_gate import require_service
+
 pytestmark = pytest.mark.integration
 
 
@@ -31,18 +33,13 @@ def _agent_src() -> Path:
 AGENT_SRC = _agent_src()
 SRC_FILES = ["fuzzing_agent.c", "config.c", "platform_posix.c", "platform_win.c"]
 
+
 # On a bare checkout the agent source / C compiler are absent and these tests
-# skip -- friendly locally. But the Docker/CI gate (docker/agent-test/) exists
-# precisely to guarantee they run against the real binary, so there OIDA_AGENT_REQUIRE=1
-# turns a missing source / compiler / failed build into a hard failure instead of a
-# silent skip (a skipped gate tests nothing).
-_REQUIRE_AGENT = os.environ.get("OIDA_AGENT_REQUIRE") == "1"
-
-
+# gate (fail by default; set OIDA_SKIP_MISSING_SERVICES=1 to skip instead) --
+# the Docker/CI gate (docker/agent-test/) exists precisely to guarantee they
+# run against the real binary.
 def _skip_or_fail(reason: str):
-    if _REQUIRE_AGENT:
-        pytest.fail(reason, pytrace=False)
-    pytest.skip(reason)
+    require_service(reason)
 
 
 if os.name != "posix":

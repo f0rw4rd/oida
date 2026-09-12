@@ -138,7 +138,8 @@ import pytest
 from typing import Optional
 
 from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST, check_port_open
+from .conftest import MOCK_HOST
+from tests.service_gate import require_port
 
 
 # DICOM SCP mocks use pynetdicom's default maximum_associations (~10); under
@@ -1034,8 +1035,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
         """Test --aet-brute against strict server (AET whitelist) [Category B]"""
         strict_port = mock_ports.get("dicom_strict", 11113)
 
-        if not check_port_open(mock_host, strict_port, timeout=3):
-            pytest.skip("DICOM strict server not available")
+        require_port(mock_host, strict_port, "DICOM strict server", timeout=3)
 
         result = cli_runner.run(
             self.protocol_name,

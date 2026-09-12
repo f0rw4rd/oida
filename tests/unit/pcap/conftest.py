@@ -12,6 +12,8 @@ from pathlib import Path
 
 import pytest
 
+from tests.service_gate import require_service
+
 
 # ---------------------------------------------------------------------------
 # Event-loop isolation (autouse)
@@ -90,10 +92,15 @@ def _has_pyshark():
 
 HAS_PYSHARK = _has_pyshark()
 
-requires_pyshark = pytest.mark.skipif(
-    not HAS_PYSHARK,
-    reason="pyshark or tshark not installed",
-)
+
+@pytest.fixture
+def _require_pyshark():
+    """Gate a test on pyshark+tshark: fails by default, skips with OIDA_SKIP_MISSING_SERVICES=1."""
+    if not HAS_PYSHARK:
+        require_service("pyshark or tshark not installed")
+
+
+requires_pyshark = pytest.mark.usefixtures("_require_pyshark")
 
 # git-lfs pointer signature -- pcap fixtures stored in LFS are <200-byte text
 # pointers until 'git lfs pull' fetches them.  tshark chokes on the pointer

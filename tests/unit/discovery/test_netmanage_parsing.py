@@ -14,8 +14,7 @@ import threading
 from datetime import datetime
 from unittest.mock import MagicMock, patch
 
-import pytest
-
+from tests.service_gate import require_import
 from oida.protocols.discovery import netmanage as nm
 from oida.protocols.discovery.netmanage import (
     NetManageDataBlock,
@@ -442,7 +441,7 @@ def _scapy_packet(encoded: bytes, src_ip: str, sport: int = nm.NETMANAGE_SEND_PO
 
 class TestNetManagePassiveListener:
     def test_response_packet_creates_device(self):
-        pytest.importorskip("scapy")
+        require_import("scapy")
         listener = _make_passive()
         encoded = build_response_publish()
         pkt = _scapy_packet(encoded, "192.168.10.20")
@@ -456,7 +455,7 @@ class TestNetManagePassiveListener:
         assert dd.manufacturer == "Schneider Electric"
 
     def test_nxc_logger_success_called(self):
-        pytest.importorskip("scapy")
+        require_import("scapy")
         listener = _make_passive()
         listener.nxc_logger = MagicMock()
         pkt = _scapy_packet(build_response_publish(), "192.168.10.21")
@@ -464,7 +463,7 @@ class TestNetManagePassiveListener:
         assert listener.nxc_logger.success.called
 
     def test_non_netmanage_port_ignored(self):
-        pytest.importorskip("scapy")
+        require_import("scapy")
         from scapy.all import IP, UDP, Raw
 
         listener = _make_passive()
@@ -473,7 +472,7 @@ class TestNetManagePassiveListener:
         assert listener.discovered_devices == {}
 
     def test_packet_without_raw_ignored(self):
-        pytest.importorskip("scapy")
+        require_import("scapy")
         from scapy.all import IP, UDP
 
         listener = _make_passive()
@@ -482,14 +481,14 @@ class TestNetManagePassiveListener:
         assert listener.discovered_devices == {}
 
     def test_short_payload_ignored(self):
-        pytest.importorskip("scapy")
+        require_import("scapy")
         listener = _make_passive()
         pkt = _scapy_packet(b"\x00" * 10, "10.0.0.11")
         listener.process_packet(pkt)
         assert listener.discovered_devices == {}
 
     def test_request_publish_logged_not_stored(self):
-        pytest.importorskip("scapy")
+        require_import("scapy")
         listener = _make_passive()
         scanner = NetManageScanner.__new__(NetManageScanner)
         req = scanner._create_discovery_request()  # RequestPublish, no data block
@@ -499,7 +498,7 @@ class TestNetManagePassiveListener:
         assert listener.discovered_devices == {}
 
     def test_repeated_response_updates_last_seen(self):
-        pytest.importorskip("scapy")
+        require_import("scapy")
         listener = _make_passive()
         encoded = build_response_publish()
         listener.process_packet(_scapy_packet(encoded, "192.168.10.30"))

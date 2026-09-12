@@ -6,6 +6,8 @@ can be imported and initialized with mock connections.
 """
 
 import pytest
+
+from tests.service_gate import require_service
 from oida.fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_CATEGORIES, PROTOCOL_TO_CATEGORY
 from oida.fuzz.core.config import FuzzerConfig
 from oida.fuzz.core.connections import MockConnectionFactory
@@ -100,7 +102,7 @@ class TestProtocolCategories:
         web_protocols = ["http", "http2"]
         for p in web_protocols:
             if p not in PROTOCOL_FUZZERS:
-                pytest.skip(f"Web protocol '{p}' not available (missing optional dep?)")
+                require_service(f"Web protocol '{p}' not available (missing optional dep?)")
 
     def test_ics_protocols(self):
         """Verify ICS protocols are present."""
@@ -132,7 +134,7 @@ class TestProtocolInitialization:
         try:
             fuzzer_class = PROTOCOL_FUZZERS[protocol_name]
         except KeyError:
-            pytest.skip(f"Protocol {protocol_name} not available")
+            require_service(f"Protocol {protocol_name} not available")
 
         try:
             fuzzer = fuzzer_class(config=mock_config, connection_factory=mock_connection_factory)
@@ -143,7 +145,7 @@ class TestProtocolInitialization:
             )
         except ImportError as e:
             if "boofuzz" in str(e):
-                pytest.skip("boofuzz not installed")
+                require_service("boofuzz not installed")
             raise
         except Exception as e:
             pytest.fail(f"Failed to initialize {protocol_name}: {type(e).__name__}: {e}")
@@ -154,7 +156,7 @@ class TestProtocolInitialization:
         try:
             fuzzer_class = PROTOCOL_FUZZERS[protocol_name]
         except KeyError:
-            pytest.skip(f"Protocol {protocol_name} not loadable")
+            require_service(f"Protocol {protocol_name} not loadable")
 
         assert hasattr(fuzzer_class, "__init__"), f"{protocol_name} missing __init__"
         assert hasattr(fuzzer_class, "_define_protocol"), (

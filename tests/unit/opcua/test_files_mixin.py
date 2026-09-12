@@ -15,11 +15,12 @@ from unittest.mock import AsyncMock, MagicMock
 
 from oida.protocols.opcua.helpers import _asyncua, ua
 from oida.protocols.opcua.mixins.files import FilesMixin
+from tests.service_gate import require_service
 
 
 def _skip_if_no_asyncua():
     if not _asyncua.is_available:
-        raise unittest.SkipTest("asyncua not available")
+        require_service("asyncua not available")
 
 
 class _BrowseName:

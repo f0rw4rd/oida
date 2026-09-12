@@ -19,6 +19,8 @@ import os
 
 import pytest
 
+from tests.service_gate import require_import, require_service
+
 from .conftest import FIXTURE_DIR, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
@@ -45,7 +47,7 @@ def _feed(pcap_path, use_ek, display_filter="dhcp"):
 
 def _write_option67_pcap(path):
     """A DHCP ACK carrying Option 67 (boot file name) = 'pxelinux.0'."""
-    scapy_all = pytest.importorskip("scapy.all")
+    scapy_all = require_import("scapy.all")
     pkt = (
         scapy_all.Ether(src="00:11:22:33:44:55", dst="aa:bb:cc:dd:ee:ff")
         / scapy_all.IP(src="192.168.1.1", dst="192.168.1.50")
@@ -76,13 +78,15 @@ class TestDhcpOption67BootFile:
             from .conftest import _ek_mode_available
 
             if not _ek_mode_available:
-                pytest.skip("pyshark EK-mode fork not installed")
+                require_service("pyshark EK-mode fork not installed")
         pcap = tmp_path / "dhcp_opt67.pcap"
         _write_option67_pcap(pcap)
 
         listener = _feed(pcap, use_ek=use_ek)
         boot_files = [
-            ix.details.get("boot_file") for ix in listener.interactions if ix.details.get("boot_file")
+            ix.details.get("boot_file")
+            for ix in listener.interactions
+            if ix.details.get("boot_file")
         ]
         # Before the fix this was empty in both modes (dead field name).
         assert "pxelinux.0" in boot_files, (
@@ -94,7 +98,7 @@ class TestDhcpClientIdFallback:
     def _dhcp_fixture(self):
         candidates = sorted(glob.glob(os.path.join(FIXTURE_DIR, "dhcp", "*.pcap")))
         if not candidates:
-            pytest.skip("no DHCP fixtures present")
+            require_service("no DHCP fixtures present")
         return candidates
 
     def test_mac_type_client_id_recorded(self):

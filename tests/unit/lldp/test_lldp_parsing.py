@@ -16,9 +16,9 @@ mode is on; we disable strict mode at import time so individual TLVs can be
 exercised in isolation.
 """
 
-import pytest
+from tests.service_gate import require_import
 
-scapy_all = pytest.importorskip("scapy.all")
+scapy_all = require_import("scapy.all")
 
 from scapy.all import Ether, conf, load_contrib  # noqa: E402
 

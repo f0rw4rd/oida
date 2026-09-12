@@ -29,6 +29,8 @@ How it works:
 
 import pytest
 
+from tests.service_gate import require_import, require_service
+
 from .conftest import create_fuzzer_config, run_fuzz_capture
 from .mock_servers import (
     iec104_server,
@@ -112,13 +114,13 @@ class TestModbusCrashDetection:
           3: test case 1 fuzz transmit (pass)
           4: test case 2 pre_send monitor check -> CRASH
         """
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.core.config import MonitorConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("modbus")
         if not fuzzer_class:
-            pytest.skip("Modbus fuzzer not available")
+            require_service("Modbus fuzzer not available")
 
         with modbus_server(crash_after=4) as server:
             config = create_fuzzer_config(
@@ -138,7 +140,7 @@ class TestModbusCrashDetection:
             try:
                 fuzzer = fuzzer_class(config=config)
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
             result = run_fuzz_capture(fuzzer, timeout_seconds=60)
 
@@ -155,13 +157,13 @@ class TestIEC104CrashDetection:
 
     def test_monitor_detects_crash(self, tmp_path):
         """Server crashes during a monitor health check."""
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.core.config import MonitorConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("iec104")
         if not fuzzer_class:
-            pytest.skip("IEC 104 fuzzer not available")
+            require_service("IEC 104 fuzzer not available")
 
         # IEC 104 monitor uses persistent connections and STARTDT handshake.
         # The request pattern may differ from Modbus. Use crash_after=6
@@ -184,7 +186,7 @@ class TestIEC104CrashDetection:
             try:
                 fuzzer = fuzzer_class(config=config)
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
             result = run_fuzz_capture(fuzzer, timeout_seconds=60)
 
@@ -201,13 +203,13 @@ class TestMMSCrashDetection:
 
     def test_monitor_detects_crash(self, tmp_path):
         """Server crashes during a monitor health check."""
-        boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+        boofuzz = require_import("boofuzz")  # noqa: F841
         from oida.fuzz.core.config import MonitorConfig
         from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
         fuzzer_class = PROTOCOL_FUZZERS.get("mms")
         if not fuzzer_class:
-            pytest.skip("MMS fuzzer not available")
+            require_service("MMS fuzzer not available")
 
         # MMS uses COTP Connection Request + MMS Initiate in its monitor check.
         # Each monitor check sends 2 requests (CR + Initiate). Use crash_after=8
@@ -230,7 +232,7 @@ class TestMMSCrashDetection:
             try:
                 fuzzer = fuzzer_class(config=config)
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
             result = run_fuzz_capture(fuzzer, timeout_seconds=60)
 

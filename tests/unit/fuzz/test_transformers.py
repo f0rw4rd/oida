@@ -17,6 +17,8 @@ Tests cover:
 """
 
 import pytest
+
+from tests.service_gate import require_service
 import gzip
 import zlib
 import base64
@@ -1226,7 +1228,7 @@ class TestBrotliTransformerCreation:
             from src.oida.fuzz.primitives.transformers.compression import BrotliTransformer
             # If we get here, brotli is installed
         except ImportError:
-            pytest.skip("Brotli not installed")
+            require_service("Brotli not installed")
 
     @pytest.fixture
     def brotli_available(self):
@@ -1236,7 +1238,7 @@ class TestBrotliTransformerCreation:
 
             return True
         except ImportError:
-            pytest.skip("Brotli not installed")
+            require_service("Brotli not installed")
 
     def test_default_creation(self, brotli_available):
         """Default BrotliTransformer uses quality 11."""
@@ -1271,7 +1273,7 @@ class TestBrotliTransformerRoundTrip:
 
             return True
         except ImportError:
-            pytest.skip("Brotli not installed")
+            require_service("Brotli not installed")
 
     def test_round_trip(self, brotli_available):
         """Round-trip preserves data."""

@@ -13,6 +13,7 @@ import argparse
 import pytest
 
 from oida.protocols.opcua.proto_args import proto_args
+from tests.service_gate import require_import
 
 
 def _advertised_policies() -> list[str]:
@@ -42,7 +43,7 @@ class TestSecurityPolicyMapping:
 
     def test_all_advertised_policies_have_asyncua_class(self):
         """Every non-None CLI choice must exist in asyncua.crypto.security_policies."""
-        asyncua_sec = pytest.importorskip("asyncua.crypto.security_policies")
+        asyncua_sec = require_import("asyncua.crypto.security_policies")
         missing = []
         for policy in _advertised_policies():
             class_name = f"SecurityPolicy{policy}"

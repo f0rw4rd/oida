@@ -11,6 +11,8 @@ real servers (e.g., incorrect packet construction, unexpected responses).
 
 import pytest
 
+from tests.service_gate import require_import, require_service
+
 from .conftest import create_fuzzer_config
 from .mock_servers import (
     mms_server,
@@ -55,12 +57,12 @@ def _create_fuzzer_with_server(fuzzer_class, config):
 
 def _get_fuzzer_class(protocol_name):
     """Get fuzzer class for a protocol, skipping if unavailable."""
-    boofuzz = pytest.importorskip("boofuzz")  # noqa: F841
+    boofuzz = require_import("boofuzz")  # noqa: F841
     from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if not fuzzer_class:
-        pytest.skip(f"{protocol_name} fuzzer not available")
+        require_service(f"{protocol_name} fuzzer not available")
     return fuzzer_class
 
 
@@ -82,7 +84,7 @@ def _create_mock_fuzzer(protocol_name, tmp_path, protocol_options=None):
     try:
         return _create_fuzzer_with_mock(fuzzer_class, config)
     except ImportError as e:
-        pytest.skip(f"Missing dependency: {e}")
+        require_service(f"Missing dependency: {e}")
 
 
 def _get_inner_state_machine(fuzzer):
@@ -153,7 +155,7 @@ class TestMMSStateTraversal:
             try:
                 fuzzer = _create_fuzzer_with_server(fuzzer_class, config)
             except ImportError as e:
-                pytest.skip(f"Missing dependency: {e}")
+                require_service(f"Missing dependency: {e}")
 
             sm = _get_inner_state_machine(fuzzer)
             if sm is None:

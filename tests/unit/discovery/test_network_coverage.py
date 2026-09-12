@@ -15,7 +15,9 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 
-scapy_all = pytest.importorskip("scapy.all")
+from tests.service_gate import require_import
+
+scapy_all = require_import("scapy.all")
 
 
 # ---------------------------------------------------------------------------

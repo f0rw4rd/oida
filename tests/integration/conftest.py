@@ -18,6 +18,7 @@ import socket
 from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
+from tests.service_gate import require_service
 from .cli_runner import CLIRunner
 
 
@@ -348,20 +349,17 @@ def _service_unavailable(msg: str) -> None:
     Set OIDA_SKIP_MISSING_SERVICES=1 in the environment to skip instead of fail
     (useful for local dev without services running).
     """
-    if os.environ.get("OIDA_SKIP_MISSING_SERVICES"):
-        pytest.skip(msg)
-    else:
-        pytest.fail(msg)
+    require_service(msg)
 
 
 def _l2_service_unavailable(msg: str) -> None:
-    """Always skip when an L2 (raw-socket) service is not available.
+    """Fail (or skip under the escape hatch) when an L2 (raw-socket) service is unavailable.
 
     L2 services require special Docker profiles and host networking with
-    CAP_NET_RAW — they are not part of the standard core service set and
-    are only available in specific test environments.
+    CAP_NET_RAW. They still count as availability guards, so they fail by
+    default like every other one — set OIDA_SKIP_MISSING_SERVICES=1 to skip.
     """
-    pytest.skip(msg)
+    require_service(msg)
 
 
 def check_port_open(host: str, port: int, timeout: int = 3) -> bool:

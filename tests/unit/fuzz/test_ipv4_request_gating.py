@@ -17,6 +17,7 @@ import pytest
 
 from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 from oida.fuzz.protocols import PROTOCOL_FUZZERS
+from tests.service_gate import require_service
 from oida.fuzz.core.connections import MockConnectionFactory
 
 pytestmark = pytest.mark.core
@@ -48,7 +49,7 @@ def _make_config(**overrides):
 def _build(config):
     fuzzer_class = PROTOCOL_FUZZERS["ipv4"]
     if fuzzer_class is None:
-        pytest.skip("ipv4 fuzzer not available (optional dependency)")
+        require_service("ipv4 fuzzer not available (optional dependency)")
     return fuzzer_class(config=config, connection_factory=MockConnectionFactory())
 
 

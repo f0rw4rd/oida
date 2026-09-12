@@ -15,6 +15,7 @@ the current baseline and flag regressions.
 import pytest
 
 from oida.fuzz.protocols import PROTOCOL_FUZZERS
+from tests.service_gate import require_service
 
 pytestmark = pytest.mark.core
 
@@ -193,7 +194,7 @@ def test_minimum_request_count(protocol_name, tier_info):
 
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     assert len(requests) >= min_requests, (
@@ -212,7 +213,7 @@ def test_request_definitions_have_required_fields(protocol_name):
     """Every RequestInfo has name, description, and category."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     for req in requests:
@@ -230,7 +231,7 @@ def test_request_names_are_unique(protocol_name):
     """Request names must be unique within a fuzzer."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     names = [r.name for r in requests]
@@ -250,7 +251,7 @@ def test_request_count_no_regression(protocol_name, expected_count):
     """
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     assert len(requests) >= expected_count, (
@@ -268,7 +269,9 @@ def test_request_count_no_regression(protocol_name, expected_count):
 def test_network_protocol_registered(protocol_name):
     """Every audited network/IT protocol is in PROTOCOL_FUZZERS."""
     if protocol_name not in PROTOCOL_FUZZERS:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS (missing optional dep?)")
+        require_service(
+            f"{protocol_name} not available in PROTOCOL_FUZZERS (missing optional dep?)"
+        )
 
 
 # --------------------------------------------------------------------------- #
@@ -300,7 +303,7 @@ def test_transport_minimum_request_count(protocol_name, tier_info):
 
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     assert len(requests) >= min_requests, (
@@ -326,7 +329,7 @@ def test_transport_request_count_no_regression(protocol_name, expected_count):
     """
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     assert len(requests) >= expected_count, (
@@ -350,7 +353,9 @@ ICS_PROTOCOL_NAMES = sorted(ICS_SCADA_TIERS.keys() - {"mutation", "echo", "dayti
 def test_ics_protocol_registered(protocol_name):
     """Every audited ICS/SCADA protocol is in PROTOCOL_FUZZERS."""
     if protocol_name not in PROTOCOL_FUZZERS:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS (missing optional dep?)")
+        require_service(
+            f"{protocol_name} not available in PROTOCOL_FUZZERS (missing optional dep?)"
+        )
 
 
 @pytest.mark.parametrize(
@@ -365,7 +370,7 @@ def test_ics_request_count_no_regression(protocol_name, expected_count):
     """
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     assert len(requests) >= expected_count, (
@@ -384,7 +389,7 @@ def test_ics_request_definitions_valid(protocol_name):
     """ICS fuzzer requests have valid name, description, and category."""
     fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
     if fuzzer_class is None:
-        pytest.skip(f"{protocol_name} not available in PROTOCOL_FUZZERS")
+        require_service(f"{protocol_name} not available in PROTOCOL_FUZZERS")
 
     requests = fuzzer_class.get_request_definitions()
     for req in requests:

@@ -18,7 +18,8 @@ import struct
 import time
 from typing import Dict, List, Optional, Tuple
 
-from .conftest import MOCK_HOST, MOCK_PORTS, check_port_open
+from .conftest import MOCK_HOST, MOCK_PORTS
+from tests.service_gate import require_port, require_service
 
 
 # HTTP/2 Frame Types (RFC 7540)
@@ -296,12 +297,11 @@ class TestHTTP2FrameTypes:
     @pytest.fixture
     def h2_conn(self, h2_port, mock_service):
         """Create HTTP/2 connection fixture."""
-        if not check_port_open(MOCK_HOST, h2_port, timeout=3):
-            pytest.skip("HTTP/2 Python server not available")
+        require_port(MOCK_HOST, h2_port, "HTTP/2 Python server")
 
         conn = HTTP2Connection(MOCK_HOST, h2_port, use_tls=False)
         if not conn.connect():
-            pytest.skip("Could not establish HTTP/2 connection")
+            require_service("Could not establish HTTP/2 connection")
 
         yield conn
         conn.close()
@@ -542,12 +542,11 @@ class TestHTTP2ProtocolViolations:
 
     @pytest.fixture
     def h2_conn(self, h2_port, mock_service):
-        if not check_port_open(MOCK_HOST, h2_port, timeout=3):
-            pytest.skip("HTTP/2 Python server not available")
+        require_port(MOCK_HOST, h2_port, "HTTP/2 Python server")
 
         conn = HTTP2Connection(MOCK_HOST, h2_port, use_tls=False)
         if not conn.connect():
-            pytest.skip("Could not establish HTTP/2 connection")
+            require_service("Could not establish HTTP/2 connection")
 
         yield conn
         conn.close()
@@ -634,12 +633,11 @@ class TestHTTP2HPACKPrimitives:
             assert normalized == headers, "Roundtrip should preserve headers"
 
         except ImportError as e:
-            pytest.skip(f"hpack library not available: {e}")
+            require_service(f"hpack library not available: {e}")
 
     def test_hpack_headers_to_server(self, h2_port, mock_service):
         """Test sending HPACK-encoded headers to server."""
-        if not check_port_open(MOCK_HOST, h2_port, timeout=3):
-            pytest.skip("HTTP/2 Python server not available")
+        require_port(MOCK_HOST, h2_port, "HTTP/2 Python server")
 
         try:
             import hpack as hpack_lib
@@ -659,7 +657,7 @@ class TestHTTP2HPACKPrimitives:
             # Create connection
             conn = HTTP2Connection(MOCK_HOST, h2_port, use_tls=False)
             if not conn.connect():
-                pytest.skip("Could not connect")
+                require_service("Could not connect")
 
             try:
                 # Send HEADERS with HPACK-encoded headers
@@ -679,7 +677,7 @@ class TestHTTP2HPACKPrimitives:
                 conn.close()
 
         except ImportError:
-            pytest.skip("hpack library not available")
+            require_service("hpack library not available")
 
 
 @pytest.mark.http2
@@ -693,8 +691,7 @@ class TestHTTP2DiagnosticEndpoints:
 
     def test_state_endpoint_format(self, h2_port, mock_service):
         """Verify /.well-known/h2/state returns expected format."""
-        if not check_port_open(MOCK_HOST, h2_port, timeout=3):
-            pytest.skip("HTTP/2 Python server not available")
+        require_port(MOCK_HOST, h2_port, "HTTP/2 Python server")
 
         data = get_server_state(MOCK_HOST, h2_port)
 
@@ -706,8 +703,7 @@ class TestHTTP2DiagnosticEndpoints:
 
     def test_frames_endpoint_format(self, h2_port, mock_service):
         """Verify /.well-known/h2/frames returns list of events."""
-        if not check_port_open(MOCK_HOST, h2_port, timeout=3):
-            pytest.skip("HTTP/2 Python server not available")
+        require_port(MOCK_HOST, h2_port, "HTTP/2 Python server")
 
         frames = get_server_frames(MOCK_HOST, h2_port)
         assert isinstance(frames, list), "Should return list"
@@ -718,16 +714,14 @@ class TestHTTP2DiagnosticEndpoints:
 
     def test_errors_endpoint_format(self, h2_port, mock_service):
         """Verify /.well-known/h2/errors returns list."""
-        if not check_port_open(MOCK_HOST, h2_port, timeout=3):
-            pytest.skip("HTTP/2 Python server not available")
+        require_port(MOCK_HOST, h2_port, "HTTP/2 Python server")
 
         errors = get_server_errors(MOCK_HOST, h2_port)
         assert isinstance(errors, list), "Should return list"
 
     def test_hpack_endpoint_format(self, h2_port, mock_service):
         """Verify /.well-known/h2/hpack returns HPACK state."""
-        if not check_port_open(MOCK_HOST, h2_port, timeout=3):
-            pytest.skip("HTTP/2 Python server not available")
+        require_port(MOCK_HOST, h2_port, "HTTP/2 Python server")
 
         data = get_server_hpack(MOCK_HOST, h2_port)
 
