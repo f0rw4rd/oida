@@ -119,16 +119,19 @@ class BFDPassiveListener(PySharkListenerBase):
     )
     # BFD state codes
     BFD_STATES = {0: "AdminDown", 1: "Down", 2: "Init", 3: "Up"}
+    # BFD diagnostic codes -- verbatim from `tshark -G values | grep bfd.diag`
+    # (RFC 5880 sec. 4.1, plus code 9 from RFC 6428).
     BFD_DIAG = {
         0: "No Diagnostic",
-        1: "Control Detection Expired",
+        1: "Control Detection Time Expired",
         2: "Echo Function Failed",
-        3: "Neighbor Signaled Down",
+        3: "Neighbor Signaled Session Down",
         4: "Forwarding Plane Reset",
         5: "Path Down",
         6: "Concatenated Path Down",
         7: "Administratively Down",
         8: "Reverse Concatenated Path Down",
+        9: "Mis-Connectivity Defect",
     }
 
     def __init__(
