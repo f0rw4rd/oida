@@ -54,7 +54,13 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
-# DeviceNet CIP service codes (common subset)
+# DeviceNet CIP service codes -- verbatim from packet-devicenet.c's
+# devicenet_service_code_vals, which is GENERIC_SC_LIST (packet-cip.h) plus the
+# four DeviceNet-specific 0x4b-0x4e entries. The previous table instead carried
+# PCCC / Modbus-bridge / CIP-over-EtherNetIP names (Execute PCCC, Read/Write
+# Tag...) and a fabricated 0x14 "Error Response" (responses are signalled by
+# the 0x80 bit on the service byte, not a service code), so a Device Shutdown
+# frame rendered as "Write Tag".
 DEVICENET_SERVICES = {
     0x01: "Get Attributes All",
     0x02: "Set Attributes All",
@@ -66,20 +72,22 @@ DEVICENET_SERVICES = {
     0x08: "Create",
     0x09: "Delete",
     0x0A: "Multiple Service Packet",
+    0x0D: "Apply Attributes",
     0x0E: "Get Attribute Single",
     0x10: "Set Attribute Single",
     0x11: "Find Next Object Instance",
-    0x14: "Error Response",
     0x15: "Restore",
     0x16: "Save",
-    0x18: "NOP",
-    0x19: "Get Member",
-    0x4B: "Execute PCCC",
-    0x4C: "Read Modify Write",
-    0x4D: "Read Tag",
-    0x4E: "Write Tag",
-    0x52: "Read Tag Fragmented",
-    0x53: "Write Tag Fragmented",
+    0x17: "Nop",
+    0x18: "Get Member",
+    0x19: "Set Member",
+    0x1A: "Insert Member",
+    0x1B: "Remove Member",
+    0x1C: "Group Sync",
+    0x4B: "Open Explicit Message Connection Request",
+    0x4C: "Close Connection Request",
+    0x4D: "Device Heartbeat Message",
+    0x4E: "Device Shutdown Message",
 }
 
 # DeviceNet message group descriptions
@@ -109,7 +117,15 @@ DEVICENET_CLASSES = {
 }
 
 # Write/control service codes (security-relevant)
-DEVICENET_WRITE_SERVICES = {0x02, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10, 0x15, 0x16, 0x4E, 0x53}
+# State-changing / control verbs (security-relevant): the set/list mutators,
+# lifecycle verbs, Close Connection Request and -- the destructive one --
+# Device Shutdown (0x4e). NB: the old set's 0x4e matched a mislabelled
+# "Write Tag" and 0x53 matched nothing real.
+DEVICENET_WRITE_SERVICES = {
+    0x02, 0x04, 0x05, 0x06, 0x07, 0x08, 0x09, 0x10,
+    0x15, 0x16, 0x19, 0x1A, 0x1B,
+    0x4C, 0x4E,
+}
 
 
 @dataclass
