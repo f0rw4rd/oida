@@ -25,6 +25,7 @@ from typing import List, Optional, Any, Dict, Tuple
 import time
 import json
 import csv
+import tempfile
 
 try:
     import yaml
@@ -1526,16 +1527,25 @@ def main(argv: Optional[List[str]] = None):
             f"\nCompleted {len(targets)} targets in {elapsed:.2f}s ({successful} ok, {failed} failed)"
         )
 
-    # Export results if requested
-    if args.output:
+    # Export results if requested (or fall back to a temp dir if the user
+    # asked for a --format but never gave -o, so results aren't silently lost)
+    output_path = args.output
+    used_temp_dir = False
+    if not output_path and args.format != "console":
+        output_path = tempfile.mkdtemp(prefix="oida-")
+        used_temp_dir = True
+
+    if output_path:
         fmt = args.format if args.format != "console" else "json"
         default_port = getattr(args, "port", None) or getattr(protocol_class, "default_port", 0)
         export_logger = get_logger(protocol_name.upper(), "", default_port)
         try:
-            export_results(results, args.output, fmt, protocol_name, nxc_logger=export_logger)
+            export_results(results, output_path, fmt, protocol_name, nxc_logger=export_logger)
         except Exception as e:
             logger.error(f"Failed to export results: {e}")
             return 1
+        if used_temp_dir and not args.quiet:
+            export_logger.display(f"--format given without -o; results written to {output_path}")
 
     return 0 if failed == 0 else 1
 
