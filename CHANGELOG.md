@@ -10,6 +10,37 @@ First stable release.
 
 ### Added
 
+- **Fuzzer combinatorial-depth controls: `--max-depth` and `--only-depth`.**
+  boofuzz fuzzes depth 1 (each field alone), then depth 2 (all field pairs),
+  then triples, ... automatically, and a default run's case space is
+  combinatorial (no practical total). `--max-depth N` caps the run at depths
+  1..N then stops (`--max-depth 1` is a completable single-field sweep);
+  `--only-depth N` (alias `--depth`, short `-D`) fuzzes *only* depth N, skipping
+  the lower depths so depth-N cases go out from the first packet. The two are
+  mutually exclusive. This replaces the impossible "seek to depth N by test-case
+  index" — boofuzz has no seek, so a big index just regenerates-and-discards the
+  whole lower-depth prefix (minutes to hours for a real protocol). Documented
+  under "Controlling depth" on the docs site.
+
+- **Six new passive PCAP listeners for uncovered OT protocols** — `selfm`
+  (SEL Fast Message / Schweitzer protective relays, with Fast Operate
+  breaker-control flagging), `egd` (GE Ethernet Global Data producer
+  exchanges), `tte` (TTEthernet / SAE AS6802, L2 MAC-addressed), `rtps`
+  (DDS/RTPS participant + domain discovery), `ieee1722` (AVTP/AVB stream
+  subtypes) and `mqttsn` (MQTT-SN sensor gateways/topics). Each is a
+  pyshark field-extraction listener registered in the ICS (or network)
+  group, backed by a dissector-verified fixture and a dedicated
+  integration test file plus parametrized quality + end-to-end
+  PcapScanner coverage. Fixtures added under `tests/fixtures/pcap/<proto>/`
+  (fetched from CISA ICSNPP / the Wireshark SampleCaptures mirror, or
+  scapy-generated with valid wire format where no public capture exists —
+  see that dir's README "Passive-parser gap coverage" section).
+- **Modbus passive listener now covers UDP and RTU transports** — the
+  `modbus` listener handles `mbudp` (MBAP over UDP) and `mbrtu` (RTU
+  framing, no MBAP, unit id + CRC16) in addition to `mbtcp`, routed through
+  the *same* per-PDU processing path (each transport is normalised to a
+  synthetic header layer — no duplicated logic). `modbus_passive_data.protocol`
+  now reports `Modbus/TCP` / `Modbus/UDP` / `Modbus/RTU`.
 - **Test suite expanded by 175 tests** (13,250 → 13,425 passing) in the
   release-prep push: 28 new pcap-listener test files (one per audit-flagged
   listener), false-positive coverage extended from 6 to 16 protocols,
@@ -128,6 +159,24 @@ First stable release.
 
 ### Fixed
 
+- **`--timeout` is now a per-protocol flag, and config-file `timeout:` is
+  honored.** `--timeout` was declared both globally and on every protocol
+  subparser, binding to the same dest. The subparser default silently clobbered
+  any value placed before the subcommand (`oida --timeout 30 modbus HOST` ran
+  with the protocol default, not 30) and the same mismatch made a config-file
+  `timeout:` silently ignored. The global flag was removed; `--timeout` now
+  lives only on each protocol (placed after the target), preserving per-protocol
+  defaults (e.g. modbus 2s, dicom 10s). Placing it before the subcommand is now
+  a clean "unrecognized argument" error instead of a silently-wrong value. `ads`
+  and `tase2` gained their own `--timeout` (default 5s) to preserve their prior
+  connect timeout. `merge_config_with_args` now uses the active protocol's own
+  default as the baseline so `timeout:` (and any per-protocol option) merges
+  correctly. Regression tests added.
+- **Global `-v/--verbose` no longer dropped before the `serial` subcommand.**
+  `serial list`/`serial detect` re-declared `-v` with `action="store_true"`
+  (concrete default), which clobbered a `-v`/`-vv` placed before the subcommand
+  (`oida -v serial list` ran non-verbose). They now use `default=argparse.SUPPRESS`,
+  matching the `fuzz` subcommand and the protocol std-parser mirror.
 - **DNP3 control operations now actually require `--confirm`.** Every
   `--bo-direct`, `--cold-restart`, `--write-file`, `--stop-app`,
   `--freeze-immediate`, `--assign-class`, etc. has had "requires --confirm"
