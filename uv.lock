@@ -1820,8 +1820,8 @@ requires-dist = [
     { name = "oida-pyshark", marker = "extra == 'pcap'", specifier = "==0.6.1.post1" },
     { name = "paho-mqtt", marker = "extra == 'mqtt'", specifier = "==2.1.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
-    { name = "profinet-py", marker = "extra == 'discovery'", specifier = "==0.6.2" },
-    { name = "profinet-py", marker = "extra == 'profinet'", specifier = "==0.6.2" },
+    { name = "profinet-py", marker = "extra == 'discovery'", specifier = "==0.6.3" },
+    { name = "profinet-py", marker = "extra == 'profinet'", specifier = "==0.6.3" },
     { name = "psutil", marker = "extra == 'discovery'", specifier = "==7.2.2" },
     { name = "pyads", marker = "extra == 'ads'", specifier = "==3.5.2" },
     { name = "pyasn1", marker = "extra == 'fuzz'", specifier = "==0.6.3" },
@@ -1860,7 +1860,7 @@ requires-dist = [
     { name = "vulture", marker = "extra == 'dev'", specifier = ">=2.16" },
     { name = "websockets", marker = "extra == 'bacnetsc'", specifier = "==16.0" },
     { name = "websockets", marker = "extra == 'ocpp'", specifier = "==16.0" },
-    { name = "xknx", marker = "extra == 'knx'", specifier = "==3.15.0" },
+    { name = "xknx", marker = "extra == 'knx'", specifier = "==3.19.0" },
     { name = "xknxproject", marker = "extra == 'knx'", specifier = "==3.9.0" },
     { name = "yadnp3", marker = "extra == 'dnp3'", specifier = "==3.2.1.1" },
     { name = "zeroconf", marker = "extra == 'discovery'", specifier = "==0.149.16" },
@@ -1945,14 +1945,14 @@ wheels = [
 
 [[package]]
 name = "profinet-py"
-version = "0.6.2"
+version = "0.6.3"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "construct" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/5d/17/7d66b898d5fa9c21d8f41df589f53b11dc8cd9467293a9315ea11d4e0e31/profinet_py-0.6.2.tar.gz", hash = "sha256:20e44828861190f70944e5f89f6dfbe71d439a360f149fe9cce2537743cd8c1b", size = 219125, upload-time = "2026-04-02T16:35:18.444Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/f7/a1/574b6b0c388b2d1474a0976bb44d276fb0dec14ffb83116e0e43389bc82a/profinet_py-0.6.3.tar.gz", hash = "sha256:c3085b945c6955e883ecf67e5849c4ff06fca0c0b3d260ff9d16ca0294427f81", size = 235185, upload-time = "2026-08-19T18:56:42.771Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/8a/11/193a983080bcd42c0adf7288a768e925b20fa8fa5554f65b4265e24c91b7/profinet_py-0.6.2-py3-none-any.whl", hash = "sha256:7b5747829dbdba2c67beca57e648262bc359751a2bfef0f60f071207fcd41da3", size = 166931, upload-time = "2026-04-02T16:35:16.889Z" },
+    { url = "https://files.pythonhosted.org/packages/e4/6d/8052fe66956ebd7857818db9a46d6b48b02b39c65559b56cdbb2db87173d/profinet_py-0.6.3-py3-none-any.whl", hash = "sha256:df982012a0c78c7d74d93f117ec817063145388c44ed4ba4d2df35ba17cab403", size = 173563, upload-time = "2026-08-19T18:56:41.1Z" },
 ]
 
 [[package]]
@@ -3117,7 +3117,7 @@ wheels = [
 
 [[package]]
 name = "xknx"
-version = "3.15.0"
+version = "3.19.0"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "async-timeout", marker = "python_full_version < '3.11'" },
@@ -3125,9 +3125,9 @@ dependencies = [
     { name = "ifaddr" },
     { name = "typing-extensions", marker = "python_full_version < '3.11'" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/e0/c7/434598b94c1421cc5aab3aff4e0f0176235cc589fe8a7fac793b75b58dd8/xknx-3.15.0.tar.gz", hash = "sha256:98cbe4bc86aed092a90b11fa9eecd78e6c375523e60311a6819172990f63c475", size = 162737, upload-time = "2026-02-15T20:47:16.56Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c9/db/59886e46d03b2ca4cfb5129624c93f933697c4ddf59a2c90f7faca1f9074/xknx-3.19.0.tar.gz", hash = "sha256:ab6d50c8313f46897575a4c343bdbbd47460d699489aeda7b9e732e161508108", size = 191421, upload-time = "2026-08-10T08:32:11.767Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/88/ec/584905650390169f3bb36d66aafc6ace67c970b9d25d00e3989c1eeb1ae0/xknx-3.15.0-py3-none-any.whl", hash = "sha256:985f52547d9e11f4df40e2edd4e5fbf14d25cc148873595909932034350d4c15", size = 240806, upload-time = "2026-02-15T20:47:14.861Z" },
+    { url = "https://files.pythonhosted.org/packages/d6/59/43ace5a2e2dccc3e429617c634fb226d2fc5fb6329bcaac89695df0ef7a6/xknx-3.19.0-py3-none-any.whl", hash = "sha256:3c2700ad8b7f3694510a7383f688b0e292d11f549a05ff63a1be7954961243b4", size = 281490, upload-time = "2026-08-10T08:32:10.499Z" },
 ]
 
 [[package]]
