@@ -1082,6 +1082,58 @@ class TestUpProto:
         profile_count = up_call.count("--profile")
         assert profile_count == 1, f"Expected 1 --profile but got {profile_count}: {up_call}"
 
+    def test_up_proto_exact_service_name_starts_only_that_service(self, mock_run):
+        """`up <service>` falls back to an exact compose service name and starts
+        only that container, not its group siblings."""
+        config = {
+            "services": {
+                "hl7-mock": {"labels": {"oida.group": "hl7"}, "profiles": []},
+                "hl7-mirth": {"labels": {"oida.group": "hl7"}, "profiles": []},
+            }
+        }
+        with patch.object(dev, "_get_compose_config", return_value=config):
+            with patch.object(dev, "_wait_service_healthy", return_value=True):
+                result = dev._up_proto_impl("hl7-mock")
+
+        assert result == 0
+        up_call = None
+        for c in mock_run.call_args_list:
+            args = c[0][0]
+            if "up" in args:
+                up_call = args
+                break
+        assert up_call is not None
+        assert "hl7-mock" in up_call
+        # The group sibling must NOT be started.
+        assert "hl7-mirth" not in up_call
+
+    def test_up_proto_group_wins_over_service_name(self, mock_run):
+        """When an arg matches a group, the group is used even if it also happens
+        to be a service key — group resolution takes precedence."""
+        config = {
+            "services": {
+                # A service literally named "hl7" that is itself in group "hl7",
+                # plus a sibling. Resolving group "hl7" must return both.
+                "hl7": {"labels": {"oida.group": "hl7"}, "profiles": []},
+                "hl7-mirth": {"labels": {"oida.group": "hl7"}, "profiles": []},
+            }
+        }
+        with patch.object(dev, "_get_compose_config", return_value=config):
+            with patch.object(dev, "_wait_service_healthy", return_value=True):
+                result = dev._up_proto_impl("hl7")
+
+        assert result == 0
+        up_call = None
+        for c in mock_run.call_args_list:
+            args = c[0][0]
+            if "up" in args:
+                up_call = args
+                break
+        assert up_call is not None
+        # Group match => both members started, not just the same-named service.
+        assert "hl7" in up_call
+        assert "hl7-mirth" in up_call
+
 
 # ---------------------------------------------------------------------------
 # clean command Tests

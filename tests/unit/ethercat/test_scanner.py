@@ -978,12 +978,18 @@ class TestEEPROMParser(unittest.TestCase):
         self.assertEqual(result[0]["entries"][0]["bit_length"], 8)
 
     def test_parse_dc_category(self):
-        """Test DC category parsing [Category A]"""
-        dc_data = bytearray(18)
+        """Test DC category parsing [Category A]
+
+        Layout per struct _sii_dclock (synapticon/siitool sii.h): cycleTime0
+        u32@0, shiftTime0 u32@4, cycleTime1 u32@8, shiftTime1 u32@12,
+        sync1CycleFactor i16@16, assignActivate u16@18, sync0CycleFactor
+        i16@20, nameIdx u8@22, descIdx u8@23 -> 24 bytes minimum.
+        """
+        dc_data = bytearray(24)
         struct.pack_into("<I", dc_data, 0, 1000000)  # cycle_time0_ns = 1ms
-        struct.pack_into("<H", dc_data, 12, 0x0300)  # assign_activate = dc_sync0
-        dc_data[16] = 1  # name_idx
-        dc_data[17] = 2  # desc_idx
+        struct.pack_into("<H", dc_data, 18, 0x0300)  # assign_activate = dc_sync0
+        dc_data[22] = 1  # name_idx
+        dc_data[23] = 2  # desc_idx
 
         strings = ["", "DC Sync", "Default DC mode"]
         result = parse_dc_category(bytes(dc_data), strings)
@@ -994,7 +1000,7 @@ class TestEEPROMParser(unittest.TestCase):
 
     def test_parse_dc_category_insufficient_data(self):
         """Test DC category with insufficient data [Category C]"""
-        result = parse_dc_category(bytes(10), [""])
+        result = parse_dc_category(bytes(20), [""])
         self.assertIn("error", result)
 
 

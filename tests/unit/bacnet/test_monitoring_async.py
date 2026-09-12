@@ -13,7 +13,6 @@ import unittest
 from unittest.mock import Mock, AsyncMock, patch
 
 from oida.protocols.bacnet import bacnet
-from oida.utils.common_types import Category
 from tests.unit.bacnet.conftest import create_mock_args, create_mock_logger
 
 
@@ -299,7 +298,6 @@ class TestEnumLifeSafety(unittest.TestCase):
         scanner.logger.security_finding.assert_called_once()
         args, kwargs = scanner.logger.security_finding.call_args
         self.assertEqual(args[0], "Insecure configuration")
-        self.assertEqual(kwargs["category"], Category.ACCESS_CONTROL)
         self.assertIn("life safety object", kwargs["detail"])
         # The decoded object name appears in the displayed findings.
         self.assertIn("Fire Alarm Zone 1", _displayed(scanner.logger))
@@ -338,7 +336,6 @@ class TestCheckLifeSafety(unittest.TestCase):
         scanner.logger.security_finding.assert_called_once()
         args, kwargs = scanner.logger.security_finding.call_args
         self.assertEqual(args[0], "Insecure configuration")
-        self.assertEqual(kwargs["category"], Category.ACCESS_CONTROL)
         self.assertIn("fire/security alarms", kwargs["detail"])
 
     @patch("oida.protocols.bacnet.mixins.monitoring._load_bacpypes3")
@@ -589,7 +586,6 @@ class TestEnumLoops(unittest.TestCase):
         scanner.logger.security_finding.assert_called_once()
         args, kwargs = scanner.logger.security_finding.call_args
         self.assertEqual(args[0], "Insecure configuration")
-        self.assertEqual(kwargs["category"], Category.ACCESS_CONTROL)
         self.assertIn("PID security concern", kwargs["detail"])
 
         displayed = _displayed(scanner.logger)

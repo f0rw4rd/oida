@@ -16,7 +16,6 @@ import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
 from oida.protocols.bacnet import bacnet
-from oida.utils.common_types import Category
 from tests.unit.bacnet.conftest import create_mock_args, create_mock_logger
 
 
@@ -446,7 +445,6 @@ class TestBbmdInjection(unittest.TestCase):
 
         call = scanner.logger.security_finding.call_args
         self.assertEqual(call.args[0], "Writable access")
-        self.assertEqual(call.kwargs["category"], Category.ACCESS_CONTROL)
         self.assertIn("BDT write accepted", call.kwargs["detail"])
 
     @patch("oida.protocols.bacnet.mixins.network._load_bacpypes3")

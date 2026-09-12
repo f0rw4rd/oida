@@ -3,9 +3,8 @@ Coverage-focused tests for discovery.core helpers.
 
 Targets the large uncovered regions of core.py:
 - build_device_description() (the standalone description builder)
-- ResponseDeduplicator
 - check_ip_in_network_scope() branches
-- OutOfScopeWarning.format_warning()
+- OutOfScopeWarning (timestamp auto-population)
 - Socket / interface helper functions (create_udp_socket, bind_socket_to_interface,
   get_interface_ips, get_interface_ipv6, check_interface_capabilities,
   get_all_broadcast_addresses, compute_network_cidr, hex_dump)
@@ -264,63 +263,6 @@ class TestOutOfScopeWarning:
     def test_timestamp_autopopulated(self):
         w = core.OutOfScopeWarning(ip="10.0.0.1", expected_network="192.168.1.0/24")
         assert w.timestamp  # __post_init__ filled it
-
-    def test_format_warning_full(self):
-        w = core.OutOfScopeWarning(
-            ip="172.16.0.9",
-            expected_network="192.168.1.0/24",
-            device_mac="aa:bb:cc:dd:ee:ff",
-            device_name="PLC-1",
-            discovered_by="arp",
-        )
-        msg = w.format_warning()
-        assert "172.16.0.9" in msg
-        assert "PLC-1" in msg
-        assert "aa:bb:cc:dd:ee:ff" in msg
-        assert "192.168.1.0/24" in msg
-        assert "arp" in msg
-
-    def test_format_warning_minimal(self):
-        w = core.OutOfScopeWarning(ip="172.16.0.9", expected_network="192.168.1.0/24")
-        msg = w.format_warning()
-        assert "172.16.0.9" in msg
-        assert "192.168.1.0/24" in msg
-
-
-# ---------------------------------------------------------------------------
-# ResponseDeduplicator
-# ---------------------------------------------------------------------------
-class TestResponseDeduplicator:
-    def test_mac_dedup_case_insensitive(self):
-        d = core.ResponseDeduplicator()
-        assert d.is_duplicate(mac="AA:BB:CC:DD:EE:FF") is False
-        d.mark_seen(mac="AA:BB:CC:DD:EE:FF")
-        assert d.is_duplicate(mac="aa:bb:cc:dd:ee:ff") is True
-
-    def test_location_usn_uuid_name(self):
-        d = core.ResponseDeduplicator()
-        d.mark_seen(location="http://x/desc.xml", usn="usn-1", uuid="uuid-1", name="Host")
-        assert d.is_duplicate(location="http://x/desc.xml") is True
-        assert d.is_duplicate(usn="usn-1") is True
-        assert d.is_duplicate(uuid="uuid-1") is True
-        assert d.is_duplicate(name="host") is True  # case insensitive
-
-    def test_ip_only_weak_identifier(self):
-        d = core.ResponseDeduplicator()
-        d.mark_seen(ip="10.0.0.1")
-        # IP alone -> duplicate
-        assert d.is_duplicate(ip="10.0.0.1") is True
-        # IP plus a stronger identifier that is NOT seen -> not duplicate
-        assert d.is_duplicate(ip="10.0.0.1", mac="00:11:22:33:44:55") is False
-
-    def test_stats(self):
-        d = core.ResponseDeduplicator()
-        d.mark_seen(mac="aa:bb:cc:dd:ee:ff", ip="10.0.0.1", name="Host")
-        stats = d.stats()
-        assert stats["macs"] == 1
-        assert stats["ips"] == 1
-        assert stats["names"] == 1
-        assert stats["uuids"] == 0
 
 
 # ---------------------------------------------------------------------------

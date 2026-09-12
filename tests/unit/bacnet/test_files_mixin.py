@@ -93,9 +93,6 @@ class TestAtomicReadFileCap(unittest.TestCase):
 
         stream_response = _make_stream_response(chunk)
 
-        captured = {}
-        orig_extend = bytearray.extend
-
         # Count how many AtomicReadFile reads happen and assert the buffer
         # never exceeds the ceiling.
         call_count = {"n": 0}

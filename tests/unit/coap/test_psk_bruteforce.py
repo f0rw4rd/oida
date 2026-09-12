@@ -440,7 +440,7 @@ class TestProtoArgs(unittest.TestCase):
 
         proto_args(subparsers, [parent])
 
-        args = main_parser.parse_args(["coap", "127.0.0.1", "-P", "0102030405060708"])
+        args = main_parser.parse_args(["coap", "127.0.0.1", "--psk", "0102030405060708"])
         assert args.psk == "0102030405060708"
 
     def test_psk_identity_accepts_string(self):
@@ -454,7 +454,7 @@ class TestProtoArgs(unittest.TestCase):
 
         proto_args(subparsers, [parent])
 
-        args = main_parser.parse_args(["coap", "127.0.0.1", "-u", "my-client"])
+        args = main_parser.parse_args(["coap", "127.0.0.1", "--psk-identity", "my-client"])
         assert args.psk_identity == "my-client"
 
     def test_port_defaults_to_none(self):

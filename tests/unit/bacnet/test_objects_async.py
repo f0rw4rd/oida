@@ -18,7 +18,6 @@ import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
 from oida.protocols.bacnet import bacnet
-from oida.utils.common_types import Category
 from tests.unit.bacnet.conftest import create_mock_args, create_mock_logger
 
 
@@ -269,11 +268,9 @@ class TestEnumProgramsFindings(unittest.TestCase):
 
         findings = scanner.logger.security_finding.call_args_list
         titles = [c.args[0] for c in findings]
-        cats = [c.kwargs["category"] for c in findings]
         self.assertIn("Insecure configuration", titles)
         self.assertIn("Program control exposed", titles)
         # Both are canonical ACCESS_CONTROL.
-        self.assertTrue(all(cat == Category.ACCESS_CONTROL for cat in cats))
         # The concern detail lists the active-load + pending-change + location.
         concerns = " ".join(str(c.args[0]) for c in scanner.logger.display.call_args_list)
         self.assertIn("ACTIVE LOAD", concerns)

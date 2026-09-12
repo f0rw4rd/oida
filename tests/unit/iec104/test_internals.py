@@ -353,10 +353,17 @@ class TestCompileTypeInfoAndSecurity(unittest.TestCase):
         scanner = make_scanner()
         scanner.logger.security_finding = MagicMock()
         results = {"file_transfer": {"supported": True}, "type_ids": {}, "data_points": {}}
-        scanner._analyze_security(results)
-        # A "Writable access" finding must be emitted for exposed file transfer
+        analysis = scanner._analyze_security(results)
+        # _analyze_security records the file-transfer exposure in the analysis
+        # summary (issue + high risk). It no longer emits a separate "Writable
+        # access" security_finding -- that would double-count the "File transfer
+        # exposed" finding already emitted by _report_file_transfer().
         titles = [c.args[0] for c in scanner.logger.security_finding.call_args_list]
-        self.assertIn("Writable access", titles)
+        self.assertNotIn("Writable access", titles)
+        self.assertEqual(analysis["risk_level"], "high")
+        self.assertTrue(
+            any("File transfer capability exposed" in issue for issue in analysis["issues"])
+        )
 
     def test_analyze_security_flags_many_points(self):
         scanner = make_scanner()
@@ -680,6 +687,26 @@ class TestIec101Framing(unittest.TestCase):
         scanner = make_scanner()
         self.assertIsNone(scanner._parse_serial_frame(b"\x10\x49"))
         self.assertIsNone(scanner._parse_serial_frame(b""))
+
+    def test_parse_variable_frame_truncated_length_does_not_raise(self):
+        """A declared length pointing past the end of the buffer must not raise
+        IndexError from `frame[4 + length]` — it should return an invalid,
+        non-crashing result instead (BUG 2 regression)."""
+        scanner = make_scanner()
+        # start=0x68, length=0x0a (10), length2=0x0a, start2=0x68, then only 2
+        # bytes of "user data" -> frame[4 + 10] is far out of bounds.
+        frame = b"\x68\x0a\x0a\x68\x01\x02"
+        parsed = scanner._parse_serial_frame(frame)
+        self.assertIsNotNone(parsed)
+        self.assertEqual(parsed["frame_type"], "variable")
+        self.assertFalse(parsed["valid"])
+
+        # Second repro from the bug report: maximal declared length.
+        frame2 = b"\x68\xff\xff\x68"
+        parsed2 = scanner._parse_serial_frame(frame2)
+        self.assertIsNotNone(parsed2)
+        self.assertEqual(parsed2["frame_type"], "variable")
+        self.assertFalse(parsed2["valid"])
 
 
 class TestIec101AsduProcessing(unittest.TestCase):

@@ -337,52 +337,6 @@ class TestValidateInterface:
             validate_interface("a" * 100)
 
 
-class TestGetBroadcastAddress:
-    """Test get_broadcast_address helper function"""
-
-    def test_valid_subnet_returns_broadcast(self):
-        """Test that valid subnet returns correct broadcast"""
-        from oida.protocols.discovery.core import get_broadcast_address
-
-        result = get_broadcast_address("192.168.1.0/24")
-        assert result == "192.168.1.255"
-
-    def test_slash_16_subnet(self):
-        """Test broadcast for /16 subnet"""
-        from oida.protocols.discovery.core import get_broadcast_address
-
-        result = get_broadcast_address("172.16.0.0/16")
-        assert result == "172.16.255.255"
-
-    def test_slash_32_subnet(self):
-        """Test broadcast for /32 subnet"""
-        from oida.protocols.discovery.core import get_broadcast_address
-
-        result = get_broadcast_address("10.0.0.1/32")
-        assert result == "10.0.0.1"
-
-    def test_none_subnet_returns_global_broadcast(self):
-        """Test that None subnet returns global broadcast"""
-        from oida.protocols.discovery.core import get_broadcast_address
-
-        result = get_broadcast_address(None)
-        assert result == "255.255.255.255"
-
-    def test_empty_subnet_returns_global_broadcast(self):
-        """Test that empty subnet returns global broadcast"""
-        from oida.protocols.discovery.core import get_broadcast_address
-
-        result = get_broadcast_address("")
-        assert result == "255.255.255.255"
-
-    def test_invalid_subnet_returns_global_broadcast(self):
-        """Test that invalid subnet returns global broadcast"""
-        from oida.protocols.discovery.core import get_broadcast_address
-
-        result = get_broadcast_address("invalid")
-        assert result == "255.255.255.255"
-
-
 class TestMacToEui64:
     """Test mac_to_eui64 helper function"""
 

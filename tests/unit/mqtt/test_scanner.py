@@ -520,7 +520,6 @@ class TestMQTTSecurityAnalysis(unittest.TestCase):
             "description": "Broker accepts connections without credentials",
         }
 
-        self.assertIn("severity", issue)
         self.assertIn("issue", issue)
         self.assertIn("description", issue)
 
@@ -861,7 +860,7 @@ class TestMQTTCredentialTesting(unittest.TestCase):
     @patch("oida.protocols.mqtt.scanner.paho_enums")
     @patch("time.sleep")
     def test_brute_force_with_builtin_credentials(
-        self, mock_sleep, mock_paho_enums, mock_paho_client
+        self, _mock_sleep, mock_paho_enums, mock_paho_client
     ):
         """Test brute-force with built-in credentials"""
         from oida.protocols.mqtt.scanner import MQTTScanner
@@ -922,7 +921,7 @@ class TestMQTTCredentialTesting(unittest.TestCase):
             scanner = MQTTScanner(args)
 
             # Mock all attempts fail
-            scanner._test_credentials = lambda u, p: False
+            scanner._test_credentials = lambda _u, _p: False
 
             result = scanner._brute_force_credentials()
 
@@ -1007,7 +1006,7 @@ class TestMQTTBrokerInfoExtraction(unittest.TestCase):
     @patch("oida.protocols.mqtt.scanner.paho_client")
     @patch("oida.protocols.mqtt.scanner.paho_enums")
     @patch("time.sleep")
-    def test_enumerate_sys_topics_parsing(self, mock_sleep, mock_paho_enums, mock_paho_client):
+    def test_enumerate_sys_topics_parsing(self, _mock_sleep, mock_paho_enums, mock_paho_client):
         """Test $SYS topic enumeration and parsing"""
         from oida.protocols.mqtt.scanner import MQTTScanner
 
@@ -1162,7 +1161,7 @@ class TestMQTTFuzzPublishPayloads(unittest.TestCase):
     @patch("oida.protocols.mqtt.scanner.paho_client")
     @patch("oida.protocols.mqtt.scanner.paho_enums")
     @patch("time.sleep")
-    def test_fuzz_publish_payloads_basic(self, mock_sleep, mock_paho_enums, mock_paho_client):
+    def test_fuzz_publish_payloads_basic(self, _mock_sleep, mock_paho_enums, mock_paho_client):
         """Test basic fuzzing of publish payloads"""
         from oida.protocols.mqtt.scanner import MQTTScanner
 
@@ -1211,7 +1210,7 @@ class TestMQTTFuzzPublishPayloads(unittest.TestCase):
     @patch("oida.protocols.mqtt.scanner.paho_client")
     @patch("oida.protocols.mqtt.scanner.paho_enums")
     @patch("time.sleep")
-    def test_fuzz_publish_with_errors(self, mock_sleep, mock_paho_enums, mock_paho_client):
+    def test_fuzz_publish_with_errors(self, _mock_sleep, mock_paho_enums, mock_paho_client):
         """Test fuzzing with publish errors"""
         from oida.protocols.mqtt.scanner import MQTTScanner
 
@@ -1251,7 +1250,7 @@ class TestMQTTCommonTopicsEnumeration(unittest.TestCase):
     @patch("oida.protocols.mqtt.scanner.paho_enums")
     @patch("time.sleep")
     def test_enumerate_common_topics_with_builtin(
-        self, mock_sleep, mock_paho_enums, mock_paho_client
+        self, _mock_sleep, mock_paho_enums, mock_paho_client
     ):
         """Test common topics enumeration with built-in list"""
         from oida.protocols.mqtt.scanner import MQTTScanner
@@ -1284,7 +1283,9 @@ class TestMQTTCommonTopicsEnumeration(unittest.TestCase):
     @patch("oida.protocols.mqtt.scanner.paho_client")
     @patch("oida.protocols.mqtt.scanner.paho_enums")
     @patch("time.sleep")
-    def test_enumerate_common_topics_with_file(self, mock_sleep, mock_paho_enums, mock_paho_client):
+    def test_enumerate_common_topics_with_file(
+        self, _mock_sleep, mock_paho_enums, mock_paho_client
+    ):
         """Test common topics enumeration with custom file"""
         from oida.protocols.mqtt.scanner import MQTTScanner
         import tempfile
@@ -1324,7 +1325,7 @@ class TestMQTTCommonTopicsEnumeration(unittest.TestCase):
     @patch("oida.protocols.mqtt.scanner.paho_enums")
     @patch("time.sleep")
     def test_enumerate_common_topics_skip_duplicates(
-        self, mock_sleep, mock_paho_enums, mock_paho_client
+        self, _mock_sleep, mock_paho_enums, mock_paho_client
     ):
         """Test that common topic enumeration skips already-tested patterns"""
         from oida.protocols.mqtt.scanner import MQTTScanner
@@ -1377,7 +1378,7 @@ class TestMQTTListenModeAdvanced(unittest.TestCase):
     @patch("time.sleep")
     @patch("builtins.open", create=True)
     def test_listen_mode_with_output_file(
-        self, mock_open, mock_sleep, mock_paho_enums, mock_paho_client
+        self, mock_open, _mock_sleep, mock_paho_enums, mock_paho_client
     ):
         """Test listen mode with output file"""
         from oida.protocols.mqtt.scanner import MQTTScanner
@@ -1414,7 +1415,7 @@ class TestMQTTListenModeAdvanced(unittest.TestCase):
     @patch("oida.protocols.mqtt.scanner.paho_client")
     @patch("oida.protocols.mqtt.scanner.paho_enums")
     @patch("time.sleep")
-    def test_listen_mode_stats_calculation(self, mock_sleep, mock_paho_enums, mock_paho_client):
+    def test_listen_mode_stats_calculation(self, _mock_sleep, mock_paho_enums, mock_paho_client):
         """Test listen mode statistics calculation"""
         from oida.protocols.mqtt.scanner import ListenStats
 

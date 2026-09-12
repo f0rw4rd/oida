@@ -18,8 +18,16 @@ class TestMQTTProtoArgs:
     def test_target_positional(self):
         assert _parse().target == "127.0.0.1"
 
-    def test_default_port(self):
-        assert _parse().port == 1883
+    def test_default_port_is_unset(self):
+        # --port defaults to None (not 1883) so proto_flow can distinguish an
+        # explicit `-p 1883` from the unset default and only auto-switch to the
+        # TLS port (8883) when no port was given. Resolution to 1883/8883 happens
+        # in mqtt.proto_flow, not at the argparse layer.
+        assert _parse().port is None
+
+    def test_explicit_port_preserved(self):
+        assert _parse("-p", "1883").port == 1883
+        assert _parse("--port", "8883").port == 8883
 
     def test_client_id(self):
         args = _parse("--client-id", "oida-test")

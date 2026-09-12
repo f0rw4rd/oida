@@ -636,7 +636,8 @@ class TestProtoFlow:
 
     def test_proto_flow_enumerate_device_specific_flag_reaches_handler(self):
         # --enumerate-device-specific now reaches its handler (finding #2).
-        args = _full_args(enumerate_device_specific=True, command_range="128-130")
+        # It is gated on --confirm (blind-probes vendor-defined commands).
+        args = _full_args(enumerate_device_specific=True, command_range="128-130", confirm=True)
         del args.scan_mode
         h = _flow_nxc(args)
         h._convert_args_to_dict = MagicMock(return_value={"rhost": "10.0.0.5"})

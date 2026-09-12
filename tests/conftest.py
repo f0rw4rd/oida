@@ -226,6 +226,30 @@ class _LeakBuffer(logging.Handler):
 
 
 @pytest.fixture(autouse=True)
+def _reset_mock_cli_singleton():
+    """Keep the legacy MockCLI logger from outliving a test's captured stream.
+
+    ics_logger._get_cli() caches a MockCLI singleton whose logging.StreamHandler
+    binds to sys.stderr at creation time. When it is first created inside a
+    capsys-capturing test (the autouse no_credential_leak fixture captures on
+    every test), the handler keeps a reference to that test's captured stream;
+    after the test that stream is closed, so the next log write raises
+    "I/O operation on closed file" -- an order-dependent flake (e.g.
+    test_json_log_path_configured and the log-level forwarding tests, which
+    pass in isolation). Dropping the singleton and its stale handler on teardown
+    forces a fresh handler bound to the live stream in the next test.
+    """
+    yield
+    try:
+        import oida.utils.ics_logger as _icslog
+
+        _icslog._cli_instance = None
+        logging.getLogger("oida._mock_cli").handlers.clear()
+    except Exception:
+        pass
+
+
+@pytest.fixture(autouse=True)
 def no_credential_leak(request, capsys, monkeypatch):
     """Assert no test leaks a seeded credential into logs / stdout / stderr.
 

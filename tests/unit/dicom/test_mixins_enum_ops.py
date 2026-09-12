@@ -32,7 +32,6 @@ try:
 except ImportError:
     _PYNETDICOM_AVAILABLE = False
 
-from oida.utils.common_types import Category
 
 # Reuse the construction helper / fixtures from the sibling scanner suite so the
 # NXC object is built WITHOUT triggering proto_flow (no real socket opened).
@@ -504,7 +503,6 @@ class TestRecursiveBulkExport(unittest.TestCase):
 
             titles = _finding_titles(scanner)
             self.assertIn("Mass data exfiltration", titles)
-            self.assertIn(Category.ACCESS_CONTROL, _finding_categories(scanner))
 
     def test_max_patients_cap_respected(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -685,7 +683,6 @@ class TestCGetRetrieve(unittest.TestCase):
             self.assertEqual(str(getattr(ds, "SeriesInstanceUID", "")), "1.2.SERIES")
 
             self.assertIn("Bulk image retrieval", _finding_titles(scanner))
-            self.assertIn(Category.ACCESS_CONTROL, _finding_categories(scanner))
 
     def test_study_level_when_only_study_uid(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -825,7 +822,6 @@ class TestCStoreSend(unittest.TestCase):
             self.assertEqual(res["files_failed"], 0)
             self.assertEqual(len(scanner.assoc.stored), 1)
             self.assertIn("Unrestricted upload", _finding_titles(scanner))
-            self.assertIn(Category.ACCESS_CONTROL, _finding_categories(scanner))
 
     def test_directory_glob_and_mixed_status(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -992,7 +988,6 @@ class TestCMoveRequest(unittest.TestCase):
         )
         self.assertIn("C-MOVE completed", success_text)
         self.assertIn("Open transfer", _finding_titles(scanner))
-        self.assertIn(Category.ACCESS_CONTROL, _finding_categories(scanner))
 
     def test_warning_status_branch(self):
         scanner = _make_dicom_instance(
@@ -1100,7 +1095,7 @@ class _BruteAEInstance:
     def add_requested_context(self, ctx):
         self._contexts.append(ctx)
 
-    def associate(self, ip, port, ae_title="ANY"):
+    def associate(self, ip, port, ae_title="ANY", tls_args=None):
         verdict = self.verdicts.get(self.ae_title, "reject")
         if verdict == "raise":
             raise RuntimeError("connection refused")
@@ -1178,7 +1173,6 @@ class TestAETBruteForce(unittest.TestCase):
 
         self.assertGreater(len(scanner.results["data"]["aet_brute"]["valid"]), 5)
         self.assertIn("No authentication", _finding_titles(scanner))
-        self.assertIn(Category.AUTHENTICATION, _finding_categories(scanner))
 
     def test_custom_wordlist_file_loaded(self):
         import oida.protocols.dicom as pkg

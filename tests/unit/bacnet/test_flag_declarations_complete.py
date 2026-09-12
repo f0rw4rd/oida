@@ -81,5 +81,37 @@ class TestEveryConsumedFlagIsDeclared(unittest.TestCase):
         )
 
 
+class TestFlagWiring(unittest.TestCase):
+    """Guard the two previously-dead flags: --enum-networks (now an alias for
+    --networks) and --direct (now read by the SC topology decision)."""
+
+    @staticmethod
+    def _parser():
+        import argparse
+
+        from oida.protocols.bacnet import proto_args as pa
+
+        p = argparse.ArgumentParser()
+        pa.register_bacnet_flags(p)
+        pa.register_sc_flags(p)
+        return p
+
+    def test_enum_networks_aliases_networks(self):
+        a = self._parser().parse_args(["--enum-networks"])
+        self.assertTrue(a.networks)
+        # no dead enum_networks attribute is created
+        self.assertFalse(hasattr(a, "enum_networks"))
+
+    def test_networks_flag_still_sets_networks(self):
+        self.assertTrue(self._parser().parse_args(["--networks"]).networks)
+
+    def test_direct_sets_sc_direct(self):
+        self.assertTrue(self._parser().parse_args(["--direct"]).sc_direct)
+
+    def test_direct_and_hub_uri_mutually_exclusive(self):
+        with self.assertRaises(SystemExit):
+            self._parser().parse_args(["--direct", "--hub-uri", "wss://x"])
+
+
 if __name__ == "__main__":
     unittest.main()

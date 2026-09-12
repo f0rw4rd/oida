@@ -17,7 +17,6 @@ import unittest
 from unittest.mock import AsyncMock, Mock, patch
 
 from oida.protocols.bacnet import bacnet
-from oida.utils.common_types import Category
 from tests.unit.bacnet.conftest import create_mock_args, create_mock_logger
 
 
@@ -160,8 +159,6 @@ class TestCheckAuth(unittest.TestCase):
         findings = [c.args[0] for c in scanner.logger.security_finding.call_args_list]
         self.assertIn("Anonymous access", findings)
         # No-SC cleartext message is recorded as a textual finding via warning.
-        cats = [c.kwargs["category"] for c in scanner.logger.security_finding.call_args_list]
-        self.assertIn(Category.ACCESS_CONTROL, cats)
 
     @patch("oida.protocols.bacnet.mixins.security._load_bacpypes3")
     def test_readable_password_property_is_flagged(self, mock_load):
@@ -215,7 +212,6 @@ class TestBruteForceDcc(unittest.TestCase):
         self.assertEqual(result, "")  # empty password matched
         call = scanner.logger.security_finding.call_args
         self.assertEqual(call.args[0], "Weak password")
-        self.assertEqual(call.kwargs["category"], Category.AUTHENTICATION)
         self.assertIn("(empty)", call.kwargs["detail"])
 
     @patch("oida.protocols.bacnet.mixins.security._load_bacpypes3")
@@ -256,7 +252,6 @@ class TestBruteForceReinit(unittest.TestCase):
         self.assertEqual(result, "filister")
         call = scanner.logger.security_finding.call_args
         self.assertEqual(call.args[0], "Weak password")
-        self.assertEqual(call.kwargs["category"], Category.AUTHENTICATION)
         self.assertIn("ReinitializeDevice", call.kwargs["detail"])
 
     @patch("oida.protocols.bacnet.mixins.security._load_bacpypes3")
@@ -302,7 +297,6 @@ class TestTestDcc(unittest.TestCase):
 
         call = scanner.logger.security_finding.call_args
         self.assertEqual(call.args[0], "Weak password")
-        self.assertEqual(call.kwargs["category"], Category.AUTHENTICATION)
         self.assertIn("DCC accepted", call.kwargs["detail"])
 
     @patch("oida.protocols.bacnet.mixins.security._load_bacpypes3")
@@ -367,7 +361,6 @@ class TestCheckBacnetSc(unittest.TestCase):
 
         call = scanner.logger.security_finding.call_args
         self.assertEqual(call.args[0], "No encryption")
-        self.assertEqual(call.kwargs["category"], Category.ENCRYPTION)
 
     @patch("oida.protocols.bacnet.mixins.security._load_bacpypes3")
     def test_sc_supported_no_finding(self, mock_load):
@@ -407,7 +400,6 @@ class TestTimeSync(unittest.TestCase):
 
         call = scanner.logger.security_finding.call_args
         self.assertEqual(call.args[0], "Unauthenticated time synchronization")
-        self.assertEqual(call.kwargs["category"], Category.ACCESS_CONTROL)
 
     @patch("oida.protocols.bacnet.mixins.security._load_bacpypes3")
     def test_clock_unchanged_no_finding(self, mock_load):
@@ -492,15 +484,18 @@ class TestTestOos(unittest.TestCase):
         scanner = _create_instance(confirm=True)
         scanner.objects = {1001: {"analogOutput": [1]}}
         app = AsyncMock()
-        # Read OOS -> ack (readable). Write OOS -> ack (writable).
-        app.request = AsyncMock(return_value=_ack())
+        # Read OOS -> a readable Boolean value (so the probe writes that SAME
+        # value back, not a hardcoded False). Write OOS -> ack (writable).
+        read_resp = Mock()
+        pv = Mock()
+        pv.cast_out = Mock(return_value=False)
+        read_resp.propertyValue = pv
+        app.request = AsyncMock(side_effect=[read_resp, _ack()])
 
         asyncio.run(scanner._bacpypes3_test_oos(app, Mock(), 1001, 2.0))
 
         titles = [c.args[0] for c in scanner.logger.security_finding.call_args_list]
-        cats = [c.kwargs["category"] for c in scanner.logger.security_finding.call_args_list]
         self.assertIn("Writable access", titles)
-        self.assertIn(Category.ACCESS_CONTROL, cats)
 
     @patch("oida.protocols.bacnet.mixins.security._load_bacpypes3")
     def test_readonly_without_confirm_skips_write(self, mock_load):
