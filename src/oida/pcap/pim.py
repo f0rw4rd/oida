@@ -285,6 +285,13 @@ class PIMPassiveListener(PySharkListenerBase):
             if jp_ht is not None:
                 hold_time = self._parse_int(jp_ht, 0)
 
+            # The upstream neighbor is the one neighbor-address signal PIM
+            # exposes per message; feeding it into `neighbors` makes the
+            # per-device neighbor tracking (and its merge block below) live
+            # instead of always-empty.
+            if upstream:
+                neighbors.append(str(upstream))
+
             # Multicast groups from join/prune
             group_v6 = self.get_field(pim, "group_ip6", None)
             group_v4 = self.get_field(pim, "group", None)
@@ -444,10 +451,19 @@ def _to_bool(value) -> bool:
 
 
 def _field_to_list(value) -> List[str]:
-    """Convert a PyShark field that may be a scalar or list-like string to a list."""
+    """Convert a PyShark field that may be a scalar or list-like string to a list.
+
+    Handles BOTH multi-value shapes ``get_field`` can produce:
+    - XML-mode pyshark may hand back a Python list repr ``"['a', 'b']"``.
+    - EK-mode values are normalized by ``PySharkListenerBase.get_field`` into a
+      comma-joined plain string ``"a,b"`` -- which must also be split, or
+      multiple multicast groups merge into one bogus comma entry.
+    """
     s = str(value).strip()
-    if s.startswith("["):
+    if s.startswith("[") and s.endswith("]"):
         # Looks like a Python list repr: "['a', 'b']"
-        items = s.strip("[]").split(",")
+        items = s[1:-1].split(",")
         return [i.strip().strip("'\"") for i in items if i.strip()]
+    if "," in s:
+        return [i.strip() for i in s.split(",") if i.strip()]
     return [s] if s else []
