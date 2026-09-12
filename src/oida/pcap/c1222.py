@@ -18,7 +18,8 @@ Protocol format:
   mechanism-name (authentication OID), calling-authentication-value
 - C12.22 message: service code + table data
 - Services: IDENT (0x20), READ (0x30), WRITE (0x40), LOGON (0x50),
-  SECURITY (0x51), LOGOFF (0x52), WAIT (0x70), REGISTRATION (0x27)
+  SECURITY (0x51), LOGOFF (0x52), WAIT (0x70); REGISTRATION is not a
+  distinct service code -- it is a WRITE to Table 55 (ST-55)
 
 tshark fields used (names verified against the packet-c1222.c dissector;
 PyShark strips the "c1222." layer prefix and joins the remaining dotted
@@ -272,9 +273,20 @@ class C1222PassiveListener(PySharkListenerBase):
             c1222_layer, "called_AP_invocation_id", "called_ap_invocation_id"
         )
 
-        # Extract service code
+        # Extract service/response code. The Wireshark dissector writes a
+        # service *request* code (>= 0x20) to hf_c1222_cmd (c1222.cmd), but
+        # writes an OK/error RESPONSE code (0x00-0x12, the codes C1222_SERVICES
+        # maps) to the separate hf_c1222_err field (c1222.err). Both must be
+        # read, or every response PDU comes back with cmd_code=None.
         cmd_raw = self.get_field(c1222_layer, "cmd")
+        err_raw = self.get_field(c1222_layer, "err")
         cmd_code = self._parse_int(cmd_raw, None)
+        err_code = self._parse_int(err_raw, None)
+        # A code sourced from the err field is unambiguously a response, even
+        # though its numeric value is also <= MAX_RESPONSE_CODE.
+        is_err_field = cmd_code is None and err_code is not None
+        if cmd_code is None:
+            cmd_code = err_code
 
         # Extract table access fields. The Wireshark dissector splits these
         # by service: c1222.read.table / c1222.write.table (-> read_table /
@@ -313,9 +325,11 @@ class C1222PassiveListener(PySharkListenerBase):
         )
 
         # Classify request vs response from the C12.22 command code. Response
-        # PDUs carry an OK/error status code (0x00-0x12); service *requests*
-        # use codes >= 0x20. Anything else (absent command code) is ambiguous.
-        is_response = cmd_code is not None and cmd_code <= MAX_RESPONSE_CODE
+        # PDUs carry an OK/error status code (0x00-0x12) -- either because it
+        # came from the dedicated err field, or (defensively) because a cmd
+        # value happens to fall in that range. Service *requests* use codes
+        # >= 0x20. Anything else (absent command code) is ambiguous.
+        is_response = cmd_code is not None and (is_err_field or cmd_code <= MAX_RESPONSE_CODE)
 
         # Native request/response signal for resolve_direction(): True=request,
         # False=response, None=ambiguous (unknown/absent command code). Be
@@ -325,7 +339,7 @@ class C1222PassiveListener(PySharkListenerBase):
         native: Optional[bool]
         if cmd_code is None:
             native = None
-        elif cmd_code <= MAX_RESPONSE_CODE:
+        elif is_err_field or cmd_code <= MAX_RESPONSE_CODE:
             native = False
         elif cmd_code in C1222_SERVICES:
             native = True
@@ -515,12 +529,15 @@ class C1222PassiveListener(PySharkListenerBase):
                 session.read_count += 1
             elif cmd_code in WRITE_SERVICES:
                 session.write_count += 1
+                # ANSI C12.22 registration is a WRITE to Table 55 (ST-55),
+                # not a distinct service code -- there is no 0x27 "REGISTRATION"
+                # command in the real EPSEM registry.
+                if table_num == 55:
+                    session.registration_count += 1
             elif cmd_code == 0x50:  # LOGON
                 session.logon_count += 1
             elif cmd_code == 0x51:  # SECURITY
                 session.security_count += 1
-            elif cmd_code == 0x27:  # REGISTRATION
-                session.registration_count += 1
 
     # ------------------------------------------------------------------
     # Security checks
@@ -597,8 +614,10 @@ class C1222PassiveListener(PySharkListenerBase):
                 }
             )
 
-        # REGISTRATION service -- re-association
-        if cmd_code == 0x27:
+        # REGISTRATION -- ANSI C12.22 registration/re-association is a WRITE
+        # to Table 55 (ST-55); there is no dedicated 0x27 "REGISTRATION"
+        # service code in the real EPSEM registry.
+        if cmd_code in WRITE_SERVICES and table_num == 55:
             self._alerts.append(
                 {
                     "level": "fail",
