@@ -173,6 +173,10 @@ examples:
 
   oida fuzz replay mysession               View session statistics
   oida fuzz replay mysession -r 1-100      Replay test case range
+  oida fuzz crashes mysession              Report crashes grouped by signature
+  oida fuzz crashes mysession --case 42    Dump one crash payload
+  oida fuzz reproduce mysession            Re-send stored crashes, verify a repro
+  oida fuzz narrow mysession               Bisect the crash window to the culprit case
 
 For protocol-specific options: oida fuzz <protocol> --show-options
         """,
@@ -216,6 +220,19 @@ For protocol-specific options: oida fuzz <protocol> --show-options
     fuzz_parser.add_argument(
         "--check-response", action="store_true", help="Validate responses (for replay)"
     )
+    fuzz_parser.add_argument(
+        "--export",
+        type=str,
+        metavar="PATH",
+        help="Write a crash payload to PATH (with 'crashes <session> --case <id>')",
+    )
+    fuzz_parser.add_argument(
+        "--target",
+        type=str,
+        dest="reproduce_target",
+        metavar="HOST",
+        help="Override the recorded target host (for 'reproduce <session>')",
+    )
 
     # Connection parameters
     fuzz_parser.add_argument(
@@ -246,6 +263,16 @@ For protocol-specific options: oida fuzz <protocol> --show-options
         action="store_true",
         help="Enable boofuzz-results database (disabled by default)",
     )
+    fuzz_parser.add_argument(
+        "--fuzz-db-keep-pass-cases",
+        type=int,
+        default=500,
+        metavar="N",
+        dest="fuzz_db_keep_pass_cases",
+        help="Cap passing test cases kept in boofuzz's results DB (default: 500). "
+        "0 = keep all (boofuzz default; unbounded RAM on long runs). Failing cases "
+        "are always retained.",
+    )
 
     # Output control. Also accept -v/--verbose on the subparser (not just the
     # global parser) so `oida fuzz <proto> <target> -v` works as the help
@@ -263,6 +290,26 @@ For protocol-specific options: oida fuzz <protocol> --show-options
 
     # Fuzzing control
     fuzz_parser.add_argument("--seed", "-S", type=int, help="Random seed for reproducible fuzzing")
+
+    # Combinatorial-depth control (mutually exclusive). boofuzz fuzzes depth 1
+    # (each field alone), then depth 2 (field pairs), then triples, ...
+    depth_grp = fuzz_parser.add_mutually_exclusive_group()
+    depth_grp.add_argument(
+        "--max-depth",
+        type=int,
+        metavar="N",
+        help="Cap combinatorial depth: fuzz depths 1..N then stop (default: all depths)",
+    )
+    depth_grp.add_argument(
+        "--only-depth",
+        "--depth",
+        "-D",
+        type=int,
+        metavar="N",
+        dest="only_depth",
+        help="Fuzz ONLY depth N, skipping lower depths (N=1 single fields, "
+        "N=2 field pairs, N=3 triples); starts sending immediately",
+    )
 
     # Multi-machine distribution
     fuzz_parser.add_argument(
@@ -327,7 +374,9 @@ For protocol-specific options: oida fuzz <protocol> --show-options
         action="store_true",
         default=False,
         dest="reuse_connection",
-        help="Reuse TCP connection between test cases (faster, less stable)",
+        help="Reuse TCP connection between test cases (faster, less stable). "
+        "Recommended for long campaigns on hosts with tcp_tw_reuse=0, where a fresh "
+        "connection per case can exhaust ephemeral ports (TIME_WAIT) and stall throughput.",
     )
     fuzz_parser.add_argument(
         "-X",
@@ -551,6 +600,21 @@ def handle_fuzz_command(args):
         args.session = target
         return handle_replay_command(args)
 
+    # Handle 'crashes' command (read-only crash report grouped by signature)
+    if fuzz_protocol == "crashes":
+        args.session = target
+        return handle_crashes_command(args)
+
+    # Handle 'reproduce' command (re-send stored crash payloads, verify via monitor)
+    if fuzz_protocol == "reproduce":
+        args.session = target
+        return handle_reproduce_command(args)
+
+    # Handle 'narrow' command (bisect the recorded crash window to the real culprit)
+    if fuzz_protocol == "narrow":
+        args.session = target
+        return handle_narrow_command(args)
+
     # Check if just requesting help for a protocol
     if fuzz_protocol and getattr(args, "show_options", False):
         return show_protocol_options(fuzz_protocol)
@@ -578,7 +642,10 @@ def show_fuzz_help():
     print(colored("Usage:", "white", attrs=["bold"]))
     print("  oida fuzz <protocol> <target> [options]")
     print("  oida fuzz <protocol>                     # Show protocol help")
-    print("  oida fuzz replay <session>               # Replay session")
+    print("  oida fuzz replay <session>               # View session / test cases")
+    print("  oida fuzz crashes <session>              # Report crashes by signature")
+    print("  oida fuzz reproduce <session>            # Verify crashes reproduce")
+    print("  oida fuzz narrow <session>               # Pin the real culprit case")
     print()
     print(colored("Examples:", "white", attrs=["bold"]))
     print("  oida fuzz modbus 192.168.1.100           # Fuzz Modbus (port 502)")
@@ -605,6 +672,8 @@ def show_fuzz_help():
     print("  -s, --session NAME       Session name for database")
     print("  -O, --option KEY=VALUE   Protocol-specific option")
     print("  --seed SEED              Random seed for reproducibility")
+    print("  --max-depth N            Cap combinatorial depth: fuzz depths 1..N then stop")
+    print("  -D, --only-depth N       Fuzz ONLY depth N (skip lower depths)")
     print()
     print("Run 'oida fuzz <protocol>' for protocol-specific options")
 
@@ -740,12 +809,14 @@ def handle_replay_command(args):
                 lightweight and int(metadata.get("crash_count", "0") or "0") > 0
             ):
                 print()
-                print(colored("[!]", "yellow", attrs=["bold"]) + " Crashes found:")
                 crash_cases = db.get_test_cases(result_filter="crash", limit=None)
-                for case in crash_cases[:10]:
-                    print(f"    [{case.id}] {case.name}")
-                if len(crash_cases) > 10:
-                    print(f"    ... and {len(crash_cases) - 10} more")
+                unique = len({c.crash_hash for c in db.get_all_crashes()})
+                print(
+                    colored("[!]", "yellow", attrs=["bold"])
+                    + f" {len(crash_cases)} crash(es), {unique} unique signature(s)"
+                )
+                print(f"    Report:    oida fuzz crashes {session}")
+                print(f"    Reproduce: oida fuzz reproduce {session} [--target HOST]")
 
             print()
             if lightweight:
@@ -798,6 +869,492 @@ def handle_replay_command(args):
         return 1
 
 
+def _open_session_db(session):
+    """Open a session's on-disk DB read-only-ish, or return None with an error.
+
+    Shared by the replay/crashes/reproduce read paths: refuses to init a schema
+    for a non-existent session (which would silently create an empty DB).
+    """
+    import os
+
+    from oida.utils.ics_logger import set_context
+
+    from .fuzz.core.database.orm import SQLAlchemyDatabase
+
+    if not session:
+        logger.error("Session name is required")
+        return None
+    set_context("FUZZ", session, 0)
+    db_path = f"{session}.db"
+    if not os.path.exists(db_path):
+        logger.error(f"Session database not found: {db_path}")
+        return None
+    db = SQLAlchemyDatabase(db_path)
+    db.init_schema()
+    return db
+
+
+def handle_crashes_command(args):
+    """Report stored crashes for a session, grouped by crash signature."""
+    import base64
+
+    from .fuzz.core.config import hexdump
+
+    session = getattr(args, "session", None)
+    db = _open_session_db(session)
+    if db is None:
+        print("Usage: oida fuzz crashes <session> [--case <id>] [--export PATH]")
+        return 1
+
+    crashes = db.get_all_crashes()
+    if not crashes:
+        print()
+        print(colored("[*]", "blue", attrs=["bold"]) + f" Session: {session}")
+        print(colored("[+]", "green", attrs=["bold"]) + " No crashes recorded")
+        return 0
+
+    # --case: dump a single crash payload (hexdump + base64, optional export)
+    case = getattr(args, "case", None)
+    if case:
+        crash = db.get_crash(case)
+        if not crash:
+            print(colored("[-]", "red", attrs=["bold"]) + f" No crash stored for test case {case}")
+            return 1
+        tc = db.get_test_case(case)
+        print()
+        print(colored("[!]", "red", attrs=["bold"]) + f" Crash for test case {case}")
+        if tc:
+            print(f"    Request: {tc.name}    Target: {tc.target_ip}:{tc.target_port}")
+        print(f"    Signature: {crash.crash_hash or 'unknown'}")
+        if crash.crash_info:
+            print(f"    Info: {crash.crash_info}")
+        print(f"    Payload: {len(crash.payload)} bytes")
+        print()
+        print(hexdump(crash.payload))
+        print()
+        print("Base64: " + base64.b64encode(crash.payload).decode("ascii"))
+        export = getattr(args, "export", None)
+        if export:
+            with open(export, "wb") as fh:
+                fh.write(crash.payload)
+            print(
+                colored("[+]", "green", attrs=["bold"])
+                + f" Wrote {len(crash.payload)} bytes to {export}"
+            )
+        return 0
+
+    # Group by signature (crash_hash); unknown hashes bucket under "unknown".
+    buckets: dict = {}
+    for c in crashes:
+        buckets.setdefault(c.crash_hash or "unknown", []).append(c)
+
+    print()
+    print(colored("[*]", "blue", attrs=["bold"]) + f" Session: {session}")
+    print(
+        colored("[!]", "yellow", attrs=["bold"])
+        + f" {len(crashes)} crash(es), {len(buckets)} unique signature(s)"
+    )
+    print()
+    for sig, items in sorted(buckets.items(), key=lambda kv: len(kv[1]), reverse=True):
+        rep = items[0]
+        tc = db.get_test_case(rep.test_case_id)
+        name = tc.name if tc else "?"
+        ids = ", ".join(str(c.test_case_id) for c in items[:8])
+        if len(items) > 8:
+            ids += f", ... (+{len(items) - 8})"
+        print(colored(f"  [{sig}]", "cyan") + f"  x{len(items)}")
+        print(f"    Representative: [{rep.test_case_id}] {name}  ({len(rep.payload)} bytes)")
+        if rep.crash_info:
+            info = rep.crash_info if len(rep.crash_info) <= 100 else rep.crash_info[:97] + "..."
+            print(f"    Info: {info}")
+        print(f"    Test cases: {ids}")
+        print()
+    print(f"Dump a payload:  oida fuzz crashes {session} --case <id> [--export out.bin]")
+    print(f"Verify a crash:  oida fuzz reproduce {session} [--target HOST] [-p PORT]")
+    return 0
+
+
+def _probe_alive(combined_monitor) -> bool:
+    """One raw health probe of every child monitor, combined by the monitor's logic.
+
+    Uses each monitor's ``_check_alive_once`` (no retry, no recovery, never raises)
+    so a reproduce verdict is a clean up/down read rather than the fuzz-loop's
+    recovery machinery. A probe that raises counts as down. No child probes ->
+    unknown, treated as up.
+    """
+    children = getattr(combined_monitor, "monitors", None) or []
+    checks = []
+    for m in children:
+        probe = getattr(m, "_check_alive_once", None)
+        if callable(probe):
+            try:
+                checks.append(bool(probe()))
+            except Exception:
+                checks.append(False)
+    if not checks:
+        return True
+    logic = getattr(combined_monitor, "logic", "and")
+    return any(checks) if logic == "or" else all(checks)
+
+
+def handle_reproduce_command(args):
+    """Re-send stored crash payloads to a live target and verify via the monitor.
+
+    Uses the *stored* crash payload (no fragile regeneration) and, by default, the
+    target host/port recorded with the crash. Reproduces one representative per
+    unique crash signature (or a single ``--case``). Verdict per crash:
+    REPRODUCED / NOT-REPRODUCED / TARGET-DOWN / ERROR.
+    """
+    import time
+
+    from .fuzz.core.config import FuzzerConfig
+    from .fuzz.core.connections import RealConnectionFactory
+    from .fuzz.protocols import PROTOCOL_FUZZERS
+
+    session = getattr(args, "session", None)
+    db = _open_session_db(session)
+    if db is None:
+        print("Usage: oida fuzz reproduce <session> [--target HOST] [-p PORT] [--case <id>]")
+        return 1
+
+    metadata = db.get_all_metadata()
+    default_protocol = metadata.get("protocol_name")
+
+    # Select crashes: one per unique signature, or a single --case.
+    case = getattr(args, "case", None)
+    if case:
+        c = db.get_crash(case)
+        if not c:
+            print(colored("[-]", "red", attrs=["bold"]) + f" No crash stored for test case {case}")
+            return 1
+        selected = [c]
+    else:
+        seen: set = set()
+        selected = []
+        for c in db.get_all_crashes():
+            key = c.crash_hash or f"id{c.test_case_id}"
+            if key not in seen:
+                seen.add(key)
+                selected.append(c)
+    if not selected:
+        print(colored("[+]", "green", attrs=["bold"]) + " No crashes to reproduce")
+        return 0
+
+    host_override = getattr(args, "reproduce_target", None)
+    port_override = getattr(args, "port", None)
+    verbose = getattr(args, "verbose", False)
+
+    print()
+    print(
+        colored("[*]", "blue", attrs=["bold"])
+        + f" Reproducing {len(selected)} crash(es) from {session}"
+    )
+    print()
+
+    results = []
+    for crash in selected:
+        tc = db.get_test_case(crash.test_case_id)
+        protocol = (tc.protocol if tc and tc.protocol else default_protocol) or "unknown"
+        host = host_override or (tc.target_ip if tc else None)
+        port = port_override or (tc.target_port if tc else None)
+
+        label = f"[{crash.test_case_id}] {protocol} -> {host}:{port}"
+        if protocol not in PROTOCOL_FUZZERS:
+            print(
+                colored("[-]", "red", attrs=["bold"])
+                + f" {label}  ERROR (unknown protocol '{protocol}')"
+            )
+            results.append((crash.test_case_id, "ERROR"))
+            continue
+        if not host:
+            print(
+                colored("[-]", "red", attrs=["bold"]) + f" {label}  ERROR (no target; use --target)"
+            )
+            results.append((crash.test_case_id, "ERROR"))
+            continue
+
+        try:
+            cfg = FuzzerConfig(
+                target_ip=host,
+                target_port=int(port) if port else 0,
+                protocol=protocol,
+                enumerate=False,
+                log_session=False,
+                console_output=verbose,
+                calibrate=False,
+            )
+            fuzzer = PROTOCOL_FUZZERS[protocol](
+                config=cfg, connection_factory=RealConnectionFactory()
+            )
+
+            # Baseline: the target must be up before we send.
+            if not _probe_alive(fuzzer.monitor):
+                print(
+                    colored("[!]", "yellow", attrs=["bold"])
+                    + f" {label}  TARGET-DOWN (unhealthy before send)"
+                )
+                results.append((crash.test_case_id, "TARGET-DOWN"))
+                continue
+
+            # Send the recorded crash payload.
+            sock = fuzzer._create_socket()
+            sock.open()
+            try:
+                sock.send(crash.payload)
+            finally:
+                sock.close()
+
+            # Verify: give a delayed crash a moment to surface.
+            reproduced = False
+            for _ in range(3):
+                time.sleep(0.5)
+                if not _probe_alive(fuzzer.monitor):
+                    reproduced = True
+                    break
+
+            if reproduced:
+                print(colored("[+]", "green", attrs=["bold"]) + f" {label}  REPRODUCED")
+                results.append((crash.test_case_id, "REPRODUCED"))
+            else:
+                print(
+                    colored("[-]", "yellow", attrs=["bold"])
+                    + f" {label}  NOT-REPRODUCED (target still up)"
+                )
+                results.append((crash.test_case_id, "NOT-REPRODUCED"))
+        except Exception as e:
+            print(colored("[-]", "red", attrs=["bold"]) + f" {label}  ERROR ({e})")
+            results.append((crash.test_case_id, "ERROR"))
+
+    # Summary
+    print()
+    repro = sum(1 for _, v in results if v == "REPRODUCED")
+    print(colored("[*]", "blue", attrs=["bold"]) + " Reproduction summary")
+    print(f"    Reproduced:     {repro}/{len(results)}")
+    for status in ("NOT-REPRODUCED", "TARGET-DOWN", "ERROR"):
+        n = sum(1 for _, v in results if v == status)
+        if n:
+            print(f"    {status}: {n}")
+    return 0 if repro else 1
+
+
+def _build_repro_fuzzer(protocol, host, port, verbose=False):
+    """Construct a protocol fuzzer bound to a live target for repro/narrow.
+
+    Returns the fuzzer (with monitors built via _setup_monitor) or None if the
+    protocol is unknown. Does not fuzz or enumerate.
+    """
+    from .fuzz.core.config import FuzzerConfig
+    from .fuzz.core.connections import RealConnectionFactory
+    from .fuzz.protocols import PROTOCOL_FUZZERS
+
+    if protocol not in PROTOCOL_FUZZERS:
+        return None
+    cfg = FuzzerConfig(
+        target_ip=host,
+        target_port=int(port) if port else 0,
+        protocol=protocol,
+        enumerate=False,
+        log_session=False,
+        console_output=verbose,
+        calibrate=False,
+    )
+    return PROTOCOL_FUZZERS[protocol](config=cfg, connection_factory=RealConnectionFactory())
+
+
+def _send_payload(fuzzer, payload):
+    """Open a fresh connection, send one payload, close. Swallow socket errors
+    (the target may already be down mid-replay; the monitor probe is the oracle)."""
+    try:
+        sock = fuzzer._create_socket()
+        sock.open()
+        try:
+            sock.send(payload)
+        finally:
+            sock.close()
+    except OSError:
+        pass
+
+
+def _bisect_min_crashing_prefix(n, oracle):
+    """Return the minimal prefix length k in [1..n] for which oracle(k) is True.
+
+    ``oracle(k)`` replays window[:k] and returns True if the target crashed, False
+    if it survived, or None if inconclusive (abort -> returns None here too).
+    Assumes monotonicity: once a prefix contains the culprit, every longer prefix
+    also crashes. The culprit is window[k-1]. Returns None if inconclusive.
+    """
+    lo, hi = 1, n
+    while lo < hi:
+        mid = (lo + hi) // 2
+        verdict = oracle(mid)
+        if verdict is None:
+            return None
+        if verdict:
+            hi = mid
+        else:
+            lo = mid + 1
+    return lo
+
+
+def handle_narrow_command(args):
+    """Bisect a recorded crash window to the test case that actually breaks the target.
+
+    A monitor flags a crash at *detection* time (up to check_interval cases after the
+    culprit), so the stored crash id is only approximate. This replays the recorded
+    pre-crash window (persisted with payloads as a CrashEvent) against a live target,
+    restarting between trials, and prefix-bisects to the minimal prefix whose replay
+    drops the target -- that prefix's last case is the culprit.
+
+    Needs the target to return between trials: pass --restart-command, or point at a
+    target that auto-respawns.
+    """
+    import shlex
+    import subprocess
+    import time
+
+    from .fuzz.core.config import hexdump
+
+    session = getattr(args, "session", None)
+    db = _open_session_db(session)
+    if db is None:
+        print("Usage: oida fuzz narrow <session> [--target HOST] [-p PORT] [--restart-command CMD]")
+        return 1
+
+    events = db.get_crash_events()
+    if not events:
+        print(colored("[-]", "red", attrs=["bold"]) + " No crash context stored for this session.")
+        print("    (Re-fuzz with a build that records crash context, then narrow.)")
+        return 1
+
+    # Pick the event: by --case (its detected_at_id) or the newest.
+    case = getattr(args, "case", None)
+    event_meta = None
+    if case:
+        event_meta = next((e for e in events if e["detected_at_id"] == case), None)
+        if not event_meta:
+            print(
+                colored("[-]", "red", attrs=["bold"]) + f" No crash event detected at case {case}"
+            )
+            return 1
+    else:
+        event_meta = events[0]
+
+    full = db.get_crash_event(event_meta["id"])
+    context = sorted(full["context"], key=lambda c: c["test_case_id"])
+    window = []
+    for entry in context:
+        payload = db.get_crash_context_payload(event_meta["id"], entry["test_case_id"])
+        if payload is not None:
+            window.append((entry["test_case_id"], entry["name"], payload))
+    if not window:
+        print(
+            colored("[-]", "red", attrs=["bold"]) + " Crash event has no payload context to replay."
+        )
+        return 1
+
+    protocol = event_meta.get("protocol") or db.get_all_metadata().get("protocol_name") or "unknown"
+    host = getattr(args, "reproduce_target", None) or event_meta.get("target_ip")
+    port = getattr(args, "port", None) or event_meta.get("target_port")
+    verbose = getattr(args, "verbose", False)
+
+    fuzzer = _build_repro_fuzzer(protocol, host, port, verbose)
+    if fuzzer is None:
+        print(colored("[-]", "red", attrs=["bold"]) + f" Unknown protocol '{protocol}'")
+        return 1
+
+    restart_cmd = getattr(args, "restart_command", None)
+    restart_argv = shlex.split(restart_cmd) if restart_cmd else None
+    restart_delay = getattr(args, "restart_delay", 2.0) or 2.0
+
+    print()
+    print(
+        colored("[*]", "blue", attrs=["bold"])
+        + f" Narrowing crash detected at case {event_meta['detected_at_id']}"
+    )
+    print(
+        f"    Target: {protocol} -> {host}:{port}   window: {len(window)} cases "
+        f"(ids {window[0][0]}..{window[-1][0]})"
+    )
+    if not restart_cmd:
+        print("    No --restart-command: relying on the target to auto-respawn between trials.")
+    print()
+
+    def restore_target(timeout=12.0):
+        """Bring the target back and wait until the monitor says it's up."""
+        if restart_argv:
+            try:
+                subprocess.Popen(restart_argv, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            except Exception as e:
+                print(colored("[-]", "red", attrs=["bold"]) + f" restart-command failed: {e}")
+        deadline = time.time() + timeout
+        time.sleep(restart_delay if restart_argv else 0.3)
+        while time.time() < deadline:
+            if _probe_alive(fuzzer.monitor):
+                return True
+            time.sleep(0.3)
+        return _probe_alive(fuzzer.monitor)
+
+    def crashes_after_prefix(k):
+        """Restore target, replay window[:k], report whether the target went down."""
+        if not restore_target():
+            return None  # cannot get a healthy target -> inconclusive
+        for _, _, payload in window[:k]:
+            _send_payload(fuzzer, payload)
+        for _ in range(3):
+            time.sleep(0.3)
+            if not _probe_alive(fuzzer.monitor):
+                return True
+        return False
+
+    n = len(window)
+    print(colored("[*]", "blue", attrs=["bold"]) + " Verifying the full window reproduces...")
+    full_crash = crashes_after_prefix(n)
+    if full_crash is None:
+        print(
+            colored("[-]", "red", attrs=["bold"])
+            + " Could not get a healthy target between trials."
+        )
+        print("    Provide --restart-command so narrow can restore the target each trial.")
+        return 1
+    if not full_crash:
+        print(
+            colored("[-]", "yellow", attrs=["bold"])
+            + " Replaying the whole recorded window did NOT crash the target."
+        )
+        print(
+            "    The crash may be non-deterministic, stateful beyond the buffer, or timing-dependent."
+        )
+        return 1
+
+    # Prefix-bisection: minimal k in [1..n] whose prefix crashes; culprit = window[k-1].
+    print(colored("[*]", "blue", attrs=["bold"]) + " Bisecting to the culprit case...")
+
+    def traced_oracle(k):
+        verdict = crashes_after_prefix(k)
+        if verdict is not None:
+            print(f"    prefix 1..{k} ({window[k - 1][0]}): {'crash' if verdict else 'ok'}")
+        return verdict
+
+    k = _bisect_min_crashing_prefix(n, traced_oracle)
+    if k is None:
+        print(colored("[-]", "red", attrs=["bold"]) + " Lost the target mid-bisection; aborting.")
+        return 1
+
+    cid, cname, cpayload = window[k - 1]
+    print()
+    print(colored("[+]", "green", attrs=["bold"]) + " Culprit identified:")
+    print(f"    Test case: [{cid}] {cname}")
+    print(
+        f"    Detected-at (recorded) case: {event_meta['detected_at_id']}  (off by {event_meta['detected_at_id'] - cid})"
+    )
+    print(f"    Payload: {len(cpayload)} bytes")
+    print()
+    print(hexdump(cpayload[:256]))
+    if len(cpayload) > 256:
+        print(f"    ... (+{len(cpayload) - 256} more bytes)")
+    return 0
+
+
 def show_protocol_usage(protocol):
     """Show comprehensive usage help when target is missing"""
     from .fuzz.protocols import PROTOCOL_FUZZERS
@@ -835,6 +1392,8 @@ def show_protocol_usage(protocol):
     print("  -s, --session NAME       Session name for results database")
     print("  -O, --option KEY=VALUE   Protocol-specific option")
     print("  --seed SEED              Random seed for reproducibility")
+    print("  --max-depth N            Cap combinatorial depth: fuzz depths 1..N then stop")
+    print("  -D, --only-depth N       Fuzz ONLY depth N (skip lower depths)")
     print("  --check-interval N       Monitor check interval (default: 100)")
     print("  -R, --reuse-connection   Reuse TCP connection (faster, less stable)")
 
@@ -1107,6 +1666,7 @@ def run_fuzzing(args, protocol, target):
     wrapped.nolog = getattr(args, "nolog", False)
     wrapped.store_all_payloads = getattr(args, "store_all_payloads", False)
     wrapped.boofuzz_db = getattr(args, "boofuzz_db", False)
+    wrapped.fuzz_db_keep_pass_cases = getattr(args, "fuzz_db_keep_pass_cases", 500)
     wrapped.skip_pre_send = True
     wrapped.check_interval = getattr(args, "check_interval", 100)
     # Console output based on verbosity
