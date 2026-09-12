@@ -332,9 +332,7 @@ class TestFuzzDataObject:
             patch.object(_Lib, "require"),
             patch.object(_Lib, "FC", _FC),
             patch.object(_Lib, "ReadError", _ReadError),
-            patch(
-                "oida.protocols.mms.cli_runner._write_under_fc", side_effect=fake_write
-            ) as wuf,
+            patch("oida.protocols.mms.cli_runner._write_under_fc", side_effect=fake_write) as wuf,
             patch("oida.utils.fuzzer.fuzz", return_value=[(b"\x01\x00\x00\x00", "desc")]),
             patch("time.sleep"),
         ):

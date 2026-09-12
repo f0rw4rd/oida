@@ -247,6 +247,16 @@ class mms(NetworkConnection):
         original = read_value()
         successful, failed, anomalies, crashes = 0, 0, 0, 0
 
+        # write_value always encodes the payload as a signed int32, but
+        # read_value returns type-specific widths (bool=1B, float=4B float,
+        # int64=8B). A raw byte compare across those encodings falsely flags
+        # every non-int32 iteration as an anomaly, so only compare for int-typed
+        # objects, on the decoded integer value (width-agnostic).
+        is_int_object = isinstance(original_typed, int) and not isinstance(original_typed, bool)
+
+        def _canon_int(b: bytes) -> int:
+            return int.from_bytes(b[:8].ljust(8, b"\x00"), "little", signed=False)
+
         for payload, _desc in fuzz(
             original, count=iterations
         ):  # fuzz() yields (bytes, desc) tuples
@@ -255,7 +265,11 @@ class mms(NetworkConnection):
                 if written_bytes is not None:
                     successful += 1
                     readback = read_value()
-                    if readback != written_bytes and readback != original:
+                    if (
+                        is_int_object
+                        and _canon_int(readback) != _canon_int(written_bytes)
+                        and _canon_int(readback) != _canon_int(original)
+                    ):
                         anomalies += 1
                         self.logger.warning(
                             f"  Anomaly: wrote {written_bytes.hex()}, read {readback.hex()}"

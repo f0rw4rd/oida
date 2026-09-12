@@ -203,7 +203,10 @@ class TestGetServerInfo:
         assert info["logical_device_count"] == 1
         assert info["supports_get_server_directory"] is True
 
-    def test_device_count_failure_still_returns_directory_flag(self):
+    def test_directory_flag_reflects_probe_failure(self):
+        # get_logical_devices() IS the GetServerDirectory probe, so a failure
+        # means support is NOT verified -- the flag is derived from the probe
+        # rather than hardcoded True.
         s = _scanner()
         connection = MagicMock()
         connection.get_server_identity.return_value = SimpleNamespace(
@@ -213,8 +216,21 @@ class TestGetServerInfo:
 
         info = s._get_server_info(connection)
 
-        assert info["supports_get_server_directory"] is True
+        assert info["supports_get_server_directory"] is False
         assert "logical_device_count" not in info
+
+    def test_directory_flag_true_when_probe_succeeds(self):
+        s = _scanner()
+        connection = MagicMock()
+        connection.get_server_identity.return_value = SimpleNamespace(
+            vendor=None, model=None, revision=None
+        )
+        connection.get_logical_devices.return_value = ["LD1", "LD2"]
+
+        info = s._get_server_info(connection)
+
+        assert info["supports_get_server_directory"] is True
+        assert info["logical_device_count"] == 2
 
 
 # --------------------------------------------------------------------------- #

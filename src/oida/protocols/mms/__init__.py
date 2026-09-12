@@ -23,7 +23,6 @@ from ...utils import (
     parse_bool,
     safe_int_conversion,
 )
-from ...utils.common_types import Category
 from ...utils.exceptions import DependencyError
 from ...utils.lazy_import import lazy_import
 from .fingerprint import FingerprintMatcher, FingerprintMatch
@@ -272,7 +271,6 @@ class MMSScanner(NetworkScanner):
                 # Confirmed MMS / IEC 61850 association over TCP — cleartext.
                 self.logger.security_finding(
                     "No encryption",
-                    category=Category.ENCRYPTION,
                     detail="MMS / IEC 61850 transmitted in cleartext (no TLS)",
                 )
             elif not (self.tls_ca or self.tls_pin):
@@ -280,7 +278,6 @@ class MMSScanner(NetworkScanner):
                 # server certificate was not authenticated.
                 self.logger.security_finding(
                     "TLS certificate not validated",
-                    category=Category.ENCRYPTION,
                     detail=(
                         "MMS/TLS session established without certificate validation "
                         "(--tls-ca/--tls-pin not supplied); transport is encrypted but "
@@ -402,11 +399,15 @@ class MMSScanner(NetworkScanner):
         try:
             device_count = len(connection.get_logical_devices())
             info["logical_device_count"] = device_count
+            # get_logical_devices() IS a GetServerDirectory request, so its
+            # success is the actual evidence of support -- rather than hardcoding
+            # the key True (an unverified always-true claim in the export).
+            info["supports_get_server_directory"] = True
             self.logger.display(f"IEC 61850 Server has {device_count} logical devices")
         except Exception as e:
+            info["supports_get_server_directory"] = False
             self.logger.debug(f"Failed to get logical device list: {e}")
 
-        info["supports_get_server_directory"] = True
         return info
 
     def _fingerprint_device(
@@ -506,6 +507,14 @@ class MMSScanner(NetworkScanner):
             self.logger.display(f"Discovering {len(device_names)} logical devices")
 
             for device_name in device_names:
+                # Bound materialization: a hostile/misbehaving endpoint can return
+                # a huge GetNameList that would exhaust memory before the
+                # data-object cap ever applies.
+                if len(logical_devices) >= self.max_objects:
+                    self.logger.display(
+                        f"Reached maximum object limit ({self.max_objects}) for logical devices"
+                    )
+                    break
                 device_info = {"name": device_name, "logical_nodes": [], "accessible": True}
                 logical_devices.append(device_info)
                 self.logger.debug(f"Found logical device: {device_name}")
@@ -561,6 +570,12 @@ class MMSScanner(NetworkScanner):
 
         try:
             for ln_name in connection.get_logical_nodes(device_name):
+                # Bound materialization against an oversized GetNameList.
+                if len(logical_nodes) >= self.max_objects:
+                    self.logger.debug(
+                        f"Reached maximum object limit ({self.max_objects}) for logical nodes"
+                    )
+                    break
                 ln_info = {
                     "name": ln_name,
                     "device": device_name,
@@ -584,6 +599,12 @@ class MMSScanner(NetworkScanner):
         try:
             ln_ref = f"{device_name}/{ln_name}"
             for do_name in connection.get_data_objects(device_name, ln_name):
+                # Bound materialization against an oversized GetNameList.
+                if len(data_objects) >= self.max_objects:
+                    self.logger.debug(
+                        f"Reached maximum object limit ({self.max_objects}) for data objects"
+                    )
+                    break
                 do_info = {
                     "name": do_name,
                     "logical_node": ln_name,
@@ -776,13 +797,19 @@ class MMSScanner(NetworkScanner):
         """Analyze security configuration."""
         write_count = len(results.get("write_test_results", {}).get("successful_writes", []))
 
+        # access_control is only KNOWN when --test-write actually ran. On a
+        # discovery-only scan write_count is trivially 0, so `write_count == 0`
+        # falsely asserted "has access control" (crediting 2 points and
+        # suppressing the missing-access-control issue) -- conflating "never
+        # tested" with "prevented". Require the write test to have run.
+        write_tested = "write_test_results" in results
         analysis = SecurityAnalyzer.assess_protocol_security(
             {
                 "authentication": False,
                 "authorization": False,
                 "encryption": False,
                 "integrity_check": False,
-                "access_control": write_count == 0,
+                "access_control": write_tested and write_count == 0,
             }
         )
 
@@ -792,6 +819,13 @@ class MMSScanner(NetworkScanner):
         # appended here and reported via report_vulnerability(), inflating
         # the vuln count with non-issues.
         analysis["concerns"] = list(analysis.get("issues", []))
+
+        # When writes were never tested, relabel the auto-generated "Missing
+        # access control" so it reads as "not tested" rather than a confirmed
+        # finding (run --test-write to actually assess it).
+        if not write_tested and "Missing access control" in analysis["concerns"]:
+            i = analysis["concerns"].index("Missing access control")
+            analysis["concerns"][i] = "Access control not tested (run --test-write to assess)"
 
         if write_count > 0:
             analysis["concerns"].append(
