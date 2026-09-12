@@ -230,15 +230,12 @@ class NFSPassiveListener(PySharkListenerBase):
         # Determine NFS version and procedure
         version, procedure_name = self._get_version_and_procedure(nfs)
 
-        # Determine direction: request vs response
-        # tshark uses nfs.status3 for NFSv3 and nfs.status for generic
-        status_raw = self.get_field(nfs, "status3", None)
-        if status_raw is None:
-            status_raw = self.get_field(nfs, "status", None)
-        if status_raw is None:
-            status_raw = self.get_field(nfs, "nfsstat3", None)
-        if status_raw is None:
-            status_raw = self.get_field(nfs, "nfsstat4", None)
+        # Determine direction: request vs response. A status field is only
+        # present on responses. The real tshark fields are nfs.nfsstat3 (v3),
+        # nfs.nfsstat4 (v4) and the generic nfs.status; "nfs.status3" is not a
+        # real field, so probing it first was a dead lookup that let v4
+        # responses fall through to "request" and flip server/client attribution.
+        status_raw = self.get_field_any(nfs, "nfsstat3", "nfsstat4", "status", default=None)
 
         # If we have a status code, this is likely a response
         is_response = status_raw is not None
@@ -388,17 +385,30 @@ class NFSPassiveListener(PySharkListenerBase):
             proc_name = NFS3_PROCEDURES.get(str(proc_v3), f"PROC_{proc_v3}")
             return "v3", proc_name
 
-        # Try v4
+        # Try v4. procedure_v4 is almost always 1 (COMPOUND); the meaningful
+        # operations are the opcodes carried INSIDE the COMPOUND. Resolve those
+        # first so WRITE/REMOVE/SETATTR/etc. are visible and write-alerting fires
+        # (returning "COMPOUND" here made the real per-op branch below dead and
+        # write tracking miss every NFSv4 mutation).
+        opcode = self.get_field(nfs, "opcode", None)
+        if opcode is not None:
+            # get_field comma-joins a multi-op COMPOUND's opcode list ("22,38,9").
+            op_names = [
+                NFS4_OPS.get(o.strip(), f"OP_{o.strip()}")
+                for o in str(opcode).split(",")
+                if o.strip() != ""
+            ]
+            if op_names:
+                # Surface a write op if the COMPOUND contains one (drives the
+                # write alert); otherwise the last op is the COMPOUND's primary
+                # action (e.g. PUTFH+GETATTR -> GETATTR).
+                write_op = next((n for n in op_names if n in WRITE_PROCEDURES), None)
+                return "v4", write_op or op_names[-1]
+
         proc_v4 = self.get_field(nfs, "procedure_v4", None)
         if proc_v4 is not None:
             proc_name = NFS4_PROCEDURES.get(str(proc_v4), f"PROC_{proc_v4}")
             return "v4", proc_name
-
-        # Try v4 opcode (inside COMPOUND)
-        opcode = self.get_field(nfs, "opcode", None)
-        if opcode is not None:
-            op_name = NFS4_OPS.get(str(opcode), f"OP_{opcode}")
-            return "v4", op_name
 
         # Fallback: try generic procedure field
         proc = self.get_field(nfs, "procedure", None)

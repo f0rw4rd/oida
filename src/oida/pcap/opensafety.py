@@ -90,31 +90,45 @@ OPENSAFETY_MSG_TYPES = {
     0x07: "SSDO",  # Safety Service Data Object
 }
 
-# SNMT service IDs
+# SNMT service IDs -- values per the Wireshark opensafety.snmt.service_id
+# dissector (verified with `tshark -G values`). The previous step-of-two table
+# (0x00..0x18) matched no real encoding, so every printed SNMT name was wrong,
+# the SN_Fail alert fired on the wrong code, and the security-service set flagged
+# benign codes while missing reconfiguration ones.
 SNMT_SERVICES = {
-    0x00: "SN_Reset_Guarding_SCM",
-    0x02: "SN_Assign_SADR",
-    0x04: "SN_Assign_Additional_SADR",
-    0x06: "SN_Assign_UDID",
-    0x08: "SN_Guard",
-    0x0A: "SN_Set_To_PreOp",
-    0x0C: "SN_Set_To_Op",
-    0x0E: "SN_Fail",
-    0x10: "SN_Busy",
-    0x12: "SN_Status",
-    0x14: "SN_Ack",
-    0x16: "SN_UDID_Response",
-    0x18: "SN_Assign_SADR_Response",
+    0x00: "SN set to pre-Operational",
+    0x01: "SN status pre-Operational",
+    0x02: "SN set to Operational",
+    0x03: "SN status Operational",
+    0x04: "SCM set to Stop",
+    0x05: "Assigned additional SADR",
+    0x06: "SCM set to Operational",
+    0x07: "SN Fail",
+    0x08: "SCM guard SN",
+    0x09: "SN Busy",
+    0x0A: "Assign additional SADR",
+    0x0C: "SN Acknowledge",
+    0x0E: "SN assign UDID SCM",
+    0x0F: "SN assigned UDID SCM",
+    0x10: "Assign initial CT for SN",
+    0x11: "Acknowledge initial CT for SN",
 }
 
-# Security-relevant SNMT services (node reconfiguration)
+# SN_Fail service ID (safety node failure report).
+SNMT_SN_FAIL = 0x07
+
+# Security-relevant SNMT services: node reconfiguration / state-change commands
+# (state set, SCM guard, SADR / UDID / CT assignment). The odd-numbered
+# status/acknowledge/response variants are benign.
 SNMT_SECURITY_SERVICES = {
-    0x00,  # SN_Reset_Guarding_SCM
-    0x02,  # SN_Assign_SADR
-    0x04,  # SN_Assign_Additional_SADR
-    0x06,  # SN_Assign_UDID
-    0x0A,  # SN_Set_To_PreOp
-    0x0C,  # SN_Set_To_Op
+    0x00,  # SN set to pre-Operational
+    0x02,  # SN set to Operational
+    0x04,  # SCM set to Stop
+    0x06,  # SCM set to Operational
+    0x08,  # SCM guard SN
+    0x0A,  # Assign additional SADR
+    0x0E,  # SN assign UDID SCM
+    0x10,  # Assign initial CT for SN
 }
 
 # SSDO access command types
@@ -343,7 +357,7 @@ class OpenSAFETYPassiveListener(PySharkListenerBase):
             node.snmt_services.add(svc_name)
 
             # Track failures
-            if snmt_svc == 0x0E:  # SN_Fail
+            if snmt_svc == SNMT_SN_FAIL:
                 node.fail_count += 1
 
             return svc_name
@@ -399,9 +413,15 @@ class OpenSAFETYPassiveListener(PySharkListenerBase):
         """Process SPDO (Safety Process Data Object) fields."""
         node.spdo_count += 1
 
-        payload = self.get_field(os_layer, "msg_spdo_payload")
-        if payload is not None:
-            details["spdo_payload"] = str(payload)
+        # The dissector exposes no raw SPDO payload field ("msg_spdo_payload" was
+        # a dead read). Surface the SPDO connection metadata it DOES expose
+        # (opensafety.spdo.direction / .connection_valid) instead.
+        direction = self.get_field(os_layer, "spdo_direction")
+        if direction is not None:
+            details["spdo_direction"] = str(direction)
+        conn_valid = self.get_field(os_layer, "spdo_connection_valid")
+        if conn_valid is not None:
+            details["spdo_connection_valid"] = str(conn_valid)
 
     # ------------------------------------------------------------------
     # Node tracking
@@ -491,7 +511,7 @@ class OpenSAFETYPassiveListener(PySharkListenerBase):
                 )
 
             # SN_Fail
-            if snmt_svc_id == 0x0E:
+            if snmt_svc_id == SNMT_SN_FAIL:
                 self._alerts.append(
                     {
                         "level": "fail",

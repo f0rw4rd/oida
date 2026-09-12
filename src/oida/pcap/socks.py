@@ -165,7 +165,12 @@ class SOCKSPassiveListener(PySharkListenerBase):
         username = str(self.get_field(socks, "username", "") or "").strip()
         password = str(self.get_field(socks, "password", "") or "").strip()
         command = self.get_field(socks, "command", "")
-        dst = self.get_field_any(socks, "dst", "remote_ip", default="")
+        # socks.dst is FT_IPv4 only; SOCKS5 clients overwhelmingly send
+        # ATYP=domainname (socks.remote_name / socks.v4a_dns_name) and IPv6
+        # targets appear as socks.dstV6. Reading only the IPv4 field dropped the
+        # single most security-relevant datum -- which host the proxy was asked
+        # to reach -- for most real traffic. ("remote_ip" was a dead fallback.)
+        dst = self.get_field_any(socks, "dst", "dstV6", "remote_name", "v4a_dns_name", default="")
         dstport = self.get_field(socks, "dstport", "")
         results = self.get_field(socks, "results", "")
 

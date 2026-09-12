@@ -190,7 +190,11 @@ class IEC101PassiveListener(PySharkListenerBase):
 
         # Check frame format to determine variable-length vs fixed-length
         header_raw = self.get_field(iec101_layer, "header", None)
-        header_val = self._parse_int(header_raw, 0, base=16)
+        # EK mode (oida pcap -r) hands over a bare DECIMAL int for this BASE_HEX
+        # field (229, not "0xe5"); base=16 turned 229 into 553 and 16 into 22, so
+        # the 0xE5 single-char-ACK test below could never fire.  _parse_int still
+        # auto-detects the "0x" prefix XML mode produces.
+        header_val = self._parse_int(header_raw, 0)
 
         # Process ASDU if present (variable-length frames with user data)
         if hasattr(packet, "iec60870_asdu"):
