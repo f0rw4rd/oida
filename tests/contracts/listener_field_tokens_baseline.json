@@ -4,7 +4,6 @@
   },
   "dhcp.py": {
     "option_agent_information_option": "broken",
-    "option_domain_search": "broken",
     "option_fqdn_name": "broken",
     "option_message_type": "broken"
   },

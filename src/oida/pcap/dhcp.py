@@ -272,7 +272,10 @@ class DHCPPassiveListener(PySharkListenerBase):
         # client_id_link_layer_address_ether for MAC-type
         client_id = str(self.get_field(dhcp, "client_id_undef", "") or "")
         if not client_id:
-            client_id = str(self.get_field(dhcp, "option_client_id", "") or "")
+            # tshark exposes the MAC-type Option 61 as the bare ``dhcp.client_id``
+            # (FT_BYTES); ``dhcp.option.client_id`` does not exist, so the old
+            # fallback name never matched.
+            client_id = str(self.get_field_any(dhcp, "client_id", "option_client_id", default=""))
         # Option 81: Client FQDN (option-level)
         fqdn = str(self.get_field(dhcp, "option_fqdn_name", "") or "")
         # Option 82: Relay Agent Info (parsed suboptions)
@@ -286,8 +289,13 @@ class DHCPPassiveListener(PySharkListenerBase):
         relay_link_selection = str(
             self.get_field(dhcp, "option_agent_information_option_link_selection", "") or ""
         )
-        # Option 119: Domain Search List
-        domain_search = str(self.get_field(dhcp, "option_domain_search", "") or "")
+        # Option 119: Domain Search List. tshark emits the value as
+        # dhcp.option.dhcp_dns_domain_search_list_fqdn (there is no
+        # "option_domain_search" -- that token resolved to nothing, so this
+        # detail was silently always empty).
+        domain_search = str(
+            self.get_field(dhcp, "option_dhcp_dns_domain_search_list_fqdn", "") or ""
+        )
         # Option 252: WPAD URL
         wpad = str(self.get_field(dhcp, "option_private_proxy_autodiscovery", "") or "")
         # Option 42: NTP server
@@ -304,8 +312,13 @@ class DHCPPassiveListener(PySharkListenerBase):
         server_name = str(self.get_field(dhcp, "server", "") or "")
         # Option 66: TFTP Server Name (overrides sname)
         tftp_server = str(self.get_field(dhcp, "option_tftp_server_name", "") or "")
-        # Option 67: Boot File Name (overrides 'file')
-        boot_file_name = str(self.get_field(dhcp, "option_boot_file_name", "") or "")
+        # Option 67: Boot File Name (overrides 'file').  tshark's field is
+        # ``dhcp.option.bootfile_name`` (no underscore between boot and file);
+        # the old ``option_boot_file_name`` spelling matched nothing, so PXE/
+        # iPXE Option 67 boot-file overrides were silently dropped.
+        boot_file_name = str(
+            self.get_field_any(dhcp, "option_bootfile_name", "option_boot_file_name", default="")
+        )
         if boot_file_name:
             boot_file = boot_file_name
         # Option 93: Client System Architecture (PXE)
