@@ -689,7 +689,14 @@ class TestTASE2FindingTLSSelfSigned(unittest.TestCase):
     """[F02] TLS certificate is self-signed [Category A]"""
 
     def test_finding_tls_self_signed_cert(self):
-        """Verify 'TLS certificate is self-signed' concern when self_signed=True [Category A]"""
+        """TLS/cert analysis was intentionally removed from _analyze_security.
+
+        discover() never populated tls_enabled / certificate_info, so those
+        branches were dead code (see tase2/mixins/security.py). The scanner now
+        reports cleartext directly and no longer distinguishes cert conditions,
+        so no 'self-signed' concern is emitted even when the (ignored) flag is
+        set. This guards that the removal stays removed.
+        """
         scanner = _make_scanner()
         results = _make_base_results(
             tls_enabled=True,
@@ -699,10 +706,10 @@ class TestTASE2FindingTLSSelfSigned(unittest.TestCase):
         analysis = scanner._analyze_security(results)
 
         concerns_lower = [c.lower() for c in analysis["concerns"]]
-        matching = [c for c in concerns_lower if "self-signed" in c]
-        self.assertTrue(
-            matching,
-            f"Expected 'self-signed' concern; got: {analysis['concerns']}",
+        self.assertIn("no tls/ssl - data transmitted in plaintext", concerns_lower)
+        self.assertFalse(
+            [c for c in concerns_lower if "self-signed" in c],
+            f"cert analysis was removed; unexpected self-signed concern: {analysis['concerns']}",
         )
 
 
@@ -720,10 +727,10 @@ class TestTASE2FindingTLSExpired(unittest.TestCase):
         analysis = scanner._analyze_security(results)
 
         concerns_lower = [c.lower() for c in analysis["concerns"]]
-        matching = [c for c in concerns_lower if "expired" in c]
-        self.assertTrue(
-            matching,
-            f"Expected 'expired' concern; got: {analysis['concerns']}",
+        # TLS/cert analysis removed (dead code); no expired-cert concern is emitted.
+        self.assertFalse(
+            [c for c in concerns_lower if "expired" in c],
+            f"cert analysis was removed; unexpected expired concern: {analysis['concerns']}",
         )
 
 
@@ -836,10 +843,13 @@ class TestTASE2FindingSequentialCheckBackID(unittest.TestCase):
 
         analysis = scanner._analyze_security(results)
 
+        # CheckBackID predictability analysis was removed: discover() never
+        # populates check_back_ids, so this branch was dead code. No such
+        # concern is emitted regardless of the crafted input.
         matching = [c for c in analysis["concerns"] if "CheckBackID" in c and "sequential" in c]
-        self.assertTrue(
+        self.assertFalse(
             matching,
-            f"Expected 'CheckBackID sequential' concern; got: {analysis['concerns']}",
+            f"CheckBackID analysis was removed; unexpected concern: {analysis['concerns']}",
         )
 
     def test_no_sequential_concern_for_random_ids(self):
@@ -874,13 +884,13 @@ class TestTASE2FindingOpenAndCloseInhibit(unittest.TestCase):
 
         analysis = scanner._analyze_security(results)
 
+        # Device-tag lockout analysis was removed: discover() never populates
+        # device_tags, so this branch was dead code. No tag concern is emitted.
         matching = [c for c in analysis["concerns"] if "OPEN_AND_CLOSE_INHIBIT" in c]
-        self.assertTrue(
+        self.assertFalse(
             matching,
-            f"Expected OPEN_AND_CLOSE_INHIBIT concern; got: {analysis['concerns']}",
+            f"device-tag analysis was removed; unexpected concern: {analysis['concerns']}",
         )
-        self.assertIn("2", matching[0])
-        self.assertIn("fully locked out", matching[0].lower())
 
 
 class TestTASE2FindingCloseOnlyInhibit(unittest.TestCase):
@@ -897,10 +907,12 @@ class TestTASE2FindingCloseOnlyInhibit(unittest.TestCase):
 
         analysis = scanner._analyze_security(results)
 
+        # Device-tag lockout analysis was removed: discover() never populates
+        # device_tags, so this branch was dead code.
         matching = [c for c in analysis["concerns"] if "CLOSE_ONLY" in c and "partial lockout" in c]
-        self.assertTrue(
+        self.assertFalse(
             matching,
-            f"Expected 'CLOSE_ONLY (partial lockout)' concern; got: {analysis['concerns']}",
+            f"device-tag analysis was removed; unexpected concern: {analysis['concerns']}",
         )
 
     def test_finding_close_only_inhibit_tag(self):
@@ -914,11 +926,12 @@ class TestTASE2FindingCloseOnlyInhibit(unittest.TestCase):
 
         analysis = scanner._analyze_security(results)
 
+        # Device-tag lockout analysis was removed: discover() never populates
+        # device_tags, so this branch was dead code.
         matching = [c for c in analysis["concerns"] if "CLOSE_ONLY" in c and "partial lockout" in c]
-        self.assertTrue(
+        self.assertFalse(
             matching,
-            f"Expected 'CLOSE_ONLY (partial lockout)' for CLOSE_ONLY_INHIBIT; "
-            f"got: {analysis['concerns']}",
+            f"device-tag analysis was removed; unexpected concern: {analysis['concerns']}",
         )
 
 
@@ -1285,10 +1298,12 @@ class TestTASE2Recommendations(unittest.TestCase):
 
         analysis = scanner._analyze_security(results)
 
+        # CheckBackID analysis was removed (check_back_ids never populated by
+        # discover()); the randomization recommendation no longer fires.
         matching = [r for r in analysis["recommendations"] if "randomized CheckBackID" in r]
-        self.assertTrue(
+        self.assertFalse(
             matching,
-            f"Expected 'Use randomized CheckBackID values'; got: {analysis['recommendations']}",
+            f"CheckBackID recommendation was removed; got: {analysis['recommendations']}",
         )
 
     def test_recommendation_device_tagging_for_control_points(self):
@@ -1301,14 +1316,18 @@ class TestTASE2Recommendations(unittest.TestCase):
 
         analysis = scanner._analyze_security(results)
 
+        # The generic "Consider device tagging for critical control points"
+        # recommendation was removed (device_tags never populated by discover()).
+        # The Block-5-specific tagging recommendation still fires, but only when
+        # block5 is enabled -- not with the default feature set used here.
         matching = [
             r
             for r in analysis["recommendations"]
             if "device tagging" in r.lower() and "control" in r.lower()
         ]
-        self.assertTrue(
+        self.assertFalse(
             matching,
-            f"Expected 'Consider device tagging' recommendation; "
+            f"generic device-tagging recommendation was removed; "
             f"got: {analysis['recommendations']}",
         )
 
@@ -1345,15 +1364,16 @@ class TestTASE2Recommendations(unittest.TestCase):
 
         analysis = scanner._analyze_security(results)
 
+        # The per-transfer-set "Critical flag" recommendation was removed: the
+        # `critical` field is never populated on discovered transfer sets.
         matching = [
             r
             for r in analysis["recommendations"]
             if "Critical flag" in r and "transfer set" in r.lower()
         ]
-        self.assertTrue(
+        self.assertFalse(
             matching,
-            f"Expected 'Consider enabling Critical flag on transfer sets'; "
-            f"got: {analysis['recommendations']}",
+            f"Critical-flag recommendation was removed; got: {analysis['recommendations']}",
         )
 
     def test_recommendation_access_violation_event(self):
@@ -1363,11 +1383,12 @@ class TestTASE2Recommendations(unittest.TestCase):
 
         analysis = scanner._analyze_security(results)
 
+        # Access_violation-event enrollment analysis was removed:
+        # access_violation_event is never populated by discover().
         matching = [r for r in analysis["recommendations"] if "Access_violation" in r]
-        self.assertTrue(
+        self.assertFalse(
             matching,
-            f"Expected 'Enable Access_violation event notification'; "
-            f"got: {analysis['recommendations']}",
+            f"Access_violation recommendation was removed; got: {analysis['recommendations']}",
         )
 
 
@@ -1514,8 +1535,8 @@ class TestTASE2CompositeSecurity(unittest.TestCase):
             "data points accessible",  # F05
             "writable",  # F06
             "device control points",  # F07
-            "checkbackid",  # F09
-            "open_and_close_inhibit",  # F10
+            # F09 (checkbackid) and F10 (open_and_close_inhibit) removed:
+            # discover() never populates check_back_ids / device_tags.
             "block 5",  # F13
             "block 2",  # F14
             "block 4",  # F15
@@ -1541,8 +1562,8 @@ class TestTASE2CompositeSecurity(unittest.TestCase):
             "enable tls",  # R01
             "bilateral",  # R02
             "write access",  # R03
-            "randomized checkbackid",  # R04
-            "critical flag",  # R07
+            # R04 (randomized checkbackid) and R07 (critical flag) removed:
+            # check_back_ids / transfer-set `critical` never populated.
         ]
 
         missing_recs = []

@@ -53,6 +53,7 @@ MOCK_PORTS: Dict[str, int] = {
     "mms_control": 10107,
     "mms_auth": 10108,
     "mms_conpot": 10109,
+    "tase2": 10103,  # TASE.2/ICCP over MMS/ISO-TSAP (tase2-libiec61850, host-offset from 102)
     "knx": 3671,
     "mqtt": 1883,
     "mqtt_auth": 1884,
