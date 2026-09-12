@@ -5,7 +5,7 @@ Main CLI entry point:
     oida <protocol> <target> [options]
 
 Examples:
-    oida modbus 192.168.1.100 -u 1 -r 0-100
+    oida modbus 192.168.1.100 --unit-id 1 -r 0-100
     oida opcua opc.tcp://192.168.1.100:4840 --auth Anonymous
     oida s7 192.168.1.10 --rack 0 --slot 2
 """
@@ -38,7 +38,7 @@ from oida.targets import parse_targets
 from oida.serial_cli import serial_args, handle_serial_command
 from oida.fuzz_cli import fuzz_args, handle_fuzz_command
 from oida.utils.ics_logger import get_logger
-from oida.utils.export_utils import configure_from_args
+from oida.utils.export_utils import configure_from_args, _write_xml
 from oida.utils.ics_logger import get_module_logger
 from oida import __version__
 
@@ -116,12 +116,18 @@ def load_config_file(config_path: str) -> Dict[str, Any]:
         return data
     except (json.JSONDecodeError, *yaml_error) as e:
         raise ValueError(f"Failed to parse config file: {e}")
+    except (OSError, UnicodeDecodeError) as e:
+        # PermissionError / IsADirectoryError (a directory named foo.json passes
+        # the suffix check) / binary content etc. path.exists() doesn't prevent
+        # these. Re-raise as ValueError so they flow through main()'s clean
+        # "Config error:" / exit-1 handler instead of a raw traceback.
+        raise ValueError(f"Could not read config file {path}: {e}")
 
 
 def merge_config_with_args(
     args: argparse.Namespace,
     config: Dict[str, Any],
-    parser: Optional[argparse.ArgumentParser] = None,
+    parser: argparse.ArgumentParser,
 ) -> argparse.Namespace:
     """
     Merge config file values into parsed arguments.
@@ -129,36 +135,50 @@ def merge_config_with_args(
     Command-line arguments take precedence over config file values.
     A config value is applied when the matching attribute is still at
     the argparse default (i.e. the operator did not set it on the
-    command line). When `parser` is provided we compute per-dest defaults
-    from the parser so booleans / ints / lists are honored — without a
-    parser the function falls back to "apply only when value is None",
-    which silently drops every typed default and is the historic bug.
+    command line). Per-dest defaults are computed from the parser so
+    booleans / ints / lists are honored.
 
     Unknown keys (no matching dest, no matching subcommand action) are
     surfaced via a warning instead of being silently set — typos like
     `tiemout: 5` would otherwise create args.tiemout=5 that nothing reads.
     """
-    valid_dests: Optional[set[str]] = None
+    # Walk the parser + every subparser so dests like 'unit_id' that
+    # live under `oida modbus` are recognized. `-c/--config` is a
+    # main-parser-only flag, so it must precede the subcommand
+    # (`oida -c file.yaml modbus HOST`).
     defaults: Dict[str, Any] = {}
-    if parser is not None:
-        # Walk the parser + every subparser so dests like 'unit_id' that
-        # live under `oida modbus` are recognized when the operator runs
-        # `oida modbus -c file.yaml`.
+    for act in parser._actions:
+        if act.dest != argparse.SUPPRESS:
+            defaults[act.dest] = act.default
+    for act in parser._actions:
+        if isinstance(act, argparse._SubParsersAction):
+            for sub in act.choices.values():
+                for sub_act in sub._actions:
+                    if sub_act.dest != argparse.SUPPRESS:
+                        defaults.setdefault(sub_act.dest, sub_act.default)
+    # A dest can live on both the main parser and a subparser (e.g. a
+    # per-protocol flag whose default differs from the global one). The
+    # sweeps above let the main parser / an arbitrary first subparser win
+    # the baseline, which makes the "still-at-default?" test below compare
+    # against the wrong value for the protocol actually being run. Override
+    # with the ACTIVE subcommand's own defaults so the baseline matches what
+    # argparse actually applied to `args`.
+    active = getattr(args, "protocol", None)
+    if active:
         for act in parser._actions:
-            if act.dest != argparse.SUPPRESS:
-                defaults[act.dest] = act.default
-        for act in parser._actions:
-            if isinstance(act, argparse._SubParsersAction):
-                for sub in act.choices.values():
-                    for sub_act in sub._actions:
-                        if sub_act.dest != argparse.SUPPRESS:
-                            defaults.setdefault(sub_act.dest, sub_act.default)
-        valid_dests = set(defaults.keys()) | {"config"}
+            if isinstance(act, argparse._SubParsersAction) and active in act.choices:
+                for sub_act in act.choices[active]._actions:
+                    if (
+                        sub_act.dest != argparse.SUPPRESS
+                        and sub_act.default is not argparse.SUPPRESS
+                    ):
+                        defaults[sub_act.dest] = sub_act.default
+    valid_dests = set(defaults.keys()) | {"config"}
 
     for key, value in config.items():
         attr_name = key.replace("-", "_")
 
-        if valid_dests is not None and attr_name not in valid_dests:
+        if attr_name not in valid_dests:
             logger.warning("Config key %r does not match any CLI argument — ignoring", key)
             continue
 
@@ -166,20 +186,13 @@ def merge_config_with_args(
             setattr(args, attr_name, value)
             continue
 
+        # Apply config value when the operator left the flag at its
+        # argparse default. Identity-or-equality avoids weird edge
+        # cases with mutable defaults (default=[] would compare True
+        # for any empty list — fine here, the operator didn't set it).
         current = getattr(args, attr_name)
-        if parser is not None:
-            # Apply config value when the operator left the flag at its
-            # argparse default. Identity-or-equality avoids weird edge
-            # cases with mutable defaults (default=[] would compare True
-            # for any empty list — fine here, the operator didn't set it).
-            if current == defaults.get(attr_name):
-                setattr(args, attr_name, value)
-        else:
-            # Backwards-compatible fallback: only override when explicitly
-            # None. Boolean/int defaults silently drop the config value
-            # here — pass `parser=` to the call site to fix that class.
-            if current is None:
-                setattr(args, attr_name, value)
+        if current == defaults.get(attr_name):
+            setattr(args, attr_name, value)
 
     return args
 
@@ -264,7 +277,8 @@ def _export_tables(
     _log = nxc_logger or get_logger("EXPORT", "", 0)
     want_csv = "csv" in formats
     want_json = "json" in formats
-    if not (want_csv or want_json):
+    want_xml = "xml" in formats
+    if not (want_csv or want_json or want_xml):
         return
     os.makedirs(output_dir, exist_ok=True)
     seen: Dict[str, int] = {}
@@ -300,11 +314,49 @@ def _export_tables(
                 json.dump(json_data, f, indent=2, default=str)
             written.append("json")
 
+        if want_xml:
+            # Previously missing: `--format xml` hit the early return above and
+            # every harvest table was silently discarded.
+            xml_path = Path(output_dir) / f"{stem}.xml"
+            if _write_xml(xml_path, headers, rows, stem):
+                written.append("xml")
+
         _log.debug("Table exported: %s (%s)", stem, "/".join(written))
         exported += 1
 
     if exported:
         _log.success(f"{exported} tables exported to {output_dir}")
+
+
+def _flatten_results_for_export(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    """Flatten scan results into tabular rows (shared by CSV and XML export).
+
+    ``data`` sub-fields are hoisted to ``data_<key>`` columns; the ``tables``
+    key is skipped (it gets dedicated per-table files).
+    """
+    flat_results = []
+    for r in results:
+        flat = {
+            "host": r.get("host", ""),
+            "ip": r.get("ip", ""),
+            "protocol": r.get("protocol", ""),
+            "port": r.get("port", ""),
+            "success": r.get("success", False),
+            "error": r.get("error", ""),
+        }
+        data = r.get("data", {})
+        if isinstance(data, dict):
+            for key, value in data.items():
+                # ``tables`` get their own dedicated files
+                if key == "tables":
+                    continue
+                # Convert complex values to strings
+                if isinstance(value, (dict, list)):
+                    flat[f"data_{key}"] = json.dumps(value, default=str)
+                else:
+                    flat[f"data_{key}"] = value
+        flat_results.append(flat)
+    return flat_results
 
 
 def export_results(
@@ -335,7 +387,7 @@ def export_results(
     # Determine formats to export
     formats = []
     if output_format.lower() == "all":
-        formats = ["json", "csv"]
+        formats = ["json", "csv", "xml"]
     elif output_format.lower() in ["json", "csv", "xml"]:
         formats = [output_format.lower()]
 
@@ -373,31 +425,7 @@ def export_results(
 
         elif fmt == "csv":
             csv_path = os.path.join(output_dir, f"{protocol_name}.csv")
-            # Flatten results for CSV
-            flat_results = []
-            for r in results:
-                flat = {
-                    "host": r.get("host", ""),
-                    "ip": r.get("ip", ""),
-                    "protocol": r.get("protocol", ""),
-                    "port": r.get("port", ""),
-                    "success": r.get("success", False),
-                    "error": r.get("error", ""),
-                }
-                # Add flattened data fields if present
-                data = r.get("data", {})
-                if isinstance(data, dict):
-                    for key, value in data.items():
-                        # ``tables`` get their own dedicated CSV files
-                        if key == "tables":
-                            continue
-                        # Convert complex values to strings
-                        if isinstance(value, (dict, list)):
-                            flat[f"data_{key}"] = json.dumps(value, default=str)
-                        else:
-                            flat[f"data_{key}"] = value
-                flat_results.append(flat)
-
+            flat_results = _flatten_results_for_export(results)
             if flat_results:
                 # Get all unique keys
                 all_keys = set()
@@ -412,7 +440,13 @@ def export_results(
                 _log.debug("Results exported to %s", csv_path)
 
         elif fmt == "xml":
-            _log.warning("XML export not yet implemented")
+            xml_path = Path(output_dir) / f"{protocol_name}.xml"
+            flat_results = _flatten_results_for_export(results)
+            if flat_results:
+                headers = sorted({k for r in flat_results for k in r})
+                rows = [[r.get(h, "") for h in headers] for r in flat_results]
+                if _write_xml(xml_path, headers, rows, protocol_name):
+                    _log.debug("Results exported to %s", xml_path)
 
     # Write each harvest table as dedicated file(s), honouring --format
     if all_tables:
@@ -449,12 +483,21 @@ def _select_parser_mode(argv, known_names):
     return ("all", None)
 
 
-def gen_cli_args():
+def gen_cli_args(argv=None):
     """
     Generate argument parser with dynamic protocol loading
 
     Scans the protocols directory and registers each protocol's
     arguments dynamically.
+
+    Args:
+        argv: The argument list this parser will be asked to parse — the
+            caller's ``main(argv)`` view, defaulting to ``sys.argv``. The
+            selective-registration fast path inspects THIS list (not the
+            process argv) to decide which protocol subparser to fully
+            build: reading the process argv instead made programmatic /
+            embedded ``main(argv=[...])`` calls build stub parsers that
+            reject protocol aliases (``oida s7``) and per-protocol flags.
 
     Returns:
         argparse.ArgumentParser: Configured argument parser
@@ -546,13 +589,6 @@ def gen_cli_args():
         type=int,
         default=10,
         help="Number of concurrent threads (default: 10)",
-    )
-
-    parser.add_argument(
-        "--timeout",
-        type=int,
-        default=5,
-        help="Connection timeout in seconds (default: 5)",
     )
 
     parser.add_argument("--debug", action="store_true", help="Enable debug output")
@@ -678,7 +714,9 @@ def gen_cli_args():
     # stub the rest. Fully registering a protocol imports its (heavy) package, so
     # doing it for all 26+ protocols on every launch made the CLI -- and the
     # frozen binary especially -- slow to boot. See _select_parser_mode.
-    _mode, _selected = _select_parser_mode(sys.argv, set(protocols.keys()))
+    _mode, _selected = _select_parser_mode(
+        sys.argv if argv is None else argv, set(protocols.keys())
+    )
 
     protocols_registered = 0
 
@@ -1355,14 +1393,18 @@ def main(argv: Optional[List[str]] = None):
     # Show banner when no arguments provided
     if not args_to_parse:
         try:
-            parser = gen_cli_args()
-        except Exception:
+            parser = gen_cli_args(sys.argv)
+        except Exception as e:
+            logger.debug(f"parser build failed for banner: {e}")
             parser = None
         return _show_usage_and_exit(parser)
 
-    # Generate parser
+    # Generate parser. Pass the args we are ABOUT to parse, not the process
+    # argv: gen_cli_args() keys selective registration off this list, and an
+    # embedding process can have a very different sys.argv (e.g. a wrapper
+    # whose own first positional is another protocol name).
     try:
-        parser = gen_cli_args()
+        parser = gen_cli_args(["oida", *args_to_parse])
     except Exception as e:
         logger.error(f"Failed to initialize CLI: {e}")
         return 1

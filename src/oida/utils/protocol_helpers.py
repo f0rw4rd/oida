@@ -2,9 +2,8 @@
 # -*- coding: utf-8 -*-
 
 import socket
-import ipaddress
 import time
-from typing import Dict, List, Any, Generator
+from typing import Dict, List, Any
 
 from oida.utils.ics_logger import get_module_logger
 
@@ -69,8 +68,10 @@ class ProgressTracker:
                 end = "\n" if is_complete else ""
                 self.logger.progress(self.count, self.total, self.success, self.failed, end=end)
             else:
-                # Fallback to log_func
-                pct = (self.count / self.total) * 100
+                # Fallback to log_func. Guard the divide the same way
+                # ICSLogger.progress() does: a total of 0 (empty work set)
+                # must not turn a progress line into a ZeroDivisionError.
+                pct = (self.count / self.total) * 100 if self.total > 0 else 0
                 status = (
                     f"Progress: {pct:.1f}% ({self.count}/{self.total}) - {now - self.start:.1f}s"
                 )
@@ -82,11 +83,6 @@ class ProgressTracker:
             # Mark as finished to prevent duplicate newlines
             if is_complete:
                 self.show = False
-
-    def add(self, count=1, msg=None):
-        """Increment the counter by specified amount and update progress"""
-        self.count += count
-        self.update(pos=self.count, msg=msg)
 
     def add_success(self, count=1):
         """Increment success counter"""
@@ -119,18 +115,6 @@ class ConnectionHelper:
             return sock
         except Exception as e:
             _logger.debug(f"TCP connection to {host}:{port} failed: {e}")
-            raise
-
-    @staticmethod
-    def create_udp_socket(host: str, port: int, timeout: int = 5) -> socket.socket:
-        """Create a UDP socket"""
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.settimeout(timeout)
-            sock.connect((host, port))
-            return sock
-        except Exception as e:
-            _logger.debug(f"UDP socket creation for {host}:{port} failed: {e}")
             raise
 
     @staticmethod
@@ -235,29 +219,43 @@ class ProtocolParser:
 
     @staticmethod
     def parse_address_range(address_range: str) -> List[int]:
-        """Parse address range string (e.g., '1-100', '1,5,10-20')"""
-        addresses = []
+        """Parse an address range string such as ``"1-100"`` or ``"1,5,10-20"``.
 
-        for part in address_range.split(","):
-            part = part.strip()
+        Tolerant of empty segments (a trailing or duplicated comma) and reversed
+        bounds (``"20-10"`` is treated the same as ``"10-20"``).  Genuinely
+        malformed tokens raise ``ValueError`` with a message naming the offending
+        segment, so the caller reports a useful error instead of a bare
+        ``int()`` traceback (previously ``--scan-range "0-10,"`` crashed the scan
+        with ``invalid literal for int() with base 10: ''``).
+        """
+        if address_range is None:
+            raise ValueError("address range is empty")
+
+        addresses: List[int] = []
+
+        for raw in str(address_range).split(","):
+            part = raw.strip()
+            if not part:
+                # Tolerate blank segments from a trailing/duplicated comma.
+                continue
             if "-" in part:
-                start, end = map(int, part.split("-", 1))
+                bounds = [b.strip() for b in part.split("-")]
+                if len(bounds) != 2 or not bounds[0] or not bounds[1]:
+                    raise ValueError(f"invalid range segment: {part!r}")
+                try:
+                    start, end = int(bounds[0]), int(bounds[1])
+                except ValueError:
+                    raise ValueError(f"invalid range segment: {part!r}") from None
+                if start > end:
+                    start, end = end, start
                 addresses.extend(range(start, end + 1))
             else:
-                addresses.append(int(part))
+                try:
+                    addresses.append(int(part))
+                except ValueError:
+                    raise ValueError(f"invalid address: {part!r}") from None
 
         return sorted(set(addresses))
-
-    @staticmethod
-    def parse_ip_range(ip_range: str) -> Generator[str, None, None]:
-        """Parse IP range and yield individual IPs"""
-        try:
-            network = ipaddress.ip_network(ip_range, strict=False)
-            for ip in network.hosts():
-                yield str(ip)
-        except ValueError:
-            # Try single IP or hostname
-            yield ip_range
 
 
 class DataFormatter:

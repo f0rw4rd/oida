@@ -17,6 +17,7 @@ import json
 import os
 import shutil
 import sys
+import threading
 from pathlib import Path
 from typing import List, Any, Optional, Dict, Union
 from xml.etree import ElementTree as ET
@@ -34,6 +35,15 @@ _config: Dict[str, Any] = {
     "logger": None,  # Optional logger instance
     "full_width": False,  # When True, don't truncate tables to terminal width
 }
+
+# Per-thread "last print_table() truncated its output" state. This used to be
+# a key in the shared _config dict, so under `oida <proto> <targets> -t N` two
+# ThreadPoolExecutor workers could interleave print_table() calls and each
+# read the OTHER thread's truncation flag — attaching the "Table truncated /
+# full data saved to" hint to the wrong target's table. Thread-local storage
+# keeps the write in print_table() and the read in export_table() scoped to
+# the same thread.
+_truncation_state = threading.local()
 
 
 def configure_from_args(args, logger=None) -> None:
@@ -119,8 +129,9 @@ def export_table(
     # Always print to console
     print_table(rows, headers, title, logger=_config["logger"])
 
-    # Check if table was truncated and inform the user
-    was_truncated = _config.get("_last_table_truncated", False)
+    # Check if table was truncated and inform the user (per-thread state —
+    # see _truncation_state above)
+    was_truncated = getattr(_truncation_state, "last_table_truncated", False)
 
     # Export to file if configured
     if not _config["output_dir"]:
@@ -590,8 +601,10 @@ def print_table(
         # Print bottom separator
         output(maybe_truncate(separator))
 
-        # Store truncation state so export_table can check it
-        _config["_last_table_truncated"] = truncated
+        # Store truncation state so export_table can check it. Thread-local:
+        # concurrent scan workers each get their own flag (see
+        # _truncation_state at module top).
+        _truncation_state.last_table_truncated = truncated
 
         return True
     except Exception as e:

@@ -163,8 +163,15 @@ class connection(ABC):
             if results:
                 return results[0][4][0]
             return host
-        except socket.gaierror as e:
-            # If resolution fails, return original (might be IP already)
+        except (socket.gaierror, UnicodeError) as e:
+            # If resolution fails, return original (might be IP already).
+            # UnicodeError (UnicodeEncodeError) escapes getaddrinfo for
+            # hostnames IDNA encoding rejects — e.g. a 300-char label, or
+            # a stray Unicode byte on a target-file line. It is NOT a
+            # gaierror subclass, and this method runs BEFORE the
+            # centralized proto_flow() error handling in __init__, so
+            # letting it escape crashed the whole connection constructor
+            # instead of degrading to a logged failure.
             self.logger.debug(f"resolve host failed: {e}")
             return host
 
@@ -365,4 +372,10 @@ class SerialConnection(connection):
         """Initialize serial connection"""
         # For serial protocols, "host" might be an interface name
         self.interface = getattr(args, "interface", None) or host
+        # Same isolation contract as NetworkConnection (see its comment): the
+        # CLI reuses one argparse Namespace across protocol dispatches, and
+        # serial scanners mutate list/dict attributes (e.g. scan_range) in
+        # place. Without a deep copy those writes bleed into the caller's
+        # Namespace and the next protocol invocation in this process.
+        args = copy.deepcopy(args)
         super().__init__(args, db, host)
