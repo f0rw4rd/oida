@@ -85,6 +85,7 @@ class HSRNode:
     total_frames: int = 0
     first_seen: str = ""
     last_seen: str = ""
+    last_supervision: str = ""
 
 
 class HSRPassiveListener(PySharkListenerBase):
@@ -144,8 +145,7 @@ class HSRPassiveListener(PySharkListenerBase):
         self.nodes: Dict[str, HSRNode] = {}
         # Track all MACs seen for rogue detection
         self._known_macs: Set[str] = set()
-        # Track supervision intervals per node
-        self._supervision_times: Dict[str, List[str]] = {}
+        # Supervision recency is tracked per node (HSRNode.last_supervision).
 
     def process_packet(self, packet) -> None:
         """Process an HSR or HSR supervision packet."""
@@ -271,8 +271,10 @@ class HSRPassiveListener(PySharkListenerBase):
         if vdan_mac:
             self._known_macs.add(vdan_mac)
 
-        # Track supervision timing
-        self._supervision_times.setdefault(node_mac, []).append(now)
+        # Track supervision recency (bounded: one timestamp per node, not an
+        # ever-growing list -- the old _supervision_times dict appended a
+        # timestamp per supervision frame for the whole capture lifetime).
+        node.last_supervision = now
 
         # Record interaction
         flow_id = self.get_flow_id(packet)
@@ -474,6 +476,7 @@ class HSRPassiveListener(PySharkListenerBase):
             "seq_gaps_a": node.seq_gaps_a,
             "seq_gaps_b": node.seq_gaps_b,
             "supervision_count": node.supervision_count,
+            "last_supervision": node.last_supervision,
             "total_frames": node.total_frames,
             "protocol": "HSR/L2",
             "first_seen": node.first_seen,
