@@ -326,7 +326,9 @@ def _export_tables(
         exported += 1
 
     if exported:
-        _log.success(f"{exported} tables exported to {output_dir}")
+        # Redundant with the caller's "results written to <dir>" line; keep at
+        # debug so the console isn't told the same directory twice.
+        _log.debug("%d tables exported to %s", exported, output_dir)
 
 
 def _flatten_results_for_export(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
