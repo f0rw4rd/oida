@@ -82,7 +82,7 @@ class TestExportResultsContract(unittest.TestCase):
 
     def test_all_writes_json_and_csv(self):
         export_results(_sample_results(), self.tmp, "all", "modbus")
-        self.assertEqual(self._files(), sorted(["modbus.csv", "modbus.json"]))
+        self.assertEqual(self._files(), sorted(["modbus.csv", "modbus.json", "modbus.xml"]))
 
     def test_console_writes_no_files(self):
         """The bug class: -o out/ alone (default format=console) writes
