@@ -165,6 +165,7 @@ class MQTTAuthenticator(ProtocolAuthenticator):
         keep_alive: int = 60,
         clean_session: bool = True,
         protocol_name: str = "MQTT",
+        properties: bytes = b"",
     ):
         """Initialize MQTT authenticator.
 
@@ -176,6 +177,9 @@ class MQTTAuthenticator(ProtocolAuthenticator):
             keep_alive: Keep alive interval in seconds
             clean_session: Clean session flag
             protocol_name: Protocol name for logging
+            properties: Encoded MQTT 5.0 CONNECT properties (v5 only, may be
+                fuzzed). Empty means "no properties" and still emits the
+                mandatory zero-length prefix.
         """
         super().__init__(protocol_name)
         self.client_id = client_id
@@ -184,6 +188,7 @@ class MQTTAuthenticator(ProtocolAuthenticator):
         self.protocol_version = protocol_version
         self.keep_alive = keep_alive
         self.clean_session = clean_session
+        self.properties = properties
 
     def authenticate(self, conn) -> bool:
         """Send MQTT CONNECT and validate CONNACK.
@@ -286,6 +291,14 @@ class MQTTAuthenticator(ProtocolAuthenticator):
             + flags.to_bytes(1, "big")
             + self.keep_alive.to_bytes(2, "big")
         )
+
+        # MQTT 5.0 (3.1.2.11): the CONNECT variable header carries a Properties
+        # section between Keep Alive and the payload. It is mandatory -- an empty
+        # one is a single 0x00 length varbyte. Without it a v5 broker rejects the
+        # packet as malformed before it ever reaches its auth logic.
+        # Not present in 3.1/3.1.1.
+        if self.protocol_version >= 5:
+            variable_header += self._encode_remaining_length(len(self.properties)) + self.properties
 
         # Build payload
         client_id_bytes = self.client_id.encode("utf-8")

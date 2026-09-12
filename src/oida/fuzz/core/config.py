@@ -131,6 +131,10 @@ class FuzzerConfig:
     seed: Optional[int] = None  # Random seed for protocol-level randomization
     index_start: int = 1  # Start test case index (for replaying specific ranges)
     index_end: Optional[int] = None  # End test case index (None = fuzz all)
+    # Combinatorial-depth controls (mutually exclusive). boofuzz fuzzes depth 1
+    # (each field alone), then depth 2 (all field pairs), then triples, ...
+    max_depth: Optional[int] = None  # Cap: fuzz depths 1..N then stop (None = all)
+    only_depth: Optional[int] = None  # Isolate: fuzz ONLY depth N (skip lower depths)
     store_all_payloads: bool = (
         False  # Store all payloads (old behavior, larger DB). Default: lightweight mode
     )
@@ -143,6 +147,12 @@ class FuzzerConfig:
     )
     monitor_logic: str = "and"  # Default combination logic for monitors ("and" or "or")
     boofuzz_db: bool = False  # Enable boofuzz-results database (disabled by default)
+    # Bound boofuzz's own results DB (in-memory by default) so a long campaign does not
+    # leak RAM: boofuzz keeps every *passing* case unless capped. 0 == keep all (boofuzz
+    # default; unbounded). We cap it because OIDA already records crash context to its own
+    # on-disk session DB, so boofuzz's copy only needs a rolling window for the web UI.
+    # Failing cases are always retained by boofuzz regardless of this cap.
+    fuzz_db_keep_pass_cases: int = 500  # Passing test cases kept in boofuzz's results DB
     reuse_target_connection: bool = (
         True  # Reuse TCP connection between test cases (faster, disable for crash detection)
     )

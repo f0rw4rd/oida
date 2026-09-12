@@ -634,5 +634,43 @@ class TestConnectionEdgeCases:
         assert conn.port == 8443
 
 
+class TestScapyRawConnectionProtocol:
+    """Regression: the raw-socket TCP transport must set IP proto=TCP (6).
+
+    A bare IP()/Raw(payload) leaves proto=0 (IPv6 nh=59), so the target drops
+    every fuzz packet at IP demux while the run reports clean.
+    """
+
+    def _sent_packet(self, ipv6, data):
+        scapy = pytest.importorskip("scapy.all")
+        scapy.conf.verb = 0
+        from src.oida.fuzz.core.connections.scapy import ScapyRawConnection
+
+        src = "::1" if ipv6 else "127.0.0.1"
+        conn = ScapyRawConnection(host=src, port=80, source_ip=src, ipv6=ipv6)
+        conn._init_scapy()
+        captured = {}
+        conn.scapy_send = lambda pkt, **kw: captured.setdefault("pkt", pkt)
+        conn._sock = True
+        conn.send(data)
+        return captured["pkt"]
+
+    def test_ipv4_full_segment_sets_proto_tcp(self):
+        from scapy.all import TCP
+
+        seg = bytes(TCP(sport=1234, dport=80, flags="S"))
+        assert self._sent_packet(False, seg).proto == 6
+
+    def test_ipv4_short_mutation_still_sets_proto_tcp(self):
+        # A sub-header mutation must not fall back to proto=0.
+        assert self._sent_packet(False, b"\x00\x01").proto == 6
+
+    def test_ipv6_full_segment_sets_next_header_tcp(self):
+        from scapy.all import TCP
+
+        seg = bytes(TCP(sport=1234, dport=80, flags="S"))
+        assert self._sent_packet(True, seg).nh == 6
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-v"])

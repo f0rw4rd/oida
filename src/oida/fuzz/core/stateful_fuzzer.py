@@ -8,9 +8,10 @@ This module provides a base class that extends BaseFuzzer with:
 - Pre-flight state reachability validation
 """
 
+import itertools
 import time
 from dataclasses import dataclass
-from typing import List, Optional, Set, Tuple, Type, Union
+from typing import Any, List, Optional, Set, Tuple, Type, Union
 
 from .base_fuzzer import BaseFuzzer, CommonState, RequestInfo
 from .config import FuzzerConfig
@@ -22,6 +23,39 @@ from .session.state_machine import StateTransitionError
 
 class AuthenticationFailedError(Exception):
     """Raised when authentication fails and fuzzing cannot continue."""
+
+
+# Monotonic source of connection identities. Never reused, unlike id(), whose
+# values CPython recycles as soon as the previous object is collected — a freed
+# connection's id landing on a live one would make a brand-new, unauthenticated
+# connection compare equal to the previously authenticated one and silently skip
+# authentication.
+_CONN_UID_ATTR = "_oida_conn_uid"
+_conn_uid_counter = itertools.count(1)
+
+
+def _connection_uid(conn: Any) -> Any:
+    """Return a stable, collision-free identity for a connection object.
+
+    The uid is stamped onto the object on first use and lives exactly as long as
+    the object does, so two distinct live connections can never share one, and a
+    collected connection's uid can never be handed to its successor.
+
+    Falls back to ``("id", id(conn))`` only for objects that reject attribute
+    assignment (``__slots__`` / C extension types), which is no worse than the
+    previous behaviour.
+    """
+    if conn is None:
+        return None
+    uid = getattr(conn, _CONN_UID_ATTR, None)
+    if uid is not None:
+        return uid
+    uid = next(_conn_uid_counter)
+    try:
+        setattr(conn, _CONN_UID_ATTR, uid)
+    except (AttributeError, TypeError):
+        return ("id", id(conn))
+    return uid
 
 
 @dataclass
@@ -176,6 +210,26 @@ class StatefulFuzzer(BaseFuzzer):
             else:
                 self.log.debug(f"[STATE] No state machine, set internal state: {state_name}")
 
+    def _state_satisfied(self, required_name: str) -> bool:
+        """Check whether a single required state name is currently satisfied.
+
+        Two namespaces coexist:
+        - Protocol-specific states tracked by the StateMachine (e.g. MQTT's
+          DISCONNECTED/CONNECTED/READY). For these, the state machine is the
+          authoritative source of truth.
+        - Auth-layer CommonStates tracked in ``self._current_state``
+          (PRE_AUTH / AUTHENTICATED / CONNECTED). These may have no literal
+          counterpart in a protocol state machine, so a successful auth is only
+          reflected here — the state machine cannot represent it.
+
+        Consulting the owning namespace keeps a single source of truth per
+        state and prevents re-authenticating every test case when the state
+        machine has no "AUTHENTICATED" state.
+        """
+        if self.state_machine and required_name in self.state_machine.states:
+            return self.state_machine.get_current_state_name() == required_name
+        return self._current_state == required_name
+
     def _request_state_matches(self, request_info: RequestInfo) -> bool:
         """Check if current state matches request's required state.
 
@@ -201,33 +255,30 @@ class StatefulFuzzer(BaseFuzzer):
             )
             return True
 
-        current = self._get_current_state()
-
         # Handle list of acceptable states (OR logic)
         if isinstance(required, list):
             req_names = [s.value if isinstance(s, CommonState) else s for s in required]
-            for req_state in required:
-                req_name = req_state.value if isinstance(req_state, CommonState) else req_state
-                if current == req_name:
+            for req_name in req_names:
+                if self._state_satisfied(req_name):
                     self.log.debug(
-                        f"[STATE] Request '{request_info.name}' requires one of {req_names}, current '{current}' MATCHES"
+                        f"[STATE] Request '{request_info.name}' requires one of {req_names}, '{req_name}' MATCHES"
                     )
                     return True
             self.log.debug(
-                f"[STATE] Request '{request_info.name}' requires one of {req_names}, current '{current}' does NOT match"
+                f"[STATE] Request '{request_info.name}' requires one of {req_names}, none match"
             )
             return False
 
         # Single state requirement
         required_name = required.value if isinstance(required, CommonState) else required
-        matches = current == required_name
+        matches = self._state_satisfied(required_name)
         if matches:
             self.log.debug(
-                f"[STATE] Request '{request_info.name}' requires '{required_name}', current '{current}' MATCHES"
+                f"[STATE] Request '{request_info.name}' requires '{required_name}' - MATCHES"
             )
         else:
             self.log.debug(
-                f"[STATE] Request '{request_info.name}' requires '{required_name}', current '{current}' does NOT match"
+                f"[STATE] Request '{request_info.name}' requires '{required_name}' - does NOT match"
             )
         return matches
 
@@ -456,11 +507,6 @@ class StatefulFuzzer(BaseFuzzer):
             """Pre-send callback that respects request state requirements."""
             self.log.debug("[STATE] === Pre-send callback triggered ===")
 
-            # Check if auth already failed - don't retry
-            if self._auth_failed:
-                self.log.fail("[STATE] Authentication previously failed, aborting")
-                raise AuthenticationFailedError("Authentication previously failed")
-
             # Get current request info
             current_node = session.fuzz_node
             if not current_node:
@@ -506,6 +552,16 @@ class StatefulFuzzer(BaseFuzzer):
                 )
                 return
 
+            # Auth previously failed: only abort requests that actually REQUIRE
+            # authentication. PRE_AUTH and ANY requests (handled above) need no
+            # auth and must keep running so the rest of the campaign proceeds.
+            if self._auth_failed:
+                self.log.fail(
+                    f"[STATE] Authentication previously failed, skipping auth-requiring "
+                    f"request '{request_name}'"
+                )
+                raise AuthenticationFailedError("Authentication previously failed")
+
             # No authenticator configured - just track state
             if not self.authenticator:
                 self.log.debug(
@@ -516,8 +572,9 @@ class StatefulFuzzer(BaseFuzzer):
             # Get connection for state tracking
             conn = target._target_connection
             generation = getattr(conn, "_connection_generation", 0)
-            current_identity = (id(conn), generation)
-            self.log.debug(f"[STATE] Connection identity: id={id(conn)}, generation={generation}")
+            conn_uid = _connection_uid(conn)
+            current_identity = (conn_uid, generation)
+            self.log.debug(f"[STATE] Connection identity: uid={conn_uid}, generation={generation}")
 
             # Handle AUTHENTICATED and protocol-specific states
             if current_identity != self._authenticated_conn_id:
@@ -632,11 +689,22 @@ class StatefulFuzzer(BaseFuzzer):
     def fuzz_all(self) -> None:
         """Run fuzzing with authentication support.
 
-        Sets up authentication callback before running fuzzing session.
+        The session/auth-callback setup is deferred to _pre_fuzz_hook() (invoked
+        by the base fuzz_all after timeout calibration) so the data socket
+        captures the calibrated recv_timeout instead of the pre-calibration
+        default; building the session eagerly here would freeze recv_timeout=5.0.
         """
         self.log.debug(f"[STATE] fuzz_all() called, current state: {self._current_state}")
+        super().fuzz_all()
 
-        # Access session to trigger lazy initialization
+    def _pre_fuzz_hook(self) -> None:
+        """Build the session + register the state-aware auth callback.
+
+        Runs after the base fuzz_all has calibrated timeouts and immediately
+        before the fuzz loop, so the lazily-built data socket picks up the
+        calibrated recv_timeout.
+        """
+        # Access session to trigger lazy initialization (post-calibration).
         _ = self.session
 
         # Setup auth callback after session is created
@@ -651,9 +719,6 @@ class StatefulFuzzer(BaseFuzzer):
                 else f"default ({self.DEFAULT_REQUEST_STATE})"
             )
             self.log.debug(f"[STATE]   - {name}: {state_str}")
-
-        # Run normal fuzzing
-        super().fuzz_all()
 
     # ==================== STATE REACHABILITY VALIDATION ====================
 
@@ -678,13 +743,19 @@ class StatefulFuzzer(BaseFuzzer):
         all_reachable = True
 
         # Get states in topological order (respects dependencies)
+        # A cyclic requires-graph (HTTP's request/response loop, for example) is
+        # legal — `requires` lists ALTERNATIVE predecessors, so a loop does not
+        # make states unreachable. Fall back to breadth-first reachability order
+        # instead of abandoning the whole check.
         try:
             ordered_states = self.state_machine.get_topological_order()
         except ValueError as e:
-            self.log.fail(f"[STATE] Cannot determine state order: {e}")
-            return False, []
+            self.log.debug(f"[STATE] No topological order ({e}); using reachability order instead")
+            ordered_states = self.state_machine.get_reachability_order()
 
-        initial_state = self.state_machine.state_history[0]
+        # Use the authoritative initial state, not state_history[0]: the history
+        # deque (maxlen=1000) evicts its left end after enough transitions.
+        initial_state = self.state_machine.initial_state.name
         self.log.debug(f"[STATE] Testing reachability for {len(ordered_states)} states")
 
         for state_name in ordered_states:
@@ -735,18 +806,21 @@ class StatefulFuzzer(BaseFuzzer):
                 for step_state in path[1:]:
                     step = self.state_machine.states[step_state]
 
-                    # Try to enter the state
-                    if step.has_setup():
-                        success = step.enter()
-                        if not success:
-                            if step_state == state_name:
-                                result.error = "setup callback returned False"
-                            else:
-                                result.error = f"failed at intermediate state {step_state}"
-                            break
-                    else:
-                        # No setup = just transition tracking
-                        step.entry_time = time.time()
+                    # Try to enter the state. Pass the state machine's context so
+                    # context-style setup callbacks (def cb(self, ctx: StateContext))
+                    # receive a real StateContext instead of None.
+                    #
+                    # enter() is called uniformly for setup and no-setup states:
+                    # it refreshes entry_time on every successful entry (so a
+                    # re-tested state never keeps a stale timestamp) and treats
+                    # only an explicit `False` from the setup callback as failure
+                    # (a callback returning None succeeded).
+                    if not step.enter(self.state_machine.context):
+                        if step_state == state_name:
+                            result.error = "setup callback returned False"
+                        else:
+                            result.error = f"failed at intermediate state {step_state}"
+                        break
 
                     # Update state machine's current state
                     self.state_machine.current_state = step

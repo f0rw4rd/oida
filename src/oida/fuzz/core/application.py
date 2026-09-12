@@ -77,12 +77,15 @@ class FuzzerApplication:
                 seed=getattr(args, "seed", None),
                 store_all_payloads=getattr(args, "store_all_payloads", False),
                 boofuzz_db=getattr(args, "boofuzz_db", False),
+                fuzz_db_keep_pass_cases=getattr(args, "fuzz_db_keep_pass_cases", 500),
                 distribution_total=getattr(args, "distribution_total", None),
                 distribution_id=getattr(args, "distribution_id", None),
                 enabled_requests=getattr(args, "enabled_requests", None),
                 disabled_requests=getattr(args, "disabled_requests", None),
                 index_start=getattr(args, "index_start", 1),  # Resume from this test case
                 index_end=getattr(args, "index_end", None),
+                max_depth=getattr(args, "max_depth", None),
+                only_depth=getattr(args, "only_depth", None),
                 monitor_config=getattr(args, "monitor_config", None),
                 monitor_logic=getattr(args, "monitor_logic", "and"),
                 reuse_target_connection=getattr(args, "reuse_connection", False),
@@ -120,6 +123,15 @@ class FuzzerApplication:
                 agent_monitor_token=getattr(args, "agent_token", None),
             )
 
+            # Depth controls must be >= 1 (depth 1 = single fields).
+            for name, val in (
+                ("--max-depth", config.max_depth),
+                ("--only-depth", config.only_depth),
+            ):
+                if val is not None and val < 1:
+                    _log.fail(f"{name} must be >= 1 (got {val})")
+                    return 2
+
             # Note: BaseFuzzer now handles TestCaseManager creation and callback registration
             # automatically when config.log_session is True
             fuzzer = self.fuzzer_factory(args.protocol, config)
@@ -154,7 +166,9 @@ class FuzzerApplication:
             db_path = f"{fuzzer.config.session_filename}.db"
             database = SQLAlchemyDatabase(db_path)
             database.init_schema()
-            manager = self.TestCaseManager(fuzzer, database, store_all_payloads=False)
+            manager = self.TestCaseManager(
+                fuzzer, database, store_all_payloads=False, read_only=True
+            )
             manager.list_test_cases()
 
         elif args.command == "detail":
@@ -162,7 +176,9 @@ class FuzzerApplication:
             db_path = f"{fuzzer.config.session_filename}.db"
             database = SQLAlchemyDatabase(db_path)
             database.init_schema()
-            manager = self.TestCaseManager(fuzzer, database, store_all_payloads=False)
+            manager = self.TestCaseManager(
+                fuzzer, database, store_all_payloads=False, read_only=True
+            )
             manager.get_test_case_details(args.case_id)
 
         elif args.command == "replay":
@@ -170,7 +186,9 @@ class FuzzerApplication:
             db_path = f"{fuzzer.config.session_filename}.db"
             database = SQLAlchemyDatabase(db_path)
             database.init_schema()
-            manager = self.TestCaseManager(fuzzer, database, store_all_payloads=False)
+            manager = self.TestCaseManager(
+                fuzzer, database, store_all_payloads=False, read_only=True
+            )
             check_response = getattr(args, "check_response", False)
             manager.replay_test_cases(args.range, args.detail, check_response)
 

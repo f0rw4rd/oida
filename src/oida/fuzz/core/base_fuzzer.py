@@ -150,9 +150,12 @@ class BaseFuzzer(ABC):
             f"FUZZ-{protocol}", config.target_ip, config.target_port, verbose=verbose
         )
 
-        # Configure random seed if provided
+        # Per-instance RNG. Seeding the process-global `random` module would be a
+        # global side effect: it makes runs non-reproducible as soon as any other
+        # code draws from `random`, and concurrent fuzzers would fight over the
+        # same stream. Route all fuzzer-owned draws through self.rng instead.
+        self.rng = random.Random(config.seed)
         if config.seed is not None:
-            random.seed(config.seed)
             set_mutation_seed(config.seed)
             self.log.debug(f"Set random seed to {config.seed}")
 
@@ -858,43 +861,35 @@ class BaseFuzzer(ABC):
             time.sleep(self.config.restart_timeout)
             self.log.display("Continuing fuzzing (connection will reconnect)")
 
-        if self.config.log_session:
-            # Note: We use our own lightweight logging through TestCaseManager.
-            # boofuzz's db is either in-memory (default) or on disk (--boofuzz-db flag)
-            session = Session(
-                target=Target(connection=self._create_socket(), monitors=[self.monitor]),
-                crash_threshold_request=self.config.crash_threshold,
-                restart_timeout=self.config.restart_timeout,
-                restart_callbacks=[restart_target],
-                web_port=web_port,
-                check_data_received_each_request=False,
-                receive_data_after_each_request=self.config.receive_data_after_each_request,
-                receive_data_after_fuzz=self.config.receive_data_after_fuzz,
-                fuzz_loggers=fuzz_loggers,
-                db_filename=db_filename,
-                index_start=self.config.index_start,
-                index_end=self.config.index_end,
-                sleep_time=self.config.sleep_time,
-                reuse_target_connection=self.config.reuse_target_connection,
-            )
-        else:
+        # Note: We use our own lightweight logging through TestCaseManager.
+        # boofuzz's db is either in-memory (default) or on disk (--boofuzz-db flag).
+        # The two branches previously built byte-for-byte identical Sessions and
+        # differed only by the warning, so build once and warn conditionally.
+        if not self.config.log_session:
             self.log.warning("Session logging is disabled!")
-            session = Session(
-                target=Target(connection=self._create_socket(), monitors=[self.monitor]),
-                crash_threshold_request=self.config.crash_threshold,
-                restart_timeout=self.config.restart_timeout,
-                restart_callbacks=[restart_target],
-                web_port=web_port,
-                check_data_received_each_request=False,
-                receive_data_after_each_request=self.config.receive_data_after_each_request,
-                receive_data_after_fuzz=self.config.receive_data_after_fuzz,
-                fuzz_loggers=fuzz_loggers,
-                db_filename=db_filename,
-                index_start=self.config.index_start,
-                index_end=self.config.index_end,
-                sleep_time=self.config.sleep_time,
-                reuse_target_connection=self.config.reuse_target_connection,
-            )
+        session = Session(
+            target=Target(connection=self._create_socket(), monitors=[self.monitor]),
+            crash_threshold_request=self.config.crash_threshold,
+            restart_timeout=self.config.restart_timeout,
+            restart_callbacks=[restart_target],
+            web_port=web_port,
+            check_data_received_each_request=False,
+            receive_data_after_each_request=self.config.receive_data_after_each_request,
+            receive_data_after_fuzz=self.config.receive_data_after_fuzz,
+            fuzz_loggers=fuzz_loggers,
+            db_filename=db_filename,
+            index_start=self.config.index_start,
+            index_end=self.config.index_end,
+            sleep_time=self.config.sleep_time,
+            reuse_target_connection=self.config.reuse_target_connection,
+            # Cap boofuzz's own results DB so a long campaign doesn't grow it without
+            # bound. 0 (boofuzz's default) keeps every passing case forever -- against
+            # a real protocol (opcua ~288k cases) that is a steady RAM leak. Failing
+            # cases are always retained regardless of this cap, and OIDA records full
+            # crash context to its own on-disk session DB, so a rolling window here is
+            # enough for the web UI.
+            fuzz_db_keep_only_n_pass_cases=self.config.fuzz_db_keep_pass_cases,
+        )
 
         # Apply filters to any new handlers created by Session
         root_logger = logging.getLogger()
@@ -1199,6 +1194,13 @@ class BaseFuzzer(ABC):
                 return monitor
         return monitors[0] if monitors else None
 
+    def _pre_fuzz_hook(self) -> None:
+        """Called after timeout calibration, immediately before the fuzz loop.
+
+        Base implementation is a no-op. Subclasses may override to build/touch
+        self.session here so its data socket picks up the calibrated timeouts.
+        """
+
     def _calibrate_timeouts(self, fuzz_log) -> None:
         """Measure latency via the monitor probe and set recv/monitor timeouts from it.
 
@@ -1293,7 +1295,19 @@ class BaseFuzzer(ABC):
             progress_thread = self._start_progress_monitor()
 
         try:
-            self.session.fuzz()
+            # Hook for subclasses to touch self.session AFTER calibration but
+            # before the fuzz loop, so the lazily-built data socket captures the
+            # calibrated recv_timeout (not the pre-calibration default).
+            self._pre_fuzz_hook()
+            only_d = getattr(self.config, "only_depth", None)
+            max_d = getattr(self.config, "max_depth", None)
+            if only_d is not None:
+                self._fuzz_only_depth(only_d)
+            elif max_d is not None:
+                # Public boofuzz cap: fuzz depths 1..N then stop.
+                self.session.fuzz(max_depth=max_d)
+            else:
+                self.session.fuzz()
         finally:
             # Stop progress monitor
             if progress_thread:
@@ -1331,6 +1345,36 @@ class BaseFuzzer(ABC):
                         "Check target is reachable and listening on the specified port"
                     )
 
+    def _fuzz_only_depth(self, depth: int) -> None:
+        """Fuzz ONLY combinatorial depth ``depth``, skipping all lower depths.
+
+        boofuzz's public ``fuzz()`` always walks depth 1, then 2, then 3, ... in
+        order, so reaching depth N normally means grinding through (and, on a
+        big ``index_start``, generating-then-discarding) the whole lower-depth
+        prefix — which scales ~O(depth1**2) and can cost minutes to hours for a
+        real protocol. Driving ``_generate_n_mutations(depth=N)`` directly yields
+        only depth-N cases, so the first packet goes out immediately with no seek.
+
+        This composes with the rest of the loop: distribution filtering wraps
+        ``_fuzz_current_case`` (downstream), and ``index_start`` / ``index_end``
+        are still honored by ``_main_fuzz_loop`` — reinterpreted as a position
+        *within* the chosen depth.
+        """
+        session = self.session
+        if not (hasattr(session, "_main_fuzz_loop") and hasattr(session, "_generate_n_mutations")):
+            raise RuntimeError(
+                "--only-depth needs a boofuzz build exposing _generate_n_mutations / "
+                "_main_fuzz_loop; upgrade boofuzz or drop the flag"
+            )
+
+        # Replicate fuzz()'s preconditions (total_mutant_index / total_num_mutations).
+        # A finite total exists only for depth 1 (num_mutations returns None above it).
+        session.total_mutant_index = 0
+        session.total_num_mutations = session.num_mutations(max_depth=1) if depth == 1 else None
+
+        self.log.display(f"Fuzzing only depth {depth} (skipping lower depths)")
+        session._main_fuzz_loop(session._generate_n_mutations(depth=depth, path=None))
+
     def _apply_distribution_filtering(self) -> None:
         """
         Apply modulo-based filtering for multi-machine distribution.
@@ -1340,8 +1384,8 @@ class BaseFuzzer(ABC):
         - Machine receives cases where (case_index % total) == (id - 1)
 
         Example:
-            Machine 2 of 3: Tests cases 2, 5, 8, 11, 14, ...
-            (case_index % 3 == 1)
+            Machine 2 of 3 (target_modulo = machine_id - 1 = 1), 1-based case
+            indices: tests cases 1, 4, 7, 10, 13, ... (case_index % 3 == 1).
         """
         total = self.config.distribution_total
         machine_id = self.config.distribution_id

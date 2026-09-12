@@ -33,11 +33,12 @@ def _parse_fuzz(*argv):
     return parser.parse_args(["fuzz", *argv])
 
 
-def _make_session_db(tmp_path, store_all=True):
+def _make_session_db(tmp_path, store_all=True, with_crash=True):
     """Create a real on-disk fuzz session DB with two test cases + one crash.
 
     Returns the session stem (path without the .db suffix), matching the
-    ``args.session`` convention used by handle_replay_command.
+    ``args.session`` convention used by handle_replay_command. Pass
+    ``with_crash=False`` for a session whose crashes table is empty.
     """
     from oida.utils.ics_logger import set_context
     from oida.fuzz.core.database.orm import (
@@ -78,15 +79,16 @@ def _make_session_db(tmp_path, store_all=True):
             monitor_status="fail",
         )
     )
-    db.store_crash(
-        CrashDTO(
-            test_case_id=2,
-            payload=b"\x00\x01\x02\x03",
-            crash_info="connection reset",
-            stack_trace="",
-            crash_hash="deadbeef",
+    if with_crash:
+        db.store_crash(
+            CrashDTO(
+                test_case_id=2,
+                payload=b"\x00\x01\x02\x03",
+                crash_info="connection reset",
+                stack_trace="",
+                crash_hash="deadbeef",
+            )
         )
-    )
     return session
 
 
@@ -402,9 +404,11 @@ class TestHandleReplayCommand:
         assert fuzz_cli.handle_replay_command(args) == 0
         out = capsys.readouterr().out
         assert "Total test cases:" in out
-        # One crash was stored -> the crashes section names the crashing case.
-        assert "Crashes found" in out
-        assert "modbus-write-regs" in out
+        # One crash was stored -> the stats view summarises the crash count and
+        # points at the dedicated `crashes` subcommand (which lists cases by
+        # signature). Per-case detail is asserted in TestHandleCrashesCommand.
+        assert "crash(es)" in out
+        assert "oida fuzz crashes" in out
 
     def test_replay_single_case_shows_result(self, tmp_path, capsys):
         session = _make_session_db(tmp_path)
@@ -442,6 +446,34 @@ class TestHandleReplayCommand:
         assert fuzz_cli.handle_replay_command(args) == 0
         out = capsys.readouterr().out
         assert "not found" in out.lower()
+
+
+class TestHandleCrashesCommand:
+    """The `crashes` subcommand lists stored crashes grouped by signature.
+
+    The per-crash detail that the replay stats view used to inline was moved
+    here; these tests keep that coverage (the crashing case is named, and the
+    crash count / unique-signature summary is shown).
+    """
+
+    def test_crashes_command_lists_case_by_signature(self, tmp_path, capsys):
+        session = _make_session_db(tmp_path)
+        args = _parse_fuzz("crashes", session)
+        args.session = session
+        assert fuzz_cli.handle_crashes_command(args) == 0
+        out = capsys.readouterr().out
+        assert "modbus-write-regs" in out
+        assert "1 crash(es)" in out
+        assert "unique signature" in out
+
+    def test_crashes_command_empty_session_reports_none(self, tmp_path, capsys):
+        # A session with no crashes table rows -> friendly "No crashes" message.
+        session = _make_session_db(tmp_path, with_crash=False)
+        args = _parse_fuzz("crashes", session)
+        args.session = session
+        assert fuzz_cli.handle_crashes_command(args) == 0
+        out = capsys.readouterr().out
+        assert "No crashes" in out
 
 
 # ---------------------------------------------------------------------------

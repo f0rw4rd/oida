@@ -85,7 +85,10 @@ BENCHMARKS = {
     # min_fuzzable lowered 350->240: the DNS flags are now one fuzzable 16-bit
     # Word per header instead of 8 byte-padded BitFields (which mis-rendered the
     # header). Fewer fields, but valid packets and broader flag-value coverage.
-    "mdns": (24, 24000, 240),
+    # Lowered again 240->230: the two duplicate wire-invalid Size prefixes per
+    # _create_dns_question/_create_dns_rr QNAME were removed so the rendered
+    # names parse in tshark; the remaining fields still mutate name content.
+    "mdns": (24, 24000, 230),
     "tftp": (16, 7000, 55),
     # P3 Simple
     "echo": (7, 500, 7),

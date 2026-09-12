@@ -646,11 +646,13 @@ _INTENTIONAL_MALFORMED_KEYWORDS = (
 # names lack an obvious keyword. Each entry verified by hand.
 _INTENTIONAL_MALFORMED: set = {
     "dns/DNS_No_Null_Term",  # deliberately omits the QNAME root label
-    "dns/DNS_EDNS0_OPTIONS",  # CVE-2020-8616 oversized-option overflow
     "dns/DNS_Pointer_Forward",  # NAME:WRECK forward compression pointer
     "dns/DNS_Pointer_Past_Packet",  # NAME:WRECK pointer beyond packet end
     "dhcp/DHCP_OPTION_CHAIN",  # option-chain parser overflow attack
     "dhcp/DHCP_Option_Refcount",  # CVE-2022-2928 option refcount overflow
+    "ethernetip/EIP_Get_Attribute_List_OOB",  # CVE-2022-43604 OpENer attr-count OOB read
+    "ethernetip/EIP_Set_Attribute_List_OOB",  # CVE-2022-43605 OpENer attr-count OOB write
+    "iec104/IEC104_APDU_Length_Lie",  # APDU length field deliberately lies about frame size
 }
 
 # Raw L3 protocols excluded from the all-requests validator. ipv4 and icmp

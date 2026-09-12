@@ -145,6 +145,7 @@ class TestCaseManager:
         fuzzer: BaseFuzzer,
         database: Optional[DatabaseInterface] = None,
         store_all_payloads: bool = False,
+        read_only: bool = False,
     ):
         """
         Initialize test case manager.
@@ -153,9 +154,12 @@ class TestCaseManager:
             fuzzer: Protocol fuzzer instance
             database: Optional database interface (defaults to SQLite)
             store_all_payloads: If True, store all payloads (old behavior)
+            read_only: If True, the manager never writes to the session DB
+                (inspection commands: list / detail / replay).
         """
         self.fuzzer = fuzzer
         self.store_all_payloads = store_all_payloads
+        self.read_only = read_only
         # Use fuzzer's ICSLogger for consistent formatted output
         self._log = fuzzer.log
 
@@ -183,6 +187,22 @@ class TestCaseManager:
         # crash/fail row and erase its crash-specific fields.
         self._persisted_ids: set[int] = set()
 
+        # Edge-trigger for full-context (with-payload) crash storage: we persist a
+        # CrashEvent + the buffered window's payloads once per crash *episode* (the
+        # first crash-flagged case), not on every subsequent flagged case, so a
+        # sustained outage doesn't create a CrashEvent per case. Reset on the next
+        # passing case (episode over). Enables `oida fuzz narrow` culprit-pinning.
+        self._crash_context_saved: bool = False
+
+        # Edge-trigger for the crash EVENT itself (counter + crash-row + context
+        # flush). A monitor reports a *state* (crashed=True) on every case while
+        # the target stays down, so without de-bouncing a single outage during a
+        # 250k-case run would report 250k crashes, write a crash row per case, and
+        # grow _persisted_ids unbounded. We treat only the FIRST flagged case of an
+        # episode as a distinct crash; subsequent flagged cases are folded into the
+        # same episode. Reset on the next passing case (episode over).
+        self._in_crash_episode: bool = False
+
         # Store session metadata for replay validation
         self._store_session_metadata()
 
@@ -192,7 +212,19 @@ class TestCaseManager:
         )
 
     def _store_session_metadata(self):
-        """Store session metadata for deterministic replay validation"""
+        """Store session metadata for deterministic replay validation.
+
+        Never OVERWRITES metadata already recorded for this session: the
+        protocol version (git hash), seed, config options and created_at
+        describe the run that produced the stored test cases. Re-writing them
+        from the current process -- which every inspection command
+        (list/detail/replay) used to do just by constructing a manager --
+        destroys exactly the provenance a CRC-mismatch report tells the user to
+        check. Only keys absent from the DB are filled in.
+        """
+        if self.read_only:
+            return
+
         try:
             import boofuzz
 
@@ -214,11 +246,15 @@ class TestCaseManager:
             "lightweight_mode": str(not self.store_all_payloads),
         }
 
-        for key, value in metadata.items():
-            self.database.store_metadata(key, value)
+        existing = self.database.get_all_metadata() or {}
+        new_items = {k: v for k, v in metadata.items() if k not in existing}
+        if new_items:
+            self.database.store_metadata_bulk(new_items)
 
+        effective = {**metadata, **existing}
         self._log.display(
-            f"Session metadata stored: {metadata['protocol_name']} v{metadata['protocol_version']}"
+            f"Session metadata stored: {effective['protocol_name']} "
+            f"v{effective['protocol_version']}"
         )
 
     def record_test_case(
@@ -252,6 +288,9 @@ class TestCaseManager:
             monitor_status: Monitor health check status
             crash_info: Crash information (if crashed)
         """
+        if self.read_only:
+            raise RuntimeError("TestCaseManager is read-only: refusing to record test cases")
+
         # Calculate CRC32 for validation
         crc32 = binascii.crc32(payload) & 0xFFFFFFFF
         timestamp = datetime.now().isoformat()
@@ -267,30 +306,51 @@ class TestCaseManager:
         # Always buffer in memory (fast, O(1) operation)
         self._buffer.add(test_id, name, payload, timestamp, crc32)
 
+        # A passing case ends any in-flight crash episode: re-arm context capture.
+        if result not in ("fail", "crash", "error"):
+            self._crash_context_saved = False
+            self._in_crash_episode = False
+
         # Periodic checkpoint: save progress every 2x monitor_check_interval
-        # This protects against unexpected termination (kill -9, power loss)
-        flush_interval = 2 * self.fuzzer.config.monitor_check_interval
+        # This protects against unexpected termination (kill -9, power loss).
+        # Guard the modulus: monitor_check_interval can be 0 (or negative) from the
+        # CLI, and `% 0` raises ZeroDivisionError -- which the callback's blanket
+        # except would silently downgrade to a log line, persisting ZERO cases for
+        # the whole run. A non-positive interval most naturally means "every case".
+        flush_interval = max(1, 2 * self.fuzzer.config.monitor_check_interval)
         if self._buffer.total_count % flush_interval == 0:
             self.save_session_progress()
 
-        # Only persist on crash/failure - flush entire buffer as crash context
+        # Only persist on crash/failure - flush entire buffer as crash context.
+        # De-bounce the crash EVENT: a monitor's crashed *state* is reported on
+        # every case while the target is down, so we act only on the episode EDGE
+        # (first flagged case). Subsequent flagged cases in the same episode are
+        # skipped -- no counter inflation, no per-case DB write storm, and
+        # _persisted_ids stops growing once the target stays down.
         if result in ["fail", "crash", "error"]:
-            self._flush_crash_context(
-                crash_id=test_id,
-                crash_info=crash_info,
-                result=result,
-                target_ip=target_ip,
-                target_port=target_port,
-                protocol=protocol,
-                duration_ms=duration_ms,
-                monitor_status=monitor_status,
-            )
-            self._crash_count += 1
-            self._log.debug(
-                f"Crash recorded: test_case={test_id}, protocol={protocol}, "
-                f"target={target_ip}:{target_port}, result={result}, "
-                f"context_size={self._buffer.buffer_size}"
-            )
+            if not self._in_crash_episode:
+                self._in_crash_episode = True
+                self._flush_crash_context(
+                    crash_id=test_id,
+                    crash_info=crash_info,
+                    result=result,
+                    target_ip=target_ip,
+                    target_port=target_port,
+                    protocol=protocol,
+                    duration_ms=duration_ms,
+                    monitor_status=monitor_status,
+                )
+                self._crash_count += 1
+                self._log.debug(
+                    f"Crash recorded: test_case={test_id}, protocol={protocol}, "
+                    f"target={target_ip}:{target_port}, result={result}, "
+                    f"context_size={self._buffer.buffer_size}"
+                )
+            else:
+                self._log.debug(
+                    f"Crash-state case {test_id} folded into active episode "
+                    f"(no new crash record; target still down)"
+                )
 
         # Legacy mode: store all payloads (if enabled)
         elif self.store_all_payloads:
@@ -349,10 +409,26 @@ class TestCaseManager:
 
         # Build DTO list once, then bulk-insert in a single transaction.
         # Was N per-row commits (= N fsyncs on rotating disks).
+        #
+        # During a crash *episode* the target stays flagged crashed, so every
+        # subsequent test case lands here while the rolling buffer slides by one.
+        # Re-upserting the whole overlapping window (~2 x monitor_check_interval
+        # rows) on every crash-flagged case turns an O(1) record into an
+        # O(buffer_size) DB write storm that also self-slows as the on-disk DB
+        # grows. Skip context rows already written by an earlier flush in this
+        # episode (tracked in _persisted_ids); only the not-yet-seen context rows
+        # plus the crash case itself are written, so each flush is ~O(new cases).
         crash_payload = None
         cases_to_store: list[TestCase] = []
         for tc_id, tc_name, tc_payload, tc_timestamp, tc_crc32 in buffer_contents:
             is_crash_case = tc_id == crash_id
+            if is_crash_case:
+                crash_payload = tc_payload
+            # The crash case is always (re)written so its result / crash fields
+            # are set even if it was previously persisted as 'pass'; already-
+            # persisted context rows are left as-is.
+            if not is_crash_case and tc_id in self._persisted_ids:
+                continue
             cases_to_store.append(
                 TestCase(
                     id=tc_id,
@@ -367,15 +443,15 @@ class TestCaseManager:
                     monitor_status=monitor_status if is_crash_case else None,
                 )
             )
-            if is_crash_case:
-                crash_payload = tc_payload
 
-        self.database.store_test_cases_bulk(cases_to_store)
+        if cases_to_store:
+            self.database.store_test_cases_bulk(cases_to_store)
 
-        # Remember which ids are now persisted so the final 'pass' flush in
-        # save_session_progress(final=True) does not re-insert (and downgrade)
-        # them. The buffer itself is left intact for ongoing crash context.
-        self._persisted_ids.update(tc.id for tc in cases_to_store)
+            # Remember which ids are now persisted so (a) later flushes in this
+            # episode don't re-insert them and (b) the final 'pass' flush in
+            # save_session_progress(final=True) does not re-insert (and downgrade)
+            # them. The buffer itself is left intact for ongoing crash context.
+            self._persisted_ids.update(tc.id for tc in cases_to_store)
 
         # Second pass: Store crash record (after test case exists)
         if crash_payload is not None:
@@ -387,8 +463,28 @@ class TestCaseManager:
             )
             self.database.store_crash(crash)
 
+        # Once per crash episode, persist the full buffered window WITH payloads as
+        # a CrashEvent so `oida fuzz narrow` can replay it and pin the real culprit
+        # (the monitor flags the crash at detection time, up to check_interval cases
+        # after the case that actually broke the target). Guarded: not every DB
+        # backend implements this, and it must fire only on the episode edge.
+        if not self._crash_context_saved and hasattr(self.database, "store_crash_context"):
+            try:
+                self.database.store_crash_context(
+                    detected_at_id=crash_id,
+                    crash_info=crash_info,
+                    target_ip=target_ip,
+                    target_port=target_port,
+                    protocol=protocol,
+                    buffer_contents=buffer_contents,
+                )
+                self._crash_context_saved = True
+            except Exception as e:
+                self._log.debug(f"Could not store crash context for {crash_id}: {e}")
+
         self._log.debug(
-            f"Flushed {len(buffer_contents)} test cases as crash context for crash {crash_id}"
+            f"Flushed {len(cases_to_store)} new test cases "
+            f"(of {len(buffer_contents)} buffered) as crash context for crash {crash_id}"
         )
 
     def get_progress(self) -> dict:
@@ -417,6 +513,10 @@ class TestCaseManager:
         Args:
             final: If True, print summary to stdout (for Ctrl+C / end of session)
         """
+        if self.read_only:
+            self._log.debug("Read-only manager: skipping session progress save")
+            return
+
         try:
             progress = self.get_progress()
 
@@ -853,11 +953,15 @@ class TestCaseManager:
                         self._log.display("\nRegenerated Payload:")
                         self._log.display(self._format_data(payload, "hexdump"))
 
-            # Create and open socket connection
+            # Create and open the socket connection. open() belongs INSIDE the
+            # try/finally: when replaying against a target that is down (the common
+            # case for a crash replay) it raises, and the socket object was then
+            # never closed -- leaking an fd per case across a replayed range.
             socket = self.fuzzer._create_socket()
-            socket.open()
 
             try:
+                socket.open()
+
                 # Send payload
                 if show_detail:
                     self._log.display("\nSending payload...")

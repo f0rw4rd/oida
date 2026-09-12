@@ -109,7 +109,7 @@ class TransitionRule:
         if self.condition is None:
             return True
         try:
-            return _call_with_optional_context(self.condition, context)
+            return bool(_call_with_optional_context(self.condition, context))
         except Exception as e:
             _log.fail(f"Transition condition check failed: {e}")
             return False
@@ -151,6 +151,19 @@ class ProtocolState:
     its ancestors' on_enter/on_exit, and there is no least-common-ancestor
     handling. Setting ``parent=`` today only builds the tree for introspection;
     do not rely on superstate behavior being inherited until that is wired up.
+
+    Note on ``requires``: it lists ALTERNATIVE valid predecessor states (OR, not
+    AND). ``requires=["SYN_SENT", "SYN_RECEIVED"]`` means "this state may be
+    entered from SYN_SENT *or* from SYN_RECEIVED" — see the TCP and HTTP fuzzer
+    state machines. AND semantics would be unsatisfiable: a machine occupies
+    exactly one state at a time, so a multi-entry ``requires`` read as a
+    conjunction would make the state permanently unreachable.
+    StateMachine.can_transition() / get_path_to_state() / get_reachability_order()
+    all implement the OR reading.
+
+    Note on ``setup``: the callback signals failure ONLY by returning an explicit
+    ``False``. Returning ``None`` — the normal Python convention for "did the
+    work, nothing to report" — is success.
 
     Note on timeouts: ``timeout``/``timeout_callback`` are evaluated lazily —
     is_timed_out() is only checked at the start of the next transition_to().
@@ -202,6 +215,11 @@ class ProtocolState:
     def enter(self, context: Optional["StateContext"] = None) -> bool:
         """Enter this state by running the setup callback.
 
+        A setup callback signals failure ONLY by returning an explicit ``False``.
+        Returning ``None`` -- the normal Python convention for "did the work,
+        nothing to report" -- counts as success, as does any other value
+        (including falsy ones such as ``0`` or ``""``).
+
         Args:
             context: Optional StateContext for data propagation
 
@@ -219,14 +237,18 @@ class ProtocolState:
         if self.setup:
             _log.debug(f"Entering state: {self.name}")
             try:
-                success = _call_with_optional_context(self.setup, context)
-                if not success:
+                result = _call_with_optional_context(self.setup, context)
+                # Only an explicit False means "setup failed"; a callback that
+                # returns None (or 0, or "") did its job and reported nothing.
+                if result is False:
                     _log.fail(f"Failed to enter state: {self.name}")
-                else:
-                    _log.debug(f"Successfully entered state: {self.name}")
-                    # Record entry time for timeout tracking
-                    self.entry_time = time.time()
-                return success
+                    return False
+                _log.debug(f"Successfully entered state: {self.name}")
+                # (Re-)record entry time for timeout tracking. This must happen
+                # on every successful entry, including re-entry of the state we
+                # are already in, or is_timed_out() keeps using a stale stamp.
+                self.entry_time = time.time()
+                return True
             except Exception as e:
                 _log.fail(f"Exception while entering state {self.name}: {e}")
                 raise
@@ -378,6 +400,16 @@ class StateMachine:
             _log.debug("StateContext attached")
 
     @property
+    def initial_state(self) -> "ProtocolState":
+        """The authoritative initial state.
+
+        Prefer this over ``state_history[0]``: state_history is a bounded deque
+        whose left end is evicted after enough transitions, so history[0] is not
+        reliably the initial state.
+        """
+        return self._initial_state
+
+    @property
     def context(self) -> Optional["StateContext"]:
         """Get the attached StateContext."""
         return self._context
@@ -394,7 +426,15 @@ class StateMachine:
 
         Resolution order:
         1. Explicit TransitionRule for this from->to pair — use its condition
-        2. Target state ``requires`` field — check from_state membership
+        2. Target state ``requires`` field — check from_state membership.
+           ``requires`` lists ALTERNATIVE predecessors (OR, never AND): the
+           transition is legal when from_state is ANY one of them. AND would be
+           unsatisfiable, since the machine only ever occupies one state at a
+           time — a multi-entry ``requires`` read as a conjunction would make
+           the target permanently unreachable. Real machines depend on the OR
+           reading (TCP: ESTABLISHED requires ["SYN_SENT", "SYN_RECEIVED"]).
+           ``get_path_to_state()`` / ``get_reachability_order()`` use this same
+           predicate, so guard and traversal cannot disagree.
         3. If any TransitionRules are defined (rules-based machine), deny
            unmatched pairs to prevent silent fall-through
         4. If no rules exist at all (requires-only machine), allow for
@@ -555,33 +595,66 @@ class StateMachine:
             target_state: Name of the target state to reach
 
         Returns:
-            True if target state was reached
+            True ONLY if the machine actually ended up in ``target_state``.
+            False if a transition step reported failure, or if the computed path
+            leaves nothing to walk (e.g. the target sits *behind* the current
+            state on the initial-state path) -- previously such cases returned
+            True while the machine had not moved at all.
 
         Raises:
-            StateTransitionError: If no path exists or a transition fails
+            StateTransitionError: If no path exists or a transition raises
         """
-        if self.current_state.name == target_state:
-            if not self.validate_current_state():
-                _log.warning(f"State validation failed for {target_state}, re-entering...")
-                if not self.current_state.enter(self._context):
-                    raise StateTransitionError(f"Failed to re-enter: {target_state}")
-            return True
+        # Hold the lock across the whole multi-hop walk: this is a
+        # check-then-act sequence, and a concurrent transition would otherwise
+        # move the machine out from under us mid-path. The lock is re-entrant,
+        # so the nested transition_to() calls are fine.
+        with self._lock:
+            if self.current_state.name == target_state:
+                if not self.validate_current_state():
+                    _log.warning(f"State validation failed for {target_state}, re-entering...")
+                    if not self.current_state.enter(self._context):
+                        raise StateTransitionError(f"Failed to re-enter: {target_state}")
+                return True
 
-        path = self.get_path_to_state(target_state)
-        if not path:
-            raise StateTransitionError(f"No path from {self.current_state.name} to {target_state}")
+            path = self.get_path_to_state(target_state)
+            if not path:
+                raise StateTransitionError(
+                    f"No path from {self.current_state.name} to {target_state}"
+                )
 
-        # Find where we are in the path
-        try:
-            current_idx = path.index(self.current_state.name)
-        except ValueError:
-            current_idx = 0
+            # get_path_to_state() returns a path rooted at the INITIAL state, so
+            # the current state is not necessarily on it. When it is, resume from
+            # there; when it is not, walk the whole path (index -1) rather than
+            # skipping its first hop.
+            try:
+                current_idx = path.index(self.current_state.name)
+            except ValueError:
+                current_idx = -1
 
-        # Traverse remaining path
-        for state_name in path[current_idx + 1 :]:
-            self.transition_to(state_name)
+            remaining = path[current_idx + 1 :]
+            if not remaining:
+                # Nothing left to walk, yet we are not in the target (the
+                # equality check above already returned). Never claim success.
+                _log.fail(
+                    f"No traversable steps from {self.current_state.name} to "
+                    f"{target_state} (path={path})"
+                )
+                return False
 
-        return True
+            for state_name in remaining:
+                if not self.transition_to(state_name):
+                    _log.fail(
+                        f"Transition to {state_name} failed while traversing to {target_state}"
+                    )
+                    return False
+
+            # Only report success if the machine really ended in the target.
+            reached = self.current_state.name == target_state
+            if not reached:
+                _log.fail(
+                    f"Traversal to {target_state} ended in {self.current_state.name} (path={path})"
+                )
+            return reached
 
     def get_current_state_name(self) -> str:
         """Get the name of the current state"""
@@ -597,6 +670,10 @@ class StateMachine:
             initial_state = self._initial_state
             initial_state_name = initial_state.name
             self.current_state = initial_state
+            # Re-entering the initial state restarts its timeout window; leaving
+            # a stale entry_time would make is_timed_out() fire immediately on
+            # the first transition after a reset.
+            initial_state.entry_time = time.time()
             self.state_history = deque([initial_state_name], maxlen=1000)
 
         _log.debug(f"Resetting state machine to initial state: {initial_state_name}")
@@ -639,6 +716,8 @@ class StateMachine:
             initial_state = self._initial_state
             initial_state_name = initial_state.name
             self.current_state = initial_state
+            # See reset_to_initial(): restart the initial state's timeout window.
+            initial_state.entry_time = time.time()
             self.state_history = deque([initial_state_name], maxlen=1000)
             self.transition_log = deque(maxlen=1000)
 
@@ -648,8 +727,15 @@ class StateMachine:
         """Return states sorted by dependency order (Kahn's algorithm).
 
         States are ordered so that dependencies (from 'requires' field)
-        come before states that depend on them. This ensures we can
-        traverse states in a valid order for reachability testing.
+        come before states that depend on them.
+
+        NOTE on semantics: this treats EVERY ``requires`` entry as an edge, i.e.
+        it answers "is the requires-graph acyclic, and what is a total order over
+        it?". That is deliberately stricter than the OR reading ``requires`` has
+        for *transition legality* (see :meth:`can_transition`) — a machine with
+        legitimate loops (HTTP request/response) is acyclic under neither and
+        raises here by design. Callers that want a traversal order which
+        tolerates loops should fall back to :meth:`get_reachability_order`.
 
         Returns:
             List of state names in topological order
@@ -689,6 +775,44 @@ class StateMachine:
             raise ValueError(f"Circular dependency detected involving: {remaining}")
 
         return result
+
+    def get_reachability_order(self) -> List[str]:
+        """Return states in breadth-first reachability order from the initial state.
+
+        This is the OR-semantics counterpart to :meth:`get_topological_order`.
+
+        ``get_topological_order()`` treats every ``requires`` entry as a
+        dependency edge and raises on cycles — useful for cycle *detection*,
+        but unusable for machines with legitimate request/response loops (HTTP)
+        where ``requires`` lists alternative predecessors. This method walks the
+        graph with the same legality check transitions use
+        (:meth:`can_transition`), so it never raises and always yields an order
+        in which each state is preceded by at least one legal predecessor.
+
+        Unreachable states are appended (sorted) at the end so callers still see
+        every state.
+
+        Returns:
+            List of state names, initial state first
+        """
+        start = self._initial_state.name
+        order = [start]
+        seen = {start}
+        queue: deque[str] = deque([start])
+
+        while queue:
+            current = queue.popleft()
+            for next_state in sorted(self.states):
+                if next_state in seen:
+                    continue
+                if self.can_transition(current, next_state):
+                    seen.add(next_state)
+                    order.append(next_state)
+                    queue.append(next_state)
+
+        # Unreachable leftovers still belong in the listing.
+        order.extend(sorted(name for name in self.states if name not in seen))
+        return order
 
     def get_path_to_state(self, target_state: str) -> List[str]:
         """Find the path from initial state to target state.

@@ -76,6 +76,17 @@ class ResilientTCPConnection(TCPSocketConnection):
         self._reconnect_count = 0
         self._total_bytes_sent = 0
         self._total_bytes_recv = 0
+        # Bug 4: in resilient mode a peer RST during recv is turned into a
+        # reconnect + empty read, which boofuzz cannot tell apart from a normal
+        # silent response -- so the RST (often the STRONGEST crash indicator)
+        # is lost. We keep the non-disruptive reconnect (re-raising would abort
+        # the reuse-connection run that resilient mode exists to sustain) but
+        # surface the reset via a counter + last-recv flag the session can read,
+        # and log it at warning level.
+        # TODO(fuzz-session): consume reset_count/last_recv_was_reset in the
+        #   session loop to attribute a failure to the case that caused the RST.
+        self.reset_count = 0
+        self.last_recv_was_reset = False
 
     def _errno_name(self, err_no):
         """Get human-readable name for errno value."""
@@ -340,7 +351,14 @@ class ResilientTCPConnection(TCPSocketConnection):
         """
         if not self.resilient:
             raise  # noqa: PLE0704
-        self._log.debug(f"{description} during recv")
+        # Bug 4: record the reset so an empty read caused by a RST is
+        # distinguishable from a clean silent response.
+        self.reset_count += 1
+        self.last_recv_was_reset = True
+        self._log.warning(
+            f"{description} during recv (RST #{self.reset_count}) -- reconnecting; "
+            "reset surfaced via reset_count/last_recv_was_reset"
+        )
         if self._reconnect(trigger_errno=trigger_errno, operation="recv"):
             self._log.debug("Recv returning empty after reconnect")
             return b""
@@ -348,16 +366,63 @@ class ResilientTCPConnection(TCPSocketConnection):
         raise  # noqa: PLE0704
 
     def send(self, data):
-        """Send data with EAGAIN handling and optional reconnection on reset.
+        """Send ALL of ``data`` (sendall semantics) with resilient handling.
 
-        EAGAIN handling is ALWAYS active (safe retry with 0.1s delay).
-        Reconnection on connection reset only happens when resilient=True.
+        boofuzz's underlying ``TCPSocketConnection.send`` performs a single
+        ``socket.send`` and returns the (possibly short) byte count. On a
+        stalled reader (with SO_SNDTIMEO set) that short write silently
+        truncates the payload -- catastrophic for the long String mutations
+        (up to ~1 MB) that matter most, and it desyncs the stream under
+        connection reuse. This wrapper loops over the unsent remainder until
+        every byte is delivered.
+
+        EAGAIN handling and (in resilient mode) reconnect-on-reset are applied
+        per chunk by :meth:`_send_chunk`.
 
         Args:
             data: Data to send
 
         Returns:
-            int: Number of bytes sent
+            int: Total number of bytes sent (== len(data) on success)
+
+        Raises:
+            BoofuzzTargetConnectionReset: If send fails after reconnection
+                attempts, or if the socket makes no forward progress.
+        """
+        data_len = len(data) if data else 0
+        if data_len == 0:
+            return 0
+
+        total_sent = 0
+        # Guard against an infinite loop if super().send() keeps returning 0
+        # (no forward progress). A healthy socket eventually reports > 0 or
+        # raises; a persistently-zero return means the peer is wedged, so we
+        # surface it as a connection reset rather than spinning forever.
+        max_zero_progress = 16
+        zero_progress = 0
+
+        while total_sent < data_len:
+            chunk = data[total_sent:]
+            num_sent = self._send_chunk(chunk)
+            if num_sent <= 0:
+                zero_progress += 1
+                if zero_progress >= max_zero_progress:
+                    self._log.fail(
+                        f"Send made no progress after {max_zero_progress} attempts "
+                        f"({total_sent}/{data_len}B sent)"
+                    )
+                    raise boofuzz_exception.BoofuzzTargetConnectionReset()
+                continue
+            zero_progress = 0
+            total_sent += num_sent
+
+        return total_sent
+
+    def _send_chunk(self, data):
+        """Send a single chunk via boofuzz, applying EAGAIN/reset handling.
+
+        Returns the number of bytes accepted by one underlying send call
+        (may be a short write); the caller loops on the remainder.
 
         Raises:
             BoofuzzTargetConnectionReset: If send fails after reconnection attempts
@@ -448,6 +513,9 @@ class ResilientTCPConnection(TCPSocketConnection):
         Returns:
             bytes: Received data
         """
+        # Clear the per-recv reset flag; it is re-set only if this recv hits a
+        # peer RST that resilient mode swallows into an empty read (Bug 4).
+        self.last_recv_was_reset = False
         try:
             data = super().recv(max_bytes)
             if data:
@@ -477,6 +545,13 @@ class ResilientTCPConnection(TCPSocketConnection):
                     raise boofuzz_exception.BoofuzzTargetConnectionReset().with_traceback(
                         sys.exc_info()[2]
                     )
+                # Bug 4: surface the reset before swallowing it into b"".
+                self.reset_count += 1
+                self.last_recv_was_reset = True
+                self._log.warning(
+                    f"Connection reset during recv (RST #{self.reset_count}) -- reconnecting; "
+                    "reset surfaced via reset_count/last_recv_was_reset"
+                )
                 if self._reconnect(trigger_errno=err_no, operation="recv"):
                     self._log.debug("Recv returning empty after reconnect")
                     return b""
@@ -541,6 +616,11 @@ class RealConnectionFactory(ConnectionFactory):
         if getattr(config, "recv_timeout", None) is not None:
             sock_kw["recv_timeout"] = config.recv_timeout
         resilient_kw = dict(sock_kw)
+        # Timeout for raw/ICMP/IGMP sockets: reuse the data-socket recv timeout
+        # if configured, else a sane 2.0s default (matches RawSocketConnection).
+        raw_recv_timeout = (
+            config.recv_timeout if getattr(config, "recv_timeout", None) is not None else 2.0
+        )
         if getattr(config, "reconnect_delay", None) is not None:
             resilient_kw["reconnect_delay"] = config.reconnect_delay
         if getattr(config, "max_reconnect_attempts", None) is not None:
@@ -571,11 +651,15 @@ class RealConnectionFactory(ConnectionFactory):
                 )
             elif config.protocol_type == ProtocolType.RAW:
                 # RAW sockets require special handling
-                # Create a wrapper that mimics boofuzz connection interface
+                # Create a wrapper that mimics boofuzz connection interface.
+                # Pass the recv timeout so recv() cannot block forever: an
+                # IPPROTO_RAW socket is send-only, so boofuzz's post-send recv
+                # never returns data and must time out instead.
                 return RawSocketConnection(
                     config.target_ip,
                     config.target_port if config.target_port else 0,
                     protocol="raw",
+                    timeout=raw_recv_timeout,
                 )
             elif config.protocol_type == ProtocolType.ICMP:
                 # ICMP sockets - kernel handles IP header and checksum
@@ -583,6 +667,7 @@ class RealConnectionFactory(ConnectionFactory):
                     config.target_ip,
                     0,  # ICMP doesn't use ports
                     protocol="icmp",
+                    timeout=raw_recv_timeout,
                 )
             elif config.protocol_type == ProtocolType.IGMP:
                 # IGMP sockets - kernel builds the IP header; app supplies IGMP
@@ -590,6 +675,7 @@ class RealConnectionFactory(ConnectionFactory):
                     config.target_ip,
                     0,  # IGMP doesn't use ports
                     protocol="igmp",
+                    timeout=raw_recv_timeout,
                 )
             elif config.protocol_type == ProtocolType.ICMPV6:
                 # ICMPv6 sockets - kernel handles IPv6 header and checksum
@@ -597,6 +683,7 @@ class RealConnectionFactory(ConnectionFactory):
                     config.target_ip,
                     0,  # ICMPv6 doesn't use ports
                     protocol="icmpv6",
+                    timeout=raw_recv_timeout,
                 )
             elif config.protocol_type == ProtocolType.SERIAL:
                 # Parse serial target: /dev/ttyUSB0:9600:8n1
@@ -756,11 +843,45 @@ class IEC104SocketConnection(ResilientTCPConnection):
         # All retries exhausted
         raise last_error
 
+    # Maximum APCI frames to read while waiting for STARTDT_CON before giving
+    # up -- lets us skip a few TESTFR/ASDU frames without looping forever on a
+    # chatty peer.
+    MAX_HANDSHAKE_FRAMES = 16
+
+    def _recv_exact(self, n: int) -> bytes:
+        """Read exactly ``n`` bytes, accumulating across TCP segments.
+
+        Fails only on timeout (socket.timeout propagates) or a closed
+        connection (empty recv). This is what makes the handshake robust to
+        segmentation of the 6-byte STARTDT_CON.
+        """
+        buf = bytearray()
+        while len(buf) < n:
+            chunk = self._sock.recv(n - len(buf))
+            if not chunk:
+                raise Exception(
+                    f"Connection closed during STARTDT handshake ({len(buf)}/{n} bytes)"
+                )
+            buf += chunk
+        return bytes(buf)
+
+    def _read_apci_frame(self) -> bytes:
+        """Read one full IEC-104 APCI frame (start byte + length + body)."""
+        header = self._recv_exact(2)
+        if header[0] != 0x68:
+            raise Exception(f"Invalid start byte: 0x{header[0]:02x}")
+        length = header[1]
+        body = self._recv_exact(length) if length else b""
+        return header + body
+
     def _perform_startdt_handshake(self):
         """
         Perform IEC 104 STARTDT handshake.
 
-        Sends STARTDT_ACT and waits for STARTDT_CON response.
+        Sends STARTDT_ACT and waits for STARTDT_CON. Frame reads accumulate
+        across TCP segments (so a split 6-byte CON is fine), and any non-CON
+        frame the server emits first (e.g. a TESTFR U-frame or a spontaneous
+        ASDU) is consumed and skipped rather than rejected.
 
         Raises:
             Exception: If handshake fails or times out
@@ -772,32 +893,26 @@ class IEC104SocketConnection(ResilientTCPConnection):
             # Set handshake timeout
             self._sock.settimeout(self.handshake_timeout)
 
-            # Send STARTDT_ACT
-            self._sock.send(self.STARTDT_ACT)
+            # Send STARTDT_ACT (full send -- 6 bytes, but never a short write)
+            self._sock.sendall(self.STARTDT_ACT)
             self._log.debug("Sent STARTDT_ACT")
 
-            # Receive STARTDT_CON
-            response = self._sock.recv(6)
+            for _ in range(self.MAX_HANDSHAKE_FRAMES):
+                frame = self._read_apci_frame()
+                length = frame[1]
+                ctrl1 = frame[2]
 
-            if len(response) < 6:
-                raise Exception(f"Incomplete STARTDT response: {len(response)} bytes")
+                # STARTDT_CON is a 4-byte U-frame with ctrl1 == 0x0B.
+                if length == 0x04 and ctrl1 == self.STARTDT_CON_BYTE:
+                    self._handshake_complete = True
+                    self._log.debug(f"Received STARTDT_CON: {frame.hex()}")
+                    return
 
-            # Verify response format
-            start_byte = response[0]
-            length = response[1]
-            ctrl1 = response[2]
+                # Anything else (TESTFR, STOPDT, spontaneous ASDU, ...) is
+                # consumed and skipped while we wait for the confirmation.
+                self._log.debug(f"Skipping non-STARTDT_CON frame while awaiting CON: {frame.hex()}")
 
-            if start_byte != 0x68:
-                raise Exception(f"Invalid start byte: 0x{start_byte:02x}")
-
-            if length != 0x04:
-                raise Exception(f"Invalid length byte: 0x{length:02x}")
-
-            if ctrl1 != self.STARTDT_CON_BYTE:
-                raise Exception(f"Expected STARTDT_CON (0x0B), got 0x{ctrl1:02x}")
-
-            self._handshake_complete = True
-            self._log.debug(f"Received STARTDT_CON: {response.hex()}")
+            raise Exception(f"No STARTDT_CON after {self.MAX_HANDSHAKE_FRAMES} frames")
 
         finally:
             # Restore original timeout

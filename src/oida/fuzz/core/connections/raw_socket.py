@@ -25,7 +25,12 @@ class RawSocketConnection:
     """
 
     def __init__(
-        self, host: str, port: int = 0, interface: Optional[str] = None, protocol: str = "raw"
+        self,
+        host: str,
+        port: int = 0,
+        interface: Optional[str] = None,
+        protocol: str = "raw",
+        timeout: float = 2.0,
     ):
         """
         Initialize raw socket connection
@@ -35,11 +40,18 @@ class RawSocketConnection:
             port: Target port (optional, used for higher-level protocols)
             interface: Network interface to bind to (e.g., 'eth0')
             protocol: Socket protocol type ('raw', 'icmp', 'icmpv6')
+            timeout: Socket recv/send timeout in seconds. Required so that
+                recv() can actually time out instead of blocking forever --
+                for protocol="raw" (IPPROTO_RAW) the socket is send-only and
+                the kernel never delivers inbound packets, so boofuzz's
+                default receive-after-send would otherwise hang the first
+                test case indefinitely.
         """
         self.host = host
         self.port = port
         self.interface = interface
         self.protocol = protocol.lower()
+        self.timeout = timeout
         self._sock = None
         self._sock_type = None
         self.max_raw_size = 65535
@@ -72,6 +84,11 @@ class RawSocketConnection:
                 self._sock = socket.socket(socket.AF_INET, socket.SOCK_RAW, socket.IPPROTO_RAW)
                 self._sock.setsockopt(socket.IPPROTO_IP, socket.IP_HDRINCL, 1)
                 self._sock_type = "raw"  # We provide IP+TCP headers
+
+            # Apply the recv/send timeout to every socket variant so that
+            # recv() -> recvfrom() can raise socket.timeout (handled below)
+            # instead of blocking forever on send-only IPPROTO_RAW sockets.
+            self._sock.settimeout(self.timeout)
 
         except PermissionError:
             raise Exception("Raw sockets require root/administrator privileges")

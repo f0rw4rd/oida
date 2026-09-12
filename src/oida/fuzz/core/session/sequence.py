@@ -4,8 +4,9 @@ Provides SequenceManager for tracking protocol sequence numbers with
 wrap-around, direction-aware incrementing, and fuzzing support.
 """
 
+from collections import deque
 from dataclasses import dataclass
-from typing import Dict, List, Tuple
+from typing import Deque, Dict, Tuple
 from enum import Enum, auto
 
 
@@ -66,7 +67,10 @@ class SequenceManager:
         self.name = name
         self._sequences: Dict[str, SequenceConfig] = {}
         self._current_values: Dict[str, int] = {}
-        self._history: List[Tuple[str, str, int, int]] = []
+        # Diagnostic-only trail of sequence changes. Bounded: stateful protocols
+        # (iec104/mms) increment a sequence per request, and nothing resets this
+        # per connection, so an unbounded list would leak across a long campaign.
+        self._history: Deque[Tuple[str, str, int, int]] = deque(maxlen=1000)
 
     def add_sequence(self, config: SequenceConfig) -> None:
         """Add a sequence configuration.
