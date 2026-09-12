@@ -47,7 +47,6 @@ def proto_args(parser, parents):
         help="Enable active probing (ARP, DCP, SSDP, DNS-SD, ICS protocols)",
     )
     discovery_parser.add_argument(
-        "-P",
         "--no-passive",
         action="store_true",
         default=False,

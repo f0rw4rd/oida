@@ -2,7 +2,6 @@
 Core types and utilities for discovery module.
 
 Contains:
-- ResponseDeduplicator: Prevent duplicate device processing
 - DiscoveredDevice: Unified device representation
 - Helper functions: MAC vendor lookup, network utilities
 - Constants: mDNS service types, SSDP/WSD device types
@@ -11,10 +10,9 @@ Contains:
 import ipaddress
 import re
 import socket
-import threading
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 from ...utils import iface_info as _iface_info
 from ...utils.ics_logger import get_module_logger
@@ -24,15 +22,12 @@ class _IfaceInfoAdapter:
     """Adapter exposing the psutil-based iface_info module through the same
     surface the discovery code uses for the old lazy netifaces module:
 
-    - ``_netifaces.is_available`` -> always True (psutil is a hard dependency)
-    - ``_netifaces()``           -> the iface_info module (attrs resolved at
-      call time so test patches on iface_info take effect)
+    - ``_netifaces()`` -> the iface_info module (attrs resolved at call time so
+      test patches on iface_info take effect)
 
     This keeps core.py consistent with scanner.py / mdns.py, which already
     bind ``from ...utils import iface_info as _netifaces``.
     """
-
-    is_available = True
 
     def __call__(self):
         return _iface_info
@@ -217,12 +212,23 @@ def normalize_mac(mac: str) -> str:
     - Cisco format: 0011.2233.4455
 
     Args:
-        mac: MAC address in any common format
+        mac: MAC address in any common format. Scapy hands back raw ``bytes``
+            for link-layer fields whose declared length is not 6 (a hostile or
+            broken ARP frame can set ``hwlen`` to anything), so bytes are
+            accepted defensively.
 
     Returns:
         Normalized MAC (lowercase, colon-separated) or empty string if invalid
     """
     if not mac:
+        return ""
+
+    if isinstance(mac, (bytes, bytearray)):
+        # Only a genuine 6-octet address is a MAC; anything else is junk from a
+        # malformed frame and must be rejected rather than reinterpreted.
+        return ":".join(f"{b:02x}" for b in mac) if len(mac) == 6 else ""
+
+    if not isinstance(mac, str):
         return ""
 
     # Remove whitespace
@@ -271,7 +277,7 @@ def is_valid_mac(mac: str) -> bool:
                 return False
             int(part, 16)
     except ValueError as e:
-        logger.debug(f"for part in parts:: {e}")
+        logger.debug(f"Invalid hex component in MAC '{mac}': {e}")
         return False
 
     # Broadcast address
@@ -303,13 +309,9 @@ def get_interface_ips(interface: str) -> List[str]:
         List of IPv4 addresses
 
     Raises:
-        ImportError: If netifaces module is not available
         ValueError: If interface not found or has no IPv4 addresses
         RuntimeError: If unable to query interface
     """
-    if not _netifaces.is_available:
-        raise ImportError("netifaces module required for interface IP detection")
-
     ips = []
     try:
         addrs = _netifaces().ifaddresses(interface)
@@ -339,9 +341,7 @@ def is_interface_up(interface: str) -> bool:
         if state is not None:
             return state == "up"
         # Final fallback: check if interface exists in netifaces
-        if _netifaces.is_available:
-            return interface in _netifaces().interfaces()
-        return False
+        return interface in _netifaces().interfaces()
     except Exception as e:
         logger.debug(f"Could not check interface state for {interface}: {e}")
         return False
@@ -357,12 +357,9 @@ def get_interface_ip(interface: str) -> str:
         IPv4 address string
 
     Raises:
-        ImportError: If netifaces module is not available
         ValueError: If interface not found or has no IPv4 address
         RuntimeError: If unable to query interface
     """
-    if not _netifaces.is_available:
-        raise ImportError("netifaces module required for interface IP detection")
     try:
         addrs = _netifaces().ifaddresses(interface)
         if _netifaces().AF_INET in addrs:
@@ -471,7 +468,7 @@ def compute_network_cidr(ip: str, netmask: str) -> Optional[str]:
     try:
         return str(ipaddress.IPv4Network(f"{ip}/{netmask}", strict=False))
     except (ValueError, TypeError) as e:
-        logger.debug(f"Return value computation failed: {e}")
+        logger.debug(f"Invalid IP/netmask {ip}/{netmask}: {e}")
         return None
 
 
@@ -494,12 +491,9 @@ def get_interface_networks(interface: str) -> list:
         List of (ip_address, network_cidr) tuples
 
     Raises:
-        ImportError: If netifaces module is not available
         ValueError: If interface not found or has no networks
         RuntimeError: If unable to query interface
     """
-    if not _netifaces.is_available:
-        raise ImportError("netifaces module required for interface network detection")
     networks = []
     try:
         addrs = _netifaces().ifaddresses(interface)
@@ -583,8 +577,6 @@ def eui64_to_mac(ipv6_address: str) -> Optional[str]:
         return None
 
     try:
-        import ipaddress
-
         addr = ipaddress.ip_address(ipv6_address.split("%")[0])  # Remove %interface
 
         if not isinstance(addr, ipaddress.IPv6Address):
@@ -614,7 +606,7 @@ def eui64_to_mac(ipv6_address: str) -> Optional[str]:
 
         return "{:02x}:{:02x}:{:02x}:{:02x}:{:02x}:{:02x}".format(*mac_bytes)
     except (ValueError, IndexError) as e:
-        logger.debug(f"Operation failed: {e}")
+        logger.debug(f"EUI-64 to MAC conversion failed for '{ipv6_address}': {e}")
         return None
 
 
@@ -628,12 +620,9 @@ def get_interface_ipv6(interface: str) -> List[str]:
         List of IPv6 address strings
 
     Raises:
-        ImportError: If netifaces module is not available
         ValueError: If interface not found or has no IPv6 addresses
         RuntimeError: If unable to query interface
     """
-    if not _netifaces.is_available:
-        raise ImportError("netifaces module required for interface IPv6 detection")
     try:
         addrs = _netifaces().ifaddresses(interface)
         ipv6_addrs = []
@@ -680,7 +669,6 @@ def check_interface_capabilities(interface: str) -> InterfaceCapabilities:
         InterfaceCapabilities with address info and scanner compatibility
 
     Raises:
-        ImportError: If netifaces module is not available
         ValueError: If interface not found
         RuntimeError: If unable to query interface
 
@@ -690,9 +678,6 @@ def check_interface_capabilities(interface: str) -> InterfaceCapabilities:
         ...     # Can run IPv4-based scans
         ...     pass
     """
-    if not _netifaces.is_available:
-        raise ImportError("netifaces module required for interface capability checks")
-
     if interface not in _netifaces().interfaces():
         raise ValueError(f"Interface '{interface}' not found")
 
@@ -742,17 +727,12 @@ def check_interface_capabilities(interface: str) -> InterfaceCapabilities:
 
 # SSDP constants
 SSDP_MULTICAST_ADDR = "239.255.255.250"
-SSDP_MULTICAST_ADDR_V6 = "ff02::c"  # SSDP IPv6 multicast
 SSDP_PORT = 1900
 SSDP_MX = 3
 
 # IPv6 discovery constants (from blog: IPv6 - The Forgotten OT Attack Surface)
 IPV6_ALL_NODES = "ff02::1"  # All nodes on link
 IPV6_ALL_ROUTERS = "ff02::2"  # All routers on link
-IPV6_MDNS_MULTICAST = "ff02::fb"  # mDNS IPv6
-IPV6_SSDP_MULTICAST = "ff02::c"  # SSDP IPv6
-IPV6_LLMNR_MULTICAST = "ff02::1:3"  # LLMNR IPv6
-IPV6_DHCPV6_ALL_AGENTS = "ff02::1:2"  # DHCPv6 agents
 
 
 # mDNS service types - comprehensive list from multiple sources
@@ -962,24 +942,6 @@ def classify_device_type(types_list: List[str], protocol: str) -> tuple:
     return ("Unknown", "Unclassified Device")
 
 
-def get_broadcast_address(subnet: Optional[str]) -> str:
-    """Get broadcast address for a subnet, defaulting to global broadcast.
-
-    Args:
-        subnet: CIDR notation subnet (e.g., "192.168.1.0/24")
-
-    Returns:
-        Broadcast address string (e.g., "192.168.1.255" or "255.255.255.255")
-    """
-    if subnet:
-        try:
-            network = ipaddress.IPv4Network(subnet, strict=False)
-            return str(network.broadcast_address)
-        except (ValueError, TypeError) as e:
-            logger.debug(f"Invalid subnet '{subnet}': {e}")
-    return "255.255.255.255"
-
-
 def get_all_broadcast_addresses(interface: str, subnet: Optional[str] = None) -> List[str]:
     """Get all broadcast addresses for discovery on an interface.
 
@@ -1104,96 +1066,6 @@ class OutOfScopeWarning:
     def __post_init__(self):
         if not self.timestamp:
             self.timestamp = datetime.now().isoformat()
-
-    def format_warning(self) -> str:
-        """Format warning for display."""
-        parts = [f"Unreachable IP detected: {self.ip}"]
-        if self.device_name:
-            parts.append(f"({self.device_name})")
-        if self.device_mac:
-            parts.append(f"[MAC: {self.device_mac}]")
-        parts.append(f"- interface network: {self.expected_network}")
-        if self.discovered_by:
-            parts.append(f"(via {self.discovered_by})")
-        return " ".join(parts)
-
-
-class ResponseDeduplicator:
-    """Prevent processing duplicate discovery responses across all protocols."""
-
-    def __init__(self):
-        self._lock = threading.Lock()
-
-        # Generic identifiers
-        self.seen_macs: Set[str] = set()  # MAC addresses (ARP, LLDP, DCP, CDP)
-        self.seen_ips: Set[str] = set()  # IP addresses (fallback)
-
-        # Protocol-specific identifiers
-        self.seen_locations: Set[str] = set()  # SSDP LOCATION URLs
-        self.seen_usns: Set[str] = set()  # SSDP USN headers
-        self.seen_uuids: Set[str] = set()  # WSD EndpointReference UUIDs
-        self.seen_names: Set[str] = set()  # mDNS/NetBIOS names
-
-    def is_duplicate(
-        self,
-        mac: str = None,
-        ip: str = None,
-        location: str = None,
-        usn: str = None,
-        uuid: str = None,
-        name: str = None,
-    ) -> bool:
-        """Check if response is duplicate using any available identifier."""
-        with self._lock:
-            if mac and mac.lower() in self.seen_macs:
-                return True
-            if location and location in self.seen_locations:
-                return True
-            if usn and usn in self.seen_usns:
-                return True
-            if uuid and uuid in self.seen_uuids:
-                return True
-            if name and name.lower() in self.seen_names:
-                return True
-            # IP is weakest identifier - only use if nothing else matched
-            if ip and ip in self.seen_ips and not any([mac, location, usn, uuid, name]):
-                return True
-            return False
-
-    def mark_seen(
-        self,
-        mac: str = None,
-        ip: str = None,
-        location: str = None,
-        usn: str = None,
-        uuid: str = None,
-        name: str = None,
-    ):
-        """Mark identifiers as seen."""
-        with self._lock:
-            if mac:
-                self.seen_macs.add(mac.lower())
-            if ip:
-                self.seen_ips.add(ip)
-            if location:
-                self.seen_locations.add(location)
-            if usn:
-                self.seen_usns.add(usn)
-            if uuid:
-                self.seen_uuids.add(uuid)
-            if name:
-                self.seen_names.add(name.lower())
-
-    def stats(self) -> Dict[str, int]:
-        """Return deduplication statistics."""
-        return {
-            "macs": len(self.seen_macs),
-            "ips": len(self.seen_ips),
-            "locations": len(self.seen_locations),
-            "usns": len(self.seen_usns),
-            "uuids": len(self.seen_uuids),
-            "names": len(self.seen_names),
-        }
 
 
 @dataclass
@@ -1401,7 +1273,11 @@ class DiscoveredDevice:
             if self.mdns_services is None:
                 self.mdns_services = []
                 updated.append("mdns_services")
-            self.mdns_services.extend(other.mdns_services)
+            # Dedup on merge: in continuous-capture mode the same device is
+            # merged repeatedly, so a bare extend() grows this list without bound.
+            for svc in other.mdns_services:
+                if svc not in self.mdns_services:
+                    self.mdns_services.append(svc)
         if other.mdns_data and not self.mdns_data:
             self.mdns_data = other.mdns_data
             updated.append("mdns_data")
@@ -1413,7 +1289,11 @@ class DiscoveredDevice:
                 self.dnssd_data = {"services": []}
                 updated.append("dnssd_data")
             if "services" in other.dnssd_data:
-                self.dnssd_data["services"].extend(other.dnssd_data["services"])
+                # Dedup on merge (unbounded duplicate growth in continuous mode).
+                existing = self.dnssd_data.setdefault("services", [])
+                for svc in other.dnssd_data["services"]:
+                    if svc not in existing:
+                        existing.append(svc)
         if other.wsdiscovery_data and not self.wsdiscovery_data:
             self.wsdiscovery_data = other.wsdiscovery_data
             updated.append("wsdiscovery_data")
@@ -1598,6 +1478,42 @@ class DiscoveredDevice:
         if other.pap_passive_data and not self.pap_passive_data:
             self.pap_passive_data = other.pap_passive_data
             updated.append("pap_passive_data")
+
+        # Active discovery vendor payloads (camera/energy/AV/BMC/vendor scanners).
+        # These were set by live scanners but never merged; when the ARP/mDNS
+        # device won the as_completed race and became `self`, the payload-carrying
+        # device merged in as `other` silently lost its distinguishing data
+        # (model/serial/firmware).
+        if other.sadp_data and not self.sadp_data:
+            self.sadp_data = other.sadp_data
+            updated.append("sadp_data")
+        if other.dahua_data and not self.dahua_data:
+            self.dahua_data = other.dahua_data
+            updated.append("dahua_data")
+        if other.sma_data and not self.sma_data:
+            self.sma_data = other.sma_data
+            updated.append("sma_data")
+        if other.crestron_data and not self.crestron_data:
+            self.crestron_data = other.crestron_data
+            updated.append("crestron_data")
+        if other.artnet_data and not self.artnet_data:
+            self.artnet_data = other.artnet_data
+            updated.append("artnet_data")
+        if other.ipmi_data and not self.ipmi_data:
+            self.ipmi_data = other.ipmi_data
+            updated.append("ipmi_data")
+        if other.slp_data and not self.slp_data:
+            self.slp_data = other.slp_data
+            updated.append("slp_data")
+        if other.ubiquiti_data and not self.ubiquiti_data:
+            self.ubiquiti_data = other.ubiquiti_data
+            updated.append("ubiquiti_data")
+        if other.mndp_data and not self.mndp_data:
+            self.mndp_data = other.mndp_data
+            updated.append("mndp_data")
+        if other.addp_data and not self.addp_data:
+            self.addp_data = other.addp_data
+            updated.append("addp_data")
         # Update tracking - extend updated_fields but preserve is_new
         # (device stays "new" for the entire scan session)
         if updated:

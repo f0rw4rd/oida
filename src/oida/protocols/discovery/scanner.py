@@ -183,7 +183,7 @@ _SCANNER_CONFIGS = {
     # Additional active scanners
     "lldp": (
         LLDPScanner,
-        lambda s: {"interface": s.interface, "timeout": s.timeout},
+        lambda s: ({"interface": s.interface, "timeout": s.timeout},),
         10,
         "broadcast",
     ),

@@ -112,7 +112,6 @@ _LAZY_IMPORTS = {
 from .core import (
     DiscoveredDevice,
     InterfaceCapabilities,
-    ResponseDeduplicator,
     check_interface_capabilities,
     classify_device_type,
     compute_network_cidr,
@@ -160,7 +159,6 @@ __all__ = [
     # Core
     "DiscoveredDevice",
     "InterfaceCapabilities",
-    "ResponseDeduplicator",
     "check_interface_capabilities",
     "compute_network_cidr",
     "lookup_mac_vendor",

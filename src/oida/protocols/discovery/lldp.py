@@ -1146,14 +1146,17 @@ class LLDPPassiveListener:
         try:
             import socket as _socket
 
-            if hasattr(tlv, "management_address"):
+            if hasattr(tlv, "management_address_subtype"):
                 addr = tlv.management_address
-                if isinstance(addr, bytes):
-                    if len(addr) == 4:  # IPv4
-                        return _socket.inet_ntoa(addr)
-                    elif len(addr) == 16:  # IPv6
-                        return _socket.inet_ntop(_socket.AF_INET6, addr)
-                return str(addr)
+                if tlv.management_address_subtype == 1:  # IPv4
+                    if isinstance(addr, str) and len(addr) == 8:
+                        # Hex string like 'c0a800d7' - convert to bytes first
+                        addr = bytes.fromhex(addr)
+                    if isinstance(addr, bytes) and len(addr) >= 4:
+                        return _socket.inet_ntoa(addr[:4])
+                elif tlv.management_address_subtype == 2:  # IPv6
+                    if isinstance(addr, bytes) and len(addr) >= 16:
+                        return _socket.inet_ntop(_socket.AF_INET6, addr[:16])
         except Exception as e:
             logger.debug(f"_socket address formatting failed: {e}")
         return None
