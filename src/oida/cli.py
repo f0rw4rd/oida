@@ -268,22 +268,22 @@ def _export_tables(
     output_dir: str,
     formats: List[str],
     nxc_logger=None,
-) -> None:
+) -> List[str]:
     """Write each harvest table to *output_dir*, one file per requested format.
 
     Only the formats the user selected (via ``--format``) are written, so
     ``--format json`` produces ``<table>.json`` and no ``.csv`` sibling, and
-    vice versa.
+    vice versa. Returns the basenames of all files written.
     """
     _log = nxc_logger or get_logger("EXPORT", "", 0)
     want_csv = "csv" in formats
     want_json = "json" in formats
     want_xml = "xml" in formats
     if not (want_csv or want_json or want_xml):
-        return
+        return []
     os.makedirs(output_dir, exist_ok=True)
     seen: Dict[str, int] = {}
-    exported = 0
+    written_files: List[str] = []
     for table in tables:
         rows = table.get("rows")
         headers = table.get("headers")
@@ -306,6 +306,7 @@ def _export_tables(
                 writer.writerow(headers)
                 writer.writerows(rows)
             written.append("csv")
+            written_files.append(f"{stem}.csv")
 
         if want_json:
             # JSON (list of dicts) — use structured json_rows when available
@@ -314,6 +315,7 @@ def _export_tables(
             with open(json_path, "w", encoding="utf-8") as f:
                 json.dump(json_data, f, indent=2, default=str)
             written.append("json")
+            written_files.append(f"{stem}.json")
 
         if want_xml:
             # Previously missing: `--format xml` hit the early return above and
@@ -321,14 +323,11 @@ def _export_tables(
             xml_path = Path(output_dir) / f"{stem}.xml"
             if _write_xml(xml_path, headers, rows, stem):
                 written.append("xml")
+                written_files.append(f"{stem}.xml")
 
         _log.debug("Table exported: %s (%s)", stem, "/".join(written))
-        exported += 1
 
-    if exported:
-        # Redundant with the caller's "results written to <dir>" line; keep at
-        # debug so the console isn't told the same directory twice.
-        _log.debug("%d tables exported to %s", exported, output_dir)
+    return written_files
 
 
 def _flatten_results_for_export(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
@@ -385,7 +384,7 @@ def export_results(
     _log = nxc_logger or get_logger("EXPORT", "", 0)
     if not results:
         _log.warning("No results to export")
-        return
+        return []
 
     # Determine formats to export
     formats = []
@@ -410,6 +409,7 @@ def export_results(
             if tables:
                 all_tables.extend(tables)
 
+    written: List[str] = []
     for fmt in formats:
         if fmt == "json":
             json_path = os.path.join(output_dir, f"{protocol_name}.json")
@@ -424,6 +424,7 @@ def export_results(
             ]
             with open(json_path, "w") as f:
                 json.dump(export_results_json, f, indent=2, default=str)
+            written.append(f"{protocol_name}.json")
             _log.debug("Results exported to %s", json_path)
 
         elif fmt == "csv":
@@ -440,6 +441,7 @@ def export_results(
                     writer = csv.DictWriter(f, fieldnames=fieldnames)
                     writer.writeheader()
                     writer.writerows(flat_results)
+                written.append(f"{protocol_name}.csv")
                 _log.debug("Results exported to %s", csv_path)
 
         elif fmt == "xml":
@@ -449,11 +451,13 @@ def export_results(
                 headers = sorted({k for r in flat_results for k in r})
                 rows = [[r.get(h, "") for h in headers] for r in flat_results]
                 if _write_xml(xml_path, headers, rows, protocol_name):
+                    written.append(f"{protocol_name}.xml")
                     _log.debug("Results exported to %s", xml_path)
 
     # Write each harvest table as dedicated file(s), honouring --format
     if all_tables:
-        _export_tables(all_tables, output_dir, formats, nxc_logger=nxc_logger)
+        written.extend(_export_tables(all_tables, output_dir, formats, nxc_logger=nxc_logger))
+    return written
 
 
 def _select_parser_mode(argv, known_names):
@@ -608,7 +612,14 @@ def gen_cli_args(argv=None):
     output_group = parser.add_argument_group("Output Options")
 
     output_group.add_argument(
-        "-o", "--output", type=str, help="Output file path (without extension)"
+        "-o",
+        "--output",
+        type=str,
+        metavar="DIR",
+        help=(
+            "Output directory for exported results (<protocol>.json/csv/xml, "
+            "plus per-table CSVs where available; default format: all)"
+        ),
     )
 
     output_group.add_argument(
@@ -683,7 +694,14 @@ def gen_cli_args(argv=None):
         "--quiet", action="store_true", default=argparse.SUPPRESS, help="Suppress console output"
     )
     post_cmd.add_argument(
-        "--output", type=str, default=argparse.SUPPRESS, help="Output file path (without extension)"
+        "--output",
+        type=str,
+        default=argparse.SUPPRESS,
+        metavar="DIR",
+        help=(
+            "Output directory for exported results (<protocol>.json/csv/xml, "
+            "plus per-table CSVs where available; default format: all)"
+        ),
     )
     post_cmd.add_argument(
         "--format",
@@ -1545,14 +1563,20 @@ def main(argv: Optional[List[str]] = None):
         # with the raw target (the pcap file path), leaking into the prefix.
         export_logger = ICSLogger(protocol_name.upper(), "", default_port)
         try:
-            export_results(results, output_path, fmt, protocol_name, nxc_logger=export_logger)
+            written_files = export_results(
+                results, output_path, fmt, protocol_name, nxc_logger=export_logger
+            )
         except Exception as e:
             logger.error(f"Failed to export results: {e}")
             return 1
-        if not args.quiet:
+        if written_files and not args.quiet:
             # Per-file writes inside export_results are debug-level, so say
-            # where the output landed at info level or users can't find it.
-            export_logger.display(f"results written to {output_path}")
+            # what landed where at info level or users can't find it.
+            n_result_files = sum(1 for f in written_files if f.startswith(f"{protocol_name}."))
+            n_table_files = len(written_files) - n_result_files
+            summary = f"results written to {output_path} ({n_result_files} result file(s)"
+            summary += f", {n_table_files} table file(s)" if n_table_files else ""
+            export_logger.display(summary + ")")
 
     return 0 if failed == 0 else 1
 
