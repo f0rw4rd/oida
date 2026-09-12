@@ -63,6 +63,22 @@ AUTH_SASL = 10
 # PostgreSQL default ports (used as fallback when frontend field is absent)
 PGSQL_PORTS = {5432, 5433}
 
+
+def _normalize_md5_salt(salt: Any) -> str:
+    """Return the MD5 salt as bare lowercase hex, or "" if it is not a salt.
+
+    tshark renders the 4-byte AuthenticationMD5Password salt as hex, sometimes
+    with ':' or ',' separators.  Anything that is not hex after separator
+    stripping (missing field, the literal "?" placeholder, garbage) is not a
+    salt and must not be reported or exported.
+    """
+    if not salt:
+        return ""
+    s = str(salt).replace(":", "").replace(",", "").lower()
+    if not s or any(c not in "0123456789abcdef" for c in s):
+        return ""
+    return s
+
 # Transaction status byte values from ReadyForQuery
 TRANSACTION_STATUS = {
     "73": "idle",  # 'I' = idle (not in a transaction)
@@ -120,12 +136,8 @@ class PostgreSQLCredential:
             digest = self.password_or_hash
             if digest.startswith("md5"):
                 digest = digest[3:]
-            salt = self.salt.replace(":", "").replace(",", "").lower()
-            # A truthiness check on self.salt is not enough: when pgsql.salt is
-            # absent the handler stores the placeholder "?", which is truthy and
-            # produced a plausible-looking but uncrackable line such as
-            # "$postgres$oida*?*dede...".  Only emit a line for a real hex salt.
-            if not salt or any(c not in "0123456789abcdef" for c in salt):
+            salt = _normalize_md5_salt(self.salt)
+            if not salt:
                 return ""
             return f"$postgres${self.username}*{salt}*{digest}"
         return ""
@@ -774,17 +786,19 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
         elif auth_type_int == AUTH_MD5:
             session.auth_type = "md5"
             salt = self.get_field(pgsql_layer, "salt", None)
-            if salt:
-                session.salt = str(salt)
-            else:
+            if not salt:
                 # Check fields dict for salt variations
                 for key, value in fields.items():
                     if "salt" in key.lower():
-                        session.salt = str(value)
+                        salt = value
                         break
-                if not session.salt:
-                    session.salt = "?"
-                    self.logger.debug(f"Missing salt in MD5 auth request from {server_ip}")
+            # tshark renders the 4-byte MD5 salt as hex, sometimes separated by
+            # ':' or ','.  Anything else -- including the placeholder that used
+            # to be stored here -- is not a salt; report nothing rather than a
+            # bogus value an operator could mistake for a real server salt.
+            session.salt = _normalize_md5_salt(salt)
+            if not session.salt:
+                self.logger.debug(f"Missing/invalid salt in MD5 auth request from {server_ip}")
             details["salt"] = session.salt
             details["result"] = "requesting MD5 password"
 
