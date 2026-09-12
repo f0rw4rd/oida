@@ -6,10 +6,41 @@ for optional dependencies (tshark, pyshark), and common assertion
 helpers used across per-protocol test files.
 """
 
+import asyncio
 import json
 from pathlib import Path
 
 import pytest
+
+
+# ---------------------------------------------------------------------------
+# Event-loop isolation (autouse)
+# ---------------------------------------------------------------------------
+
+
+@pytest.fixture(autouse=True)
+def _ensure_current_event_loop():
+    """Guarantee every pcap test starts with a usable current event loop.
+
+    pyshark's FileCapture calls asyncio.get_event_loop() internally. On
+    Python 3.10+ that raises RuntimeError when the thread has no current
+    loop -- which is exactly the state asyncio.run() leaves behind (its
+    finally block calls set_event_loop(None)). Under `pytest -n auto`, a
+    bacnet/coap/knx test that used asyncio.run() can run in the same worker
+    process just before a pyshark test, so the pyshark test would flake with
+    "There is no current event loop" depending purely on scheduling.
+
+    Installing a fresh loop at the start of each pcap test restores the
+    invariant regardless of what ran before, so tests that build FileCapture
+    directly no longer need their own inline guard.
+    """
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    try:
+        yield
+    finally:
+        loop.close()
+        asyncio.set_event_loop(None)
 
 
 # ---------------------------------------------------------------------------
