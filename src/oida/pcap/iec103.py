@@ -112,12 +112,12 @@ _FUNC_TYPE_RANGES = [
 COT_MON = {
     1: "Spontaneous",
     2: "Cyclic",
-    3: "Reset frame count bit",
-    4: "Reset communication link",
-    5: "Start/restart",
+    3: "Reset frame count bit (FCB)",
+    4: "Reset communication unit (CU)",
+    5: "Start / restart",
     6: "Power on",
     7: "Test mode",
-    8: "Time synchronized",
+    8: "Time synchronization",
     9: "General interrogation",
     10: "Termination of general interrogation",
     11: "Local operation",
@@ -127,7 +127,9 @@ COT_MON = {
     31: "Transmission of disturbance data",
     40: "Positive acknowledgement of generic write command",
     41: "Negative acknowledgement of generic write command",
-    44: "Valid data response",
+    42: "Valid data response to generic read command",
+    43: "Invalid data response to generic read command",
+    44: "Generic write confirmation",
 }
 
 # IEC 103 Cause of Transmission -- Control Direction
