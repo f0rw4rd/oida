@@ -5,7 +5,6 @@
 from typing import Dict, Any
 
 from ...connection import NetworkConnection
-from ...utils.common_types import Category
 from .scanner import DNP3Scanner, _yadnp3
 
 
@@ -108,7 +107,6 @@ class dnp3(NetworkConnection):
         if not getattr(self.args, "tls", False):
             self.logger.security_finding(
                 "No encryption",
-                category=Category.ENCRYPTION,
                 detail="DNP3 has no transport encryption - wrap in TLS (IEC 62351); "
                 "DNP3-SA is deprecated and authentication-only, not a substitute",
             )
@@ -118,7 +116,10 @@ class dnp3(NetworkConnection):
         self.results["data"]["device_info"] = {
             "connected": True,
             "master_address": getattr(self.args, "master_addr", 1),
-            "outstation_address": getattr(self.args, "outstation_addr", 1024),
+            # --outstation-addr defaults to None; proto_flow substitutes 1024 for
+            # the scan, so the getattr default never applies -- use `or 1024` to
+            # record the address actually scanned (matches print_host_info()).
+            "outstation_address": getattr(self.args, "outstation_addr", 1024) or 1024,
             "transport": transport.upper(),
         }
 

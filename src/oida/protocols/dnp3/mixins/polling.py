@@ -583,7 +583,12 @@ class PollingMixin(_ScannerBase):
                 failed.append({"group": grp, "error": str(e)})
                 self.logger.debug(f"Group {grp}: exception {e}")
 
-            if consecutive_failures >= max_consecutive_failures and not supported:
+            if consecutive_failures >= max_consecutive_failures:
+                # Gate the abort on the failure streak alone. Previously this
+                # also required `not supported`, so an outstation that answered
+                # a single group and then went silent disabled the escape hatch
+                # and held the scan for the full 123-group sweep, each group
+                # costing a complete _sync_scan timeout.
                 self.logger.warning(
                     f"Outstation not responding ({consecutive_failures} consecutive failures), aborting probe"
                 )

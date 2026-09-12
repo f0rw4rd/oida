@@ -208,7 +208,6 @@ Examples:
         help="Enumerate all data point ranges from device attributes",
     )
     poll_group.add_argument(
-        "-P",
         "--probe-objects",
         action="store_true",
         help="Probe all DNP3 groups 0-122 to discover supported objects (read-only)",

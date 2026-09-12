@@ -596,8 +596,13 @@ class TestAssignClass:
         _arm_task(scanner, success=True)
         results = {"operations": {}}
         scanner._assign_class(results)
-        # Class 7 invalid -> entry skipped -> no operations performed.
-        assert results["operations"]["assign_class"]["operations"] == []
+        # Class 7 invalid -> no PerformFunction call, but the rejection is
+        # recorded (not silently dropped, which would make the overall
+        # all([]) success check vacuously True).
+        ops = results["operations"]["assign_class"]["operations"]
+        assert len(ops) == 1
+        assert ops[0]["success"] is False
+        assert ops[0]["entry"] == "1:0-9:7"
 
     def test_malformed_entry_recorded(self):
         scanner = _make_scanner(**{"assign-class": ["1:abc:1"]})
@@ -608,12 +613,17 @@ class TestAssignClass:
         assert ops and ops[0]["success"] is False
 
     def test_wrong_number_of_parts_skipped(self):
-        # Only two colon-parts -> not the GROUP:RANGE:CLASS shape -> skipped.
+        # Only two colon-parts -> not the GROUP:RANGE:CLASS shape -> no
+        # PerformFunction call, but the rejection is recorded so the overall
+        # success check isn't vacuously True over an empty operations list.
         scanner = _make_scanner(**{"assign-class": ["1:0-9"]})
         _arm_task(scanner, success=True)
         results = {"operations": {}}
         scanner._assign_class(results)
-        assert results["operations"]["assign_class"]["operations"] == []
+        ops = results["operations"]["assign_class"]["operations"]
+        assert len(ops) == 1
+        assert ops[0]["success"] is False
+        assert ops[0]["entry"] == "1:0-9"
 
     def test_empty_assign_class_is_noop(self):
         scanner = _make_scanner()

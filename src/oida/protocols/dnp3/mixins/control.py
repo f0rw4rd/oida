@@ -685,6 +685,11 @@ class ControlMixin(_ScannerBase):
                 parts = entry.split(":")
                 if len(parts) != 3:
                     self.logger.warning(f"Invalid assign-class format: {entry}")
+                    # Record the rejection: skipping silently would make
+                    # operations_performed empty, and all([]) is vacuously True.
+                    operations_performed.append(
+                        {"entry": entry, "success": False, "error": "invalid format"}
+                    )
                     continue
 
                 group = int(parts[0])
@@ -695,6 +700,13 @@ class ControlMixin(_ScannerBase):
 
                 if target_class not in [0, 1, 2, 3]:
                     self.logger.warning(f"Invalid class number: {target_class} (must be 0-3)")
+                    operations_performed.append(
+                        {
+                            "entry": entry,
+                            "success": False,
+                            "error": f"invalid class {target_class} (must be 0-3)",
+                        }
+                    )
                     continue
 
                 # Map target class to Group 60 variation
@@ -746,7 +758,10 @@ class ControlMixin(_ScannerBase):
                 )
 
         results["operations"]["assign_class"] = {
-            "success": all(op.get("success", False) for op in operations_performed),
+            # bool(...) guards against the vacuous all([]) == True when every
+            # entry was rejected before anything was sent to the outstation.
+            "success": bool(operations_performed)
+            and all(op.get("success", False) for op in operations_performed),
             "operations": operations_performed,
         }
 
@@ -834,12 +849,33 @@ class ControlMixin(_ScannerBase):
 
     @staticmethod
     def _command_success(result) -> bool:
-        """Check if an ICommandTaskResult indicates success."""
+        """Check if an ICommandTaskResult indicates success.
+
+        A SUCCESS summary only means the master completed the exchange; the
+        outstation can still reject the command at the point level
+        (CommandStatus NOT_SUPPORTED / FORMAT_ERROR / NOT_AUTHORIZED, or a
+        non-SUCCESS CommandPointState). Require every commanded point to be
+        accepted so control ops don't report success for a rejected command.
+        """
         if result is None:
             return False
-        summary = getattr(result, "summary", None)
-        if summary is not None:
-            import opendnp3
+        import opendnp3
 
-            return summary == opendnp3.TaskCompletion.SUCCESS
-        return False
+        summary = getattr(result, "summary", None)
+        if summary != opendnp3.TaskCompletion.SUCCESS:
+            return False
+
+        try:
+            points = result.to_list()
+        except Exception:
+            points = None
+        # No per-point detail available -> fall back to the summary result.
+        if not points:
+            return True
+        for point in points:
+            if getattr(point, "status", None) != opendnp3.CommandStatus.SUCCESS:
+                return False
+            state = getattr(point, "state", None)
+            if state is not None and state != opendnp3.CommandPointState.SUCCESS:
+                return False
+        return True

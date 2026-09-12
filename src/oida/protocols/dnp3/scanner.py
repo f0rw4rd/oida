@@ -868,6 +868,17 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
 
             stack_config = self._build_master_stack_config()
 
+            # DNP3 Secure Authentication over TLS needs both a cert and key.
+            # The CLI validate_args() refuses --tls without them, but a library
+            # caller of DNP3Scanner could set tls=True alone and would otherwise
+            # silently get a cleartext session -- warn loudly on that fallback.
+            if self.use_tls and not (self.tls_cert and self.tls_key):
+                self.logger.warning(
+                    "tls=True but tls_cert/tls_key are not both set -- DNP3 has no "
+                    "anonymous TLS, falling back to PLAINTEXT TCP. Provide tls_cert "
+                    "and tls_key for an encrypted channel."
+                )
+
             # Create channel based on transport
             if self.use_tls and self.tls_cert and self.tls_key:
                 self._channel = self._connect_tls(levels, retry, host, port)
