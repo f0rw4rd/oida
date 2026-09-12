@@ -375,18 +375,17 @@ class DICOMFuzzer(BaseFuzzer):
                     + head
                     + elem_hdr,
                 ),
+                # Windows-style and deeper traversal variants are added as extra
+                # mutation candidates on this SAME field (not a sibling block) so
+                # each one reaches the wire as a clean, standalone UID value
+                # instead of being concatenated after the default unix payload.
                 SmartString(
                     "affected_sop_instance_uid",
                     traversal,
                     max_len=4096,
                     context=StringContext.PATH,
                     fuzzable=True,
-                ),
-                # Windows-style and deeper traversal variants for the same element.
-                Group(
-                    "traversal_variants",
-                    values=[
-                        b"",
+                    fuzz_values=[
                         b"..\\..\\..\\..\\windows\\win.ini",
                         b"../../../../../../etc/shadow",
                         b"....//....//etc/passwd",
