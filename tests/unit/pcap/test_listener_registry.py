@@ -304,3 +304,38 @@ class TestCreateListeners:
         listeners = create_listeners({"dns"})
         if "dns" in listeners:
             assert listeners["dns"].PROTOCOL_NAME == "dns"
+
+    def test_import_failure_is_surfaced_as_warning_not_silent(self, monkeypatch):
+        """G6 review regression: a listener that fails to instantiate (e.g. a
+        broken module path / missing dependency / bad class name) must not be
+        silently dropped with only a debug-level log line -- that makes a
+        partially-loaded listener set look like full, successful coverage to
+        an operator who isn't running with debug verbosity. It must surface
+        via logger.warning().
+        """
+        import copy
+
+        from oida.protocols.pcap import listener_registry as reg_mod
+
+        broken_registry = copy.deepcopy(reg_mod.LISTENER_REGISTRY)
+        broken_registry["dns"] = {
+            "module": "oida.pcap.listeners.does_not_exist_xyz",
+            "class": "NoSuchListener",
+        }
+        monkeypatch.setattr(reg_mod, "LISTENER_REGISTRY", broken_registry)
+
+        warnings = []
+
+        class FakeLogger:
+            def debug(self, *a, **k):
+                pass
+
+            def warning(self, *a, **k):
+                warnings.append((a, k))
+
+        listeners = create_listeners({"dns"}, logger=FakeLogger())
+
+        assert "dns" not in listeners
+        assert warnings, "expected create_listeners to call logger.warning() on failure"
+        # The warning must actually name the failed listener, not just a count.
+        assert any("dns" in str(a) for a, _k in warnings)

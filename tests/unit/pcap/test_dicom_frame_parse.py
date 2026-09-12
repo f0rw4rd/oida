@@ -264,6 +264,7 @@ def test_data_identifies_dimse_command_from_command_field():
                 "pdu_type": "0x04",
                 "pdv_ctx": "1",
                 "pdv_flags": "0x00",  # command, bit0=0 -> request
+                "tag": "0x00000100",  # (0000,0100) Command Field element present
                 "tag_value_16u": "1",  # 0x0001 C-STORE-RQ
             },
         )
@@ -285,6 +286,7 @@ def test_data_response_direction_from_pdv_flags():
             {
                 "pdu_type": "0x04",
                 "pdv_flags": "0x01",
+                "tag": "0x00000100",  # (0000,0100) Command Field element present
                 "tag_value_16u": "32816",
             },  # 0x8030 C-ECHO-RSP
         )
@@ -378,7 +380,8 @@ def test_format_protocol_columns_for_data_with_phi():
         _FakePacket(
             SCU_IP,
             SCP_IP,
-            {"pdu_type": "0x04", "tag": "0x00100020", "tag_value_16u": "1"},  # PatientID + C-STORE
+            # (0000,0100) Command Field + (0010,0020) PatientID carried in one PDV
+            {"pdu_type": "0x04", "tag": "0x00000100,0x00100020", "tag_value_16u": "1"},
         )
     )
     cols = listener._format_protocol_columns(listener.interactions[-1])
@@ -427,7 +430,11 @@ def test_get_write_operations_counts_store_command():
     listener = _make_listener()
     # C-STORE-RQ (0x0001) is a write command; tag_value_16u sets command_field.
     listener.process_packet(
-        _FakePacket(SCU_IP, SCP_IP, {"pdu_type": "0x04", "pdv_flags": "0x00", "tag_value_16u": "1"})
+        _FakePacket(
+            SCU_IP,
+            SCP_IP,
+            {"pdu_type": "0x04", "pdv_flags": "0x00", "tag": "0x00000100", "tag_value_16u": "1"},
+        )
     )
     writes = listener.get_write_operations()
     assert len(writes) == 1

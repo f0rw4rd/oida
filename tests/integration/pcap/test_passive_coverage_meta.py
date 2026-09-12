@@ -30,6 +30,12 @@ class TestListenerImportability:
 
     LISTENER_MODULES = {
         "ads": "ADSPassiveListener",
+        "egd": "EGDPassiveListener",
+        "selfm": "SELFMPassiveListener",
+        "tte": "TTEPassiveListener",
+        "rtps": "RTPSPassiveListener",
+        "ieee1722": "IEEE1722PassiveListener",
+        "mqttsn": "MQTTSNPassiveListener",
         "bacnet": "BACnetPassiveListener",
         "bfd": "BFDPassiveListener",
         "bgp": "BGPPassiveListener",

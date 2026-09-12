@@ -98,10 +98,11 @@ class TestOptionalArguments:
 class TestListenerFilteringFlags:
     """Test -p/--protocols, --category, --exclude, --quick, --list-listeners."""
 
-    def test_protocols_short_flag(self):
+    def test_protocols_no_short_flag(self):
+        """Verify -p is NOT a valid short flag: reserved for --port framework-wide."""
         main, _ = _build_parser()
-        ns = main.parse_args(["pcap", "f.pcap", "-p", "ics"])
-        assert ns.protocols == "ics"
+        with pytest.raises(SystemExit):
+            main.parse_args(["pcap", "f.pcap", "-p", "ics"])
 
     def test_protocols_long_flag(self):
         main, _ = _build_parser()
