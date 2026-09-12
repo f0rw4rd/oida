@@ -1534,7 +1534,9 @@ def main(argv: Optional[List[str]] = None):
         output_path = tempfile.mkdtemp(prefix="oida-")
 
     if output_path:
-        fmt = args.format if args.format != "console" else "json"
+        # --output without --format (or with the default console) implies the
+        # user wants everything on disk, not a lone JSON file.
+        fmt = args.format if args.format != "console" else "all"
         default_port = getattr(args, "port", None) or getattr(protocol_class, "default_port", 0)
         # A fresh ICSLogger, not get_logger(): the cache key collides with the
         # scan's migrated logger whose thread-local extra still seeds host
