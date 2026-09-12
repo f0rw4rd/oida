@@ -97,21 +97,23 @@ ADDR_FORMATS = {
     3: "unique_id",  # Unique Node ID addressing
 }
 
-# TPDU types (lon.tpdu_type)
+# TPDU types (lon.tpdu_type) -- verbatim from `tshark -G values`.
+# 3 is unassigned; REMINDER/REM_MSG are 4/5, not 3/4 as previously coded.
 TPDU_TYPES = {
     0: "ACKD",  # Acknowledged
     1: "UnACKD_RPT",  # Unacknowledged repeated
     2: "ACK",  # Acknowledgement
-    3: "REMINDER",  # Reminder message
-    4: "REM_MSG",  # Reminder/message
+    4: "REMINDER",  # Reminder message
+    5: "REM_MSG",  # Reminder/message
 }
 
-# SPDU types (lon.spdu_type)
+# SPDU types (lon.spdu_type) -- verbatim from `tshark -G values`.
+# REM_MSG is 5, not 6.
 SPDU_TYPES = {
     0: "REQUEST",  # Request
     2: "RESPONSE",  # Response
     4: "REMINDER",  # Reminder
-    6: "REM_MSG",  # Reminder/message
+    5: "REM_MSG",  # Reminder/message
 }
 
 # AuthPDU types (lon.authpdu_type)
@@ -130,7 +132,10 @@ APP_MSG_TYPES = {
     0x3F: "Foreign_Frame",  # Foreign frame (tunneled)
 }
 
-# Network Management codes (lon.nm, when pdufmt indicates NM)
+# Network Management codes (lon.code when pdufmt indicates NM) -- verbatim
+# from `tshark -G values | grep '^V\tlon.code'` (ANSI/CEA-709.1).
+# The previous table was shifted by one from 0x69 onward, so e.g. 0x6e
+# (NM_WRITE_MEMORY) was named "Wink" and escaped the write classification.
 NM_COMMANDS = {
     0x61: "NM_QueryID",
     0x62: "NM_RespondToQuery",
@@ -140,44 +145,41 @@ NM_COMMANDS = {
     0x66: "NM_UpdateAddress",
     0x67: "NM_QueryAddress",
     0x68: "NM_QueryNVConfig",
-    0x69: "NM_UpdateNVConfig",
-    0x6A: "NM_SetNodeMode",
-    0x6B: "NM_ReadMemory",
-    0x6C: "NM_WriteMemory",
-    0x6D: "NM_ChecksumRecalc",
-    0x6E: "NM_Wink",
-    0x6F: "NM_MemoryRefresh",
-    0x70: "NM_QuerySNVT",
-    0x71: "NM_NVFetch",
-    0x72: "NM_DeviceEscape",
-    0x73: "NM_ServicePin",
-    0x7D: "NM_ProxyCommand",
-    0x7E: "NM_ProxyResponse",
-    0x7F: "NM_RouterEscape",
+    0x69: "NM_UpdateGroupAddr",
+    0x6A: "NM_QueryDomain",
+    0x6B: "NM_UpdateNVConfig",
+    0x6C: "NM_SetNodeMode",
+    0x6D: "NM_ReadMemory",
+    0x6E: "NM_WriteMemory",
+    0x6F: "NM_ChecksumRecalc",
+    0x70: "NM_Wink",
+    0x71: "NM_MemoryRefresh",
+    0x72: "NM_QuerySNVT",
+    0x73: "NM_NVFetch",
+    0x7F: "NM_ManualServiceRequest",
 }
 
 # Network Diagnostic codes
+# Only these four ND codes exist in the registry; 0x55-0x57 were invented.
 ND_COMMANDS = {
     0x51: "ND_QueryStatus",
-    0x52: "ND_ProxyResponse",
+    0x52: "ND_ProxyCommand",
     0x53: "ND_ClearStatus",
     0x54: "ND_QueryTransceiverStatus",
-    0x55: "ND_QueryConfigData",
-    0x56: "ND_QueryLsAddrMapping",
-    0x57: "ND_QueryDomainID",
 }
 
 # Security-sensitive NM commands (configuration changes)
 NM_WRITE_COMMANDS = {
-    0x63,
-    0x64,
-    0x65,
-    0x66,
-    0x69,
-    0x6A,  # Domain, key, address, NV config, node mode
-    0x6C,
-    0x6D,
-    0x72,  # Write memory, checksum recalc, device escape
+    0x63,  # NM_UpdateDomain
+    0x64,  # NM_LeaveDomain
+    0x65,  # NM_UpdateKey
+    0x66,  # NM_UpdateAddress
+    0x69,  # NM_UpdateGroupAddr
+    0x6B,  # NM_UpdateNVConfig
+    0x6C,  # NM_SetNodeMode
+    0x6E,  # NM_WriteMemory
+    0x6F,  # NM_ChecksumRecalc
+    0x71,  # NM_MemoryRefresh
 }
 
 
@@ -203,6 +205,7 @@ class LONNode:
     nv_selectors: Set[int] = field(default_factory=set)
     auth_seen: bool = False
     nm_commands_recv: int = 0
+    nm_writes_recv: int = 0
     nv_update_count: int = 0
     msg_codes_seen: Set[str] = field(default_factory=set)
     first_seen: str = ""
@@ -471,12 +474,17 @@ class LonTalkPassiveListener(PySharkListenerBase):
             return "NM", ""
 
         nm_name = NM_COMMANDS.get(code, f"NM(0x{code:02x})")
-        rw = "write" if code in NM_WRITE_COMMANDS else "read"
+        is_write = code in NM_WRITE_COMMANDS
+        rw = "write" if is_write else "read"
 
-        # Track NM commands on target node
+        # Track NM commands on target node. Writes are counted separately:
+        # get_write_operations() used to report every node that received ANY
+        # NM command -- including pure reads like NM_QueryID -- as written to.
         if dst_subnet is not None and dst_node_id is not None:
             target = self._ensure_node(dst_subnet, dst_node_id, "", now)
             target.nm_commands_recv += 1
+            if is_write:
+                target.nm_writes_recv += 1
 
         if src_node:
             src_node.msg_codes_seen.add(nm_name)
@@ -536,6 +544,7 @@ class LonTalkPassiveListener(PySharkListenerBase):
             "nv_selectors": sorted(node.nv_selectors),
             "nv_update_count": node.nv_update_count,
             "nm_commands_recv": node.nm_commands_recv,
+            "nm_writes_recv": node.nm_writes_recv,
             "msg_codes": sorted(node.msg_codes_seen),
             "first_seen": node.first_seen,
             "last_seen": node.last_seen,
@@ -566,10 +575,10 @@ class LonTalkPassiveListener(PySharkListenerBase):
             {
                 "client": "network",
                 "server": f"node:{node.subnet}/{node.node}",
-                "write_count": node.nm_commands_recv,
+                "write_count": node.nm_writes_recv,
             }
             for node in self.nodes.values()
-            if node.nm_commands_recv > 0
+            if node.nm_writes_recv > 0
         ]
 
     def get_control_operations(self) -> List[Dict[str, Any]]:
