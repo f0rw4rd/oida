@@ -197,7 +197,12 @@ class SZLParser:
                 result["protection_level"] = max(
                     result["sch_schal"], result["sch_par"], result["sch_rel"]
                 )
-            result["parsed"] = True
+                # Only a populated response is a successful parse; a truncated /
+                # empty / wrong-index 0x0132 must not be marked parsed=True with
+                # no fields (matches sibling parsers using parsed = bool(records)).
+                result["parsed"] = True
+            else:
+                result["parsed"] = False
         except Exception as e:
             result["error"] = str(e)
             result["parsed"] = False

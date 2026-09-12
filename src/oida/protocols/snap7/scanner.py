@@ -81,25 +81,35 @@ def _run_with_timeout(func, timeout_seconds=5, error_msg="Operation timed out"):
     """
     from concurrent.futures import ThreadPoolExecutor, TimeoutError as FuturesTimeoutError
 
-    with ThreadPoolExecutor(max_workers=1) as executor:
-        future = executor.submit(func)
-        try:
-            return future.result(timeout=timeout_seconds)
-        except FuturesTimeoutError as e:
-            logger.debug("run with timeout failed: %s", e)
-            return {"error": error_msg}
-        except Exception as e:
-            # Decode bytes in error messages (snap7 returns bytes)
-            logger.debug("run with timeout failed: %s", e)
-            err_str = str(e)
-            if "b'" in err_str and "'" in err_str:
-                # Extract and decode the bytes portion
-                import re
+    # Do NOT use `with ThreadPoolExecutor(...)`: its __exit__ calls
+    # shutdown(wait=True), which blocks until the running snap7 call finishes,
+    # so returning on FuturesTimeoutError would still wait out the full snap7
+    # socket timeout and `timeout_seconds` would not bound wall-clock time.
+    # shutdown(wait=False) lets us return promptly; the orphaned daemon worker
+    # exits on its own once its blocking snap7 call returns.
+    executor = ThreadPoolExecutor(max_workers=1)
+    future = executor.submit(func)
+    try:
+        result = future.result(timeout=timeout_seconds)
+        executor.shutdown(wait=False)
+        return result
+    except FuturesTimeoutError as e:
+        logger.debug("run with timeout failed: %s", e)
+        executor.shutdown(wait=False)
+        return {"error": error_msg}
+    except Exception as e:
+        # Decode bytes in error messages (snap7 returns bytes)
+        logger.debug("run with timeout failed: %s", e)
+        executor.shutdown(wait=False)
+        err_str = str(e)
+        if "b'" in err_str and "'" in err_str:
+            # Extract and decode the bytes portion
+            import re
 
-                match = re.search(r"b'([^']*)'", err_str)
-                if match:
-                    err_str = match.group(1)
-            return {"error": err_str}
+            match = re.search(r"b'([^']*)'", err_str)
+            if match:
+                err_str = match.group(1)
+        return {"error": err_str}
 
 
 def _get_order_code_extended(client) -> Dict[str, Any]:

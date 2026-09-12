@@ -14,7 +14,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -135,7 +134,6 @@ class MemoryMixin(_ScannerBase):
                         host, port = self.get_target_info()
                         self.logger.security_finding(
                             "Writable access",
-                            category=Category.ACCESS_CONTROL,
                             detail=f"{area_name} memory area is writable",
                         )
                     except Exception as e:

@@ -159,10 +159,23 @@ class TestSimpleActionDispatch(unittest.TestCase):
         scanner.cpu_stop.assert_called_once_with(obj.conn)
         self.assertEqual(obj.results["data"]["action_result"]["action"], "cpu_stop")
 
-    def test_cpu_start_maps_to_cpu_cold_start_method(self):
+    def test_cpu_start_maps_to_cpu_hot_start_method(self):
+        # --cpu-start is the benign "resume execution" the help promises, so it
+        # maps to a HOT start (preserves retentive memory); the destructive COLD
+        # start stays under --restart.
+        scanner = Mock()
+        scanner.cpu_hot_start.return_value = {"success": True}
+        obj = make_s7(scanner=scanner, cpu_start=True, confirm=True)
+
+        obj._execute_action()
+
+        scanner.cpu_hot_start.assert_called_once_with(obj.conn)
+        scanner.cpu_cold_start.assert_not_called()
+
+    def test_restart_maps_to_cpu_cold_start_method(self):
         scanner = Mock()
         scanner.cpu_cold_start.return_value = {"success": True}
-        obj = make_s7(scanner=scanner, cpu_start=True, confirm=True)
+        obj = make_s7(scanner=scanner, restart=True, confirm=True)
 
         obj._execute_action()
 

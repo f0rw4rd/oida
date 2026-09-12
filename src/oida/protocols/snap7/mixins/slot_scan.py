@@ -59,9 +59,7 @@ class SlotScanMixin(_ScannerBase):
         Returns:
             Dict with slot info if a device was found, or None.
         """
-        from ..scanner import _get_snap7_client, _get_order_code_extended
-        from ..szl_parser import SZLParser
-        from ..device_lookup import lookup_device_name
+        from ..scanner import _get_snap7_client
         from ....utils.protocol_helpers import ConnectionHelper
         from snap7.type import Parameter
 
@@ -84,8 +82,42 @@ class SlotScanMixin(_ScannerBase):
 
             if not client.get_connected():
                 self.logger.debug(f"Slot {slot}: no response")
+                client.disconnect()
                 return None
 
+            # From here on we hold a live S7 session. S7-300/400 CPUs accept
+            # very few concurrent connections, so it MUST be released on every
+            # exit path — including exceptions from the info-building block
+            # below (previously only the success path disconnected, leaking a
+            # PLC connection slot per failed probe).
+            try:
+                return self._build_slot_info(client, host, port, rack, slot, detailed)
+            finally:
+                try:
+                    client.disconnect()
+                except Exception as disc_err:
+                    # Never mask the original failure with a teardown error.
+                    self.logger.debug(f"Slot {slot}: disconnect failed: {disc_err}")
+
+        except Exception as e:
+            self.logger.debug(f"Slot {slot}: {e}")
+            return None
+
+    def _build_slot_info(
+        self,
+        client: Any,
+        host: str,
+        port: int,
+        rack: int,
+        slot: int,
+        detailed: bool = True,
+    ) -> Optional[Dict[str, Any]]:
+        """Query a CONNECTED client for slot info. Caller owns disconnect."""
+        from ..scanner import _get_order_code_extended
+        from ..szl_parser import SZLParser
+        from ..device_lookup import lookup_device_name
+
+        try:
             self.logger.debug("Slot %d: detailed=%s mode", slot, detailed)
 
             info = {"rack": rack, "slot": slot}
@@ -187,7 +219,6 @@ class SlotScanMixin(_ScannerBase):
                 msg += f"{info['order_code']} [{info['firmware']}]"
 
             self.logger.success(msg)
-            client.disconnect()
             return info
 
         except Exception as e:

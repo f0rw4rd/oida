@@ -342,17 +342,20 @@ class TestSZLParse0x0132(unittest.TestCase):
 
         data = bytes(8)
         result = SZLParser._parse_0x0132(data, 4)
-        # With < 12 bytes and index 4, no detailed fields are set
-        self.assertTrue(result["parsed"])
+        # With < 12 bytes and index 4, no detailed fields are set, so it is NOT
+        # a successful parse (a truncated response must not report parsed=True).
+        self.assertFalse(result["parsed"])
         self.assertNotIn("protection_level", result)
 
     def test_other_index(self):
-        """Test index != 4 still returns parsed=True."""
+        """Test index != 4 parses no fields, so parsed=False."""
         from oida.protocols.snap7.szl_parser import SZLParser
 
         data = bytes(20)
         result = SZLParser._parse_0x0132(data, 1)
-        self.assertTrue(result["parsed"])
+        # Only index 4 carries protection fields; any other index populates
+        # nothing and must not be reported as a successful parse.
+        self.assertFalse(result["parsed"])
         self.assertNotIn("protection_level", result)
 
     def test_empty_data_index_4(self):
@@ -360,7 +363,8 @@ class TestSZLParse0x0132(unittest.TestCase):
         from oida.protocols.snap7.szl_parser import SZLParser
 
         result = SZLParser._parse_0x0132(b"", 4)
-        self.assertTrue(result["parsed"])
+        # Empty data parses nothing -> parsed=False (no fields populated).
+        self.assertFalse(result["parsed"])
 
     def test_szl_id_in_result(self):
         """Test szl_id is always '0x0132'."""

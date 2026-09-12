@@ -15,7 +15,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -147,7 +146,6 @@ class SecurityMixin(_ScannerBase):
                 # Log security finding
                 self.logger.security_finding(
                     "Insecure configuration",
-                    category=Category.CONFIGURATION,
                     detail="put_get_enabled",
                 )
 
@@ -238,7 +236,6 @@ class SecurityMixin(_ScannerBase):
                     results["found"].append(test_password)
                     self.logger.security_finding(
                         "Weak password",
-                        category=Category.AUTHENTICATION,
                         detail=f"S7 password found: {test_password}",
                     )
 
@@ -293,7 +290,6 @@ class SecurityMixin(_ScannerBase):
             # Report security finding
             self.logger.security_finding(
                 "No authentication",
-                category=Category.AUTHENTICATION,
                 detail="Empty password accepted",
             )
 
@@ -330,7 +326,6 @@ class SecurityMixin(_ScannerBase):
         # Report no encryption (S7 protocol is never encrypted)
         self.logger.security_finding(
             "No encryption",
-            category=Category.ENCRYPTION,
             detail="S7 protocol does not support encryption",
         )
 
@@ -345,14 +340,12 @@ class SecurityMixin(_ScannerBase):
             analysis["concerns"].append("No protection - Full read/write access")
             self.logger.security_finding(
                 "Insecure configuration",
-                category=Category.CONFIGURATION,
                 detail="protection_level=1",
             )
         elif protection_level == 2:
             analysis["concerns"].append("Write protection only - Read access available")
             self.logger.security_finding(
                 "Insecure configuration",
-                category=Category.CONFIGURATION,
                 detail="protection_level=2",
             )
 
@@ -399,7 +392,6 @@ class SecurityMixin(_ScannerBase):
         if writable:
             self.logger.security_finding(
                 "Writable access",
-                category=Category.ACCESS_CONTROL,
                 detail=f"S7 memory areas are writable: {', '.join(writable)}",
             )
             for area in writable:

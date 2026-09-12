@@ -263,7 +263,11 @@ class s7(NetworkConnection):
         # Simple boolean actions: attr -> (message, scanner_method)
         simple_actions = {
             "cpu_stop": ("Executing CPU STOP...", "cpu_stop"),
-            "cpu_start": ("Executing CPU COLD START...", "cpu_cold_start"),
+            # --cpu-start is the benign "resume execution" the help promises, so
+            # it maps to a HOT start (preserves retentive/retain memory). The
+            # destructive COLD start (reinitializes the CPU, wipes retentive
+            # memory) stays under --restart, which reads as such.
+            "cpu_start": ("Executing CPU HOT START...", "cpu_hot_start"),
             "restart": ("Executing CPU RESTART (cold restart)...", "cpu_cold_start"),
             "cpu_hot_start": ("Executing CPU HOT START...", "cpu_hot_start"),
             "copy_ram_to_rom": ("Copying RAM to ROM...", "copy_ram_to_rom"),
@@ -473,7 +477,6 @@ class s7(NetworkConnection):
 
     def _action_download_db(self):
         """Handle --download-db action"""
-        import os
 
         from ...utils.common_types import safe_file_path
 
@@ -484,7 +487,7 @@ class s7(NetworkConnection):
             self.results["success"] = False
             return None
         try:
-            validated_path = safe_file_path(input_file, base_dir=os.getcwd())
+            validated_path = safe_file_path(input_file)
             with open(validated_path, "rb") as f:
                 data = f.read()
             self.logger.display(f"Downloading {len(data)} bytes to DB{db_num}...")

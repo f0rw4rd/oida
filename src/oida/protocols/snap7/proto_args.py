@@ -336,18 +336,18 @@ Examples:
     control_group.add_argument(
         "--cpu-hot-start",
         action="store_true",
-        help="Start CPU (hot start, preserves state)",
+        help="Start CPU (hot start, preserves state; requires --confirm)",
     )
     control_group.add_argument(
         "-K",
         "--copy-ram-to-rom",
         action="store_true",
-        help="Copy RAM to ROM (persist changes)",
+        help="Copy RAM to ROM (persist changes; requires --confirm)",
     )
     control_group.add_argument(
         "--compress",
         action="store_true",
-        help="Compress PLC memory",
+        help="Compress PLC memory (requires --confirm)",
     )
 
     # Monitor Mode (--monitor, --interval, --duration)
