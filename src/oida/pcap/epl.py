@@ -66,19 +66,26 @@ EPL_MSG_TYPES = {
 }
 
 # EPL NMT states (epl.pres.stat, epl.soa.stat, epl.asnd.ires.state)
+# NMT states (epl.pres.stat) -- verbatim from `tshark -G values`.
+# The previous table reused the real codes 0x19/0x1c/0x5d/0x6d under the WRONG
+# state names, which is why it looked plausible.
 EPL_NMT_STATES = {
     0x00: "Off",
-    0x01: "Initialising",
-    0x19: "NotActive",
-    0x1C: "BasicEthernet",
-    0x24: "PreOperational1",
-    0x3D: "PreOperational2",
-    0x5D: "ReadyToOperate",
-    0x6D: "Stopped",
+    0x19: "Initialising",
+    0x1C: "NotActive",
+    0x1D: "PreOperational1",
+    0x1E: "BasicEthernet",
+    0x29: "ResetApplication",
+    0x39: "ResetCommunication",
+    0x4D: "Stopped",
+    0x5D: "PreOperational2",
+    0x6D: "ReadyToOperate",
     0xFD: "Operational",
 }
 
-# ASnd service IDs (epl.asnd.svid)
+# ASnd service IDs -- upstream packet-epl.c. 0x06 is Sync Response; 0x07-0x9f
+# are reserved (the old table had 0x06 as an invented "UnspecifiedInvite" and
+# shifted Sync Response onto 0x07).
 ASND_SERVICE_IDS = {
     0x00: "Reserved",
     0x01: "IdentResponse",
@@ -86,48 +93,67 @@ ASND_SERVICE_IDS = {
     0x03: "NMTRequest",
     0x04: "NMTCommand",
     0x05: "SDO",
-    0x06: "UnspecifiedInvite",
-    0x07: "SyncResponse",
+    0x06: "SyncResponse",
 }
 
-# NMT command IDs (epl.asnd.nmtcommand.cid, epl.asnd.nmtrequest.rcid)
+# NMT command IDs -- upstream packet-epl.c (epl_asnd_nmt_command_vals).
+# The real table is NON-sequential; the previous 0x01..0x3a run was fabricated.
 NMT_COMMANDS = {
-    0x01: "NMTStartNode",
-    0x02: "NMTStopNode",
-    0x03: "NMTEnterPreOperational2",
-    0x04: "NMTEnableReadyToOperate",
-    0x05: "NMTResetNode",
-    0x06: "NMTResetCommunication",
-    0x07: "NMTSwReset",
-    0x08: "NMTSwUpdate",
-    0x21: "NMTNetHostNameSet",
-    0x22: "NMTFlushArpEntry",
-    0x30: "NMTPublishConfiguredCN",
-    0x31: "NMTPublishActiveCN",
-    0x32: "NMTPublishPreOperational1",
-    0x33: "NMTPublishPreOperational2",
-    0x34: "NMTPublishReadyToOperate",
-    0x35: "NMTPublishOperational",
-    0x36: "NMTPublishStopped",
-    0x38: "NMTPublishEmergencyNew",
-    0x39: "NMTPublishTime",
-    0x3A: "NMTInvalidService",
+    0x21: "NMTStartNode",
+    0x22: "NMTStopNode",
+    0x23: "NMTEnterPreOperational2",
+    0x24: "NMTEnableReadyToOperate",
+    0x28: "NMTResetNode",
+    0x29: "NMTResetCommunication",
+    0x2A: "NMTResetConfiguration",
+    0x2B: "NMTSwReset",
+    0x2D: "NMTDNA",
+    0x41: "NMTStartNodeEx",
+    0x42: "NMTStopNodeEx",
+    0x43: "NMTEnterPreOperational2Ex",
+    0x44: "NMTEnableReadyToOperateEx",
+    0x48: "NMTResetNodeEx",
+    0x49: "NMTResetCommunicationEx",
+    0x4A: "NMTResetConfigurationEx",
+    0x4B: "NMTSwResetEx",
+    0x62: "NMTNetHostNameSet",
+    0x63: "NMTFlushArpEntry",
+    0x80: "NMTPublishConfiguredNodes",
+    0x90: "NMTPublishActiveNodes",
+    0x91: "NMTPublishPreOperational1",
+    0x92: "NMTPublishPreOperational2",
+    0x93: "NMTPublishReadyToOperate",
+    0x94: "NMTPublishOperational",
+    0x95: "NMTPublishStopped",
+    0xA0: "NMTPublishEmergencyNew",
+    0xB0: "NMTPublishTime",
+    0xFF: "NMTInvalidService",
 }
 
-# SDO command IDs (epl.asnd.sdo.cmd.command.id)
+# SDO command IDs -- upstream packet-epl.c (epl_sdo_asnd_cmd_vals).
+# In EPL the ODD ids are the write verbs and the EVEN ids the read verbs.
+# This table and SDO_WRITE_COMMANDS below used to be exactly INVERTED, so every
+# real object-dictionary write was counted as a read (and never surfaced by
+# get_write_operations()) while benign reads were reported as writes.
 SDO_COMMANDS = {
-    0x01: "InitReadByIndex",
-    0x02: "InitWriteByIndex",
-    0x03: "InitReadAllByIndex",
-    0x04: "InitWriteAllByIndex",
-    0x05: "InitReadByMultipleIndex",
-    0x06: "InitWriteByMultipleIndex",
+    0x00: "NotInList",
+    0x01: "WriteByIndex",
+    0x02: "ReadByIndex",
+    0x03: "WriteAllByIndex",
+    0x04: "ReadAllByIndex",
+    0x05: "WriteByName",
+    0x06: "ReadByName",
+    0x20: "FileWrite",
+    0x21: "FileRead",
+    0x31: "WriteMultipleParameterByIndex",
+    0x32: "ReadMultipleParameterByIndex",
+    0x70: "MaximumSegmentSize",
+    0x71: "LinkNameToIndex",
 }
 
-# SDO write commands (security-relevant)
-SDO_WRITE_COMMANDS = {0x02, 0x04, 0x06}
+# The state-changing SDO verbs.
+SDO_WRITE_COMMANDS = {0x01, 0x03, 0x05, 0x20, 0x31}
 
-# Managing Node default address
 MN_NODE_ID = 240
 
 
