@@ -214,7 +214,9 @@ class TestEnumV3:
         assert cred["username"] == "admin"
         assert cred["auth_pass"] == "public"
         assert cred["auth_protocol"]  # protocol captured
-        assert cred["security_level"] == "authRequired-priv"
+        # The internal 'authRequired-priv' sentinel is mapped to a user-facing
+        # label before results are returned/exported (priv key never cracked).
+        assert cred["security_level"] == "authNoPriv (priv key not recovered)"
         assert "priv_pass" not in cred  # priv never cracked
 
     def test_wrong_level_then_priv_success_upgrades_in_place(self):

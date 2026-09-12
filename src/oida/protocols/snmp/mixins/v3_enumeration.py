@@ -13,7 +13,6 @@ import asyncio
 import time
 from typing import TYPE_CHECKING, Dict, List
 
-from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -216,7 +215,6 @@ class V3EnumerationMixin(_ScannerBase):
                 self.logger.progress(p1_idx, p1_total, end="\n")
                 self.logger.security_finding(
                     f"No authentication (user '{username}')",
-                    category=Category.AUTHENTICATION,
                     detail=f"SNMPv3 noAuthNoPriv access: user '{username}'",
                 )
                 valid_users.append({"username": username, "level": "noAuthNoPriv"})
@@ -427,7 +425,7 @@ class V3EnumerationMixin(_ScannerBase):
                         )
                         self.logger.security_finding(
                             "Credential disclosure",
-                            category=Category.INFO_DISCLOSURE,
+                            category="INFO_DISCLOSURE",
                             detail=f"SNMPv3 credentials found: user '{username}' pass '{password}'",
                         )
                         found = True
@@ -460,7 +458,7 @@ class V3EnumerationMixin(_ScannerBase):
                         )
                         self.logger.security_finding(
                             "Credential disclosure",
-                            category=Category.INFO_DISCLOSURE,
+                            category="INFO_DISCLOSURE",
                             detail=f"SNMPv3 auth credentials found (priv required): "
                             f"user '{username}' pass '{password}'",
                         )
@@ -572,7 +570,7 @@ class V3EnumerationMixin(_ScannerBase):
                                 credentials.append(full_cred)
                             self.logger.security_finding(
                                 "Credential disclosure",
-                                category=Category.INFO_DISCLOSURE,
+                                category="INFO_DISCLOSURE",
                                 detail=f"SNMPv3 full credentials: user '{username}' "
                                 f"auth='{auth_pass}' priv='{priv_pass}'",
                             )
@@ -595,6 +593,14 @@ class V3EnumerationMixin(_ScannerBase):
             f"SNMP v3 enum: done -- {len(valid_users)} user(s), "
             f"{len(credentials)} credential set(s)"
         )
+
+        # Map the internal 'authRequired-priv' sentinel (used above to find the
+        # phase-2 entries phase 3 upgrades) to a user-facing label for any entry
+        # whose priv key was never cracked, so the sentinel doesn't leak into the
+        # exported summary table or the returned results.
+        for cred in credentials:
+            if cred.get("security_level") == "authRequired-priv":
+                cred["security_level"] = "authNoPriv (priv key not recovered)"
 
         if valid_users:
             host_sfx = self.host.replace(".", "_")

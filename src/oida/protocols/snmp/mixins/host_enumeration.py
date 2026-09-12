@@ -19,7 +19,6 @@ import re
 import time
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -1174,7 +1173,7 @@ class HostEnumerationMixin(_ScannerBase):
                     )
                     self.logger.security_finding(
                         "Credential disclosure",
-                        category=Category.INFO_DISCLOSURE,
+                        category="INFO_DISCLOSURE",
                         detail=f"H3C credential found: {username} / {password or '(empty)'}",
                     )
                     self.logger.info(
@@ -1198,7 +1197,7 @@ class HostEnumerationMixin(_ScannerBase):
                 brocade_users.append({"index": idx, "username": username, "password": password})
                 self.logger.security_finding(
                     "Credential disclosure",
-                    category=Category.INFO_DISCLOSURE,
+                    category="INFO_DISCLOSURE",
                     detail=f"Brocade credential found: {username} / {password or '(hash)'}",
                 )
 
@@ -1234,13 +1233,13 @@ class HostEnumerationMixin(_ScannerBase):
                     if is_password:
                         self.logger.security_finding(
                             "Credential disclosure",
-                            category=Category.INFO_DISCLOSURE,
+                            category="INFO_DISCLOSURE",
                             detail=f"Credential OID '{name}': password='{result['value']}'",
                         )
                     elif "community" in name.lower() or "Community" in name:
                         self.logger.security_finding(
                             "Credential disclosure",
-                            category=Category.INFO_DISCLOSURE,
+                            category="INFO_DISCLOSURE",
                             detail=f"Community string in OID '{name}': '{result['value']}'",
                         )
         else:
@@ -1295,7 +1294,7 @@ class HostEnumerationMixin(_ScannerBase):
                     )
                     self.logger.security_finding(
                         "Credential disclosure",
-                        category=Category.INFO_DISCLOSURE,
+                        category="INFO_DISCLOSURE",
                         detail=f"Credential in process args: '{proc_name}' (PID {idx})"
                         f" -- {matched_fragment}",
                     )
@@ -1409,7 +1408,6 @@ class HostEnumerationMixin(_ScannerBase):
         if details.get("ipForwarding") == "1":
             self.logger.security_finding(
                 "IP forwarding enabled",
-                category=Category.CONFIGURATION,
                 detail="Device is routing between networks -- potential pivot point",
             )
 
@@ -1510,7 +1508,6 @@ class HostEnumerationMixin(_ScannerBase):
             if fs["remote_mount"] and access_str == "readWrite":
                 self.logger.security_finding(
                     "Insecure configuration",
-                    category=Category.CONFIGURATION,
                     detail=f"Writable remote mount: '{fs['remote_mount']}' at '{fs['mount_point']}'",
                 )
 
@@ -1678,7 +1675,6 @@ class HostEnumerationMixin(_ScannerBase):
             if storage_raw == "2":
                 self.logger.security_finding(
                     "RCE risk",
-                    category=Category.CONFIGURATION,
                     detail=f"Injected extend script '{name}': {cmd} {args}",
                 )
             elif cmd:
@@ -1710,7 +1706,6 @@ class HostEnumerationMixin(_ScannerBase):
                     proto_name = ICS_PORTS[port]
                     self.logger.security_finding(
                         "Insecure configuration",
-                        category=Category.PROTOCOL_EXPOSURE,
                         detail=f"ICS service exposed: {proto_name} on TCP :{port}",
                     )
 
@@ -1721,7 +1716,6 @@ class HostEnumerationMixin(_ScannerBase):
                 if user in risky_users:
                     self.logger.security_finding(
                         "Insecure configuration",
-                        category=Category.CONFIGURATION,
                         detail=f"Default Windows account enabled: {user}",
                     )
 
@@ -1733,7 +1727,6 @@ class HostEnumerationMixin(_ScannerBase):
                 if name in admin_shares:
                     self.logger.security_finding(
                         "Insecure configuration",
-                        category=Category.CONFIGURATION,
                         detail=f"Administrative share exposed: {name} ({share.get('path', '')})",
                     )
 
@@ -1743,7 +1736,6 @@ class HostEnumerationMixin(_ScannerBase):
                 if community and community not in ("public", self.community):
                     self.logger.security_finding(
                         "Insecure configuration",
-                        category=Category.INFO_DISCLOSURE,
                         detail=f"Additional community string in trap config: '{community}'",
                     )
 
@@ -1751,7 +1743,6 @@ class HostEnumerationMixin(_ScannerBase):
         if isinstance(extend_data, dict) and extend_data.get("count", 0) > 0:
             self.logger.security_finding(
                 "RCE risk",
-                category=Category.CONFIGURATION,
                 detail=f"{extend_data['count']} NET-SNMP extend scripts configured -- "
                 "RCE possible if community string has write access",
             )
@@ -1760,7 +1751,6 @@ class HostEnumerationMixin(_ScannerBase):
         if isinstance(ipv6_data, dict) and ipv6_data.get("global", 0) > 0:
             self.logger.security_finding(
                 "Hidden attack surface",
-                category=Category.PROTOCOL_EXPOSURE,
                 detail=f"{ipv6_data['global']} global IPv6 addresses found -- "
                 "services may be reachable on IPv6 only",
             )
@@ -1771,6 +1761,5 @@ class HostEnumerationMixin(_ScannerBase):
             if proc_creds:
                 self.logger.security_finding(
                     "Credential exposure",
-                    category=Category.INFO_DISCLOSURE,
                     detail=f"{len(proc_creds)} processes leaking credentials in command-line arguments",
                 )

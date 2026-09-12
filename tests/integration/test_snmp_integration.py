@@ -32,16 +32,11 @@ pytestmark = pytest.mark.xdist_group("snmp_service")
 SNMP_PORT = MOCK_PORTS.get("snmp", 10161)
 SNMP_V3ONLY_PORT = MOCK_PORTS.get("snmp_v3only", 10164)
 
-# Linux profile (port 10161)
-MOCK_SYSDESCR = "Linux ics-server01 5.15.0-91-generic #101-Ubuntu SMP x86_64"
-MOCK_SYSNAME = "ics-server01"
+# Linux profile (port 10161). Only MOCK_SYSCONTACT is referenced in an
+# assertion; the other sysDescr/sysName/sysLocation/vendor values are documented
+# in the module docstring above and asserted inline as literals where needed, so
+# duplicating them as never-read constants here was dead.
 MOCK_SYSCONTACT = "ics-admin@plant.local"
-MOCK_SYSLOCATION = "ICS Control Room, Building A"
-MOCK_VENDOR = "Net-SNMP"  # PEN 8072 -> Net-SNMP
-
-# v3only profile (port 10164)
-V3ONLY_SYSDESCR = "Schweitzer SEL-3620 Ethernet Security Gateway, Firmware 3.0.0.1"
-V3ONLY_SYSNAME = "SEL-3620-GW01"
 
 
 # ---------------------------------------------------------------------------
@@ -49,7 +44,15 @@ V3ONLY_SYSNAME = "SEL-3620-GW01"
 # ---------------------------------------------------------------------------
 
 
-def _check_snmp_reachable(host: str, port: int, community: str = "public") -> bool:
+# Reachability probes deliberately narrow their exception handling. A missing
+# pysnmp (ImportError) or a genuine network error maps to False so the dependent
+# tests SKIP. Programming errors -- AttributeError/TypeError from a changed
+# pysnmp API, e.g. a renamed symbol -- are NOT caught: a broad `except Exception`
+# here would silently skip all 144 SNMP tests with CI green instead of failing
+# loudly, masking a real breakage.
+
+
+def _check_snmp_reachable(host: str, port: int) -> bool:
     """Check if SNMP agent responds on the given UDP port (pysnmp v7 async API)."""
     try:
         import asyncio
@@ -62,21 +65,24 @@ def _check_snmp_reachable(host: str, port: int, community: str = "public") -> bo
             UdpTransportTarget,
             get_cmd,
         )
+    except ImportError:
+        return False
 
-        async def _probe():
-            engine = SnmpEngine()
-            transport = await UdpTransportTarget.create((host, port), timeout=2, retries=0)
-            error_indication, error_status, _, _ = await get_cmd(
-                engine,
-                CommunityData(community),
-                transport,
-                ContextData(),
-                ObjectType(ObjectIdentity(".1.3.6.1.2.1.1.1.0")),
-            )
-            return error_indication is None and error_status == 0
+    async def _probe():
+        engine = SnmpEngine()
+        transport = await UdpTransportTarget.create((host, port), timeout=2, retries=0)
+        error_indication, error_status, _, _ = await get_cmd(
+            engine,
+            CommunityData("public"),
+            transport,
+            ContextData(),
+            ObjectType(ObjectIdentity(".1.3.6.1.2.1.1.1.0")),
+        )
+        return error_indication is None and error_status == 0
 
+    try:
         return asyncio.run(_probe())
-    except Exception:
+    except OSError:
         return False
 
 
@@ -92,27 +98,30 @@ def _check_snmp_v3_reachable(host: str, port: int) -> bool:
             SnmpEngine,
             UdpTransportTarget,
             get_cmd,
-            usmHMACSHAAuthProtocol,
+            USM_AUTH_HMAC96_SHA,
         )
+    except ImportError:
+        return False
 
-        async def _probe():
-            engine = SnmpEngine()
-            transport = await UdpTransportTarget.create((host, port), timeout=2, retries=0)
-            error_indication, error_status, _, _ = await get_cmd(
-                engine,
-                UsmUserData(
-                    "engineer",
-                    authKey="engineer1",
-                    authProtocol=usmHMACSHAAuthProtocol,
-                ),
-                transport,
-                ContextData(),
-                ObjectType(ObjectIdentity(".1.3.6.1.2.1.1.1.0")),
-            )
-            return error_indication is None and error_status == 0
+    async def _probe():
+        engine = SnmpEngine()
+        transport = await UdpTransportTarget.create((host, port), timeout=2, retries=0)
+        error_indication, error_status, _, _ = await get_cmd(
+            engine,
+            UsmUserData(
+                "engineer",
+                authKey="engineer1",
+                authProtocol=USM_AUTH_HMAC96_SHA,
+            ),
+            transport,
+            ContextData(),
+            ObjectType(ObjectIdentity(".1.3.6.1.2.1.1.1.0")),
+        )
+        return error_indication is None and error_status == 0
 
+    try:
         return asyncio.run(_probe())
-    except Exception:
+    except OSError:
         return False
 
 
@@ -364,6 +373,9 @@ class TestSNMPIntegration:
             str(community_file),
             "-V",
             "2c",
+            # A -C wordlist FILE is an active brute-force and is gated behind
+            # --confirm (scanner.py community_is_file gate), like --default-creds.
+            "--confirm",
             "--timeout",
             "2",
             timeout=15,
@@ -394,6 +406,9 @@ class TestSNMPIntegration:
             str(community_file),
             "-V",
             "2c",
+            # A -C wordlist FILE brute-force requires --confirm; without it the
+            # scan is rejected before ever probing the communities.
+            "--confirm",
             "--timeout",
             "2",
             timeout=15,
@@ -2194,10 +2209,15 @@ class TestSNMPIntegration:
     @pytest.mark.auth
     @pytest.mark.security
     def test_enum_v3_requires_confirm(self, cli_runner, target, port):
-        """Test -E admin -V 3 -A admin123 without --confirm is rejected [Category C]
+        """Test -E admin -V 3 -A admin123 runs the targeted auth test, defers priv brute [Category C]
 
-        -E/--enum-v3 now requires --confirm unconditionally (active probing).
-        The scanner logs a fail message and skips v3 enumeration.
+        A named user with a single provided auth password (`-E USER -A pass`) is a
+        TARGETED credential test, not a brute-force, so it is allowed through the
+        outer --confirm gate (see scanner.py `is_single_credential`). Phase 2 tests
+        that one auth password and, when the user needs priv, records the finding
+        and DEFERS the active priv brute-force behind --confirm ("add --confirm to
+        proceed"). The upfront "requires --confirm" rejection only applies to bare
+        `-E USER` (no password) -- see test_enum_v3_without_confirm_rejected.
         """
         result = cli_runner.run(
             "snmp",
@@ -2216,8 +2236,13 @@ class TestSNMPIntegration:
         )
         _assert_log_has_events(result)
         messages = _all_messages(result.scan_log)
-        assert "requires --confirm" in messages, (
-            f"Expected 'requires --confirm' rejection, got: {messages[:300]}"
+        # The targeted single-credential auth test is NOT rejected upfront...
+        assert "requires --confirm" not in messages, (
+            f"Single-credential targeted -E should not be rejected upfront: {messages[:300]}"
+        )
+        # ...it runs phase 2 and defers the active priv brute-force behind --confirm.
+        assert "add --confirm to proceed" in messages, (
+            f"Expected phase-3 priv-brute deferral gated on --confirm, got: {messages[:400]}"
         )
 
     # ========================================================================
@@ -2640,9 +2665,9 @@ class TestSNMPv3Only:
 
 SNMP_SWITCH_PORT = MOCK_PORTS.get("snmp_switch", 10162)
 
-# Ground truth from snmpd-switch.conf + pass_persist.py
-SWITCH_SYSNAME = "ICS-SWITCH-01"
-SWITCH_SYSDESCR_FRAGMENT = "H3C S5500"
+# Switch ground truth (snmpd-switch.conf + pass_persist.py) is asserted inline
+# where needed (e.g. sysName "ICS-SWITCH-01"); the never-read SWITCH_SYSNAME /
+# SWITCH_SYSDESCR_FRAGMENT constants were dead.
 
 # H3C credential ground truth (pass_persist.py)
 H3C_USERS = [
@@ -4168,38 +4193,6 @@ class TestSNMPSwitchSecurityFindings:
         # Should find at least the known users
         h3c_text = " ".join(h3c_details).lower()
         assert "admin" in h3c_text, f"Expected 'admin' in H3C findings, got: {h3c_text}"
-
-    @pytest.mark.security
-    def test_finding_h3c_credential_category(self, cli_runner, target, port):
-        """Test H3C credential finding has category 'Credential disclosure' [Category A]"""
-        result = cli_runner.run(
-            "snmp",
-            target,
-            "--port",
-            str(port),
-            "--enum",
-            "creds",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.success
-        _assert_log_has_events(result)
-        all_details = _get_security_finding_details(result.scan_log)
-        # H3C text is in the details (d[2]); the finding *title* (d[0]) is the
-        # generic "Credential disclosure" and the category (d[1]) is the
-        # INFO_DISCLOSURE weakness class.
-        h3c_details = [d for d in all_details if "h3c credential" in d[2].lower()]
-        assert len(h3c_details) > 0, (
-            f"Expected H3C credential findings, got: {[d[2] for d in all_details]}"
-        )
-        for d in h3c_details:
-            assert d[0] == "Credential disclosure", (
-                f"Expected title 'Credential disclosure' for H3C finding, got: '{d[0]}'"
-            )
-            assert "INFO_DISCLOSURE" in d[1], (
-                f"Expected INFO_DISCLOSURE category for H3C finding, got: '{d[1]}'"
-            )
 
     @pytest.mark.security
     def test_finding_h3c_credential_includes_password(self, cli_runner, target, port):

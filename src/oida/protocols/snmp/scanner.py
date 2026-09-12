@@ -38,7 +38,6 @@ from .mixins import (
     RawQueryMixin,
     HostEnumerationMixin,
 )
-from oida.utils.common_types import Category
 
 _pysnmp = lazy_import("pysnmp", "SNMP")
 
@@ -446,8 +445,14 @@ class SNMPScanner(
                 # is_single_auth skip inside _enum_v3()'s phase 2 gate, so this
                 # outer gate doesn't block the exact case that phase 2 allows
                 # through (e.g. `-E admin -A admin123` with no --confirm).
+                # The single-credential skip only applies to a TARGETED test:
+                # a named user (`-E USER`) with one password. Bare `-E` (no
+                # target user) means "discover users then brute", which sweeps
+                # the whole SNMP_V3_USERNAMES list with noAuthNoPriv probes -- an
+                # active operation that must stay gated behind --confirm even
+                # with a single password.
                 is_single_credential = False
-                if self.auth_pass:
+                if self.auth_pass and self.enum_v3_target_user:
                     from ...utils.default_credentials import parse_credential_input
 
                     _pw_list, _ = parse_credential_input(self.auth_pass)
@@ -659,12 +664,26 @@ class SNMPScanner(
                 return UsmUserData(self.username)
             try:
                 if self.security_level == "authNoPriv":
+                    if not self.auth_pass:
+                        raise ValueError("SNMPv3 authNoPriv requires an auth password (-A)")
                     return UsmUserData(
                         self.username,
                         authKey=_validate_snmp_key(self.auth_pass, "auth password"),
                         authProtocol=auth_proto,
                     )
                 else:  # authPriv
+                    # An authPriv session needs BOTH passphrases. A zero-length
+                    # priv/auth key reaches pysnmp's localkey.hash_passphrase,
+                    # which does `64 // len(passphrase)` and raises
+                    # ZeroDivisionError. This case arises when v3 enum finds the
+                    # auth secret but no priv secret ("auth found, needs priv"):
+                    # we cannot form an authPriv session, so fail cleanly instead
+                    # of crashing the whole scan.
+                    if not self.auth_pass or not self.priv_pass:
+                        raise ValueError(
+                            "SNMPv3 authPriv requires both an auth password (-A) "
+                            "and a priv password (-X)"
+                        )
                     return UsmUserData(
                         self.username,
                         authKey=_validate_snmp_key(self.auth_pass, "auth password"),
@@ -743,20 +762,17 @@ class SNMPScanner(
         if self.version == "1":
             self.logger.security_finding(
                 "Legacy protocol",
-                category=Category.AUTHENTICATION,
                 detail="SNMPv1 supported (no message integrity)",
             )
         if self.version in ("1", "2c"):
             self.logger.security_finding(
                 "No encryption",
-                category=Category.ENCRYPTION,
                 detail=f"SNMPv{self.version} sends community strings in cleartext",
             )
 
         if self.version in ("1", "2c") and self.community == "public":
             self.logger.security_finding(
                 "Default credentials",
-                category=Category.AUTHENTICATION,
                 detail="Default community string 'public' accepted",
             )
 
