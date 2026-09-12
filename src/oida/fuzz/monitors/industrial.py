@@ -836,11 +836,15 @@ class ModbusRTUMonitor(ProtocolMonitor):
         expected_crc = self._calculate_crc(frame_data)
         actual_crc = response[-2:]
         if expected_crc != actual_crc:
-            self.logger.debug(
-                f"CRC mismatch: expected {expected_crc.hex()}, got {actual_crc.hex()}"
+            # A frame whose CRC does not match is not a valid Modbus RTU reply --
+            # it is line noise, a fragment, or a corrupted response from a target
+            # that is no longer framing correctly. Accepting it as proof of a
+            # healthy device (and, worse, storing it as the baseline) hides
+            # exactly the malformed-output failure mode fuzzing is looking for.
+            self.logger.warning(
+                f"Modbus RTU CRC mismatch: expected {expected_crc.hex()}, got {actual_crc.hex()}"
             )
-            # CRC mismatch is not fatal for health check -- the device responded
-            # but might have noise on the line. Still counts as alive.
+            return False
 
         # Check function code is not an error response (FC + 0x80)
         function_code = response[1]
@@ -1019,10 +1023,11 @@ class BACnetMonitor(ProtocolMonitor):
       * any other datagram reply (something is bound to the port)    -> alive
       * ICMP port unreachable (ConnectionRefused - the BACnet socket is gone)
                                                                       -> down
-      * silent timeout (no reply, no ICMP error) -> treated as alive, since a
-        live-but-quiet device (filtering our Who-Is, or answering only on the
-        broadcast socket) must not be falsely killed. A hard "unreachable" is
-        reserved for the real down signal (ICMP) or a socket error.
+      * silent timeout (no reply, no ICMP error) -> no evidence of life, counted
+        as a failed probe. A crash is only declared after failure_threshold
+        consecutive failed rounds, so a device that is merely quiet for one round
+        is not killed, but one that has gone permanently silent (hung, or
+        firewalled after a crash so no ICMP arrives) is no longer called healthy.
 
     Args:
         host: Target hostname or IP
@@ -1097,16 +1102,17 @@ class BACnetMonitor(ProtocolMonitor):
 
             try:
                 response = sock.recv(1500)
-            except socket.timeout:
-                # No reply and no ICMP error: the device may filter our directed
-                # Who-Is or only answer on its broadcast socket. Treat as alive to
-                # avoid a false "unreachable" on a quiet-but-up device.
-                self.logger.debug("BACnet Who-Is timed out (no ICMP error) - treating as alive")
+            except TimeoutError:
+                # No datagram and no ICMP error: nothing came back, so there is NO
+                # evidence of life. Report a failed probe instead of claiming
+                # health; base's streak logic still needs failure_threshold
+                # consecutive failed rounds before this becomes a crash.
+                self.logger.warning("BACnet Who-Is timed out - no reply (no evidence of life)")
                 if fuzz_data_logger:
                     fuzz_data_logger.log_info(
-                        "BACnetMonitor: no I-Am within timeout (no ICMP error) - assuming alive"
+                        "BACnetMonitor: no reply within timeout - no evidence of life"
                     )
-                return True
+                return False
 
             if not response:
                 # Zero-length datagram: something answered. Alive.

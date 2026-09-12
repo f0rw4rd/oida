@@ -49,8 +49,14 @@ class TestPingMonitorCreation:
 class TestPingMonitorCheckAlive:
     """Tests for PingMonitor health check logic."""
 
-    def test_check_alive_success_resets_failures(self):
-        """Successful ping resets failure counter."""
+    def test_check_alive_success_clears_failures_after_streak(self):
+        """A clean-check STREAK clears failures; a single success does not.
+
+        New semantics (Bug 4 fix): a lone success no longer wipes accumulated
+        failure history -- otherwise a half-crashed target that answers only
+        intermittently would never trip the crash threshold. failure_threshold
+        consecutive successful checks are required to reset the counter.
+        """
         from src.oida.fuzz.monitors.network import PingMonitor
 
         mock_runner = Mock()
@@ -59,9 +65,15 @@ class TestPingMonitorCheckAlive:
         monitor = PingMonitor("192.168.1.1", command_runner=mock_runner)
         monitor.consecutive_failures = 2
 
-        result = monitor._check_alive(None)
+        # One good check is NOT enough to clear the failure history.
+        monitor.last_check_time = None
+        assert monitor._check_alive(None) is True
+        assert monitor.consecutive_failures == 2
 
-        assert result is True
+        # A full streak of failure_threshold clean checks clears it.
+        for _ in range(monitor.failure_threshold):
+            monitor.last_check_time = None
+            assert monitor._check_alive(None) is True
         assert monitor.consecutive_failures == 0
 
     def test_check_alive_failure_increments_counter(self):
@@ -77,7 +89,8 @@ class TestPingMonitorCheckAlive:
 
         result = monitor._check_alive(Mock())
 
-        assert result is True  # Below threshold
+        # Bug 4 fix: a fully-failed round is NOT healthy even below threshold.
+        assert result is False
         assert monitor.consecutive_failures == 1
 
     def test_check_alive_exceeds_threshold(self):
@@ -220,7 +233,8 @@ class TestSocketHealthMonitorCheckAlive:
 
             result = monitor._check_alive(Mock())
 
-            assert result is True  # Below threshold
+            # Bug 4 fix: a fully-failed round is NOT healthy even below threshold.
+            assert result is False
             assert monitor.consecutive_failures == 1
 
 
@@ -362,7 +376,8 @@ class TestModbusMonitorCheckAlive:
 
             result = monitor._check_alive(Mock())
 
-            assert result is True  # Below threshold
+            # Bug 4 fix: a fully-failed round is NOT healthy even below threshold.
+            assert result is False
             assert monitor.consecutive_failures == 1
 
 
@@ -510,8 +525,9 @@ class TestIEC104MonitorCrashDetection:
 
         monitor, tracker = self._make_down_monitor()
 
-        # First probe: 1 failure (below threshold=2) -> reports alive, keeps fuzzing.
-        assert monitor.pre_send(fuzz_data_logger=Mock()) is True
+        # First probe: 1 failure (below threshold=2). Bug 4 fix: a fully-failed
+        # round is reported as False (not healthy), but does not yet crash.
+        assert monitor.pre_send(fuzz_data_logger=Mock()) is False
         assert monitor.consecutive_failures == 1
         assert tracker.crash_count == 0
 
@@ -534,7 +550,8 @@ class TestIEC104MonitorCrashDetection:
 
         # test_case_count must be a multiple of check_interval for the check to run.
         monitor.test_case_count = 1
-        assert monitor.post_send(fuzz_data_logger=Mock()) is True
+        # Bug 4 fix: a fully-failed round reports False (not healthy) below threshold.
+        assert monitor.post_send(fuzz_data_logger=Mock()) is False
         assert monitor.consecutive_failures == 1
 
         monitor.last_check_time = None
@@ -695,11 +712,12 @@ class TestFailureThresholdBehavior:
 
         logger = Mock()
 
-        # First two failures should be tolerated
+        # First two failures are below threshold: tolerated (no crash/raise), but
+        # a fully-failed round now reports False (Bug 4 fix), not healthy.
         for _ in range(2):
             monitor.last_check_time = None  # Reset rate limiter
             result = monitor._check_alive(logger)
-            assert result is True
+            assert result is False
 
         # Third failure should raise BoofuzzFailure (threshold exceeded, recovery fails)
         from boofuzz.exception import BoofuzzFailure
@@ -723,9 +741,10 @@ class TestFailureThresholdBehavior:
 
             logger = Mock()
 
-            # First failure tolerated
+            # First failure below threshold: tolerated (no raise) but reports
+            # False (Bug 4 fix), not healthy.
             result = monitor._check_alive(logger)
-            assert result is True
+            assert result is False
             assert monitor.consecutive_failures == 1
 
             # Reset time to allow check
@@ -855,7 +874,10 @@ class TestCustomSSLSocketMonitorCheckAlive:
             monitor = _make_ssl_monitor(retry_count=1, failure_threshold=3)
             result = monitor._check_alive(Mock())
 
-            assert result is True  # below threshold -> keep fuzzing
+            # The point of this test is that a single blip does NOT raise. It is
+            # still reported as False (Bug 4 fix), not healthy, but fuzzing
+            # continues (only crossing failure_threshold raises BoofuzzFailure).
+            assert result is False  # below threshold -> keep fuzzing, but not "healthy"
             assert monitor.consecutive_failures == 1
 
     def test_crash_after_threshold_raises(self):

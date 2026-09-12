@@ -7,7 +7,7 @@ All imports are lazy to avoid pulling in boofuzz at CLI startup time.
 The actual monitor classes and CombinedMonitor are loaded on first access.
 """
 
-from typing import List
+from typing import List, Optional
 
 
 def _load_combined_monitor():
@@ -54,6 +54,13 @@ def _load_combined_monitor():
             self.consecutive_failures = 0
             self.total_failures = 0
             self._disabled_monitors: set = set()
+            # Verdict of the last aggregation round:
+            #   True  -> healthy, False -> failed, None -> unknown / no signal.
+            # None is the honest answer when there is nothing left to ask (no
+            # monitors configured, or every monitor disabled) -- an aggregator
+            # with zero active checks must not assert health.
+            self.last_verdict: Optional[bool] = None
+            self.no_signal_checks = 0
 
             self.crash_tracker = CrashTracker(target=f"{host}:{port}" if port else host)
 
@@ -99,11 +106,21 @@ def _load_combined_monitor():
         def is_crashed(self) -> bool:
             return self.crash_tracker.is_crashed
 
+        @property
+        def health_signal_available(self) -> bool:
+            """True when at least one monitor is still able to answer."""
+            return bool(self.get_active_monitors())
+
         def get_crash_summary(self) -> dict:
             summary = self.crash_tracker.get_crash_summary()
             summary["disabled_monitors"] = len(self._disabled_monitors)
             summary["active_monitors"] = len(self.get_active_monitors())
             summary["total_failures"] = self.total_failures
+            summary["no_signal_checks"] = self.no_signal_checks
+            if self.last_verdict is None:
+                summary["health_signal"] = "unknown"
+            else:
+                summary["health_signal"] = "healthy" if self.last_verdict else "failed"
             return summary
 
         def set_monitors(self, monitors: List[BaseMonitor]):
@@ -173,7 +190,7 @@ def _load_combined_monitor():
             active_monitors = self.get_active_monitors()
 
             if not active_monitors:
-                return True
+                return self._no_signal(fuzz_data_logger, check_type)
 
             self.actual_check_count += 1
             results = []
@@ -219,7 +236,7 @@ def _load_combined_monitor():
                         )
 
             if not results:
-                return True
+                return self._no_signal(fuzz_data_logger, check_type)
 
             if self.logic == "or":
                 passed = any(results)
@@ -244,7 +261,38 @@ def _load_combined_monitor():
             else:
                 self.consecutive_failures = 0
 
+            self.last_verdict = passed
             return passed
+
+        def _no_signal(self, fuzz_data_logger, check_type) -> bool:
+            """Record a round in which no check could be performed.
+
+            Zero active monitors (none configured, or all disabled by graceful
+            degradation) means zero evidence either way. Claiming "healthy" here
+            would silently turn the rest of the run into an unmonitored fuzz --
+            every case would pass regardless of what the target did. So the
+            verdict is recorded as unknown and the failure history is left
+            untouched (a no-signal round neither clears nor extends a streak).
+
+            The bool returned to boofuzz is True only because it means "do not
+            abort the session"; ``last_verdict``/``health_signal`` carry the real
+            (unknown) state for anything reasoning about target health.
+            """
+            self.last_verdict = None
+            self.no_signal_checks += 1
+            if self.no_signal_checks == 1:
+                from ...utils.ics_logger import get_logger
+
+                get_logger("MONITOR", self.host, self.port or 0).warning(
+                    f"No active monitors for {self.host} - target health is UNKNOWN "
+                    f"(fuzzing continues unmonitored)"
+                )
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(
+                    f"CombinedMonitor: no active monitors for {check_type} check - "
+                    f"target health unknown (no signal)"
+                )
+            return True
 
     return CombinedMonitor
 

@@ -184,8 +184,23 @@ class HTTPGetMonitor(ProtocolMonitor):
                 fuzz_data_logger.log_info("HTTPGetMonitor: Failed to connect to HTTP service")
             return False
 
-        # Store baseline on first successful request
+        # Store baseline on first *successful* request only. A 5xx is the server
+        # telling us it is broken -- freezing that as the reference inverts every
+        # later comparison (a recovered 200 then looks like a "change", while a
+        # permanently broken 500 looks healthy), so treat it as a failed probe and
+        # retry on the next round instead.
         if not self.baseline_established:
+            if response.status_code >= 500:
+                self.logger.warning(
+                    f"HTTP baseline probe returned {response.status_code} - "
+                    f"not usable as a baseline"
+                )
+                if fuzz_data_logger:
+                    fuzz_data_logger.log_info(
+                        f"HTTPGetMonitor: baseline probe failed with server error "
+                        f"{response.status_code} - no baseline stored"
+                    )
+                return False
             self._store_baseline(response, fuzz_data_logger)
             return True
 
@@ -248,6 +263,15 @@ class _BannerProtocolMonitor(ProtocolMonitor):
                 except Exception as e:
                     self.logger.debug(f"Socket close error: {e}")
 
+    @staticmethod
+    def _is_status_reply(response: bytes) -> bool:
+        """True when the reply starts with a 3-digit FTP/SMTP status code.
+
+        Anything else (truncated read, binary garbage from a corrupted server)
+        is a failed probe, not a usable baseline or comparison point.
+        """
+        return len(response) >= 3 and response[:3].isdigit()
+
     def _store_baseline(self, response: bytes, fuzz_data_logger=None):
         """Store the first response as baseline."""
         self.baseline_response = response
@@ -277,11 +301,26 @@ class _BannerProtocolMonitor(ProtocolMonitor):
         """Single attempt to check if service is responding correctly."""
         response = self._send_command(self.check_command)
 
-        if response is None:
+        if not response:
+            # None (connect/send error) or b"" (peer closed without replying).
+            # b"" is falsy but *not* None, so the old `is None` guard let a
+            # closed-connection probe through and baselined an empty banner --
+            # after which every later empty reply compared "equal" and the dead
+            # service looked healthy forever.
             if fuzz_data_logger:
                 fuzz_data_logger.log_info(
-                    f"{self.protocol_label}Monitor: Failed to connect to "
-                    f"{self.protocol_label} service"
+                    f"{self.protocol_label}Monitor: no reply from {self.protocol_label} service"
+                )
+            return False
+
+        if not self._is_status_reply(response):
+            self.logger.warning(
+                f"{self.protocol_label} reply is not a status line: {response[:16]!r}"
+            )
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(
+                    f"{self.protocol_label}Monitor: malformed reply (no status code) - "
+                    f"{response[:16]!r}"
                 )
             return False
 

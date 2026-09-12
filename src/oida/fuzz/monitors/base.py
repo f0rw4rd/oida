@@ -246,6 +246,10 @@ class ProtocolMonitor(BaseMonitor):
         self.test_case_count = 0
         self.test_case_name: Optional[str] = None  # Current test case name (set by CombinedMonitor)
         self.consecutive_failures = 0
+        # Clean-check streak. A single success no longer wipes failure history;
+        # failure_threshold consecutive successes are required to clear it, so a
+        # half-responsive target still trips the crash threshold over time.
+        self.consecutive_successes = 0
         self.last_check_time: Optional[float] = None
 
         # Online timeout adaptation (armed by the calibration phase when enabled).
@@ -330,9 +334,16 @@ class ProtocolMonitor(BaseMonitor):
             self.logger.debug("Already crashed, trying recovery")
             return self._try_recovery(fuzz_data_logger)
 
-        # Rate limit: minimum 0.2s between checks
+        # Rate limit: minimum 0.2s between checks. When rate-limited we skip the
+        # probe, but we must NOT unconditionally report "healthy" -- post_send
+        # fires microseconds after pre_send stamps last_check_time, so returning
+        # True here would make the post-send check a no-op that masks a target the
+        # monitor already knows is failing. Return the LAST KNOWN verdict instead:
+        # healthy only if not crashed and no failures have accrued this episode.
+        # (crashed=True short-circuits above via recovery, so in practice this
+        # reflects consecutive_failures, but the crashed guard is kept for safety.)
         if self.last_check_time and (time.time() - self.last_check_time < 0.2):
-            return True
+            return not self.crashed and self.consecutive_failures == 0
 
         self.logger.debug(f"Checking target (test_case={self.test_case_count})")
 
@@ -342,12 +353,19 @@ class ProtocolMonitor(BaseMonitor):
             result = self._check_alive_once(fuzz_data_logger)
 
             if result:
-                # Success - reset failure counter
                 if attempt > 0:
                     self.logger.display(
                         f"Check succeeded on attempt {attempt + 1}/{self.retry_count}"
                     )
-                self.consecutive_failures = 0
+                # Do NOT hard-reset the failure counter on a single success: a
+                # half-crashed target that answers only intermittently would then
+                # never trip the threshold (every lucky probe wipes the history).
+                # Require a short run of clean checks (failure_threshold successes)
+                # before clearing accumulated failures, so an alternating target
+                # still accrues toward a crash.
+                self.consecutive_successes += 1
+                if self.consecutive_successes >= self.failure_threshold:
+                    self.consecutive_failures = 0
                 self.last_check_time = time.time()
                 self._record_rtt(time.perf_counter() - probe_start)
                 return True
@@ -357,7 +375,8 @@ class ProtocolMonitor(BaseMonitor):
                 self.logger.warning(f"Check failed, retrying ({attempt + 1}/{self.retry_count})...")
             time.sleep(0.1)
 
-        # All retries failed - increment and check threshold
+        # All retries failed - a fully-failed round is NOT healthy.
+        self.consecutive_successes = 0
         self.consecutive_failures += 1
         self.last_check_time = time.time()
         self._on_probe_timeout()
@@ -372,9 +391,13 @@ class ProtocolMonitor(BaseMonitor):
                     return True
             raise BoofuzzFailure("Recovery failed after all attempts")
 
-        # Not yet at threshold - report failure but continue fuzzing
+        # Below the crash threshold but every probe this round failed: report the
+        # failure to boofuzz (return False) instead of the old "warn but return
+        # True", which reported a fully-unresponsive round as healthy and let the
+        # case pass with zero successful probes. This does not abort the run --
+        # only crossing failure_threshold raises BoofuzzFailure.
         self.logger.warning(f"Check failed ({self.consecutive_failures}/{self.failure_threshold})")
-        return True
+        return False
 
     def _record_rtt(self, rtt: float) -> None:
         """Store a clean probe RTT and, if armed, adapt the timeout / watch for drift."""
@@ -552,6 +575,7 @@ class ProtocolMonitor(BaseMonitor):
             self.crashed = False
             self.crash_info = None
             self.consecutive_failures = 0
+            self.consecutive_successes = 0
             self.recovery_attempts = 0
             return True
 
@@ -607,8 +631,11 @@ class ProtocolMonitor(BaseMonitor):
         """
         self.test_case_count += 1
 
-        # Only check every check_interval test cases
-        if self.test_case_count % self.check_interval != 0:
+        # Only check every check_interval test cases. Guard the modulus: a 0 (or
+        # negative) check_interval would raise ZeroDivisionError here; treat a
+        # non-positive interval as "check every case" (effectively 1).
+        interval = self.check_interval if self.check_interval > 0 else 1
+        if self.test_case_count % interval != 0:
             return True
 
         self.logger.display(f"Pre-send health check at test case {self.test_case_count}")
@@ -625,8 +652,10 @@ class ProtocolMonitor(BaseMonitor):
         Returns:
             True if target is alive, False if crashed
         """
-        # Only check every check_interval test cases
-        if self.test_case_count % self.check_interval != 0:
+        # Only check every check_interval test cases. Guard the modulus (see
+        # pre_send): a non-positive interval is treated as "check every case".
+        interval = self.check_interval if self.check_interval > 0 else 1
+        if self.test_case_count % interval != 0:
             return True
 
         self.logger.display(f"Post-send health check at test case {self.test_case_count}")

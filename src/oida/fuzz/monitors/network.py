@@ -174,9 +174,10 @@ class SNMPHealthMonitor(ProtocolMonitor):
       * any datagram reply           -> alive
       * ConnectionRefused / ICMP port unreachable (the agent socket is gone)
                                      -> down (real crash signal)
-      * silent timeout (no reply, no ICMP error) -> treated as alive, since a
-        live agent may simply not answer our community/version, and reporting
-        it down would manufacture a crash on every case.
+      * silent timeout (no reply, no ICMP error) -> no evidence of life, counted
+        as a failed probe. A crash is only declared after failure_threshold
+        consecutive failed rounds, so one quiet round is not fatal, but a target
+        that has gone permanently silent is no longer reported healthy.
 
     Args:
         host: Target hostname or IP
@@ -245,11 +246,18 @@ class SNMPHealthMonitor(ProtocolMonitor):
                 response = sock.recv(2048)
                 self.logger.debug(f"SNMP agent replied ({len(response)} bytes)")
                 return True
-            except socket.timeout:
-                # No reply and no ICMP error: agent may just not answer this
-                # version/community. Treat as alive to avoid false crashes.
-                self.logger.debug("SNMP probe timed out (no ICMP error) - treating as alive")
-                return True
+            except TimeoutError:
+                # No datagram and no ICMP error: nothing came back, so there is
+                # NO evidence of life. Report a failed probe rather than claiming
+                # health -- base's streak logic still needs failure_threshold
+                # consecutive failed rounds before this becomes a crash, so a
+                # single quiet round does not manufacture one.
+                self.logger.warning("SNMP probe timed out - no reply (no evidence of life)")
+                if fuzz_data_logger:
+                    fuzz_data_logger.log_info(
+                        "SNMPHealthMonitor: no reply within timeout - no evidence of life"
+                    )
+                return False
         except ConnectionRefusedError as e:
             # ICMP port unreachable: the agent socket is gone -> real crash.
             self.logger.warning(f"SNMP UDP port unreachable: {e}")
