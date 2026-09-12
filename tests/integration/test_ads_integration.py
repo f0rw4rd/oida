@@ -74,7 +74,7 @@ Flag Coverage Matrix (proto_args.py):
   --ams-netid/--target-ams  [A] test_with_ams_netid
   -L/--local-netid          [B] test_local_netid
   -T/--port-type            [A] test_port_type_tc3plc1, [B] test_port_type_nc
-  -P/--ads-port             [A] test_explicit_ads_port
+  --ads-port                [A] test_explicit_ads_port
   --ads-timeout             [B] test_ads_timeout_custom
   -i/--device-info          [A] test_device_info
   -l/--list-symbols         [A] test_list_symbols
