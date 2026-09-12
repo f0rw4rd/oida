@@ -2,7 +2,7 @@
 """OIDA service manager — manages mock ICS services for testing and development.
 
 Usage:
-    python services.py up [core|cve|all|<group>]   # <group> starts core + CVE members
+    python services.py up [core|cve|all|<group>|<service>]  # <group> starts core + CVE members; <service> starts one container
     python services.py down
     python services.py status [filter] [-v]   # health overview; -v adds per-container detail
     python services.py logs [service...]
@@ -1010,16 +1010,19 @@ def cmd_list(args: argparse.Namespace) -> int:
                 }
             )
     core_rows.sort(key=lambda r: r["group"])
+    core_rows = [r for r in core_rows if _match(r)]
 
-    print(f"{BOLD}{CYAN}=== Core Services ==={RST}  {DIM}python services.py up{RST}")
-    hdr = (
-        f"  {BOLD}{CYAN}{'GROUP':<16} {'SERVICE':<32} {'PORT(S)':<14} {'':<20} {'DESCRIPTION'}{RST}"
-    )
-    sep = f"  {DIM}{'---':<16} {'---':<32} {'---':<14} {'':<20} {'---'}{RST}"
-    print(hdr)
-    print(sep)
-    _render_services(core_rows)
-    print()
+    if core_rows or not filt:
+        print(f"{BOLD}{CYAN}=== Core Services ==={RST}  {DIM}python services.py up{RST}")
+        hdr = (
+            f"  {BOLD}{CYAN}{'GROUP':<16} {'SERVICE':<32} {'PORT(S)':<14} "
+            f"{'':<20} {'DESCRIPTION'}{RST}"
+        )
+        sep = f"  {DIM}{'---':<16} {'---':<32} {'---':<14} {'':<20} {'---'}{RST}"
+        print(hdr)
+        print(sep)
+        _render_services(core_rows)
+        print()
 
     # --- CVE services ---
     cve_config = _get_compose_config([*_all_args(), "--profile", "vuln-services"])
@@ -1187,14 +1190,25 @@ def _up_proto_impl(group: str, *, quiet_pull: bool = False) -> int:
     config = _get_compose_config([*compose_args, "--profile", "vuln-services"])
     services = _resolve_services_by_group(group, compose_args, config=config)
 
+    # Fallback: exact compose service name (e.g. `up hl7-mock` to start one
+    # container instead of the whole `hl7` group). A group match takes
+    # precedence, so an oida.group value always wins if a group and a service
+    # ever share a name; a service name is only tried once no group matched.
+    banner = f"{group} services"
+    if not services and group in config.get("services", {}):
+        services = [group]
+        banner = group
+
     if not services:
-        print(f"{RED}[!!]{RST} No services found with oida.group={group}")
+        print(
+            f"{RED}[!!]{RST} No services found for '{group}' (no matching oida.group or service name)"
+        )
         print("    Available groups (or run: services.py groups):")
         for g in sorted(_all_groups(config)):
             print(f"      {g}")
         return 1
 
-    print(f"{BLUE}=== Starting {group} services ==={RST}")
+    print(f"{BLUE}=== Starting {banner} ==={RST}")
 
     # (#1) Collect profiles required by resolved services — set-based dedup
     seen_profiles: set[str] = set()
@@ -1307,7 +1321,8 @@ def cmd_groups(args: argparse.Namespace) -> int:
         else:
             origin = f"{n_core} core"
         print(f"  {GREEN}{g:<18}{RST} {DIM}{origin}{RST}")
-    print(f"\n{DIM}Start one with:  services.py up <group>{RST}")
+    print(f"\n{DIM}Start a group with:  services.py up <group>{RST}")
+    print(f"{DIM}Start one service:   services.py up <service>  (e.g. hl7-mock){RST}")
     return 0
 
 
@@ -1325,8 +1340,14 @@ def build_parser() -> argparse.ArgumentParser:
     sub = parser.add_subparsers(dest="command", help="Available commands")
 
     # Infrastructure commands
-    p_up = sub.add_parser("up", help="Start mock services [core|cve|all|<group>]")
-    p_up.add_argument("stack", nargs="?", default="core", help="Stack to start (default: core)")
+    p_up = sub.add_parser("up", help="Start mock services [core|cve|all|<group>|<service>]")
+    p_up.add_argument(
+        "stack",
+        nargs="?",
+        default="core",
+        help="What to start: core|cve|all, an oida.group (e.g. hl7), "
+        "or a single compose service name (e.g. hl7-mock). Default: core",
+    )
     p_up.add_argument(
         "--build",
         action="store_true",
@@ -1380,7 +1401,13 @@ def build_parser() -> argparse.ArgumentParser:
     sub.add_parser("clean", help="Remove containers, volumes, and local images")
 
     # Discovery commands
-    sub.add_parser("list", help="List all available services (reads compose labels)")
+    p_list = sub.add_parser("list", help="List all available services (reads compose labels)")
+    p_list.add_argument(
+        "filter",
+        nargs="?",
+        help="Only show services whose group or name contains this text "
+        "(e.g. `list modbus`). Omit to list everything.",
+    )
     sub.add_parser("ports", help="Show port mappings of currently running containers")
     sub.add_parser("groups", help="List oida.group values from compose (valid `up <group>` args)")
     sub.add_parser("tags", help="Show the content-hash tag computed for each distinct image")
