@@ -129,19 +129,33 @@ class TestModbusProtocolLogic(unittest.TestCase):
     """Test Modbus protocol logic without full scanner"""
 
     def test_parse_address_range(self):
-        """Test address range parsing"""
+        """Test the real ProtocolParser.parse_address_range implementation."""
+        from oida.utils.protocol_helpers import ProtocolParser
 
-        def parse_address_range(range_str):
-            """Simple range parser for testing"""
-            if "-" in range_str:
-                start, end = map(int, range_str.split("-"))
-                return list(range(start, end + 1))
-            return [int(range_str)]
+        parse_address_range = ProtocolParser.parse_address_range
 
-        # Test various range formats
+        # Basic formats
         self.assertEqual(parse_address_range("0-5"), [0, 1, 2, 3, 4, 5])
         self.assertEqual(parse_address_range("100-102"), [100, 101, 102])
         self.assertEqual(parse_address_range("42"), [42])
+
+        # Mixed list of singletons and ranges; result is sorted & de-duplicated.
+        self.assertEqual(parse_address_range("1,5,10-12,5"), [1, 5, 10, 11, 12])
+
+        # Tolerant of a trailing/duplicated comma and surrounding whitespace
+        # (regression: these used to raise ValueError from int("")).
+        self.assertEqual(parse_address_range("0-3,"), [0, 1, 2, 3])
+        self.assertEqual(parse_address_range(" 1 , , 3 "), [1, 3])
+
+        # Reversed bounds are normalized.
+        self.assertEqual(parse_address_range("12-10"), [10, 11, 12])
+
+        # Genuinely malformed tokens raise a clear ValueError, not a bare
+        # int() traceback.
+        with self.assertRaises(ValueError):
+            parse_address_range("1-2-3")
+        with self.assertRaises(ValueError):
+            parse_address_range("abc")
 
     def test_register_value_conversion(self):
         """Test register value type conversions"""
@@ -804,7 +818,7 @@ class TestModbusScannerClass(unittest.TestCase):
     """Test ModbusScanner class with mocks"""
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_scanner_initialization_tcp(self, mock_pymodbus):
+    def test_scanner_initialization_tcp(self, _mock_pymodbus):
         """Test scanner initialization with TCP args"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -826,7 +840,7 @@ class TestModbusScannerClass(unittest.TestCase):
         self.assertEqual(scanner.get_default_port(), 502)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_scanner_initialization_custom_values(self, mock_pymodbus):
+    def test_scanner_initialization_custom_values(self, _mock_pymodbus):
         """Test scanner initialization with custom values"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -854,7 +868,7 @@ class TestModbusScannerClass(unittest.TestCase):
         self.assertEqual(scanner.baudrate, 19200)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_scanner_initialization_serial(self, mock_pymodbus):
+    def test_scanner_initialization_serial(self, _mock_pymodbus):
         """Test scanner initialization for serial connection"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -878,7 +892,7 @@ class TestParseMEIResponse(unittest.TestCase):
     """Test _parse_mei_response method"""
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def setUp(self, mock_pymodbus):
+    def setUp(self, _mock_pymodbus):
         """Set up scanner instance"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -973,7 +987,7 @@ class TestModbusScannerErrorPaths(unittest.TestCase):
     """Test error handling paths in ModbusScanner"""
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def setUp(self, mock_pymodbus):
+    def setUp(self, _mock_pymodbus):
         """Set up scanner instance"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1008,7 +1022,7 @@ class TestModbusGetExceptionName(unittest.TestCase):
     """Test _get_exception_name method"""
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def setUp(self, mock_pymodbus):
+    def setUp(self, _mock_pymodbus):
         """Set up scanner instance"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1035,7 +1049,7 @@ class TestModbusConnectionMethods(unittest.TestCase):
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
     @patch("oida.protocols.modbus.scanner._get_modbus_tcp_client")
-    def test_get_protocol_name(self, mock_tcp_client, mock_pymodbus):
+    def test_get_protocol_name(self, _mock_tcp_client, _mock_pymodbus):
         """Test get_protocol_name returns Modbus"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1046,7 +1060,7 @@ class TestModbusConnectionMethods(unittest.TestCase):
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
     @patch("oida.protocols.modbus.scanner._get_modbus_tcp_client")
-    def test_get_default_port(self, mock_tcp_client, mock_pymodbus):
+    def test_get_default_port(self, _mock_tcp_client, _mock_pymodbus):
         """Test get_default_port returns 502"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1056,7 +1070,7 @@ class TestModbusConnectionMethods(unittest.TestCase):
         self.assertEqual(scanner.get_default_port(), 502)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_check_dependencies(self, mock_pymodbus):
+    def test_check_dependencies(self, _mock_pymodbus):
         """Test check_dependencies method"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1090,7 +1104,7 @@ class TestModbusDisconnect(unittest.TestCase):
     """Test disconnect method"""
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def setUp(self, mock_pymodbus):
+    def setUp(self, _mock_pymodbus):
         """Set up scanner instance"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1210,7 +1224,7 @@ class TestModbusScannerMEIErrorHandling(unittest.TestCase):
     """Test MEI response parsing with various error conditions"""
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def setUp(self, mock_pymodbus):
+    def setUp(self, _mock_pymodbus):
         """Set up scanner instance"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1255,7 +1269,7 @@ class TestModbusScannerInitializationEdgeCases(unittest.TestCase):
     """Test ModbusScanner initialization with edge cases"""
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_scanner_init_missing_optional_args(self, mock_pymodbus):
+    def test_scanner_init_missing_optional_args(self, _mock_pymodbus):
         """Test scanner with minimal args (only required fields)"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1273,7 +1287,7 @@ class TestModbusScannerInitializationEdgeCases(unittest.TestCase):
         self.assertFalse(scanner.discover_units)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_scanner_init_get_device_id_false(self, mock_pymodbus):
+    def test_scanner_init_get_device_id_false(self, _mock_pymodbus):
         """Test scanner with get-device-id disabled"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1288,7 +1302,7 @@ class TestModbusScannerInitializationEdgeCases(unittest.TestCase):
         self.assertFalse(scanner.get_device_id)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_scanner_init_all_optional_args(self, mock_pymodbus):
+    def test_scanner_init_all_optional_args(self, _mock_pymodbus):
         """Test scanner with all optional args set"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1415,7 +1429,7 @@ class TestModbusNetworkErrorPaths(unittest.TestCase):
     """
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def setUp(self, mock_pymodbus):
+    def setUp(self, _mock_pymodbus):
         """Set up scanner instance"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1536,7 +1550,7 @@ class TestModbusMalformedResponseHandling(unittest.TestCase):
     """Test handling of malformed Modbus responses."""
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def setUp(self, mock_pymodbus):
+    def setUp(self, _mock_pymodbus):
         """Set up scanner instance"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1624,7 +1638,7 @@ class TestModbusTimeoutEdgeCases(unittest.TestCase):
     """Test timeout handling edge cases."""
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_zero_timeout(self, mock_pymodbus):
+    def test_zero_timeout(self, _mock_pymodbus):
         """Test scanner behavior with zero timeout."""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1634,7 +1648,7 @@ class TestModbusTimeoutEdgeCases(unittest.TestCase):
         self.assertEqual(scanner.timeout, 0)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_very_small_timeout(self, mock_pymodbus):
+    def test_very_small_timeout(self, _mock_pymodbus):
         """Test scanner behavior with very small timeout (1ms).
 
         Note: BaseScanner converts timeout to int, so 0.001 becomes 0.
@@ -1648,7 +1662,7 @@ class TestModbusTimeoutEdgeCases(unittest.TestCase):
         self.assertEqual(scanner.timeout, 0)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_very_large_timeout(self, mock_pymodbus):
+    def test_very_large_timeout(self, _mock_pymodbus):
         """Test scanner behavior with very large timeout."""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1658,7 +1672,7 @@ class TestModbusTimeoutEdgeCases(unittest.TestCase):
         self.assertEqual(scanner.timeout, 3600)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_negative_timeout_handling(self, mock_pymodbus):
+    def test_negative_timeout_handling(self, _mock_pymodbus):
         """Test scanner behavior with negative timeout."""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1674,7 +1688,7 @@ class TestModbusInvalidInputHandling(unittest.TestCase):
     """Test handling of invalid input parameters."""
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_invalid_unit_id_zero(self, mock_pymodbus):
+    def test_invalid_unit_id_zero(self, _mock_pymodbus):
         """Test handling of unit ID 0."""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1685,7 +1699,7 @@ class TestModbusInvalidInputHandling(unittest.TestCase):
         self.assertEqual(scanner.unit_id, 0)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_invalid_unit_id_over_247(self, mock_pymodbus):
+    def test_invalid_unit_id_over_247(self, _mock_pymodbus):
         """Test handling of unit ID > 247."""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1696,7 +1710,7 @@ class TestModbusInvalidInputHandling(unittest.TestCase):
         self.assertEqual(scanner.unit_id, 255)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_invalid_port_zero(self, mock_pymodbus):
+    def test_invalid_port_zero(self, _mock_pymodbus):
         """Test handling of port 0.
 
         Note: BaseScanner uses `rport or get_default_port()`, so port 0
@@ -1711,7 +1725,7 @@ class TestModbusInvalidInputHandling(unittest.TestCase):
         self.assertEqual(scanner.port, 502)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_invalid_port_over_65535(self, mock_pymodbus):
+    def test_invalid_port_over_65535(self, _mock_pymodbus):
         """Test handling of port > 65535."""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1721,7 +1735,7 @@ class TestModbusInvalidInputHandling(unittest.TestCase):
         self.assertEqual(scanner.port, 70000)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_empty_scan_range(self, mock_pymodbus):
+    def test_empty_scan_range(self, _mock_pymodbus):
         """Test handling of empty scan range."""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1732,7 +1746,7 @@ class TestModbusInvalidInputHandling(unittest.TestCase):
         self.assertIsNotNone(scanner.scan_range)
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_malformed_scan_range(self, mock_pymodbus):
+    def test_malformed_scan_range(self, _mock_pymodbus):
         """Test handling of malformed scan range format."""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1743,7 +1757,7 @@ class TestModbusInvalidInputHandling(unittest.TestCase):
         self.assertEqual(scanner.scan_range, "invalid")
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def test_reversed_scan_range(self, mock_pymodbus):
+    def test_reversed_scan_range(self, _mock_pymodbus):
         """Test handling of reversed scan range (end < start)."""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1757,7 +1771,7 @@ class TestModbusExceptionResponseParsing(unittest.TestCase):
     """Test parsing of Modbus exception responses."""
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def setUp(self, mock_pymodbus):
+    def setUp(self, _mock_pymodbus):
         """Set up scanner instance"""
         from oida.protocols.modbus.scanner import ModbusScanner
 
@@ -1798,7 +1812,7 @@ class TestModbusResourceCleanup(unittest.TestCase):
     """Test proper resource cleanup on errors."""
 
     @patch("oida.protocols.modbus.scanner._get_pymodbus")
-    def setUp(self, mock_pymodbus):
+    def setUp(self, _mock_pymodbus):
         """Set up scanner instance"""
         from oida.protocols.modbus.scanner import ModbusScanner
 

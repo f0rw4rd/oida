@@ -145,7 +145,7 @@ class ScannerWriteOpsMixin(_ScannerBase):
             result["success"] = not write_result.isError()
 
             # Restore if requested
-            if restore_on_exit and result["original_values"]:
+            if restore_on_exit and result["original_values"] is not None:
                 restore_result = client.write_registers(
                     address, result["original_values"], device_id=self.unit_id
                 )
@@ -203,7 +203,7 @@ class ScannerWriteOpsMixin(_ScannerBase):
             result["success"] = not write_result.isError()
 
             # Restore if requested
-            if restore_on_exit and result["original_values"]:
+            if restore_on_exit and result["original_values"] is not None:
                 restore_result = client.write_coils(
                     address, result["original_values"], device_id=self.unit_id
                 )

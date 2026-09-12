@@ -334,7 +334,9 @@ class ScannerIdentificationMixin(_ScannerBase):
 
         all_objects = {}
         current_object_id = 0x00
-        transaction_id = 1
+        # Start high to avoid colliding with pymodbus's own low, incrementing
+        # transaction-id sequence on the shared socket.
+        transaction_id = 0xF000
         max_iterations = 10  # Prevent infinite loops
 
         try:
@@ -418,3 +420,20 @@ class ScannerIdentificationMixin(_ScannerBase):
         except Exception as e:
             self.logger.debug(f"MEI raw read error: {e}")
             return all_objects if all_objects else None
+        finally:
+            # Drain any leftover/fragmented bytes from the shared socket so
+            # pymodbus's next framed read doesn't pick up the tail of our raw MEI
+            # response and desync every subsequent operation.
+            try:
+                client.socket.settimeout(0.05)
+                # Bounded so a chatty/mock socket can't spin here forever.
+                for _ in range(64):
+                    if not client.socket.recv(4096):
+                        break
+            except Exception:
+                pass
+            finally:
+                try:
+                    client.socket.settimeout(self.timeout)
+                except Exception:
+                    pass

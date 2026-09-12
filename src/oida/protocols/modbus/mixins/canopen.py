@@ -157,6 +157,19 @@ class CANopenMixin(_ScannerBase):
             node_id = int(parts[0], 0)
             index = int(parts[1], 0)
             subindex = int(parts[2], 0)
+            # node_id and subindex are packed into single bytes downstream, and
+            # index into two; a caller like `300:0x1000:0` would otherwise raise
+            # `bytes must be in range(0, 256)` outside the handler's try/except
+            # and abort the run instead of the intended clean fail.
+            if not (0 <= node_id <= 255):
+                self.logger.debug(f"CANopen node_id out of range (0-255): {node_id}")
+                return None, 0, 0
+            if not (0 <= subindex <= 255):
+                self.logger.debug(f"CANopen subindex out of range (0-255): {subindex}")
+                return None, 0, 0
+            if not (0 <= index <= 0xFFFF):
+                self.logger.debug(f"CANopen index out of range (0-0xFFFF): {index}")
+                return None, 0, 0
             return node_id, index, subindex
         except ValueError as e:
             self.logger.debug(f"Failed to get node_id: {e}")

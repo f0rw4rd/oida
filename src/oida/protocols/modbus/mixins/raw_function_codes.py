@@ -124,7 +124,16 @@ class RawFCMixin(_ScannerBase):
             self.logger.warning(f"Could not save response: {e}")
 
     def _handle_enumerate_functions(self):
-        """Handle --enumerate-functions flag."""
+        """Handle --enumerate-functions flag.
+
+        This probes every FC in range with an EMPTY payload (including write FCs
+        5/6/15/16/23) WITHOUT --confirm, unlike _test_function_codes which gates
+        the same MUTATING_FCS behind --confirm. The exemption is deliberate: a
+        spec-compliant server rejects an empty write request as an
+        illegal-data-value exception before performing any write, so an
+        empty-payload probe only reveals whether the FC is *implemented*, never
+        mutates state. (Do not add real payloads here without a --confirm gate.)
+        """
         self.logger.display("Enumerating supported function codes...")
 
         fc_range_str = getattr(self.args, "fc_range", "1-8,11,12,15-17,20-23,43")

@@ -57,7 +57,7 @@ Flag Coverage Matrix (proto_args.py):
   --ascii                   [skip] requires physical serial hardware
   -r/--scan-range           [A] test_read_holding_registers
   -R/--register-type        [A] test_read_holding_registers, _input, _coils, _discrete, _all
-  -u/--unit-id              [A] test_specific_unit_id
+  --unit-id                 [A] test_specific_unit_id
   -U/--discover-units       [B] test_unit_id_discovery
   --unit-range              [B] test_discover_units_small_range
   --broadcast               [B] test_broadcast_mode
@@ -103,8 +103,6 @@ Flag Coverage Matrix (proto_args.py):
   --duration                [B] test_monitor_mode
   --on-change               [B] test_monitor_on_change
   --log-file                [B] test_monitor_with_log_file
-  --delay                   [A] test_scan_behavior_options
-  --retries                 [A] test_scan_behavior_options
   --scan-mode               [A] test_quick_mode, test_full_mode, test_discover_mode
   --max-registers           [B] test_max_registers
   --raw-fc                  [B] test_raw_fc_standard_code
@@ -114,7 +112,8 @@ Flag Coverage Matrix (proto_args.py):
   --confirm                 [A] test_write_register_requires_confirm
   --fuzz                    [A] test_fuzz_without_confirm_is_rejected, _no_fuzz_data, _result_contains_summary
                             [B] test_fuzz_mode_data, _boundary, _full, _over_rtu_tcp, _float32, _int32
-                            [C] test_basic_fuzz, test_fuzz_against_wrong_port
+                            [C] test_basic_fuzz, test_basic_fuzz_no_scan_range_defaults,
+                            test_fuzz_against_wrong_port
   --fuzz-mode               [B] test_fuzz_mode_data, _boundary, _full, test_fuzz_function_mode_no_scan_range
                             [C] test_function_fuzz
   --fuzz-iterations         [B] test_fuzz_iterations_one, _large_range_small_max
@@ -1462,27 +1461,6 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
         assert result.returncode != 0, "Unreachable host should return non-zero"
         assert not result.success, "Unreachable host should not report success"
 
-    def test_scan_behavior_options(self, cli_runner, target, port, docker_services):
-        """Test --delay and --retries scan behavior options [Category A]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--scan-range",
-            "0-10",
-            "--delay",
-            "0.1",
-            "--retries",
-            "2",
-            format="json",
-            json_log=True,
-        )
-
-        assert result.success, f"Scan with options failed: {result.stderr}"
-        assert result.returncode == 0, f"Expected return code 0, got {result.returncode}"
-        _assert_log_has_events(result)
-
     # ========================================================================
     # CANopen MEI Tests (FC 43/13)
     # ========================================================================
@@ -1599,6 +1577,48 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
 
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
+
+    @pytest.mark.fuzz
+    @pytest.mark.slow
+    def test_basic_fuzz_no_scan_range_defaults(self, cli_runner, target, port, docker_services):
+        """Test register fuzzing without --scan-range falls back to 0-10 [Category A]
+
+        Regression: argparse always sets args.scan_range (None when absent), so
+        the "0-10" getattr fallback in _fuzz_registers never applied and the run
+        died with "'NoneType' object has no attribute 'split'" (now a guarded
+        ValueError). Default range 0-10 = 11 addresses, capped by the default
+        --fuzz-max-addresses=10 -> 10 registers x 8 boundary payloads = 80 tests.
+        """
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--fuzz",
+            "--fuzz-mode",
+            "basic",
+            "--fuzz-iterations",
+            "3",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=60,
+        )
+
+        assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
+
+        output = _combined_text(result, result.scan_log)
+        assert "scan failed" not in output.lower(), f"Fuzz crashed: {output[:600]}"
+        summary = _parse_fuzz_summary(output)
+        assert summary is not None, f"No fuzz summary line found in output: {output[:600]}"
+        assert summary["tests"] == 80, f"Expected 80 tests (10 regs x 8 payloads): {summary}"
+        assert summary["writes"] == summary["tests"], (
+            f"Expected every write to succeed against writable mock: {summary}"
+        )
+        assert summary["crashes"] == 0, f"Mock crashed during fuzzing: {summary}"
+        assert _count_fuzzed_registers(result) == 10, (
+            f"Expected 10 'Fuzzing register' lines: {output[:600]}"
+        )
 
     @pytest.mark.fuzz
     @pytest.mark.slow

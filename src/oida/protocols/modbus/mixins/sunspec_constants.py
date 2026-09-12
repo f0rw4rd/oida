@@ -63,6 +63,12 @@ SUNSPEC_CRITICAL_CONTROLS: Dict[int, Dict[str, str]] = {
 # Inverter operating states indicating active production
 SUNSPEC_ACTIVE_STATES = {4, 5}  # MPPT, THROTTLED
 
+# Legal range of a sunssf scale-factor register per the SunSpec specification.
+# The value is peer-supplied and used as an exponent (10 ** sf), so anything
+# outside this range is treated as malformed rather than applied.
+SUNSPEC_SF_MIN = -10
+SUNSPEC_SF_MAX = 10
+
 # SunSpec "Not Implemented" sentinel values by data type
 SUNSPEC_NOT_IMPLEMENTED = {
     "u16": 0xFFFF,

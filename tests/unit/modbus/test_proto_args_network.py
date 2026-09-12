@@ -164,19 +164,19 @@ class TestModbusCoreOptions:
         args = parser.parse_args(["modbus", "192.168.1.100", "--unit-id", "5"])
         assert args.unit_id == 5
 
-    def test_unit_id_short_flag(self, parser):
-        """Test -u short flag for unit ID."""
-        args = parser.parse_args(["modbus", "192.168.1.100", "-u", "10"])
-        assert args.unit_id == 10
+    def test_unit_id_no_short_flag(self, parser):
+        """Verify -u is NOT a valid short flag: reserved for --username framework-wide."""
+        with pytest.raises(SystemExit):
+            parser.parse_args(["modbus", "192.168.1.100", "-u", "10"])
 
     def test_unit_id_broadcast(self, parser):
         """Test unit ID 0 (broadcast)."""
-        args = parser.parse_args(["modbus", "192.168.1.100", "-u", "0"])
+        args = parser.parse_args(["modbus", "192.168.1.100", "--unit-id", "0"])
         assert args.unit_id == 0
 
     def test_unit_id_max(self, parser):
         """Test maximum unit ID (247)."""
-        args = parser.parse_args(["modbus", "192.168.1.100", "-u", "247"])
+        args = parser.parse_args(["modbus", "192.168.1.100", "--unit-id", "247"])
         assert args.unit_id == 247
 
     def test_scan_range(self, parser):

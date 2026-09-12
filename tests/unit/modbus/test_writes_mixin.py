@@ -315,7 +315,7 @@ class TestHandleTestWrite:
             "errors": [],
         }
         fw._handle_test_write()
-        assert any(f["category"] == "ACCESS_CONTROL" for f in fw.logger.findings)
+        assert any(f["title"] == "Writable access" for f in fw.logger.findings)
         assert fw.results["data"]["test_write"]["writable"]
 
     def test_coil_register_type_mapped(self):

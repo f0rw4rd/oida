@@ -118,7 +118,6 @@ Custom Function Codes:
     # Modbus Core Options
     modbus_group = modbus_parser.add_argument_group("Modbus Options")
     modbus_group.add_argument(
-        "-u",
         "--unit-id",
         type=bounded_int(0, 247),
         default=None,
@@ -413,8 +412,11 @@ Custom Function Codes:
         "--log-file", type=str, metavar="FILE", help="Log monitored values to file"
     )
 
-    # Scan Options (--threads, --delay, --retries)
-    scan_group = add_scan_options(modbus_parser, include_threads=False)
+    # Scan Options group (used below for --scan-mode etc.); --threads/--delay/
+    # --retries are not wired in the modbus scanner, so they stay disabled.
+    scan_group = add_scan_options(
+        modbus_parser, include_threads=False, include_delay=False, include_retries=False
+    )
     scan_group.add_argument(
         "--scan-mode",
         choices=["discovery", "registers", "full", "quick"],

@@ -169,13 +169,35 @@ class ScannerDiagnosticsMixin(_ScannerBase):
             self.logger.debug(f"Echo test failed: {e}")
         return None
 
+    @staticmethod
+    def _normalize_diag_word(value: Any) -> Optional[int]:
+        """Coerce a pymodbus diagnostic payload to a single 16-bit word.
+
+        The device controls the response length, and pymodbus decodes >=4 data
+        bytes into a *tuple* of words (and the echo sub-function into bytes).
+        Callers format this with ``f"0x{...:04X}"``, which raises TypeError on
+        anything but an int, so normalize here rather than at the display layer.
+        """
+        if isinstance(value, (tuple, list)):
+            value = value[0] if value else None
+        if isinstance(value, (bytes, bytearray)):
+            value = int.from_bytes(value[:2], "big") if value else None
+        if isinstance(value, bool) or not isinstance(value, int):
+            return None
+        return value & 0xFFFF
+
     def _diagnostic_read_register(self, client: Any) -> Optional[int]:
         """Read diagnostic register (subfunction 0x02)"""
         try:
             # Use pymodbus built-in diag_read_diagnostic_register method
             result = client.diag_read_diagnostic_register(device_id=self.unit_id)
             if not result.isError():
-                return getattr(result, "message", None) or getattr(result, "data", 0)
+                raw = getattr(result, "message", None)
+                if raw is None:
+                    # A legitimate register value of 0 is falsy, so only fall
+                    # back to `.data` when `.message` is genuinely absent.
+                    raw = getattr(result, "data", 0)
+                return self._normalize_diag_word(raw)
         except Exception as e:
             self.logger.debug(f"Read diagnostic register failed: {e}")
         return None

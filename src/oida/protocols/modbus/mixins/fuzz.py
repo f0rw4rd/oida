@@ -65,7 +65,10 @@ class FuzzMixin(_ScannerBase):
 
     def _fuzz_registers(self, iterations: int, mode: str) -> Dict:
         """Fuzz registers with various payloads."""
-        scan_range = getattr(self.args, "scan_range", "0-10")
+        # Default to "0-10" when -r/--scan-range isn't given: argparse always
+        # sets the attribute (None when absent), so getattr's default never
+        # applies — same pattern as writes.py's test-write handler.
+        scan_range = getattr(self.args, "scan_range", None) or "0-10"
         decode_type = getattr(self.args, "decode", None)
 
         addresses = self._parse_fuzz_range(scan_range)
@@ -73,7 +76,14 @@ class FuzzMixin(_ScannerBase):
             self.logger.fail("No addresses to fuzz. Use -r/--scan-range")
             return {}
 
-        stats = {"tests": 0, "writes": 0, "errors": 0, "crashes": 0, "details": []}
+        stats = {
+            "tests": 0,
+            "writes": 0,
+            "errors": 0,
+            "crashes": 0,
+            "details": [],
+            "restore_warnings": [],
+        }
 
         max_addresses = getattr(self.args, "fuzz_max_addresses", 10)
         fuzz_addrs = addresses[:max_addresses]
@@ -147,6 +157,17 @@ class FuzzMixin(_ScannerBase):
             # Restore original value(s) -- rewrite the full register window
             # for 2-register typed payloads so addr+1 doesn't stay fuzzed.
             if original_value is not None:
+                if register_width == 2 and original_value_hi is None:
+                    # We never learned addr+1's pre-fuzz value (the read at
+                    # the top of this loop failed), so only addr can be
+                    # restored below -- addr+1 is left holding whatever the
+                    # last fuzz payload wrote. This must not be silent.
+                    msg = (
+                        f"Could not restore register {addr + 1}: original value "
+                        f"was never read; device left holding fuzzed data"
+                    )
+                    self.logger.warning(msg)
+                    stats["restore_warnings"].append({"address": addr + 1, "reason": msg})
                 try:
                     if register_width == 2 and original_value_hi is not None:
                         self.conn.write_registers(
@@ -159,7 +180,9 @@ class FuzzMixin(_ScannerBase):
                             addr, original_value, device_id=self.scanner.unit_id
                         )
                 except Exception as e:
-                    self.logger.debug(f"Failed to restore register {addr}: {e}")
+                    msg = f"Failed to restore register {addr}: {e}"
+                    self.logger.warning(msg)
+                    stats["restore_warnings"].append({"address": addr, "reason": msg})
 
         return stats
 

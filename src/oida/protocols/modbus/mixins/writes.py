@@ -16,7 +16,6 @@ from ..decoder import ModbusEncoder, parse_endian
 from ....utils.protocol_helpers import ProtocolParser
 
 from typing import TYPE_CHECKING
-from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -340,14 +339,23 @@ class WritesMixin(_ScannerBase):
         scan_range = getattr(self.args, "scan_range", None) or "0-10"
         register_type = getattr(self.args, "register_type", None) or "holding"
 
-        # Map register type to internal format
+        # Map register type to internal format. Input registers and discrete
+        # inputs are READ-ONLY in Modbus, so a write test against them is
+        # invalid -- reject the request explicitly instead of silently coercing
+        # to holding_registers and reporting write access for a different bank.
         type_map = {
             "holding": "holding_registers",
             "coil": "coils",
             "coils": "coils",
             "holding_registers": "holding_registers",
         }
-        reg_type = type_map.get(register_type, "holding_registers")
+        if register_type not in type_map:
+            self.logger.fail(
+                f"--test-write does not support register type '{register_type}' "
+                "(input/discrete are read-only in Modbus; use 'holding' or 'coil')"
+            )
+            return
+        reg_type = type_map[register_type]
 
         addresses = ProtocolParser.parse_address_range(scan_range)
 
@@ -392,6 +400,5 @@ class WritesMixin(_ScannerBase):
         if writable:
             self.logger.security_finding(
                 "Writable access",
-                category=Category.ACCESS_CONTROL,
                 detail=f"Found {len(writable)} writable {reg_type}",
             )

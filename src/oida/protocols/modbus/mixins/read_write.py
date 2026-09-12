@@ -179,8 +179,8 @@ class MapReadWriteMixin(_ScannerBase):
         regs_needed = resolver.get_registers_needed(entry)
         address = entry["address"]
         fc = entry["function_code"]
-        # Use map's default unit ID only if the user did not explicitly pass -u
-        # (argparse default is None). An explicit -u 1 must be honored verbatim.
+        # Use map's default unit ID only if the user did not explicitly pass --unit-id
+        # (argparse default is None). An explicit --unit-id 1 must be honored verbatim.
         user_unit_id = getattr(self.args, "unit_id", None)
         default_uid = resolver.map_data.get("default_unit_id")
         if user_unit_id is None:
@@ -324,8 +324,8 @@ class MapReadWriteMixin(_ScannerBase):
         address = entry["address"]
         fc = entry["function_code"]
         dtype = entry["type"]
-        # Use map's default unit ID only if the user did not explicitly pass -u
-        # (argparse default is None). An explicit -u 1 must be honored verbatim.
+        # Use map's default unit ID only if the user did not explicitly pass --unit-id
+        # (argparse default is None). An explicit --unit-id 1 must be honored verbatim.
         user_unit_id = getattr(self.args, "unit_id", None)
         default_uid = resolver.map_data.get("default_unit_id")
         if user_unit_id is None:

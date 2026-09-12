@@ -763,6 +763,8 @@ def validate_register_map(
             scale = reg_def["scale"]
             if not isinstance(scale, (int, float)):
                 result.error(f"Register '{reg_name}': scale must be numeric, got '{scale}'")
+            elif scale == 0:
+                result.error(f"Register '{reg_name}': scale must not be 0 (division by zero)")
 
         # ----- Check for address overlaps -----
         fc = reg_def.get("function_code", 3)

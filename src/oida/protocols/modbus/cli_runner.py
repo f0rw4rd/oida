@@ -18,7 +18,6 @@ The class uses mixins for feature-specific handler methods:
 """
 
 from ...connection import NetworkConnection
-from ...utils.common_types import Category
 from ...utils.exceptions import DependencyError
 from ...utils.lazy_import import lazy_import
 
@@ -451,8 +450,8 @@ class modbus(
             self.logger.display(f"  Standard: {standard.upper()}")
         self.logger.display(f"  Byte order: {byte_order}, Word order: {word_order}")
 
-        # Use map's default unit ID only if the user did not explicitly pass -u
-        # (argparse default is None). An explicit -u 1 must be honored verbatim.
+        # Use map's default unit ID only if the user did not explicitly pass --unit-id
+        # (argparse default is None). An explicit --unit-id 1 must be honored verbatim.
         user_unit_id = getattr(self.args, "unit_id", None)
         default_uid = reg_map.get("default_unit_id")
         if user_unit_id is None:
@@ -883,7 +882,6 @@ class modbus(
         # on a confirmed-live connection here, so emit the no-encryption finding.
         self.logger.security_finding(
             "No encryption",
-            category=Category.ENCRYPTION,
             detail="Modbus/TCP has no transport encryption (cleartext)",
         )
 

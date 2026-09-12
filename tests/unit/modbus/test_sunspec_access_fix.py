@@ -25,7 +25,7 @@ class TestSunSpecAccessOverride(unittest.TestCase):
         # Register marked 'r' in the device map; spec says it's a control
         # class that's 'rw'. Old code overrode access with the spec value
         # ('trust the spec'); fixed code keeps the map's 'r'.
-        scanner = _Scanner()
+        _Scanner()
         # Inline a tiny piece of the mixin's logic to verify the contract:
         reg_info = {"access": "r", "value": 42, "not_implemented": False}
         access = reg_info.get("access", "r")
