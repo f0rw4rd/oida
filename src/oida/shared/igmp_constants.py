@@ -13,7 +13,13 @@ IGMP_V2_MEMBERSHIP_REPORT = 0x16
 IGMP_V2_LEAVE_GROUP = 0x17
 IGMP_V3_MEMBERSHIP_REPORT = 0x22
 
-# Common multicast groups and their purposes
+# Common multicast groups and their purposes.
+#
+# Names follow the IANA IPv4 Multicast Address Registry:
+# https://www.iana.org/assignments/multicast-addresses/multicast-addresses.txt
+# Do not invent entries here -- an earlier revision claimed 224.0.0.120 for
+# BACnet/IP, 224.0.1.129 for "Multicast VLAN Registration" and 224.0.23.0/1 for
+# PROFINET DCP, none of which IANA assigns to those protocols.
 MULTICAST_GROUPS = {
     "224.0.0.1": "All Hosts",
     "224.0.0.2": "All Routers",
@@ -24,21 +30,31 @@ MULTICAST_GROUPS = {
     "224.0.0.13": "PIM",
     "224.0.0.18": "VRRP",
     "224.0.0.22": "IGMPv3",
-    "224.0.0.102": "HSRPv2",
-    "224.0.0.120": "BACnet/IP",
+    "224.0.0.102": "HSRPv2/GLBP",
+    "224.0.0.107": "PTP-pdelay (IEEE 1588)",
+    "224.0.0.120": "3GPP MBMS SACH",
     "224.0.0.251": "mDNS",
     "224.0.0.252": "LLMNR",
     "224.0.1.1": "NTP",
-    "224.0.1.129": "Multicast VLAN Registration",
+    "224.0.1.129": "PTP-primary (IEEE 1588)",
+    "224.0.1.130": "PTP-alternate1 (IEEE 1588)",
+    "224.0.23.0": "ECHONET",
+    "224.0.23.1": "Ricoh-device-ctrl",
+    "224.0.23.12": "KNXnet/IP",
+    "224.0.23.159": "LXI-EVENT",
     "239.255.255.250": "SSDP/UPnP",
-    "239.255.255.253": "SSDP Search",
+    "239.255.255.253": "SLPv2 Discovery",
     "239.192.0.0/14": "Organization-Local Scope",  # Range
 }
 
-# ICS-specific multicast groups
+# ICS-specific multicast groups (subset of MULTICAST_GROUPS that indicates
+# industrial / building-automation / test-instrumentation traffic).
 ICS_MULTICAST_GROUPS = {
-    "224.0.0.120": "BACnet/IP",
-    "224.0.23.0": "PROFINET DCP",
-    "224.0.23.1": "PROFINET DCP",
+    "224.0.0.107": "PTP-pdelay (IEEE 1588)",
+    "224.0.1.129": "PTP-primary (IEEE 1588)",
+    "224.0.1.130": "PTP-alternate1 (IEEE 1588)",
+    "224.0.23.0": "ECHONET",
+    "224.0.23.12": "KNXnet/IP",
+    "224.0.23.159": "LXI-EVENT",
     "239.255.255.250": "SSDP (industrial devices)",
 }

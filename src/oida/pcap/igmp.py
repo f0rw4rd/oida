@@ -12,8 +12,10 @@ IGMP versions:
 - IGMPv2: Adds leave group message
 - IGMPv3: Source-specific multicast
 
-Common ICS multicast groups:
-- 224.0.0.120: BACnet/IP
+Common ICS multicast groups (names per the IANA IPv4 multicast registry):
+- 224.0.23.12: KNXnet/IP
+- 224.0.1.129: PTP-primary (IEEE 1588)
+- 224.0.23.0: ECHONET
 - 224.0.0.251: mDNS
 - 224.0.1.1: NTP
 - 239.255.255.250: SSDP/UPnP

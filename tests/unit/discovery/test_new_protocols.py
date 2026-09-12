@@ -354,11 +354,17 @@ class TestIGMPPassiveListener:
         assert result is None
 
     def test_igmp_ics_multicast_groups(self):
-        """Test ICS multicast group detection."""
+        """ICS multicast group names must match the IANA IPv4 multicast registry.
+
+        This test previously asserted ICS_MULTICAST_GROUPS["224.0.0.120"] ==
+        "BACnet/IP"; IANA assigns 224.0.0.120 to 3GPP MBMS SACH, and BACnet/IP
+        (ASHRAE 135 Annex J) is UDP/47808 broadcast + BBMD, not multicast.
+        """
         from oida.protocols.discovery.igmp import ICS_MULTICAST_GROUPS
 
-        assert "224.0.0.120" in ICS_MULTICAST_GROUPS  # BACnet
-        assert ICS_MULTICAST_GROUPS["224.0.0.120"] == "BACnet/IP"
+        assert ICS_MULTICAST_GROUPS["224.0.23.12"] == "KNXnet/IP"
+        assert "PTP" in ICS_MULTICAST_GROUPS["224.0.1.129"]
+        assert "224.0.0.120" not in ICS_MULTICAST_GROUPS
 
 
 class TestIGMPQueryScanner:
