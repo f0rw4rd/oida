@@ -369,34 +369,37 @@ class DiscoveryMixin:
 
         self.logger.display(f"  Vendor: {vendor_name} (ID: {vendor_id})")
 
-        # Known vendor patterns for proprietary objects/properties
+        # Known vendor patterns for proprietary objects/properties. Vendor IDs
+        # are the official ASHRAE assigned-vendor-ids (bacnet.org), matching the
+        # VENDORS map; the proprietary-property probe range (512+) is the generic
+        # BACnet vendor-proprietary band, not vendor-specific intelligence.
         known_vendor_patterns = {
-            89: {  # Tridium / Niagara
+            36: {  # Tridium / Niagara
                 "name": "Tridium/Niagara",
                 "suspect_props": [512, 513, 514, 515, 516, 517, 518, 519, 520],
                 "notes": "Niagara Framework - check for NiagaraStation config props",
             },
-            7: {  # Siemens Building Technologies
+            7: {  # Siemens Schweiz AG
                 "name": "Siemens",
                 "suspect_props": [512, 513, 514, 515, 520, 521, 522, 530, 540],
                 "notes": "Siemens Desigo/PXC - may expose engineering access props",
             },
-            4: {  # Honeywell
+            17: {  # Honeywell
                 "name": "Honeywell",
                 "suspect_props": [512, 513, 514, 515, 516, 524, 525, 530, 540, 550],
                 "notes": "Honeywell WEBs/Spyder - check for service tool properties",
             },
-            6: {  # Honeywell (alternate ID)
-                "name": "Honeywell",
+            18: {  # Alerton / Honeywell
+                "name": "Alerton/Honeywell",
                 "suspect_props": [512, 513, 514, 515, 516, 524, 525, 530, 540, 550],
-                "notes": "Honeywell - check for service tool properties",
+                "notes": "Alerton/Honeywell - check for service tool properties",
             },
             5: {  # Johnson Controls
                 "name": "Johnson Controls",
                 "suspect_props": [512, 513, 514, 515, 516, 517, 518, 530, 540],
                 "notes": "JCI Metasys - may have NAE/NCE debug properties",
             },
-            222: {  # Schneider Electric
+            10: {  # Schneider Electric
                 "name": "Schneider Electric",
                 "suspect_props": [512, 513, 514, 515, 520, 525, 530],
                 "notes": "Schneider SmartStruxure - check for engineering props",

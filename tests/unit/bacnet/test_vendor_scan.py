@@ -92,9 +92,9 @@ class TestVendorScan(unittest.TestCase):
         scanner = _create_instance()
         app = AsyncMock()
 
-        # First call returns vendorIdentifier = 89 (Tridium)
+        # First call returns vendorIdentifier = 36 (Tridium, per ASHRAE registry)
         # Remaining calls return None (no proprietary objects/props found)
-        responses = [_make_uint_response(89)] + [None] * 500
+        responses = [_make_uint_response(36)] + [None] * 500
         app.request = AsyncMock(side_effect=responses)
 
         asyncio.run(scanner._bacpypes3_vendor_scan(app, Mock(), 1001, 5.0))
