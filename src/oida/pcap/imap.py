@@ -397,11 +397,32 @@ class IMAPPassiveListener(PySharkListenerBase):
                     detail["parameter"] = folder
                     self.logger.debug(f"IMAP {cmd_upper}: {client_ip} -> {folder}")
 
-                # AUTHENTICATE - track method
+                # AUTHENTICATE - track SASL mechanism (PLAIN / LOGIN /
+                # CRAM-MD5 / XOAUTH2, ...). There is no
+                # "imap.request.parameter" / "imap.request_parameter" field in
+                # any Wireshark version -- derive the mechanism from the raw
+                # request text instead. ``imap.request`` is documented as the
+                # "remainder of request line" (tag already stripped by the
+                # dissector), e.g. "AUTHENTICATE PLAIN", but be defensive in
+                # case a caller feeds the full line (tag included) or trailing
+                # CRLF.
                 if cmd_upper == "AUTHENTICATE":
-                    param_field = self.get_field(imap_layer, "request_parameter", "")
-                    if param_field:
-                        detail["parameter"] = str(param_field)
+                    raw_request = self.get_field(imap_layer, "request", "")
+                    if raw_request:
+                        tokens = str(raw_request).strip().split()
+                        upper_tokens = [t.upper() for t in tokens]
+                        mechanism = ""
+                        if "AUTHENTICATE" in upper_tokens:
+                            idx = upper_tokens.index("AUTHENTICATE")
+                            if idx + 1 < len(tokens):
+                                mechanism = tokens[idx + 1].upper()
+                        elif tokens:
+                            # Verb already stripped (e.g. only the remainder
+                            # after "AUTHENTICATE" was supplied) -- the first
+                            # token is the mechanism itself.
+                            mechanism = tokens[0].upper()
+                        if mechanism:
+                            detail["parameter"] = mechanism
 
                 # CONTINUATION - SASL data after AUTHENTICATE
                 if cmd_upper == "CONTINUATION":
