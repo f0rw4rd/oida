@@ -847,6 +847,42 @@ class TestOCPPScannerConnect(unittest.TestCase):
         scanner = self._make_scanner()
         self.assertIsNone(scanner._send_and_receive(Mock(), '{"test": true}'))
 
+    @patch("oida.protocols.ocpp.scanner._websockets")
+    def test_send_and_receive_discards_mismatched_unique_id(self, mock_ws_wrapper):
+        """A CALLRESULT answering a different (stale/out-of-order) UniqueId
+        must not be accepted as the response to the CALL just sent -- the
+        client must keep waiting for the correctly-correlated response
+        instead of a "first response wins" acceptance."""
+        scanner = self._make_scanner()
+        stale_response = json.dumps([3, "OTHER-ID", {"status": "Accepted"}])
+        correct_response = json.dumps([3, "REQ-1", {"status": "Rejected"}])
+        frames = [stale_response, correct_response]
+
+        mock_ws = Mock()
+
+        async def fake_send(msg):
+            pass
+
+        async def fake_recv():
+            return frames.pop(0)
+
+        mock_ws.send = fake_send
+        mock_ws.recv = fake_recv
+
+        async def fake_connect(*a, **kw):
+            return mock_ws
+
+        mock_ws_wrapper.get_module.return_value = Mock()
+        mock_ws_wrapper.dependencies_missing = False
+
+        with patch("websockets.asyncio.client.connect", side_effect=fake_connect):
+            conn = scanner.connect()
+
+        sent_call = json.dumps([2, "REQ-1", "Heartbeat", {}])
+        result = scanner._send_and_receive(conn, sent_call)
+
+        self.assertEqual(result, correct_response)
+
 
 # ---------------------------------------------------------------------------
 # Incoming CALL handler tests
@@ -951,7 +987,6 @@ class TestDiscoveryMixin(unittest.TestCase):
         obj.conn = Mock()
         obj.conn.subprotocol = "ocpp1.6"
         obj.logger = Mock()
-        obj.security = Mock()
         obj.results = {"data": {}}
         obj.scanner = Mock()
         obj.args = Mock()
@@ -1144,14 +1179,13 @@ class TestDiscoveryMixin(unittest.TestCase):
         self.assertIn("UnlockConnector", actions["supported"])
         self.assertIn("Heartbeat", actions["supported"])
 
-        # Should have generated a HIGH finding for dangerous actions
+        # Should have generated a finding for dangerous actions
         findings = obj.results["data"].get("security_findings", [])
-        high_findings = [f for f in findings if f["severity"] == "HIGH"]
-        self.assertEqual(len(high_findings), 1)
-        self.assertIn("Reset", high_findings[0]["description"])
-        self.assertIn("UnlockConnector", high_findings[0]["description"])
+        self.assertEqual(len(findings), 1)
+        self.assertIn("Reset", findings[0]["description"])
+        self.assertIn("UnlockConnector", findings[0]["description"])
         # Heartbeat is not dangerous, should not be mentioned
-        self.assertNotIn("Heartbeat", high_findings[0]["description"])
+        self.assertNotIn("Heartbeat", findings[0]["description"])
 
     def test_enumerate_no_finding_when_no_dangerous_actions(self):
         """No finding generated when only safe actions are supported."""
@@ -1367,7 +1401,6 @@ class TestSecurityMixin(unittest.TestCase):
         obj = FakeOCPP()
         obj.conn = Mock()
         obj.logger = Mock()
-        obj.security = Mock()
         obj.results = {"data": {}}
         obj.scanner = Mock()
         obj.args = Mock()
@@ -1422,7 +1455,6 @@ class TestSecurityMixin(unittest.TestCase):
 
         findings = self._get_findings(obj)
         self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0]["severity"], "MEDIUM")
 
     def test_check_boot_rejected_no_finding(self):
         obj = self._make_instance()
@@ -1452,7 +1484,6 @@ class TestSecurityMixin(unittest.TestCase):
         findings = self._get_findings(obj)
         key_findings = [f for f in findings if "AuthorizationKey" in f["issue"]]
         self.assertEqual(len(key_findings), 1)
-        self.assertEqual(key_findings[0]["severity"], "CRITICAL")
 
     def test_check_config_writable_security_key_generates_medium(self):
         obj = self._make_instance()
@@ -1465,7 +1496,6 @@ class TestSecurityMixin(unittest.TestCase):
         findings = self._get_findings(obj)
         writable = [f for f in findings if "writable" in f["issue"]]
         self.assertEqual(len(writable), 1)
-        self.assertEqual(writable[0]["severity"], "MEDIUM")
 
     # --- test_charging_profile_write: cleanup always runs ---
 
@@ -1523,7 +1553,6 @@ class TestSecurityMixin(unittest.TestCase):
         findings = self._get_findings(obj)
         profile_findings = [f for f in findings if "charging profile" in f["issue"].lower()]
         self.assertEqual(len(profile_findings), 1)
-        self.assertEqual(profile_findings[0]["severity"], "HIGH")
 
     def test_charging_profile_rejected_no_finding(self):
         obj = self._make_instance()
@@ -1574,7 +1603,6 @@ class TestSecurityMixin(unittest.TestCase):
         findings = self._get_findings(obj)
         avail_findings = [f for f in findings if "ChangeAvailability" in f["issue"]]
         self.assertEqual(len(avail_findings), 1)
-        self.assertEqual(avail_findings[0]["severity"], "HIGH")
 
     def test_availability_scheduled_also_generates_finding(self):
         """Scheduled acceptance is still a vulnerability."""
@@ -1618,8 +1646,11 @@ class TestSecurityMixin(unittest.TestCase):
 
         obj.test_remote_transaction_control()
 
+        # Findings carry issue + description (no severity field in this model),
+        # so the "_is_critical" name is assured via the operation-specific issue.
         findings = self._get_findings(obj)
-        self.assertEqual(findings[0]["severity"], "CRITICAL")
+        matched = [f for f in findings if "remote transaction start accepted" in f["issue"].lower()]
+        self.assertEqual(len(matched), 1)
 
     def test_reset_accepted_is_high(self):
         obj = self._make_instance()
@@ -1628,7 +1659,8 @@ class TestSecurityMixin(unittest.TestCase):
         obj.test_reset_command()
 
         findings = self._get_findings(obj)
-        self.assertEqual(findings[0]["severity"], "HIGH")
+        matched = [f for f in findings if "soft reset accepted" in f["issue"].lower()]
+        self.assertEqual(len(matched), 1)
 
     def test_unlock_accepted_is_high(self):
         obj = self._make_instance()
@@ -1637,7 +1669,8 @@ class TestSecurityMixin(unittest.TestCase):
         obj.test_unlock_connector()
 
         findings = self._get_findings(obj)
-        self.assertEqual(findings[0]["severity"], "HIGH")
+        matched = [f for f in findings if "connector unlock accepted" in f["issue"].lower()]
+        self.assertEqual(len(matched), 1)
 
     def test_unlock_failed_no_finding(self):
         obj = self._make_instance()
@@ -1655,7 +1688,8 @@ class TestSecurityMixin(unittest.TestCase):
         obj.test_firmware_update()
 
         findings = self._get_findings(obj)
-        self.assertEqual(findings[0]["severity"], "CRITICAL")
+        matched = [f for f in findings if "firmware update accepted" in f["issue"].lower()]
+        self.assertEqual(len(matched), 1)
 
     def test_clear_cache_accepted_is_medium(self):
         obj = self._make_instance()
@@ -1664,7 +1698,8 @@ class TestSecurityMixin(unittest.TestCase):
         obj.test_clear_cache()
 
         findings = self._get_findings(obj)
-        self.assertEqual(findings[0]["severity"], "MEDIUM")
+        matched = [f for f in findings if "clearcache accepted" in f["issue"].lower()]
+        self.assertEqual(len(matched), 1)
 
     def test_diagnostics_v16_ssrf_is_high(self):
         obj = self._make_instance()
@@ -1676,7 +1711,6 @@ class TestSecurityMixin(unittest.TestCase):
         obj.test_diagnostics()
 
         findings = self._get_findings(obj)
-        self.assertEqual(findings[0]["severity"], "HIGH")
         self.assertIn("SSRF", findings[0]["issue"])
 
     def test_diagnostics_v201_uses_get_log(self):
@@ -1696,7 +1730,8 @@ class TestSecurityMixin(unittest.TestCase):
         obj.test_remote_stop()
 
         findings = self._get_findings(obj)
-        self.assertEqual(findings[0]["severity"], "HIGH")
+        matched = [f for f in findings if "remotestoptransaction accepted" in f["issue"].lower()]
+        self.assertEqual(len(matched), 1)
 
     def test_local_list_send_accepted_is_critical(self):
         """SendLocalList acceptance is CRITICAL (auth list replacement)."""
@@ -1712,7 +1747,6 @@ class TestSecurityMixin(unittest.TestCase):
         findings = self._get_findings(obj)
         send_findings = [f for f in findings if "SendLocalList" in f["issue"]]
         self.assertEqual(len(send_findings), 1)
-        self.assertEqual(send_findings[0]["severity"], "CRITICAL")
 
     def test_reserve_accepted_is_medium(self):
         obj = self._make_instance()
@@ -1726,8 +1760,8 @@ class TestSecurityMixin(unittest.TestCase):
         obj.test_reserve()
 
         findings = self._get_findings(obj)
-        reserve_findings = [f for f in findings if "ReserveNow" in f["issue"]]
-        self.assertEqual(reserve_findings[0]["severity"], "MEDIUM")
+        matched = [f for f in findings if "ReserveNow" in f["issue"]]
+        self.assertEqual(len(matched), 1)
 
     # --- Config write with sensitive keys ---
 
@@ -1761,7 +1795,6 @@ class TestSecurityMixin(unittest.TestCase):
         findings = self._get_findings(obj)
         harmless = [f for f in findings if "Configuration writes" in f["issue"]]
         self.assertEqual(len(harmless), 1)
-        self.assertEqual(harmless[0]["severity"], "MEDIUM")
 
     def test_config_write_authorization_key_writable_is_critical(self):
         """AuthorizationKey being writable is CRITICAL, other keys are HIGH."""
@@ -1795,10 +1828,8 @@ class TestSecurityMixin(unittest.TestCase):
 
         findings = self._get_findings(obj)
         # AuthorizationKey should be skipped (too risky to probe write)
-        [f for f in findings if "AuthorizationKey" in f["issue"]]
         security_findings = [f for f in findings if "SecurityProfile" in f["issue"]]
-        if security_findings:
-            self.assertEqual(security_findings[0]["severity"], "HIGH")
+        self.assertTrue(security_findings)
 
     def test_config_write_readonly_key_marked_safe(self):
         obj = self._make_instance()
@@ -1910,7 +1941,6 @@ class TestChargingMixin(unittest.TestCase):
         obj = FakeOCPP()
         obj.conn = Mock()
         obj.logger = Mock()
-        obj.security = Mock()
         obj.results = {"data": {}}
         obj.scanner = Mock()
         obj.args = Mock()
@@ -1936,7 +1966,6 @@ class TestChargingMixin(unittest.TestCase):
         result = obj.results["data"]["authorize_flow"]
         self.assertEqual(result["status"], "Accepted")
         findings = self._get_findings(obj)
-        self.assertEqual(findings[0]["severity"], "HIGH")
         self.assertIn("authorization bypass", findings[0]["issue"].lower())
 
     def test_authorize_v201_reads_id_token_info(self):
@@ -2059,7 +2088,6 @@ class TestChargingMixin(unittest.TestCase):
         obj._test_meter_injection()
 
         findings = self._get_findings(obj)
-        self.assertEqual(findings[0]["severity"], "HIGH")
         self.assertIn("999999", findings[0]["description"])
 
     def test_meter_injection_error_no_finding(self):
@@ -2309,7 +2337,6 @@ class TestBruteForceHTTPAuth(unittest.TestCase):
         obj = FakeOCPP()
         obj.conn = Mock()
         obj.logger = Mock()
-        obj.security = Mock()
         obj.results = {"data": {"target_url": "ws://localhost:9000/CP1"}}
         obj.scanner = Mock()
         obj.args = Mock()
@@ -2338,7 +2365,6 @@ class TestBruteForceHTTPAuth(unittest.TestCase):
 
         findings = obj.results["data"].get("security_findings", [])
         self.assertEqual(len(findings), 1)
-        self.assertEqual(findings[0]["severity"], "CRITICAL")
         self.assertEqual(len(obj.results["data"]["brute_force"]["http_auth"]["valid"]), 1)
 
     def test_stop_on_success_stops_after_first_valid(self):
@@ -2400,7 +2426,6 @@ class TestBruteForceIdTags(unittest.TestCase):
         obj = FakeOCPP()
         obj.conn = Mock()
         obj.logger = Mock()
-        obj.security = Mock()
         obj.results = {"data": {"target_url": "ws://localhost:9000/CP1"}}
         obj.scanner = Mock()
         obj.args = Mock()
@@ -2417,7 +2442,8 @@ class TestBruteForceIdTags(unittest.TestCase):
         obj._brute_force_id_tags(["VALID_TAG"])
 
         findings = obj.results["data"].get("security_findings", [])
-        self.assertEqual(findings[0]["severity"], "HIGH")
+        matched = [f for f in findings if "Valid OCPP IdTag tokens found" in f["issue"]]
+        self.assertEqual(len(matched), 1)
         valid = obj.results["data"]["brute_force"]["id_tags"]["valid"]
         self.assertEqual(valid[0]["id_tag"], "VALID_TAG")
 

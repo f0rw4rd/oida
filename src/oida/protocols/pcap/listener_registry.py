@@ -113,6 +113,12 @@ LISTENER_REGISTRY: Dict[str, Dict[str, Any]] = {
         "category": "credential",
         "tags": {"credential", "mqtt", "iot"},
     },
+    "mqttsn": {
+        "module": ".mqttsn",
+        "class": "MQTTSNPassiveListener",
+        "category": "network",
+        "tags": {"network", "mqttsn", "mqtt-sn", "iot", "sensor", "constrained"},
+    },
     "coap": {
         "module": ".coap",
         "class": "CoAPPassiveListener",
@@ -206,6 +212,36 @@ LISTENER_REGISTRY: Dict[str, Dict[str, Any]] = {
         "class": "ModbusPassiveListener",
         "category": "ics",
         "tags": {"ics", "modbus"},
+    },
+    "egd": {
+        "module": ".egd",
+        "class": "EGDPassiveListener",
+        "category": "ics",
+        "tags": {"ics", "egd", "ge", "plc", "power"},
+    },
+    "selfm": {
+        "module": ".selfm",
+        "class": "SELFMPassiveListener",
+        "category": "ics",
+        "tags": {"ics", "selfm", "sel", "schweitzer", "relay", "power", "substation"},
+    },
+    "tte": {
+        "module": ".tte",
+        "class": "TTEPassiveListener",
+        "category": "ics",
+        "tags": {"ics", "tte", "ttethernet", "as6802", "tsn", "deterministic"},
+    },
+    "rtps": {
+        "module": ".rtps",
+        "class": "RTPSPassiveListener",
+        "category": "ics",
+        "tags": {"ics", "rtps", "dds", "pubsub", "middleware", "ros2"},
+    },
+    "ieee1722": {
+        "module": ".ieee1722",
+        "class": "IEEE1722PassiveListener",
+        "category": "ics",
+        "tags": {"ics", "ieee1722", "avtp", "avb", "tsn", "automotive"},
     },
     "iec104": {
         "module": ".iec104",
@@ -467,17 +503,15 @@ LISTENER_REGISTRY: Dict[str, Dict[str, Any]] = {
         "tags": {"routing", "pim", "multicast"},
     },
     # --- FHRP listeners ---
+    # A single HSRPPassiveListener handles both HSRPv1 and HSRPv2 (it version-
+    # switches internally). Do NOT also register "hsrpv2" -> the same class:
+    # default resolution would instantiate both, feed every HSRP packet to each,
+    # and duplicate every interaction/credential/hash row in the merged output.
     "hsrp": {
         "module": ".hsrp",
         "class": "HSRPPassiveListener",
         "category": "fhrp",
-        "tags": {"fhrp", "hsrp", "credential"},
-    },
-    "hsrpv2": {
-        "module": ".hsrp",
-        "class": "HSRPv2PassiveListener",
-        "category": "fhrp",
-        "tags": {"fhrp", "hsrp", "credential"},
+        "tags": {"fhrp", "hsrp", "hsrpv2", "credential"},
     },
     "glbp": {
         "module": ".glbp",
@@ -813,7 +847,9 @@ def create_listeners(names: Set[str], logger=logger) -> Dict[str, Any]:
 
     Returns:
         Dict mapping listener name to instantiated listener object.
-        Listeners that fail to instantiate are silently skipped (logged at debug).
+        Listeners that fail to instantiate are skipped, with the failure
+        surfaced via a warning (not just a debug log) so an operator does not
+        mistake a partially-loaded listener set for full protocol coverage.
     """
     listeners = {}
     failed = []
@@ -832,8 +868,11 @@ def create_listeners(names: Set[str], logger=logger) -> Dict[str, Any]:
             logger.debug("create_listeners: failed to create %s (%s): %s", name, info["class"], e)
 
     if failed:
-        logger.debug(
-            "create_listeners: %d/%d listeners failed: %s", len(failed), len(names), failed
+        logger.warning(
+            "create_listeners: %d/%d listeners failed to load: %s",
+            len(failed),
+            len(names),
+            ", ".join(failed),
         )
     logger.debug("create_listeners: %d listeners ready", len(listeners))
     return listeners

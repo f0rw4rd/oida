@@ -351,10 +351,13 @@ class ConnectionMixin:
             while time.time() - start < timeout:
                 try:
                     client.loop(timeout=0.05)
-                except KeyError:
-                    # MQTT 5.0 client receiving MQTT 3.x response causes KeyError
-                    # in paho's ReasonCode parsing. This means the server doesn't
-                    # support MQTT 5.0 but does support older versions.
+                except (IndexError, KeyError):
+                    # MQTT 5.0 client receiving an MQTT 3.x response raises
+                    # KeyError or IndexError inside paho's ReasonCode parsing --
+                    # the server doesn't support 5.0 but does support older
+                    # versions. Match connect()/_attempt_connect(), which catch
+                    # both, so this reports the clean "3.x response" reason rather
+                    # than a raw "list index out of range".
                     if version == 5:
                         return False, "Server sent MQTT 3.x response", {}, False
                     raise

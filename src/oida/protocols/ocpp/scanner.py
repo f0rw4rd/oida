@@ -341,8 +341,7 @@ class OCPPScanner(NetworkScanner):
                     ws = await ws_connect(target_url, **connect_kwargs)
                     return ws
                 except Exception as e:
-                    error_str = str(e).lower()
-                    if "401" in error_str or "403" in error_str:
+                    if self._extract_http_status(e) in (401, 403):
                         return None
                     self.logger.debug(f"Auth probe connection error: {e}")
                     return None
@@ -428,7 +427,12 @@ class OCPPScanner(NetworkScanner):
             self.logger.debug("Send/receive aborted: event loop unavailable")
             return None
 
-        # Extract action name for debug logging
+        # Extract action name for debug logging, and the UniqueId of the
+        # outgoing CALL so the response can be correlated below instead of
+        # accepting whatever CALLRESULT/CALLERROR arrives next ("first
+        # response wins" would misattribute a stale/out-of-order reply to a
+        # previous, already-timed-out exchange to this one).
+        _sent_id: Optional[str] = None
         try:
             _parsed = json.loads(message)
             _action = (
@@ -438,6 +442,8 @@ class OCPPScanner(NetworkScanner):
                 and _parsed[0] == MessageType.CALL
                 else "response"
             )
+            if isinstance(_parsed, list) and len(_parsed) >= 2:
+                _sent_id = str(_parsed[1])
         except Exception:
             _action = "unknown"
         self.logger.debug(f"Sending {_action} ({len(message)} bytes, timeout={timeout}s)")
@@ -480,7 +486,18 @@ class OCPPScanner(NetworkScanner):
                             self.logger.debug(f"Error sending CALL response: {e}")
                     continue
 
-                # This is a CALLRESULT or CALLERROR -- return it
+                # This is a CALLRESULT or CALLERROR. Only accept it as the
+                # answer to the CALL we just sent if its UniqueId matches --
+                # otherwise it is a stale/out-of-order reply to an earlier
+                # exchange and must not be misattributed to this one.
+                resp_id = str(data[1]) if isinstance(data, list) and len(data) >= 2 else None
+                if _sent_id is not None and resp_id != _sent_id:
+                    self.logger.debug(
+                        f"OCPP exchange: discarding response with UniqueId {resp_id!r} "
+                        f"(expected {_sent_id!r}); still waiting"
+                    )
+                    continue
+
                 _resp_type = (
                     "CALLRESULT"
                     if (
@@ -765,9 +782,10 @@ class OCPPScanner(NetworkScanner):
                         return {"supported": False, "reason": f"negotiated {negotiated}"}
                 except Exception as e:
                     error_str = str(e).lower()
+                    status = self._extract_http_status(e)
                     if "subprotocol" in error_str:
                         return {"supported": False, "reason": "subprotocol rejected"}
-                    elif "401" in error_str or "403" in error_str:
+                    elif status in (401, 403):
                         # Auth required but version may still be supported
                         return {"supported": True, "reason": "auth required"}
                     else:
@@ -776,6 +794,24 @@ class OCPPScanner(NetworkScanner):
             return loop.run_until_complete(_probe())
         finally:
             loop.close()
+
+    def _extract_http_status(self, error: Exception) -> Optional[int]:
+        """Extract a real HTTP status code from a WebSocket handshake error.
+
+        Only trusts the structured ``InvalidStatus.response.status_code``
+        attribute. String matching like ``"401" in str(e)`` is unsafe: a TCP
+        connect failure against port 14010 produces an errno message that
+        *contains* "401", which previously fabricated an
+        ``auth required (401)`` "endpoint" out of a refused socket.
+        Returns None when the error carries no HTTP status.
+        """
+        status_code = getattr(getattr(error, "response", None), "status_code", None)
+        if isinstance(status_code, int):
+            return status_code
+        status_code = getattr(error, "status_code", None)
+        if isinstance(status_code, int):
+            return status_code
+        return None
 
     def _probe_path(self, base_url: str, path: str, charge_point_id: str) -> Dict[str, Any]:
         """
@@ -848,13 +884,8 @@ class OCPPScanner(NetworkScanner):
                         "reason": "connected",
                     }
                 except Exception as e:
+                    status_code = self._extract_http_status(e)
                     error_str = str(e).lower()
-                    status_code = None
-                    # Extract HTTP status code from error message
-                    for code in ("401", "403", "404", "400", "500", "502", "503"):
-                        if code in error_str:
-                            status_code = int(code)
-                            break
 
                     if status_code == 401 or status_code == 403:
                         # Endpoint exists but requires auth
@@ -1031,8 +1062,7 @@ class OCPPScanner(NetworkScanner):
                 try:
                     ws2 = await ws_connect(target_url, **connect_kwargs)
                 except Exception as e:
-                    error_str = str(e).lower()
-                    if "401" in error_str or "403" in error_str:
+                    if self._extract_http_status(e) in (401, 403):
                         result["error"] = "auth_rejected"
                     else:
                         result["error"] = str(e)

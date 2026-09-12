@@ -343,19 +343,17 @@ PROBE_DISPLAY_MESSAGE = "OIDA Security Audit"
 
 # SSRF probe URLs for extended SSRF testing via UpdateFirmware/GetDiagnostics/GetLog
 SSRF_PROBE_URLS = [
-    ("http://169.254.169.254/latest/meta-data/", "AWS metadata", "CRITICAL"),
+    ("http://169.254.169.254/latest/meta-data/", "AWS metadata"),
     (
         "http://169.254.169.254/metadata/instance?api-version=2021-02-01",
         "Azure metadata",
-        "CRITICAL",
     ),
     (
         "http://metadata.google.internal/computeMetadata/v1/",
         "GCP metadata",
-        "CRITICAL",
     ),
-    ("http://127.0.0.1:80/", "localhost", "HIGH"),
-    ("file:///etc/passwd", "file URI", "HIGH"),
+    ("http://127.0.0.1:80/", "localhost"),
+    ("file:///etc/passwd", "file URI"),
 ]
 
 
@@ -383,7 +381,7 @@ PROTOCOL_OPTIONS = {
     "version": {
         "type": "enum",
         "description": "OCPP version to use",
-        "values": ["1.6", "2.0.1", "auto"],
+        "values": ["1.6", "2.0.1", "2.1", "auto"],
         "default": "auto",
     },
     "charge-point-id": {

@@ -331,7 +331,9 @@ class TestScannerDiscoveryDispatch(unittest.TestCase):
 
             conn.clock_sync.side_effect = set_raw
             result = scanner._read_clock(MagicMock(), conn)
-        self.assertTrue(result["success"])
+        # GapC fix: a negative confirmation means the device REJECTED the
+        # clock-sync command, so this must not be reported as success.
+        self.assertFalse(result["success"])
         self.assertTrue(result.get("negative"))
 
     def test_read_clock_failure(self):

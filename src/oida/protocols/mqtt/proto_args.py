@@ -60,9 +60,13 @@ Examples:
     add_target_argument(mqtt_parser, help_text="MQTT broker address (IP or hostname)")
 
     # === Network Options ===
+    # default_port=None (not 1883) so proto_flow can tell an explicit `-p 1883`
+    # from the unset default and only auto-switch to 8883 when TLS is requested
+    # AND no port was given. The base class resolves an unset port to
+    # self.default_port, so None is safe downstream.
     add_network_options(
         mqtt_parser,
-        default_port=1883,
+        default_port=None,
         include_timeout=True,
         default_timeout=10,
         port_help="MQTT port (default: 1883, or 8883 with --tls)",

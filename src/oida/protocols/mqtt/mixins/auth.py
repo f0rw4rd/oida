@@ -10,7 +10,6 @@ from pathlib import Path
 from typing import Any, Dict
 
 from ..scanner import DEFAULT_CREDENTIALS, DEFAULT_WORDLIST_PATHS
-from oida.utils.common_types import Category
 
 
 class AuthMixin:
@@ -111,7 +110,6 @@ class AuthMixin:
                 results["valid"].append({"username": user, "password": passwd})
                 self.logger.security_finding(
                     "Default credentials",
-                    category=Category.ACCESS_CONTROL,
                     detail=f"Valid MQTT credentials: {user}:***",
                 )
 

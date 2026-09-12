@@ -11,7 +11,6 @@ from ...utils.proto_args_factory import (
     add_auth_options,
     add_tls_options,
     add_dangerous_options,
-    add_scan_options,
     add_brute_options,
 )
 
@@ -479,9 +478,6 @@ WebSocket Path Discovery:
         metavar="SECS",
         help="Exit listen mode after N seconds (default: run until Ctrl+C)",
     )
-
-    # === Scan Options ===
-    add_scan_options(ocpp_parser, include_threads=False)
 
     # === Active Testing ===
     add_dangerous_options(ocpp_parser, include_fuzz=False)

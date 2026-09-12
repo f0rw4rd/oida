@@ -68,7 +68,6 @@ class ChargingMixin:
                             f"  Authorize({FAKE_ID_TAG}): ACCEPTED (any idTag accepted)"
                         )
                         self._add_finding(
-                            "HIGH",
                             "Authorization bypass: fake idTag accepted",
                             f"Authorize with fake idTag '{FAKE_ID_TAG}' was accepted. "
                             "CSMS does not validate authorization tokens.",
@@ -148,7 +147,6 @@ class ChargingMixin:
                     if status == "Accepted":
                         self.logger.warning(f"  StartTransaction: ACCEPTED (txId={transaction_id})")
                         self._add_finding(
-                            "HIGH",
                             "Unauthorized charging session started",
                             f"StartTransaction with fake idTag was accepted "
                             f"(transactionId={transaction_id}). "
@@ -293,7 +291,6 @@ class ChargingMixin:
                         "  MeterValues injection: ACCEPTED (crafted meter values accepted)"
                     )
                     self._add_finding(
-                        "HIGH",
                         "Meter value injection accepted",
                         "MeterValues with crafted energy readings (999999 Wh) were "
                         "accepted without validation. Billing fraud is possible.",
@@ -358,7 +355,6 @@ class ChargingMixin:
                     result_data["started_status"] = "Accepted"
                     self.logger.warning("  TransactionEvent(Started): ACCEPTED")
                     self._add_finding(
-                        "HIGH",
                         "Unauthorized TransactionEvent(Started) accepted",
                         "OCPP 2.0.1 TransactionEvent with Started type was accepted "
                         "from unauthenticated scanner.",

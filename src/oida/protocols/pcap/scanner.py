@@ -146,6 +146,13 @@ class PcapScanner:
                 if "isn't a capture file" in err_msg or "not a capture file" in err_msg:
                     self.logger.fail(_extract_tshark_error(e))
                     break
+                # Only retry a genuine tshark crash (retcode/crashed). Any other
+                # exception (e.g. an AttributeError/KeyError in our own pipeline)
+                # is not transient -- propagate it instead of burning retries on a
+                # misleading "tshark crashed" message that hides the real error.
+                is_crash = "crashed" in err_msg or "retcode" in err_msg
+                if not is_crash:
+                    raise
                 if attempt < max_retries:
                     self.logger.info(
                         f"tshark crashed, retrying ({attempt + 2}/{max_retries + 1})..."
@@ -263,11 +270,77 @@ class PcapScanner:
         )
         return names
 
+    def _kill_capture_processes(self, capture) -> None:
+        """Kill the tshark subprocesses owned by a pyshark capture and clear the
+        list, so an orphaned capture does not trigger noisy asyncio __del__
+        teardown when it is later garbage-collected.
+        """
+        if capture is None:
+            return
+        for proc in getattr(capture, "_running_processes", []):
+            try:
+                proc.kill()
+            except Exception as e:
+                self.logger.debug(f"proc.kill(): {e}")
+        try:
+            capture._running_processes.clear()
+        except Exception as e:
+            self.logger.debug(f"capture._running_processes.clear(): {e}")
+
+    def _filter_supported_by_tshark(self, display_filter: str) -> Optional[str]:
+        """Return *display_filter* if the local tshark accepts it, else None.
+
+        The combined listener filter is only a performance pre-filter, so if any
+        term names a protocol this tshark build doesn't have (which makes tshark
+        reject the entire filter, retcode 4), it is safer to drop the whole
+        filter and let every packet through than to abort the scan. Listeners
+        still gate packets themselves, so nothing is missed -- only slower.
+
+        A valid filter is confirmed with one bounded ``tshark -c 1`` check
+        (invalid filters fail instantly, before any packet is read). Any
+        non-filter error (or no tshark on PATH) leaves the filter untouched so
+        the pipeline's own error handling still surfaces it.
+        """
+        tshark = shutil.which("tshark")
+        if not tshark:
+            return display_filter
+        try:
+            result = subprocess.run(
+                [tshark, "-Y", display_filter, "-r", self.pcap_file, "-c", "1"],
+                capture_output=True,
+                text=True,
+                timeout=60,
+            )
+        except Exception as e:  # timeout / spawn failure -> keep filter, don't block
+            self.logger.debug("display_filter validation skipped: %s", e)
+            return display_filter
+        stderr = result.stderr or ""
+        if result.returncode == 0 or "packet count is zero" in stderr:
+            return display_filter
+        if "is not a valid protocol or protocol field" in stderr:
+            import re
+
+            unknown = re.findall(r'"([^"]+)" is not a valid protocol', stderr)
+            self.logger.debug(
+                "display_filter names protocol(s) this tshark lacks (%s); "
+                "dropping the pre-filter and processing all packets",
+                ", ".join(unknown) or "unknown",
+            )
+            return None
+        # Different tshark complaint (bad file, etc.) -- leave it to the pipeline.
+        return display_filter
+
     def _run_pyshark_pipeline(self) -> int:
         """Process all protocols with PyShark-based listeners."""
         listeners = self._create_pyshark_listeners()
         if not listeners:
-            self.logger.debug("_run_pyshark_pipeline: no listeners created, skipping")
+            # Almost always a filter that matched nothing (e.g. `--protocols typo` /
+            # `--category bogus`); surface it instead of silently reporting 0
+            # results, which reads as "no matching traffic".
+            self.logger.fail(
+                "No passive listeners resolved from the requested filter -- "
+                "run with --list-listeners to see valid names/categories."
+            )
             return 0
 
         self.logger.info(f"PyShark pipeline: {len(listeners)} listeners")
@@ -355,6 +428,12 @@ class PcapScanner:
                         len(parts),
                         display_filter[:120],
                     )
+                    # A single listener term naming a protocol this tshark build
+                    # lacks (e.g. wsdiscovery on stock Wireshark) makes tshark
+                    # reject the WHOLE combined filter (retcode 4) and abort the
+                    # scan. Validate once; if unsupported, drop the filter and
+                    # process every packet rather than crashing.
+                    display_filter = self._filter_supported_by_tshark(display_filter)
 
             # Collect override_prefs from active listeners (e.g. Modbus needs
             # mbtcp.tcp.port:502 to enable full PDU dissection).
@@ -387,7 +466,6 @@ class PcapScanner:
                     except Exception as e:
                         self.logger.debug("configure_ports failed for listener: %s", e)
 
-            max_packets = self.args.get("max_packets")
             capture_kw: Dict[str, Any] = {
                 "keep_packets": False,
                 "decode_as": decode_as_final if decode_as_final else None,
@@ -403,10 +481,6 @@ class PcapScanner:
             # JSON parser and breaks the listeners' EK-mode field access.
             if {"ospf", "rip", "eigrp"} & set(listeners):
                 capture_kw["include_raw"] = True
-            if max_packets:
-                # Pass tshark -c flag to stop after N packets (FileCapture has no packet_count)
-                existing = capture_kw.get("custom_parameters") or []
-                capture_kw["custom_parameters"] = list(existing) + ["-c", str(int(max_packets))]
 
             # Ensure an asyncio event loop exists for pyshark (it uses asyncio
             # internally).  Previous tests or callers may have consumed/closed
@@ -416,47 +490,88 @@ class PcapScanner:
             except RuntimeError:
                 asyncio.set_event_loop(asyncio.new_event_loop())
 
-            # EK mode: ~18x faster NDJSON parsing vs XML/PDML.
-            # Needs tshark 4.6+ EK fixes (upstream PRs #744/#743), shipped via the
-            # oida-pyshark PyPI package. EK multifields are resolved in stats.py.
-            try:
-                capture = _pyshark.FileCapture(self.pcap_file, use_ek=True, **capture_kw)
-            except Exception as e:
-                self.logger.debug("_run_pyshark_pipeline: EK fallback to XML: %s", e)
-                capture = _pyshark.FileCapture(self.pcap_file, **capture_kw)
+            def _open_capture(use_ek: bool):
+                if use_ek:
+                    return _pyshark.FileCapture(self.pcap_file, use_ek=True, **capture_kw)
+                # XML/PDML fallback: pyshark rejects include_raw unless use_ek or
+                # use_json is set, and use_json switches to the JSON parser that
+                # breaks the listeners' EK-mode field access. So drop raw capture
+                # here -- the routing keyed-hash salt (ospf/rip/eigrp) is then
+                # unavailable in XML mode, but the rest of the pipeline runs
+                # instead of the whole scan aborting.
+                xml_kw = {k: v for k, v in capture_kw.items() if k != "include_raw"}
+                return _pyshark.FileCapture(self.pcap_file, **xml_kw)
 
             show_progress = bool(total_packets)
+
+            def _consume(cap) -> None:
+                """Run the per-packet dispatch loop, updating packet_count."""
+                nonlocal packet_count
+                for packet in cap:
+                    packet_count += 1
+
+                    if collect_stats:
+                        self.stats.process_pyshark_packet(packet)
+
+                    if collect_endpoints:
+                        self._track_endpoint(packet)
+
+                    # Layer-based dispatch: only call listeners whose layers match
+                    matched_ids: set = set()
+                    for layer in packet.layers:
+                        for listener in layer_dispatch.get(layer.layer_name.lower(), ()):
+                            lid = id(listener)
+                            if lid not in matched_ids:
+                                matched_ids.add(lid)
+                                try:
+                                    listener.feed_packet(packet)
+                                except Exception as e:
+                                    self.logger.debug("PyShark packet feed error: %s", e)
+                    for listener in always_listeners:
+                        try:
+                            listener.feed_packet(packet)
+                        except Exception as e:
+                            self.logger.debug("PyShark packet feed error: %s", e)
+
+                    if show_progress and packet_count % progress_interval == 0:
+                        self.logger.progress(packet_count, total_packets)
+
+            # EK mode: ~18x faster NDJSON parsing vs XML/PDML. Needs tshark 4.6+
+            # EK fixes (upstream PRs #744/#743), shipped via the oida-pyshark
+            # PyPI package. An EK-incapable tshark can fail EITHER at construction
+            # OR only once iteration starts (it emits invalid EK/NDJSON), so fall
+            # back to XML in both cases -- detecting the iteration failure before
+            # any packet was processed so no listener/stats state is lost.
+            use_ek = True
+            try:
+                capture = _open_capture(use_ek=True)
+            except Exception as e:
+                self.logger.debug("_run_pyshark_pipeline: EK construction failed, XML: %s", e)
+                use_ek = False
+                capture = _open_capture(use_ek=False)
+
             if show_progress:
                 set_progress_active(True)
 
-            for packet in capture:
-                packet_count += 1
-
-                if collect_stats:
-                    self.stats.process_pyshark_packet(packet)
-
-                if collect_endpoints:
-                    self._track_endpoint(packet)
-
-                # Layer-based dispatch: only call listeners whose layers match
-                matched_ids: set = set()
-                for layer in packet.layers:
-                    for listener in layer_dispatch.get(layer.layer_name.lower(), ()):
-                        lid = id(listener)
-                        if lid not in matched_ids:
-                            matched_ids.add(lid)
-                            try:
-                                listener.feed_packet(packet)
-                            except Exception as e:
-                                self.logger.debug("PyShark packet feed error: %s", e)
-                for listener in always_listeners:
+            try:
+                _consume(capture)
+            except Exception as e:
+                if use_ek and packet_count == 0:
+                    # EK unusable at iteration time -> re-open in XML and restart.
+                    self.logger.debug(
+                        "_run_pyshark_pipeline: EK iteration failed before any packet, "
+                        "XML fallback: %s",
+                        e,
+                    )
+                    self._kill_capture_processes(capture)
                     try:
-                        listener.feed_packet(packet)
-                    except Exception as e:
-                        self.logger.debug("PyShark packet feed error: %s", e)
-
-                if show_progress and packet_count % progress_interval == 0:
-                    self.logger.progress(packet_count, total_packets)
+                        capture.close()
+                    except Exception as ce:
+                        self.logger.debug("EK capture close before XML retry: %s", ce)
+                    capture = _open_capture(use_ek=False)
+                    _consume(capture)
+                else:
+                    raise
 
             if show_progress:
                 set_progress_active(False)
@@ -493,7 +608,7 @@ class PcapScanner:
             if packet_count == 0 and total_packets:
                 self.logger.info(
                     f"0/{total_packets} packets matched active listeners "
-                    f"(try -p to select specific protocols, or --list-listeners to see available)"
+                    f"(try --protocols to select specific protocols, or --list-listeners to see available)"
                 )
             else:
                 self.logger.success(f"Processed {packet_count} packets")
@@ -520,32 +635,20 @@ class PcapScanner:
                     )
                 # Suppress noisy __del__ exceptions from the orphaned capture
                 # by killing subprocesses and clearing the process list.
-                if capture is not None:
-                    for proc in getattr(capture, "_running_processes", []):
-                        try:
-                            proc.kill()
-                        except Exception as e:
-                            self.logger.debug(f"proc.kill(): {e}")
-                    try:
-                        capture._running_processes.clear()
-                    except Exception as e:
-                        self.logger.debug(f"capture._running_processes.clear(): {e}")
+                self._kill_capture_processes(capture)
             elif is_crash:
                 # No packets processed — genuine crash, propagate for retry.
                 # Kill subprocesses to suppress noisy __del__ asyncio errors.
-                if capture is not None:
-                    for proc in getattr(capture, "_running_processes", []):
-                        try:
-                            proc.kill()
-                        except Exception as e:
-                            self.logger.debug(f"proc.kill(): {e}")
-                    try:
-                        capture._running_processes.clear()
-                    except Exception as e:
-                        self.logger.debug(f"capture._running_processes.clear(): {e}")
+                self._kill_capture_processes(capture)
                 raise
             else:
+                # Any other unexpected error (e.g. from process_pyshark_packet /
+                # _track_endpoint / the generator). Previously this returned
+                # without killing the tshark subprocess, orphaning it until GC
+                # ran pyshark's __del__ and triggering the exact noisy asyncio
+                # teardown the crash branches suppress. Clean up here too.
                 self.logger.fail(f"PyShark pipeline error: {e}")
+                self._kill_capture_processes(capture)
                 return 0
 
         # Harvest protocol-specific data from all listeners via generic interface
@@ -987,8 +1090,11 @@ class PcapScanner:
             return True
         if ip in ("0.0.0.0", "::", "255.255.255.255"):
             return True
-        # IPv4 multicast (224.0.0.0/4) and broadcast suffix
-        if ip.endswith(".255"):
+        # A .255 address is a directed broadcast only on a /24; a /16 host such
+        # as 10.0.1.255 is a valid unicast endpoint. Treat .255 as broadcast
+        # noise only when the MAC confirms it (broadcast, or absent/unknown where
+        # the L2 address can't disambiguate) -- a real unicast MAC keeps the host.
+        if ip.endswith(".255") and (not mac or mac == "ff:ff:ff:ff:ff:ff"):
             return True
         first_octet = ip.split(".")[0] if "." in ip else ""
         if first_octet.isdigit() and 224 <= int(first_octet) <= 239:

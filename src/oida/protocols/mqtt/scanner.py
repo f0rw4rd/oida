@@ -582,9 +582,15 @@ class MQTTScanner(
             self.topics_from_file = True
             self.topics_file = topics_arg
             with open(topics_arg) as f:
+                stripped_lines = (line.strip() for line in f)
+                # A bare "#" is a valid MQTT topic filter (subscribe to
+                # everything), not a comment - only drop lines that start
+                # with "#" and carry actual comment text after it.
                 self.topics_list = [
-                    line.strip() for line in f if line.strip() and not line.startswith("#")
+                    s for s in stripped_lines if s and not (s.startswith("#") and s != "#")
                 ]
+            if not self.topics_list:
+                self.topics_list = ["#"]
             # Use first topic as pattern if single, otherwise subscribe to all
             self.topics_pattern = self.topics_list[0] if len(self.topics_list) == 1 else "#"
         else:

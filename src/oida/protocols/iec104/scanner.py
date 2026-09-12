@@ -20,7 +20,6 @@ from ...utils import (
 from ...utils.protocol_helpers import ConnectionHelper
 from ...utils.cli import run as cli_run
 from ...utils.ics_logger import get_module_logger
-from oida.utils.common_types import Category
 
 logger = get_module_logger(__name__)
 
@@ -389,33 +388,39 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
                                 cot_str = str(cot_obj).replace("Cot.", "") if cot_obj else None
                                 timestamp = datetime.now().isoformat()
 
-                                # Collect all IOAs to discover
-                                ioas_to_add = []
+                                # Collect (ioa, info-element offset) pairs. The
+                                # info-element offset MUST be captured at parse
+                                # time from the physical object index -- deriving
+                                # it later from the filtered list index misaligns
+                                # every value after an IOA==0 object is skipped.
+                                ioas_to_add: list = []
+                                _ioa_size = IOA_SIZE
+                                _ie_size = INFO_ELEMENT_SIZES.get(type_id, 0)
 
                                 if is_sequence:
-                                    # Sequence mode: IOAs are sequential starting from first_ioa
-                                    ioas_to_add = [first_ioa + i for i in range(num_objects)]
+                                    # Sequence mode: one IOA, then N packed values.
+                                    for i in range(num_objects):
+                                        ie_off = ASDU_HEADER_SIZE + _ioa_size + i * _ie_size
+                                        ioas_to_add.append((first_ioa + i, ie_off))
                                 elif num_objects > 1 and type_id in INFO_ELEMENT_SIZES:
                                     # Non-sequence mode: parse each IOA from the ASDU
-                                    elem_size = INFO_ELEMENT_SIZES[type_id]
-                                    ioa_size = IOA_SIZE
                                     offset = ASDU_HEADER_SIZE
 
                                     for i in range(num_objects):
-                                        if offset + ioa_size <= len(data):
+                                        if offset + _ioa_size <= len(data):
                                             ioa = (
                                                 data[offset]
                                                 | (data[offset + 1] << 8)
                                                 | (data[offset + 2] << 16)
                                             )
                                             if ioa > 0:
-                                                ioas_to_add.append(ioa)
-                                            offset += ioa_size + elem_size
+                                                ioas_to_add.append((ioa, offset + _ioa_size))
+                                            offset += _ioa_size + _ie_size
                                         else:
                                             break
                                 else:
                                     # Single object
-                                    ioas_to_add = [first_ioa]
+                                    ioas_to_add = [(first_ioa, ASDU_HEADER_SIZE + _ioa_size)]
 
                                 # Extract measured values from raw info elements.
                                 # Returns None when the type size is unknown or the
@@ -461,21 +466,14 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
                                         )
                                     return None
 
-                                # Store/update discovered IOAs
-                                ioa_size = IOA_SIZE
-                                ie_size = INFO_ELEMENT_SIZES.get(type_id, 0)
+                                # Store/update discovered IOAs. ie_off was
+                                # captured from the physical object position at
+                                # parse time (see above), so it stays aligned even
+                                # when an IOA==0 object was skipped.
                                 with scanner._lock:
                                     if common_addr > 0:
                                         scanner._discovered_stations.add(common_addr)
-                                    for idx, ioa in enumerate(ioas_to_add):
-                                        if is_sequence:
-                                            ie_off = ASDU_HEADER_SIZE + ioa_size + idx * ie_size
-                                        else:
-                                            ie_off = (
-                                                ASDU_HEADER_SIZE
-                                                + idx * (ioa_size + ie_size)
-                                                + ioa_size
-                                            )
+                                    for ioa, ie_off in ioas_to_add:
                                         value = _extract_value(data, ie_off, type_id)
                                         entry = {
                                             "type": type_name,
@@ -695,7 +693,6 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
             if not self.use_tls:
                 self.logger.security_finding(
                     "No encryption",
-                    category=Category.ENCRYPTION,
                     detail="IEC 104 has no transport encryption (cleartext)",
                 )
 
@@ -1381,6 +1378,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
                 if is_negative:
                     self.logger.warning("Device rejected clock sync (negative confirmation)")
                     result["negative"] = True
+                    result["success"] = False
                 elif device_dt:
                     self.logger.success(
                         f"Device clock: {device_dt.strftime('%Y-%m-%d %H:%M:%S.%f')[:-3]}"
@@ -1511,7 +1509,6 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
                     )
             self.logger.security_finding(
                 "File transfer exposed",
-                category=Category.PROTOCOL_EXPOSURE,
                 detail="Server advertises file-transfer type IDs (120-127)",
             )
         else:
@@ -1585,11 +1582,10 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
 
         file_info = results.get("file_transfer", {})
         if file_info.get("supported"):
-            self.logger.security_finding(
-                "Writable access",
-                category=Category.ACCESS_CONTROL,
-                detail="File transfer capability exposed (Type IDs 120-127) - allows read/write/delete operations",
-            )
+            # The "File transfer exposed" security_finding is already emitted by
+            # _report_file_transfer() for this exact condition; don't emit a
+            # second "Writable access" finding for the same thing (double-count).
+            # Still record it in the analysis issues/risk summary.
             analysis["issues"].append("File transfer capability exposed (Type IDs 120-127)")
             analysis["risk_level"] = "high"
 
@@ -1598,7 +1594,6 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         if custom_count > 0:
             self.logger.security_finding(
                 "Insecure configuration",
-                category=Category.CONFIGURATION,
                 detail=f"{custom_count} custom/vendor-specific type IDs detected - potential proprietary extensions",
             )
             analysis["issues"].append(f"{custom_count} custom/vendor-specific type IDs detected")
@@ -1607,7 +1602,6 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         if points_count > 100:
             self.logger.security_finding(
                 "Anonymous access allowed",
-                category=Category.AUTHENTICATION,
                 detail=f"{points_count} data points accessible without authentication",
             )
             analysis["issues"].append(f"{points_count} data points accessible without auth")

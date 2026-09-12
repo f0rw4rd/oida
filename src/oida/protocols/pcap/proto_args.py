@@ -25,8 +25,8 @@ def proto_args(parser, parents):
 Examples:
   oida pcap capture.pcap                          # Full analysis (all listeners)
   oida pcap capture.pcap --quick                  # Quick scan (core protocols only)
-  oida pcap capture.pcap -p ics                   # ICS protocols only
-  oida pcap capture.pcap -p modbus,dnp3           # Specific protocols
+  oida pcap capture.pcap --protocols ics          # ICS protocols only
+  oida pcap capture.pcap --protocols modbus,dnp3  # Specific protocols
   oida pcap capture.pcap --category credential    # All credential listeners
   oida pcap capture.pcap --exclude routing,fhrp   # Skip routing/FHRP
   oida pcap capture.pcap -e                       # All extractions (file carving)
@@ -50,7 +50,6 @@ Listener categories:
     # Listener Filtering
     filter_group = pcap_parser.add_argument_group("Listener Filtering")
     filter_group.add_argument(
-        "-p",
         "--protocols",
         type=str,
         default=None,

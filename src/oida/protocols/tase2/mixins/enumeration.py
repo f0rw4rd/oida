@@ -116,16 +116,27 @@ class EnumerationMixin(_ScannerBase):
         try:
             values = connection.read_points([(domain, n) for n in names])
 
-            for name, pv in zip(names, values):
-                results.append(
-                    {
-                        "domain": domain,
-                        "name": name,
-                        "value": pv.value if pv else None,
-                        "quality": str(pv.quality) if pv else None,
-                        "point_type": pv.type_name if pv else None,
-                    }
+            # zip() would silently truncate if the library returns fewer values
+            # than names -- trailing points would vanish with no indication.
+            # Detect the mismatch and emit an explicit per-name error instead.
+            if len(values) != len(names):
+                self.logger.warning(
+                    f"Bulk read returned {len(values)} value(s) for {len(names)} requested "
+                    f"point(s) in {domain}; missing points reported as errors."
                 )
+
+            for idx, name in enumerate(names):
+                pv = values[idx] if idx < len(values) else None
+                entry = {
+                    "domain": domain,
+                    "name": name,
+                    "value": pv.value if pv else None,
+                    "quality": str(pv.quality) if pv else None,
+                    "point_type": pv.type_name if pv else None,
+                }
+                if idx >= len(values):
+                    entry["error"] = "no value returned"
+                results.append(entry)
         except Exception as e:
             self.logger.debug(f"Error in bulk read: {e}")
 

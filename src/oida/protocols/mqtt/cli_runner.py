@@ -67,8 +67,29 @@ class mqtt(NetworkConnection):
 
         return self.scanner._build_publish_properties(args_dict)
 
+    def _resolve_default_port(self) -> None:
+        """Fill in the port the operator did NOT set.
+
+        --port defaults to None so an explicit `-p` (even `-p 1883` with --tls,
+        or `-p 8883` without) is always honored. When unset: TLS -> 8883,
+        plaintext -> 1883. Previously the default was 1883, so an explicit
+        `-p 1883 --tls` was indistinguishable from the default and got silently
+        forced to 8883.
+        """
+        if getattr(self.args, "port", None) is not None:
+            return
+        tls = getattr(self.args, "tls", False)
+        self.args.port = 8883 if tls else self.default_port
+        self.logger.debug(
+            "--port unset: defaulting to %d (%s)",
+            self.args.port,
+            "MQTT TLS" if tls else "MQTT plaintext",
+        )
+
     def proto_flow(self):
         """Execute MQTT scanning workflow"""
+        self._resolve_default_port()
+
         args_dict = self._convert_args_to_dict()
         self.scanner = MQTTScanner(args_dict)
 
@@ -121,7 +142,6 @@ class mqtt(NetworkConnection):
             return
 
         username = getattr(self.args, "username", "")
-        password = getattr(self.args, "password", "")
         auth_result = self.scanner.auth_result
 
         if auth_result:

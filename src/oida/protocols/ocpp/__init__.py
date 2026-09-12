@@ -24,8 +24,6 @@ Easy CLI examples:
     oida ocpp ws://host:9000/CP_001 -E                  # Probe OCPP versions
 """
 
-from oida.utils.common_types import Category
-
 from .scanner import (
     OCPPScanner,
     metadata,
@@ -53,6 +51,26 @@ from .constants import (
 
 from ...connection import NetworkConnection
 from .mixins import DiscoveryMixin, SecurityMixin, MessagesMixin, ChargingMixin
+
+
+def _payload_status(payload, container_key: str | None = None) -> str:
+    """Read a status out of a CALLRESULT payload the peer fully controls.
+
+    ``_parse_message`` returns element 2 of the OCPP-J frame verbatim, so it
+    can be any JSON type -- a string, number, list or null, not just the
+    object the spec calls for. Reading ``.get()`` off that directly raises
+    AttributeError, which escapes the callers' ``except ValueError`` and
+    aborts the rest of the host scan. Anything that isn't the expected
+    nesting degrades to "Unknown" instead.
+    """
+    if not isinstance(payload, dict):
+        return "Unknown"
+    if container_key is not None:
+        payload = payload.get(container_key, {})
+        if not isinstance(payload, dict):
+            return "Unknown"
+    status = payload.get("status")
+    return "Unknown" if status is None else str(status)
 
 
 class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkConnection):
@@ -129,6 +147,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             "auth_id",
             "status",
             "trigger",
+            "security",
             "charging",
             "brute",
             "default_creds",
@@ -136,6 +155,25 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             "listen",
         ]
     )
+
+    @staticmethod
+    def _bracket_ipv6(host: str) -> str:
+        """Bracket a bare IPv6 literal so "ws://host:port/path" is parseable.
+
+        f"ws://{host}:{port}" with a bare IPv6 host yields
+        "ws://2001:db8::1:9000/CP1", which websockets' URI parser rejects
+        ("Port could not be cast to integer value"), failing every scan
+        against an IPv6 target.
+        """
+        if ":" in host and not host.startswith("["):
+            try:
+                import ipaddress
+
+                ipaddress.ip_address(host)
+                return f"[{host}]"
+            except ValueError:
+                return host
+        return host
 
     def __init__(self, args, db, host):
         self.protocol_name = "OCPP"
@@ -170,7 +208,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             else:
                 cp_id = getattr(args, "charge_point_id", "CP_SCANNER_001")
                 path = f"/{cp_id}"
-            self._target_url = f"{scheme}://{host}:{port}{path}"
+            self._target_url = f"{scheme}://{self._bracket_ipv6(host)}:{port}{path}"
 
         super().__init__(args, db, host)
         self.logger.debug(f"OCPP target URL resolved: {self._target_url}")
@@ -568,12 +606,19 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         self.logger.display(f"[Authorize] Testing idTag: {auth_id}")
         response = self.scanner._send_and_receive(self.conn, msg)
         if response:
-            msg_type, _, resp_payload = self._parse_message(response)
+            try:
+                msg_type, _, resp_payload = self._parse_message(response)
+            except ValueError as e:
+                # Lenient real-world OCPP stacks can emit invalid JSON or a short
+                # CALLERROR; degrade here instead of letting ValueError abort the
+                # whole scan (skipping later ops such as listen mode).
+                self.logger.display(f"[Authorize] Unparseable response: {e}")
+                return
             if msg_type == MessageType.CALLRESULT:
                 if version.startswith("2."):
-                    status = resp_payload.get("idTokenInfo", {}).get("status", "Unknown")
+                    status = _payload_status(resp_payload, "idTokenInfo")
                 else:
-                    status = resp_payload.get("idTagInfo", {}).get("status", "Unknown")
+                    status = _payload_status(resp_payload, "idTagInfo")
                 self.logger.display(f"[Authorize] {auth_id}: {status}")
                 self.results["data"]["authorize"] = {"id_tag": auth_id, "status": status}
             elif msg_type == MessageType.CALLERROR:
@@ -593,7 +638,11 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         self.logger.display(f"[StatusNotification] Connector {connector_id}")
         response = self.scanner._send_and_receive(self.conn, msg)
         if response:
-            msg_type, _, payload = self._parse_message(response)
+            try:
+                msg_type, _, payload = self._parse_message(response)
+            except ValueError as e:
+                self.logger.display(f"[StatusNotification] Unparseable response: {e}")
+                return
             if msg_type == MessageType.CALLRESULT:
                 self.logger.display("[StatusNotification] Accepted")
             elif msg_type == MessageType.CALLERROR:
@@ -613,9 +662,13 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         self.logger.display(f"[TriggerMessage] Requesting: {requested}")
         response = self.scanner._send_and_receive(self.conn, msg)
         if response:
-            msg_type, _, payload = self._parse_message(response)
+            try:
+                msg_type, _, payload = self._parse_message(response)
+            except ValueError as e:
+                self.logger.display(f"[TriggerMessage] Unparseable response: {e}")
+                return
             if msg_type == MessageType.CALLRESULT:
-                status = payload.get("status", "Unknown")
+                status = _payload_status(payload)
                 self.logger.display(f"[TriggerMessage] {requested}: {status}")
             elif msg_type == MessageType.CALLERROR:
                 self.logger.display(
@@ -627,11 +680,14 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         self.logger.info(f"Connecting to {self._target_url}")
         self.conn = self.scanner.connect()
 
-        if self.conn and not getattr(self.args, "username", None):
+        # A TLS client certificate (OCPP Security Profile 2/3) IS an identity,
+        # even without an HTTP Basic-Auth username -- so don't flag such a
+        # cert-authenticated session as "Anonymous access".
+        has_client_cert = bool(getattr(self.args, "tls_cert", None))
+        if self.conn and not getattr(self.args, "username", None) and not has_client_cert:
             self.logger.success(f"Connected to OCPP endpoint at {self._target_url}")
             self.logger.security_finding(
                 "Anonymous access",
-                category=Category.AUTHENTICATION,
                 detail="Anonymous connection accepted (no credentials provided)",
             )
         elif self.conn:
@@ -642,7 +698,6 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         if self.conn and self._target_url.startswith("ws://"):
             self.logger.security_finding(
                 "No encryption",
-                category=Category.ENCRYPTION,
                 detail="OCPP over ws:// -- charge point traffic in cleartext (no TLS)",
             )
 

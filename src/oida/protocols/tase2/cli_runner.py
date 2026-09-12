@@ -5,7 +5,6 @@
 from typing import Any, Optional
 
 from ...connection import NetworkConnection
-from ...utils.common_types import Category
 from ...utils.lazy_import import lazy_import
 
 from .scanner import TASE2Scanner
@@ -57,7 +56,6 @@ class tase2(NetworkConnection):
             if not getattr(self.scanner, "use_tls", False):
                 self.logger.security_finding(
                     "No encryption",
-                    category=Category.ENCRYPTION,
                     detail="TASE.2 / ICCP without TLS (IEC 62351) -- cleartext",
                 )
         else:

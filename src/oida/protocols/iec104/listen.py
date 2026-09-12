@@ -73,22 +73,27 @@ class ListenMixin:
             if type_id in [1, 30]:
                 siq = data[0]
                 value = bool(siq & SIQ_SPI_MASK)
-                quality = self._parse_quality_flags(siq)
+                quality = self._parse_quality_flags(siq, check_ov=False)
                 return value, quality
 
             # Double-point information (Type 3, 31)
             elif type_id in [3, 31]:
                 diq = data[0]
                 value = diq & DIQ_DPI_MASK  # 0=indeterminate, 1=off, 2=on, 3=indeterminate
-                quality = self._parse_quality_flags(diq)
+                quality = self._parse_quality_flags(diq, check_ov=False)
                 return value, quality
 
-            # Measured value, normalized (Type 9, 21, 34)
+            # Measured value, normalized (Type 9, 34 carry a QDS octet;
+            # Type 21 = M_ME_ND_1 has NO quality descriptor, so reading data[2]
+            # would splice in the next element/object as a spurious quality).
             elif type_id in [9, 21, 34]:
                 if len(data) >= 2:
                     nva = struct.unpack("<h", data[0:2])[0]
                     value = nva / NORMALIZED_SCALE  # Normalize to -1.0 to 1.0
-                    quality = self._parse_quality_flags(data[2]) if len(data) > 2 else ""
+                    if type_id == 21:
+                        quality = ""
+                    else:
+                        quality = self._parse_quality_flags(data[2]) if len(data) > 2 else ""
                     return round(value, 4), quality
 
             # Measured value, scaled (Type 11, 35)
@@ -134,8 +139,15 @@ class ListenMixin:
         except Exception as e:
             return data.hex() if data else None, f"parse_error: {e}"
 
-    def _parse_quality_flags(self, qds: int) -> str:
-        """Parse quality descriptor flags"""
+    def _parse_quality_flags(self, qds: int, check_ov: bool = True) -> str:
+        """Parse quality descriptor flags.
+
+        IV/NT/SB/BL live in the high nibble and are shared by QDS, SIQ and DIQ.
+        OV (bit 0) exists ONLY in QDS: in SIQ bit 0 is the SPI value and in DIQ
+        bits 0-1 are the DPI value, so callers parsing an SIQ/DIQ byte must pass
+        check_ov=False -- otherwise every ON single-point / DPI-bit-0
+        double-point is falsely flagged OV.
+        """
         flags = []
         if qds & QDS_IV:
             flags.append("IV")  # Invalid
@@ -145,7 +157,7 @@ class ListenMixin:
             flags.append("SB")  # Substituted
         if qds & QDS_BL:
             flags.append("BL")  # Blocked
-        if qds & QDS_OV:
+        if check_ov and qds & QDS_OV:
             flags.append("OV")  # Overflow
         return ",".join(flags) if flags else "OK"
 

@@ -545,8 +545,7 @@ class TestWsBruteForce(unittest.TestCase):
 
             instance._add_finding.assert_called_once()
             call_args = instance._add_finding.call_args
-            assert call_args[0][0] == "MEDIUM"
-            assert "brute-force" in call_args[0][1].lower()
+            assert "brute-force" in call_args[0][0].lower()
         finally:
             os.unlink(tmp_path)
 

@@ -11,7 +11,6 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -60,6 +59,21 @@ class ControlMixin(_ScannerBase):
                             connection.select_device(domain.name, var_name)
                             control_info["selectable"] = True
                             self.logger.warning(f"SELECTABLE: {domain.name}/{var_name}")
+                            # A successful Select-Before-Operate RESERVES the
+                            # device server-side until its timer expires, which
+                            # can lock out legitimate operators across many
+                            # points. Best-effort cancel the selection if the
+                            # library exposes it.
+                            for cancel_attr in ("cancel_device", "deselect_device", "cancel"):
+                                cancel = getattr(connection, cancel_attr, None)
+                                if callable(cancel):
+                                    try:
+                                        cancel(domain.name, var_name)
+                                    except Exception as ce:
+                                        self.logger.debug(
+                                            f"SBO cancel failed for {domain.name}/{var_name}: {ce}"
+                                        )
+                                    break
                         except Exception as e:
                             self.logger.debug(
                                 f"Select test failed for {domain.name}/{var_name}: {e}"
@@ -91,7 +105,6 @@ class ControlMixin(_ScannerBase):
                 writable_count += 1
                 self.logger.security_finding(
                     "Writable access",
-                    category=Category.ACCESS_CONTROL,
                     detail=f"TASE.2 writable point: {point['domain']}/{point['name']}",
                 )
 

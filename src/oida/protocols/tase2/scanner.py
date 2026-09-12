@@ -52,11 +52,11 @@ class TASE2IMScope:
 
     Determines whether an IM is VCC-scope or ICC-scope.
     Per IEC 60870-6-503, Information Messages can be associated with
-    either a Virtual Control Center (VCC) or Invocation Control Center (ICC).
+    either a Virtual Control Center (VCC) or Indication Control Center (ICC).
     """
 
     VCC = "VCC"  # Virtual Control Center scope (server-wide)
-    ICC = "ICC"  # Invocation Control Center scope (bilateral-specific)
+    ICC = "ICC"  # Indication Control Center scope (bilateral-specific)
 
 
 protocol_options = {

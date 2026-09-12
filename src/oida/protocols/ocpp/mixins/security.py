@@ -8,7 +8,6 @@ Each check is triggered by its own CLI flag.
 import base64
 import time
 
-from oida.utils.common_types import Category
 
 from ..constants import (
     SECURITY_CONFIG_KEYS,
@@ -33,11 +32,11 @@ from ..constants import (
 class SecurityMixin:
     """Mixin for OCPP security assessment"""
 
-    def _add_finding(self, severity: str, issue: str, description: str):
+    def _add_finding(self, issue: str, description: str):
         """Append a security finding to results."""
-        self.logger.debug(f"Security finding: [{severity}] {issue}")
+        self.logger.debug(f"Security finding: {issue}")
         findings = self.results["data"].setdefault("security_findings", [])
-        findings.append({"severity": severity, "issue": issue, "description": description})
+        findings.append({"issue": issue, "description": description})
 
     @staticmethod
     def _extract_write_status(payload, version: str) -> str:
@@ -117,11 +116,9 @@ class SecurityMixin:
         if status == "Accepted":
             self.logger.security_finding(
                 "No authentication",
-                category=Category.AUTHENTICATION,
                 detail="Unknown charge point accepted by CSMS via BootNotification",
             )
             self._add_finding(
-                "MEDIUM",
                 "BootNotification accepted without authentication",
                 "CSMS accepted an unknown charge point registration",
             )
@@ -153,11 +150,9 @@ class SecurityMixin:
             if key_name == "AuthorizationKey" and key_value:
                 self.logger.security_finding(
                     "Insecure configuration",
-                    category=Category.CONFIGURATION,
                     detail="AuthorizationKey exposed in configuration",
                 )
                 self._add_finding(
-                    "CRITICAL",
                     "AuthorizationKey exposed in configuration",
                     f"AuthorizationKey readable: {key_value[:4]}...",
                 )
@@ -165,11 +160,9 @@ class SecurityMixin:
             if key_name in SECURITY_CONFIG_KEYS and not readonly:
                 self.logger.security_finding(
                     "Writable access",
-                    category=Category.ACCESS_CONTROL,
                     detail=f"Security config key '{key_name}' is writable",
                 )
                 self._add_finding(
-                    "MEDIUM",
                     f"Security config key '{key_name}' is writable",
                     f"Configuration key {key_name} can be modified",
                 )
@@ -259,7 +252,6 @@ class SecurityMixin:
                             "  SetChargingProfile: ACCEPTED (unauthenticated write possible)"
                         )
                         self._add_finding(
-                            "HIGH",
                             "Unauthorized charging profile write accepted",
                             "SetChargingProfile with TxDefaultProfile (1A) was accepted "
                             "without authentication. Rate manipulation attack possible.",
@@ -342,7 +334,6 @@ class SecurityMixin:
                             "  RemoteStartTransaction: ACCEPTED (unauthenticated session start possible)"
                         )
                         self._add_finding(
-                            "CRITICAL",
                             "Unauthorized remote transaction start accepted",
                             f"RemoteStartTransaction with fake IdTag '{FAKE_ID_TAG}' was "
                             "accepted. Unauthorized charging sessions can be started.",
@@ -398,7 +389,6 @@ class SecurityMixin:
                             "  Reset(Soft): ACCEPTED (unauthenticated reset possible)"
                         )
                         self._add_finding(
-                            "HIGH",
                             "Unauthorized soft reset accepted",
                             "Reset(Soft) command was accepted without authentication. "
                             "An attacker can restart the charge point (denial of service).",
@@ -453,7 +443,6 @@ class SecurityMixin:
                             "(unauthenticated remote unlock possible)"
                         )
                         self._add_finding(
-                            "HIGH",
                             "Unauthorized connector unlock accepted",
                             f"UnlockConnector({connector_id}) was accepted. "
                             "Connector can be unlocked remotely without authorization.",
@@ -526,7 +515,6 @@ class SecurityMixin:
                             "  UpdateFirmware: ACCEPTED (unauthenticated firmware update possible)"
                         )
                         self._add_finding(
-                            "CRITICAL",
                             "Unauthorized firmware update accepted",
                             f"UpdateFirmware with dummy URL ({FAKE_FIRMWARE_URL}) was accepted "
                             "without authentication. Supply chain attack vector.",
@@ -625,8 +613,18 @@ class SecurityMixin:
         Returns:
             Status string (e.g. "Accepted", "Rejected", "no_response", "error:...")
         """
+        # This probe writes the CURRENT value back unchanged (harmless). If the
+        # prior read failed we don't know the current value; writing a hardcoded
+        # '300' would silently CHANGE a real interval of e.g. 60, breaking the
+        # "same value back" contract. Skip the write and report read_failed.
         key_info = self._read_config_value(HARMLESS_CONFIG_KEY)
-        current_value = key_info.get("value", "300") if key_info else "300"
+        current_value = key_info.get("value") if key_info else None
+        if not current_value:
+            self.logger.display(
+                f"  ChangeConfiguration({HARMLESS_CONFIG_KEY}) skipped: "
+                "could not read the current value to write back safely"
+            )
+            return "read_failed"
         self.logger.debug(f"Harmless config write: {HARMLESS_CONFIG_KEY}={current_value}")
 
         version = self.results["data"].get("ocpp_version", "1.6") or "1.6"
@@ -647,11 +645,9 @@ class SecurityMixin:
                 if status == "Accepted":
                     self.logger.security_finding(
                         "Writable access",
-                        category=Category.ACCESS_CONTROL,
                         detail=f"ChangeConfiguration({HARMLESS_CONFIG_KEY}) accepted without auth",
                     )
                     self._add_finding(
-                        "MEDIUM",
                         "Configuration writes accepted without authentication",
                         f"ChangeConfiguration({HARMLESS_CONFIG_KEY}) was accepted. "
                         "Configuration can be modified without auth.",
@@ -742,11 +738,9 @@ class SecurityMixin:
             if status in ("Accepted", "RebootRequired"):
                 self.logger.security_finding(
                     "Writable access",
-                    category=Category.ACCESS_CONTROL,
                     detail=f"Security-sensitive key '{sensitive_key}' is writable ({status})",
                 )
                 self._add_finding(
-                    "CRITICAL" if sensitive_key == "AuthorizationKey" else "HIGH",
                     f"Security-sensitive key '{sensitive_key}' is writable",
                     f"ChangeConfiguration({sensitive_key}) returned {status}. "
                     "Security configuration can be modified without auth.",
@@ -810,7 +804,6 @@ class SecurityMixin:
                             "(unauthenticated availability change possible)"
                         )
                         self._add_finding(
-                            "HIGH",
                             "Unauthorized ChangeAvailability accepted",
                             f"ChangeAvailability(Inoperative) on connector {connector_id} "
                             f"was {status}. Attacker can disable charging.",
@@ -885,7 +878,6 @@ class SecurityMixin:
                             "  ClearCache: ACCEPTED (unauthenticated cache clear possible)"
                         )
                         self._add_finding(
-                            "MEDIUM",
                             "Unauthorized ClearCache accepted",
                             "ClearCache was accepted without authentication. "
                             "Local authorization cache was cleared, forcing "
@@ -977,7 +969,6 @@ class SecurityMixin:
                             f"  {method}: ACCEPTED (attacker-controlled upload URL accepted)"
                         )
                         self._add_finding(
-                            "HIGH",
                             f"Unauthorized {method} accepted (SSRF)",
                             f"{method} with attacker-controlled upload URL was accepted. "
                             "Charge point will upload diagnostics/logs to arbitrary URL. "
@@ -1035,7 +1026,6 @@ class SecurityMixin:
                             "(unauthenticated session stop possible)"
                         )
                         self._add_finding(
-                            "HIGH",
                             "Unauthorized RemoteStopTransaction accepted",
                             "RemoteStopTransaction was accepted without authentication. "
                             "Attacker can terminate active charging sessions.",
@@ -1099,7 +1089,6 @@ class SecurityMixin:
                             "  ReserveNow: ACCEPTED (unauthenticated reservation possible)"
                         )
                         self._add_finding(
-                            "MEDIUM",
                             "Unauthorized ReserveNow accepted",
                             f"ReserveNow on connector {connector_id} was accepted. "
                             "Attacker can exhaust all connectors via reservations.",
@@ -1171,7 +1160,6 @@ class SecurityMixin:
 
                     if list_ver >= 0:
                         self._add_finding(
-                            "LOW",
                             "Local authorization list version disclosed",
                             f"GetLocalListVersion returned version {list_ver}. "
                             "Auth list metadata exposed.",
@@ -1202,7 +1190,6 @@ class SecurityMixin:
                             "  SendLocalList: ACCEPTED (unauthenticated auth list write possible)"
                         )
                         self._add_finding(
-                            "CRITICAL",
                             "Unauthorized SendLocalList accepted",
                             "SendLocalList was accepted without authentication. "
                             "Attacker can replace the local authorization list, "
@@ -1298,7 +1285,6 @@ class SecurityMixin:
                 if conn is not None:
                     self.logger.security_finding(
                         "Default credentials",
-                        category=Category.AUTHENTICATION,
                         detail=f"Valid HTTP Basic Auth: {username}:{password}",
                     )
                     valid_creds.append({"username": username, "password": password})
@@ -1331,7 +1317,6 @@ class SecurityMixin:
         if valid_creds:
             cred_summary = ", ".join(f"{c['username']}:{c['password']}" for c in valid_creds[:3])
             self._add_finding(
-                "CRITICAL",
                 f"Valid HTTP Basic Auth credentials found ({len(valid_creds)})",
                 f"Credentials: {cred_summary}",
             )
@@ -1381,7 +1366,6 @@ class SecurityMixin:
                         if status == "Accepted":
                             self.logger.security_finding(
                                 "Default credentials",
-                                category=Category.AUTHENTICATION,
                                 detail=f"Valid IdTag accepted: {tag}",
                             )
                             valid_tags.append({"id_tag": tag, "status": status})
@@ -1405,7 +1389,6 @@ class SecurityMixin:
 
         if valid_tags:
             self._add_finding(
-                "HIGH",
                 f"Valid OCPP IdTag tokens found ({len(valid_tags)})",
                 f"Tags: {', '.join(t['id_tag'] for t in valid_tags[:5])}",
             )
@@ -1464,7 +1447,6 @@ class SecurityMixin:
                             "  SetNetworkProfile: ACCEPTED (connection hijack possible!)"
                         )
                         self._add_finding(
-                            "CRITICAL",
                             "SetNetworkProfile accepted attacker-controlled CSMS URL",
                             f"SetNetworkProfile with URL '{FAKE_NETWORK_PROFILE_URL}' "
                             "was accepted. Charger can be redirected to a rogue CSMS.",
@@ -1528,7 +1510,6 @@ class SecurityMixin:
                             "  InstallCertificate: ACCEPTED (rogue root CA installable!)"
                         )
                         self._add_finding(
-                            "CRITICAL",
                             "InstallCertificate accepted arbitrary root CA",
                             "InstallCertificate with a fake CSMSRootCertificate was "
                             "accepted. Attacker can install rogue CA for MITM attacks.",
@@ -1629,7 +1610,6 @@ class SecurityMixin:
                             "  SetDisplayMessage: ACCEPTED (social engineering vector)"
                         )
                         self._add_finding(
-                            "MEDIUM",
                             "SetDisplayMessage accepted without authorization",
                             f"SetDisplayMessage with text '{PROBE_DISPLAY_MESSAGE}' was "
                             "accepted. Attacker can display arbitrary messages on screen.",
@@ -1729,7 +1709,6 @@ class SecurityMixin:
                             "  CustomerInformation: ACCEPTED (PII exfiltration possible)"
                         )
                         self._add_finding(
-                            "HIGH",
                             "CustomerInformation accepted without authorization",
                             "CustomerInformation with report=True was accepted. "
                             "Customer PII data may be exfiltrated from the charger.",
@@ -1770,8 +1749,8 @@ class SecurityMixin:
 
         result_data = {"probes": []}
 
-        for url, label, severity in SSRF_PROBE_URLS:
-            probe_result = {"url": url, "label": label, "severity": severity, "status": None}
+        for url, label in SSRF_PROBE_URLS:
+            probe_result = {"url": url, "label": label, "status": None}
 
             try:
                 # Use UpdateFirmware as the SSRF vector (works on both 1.6 and 2.0.1)
@@ -1804,7 +1783,6 @@ class SecurityMixin:
                             probe_result["status"] = "Accepted"
                             self.logger.warning(f"  SSRF [{label}]: ACCEPTED ({url})")
                             self._add_finding(
-                                severity,
                                 f"SSRF via UpdateFirmware: {label} URL accepted",
                                 f"UpdateFirmware with URL '{url}' was accepted. "
                                 f"Charger will attempt to fetch from {label} endpoint.",
@@ -1822,11 +1800,10 @@ class SecurityMixin:
             result_data["probes"].append(probe_result)
 
         # Also test via GetDiagnostics/GetLog for the cloud metadata URLs
-        for url, label, severity in SSRF_PROBE_URLS[:3]:
+        for url, label in SSRF_PROBE_URLS[:3]:
             diag_result = {
                 "url": url,
                 "label": f"{label} (diag)",
-                "severity": severity,
                 "status": None,
             }
 
@@ -1864,7 +1841,6 @@ class SecurityMixin:
                         if accepted:
                             self.logger.warning(f"  SSRF [{label}] via {method}: ACCEPTED")
                             self._add_finding(
-                                severity,
                                 f"SSRF via {method}: {label} URL accepted",
                                 f"{method} with URL '{url}' was accepted. "
                                 f"Charger will upload data to {label} endpoint.",
@@ -1935,7 +1911,6 @@ class SecurityMixin:
                         "  PARALLEL connections accepted (SaiFlow data theft vector!)"
                     )
                     self._add_finding(
-                        "CRITICAL",
                         "WebSocket parallel connection hijacking (SaiFlow)",
                         "A second WebSocket connection was accepted while the first "
                         "remained active. Attacker can intercept/inject OCPP messages "
@@ -1948,7 +1923,6 @@ class SecurityMixin:
                         "  First connection DISPLACED by second (SaiFlow DoS vector)"
                     )
                     self._add_finding(
-                        "HIGH",
                         "WebSocket connection displacement (SaiFlow DoS)",
                         "A second WebSocket connection was accepted and the first "
                         "connection was dropped. Attacker can perform displacement "

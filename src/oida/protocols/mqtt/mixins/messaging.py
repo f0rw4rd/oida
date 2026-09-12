@@ -20,6 +20,11 @@ from ....utils.fuzzer import fuzz
 # the reported count matches what actually gets fuzzed.
 MAX_FUZZ_TOPICS = 10
 
+# Cap for the in-RAM message list used only to render the final summary table.
+# The JSONL output file persists every message, so an unbounded --listen-time 0
+# against a busy broker on '#' would otherwise grow this list until OOM.
+MAX_SUMMARY_MESSAGES = 10000
+
 
 class MessagingMixin:
     """Mixin providing MQTT messaging operations."""
@@ -72,6 +77,10 @@ class MessagingMixin:
             }
             msg_record.update(props_dict)
             stats.messages.append(msg_record)
+            # Bound the summary list (the JSONL file already has everything).
+            # Trim in chunks so trimming is amortized O(1) per message.
+            if len(stats.messages) > 2 * MAX_SUMMARY_MESSAGES:
+                del stats.messages[:-MAX_SUMMARY_MESSAGES]
 
             if output_fh:
                 output_fh.write(json.dumps(msg_record) + "\n")

@@ -26,11 +26,21 @@ from .constants import (
     CapturedASDU,
     ListenStats,
     COT_ACTIVATION,
+    COT_VALUE_MASK,
     VSQ_SINGLE_OBJECT,
     IEC101_CA_OCTETS,
     IEC101_IOA_OCTETS,
 )
-from oida.utils.common_types import Category
+
+
+def _decode_cot_value(raw_cot: int) -> int:
+    """Mask a raw IEC 60870-5-101/104 COT octet down to its cause value.
+
+    Bit 7 (Test) and bit 6 (P/N, negative confirmation) are flags, not part
+    of the cause-of-transmission enumeration; only bits 0-5 identify the
+    cause and should be used for ``IEC104_COT`` name lookups.
+    """
+    return raw_cot & COT_VALUE_MASK
 
 
 class IEC101Mixin:
@@ -197,6 +207,11 @@ class IEC101Mixin:
         elif frame[0] == FT12_START_VARIABLE:
             result["frame_type"] = "variable"
             length = frame[1]
+            if len(frame) < 4 + length + 1:
+                # Declared length runs past the end of the buffer (truncated
+                # or malicious frame) - report invalid instead of indexing
+                # out of bounds.
+                return result
             user_data = frame[4 : 4 + length]
             checksum = frame[4 + length]
             end = frame[4 + length + 1] if len(frame) > 4 + length + 1 else 0
@@ -404,7 +419,7 @@ class IEC101Mixin:
         ca_off = 3  # type_id(1) + vsq(1) + cot(1)
         ioa_off = ca_off + IEC101_CA_OCTETS
         type_id = asdu[0]
-        _cot = asdu[2]  # noqa: F841 — extracted but unused; reserved for future multi-object parsing
+        _cot = _decode_cot_value(asdu[2])  # noqa: F841 — reserved for future multi-object parsing
         ca = int.from_bytes(asdu[ca_off : ca_off + IEC101_CA_OCTETS], "little")
         ioa = (
             int.from_bytes(asdu[ioa_off : ioa_off + IEC101_IOA_OCTETS], "little")
@@ -500,7 +515,7 @@ class IEC101Mixin:
         ioa_off = ca_off + IEC101_CA_OCTETS
         value_off = ioa_off + IEC101_IOA_OCTETS
         type_info = IEC104_TYPE_IDS.get(type_id, (f"TYPE_{type_id}", "Unknown"))
-        cot = asdu[2]
+        cot = _decode_cot_value(asdu[2])
         ca = int.from_bytes(asdu[ca_off : ca_off + IEC101_CA_OCTETS], "little")
         ioa = (
             int.from_bytes(asdu[ioa_off : ioa_off + IEC101_IOA_OCTETS], "little")
@@ -556,17 +571,14 @@ class IEC101Mixin:
         # Report security findings
         self.logger.security_finding(
             "No authentication",
-            category=Category.AUTHENTICATION,
             detail="IEC 101 protocol limitation - no authentication mechanism",
         )
         self.logger.security_finding(
             "No encryption",
-            category=Category.ENCRYPTION,
             detail="IEC 101 protocol limitation - unencrypted serial communication",
         )
         self.logger.security_finding(
             "Insecure configuration",
-            category=Category.CONFIGURATION,
             detail="Physical access to serial line grants full control",
         )
 

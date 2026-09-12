@@ -43,7 +43,9 @@ Requires: pyiec61850-ng (pip install oida[tase2])
     add_target_argument(tase2_parser)
 
     # Network options with TASE.2-specific additions
-    network_group = add_network_options(tase2_parser, default_port=102, include_timeout=False)
+    network_group = add_network_options(
+        tase2_parser, default_port=102, include_timeout=True, default_timeout=5
+    )
     network_group.add_argument(
         "--local-ap-title",
         type=str,

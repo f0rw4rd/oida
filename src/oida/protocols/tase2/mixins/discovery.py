@@ -189,18 +189,24 @@ class DiscoveryMixin(_ScannerBase):
 
         try:
             domain_list = connection.get_domains()
-            self.domains = domain_list
 
             self.logger.display(f"Found {len(domain_list)} domain(s)")
 
-            for domain in domain_list:
-                domain_type = "VCC" if domain.is_vcc else "ICC"
+            # Honour the --discover-vcc / --discover-icc gating. self.domains
+            # must reflect the same filtering as the returned/displayed list:
+            # every other mixin (enumeration, control testing, transfer set
+            # discovery) iterates self.domains directly, so a domain excluded
+            # here must not leak into those downstream operations.
+            filtered_domains = [
+                domain
+                for domain in domain_list
+                if (domain.is_vcc and self.discover_vcc)
+                or (not domain.is_vcc and self.discover_icc)
+            ]
+            self.domains = filtered_domains
 
-                # Honour the --discover-vcc / --discover-icc gating
-                if domain.is_vcc and not self.discover_vcc:
-                    continue
-                if not domain.is_vcc and not self.discover_icc:
-                    continue
+            for domain in filtered_domains:
+                domain_type = "VCC" if domain.is_vcc else "ICC"
 
                 domain_info = {
                     "name": domain.name,

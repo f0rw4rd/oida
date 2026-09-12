@@ -14,7 +14,7 @@ packet analysis across all supported protocol categories.
 Usage:
     oida pcap capture.pcap                    # Full analysis
     oida pcap capture.pcap -E                 # File extraction
-    oida pcap capture.pcap -p ics             # ICS protocols only
+    oida pcap capture.pcap --protocols ics    # ICS protocols only
 """
 
 from .scanner import PcapScanner, pcap

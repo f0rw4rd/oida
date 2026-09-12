@@ -273,7 +273,6 @@ class DiscoveryMixin:
 
             if exposed_dangerous:
                 self._add_finding(
-                    "HIGH",
                     f"Dangerous OCPP actions accessible ({len(exposed_dangerous)})",
                     f"Actions: {', '.join(exposed_dangerous)}",
                 )
@@ -593,6 +592,27 @@ class DiscoveryMixin:
                 "values": [],
             }
 
+    def _send_only(self, conn: Any, message: str) -> None:
+        """Send an OCPP-J frame without waiting for (and consuming) a reply.
+
+        Used for CALLRESULT acks to CP-initiated CALLs. Reusing
+        _send_and_receive here would open a recv loop that discards frames
+        whose UniqueId doesn't match the ack -- swallowing genuine CP
+        messages that arrive right after the ack.
+        """
+        loop = getattr(self.scanner, "_event_loop", None)
+        if not loop or loop.is_closed():
+            self.logger.debug("Send-only ack aborted: event loop unavailable")
+            return
+
+        async def _send():
+            await conn.send(message)
+
+        try:
+            loop.run_until_complete(_send())
+        except Exception as e:
+            self.logger.debug(f"Send-only ack failed: {e}")
+
     def _receive_meter_values(self) -> List[Dict[str, Any]]:
         """
         Try to receive an asynchronous MeterValues CALL message from the charge point.
@@ -627,9 +647,13 @@ class DiscoveryMixin:
                     values = self._extract_meter_values(meter_payload)
                     self._display_meter_values(values)
 
-                    # Send CALLRESULT acknowledgement
+                    # Send CALLRESULT acknowledgement (plain send -- see
+                    # _receive_status_notification for why not _send_and_receive).
                     ack = self._build_call_result(msg_id, {})
-                    self.scanner._send_and_receive(self.conn, ack, timeout=1)
+                    try:
+                        self._send_only(self.conn, ack)
+                    except Exception as e:
+                        self.logger.debug(f"Failed to send acknowledgement: {e}")
 
                     return values
 
@@ -1097,10 +1121,26 @@ class DiscoveryMixin:
         else:
             host = target or self.ip
             if ":" in host and not host.startswith("["):
-                parts = host.rsplit(":", 1)
-                if parts[1].isdigit():
-                    host = parts[0]
-                    port = int(parts[1])
+                try:
+                    import ipaddress
+
+                    ipaddress.ip_address(host)
+                    # Bare IPv6 address: no port can be embedded in it. Bracket
+                    # it so the probe URL is parseable (ws://[2001:db8::1]:9000).
+                    host = f"[{host}]"
+                except ValueError:
+                    # IPv4:port / hostname:port notation
+                    parts = host.rsplit(":", 1)
+                    if parts[1].isdigit():
+                        host = parts[0]
+                        port = int(parts[1])
+            elif host.startswith("[") and "]" in host:
+                # Bracketed IPv6, possibly with :port after the bracket
+                host_part, _, rest = host.partition("]")
+                host = host_part[1:]
+                if rest.startswith(":") and rest[1:].isdigit():
+                    port = int(rest[1:])
+                host = f"[{host}]"
             # TLS is inferred from the port (wss:// default 443), mirroring how
             # the scanner __init__ derives it; there is no --tls flag for OCPP.
             scheme = "wss" if port == DEFAULT_WSS_PORT else "ws"
@@ -1188,7 +1228,6 @@ class DiscoveryMixin:
             open_eps = [e for e in found_endpoints if e.get("status_code") not in (401, 403)]
             paths_str = ", ".join(e.get("path", "") for e in open_eps[:5])
             self._add_finding(
-                "MEDIUM",
                 f"OCPP endpoints discovered via path brute-force ({open_count})",
                 f"Open WebSocket endpoints found at: {paths_str}",
             )
@@ -1230,10 +1269,14 @@ class DiscoveryMixin:
                         "connector_id": p.get("connectorId", 0),
                     }
 
-                    # Send CALLRESULT acknowledgement
+                    # Send CALLRESULT acknowledgement. This must be a plain
+                    # send: _send_and_receive would enter its recv loop and
+                    # CONSUME subsequent CP frames (e.g. the next connector's
+                    # StatusNotification or the async MeterValues), losing
+                    # probe data.
                     ack = self._build_call_result(msg_id, {})
                     try:
-                        self.scanner._send_and_receive(self.conn, ack, timeout=1)
+                        self._send_only(self.conn, ack)
                     except Exception as e:
                         self.logger.debug(f"Failed to send acknowledgement: {e}")
 
