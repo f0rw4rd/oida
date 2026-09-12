@@ -78,6 +78,7 @@ knx:fuzz_iterations
 knx:fuzz_property
 knx:group_write
 knx:key_write
+knx:master_reset
 knx:memory_write
 knx:property_write
 knx:restart
@@ -110,6 +111,9 @@ profinet:write_im1
 profinet:write_im2
 profinet:write_im3
 profinet:write_index
+snap7:compress
+snap7:copy_ram_to_rom
+snap7:cpu_hot_start
 snap7:fuzz_max_targets
 snap7:restart
 snmp:default_creds
