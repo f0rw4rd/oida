@@ -70,6 +70,7 @@ AMQP_CLASSES: Dict[str, str] = {
 }
 
 # AMQP method IDs (within each class)
+# Verbatim from `tshark -G values amqp.method.method` (Connection block).
 AMQP_CONNECTION_METHODS: Dict[str, str] = {
     "10": "Start",
     "11": "Start-Ok",
@@ -79,8 +80,11 @@ AMQP_CONNECTION_METHODS: Dict[str, str] = {
     "31": "Tune-Ok",
     "40": "Open",
     "41": "Open-Ok",
+    "42": "Redirect",
     "50": "Close",
     "51": "Close-Ok",
+    "60": "Blocked",
+    "61": "Unblocked",
 }
 
 AMQP_CHANNEL_METHODS: Dict[str, str] = {
@@ -100,7 +104,7 @@ AMQP_EXCHANGE_METHODS: Dict[str, str] = {
     "30": "Bind",
     "31": "Bind-Ok",
     "40": "Unbind",
-    "51": "Unbind-Ok",
+    "41": "Unbind-Ok",
 }
 
 AMQP_QUEUE_METHODS: Dict[str, str] = {
@@ -131,8 +135,9 @@ AMQP_BASIC_METHODS: Dict[str, str] = {
     "72": "Get-Empty",
     "80": "Ack",
     "90": "Reject",
-    "100": "Recover",
-    "110": "Recover-Ok",
+    "100": "Recover-Async",
+    "110": "Recover",
+    "111": "Recover-Ok",
     "120": "Nack",
 }
 
@@ -283,6 +288,7 @@ class AMQPPassiveListener(PySharkListenerBase):
         client_ok_methods = {"Start-Ok", "Secure-Ok", "Tune-Ok"}
         is_response = method_name in (
             "Start",
+            "Secure",
             "Tune",
             "Deliver",
             "Return",
