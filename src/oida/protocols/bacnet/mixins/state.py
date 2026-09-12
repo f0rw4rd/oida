@@ -296,6 +296,8 @@ class StateMixin:
         if removed_devices:
             self.logger.warning(f"  Removed devices: {removed_devices}")
 
+        any_object_changes = False
+
         for device_id in current_devices & baseline_devices:
             baseline_device = baseline["devices"].get(str(device_id), {})
             baseline_objects = baseline_device.get("objects", {})
@@ -303,7 +305,11 @@ class StateMixin:
             current_objects = self.objects.get(int(device_id), {})
 
             changes = []
-            for obj_type, instances in current_objects.items():
+            # Walk every object type seen on EITHER side so a type that was
+            # fully removed (present in the baseline, absent from the current
+            # scan) is still reported, not just types the current scan found.
+            for obj_type in set(current_objects) | set(baseline_objects):
+                instances = current_objects.get(obj_type, [])
                 baseline_type_objs = baseline_objects.get(obj_type, [])
                 # Baselines come in two on-disk shapes: --dump writes dicts with
                 # an "instance" key, while _export_results writes bare instance
@@ -316,15 +322,19 @@ class StateMixin:
                 current_instances = set(instances)
 
                 new_objs = current_instances - baseline_instances
+                removed_objs = baseline_instances - current_instances
                 if new_objs:
                     changes.append(f"New {obj_type}: {new_objs}")
+                if removed_objs:
+                    changes.append(f"Removed {obj_type}: {removed_objs}")
 
             if changes:
+                any_object_changes = True
                 self.logger.display(f"\n  Device {device_id} changes:")
                 for change in changes:
                     self.logger.display(f"    {change}")
 
-        if not new_devices and not removed_devices:
+        if not new_devices and not removed_devices and not any_object_changes:
             self.logger.display("  No significant changes detected")
 
     async def _async_handle_monitor(self):

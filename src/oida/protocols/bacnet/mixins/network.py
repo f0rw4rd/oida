@@ -6,7 +6,6 @@ Handles BBMD, FDT, router discovery, and remote network scanning.
 
 import asyncio
 from ..constants import _load_bacpypes3
-from oida.utils.common_types import Category
 
 
 class NetworkMixin:
@@ -451,7 +450,6 @@ class NetworkMixin:
                     if code == 0:
                         self.logger.security_finding(
                             "Writable access",
-                            category=Category.ACCESS_CONTROL,
                             detail="BBMD BDT write accepted (result=success)",
                         )
                         findings.append("BBMD BDT write accepted (result=success)")

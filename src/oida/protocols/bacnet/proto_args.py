@@ -322,13 +322,14 @@ def register_bacnet_flags(p):
     p.add_argument("--object-types", type=str, help=SUPPRESS)
     p.add_argument("--object-type", type=str, help=SUPPRESS)
     p.add_argument("--max-objects", type=int, default=1000, help=SUPPRESS)
-    p.add_argument("--vendor-info", action="store_true", help=SUPPRESS)
     p.add_argument("--test-write", action="store_true", help=SUPPRESS)
     p.add_argument("--bbmd", type=str, help=SUPPRESS)
     p.add_argument("--interface", type=str, help=SUPPRESS)
     p.add_argument("--device-range", type=str, help=SUPPRESS)
-    p.add_argument("--retries", type=int, default=1, help=SUPPRESS)
-    p.add_argument("--enum-networks", action="store_true", help=SUPPRESS)
+    # Hidden back-compat alias for --networks (dest reused so it is actually
+    # honoured; a previous version set a dead `enum_networks` attribute that
+    # nothing consumed).
+    p.add_argument("--enum-networks", action="store_true", dest="networks", help=SUPPRESS)
     p.add_argument("--assess-network", action="store_true", help=SUPPRESS)
     p.add_argument("--assess-access", action="store_true", help=SUPPRESS)
     p.add_argument("--assess-config", action="store_true", help=SUPPRESS)

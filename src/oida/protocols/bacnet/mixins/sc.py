@@ -143,14 +143,19 @@ class SCMixin:
         device_id = getattr(self.args, "device_id", None)
 
         hub_uri = getattr(self.args, "sc_hub_uri", None)
-        use_hub = bool(hub_uri)
+        # --hub-uri routes via an SC hub; --direct (sc_direct) connects straight
+        # to the target. They are mutually exclusive and direct is the default
+        # when neither is given, so --direct explicitly wins if both are set.
+        direct = getattr(self.args, "sc_direct", False)
+        use_hub = bool(hub_uri) and not direct
         uri = hub_uri if use_hub else self._sc_uri
+        topology = "hub" if use_hub else "direct"
 
         ca = getattr(self.args, "sc_ca", None)
         cert = getattr(self.args, "sc_cert", None)
         key = getattr(self.args, "sc_key", None)
 
-        self.logger.display(f"Connecting to BACnet/SC {uri} ...")
+        self.logger.display(f"Connecting to BACnet/SC ({topology}) {uri} ...")
         if cert and key:
             self.logger.debug("BACnet/SC: presenting client certificate (mutual auth)")
         else:
@@ -213,7 +218,7 @@ class SCMixin:
             modelName="BACnet/SC Scanner",
         )
         app = Application.from_object_list([local_dev])
-        link = sc_conn.make_link_layer()
+        link = sc_conn.make_link_layer(logger=self.logger)
         app.nsap.bind(link, address=sc_conn.local_vmac)
 
         target_addr = peer_vmac  # address the device by its negotiated VMAC
@@ -286,7 +291,6 @@ class SCMixin:
 
     async def _probe_mutual_auth(self, uri, use_hub):
         """A device/hub that accepts a missing or rogue client cert is broken."""
-        from oida.utils.common_types import Category
 
         from .. import sc_tls
 
@@ -297,7 +301,6 @@ class SCMixin:
         if await self._sc_handshake_succeeds(anon_ctx, uri, use_hub, timeout):
             self.logger.security_finding(
                 "BACnet/SC mutual auth NOT enforced (anonymous client accepted)",
-                Category.AUTHENTICATION,
                 "Device/hub completed the SC handshake with NO client "
                 "certificate. BACnet/SC requires mutual X.509 authentication; "
                 "an anonymous peer must be rejected.",
@@ -316,7 +319,6 @@ class SCMixin:
             if await self._sc_handshake_succeeds(rogue_ctx, uri, use_hub, timeout):
                 self.logger.security_finding(
                     "BACnet/SC mutual auth NOT enforced (rogue client cert accepted)",
-                    Category.AUTHENTICATION,
                     "Device/hub completed the SC handshake with a self-signed "
                     "client certificate not chaining to its issuer CA. Any "
                     "attacker can connect.",
@@ -332,8 +334,6 @@ class SCMixin:
         """A device that completes a TLS 1.2 handshake violates the SC mandate."""
         import ssl as _ssl
 
-        from oida.utils.common_types import Category
-
         from .. import sc_tls
 
         timeout = getattr(self.args, "timeout", 6.0) or 6.0
@@ -346,7 +346,6 @@ class SCMixin:
         if await self._sc_handshake_succeeds(ctx12, uri, use_hub, timeout):
             self.logger.security_finding(
                 "BACnet/SC accepts TLS 1.2 (downgrade)",
-                Category.ENCRYPTION,
                 "Device/hub completed a handshake pinned to TLS 1.2. BACnet/SC "
                 "mandates TLS 1.3; accepting 1.2 is a downgrade exposure.",
             )

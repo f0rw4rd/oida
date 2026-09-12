@@ -253,7 +253,14 @@ class bacnet(
             self.args.enumerate_properties = True
             self.args.assess = True
 
-        # Full security assessment enables all checks
+        # Full security assessment enables all checks.
+        #
+        # NOTE: --assess has different SAFETY on the two transports. On the
+        # default bacpypes3 path it expands to read-only checks (no --confirm
+        # required). On --use-bac0 it routes through _handle_security_assessment,
+        # which issues real WriteProperty probes (priority/OOS/time-sync) and so
+        # requires --confirm. The same flag is therefore passive on one path and
+        # mutating on the other -- documented here to avoid least-surprise.
         if getattr(self.args, "assess", False):
             self.args.check_anonymous = True
             self.args.check_priority = True

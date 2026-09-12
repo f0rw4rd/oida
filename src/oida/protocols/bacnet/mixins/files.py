@@ -73,6 +73,14 @@ class FilesMixin:
                         response = await asyncio.wait_for(
                             app.request(request), timeout=min(timeout, 3.0)
                         )
+                    # ErrorPDU/AbortPDU/RejectPDU (bacpypes3 ErrorRejectAbortNack
+                    # subclasses) derive from BaseException, NOT Exception --
+                    # Application.confirmation() rejects the request future with
+                    # them via set_exception(), so `except Exception` never catches
+                    # them and they'd otherwise escape this whole scan.
+                    except (AbortPDU, ErrorPDU, RejectPDU, Error) as e:
+                        self.logger.warning(f"  File:{instance} {prop_name}: device error {e}")
+                        continue
                     except Exception as e:
                         self.logger.debug(f"bacpypes3 enumerate files failed: {e}")
                         continue
@@ -107,6 +115,9 @@ class FilesMixin:
                             else:
                                 self.logger.display(f"    {display_name}: {value}")
 
+                except (AbortPDU, ErrorPDU, RejectPDU, Error) as e:
+                    self.logger.warning(f"  File:{instance} {prop_name}: device error {e}")
+                    continue
                 except Exception as e:
                     self.logger.debug(f"bacpypes3 enumerate files failed: {e}")
                     continue
@@ -118,6 +129,15 @@ class FilesMixin:
         ObjectIdentifier = types["ObjectIdentifier"]
         PropertyIdentifier = types["PropertyIdentifier"]
         Unsigned = types["Unsigned"]
+        # Loaded up front (not just before the AtomicReadFile loop) because the
+        # fileSize ReadPropertyRequest below is just as capable of getting an
+        # Error/Abort/Reject response as the AtomicReadFile requests are, and
+        # those PDU types (ErrorRejectAbortNack subclasses) derive from
+        # BaseException, not Exception -- `except Exception` does not catch them.
+        AbortPDU = types["AbortPDU"]
+        ErrorPDU = types["ErrorPDU"]
+        RejectPDU = types["RejectPDU"]
+        Error = types["Error"]
 
         self.logger.display(f"\n[Reading File:{file_instance}]")
 
@@ -141,16 +161,15 @@ class FilesMixin:
                     except Exception as e:
                         self.logger.debug(f"bacpypes3 read file size decode failed: {e}")
                 self.logger.display(f"  File size: {file_size} bytes")
+            except (AbortPDU, ErrorPDU, RejectPDU, Error) as e:
+                self.logger.warning(f"  File:{file_instance} fileSize read error: {e}")
+                file_size = 1024  # Try default
             except Exception as e:
                 self.logger.warning(f"  Could not read file size: {e}")
                 file_size = 1024  # Try default
 
             # Try to read file content using AtomicReadFile
             AtomicReadFileRequest = types["AtomicReadFileRequest"]
-            AbortPDU = types["AbortPDU"]
-            ErrorPDU = types["ErrorPDU"]
-            RejectPDU = types["RejectPDU"]
-            Error = types["Error"]
 
             self.logger.display("  Attempting to read file content via AtomicReadFile...")
 
@@ -167,6 +186,11 @@ class FilesMixin:
 
             all_data = bytearray()
             offset = 0
+            # AtomicReadFile recordAccess addresses records by RECORD COUNT
+            # (ASHRAE 135), not by byte offset -- tracked separately from
+            # `offset` (which stays a byte counter used for the stream path
+            # and for the byte-size cap / EOF-by-size bookkeeping below).
+            records_read = 0
             # Bound iterations by both the reported size and an absolute cap so
             # a huge fileSize cannot inflate max_reads into the millions and a
             # dribbling device cannot loop forever.
@@ -193,7 +217,7 @@ class FilesMixin:
                             fileIdentifier=obj_id,
                             accessMethod={
                                 "recordAccess": {
-                                    "fileStartRecord": offset,
+                                    "fileStartRecord": records_read,
                                     "requestedRecordCount": min(chunk_size, 100),
                                 }
                             },
@@ -207,6 +231,11 @@ class FilesMixin:
                     except (asyncio.TimeoutError, TimeoutError):
                         self.logger.warning(f"  Timeout at offset {offset}")
                         break
+                    except (AbortPDU, ErrorPDU, RejectPDU, Error) as e:
+                        self.logger.warning(
+                            f"  File:{file_instance} AtomicReadFile error at offset {offset}: {e}"
+                        )
+                        break
                     except Exception as e:
                         self.logger.debug(f"AtomicReadFile error: {e}")
                         break
@@ -216,6 +245,7 @@ class FilesMixin:
                     ):
                         # Extract data from response
                         chunk = None
+                        chunk_record_count = 0
                         end_of_file = False
 
                         if hasattr(response, "endOfFile"):
@@ -236,10 +266,12 @@ class FilesMixin:
                                             if chunk is None
                                             else chunk + bytes(record)
                                         )
+                                        chunk_record_count += 1
 
                         if chunk:
                             all_data.extend(chunk)
                             offset += len(chunk)
+                            records_read += chunk_record_count
                             self.logger.debug(
                                 f"  Read {len(chunk)} bytes at offset {offset - len(chunk)}"
                             )
@@ -267,6 +299,11 @@ class FilesMixin:
                         self.logger.warning(f"  AtomicReadFile error: {error_str}")
                         break
 
+                except (AbortPDU, ErrorPDU, RejectPDU, Error) as e:
+                    self.logger.warning(
+                        f"  File:{file_instance} AtomicReadFile error at offset {offset}: {e}"
+                    )
+                    break
                 except Exception as e:
                     self.logger.debug(f"AtomicReadFile chunk error: {e}")
                     break
@@ -296,6 +333,9 @@ class FilesMixin:
                 self.logger.warning("  No data retrieved via AtomicReadFile")
                 self.logger.display("  Device may not support AtomicReadFile for this object")
 
+        except (AbortPDU, ErrorPDU, RejectPDU, Error) as e:
+            self.logger.warning(f"  File:{file_instance} error: {e}")
+            self.logger.fail(f"File read error: {e}")
         except Exception as e:
             self.logger.debug(f"bacpypes3 read file failed: {e}")
             self.logger.fail(f"File read error: {e}")

@@ -35,6 +35,12 @@ HUB_SUBPROTOCOL = "hub.bsc.bacnet.org"
 _MAX_BVLC_LEN = 1476
 _MAX_NPDU_LEN = 1497
 
+# Hard ceiling on a single inbound websocket message. The peer is untrusted, and
+# our advertised receive maximum is _MAX_BVLC_LEN, so this is orders of magnitude
+# more than any conforming frame -- it exists purely so a hostile hub cannot make
+# us buffer unbounded memory.
+_MAX_WS_MESSAGE = 1 << 20
+
 
 class SCLinkLayer(Server):
     """A BACnet/SC link layer bound under the NSAP.
@@ -49,11 +55,13 @@ class SCLinkLayer(Server):
         websocket,
         local_vmac: VirtualAddress,
         peer_vmac: VirtualAddress,
+        logger=None,
     ) -> None:
         super().__init__()
         self.websocket = websocket
         self.local_vmac = local_vmac
         self.peer_vmac = peer_vmac
+        self.logger = logger
         self._msg_id = 1
         self._reader = asyncio.ensure_future(self._read_loop())
 
@@ -83,7 +91,15 @@ class SCLinkLayer(Server):
                     continue
                 npdu = PDU(bytes(work.pduData))
                 npdu.pduSource = self.peer_vmac
-                await self.response(npdu)
+                try:
+                    await self.response(npdu)
+                except Exception as e:
+                    # The NPDU is peer-controlled; a decode failure upstream must
+                    # not kill the reader task. If it did, the failure would be
+                    # silent ("Task exception was never retrieved") and every
+                    # later request would stall for its full timeout.
+                    if self.logger:
+                        self.logger.debug(f"BACnet/SC upstream dispatch failed: {e}")
         except websockets.ConnectionClosed:
             pass
 
@@ -131,7 +147,7 @@ class SCConnection:
                 self.uri,
                 ssl=self.ssl_context,
                 subprotocols=[websockets.Subprotocol(self.subprotocol)],
-                max_size=None,
+                max_size=_MAX_WS_MESSAGE,
             ),
             timeout=self.timeout,
         )
@@ -157,10 +173,10 @@ class SCConnection:
         self.peer_vmac = ca.vmac_address
         return self.peer_vmac
 
-    def make_link_layer(self) -> SCLinkLayer:
+    def make_link_layer(self, logger=None) -> SCLinkLayer:
         if self.websocket is None or self.peer_vmac is None:
             raise RuntimeError("open() must succeed before make_link_layer()")
-        return SCLinkLayer(self.websocket, self.local_vmac, self.peer_vmac)
+        return SCLinkLayer(self.websocket, self.local_vmac, self.peer_vmac, logger=logger)
 
     def peer_cipher(self):
         """(cipher_name, tls_version, secret_bits) of the live TLS session."""

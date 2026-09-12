@@ -6,7 +6,17 @@ Handles schedules, calendars, alarms, trendlogs, priority arrays, and life safet
 
 import asyncio
 from ..constants import _load_bacpypes3, CONTROL_POINT_TYPES
-from oida.utils.common_types import Category
+
+
+class _UnraisableSentinel(BaseException):
+    """Placeholder exception that is never raised.
+
+    Used in except-tuples when the real bacpypes3 ``ErrorRejectAbortNack`` is
+    absent from a (test-mocked) ``_load_bacpypes3()`` dict. Production always
+    supplies the real class, so this only affects unit tests whose fake type
+    dicts predate that key -- and those tests never raise it, so matching
+    behaviour is identical.
+    """
 
 
 class MonitoringMixin:
@@ -357,6 +367,7 @@ class MonitoringMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types.get("ErrorRejectAbortNack", _UnraisableSentinel)
 
         self.logger.display("\n[Life Safety Objects Enumeration]")
 
@@ -412,7 +423,12 @@ class MonitoringMixin:
                                                 f"Life safety object name decode failed: {e}"
                                             )
                             findings.append(f"{display_name}:{instance} - '{name}'")
-                    except asyncio.TimeoutError as e:
+                    except (asyncio.TimeoutError, ErrorRejectAbortNack) as e:
+                        # ErrorRejectAbortNack (Error/Reject/Abort) is a
+                        # BaseException, not Exception, so `except Exception`
+                        # below cannot catch it -- an unknown-object error on one
+                        # probed instance would otherwise abort the whole loop and
+                        # discard findings already collected for real objects.
                         self.logger.debug(f"bacpypes3 enum life safety failed: {e}")
                         continue
                 except Exception as e:
@@ -422,7 +438,6 @@ class MonitoringMixin:
         if findings:
             self.logger.security_finding(
                 "Insecure configuration",
-                category=Category.ACCESS_CONTROL,
                 detail=f"{len(findings)} life safety object(s) found - control fire/security systems",
             )
             for finding in findings[:10]:
@@ -488,7 +503,6 @@ class MonitoringMixin:
         if findings:
             self.logger.security_finding(
                 "Insecure configuration",
-                category=Category.ACCESS_CONTROL,
                 detail=f"{len(findings)} life safety properties accessible - could disable fire/security alarms",
             )
             for finding in findings[:5]:
@@ -719,12 +733,15 @@ class MonitoringMixin:
             if record_count == 0:
                 continue
 
-            # Read logBuffer records using ReadProperty with array index
+            # Read logBuffer records using ReadProperty with array index. The
+            # logBuffer array is 1-indexed oldest-first, so "last N" (newest)
+            # means the highest indices -- reading 1..N returned the OLDEST N
+            # while the message claimed most-recent.
             records_to_read = min(record_count, max_records)
             self.logger.display(f"    Reading last {records_to_read} records...")
 
             records_read = 0
-            for idx in range(1, records_to_read + 1):
+            for idx in range(record_count - records_to_read + 1, record_count + 1):
                 try:
                     request = ReadPropertyRequest(
                         objectIdentifier=obj_id,
@@ -776,6 +793,7 @@ class MonitoringMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types.get("ErrorRejectAbortNack", _UnraisableSentinel)
 
         self.logger.display("\n[Loop / PID Controller Analysis]")
 
@@ -833,7 +851,11 @@ class MonitoringMixin:
                         response = await asyncio.wait_for(
                             app.request(request), timeout=min(timeout, 3.0)
                         )
-                    except (asyncio.TimeoutError, TimeoutError) as e:
+                    except (asyncio.TimeoutError, TimeoutError, ErrorRejectAbortNack) as e:
+                        # ErrorRejectAbortNack (Error/Reject/Abort) is a
+                        # BaseException, not Exception -- catch it here so an
+                        # unknown-object error on one probed instance doesn't
+                        # abort the whole loop and discard PID findings.
                         self.logger.debug(f"bacpypes3 enum loops failed: {e}")
                         continue
                     except Exception as e:
@@ -1014,7 +1036,6 @@ class MonitoringMixin:
         if security_concerns:
             self.logger.security_finding(
                 "Insecure configuration",
-                category=Category.ACCESS_CONTROL,
                 detail=f"{len(security_concerns)} PID security concern(s) - parameter manipulation can destabilize control systems",
             )
             for concern in security_concerns:

@@ -13,7 +13,16 @@ from ..constants import (
     CONTROL_POINT_TYPES,
     BACNET_PRIORITY_LEVELS,
 )
-from oida.utils.common_types import Category
+
+
+class _UnraisableSentinel(BaseException):
+    """Placeholder exception that is never raised.
+
+    Used in except-tuples when the real bacpypes3 ``ErrorRejectAbortNack`` is
+    absent from a (test-mocked) ``_load_bacpypes3()`` dict. Production always
+    supplies the real class, so this only affects unit tests whose fake type
+    dicts predate that key -- and those tests never raise it.
+    """
 
 
 class SecurityMixin:
@@ -49,6 +58,12 @@ class SecurityMixin:
             "Error": types["Error"],
             "AbortPDU": types["AbortPDU"],
             "RejectPDU": types["RejectPDU"],
+            # bacpypes3 RAISES Error/Reject/Abort (all ErrorRejectAbortNack
+            # subclasses, which derive from BaseException NOT Exception) from
+            # app.request() on e.g. a wrong DCC/reinit password. Callers must
+            # catch this explicitly or a single wrong password aborts the whole
+            # brute-force. Absent from older test-mocked dicts -> sentinel.
+            "ErrorRejectAbortNack": types.get("ErrorRejectAbortNack", _UnraisableSentinel),
         }
 
     def _build_dcc_request(self, types, password, target_addr):
@@ -105,8 +120,8 @@ class SecurityMixin:
         if self.devices:
             self.logger.security_finding(
                 "Anonymous access",
-                category=Category.ACCESS_CONTROL,
                 detail="Anonymous read access enabled - no authentication required",
+                category="ACCESS_CONTROL",
             )
             vulns.append("Anonymous read access - no authentication required")
 
@@ -128,7 +143,7 @@ class SecurityMixin:
         if vulns:
             self.logger.display("\n  [Vulnerabilities Found]")
             for vuln in vulns:
-                self.logger.vuln(vuln, "high")
+                self.logger.vuln(vuln)
 
     def _handle_test_write(self):
         """Test write access (non-destructive)
@@ -166,7 +181,6 @@ class SecurityMixin:
                         if success:
                             self.logger.security_finding(
                                 "Writable access",
-                                category=Category.ACCESS_CONTROL,
                                 detail=f"Anonymous write access on {obj_type}:{instance}",
                             )
                             return
@@ -206,7 +220,6 @@ class SecurityMixin:
         if writable_count > 0:
             self.logger.security_finding(
                 "Writable access",
-                category=Category.ACCESS_CONTROL,
                 detail=f"Found {writable_count} writable control points",
             )
 
@@ -400,8 +413,8 @@ class SecurityMixin:
             if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
                 self.logger.security_finding(
                     "Anonymous access",
-                    category=Category.ACCESS_CONTROL,
                     detail="Anonymous READ access allowed",
+                    category="ACCESS_CONTROL",
                 )
                 findings.append("Anonymous read access enabled - no authentication required")
             else:
@@ -424,7 +437,6 @@ class SecurityMixin:
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
                     self.logger.security_finding(
                         "Insecure configuration",
-                        category=Category.ACCESS_CONTROL,
                         detail=f"Password property '{prop}' is readable",
                     )
                     findings.append(f"Password property '{prop}' is readable")
@@ -486,7 +498,11 @@ class SecurityMixin:
                     response = await asyncio.wait_for(
                         app.request(request), timeout=min(timeout, 2.0)
                     )
-                except (asyncio.TimeoutError, TimeoutError) as e:
+                except (asyncio.TimeoutError, TimeoutError, types["ErrorRejectAbortNack"]) as e:
+                    # A wrong password raises Error(...): security: password-failure
+                    # (an ErrorRejectAbortNack / BaseException). That is the
+                    # EXPECTED result for a non-matching password -- treat it as a
+                    # miss and try the next, never let it abort the brute-force.
                     self.logger.debug(f"bacpypes3 dcc brute force failed: {e}")
                     continue
                 except Exception as e:
@@ -496,7 +512,6 @@ class SecurityMixin:
                     display_pass = password if password else "(empty)"
                     self.logger.security_finding(
                         "Weak password",
-                        category=Category.AUTHENTICATION,
                         detail=f"DCC Password found: '{display_pass}'",
                     )
                     self.logger.success(f"  [Result] DeviceCommunicationControl: '{display_pass}'")
@@ -544,7 +559,11 @@ class SecurityMixin:
                     response = await asyncio.wait_for(
                         app.request(request), timeout=min(timeout, 2.0)
                     )
-                except (asyncio.TimeoutError, TimeoutError) as e:
+                except (asyncio.TimeoutError, TimeoutError, types["ErrorRejectAbortNack"]) as e:
+                    # A wrong password raises Error(...): security: password-failure
+                    # (an ErrorRejectAbortNack / BaseException) -- the expected
+                    # miss result. Treat it as a miss and continue rather than
+                    # letting it abort the brute-force at the first wrong password.
                     self.logger.debug(f"bacpypes3 reinit brute force failed: {e}")
                     continue
                 except Exception as e:
@@ -554,7 +573,6 @@ class SecurityMixin:
                     display_pass = password if password else "(empty)"
                     self.logger.security_finding(
                         "Weak password",
-                        category=Category.AUTHENTICATION,
                         detail=f"ReinitializeDevice password found: '{display_pass}' - device can be reset",
                     )
                     self.logger.success(f"  [Result] ReinitializeDevice: '{display_pass}'")
@@ -597,7 +615,6 @@ class SecurityMixin:
                         display_pass = password if password else "(empty)"
                         self.logger.security_finding(
                             "Weak password",
-                            category=Category.AUTHENTICATION,
                             detail=f"DCC accepted with password: '{display_pass}' - device can be disabled",
                         )
                         return
@@ -756,8 +773,8 @@ class SecurityMixin:
             self.logger.display("  [-] No BACnet/SC support detected")
             self.logger.security_finding(
                 "No encryption",
-                category=Category.ENCRYPTION,
                 detail="All BACnet/IP traffic is unencrypted - implement BACnet/SC or network segmentation",
+                category="ENCRYPTION",
             )
 
     async def _bacpypes3_test_priority_writes(
@@ -948,7 +965,6 @@ class SecurityMixin:
             if critical:
                 self.logger.security_finding(
                     "Writable access",
-                    category=Category.ACCESS_CONTROL,
                     detail=f"Life Safety priorities writable: {critical} - attacker can override life safety controls",
                 )
             operator = [p for p in writable_priorities if p == 8]
@@ -1066,13 +1082,34 @@ class SecurityMixin:
         if str(before) != str(after):
             self.logger.security_finding(
                 "Unauthenticated time synchronization",
-                category=Category.ACCESS_CONTROL,
                 detail=(
                     "Device applied an unauthenticated TimeSynchronization "
                     f"(localDate/localTime changed {before} -> {after}) - attacker can "
                     "desynchronize clocks, corrupting trend logs and schedule timing"
                 ),
             )
+            # The write was accepted, so the device is now +5min fast. Restore
+            # the correct time -- an intrusive probe must not leave the target
+            # clock permanently skewed (the exact harm the finding warns about).
+            now = datetime.now()
+            try:
+                restore = TimeSynchronizationRequest(
+                    time=DateTime(
+                        date=Date((now.year - 1900, now.month, now.day, now.weekday() + 1)),
+                        time=Time((now.hour, now.minute, now.second, 0)),
+                    ),
+                )
+                restore.pduDestination = target_addr
+                try:
+                    await asyncio.wait_for(app.request(restore), timeout=min(timeout, 3.0))
+                except (asyncio.TimeoutError, TimeoutError):
+                    pass  # unconfirmed service -- no ACK expected
+                self.logger.display("  Restored device clock to the correct time")
+            except Exception as e:
+                self.logger.debug(f"Time sync restore failed: {e}")
+                self.logger.display(
+                    "  [!] Could not restore device clock -- it may remain +5 min fast"
+                )
         else:
             self.logger.success(
                 "  [+] Device clock unchanged after TimeSynchronization (write not applied)"
@@ -1114,6 +1151,12 @@ class SecurityMixin:
         for obj_type, instance in test_objects:
             obj_id = ObjectIdentifier((obj_type, instance))
 
+            # Reset per object: oos_value must reflect THIS object's read. Without
+            # this, an object whose read fails (error PDU / no reply) would inherit
+            # a prior object's stale value and — with --confirm — get that wrong
+            # value written to it (or UnboundLocalError on the first object).
+            oos_value: object = "unknown"
+
             # Test read
             try:
                 request = ReadPropertyRequest(
@@ -1152,15 +1195,24 @@ class SecurityMixin:
             try:
                 from bacpypes3.primitivedata import Boolean
 
+                # Write the CURRENT value back, not a hardcoded False: forcing an
+                # object that was legitimately Out-Of-Service (maintenance) back
+                # into service reconnects physical I/O -- a real state change, not
+                # the "non-destructive" probe the old code claimed. Skip when the
+                # current value couldn't be read.
+                if not isinstance(oos_value, bool):
+                    self.logger.debug(
+                        f"  {obj_type}:{instance} outOfService unreadable -- skipping write test"
+                    )
+                    continue
+
                 request = WritePropertyRequest(
                     objectIdentifier=obj_id,
                     propertyIdentifier=PropertyIdentifier("outOfService"),
                 )
-                # We don't actually want to change it - just test if write is accepted
-                # Write False (normal operation) which is safe
                 from bacpypes3.constructeddata import AnyAtomic
 
-                request.propertyValue = AnyAtomic(Boolean(False))
+                request.propertyValue = AnyAtomic(Boolean(oos_value))
                 request.pduDestination = target_addr
 
                 response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
@@ -1172,7 +1224,6 @@ class SecurityMixin:
                     writable.append((obj_type, instance))
                     self.logger.security_finding(
                         "Writable access",
-                        category=Category.ACCESS_CONTROL,
                         detail=f"{obj_type}:{instance} outOfService is writable",
                     )
             except (asyncio.TimeoutError, TimeoutError) as e:
@@ -1188,7 +1239,6 @@ class SecurityMixin:
         if writable:
             self.logger.security_finding(
                 "Writable access",
-                category=Category.ACCESS_CONTROL,
                 detail=f"{len(writable)} objects have writable outOfService flag - control loops can be disabled",
             )
         elif not getattr(self.args, "confirm", False) and readable:

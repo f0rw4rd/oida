@@ -10,9 +10,8 @@ Two responsibilities:
    sees a mutual-auth attempt.
 
 2. audit_* helpers — run automatically on every SC connection (no flag) and
-   emit findings via logger.security_finding(..., Category.ENCRYPTION|
-   AUTHENTICATION). They verify the device ENFORCES its security settings, not
-   merely that a connection succeeded:
+   emit findings via logger.security_finding(). They verify the device
+   ENFORCES its security settings, not merely that a connection succeeded:
      * TLS version (BACnet/SC mandates 1.3 — flag < 1.3)
      * weak/deprecated cipher suites
      * server certificate hygiene (self-signed/untrusted, expiry, weak key,
@@ -28,8 +27,6 @@ import datetime
 import ssl
 import tempfile
 from typing import Optional
-
-from ...utils.common_types import Category
 
 
 def build_client_context(
@@ -87,7 +84,6 @@ def audit_tls_version(cipher_tuple, logger) -> None:
     if version and version != "TLSv1.3":
         logger.security_finding(
             "BACnet/SC not using TLS 1.3",
-            Category.ENCRYPTION,
             f"Negotiated {version}; BACnet/SC (ANSI/ASHRAE 135 Annex AB) "
             f"mandates TLS 1.3. Device accepts a weaker TLS version.",
         )
@@ -104,13 +100,11 @@ def audit_cipher(cipher_tuple, logger) -> None:
     if any(tok in upper for tok in _WEAK_CIPHER_TOKENS):
         logger.security_finding(
             "Weak/deprecated TLS cipher suite",
-            Category.ENCRYPTION,
             f"Negotiated cipher {name} is weak or deprecated.",
         )
     if bits and bits < 128:
         logger.security_finding(
             "Weak TLS cipher key length",
-            Category.ENCRYPTION,
             f"Negotiated cipher {name} provides only {bits}-bit security.",
         )
 
@@ -153,7 +147,6 @@ def audit_server_cert(cert_der: Optional[bytes], host: str, logger) -> None:
         if self_signed:
             logger.security_finding(
                 "BACnet/SC server certificate is self-signed",
-                Category.ENCRYPTION,
                 f"Subject == issuer ({cert.subject.rfc4514_string()}) and the "
                 f"cert is signed by its own key; it does not chain to a CA.",
             )
@@ -171,13 +164,11 @@ def audit_server_cert(cert_der: Optional[bytes], host: str, logger) -> None:
     if now > not_after:
         logger.security_finding(
             "BACnet/SC server certificate expired",
-            Category.ENCRYPTION,
             f"Expired {not_after.isoformat()}.",
         )
     if now < not_before:
         logger.security_finding(
             "BACnet/SC server certificate not yet valid",
-            Category.ENCRYPTION,
             f"Not valid before {not_before.isoformat()}.",
         )
 
@@ -187,13 +178,11 @@ def audit_server_cert(cert_der: Optional[bytes], host: str, logger) -> None:
         if isinstance(pub, rsa.RSAPublicKey) and pub.key_size < 2048:
             logger.security_finding(
                 "BACnet/SC server certificate weak RSA key",
-                Category.ENCRYPTION,
                 f"RSA key size {pub.key_size} < 2048 bits.",
             )
         elif isinstance(pub, ec.EllipticCurvePublicKey) and pub.curve.key_size < 256:
             logger.security_finding(
                 "BACnet/SC server certificate weak EC curve",
-                Category.ENCRYPTION,
                 f"EC curve {pub.curve.name} ({pub.curve.key_size} bits) < 256.",
             )
     except Exception as e:
@@ -205,7 +194,6 @@ def audit_server_cert(cert_der: Optional[bytes], host: str, logger) -> None:
         if isinstance(sig, (hashes.MD5, hashes.SHA1)):
             logger.security_finding(
                 "BACnet/SC server certificate weak signature algorithm",
-                Category.ENCRYPTION,
                 f"Signed with {sig.name}; SHA-1/MD5 are broken.",
             )
     except Exception as e:
@@ -229,7 +217,6 @@ def audit_server_cert(cert_der: Optional[bytes], host: str, logger) -> None:
     except x509.ExtensionNotFound:
         logger.security_finding(
             "BACnet/SC server certificate missing SAN",
-            Category.ENCRYPTION,
             "Certificate has no Subject Alternative Name extension.",
         )
     except Exception as e:
