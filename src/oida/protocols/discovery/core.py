@@ -10,7 +10,7 @@ Contains:
 import ipaddress
 import re
 import socket
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
@@ -1068,6 +1068,16 @@ class OutOfScopeWarning:
             self.timestamp = datetime.now().isoformat()
 
 
+# DiscoveredDevice payload fields with bespoke merge_from() handling (or that
+# must not copy verbatim); excluded from the generic fields() loop there.
+_MERGE_SPECIAL_FIELDS = frozenset(
+    {
+        "dnssd_data",  # services list dedups
+        "ipv6_data",  # address list merges
+    }
+)
+
+
 @dataclass
 class DiscoveredDevice:
     """Unified device representation from multiple discovery protocols"""
@@ -1195,6 +1205,84 @@ class DiscoveredDevice:
     bgp_passive_data: Optional[Dict[str, Any]] = None  # BGP peer data
     irc_passive_data: Optional[Dict[str, Any]] = None  # IRC server/client data
     pap_passive_data: Optional[Dict[str, Any]] = None  # PAP auth data
+
+    # Passive listener protocol data (pcap module). Every attr a listener
+    # writes via _ensure_device(data_attr=...) or direct assignment MUST be
+    # declared here — merge_from() only copies declared fields, so an
+    # undeclared attr is silently dropped on device merge. Guarded by
+    # tests/unit/protocols/test_device_schema_consistency.py.
+    ads_passive_data: Optional[Dict[str, Any]] = None  # Beckhoff ADS/TwinCAT sessions
+    ajp_passive_data: Optional[Dict[str, Any]] = None  # AJP13 connector data
+    amqp_passive_data: Optional[Dict[str, Any]] = None  # AMQP broker/session data
+    bacnet_passive_data: Optional[Dict[str, Any]] = None  # BACnet/IP passive sessions
+    c1222_passive_data: Optional[Dict[str, Any]] = None  # IEEE 1363 C12.22 data
+    can_passive_data: Optional[Dict[str, Any]] = None  # CAN/CAN XL frame data
+    canopen_passive_data: Optional[Dict[str, Any]] = None  # CANopen node data
+    cipsafety_passive_data: Optional[Dict[str, Any]] = None  # CIP Safety data
+    coap_passive_data: Optional[Dict[str, Any]] = None  # CoAP endpoint data
+    cotp_passive_data: Optional[Dict[str, Any]] = None  # ISO 8073 COTP data
+    devicenet_passive_data: Optional[Dict[str, Any]] = None  # DeviceNet node data
+    dicom_passive_data: Optional[Dict[str, Any]] = None  # DICOM AE/roles data
+    dnp3_passive_data: Optional[Dict[str, Any]] = None  # DNP3 master/outstation data
+    dtp_data: Optional[Dict[str, Any]] = None  # Cisco DTP trunk state
+    egd_passive_data: Optional[Dict[str, Any]] = None  # Ethernet Global Data exchanges
+    enip_passive_data: Optional[Dict[str, Any]] = None  # EtherNet/IP CIP sessions
+    epl_passive_data: Optional[Dict[str, Any]] = None  # Ethernet POWERLINK data
+    ethercat_passive_data: Optional[Dict[str, Any]] = None  # EtherCAT slave data
+    ff_hse_passive_data: Optional[Dict[str, Any]] = None  # Foundation Fieldbus HSE data
+    fins_passive_data: Optional[Dict[str, Any]] = None  # FINS/Omron passive sessions
+    glbp_data: Optional[Dict[str, Any]] = None  # Cisco GLBP gateway data
+    goose_passive_data: Optional[Dict[str, Any]] = None  # IEC 61850 GOOSE publisher data
+    hartip_passive_data: Optional[Dict[str, Any]] = None  # HART-IP device data
+    hl7_passive_data: Optional[Dict[str, Any]] = None  # HL7 MLLP endpoint data
+    hsr_passive_data: Optional[Dict[str, Any]] = None  # IEC 62439-3 HSR ring data
+    ibmmq_passive_data: Optional[Dict[str, Any]] = None  # IBM MQ channel data
+    ieee1722_passive_data: Optional[Dict[str, Any]] = None  # AVTP/IEEE 1722 stream data
+    ipmi_passive_data: Optional[Dict[str, Any]] = None  # IPMI/RMCP session data
+    ipp_passive_data: Optional[Dict[str, Any]] = None  # Internet Printing Protocol data
+    ipsec_passive_data: Optional[Dict[str, Any]] = None  # IKE/IPsec tunnel data
+    iscsi_passive_data: Optional[Dict[str, Any]] = None  # iSCSI target/initiator data
+    j1939_passive_data: Optional[Dict[str, Any]] = None  # SAE J1939 node data
+    knx_passive_data: Optional[Dict[str, Any]] = None  # KNXnet/IP tunneling data
+    lontalk_passive_data: Optional[Dict[str, Any]] = None  # LonTalk node data
+    memcached_passive_data: Optional[Dict[str, Any]] = None  # Memcached server data
+    mms_passive_data: Optional[Dict[str, Any]] = None  # IEC 61850 MMS data
+    mongodb_passive_data: Optional[Dict[str, Any]] = None  # MongoDB handshake data
+    mqttsn_passive_data: Optional[Dict[str, Any]] = None  # MQTT-SN gateway data
+    msrpc_passive_data: Optional[Dict[str, Any]] = None  # MS-RPC endpoint data
+    netbios_passive_data: Optional[Dict[str, Any]] = None  # NetBIOS name/session service
+    nfs_passive_data: Optional[Dict[str, Any]] = None  # NFS export/auth data
+    nmea0183_passive_data: Optional[Dict[str, Any]] = None  # NMEA 0183 talker data
+    ntp_passive_data: Optional[Dict[str, Any]] = None  # NTP server/client passive data
+    opcda_passive_data: Optional[Dict[str, Any]] = None  # OPC DA (DCOM) data
+    opcua_passive_data: Optional[Dict[str, Any]] = None  # OPC UA endpoint/session data
+    opensafety_passive_data: Optional[Dict[str, Any]] = None  # openSAFETY frame data
+    pcom_passive_data: Optional[Dict[str, Any]] = None  # Omron PCOM data
+    pjl_passive_data: Optional[Dict[str, Any]] = None  # Printer Job Language data
+    profinet_passive_data: Optional[Dict[str, Any]] = None  # PROFINET device data
+    protocol_data: Optional[Dict[str, Any]] = (
+        None  # Generic per-protocol session payload (iec101/iec103/synchrophasor)
+    )
+    prp_passive_data: Optional[Dict[str, Any]] = None  # IEC 62439-3 PRP data
+    ptp_passive_data: Optional[Dict[str, Any]] = None  # PTP/IEEE 1588 clock data
+    redis_passive_data: Optional[Dict[str, Any]] = None  # Redis server data
+    rgoose_passive_data: Optional[Dict[str, Any]] = None  # Routed GOOSE data
+    rmi_passive_data: Optional[Dict[str, Any]] = None  # Java RMI registry data
+    rpcbind_passive_data: Optional[Dict[str, Any]] = None  # rpcbind/portmap program data
+    rsync_passive_data: Optional[Dict[str, Any]] = None  # rsync module data
+    rtps_passive_data: Optional[Dict[str, Any]] = None  # RTPS/DDS participant data
+    rtsp_passive_data: Optional[Dict[str, Any]] = None  # RTSP stream/session data
+    s7comm_passive_data: Optional[Dict[str, Any]] = None  # S7comm PLC session data
+    selfm_passive_data: Optional[Dict[str, Any]] = None  # SEL Fast Message data
+    sercos_passive_data: Optional[Dict[str, Any]] = None  # Sercos drive data
+    smartinstall_data: Optional[Dict[str, Any]] = None  # Cisco Smart Install data
+    snmp_passive_data: Optional[Dict[str, Any]] = None  # SNMP agent/community data
+    sv_passive_data: Optional[Dict[str, Any]] = None  # IEC 61850 Sampled Values data
+    tns_passive_data: Optional[Dict[str, Any]] = None  # Oracle TNS listener data
+    tte_passive_data: Optional[Dict[str, Any]] = None  # TTEthernet data
+    vtp_data: Optional[Dict[str, Any]] = None  # Cisco VTP domain data
+    x11_passive_data: Optional[Dict[str, Any]] = None  # X11 display data
+
     # Change tracking
     is_new: bool = True  # First time seeing this device
     updated_fields: List[str] = field(default_factory=list)  # Fields added/updated
@@ -1259,261 +1347,55 @@ class DiscoveredDevice:
             self.first_seen = other.first_seen
         self.last_seen = datetime.now().isoformat()
 
-        # Merge protocol-specific data (only if not already set)
-        if other.arp_data and not self.arp_data:
-            self.arp_data = other.arp_data
-            updated.append("arp_data")
-        if other.lldp_data and not self.lldp_data:
-            self.lldp_data = other.lldp_data
-            updated.append("lldp_data")
-        if other.dcp_data and not self.dcp_data:
-            self.dcp_data = other.dcp_data
-            updated.append("dcp_data")
+        # Merge protocol-specific data. Every declared Optional[Dict] payload
+        # field copies across when self's is empty — a fields() loop keeps
+        # newly declared fields merging automatically instead of drifting
+        # out of a hand-written chain (see
+        # tests/unit/protocols/test_device_schema_consistency.py).
+        for f in fields(self):
+            if f.name in _MERGE_SPECIAL_FIELDS:
+                continue
+            if not f.name.endswith("_data"):
+                continue
+            other_val = getattr(other, f.name)
+            if not other_val or getattr(self, f.name):
+                continue
+            setattr(self, f.name, other_val)
+            updated.append(f.name)
+
+        # mdns_services: list payload with dedup on merge — in
+        # continuous-capture mode the same device is merged repeatedly, so a
+        # bare extend() grows this list without bound.
         if other.mdns_services:
             if self.mdns_services is None:
                 self.mdns_services = []
                 updated.append("mdns_services")
-            # Dedup on merge: in continuous-capture mode the same device is
-            # merged repeatedly, so a bare extend() grows this list without bound.
             for svc in other.mdns_services:
                 if svc not in self.mdns_services:
                     self.mdns_services.append(svc)
-        if other.mdns_data and not self.mdns_data:
-            self.mdns_data = other.mdns_data
-            updated.append("mdns_data")
-        if other.ssdp_data and not self.ssdp_data:
-            self.ssdp_data = other.ssdp_data
-            updated.append("ssdp_data")
+
+        # dnssd_data: dict payload whose "services" list dedups on merge
         if other.dnssd_data:
             if self.dnssd_data is None:
                 self.dnssd_data = {"services": []}
                 updated.append("dnssd_data")
             if "services" in other.dnssd_data:
-                # Dedup on merge (unbounded duplicate growth in continuous mode).
                 existing = self.dnssd_data.setdefault("services", [])
                 for svc in other.dnssd_data["services"]:
                     if svc not in existing:
                         existing.append(svc)
-        if other.wsdiscovery_data and not self.wsdiscovery_data:
-            self.wsdiscovery_data = other.wsdiscovery_data
-            updated.append("wsdiscovery_data")
-        if other.llmnr_data and not self.llmnr_data:
-            self.llmnr_data = other.llmnr_data
-            updated.append("llmnr_data")
-        if other.cdp_data and not self.cdp_data:
-            self.cdp_data = other.cdp_data
-            updated.append("cdp_data")
-        if other.knx_data and not self.knx_data:
-            self.knx_data = other.knx_data
-            updated.append("knx_data")
-        if other.bacnet_data and not self.bacnet_data:
-            self.bacnet_data = other.bacnet_data
-            updated.append("bacnet_data")
-        if other.opcua_data and not self.opcua_data:
-            self.opcua_data = other.opcua_data
-            updated.append("opcua_data")
-        if other.ethernetip_data and not self.ethernetip_data:
-            self.ethernetip_data = other.ethernetip_data
-            updated.append("ethernetip_data")
-        if other.netbios_data and not self.netbios_data:
-            self.netbios_data = other.netbios_data
-            updated.append("netbios_data")
-        if other.stp_data and not self.stp_data:
-            self.stp_data = other.stp_data
-            updated.append("stp_data")
-        if other.codesys_data and not self.codesys_data:
-            self.codesys_data = other.codesys_data
-            updated.append("codesys_data")
-        if other.moxa_data and not self.moxa_data:
-            self.moxa_data = other.moxa_data
-            updated.append("moxa_data")
-        if other.lantronix_data and not self.lantronix_data:
-            self.lantronix_data = other.lantronix_data
-            updated.append("lantronix_data")
+
+        # ipv6_data: merge address lists instead of overwriting
         if other.ipv6_data:
             if self.ipv6_data is None:
                 self.ipv6_data = other.ipv6_data
                 updated.append("ipv6_data")
             else:
-                # Merge IPv6 addresses
                 for ip in other.ipv6_data.get("addresses", []):
                     if ip not in self.ipv6_data.get("addresses", []):
                         self.ipv6_data.setdefault("addresses", []).append(ip)
                         updated.append(f"ipv6:{ip}")
-        if other.dhcp_data and not self.dhcp_data:
-            self.dhcp_data = other.dhcp_data
-            updated.append("dhcp_data")
-        if other.fins_data and not self.fins_data:
-            self.fins_data = other.fins_data
-            updated.append("fins_data")
-        if other.hsrp_data and not self.hsrp_data:
-            self.hsrp_data = other.hsrp_data
-            updated.append("hsrp_data")
-        if other.igmp_data and not self.igmp_data:
-            self.igmp_data = other.igmp_data
-            updated.append("igmp_data")
-        if other.dhcpv6_data and not self.dhcpv6_data:
-            self.dhcpv6_data = other.dhcpv6_data
-            updated.append("dhcpv6_data")
-        if other.ads_data and not self.ads_data:
-            self.ads_data = other.ads_data
-            updated.append("ads_data")
-        if other.netmanage_data and not self.netmanage_data:
-            self.netmanage_data = other.netmanage_data
-            updated.append("netmanage_data")
-        if other.ntp_data and not self.ntp_data:
-            self.ntp_data = other.ntp_data
-            updated.append("ntp_data")
-        if other.vrrp_data and not self.vrrp_data:
-            self.vrrp_data = other.vrrp_data
-            updated.append("vrrp_data")
 
-        # IT infrastructure broadcast discovery data
-        for _infra_field in [
-            "hid_data",
-            "mssql_data",
-            "bjnp_data",
-            "sonicwall_data",
-            "db2_data",
-            "sybase_data",
-            "xdmcp_data",
-            "jenkins_data",
-            "pcanywhere_data",
-        ]:
-            if getattr(other, _infra_field) and not getattr(self, _infra_field):
-                setattr(self, _infra_field, getattr(other, _infra_field))
-                updated.append(_infra_field)
-
-        # Routing protocol passive discovery data
-        if other.ospf_data and not self.ospf_data:
-            self.ospf_data = other.ospf_data
-            updated.append("ospf_data")
-        if other.eigrp_data and not self.eigrp_data:
-            self.eigrp_data = other.eigrp_data
-            updated.append("eigrp_data")
-        if other.rip_data and not self.rip_data:
-            self.rip_data = other.rip_data
-            updated.append("rip_data")
-        if other.pim_data and not self.pim_data:
-            self.pim_data = other.pim_data
-            updated.append("pim_data")
-
-        # BruteShark-inspired credential/network passive data
-        if other.ftp_passive_data and not self.ftp_passive_data:
-            self.ftp_passive_data = other.ftp_passive_data
-            updated.append("ftp_passive_data")
-        if other.telnet_passive_data and not self.telnet_passive_data:
-            self.telnet_passive_data = other.telnet_passive_data
-            updated.append("telnet_passive_data")
-        if other.imap_passive_data and not self.imap_passive_data:
-            self.imap_passive_data = other.imap_passive_data
-            updated.append("imap_passive_data")
-        if other.smtp_passive_data and not self.smtp_passive_data:
-            self.smtp_passive_data = other.smtp_passive_data
-            updated.append("smtp_passive_data")
-        if other.kerberos_passive_data and not self.kerberos_passive_data:
-            self.kerberos_passive_data = other.kerberos_passive_data
-            updated.append("kerberos_passive_data")
-        if other.ntlm_passive_data and not self.ntlm_passive_data:
-            self.ntlm_passive_data = other.ntlm_passive_data
-            updated.append("ntlm_passive_data")
-        if other.sip_passive_data and not self.sip_passive_data:
-            self.sip_passive_data = other.sip_passive_data
-            updated.append("sip_passive_data")
-        if other.file_carving_data and not self.file_carving_data:
-            self.file_carving_data = other.file_carving_data
-            updated.append("file_carving_data")
-        if other.pop3_passive_data and not self.pop3_passive_data:
-            self.pop3_passive_data = other.pop3_passive_data
-            updated.append("pop3_passive_data")
-
-        # ICS passive monitoring data
-        if other.modbus_passive_data and not self.modbus_passive_data:
-            self.modbus_passive_data = other.modbus_passive_data
-            updated.append("modbus_passive_data")
-        if other.iec104_passive_data and not self.iec104_passive_data:
-            self.iec104_passive_data = other.iec104_passive_data
-            updated.append("iec104_passive_data")
-
-        # Additional credential extraction
-        if other.mssql_passive_data and not self.mssql_passive_data:
-            self.mssql_passive_data = other.mssql_passive_data
-            updated.append("mssql_passive_data")
-        if other.vnc_passive_data and not self.vnc_passive_data:
-            self.vnc_passive_data = other.vnc_passive_data
-            updated.append("vnc_passive_data")
-        if other.rdp_passive_data and not self.rdp_passive_data:
-            self.rdp_passive_data = other.rdp_passive_data
-            updated.append("rdp_passive_data")
-        if other.radius_passive_data and not self.radius_passive_data:
-            self.radius_passive_data = other.radius_passive_data
-            updated.append("radius_passive_data")
-        if other.mysql_passive_data and not self.mysql_passive_data:
-            self.mysql_passive_data = other.mysql_passive_data
-            updated.append("mysql_passive_data")
-        if other.pgsql_passive_data and not self.pgsql_passive_data:
-            self.pgsql_passive_data = other.pgsql_passive_data
-            updated.append("pgsql_passive_data")
-        if other.ldap_passive_data and not self.ldap_passive_data:
-            self.ldap_passive_data = other.ldap_passive_data
-            updated.append("ldap_passive_data")
-        if other.tacacs_passive_data and not self.tacacs_passive_data:
-            self.tacacs_passive_data = other.tacacs_passive_data
-            updated.append("tacacs_passive_data")
-        if other.socks_passive_data and not self.socks_passive_data:
-            self.socks_passive_data = other.socks_passive_data
-            updated.append("socks_passive_data")
-        if other.mqtt_passive_data and not self.mqtt_passive_data:
-            self.mqtt_passive_data = other.mqtt_passive_data
-            updated.append("mqtt_passive_data")
-        if other.bfd_passive_data and not self.bfd_passive_data:
-            self.bfd_passive_data = other.bfd_passive_data
-            updated.append("bfd_passive_data")
-        if other.bgp_passive_data and not self.bgp_passive_data:
-            self.bgp_passive_data = other.bgp_passive_data
-            updated.append("bgp_passive_data")
-        if other.irc_passive_data and not self.irc_passive_data:
-            self.irc_passive_data = other.irc_passive_data
-            updated.append("irc_passive_data")
-        if other.pap_passive_data and not self.pap_passive_data:
-            self.pap_passive_data = other.pap_passive_data
-            updated.append("pap_passive_data")
-
-        # Active discovery vendor payloads (camera/energy/AV/BMC/vendor scanners).
-        # These were set by live scanners but never merged; when the ARP/mDNS
-        # device won the as_completed race and became `self`, the payload-carrying
-        # device merged in as `other` silently lost its distinguishing data
-        # (model/serial/firmware).
-        if other.sadp_data and not self.sadp_data:
-            self.sadp_data = other.sadp_data
-            updated.append("sadp_data")
-        if other.dahua_data and not self.dahua_data:
-            self.dahua_data = other.dahua_data
-            updated.append("dahua_data")
-        if other.sma_data and not self.sma_data:
-            self.sma_data = other.sma_data
-            updated.append("sma_data")
-        if other.crestron_data and not self.crestron_data:
-            self.crestron_data = other.crestron_data
-            updated.append("crestron_data")
-        if other.artnet_data and not self.artnet_data:
-            self.artnet_data = other.artnet_data
-            updated.append("artnet_data")
-        if other.ipmi_data and not self.ipmi_data:
-            self.ipmi_data = other.ipmi_data
-            updated.append("ipmi_data")
-        if other.slp_data and not self.slp_data:
-            self.slp_data = other.slp_data
-            updated.append("slp_data")
-        if other.ubiquiti_data and not self.ubiquiti_data:
-            self.ubiquiti_data = other.ubiquiti_data
-            updated.append("ubiquiti_data")
-        if other.mndp_data and not self.mndp_data:
-            self.mndp_data = other.mndp_data
-            updated.append("mndp_data")
-        if other.addp_data and not self.addp_data:
-            self.addp_data = other.addp_data
-            updated.append("addp_data")
         # Update tracking - extend updated_fields but preserve is_new
         # (device stays "new" for the entire scan session)
         if updated:
@@ -1681,11 +1563,21 @@ def build_device_description(device: Dict[str, Any], verbose: bool = False) -> s
         if stp.get("root_bridge"):
             details.append("Root")
 
-    # NetBIOS data
-    netbios = device.get("netbios_data") or {}
+    # NetBIOS data (active discovery uses netbios_data, pcap passive
+    # listeners write netbios_passive_data)
+    netbios = device.get("netbios_data") or device.get("netbios_passive_data") or {}
     if netbios:
-        if netbios.get("name") and not device.get("name"):
-            desc_parts.insert(0, netbios["name"])
+        nb_name = netbios.get("name")
+        if not nb_name and isinstance(netbios.get("names"), list):
+            for entry in netbios["names"]:
+                if isinstance(entry, dict) and entry.get("name"):
+                    nb_name = entry["name"]
+                    break
+                if isinstance(entry, str) and entry:
+                    nb_name = entry
+                    break
+        if nb_name and not device.get("name"):
+            desc_parts.insert(0, nb_name)
         if netbios.get("domain"):
             details.append(f"Domain:{netbios['domain']}")
 

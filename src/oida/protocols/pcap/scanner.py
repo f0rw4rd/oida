@@ -11,7 +11,6 @@ import os
 import shutil
 import subprocess
 import time
-from dataclasses import fields
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -926,12 +925,8 @@ class PcapScanner:
         listeners (ads + igmp + netbios + ssdp) appears once per key. Group by
         MAC address (fallback: IP address for MAC-less devices), keep the
         richest device as the primary, and merge_from() the rest.
-
-        merge_from() only copies declared dataclass fields, so dynamic
-        attributes that listeners set via data_attr= (e.g.
-        netbios_passive_data) are carried over manually afterwards.
         """
-        from ..discovery.core import DiscoveredDevice, normalize_ipv6
+        from ..discovery.core import normalize_ipv6
 
         devices = self.discovered_devices
         original_count = len(devices)
@@ -987,7 +982,6 @@ class PcapScanner:
                 return (filled, -members.index(k))
 
             primary = max(members, key=richness)
-            declared = {f.name for f in fields(DiscoveredDevice)}
             for key in members:
                 if key == primary:
                     continue
@@ -1001,15 +995,6 @@ class PcapScanner:
                 ):
                     devices[primary].discovery_reasons.append(other.device_type)
                 merged = devices[primary].merge_from(other)
-                # Carry dynamic (undeclared) listener attrs that merge_from
-                # skips: e.g. netbios_passive_data, s7comm_passive_data.
-                for attr, val in vars(other).items():
-                    if (
-                        attr not in declared
-                        and not hasattr(devices[primary], attr)
-                        and val not in (None, "", [], {}, ())
-                    ):
-                        setattr(devices[primary], attr, val)
                 self.logger.debug("dedup: folded %s into %s (updated: %s)", key, primary, merged)
                 del devices[key]
 
