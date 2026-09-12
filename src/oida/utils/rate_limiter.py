@@ -58,12 +58,16 @@ class RateLimiter:
             return
 
         with self._lock:
-            now = time.time()
+            # time.monotonic(), never time.time(): a wall-clock adjustment
+            # (NTP correction, VM resume) mid-scan would otherwise make
+            # `elapsed` negative and turn the throttle into a sleep as long as
+            # the jump, or - stepping forward - stop enforcing the rate at all.
+            now = time.monotonic()
             elapsed = now - self.last_send
             if elapsed < self.interval:
                 sleep_time = self.interval - elapsed
                 time.sleep(sleep_time)
-            self.last_send = time.time()
+            self.last_send = time.monotonic()
             self._packet_count += 1
 
     def reset(self) -> None:

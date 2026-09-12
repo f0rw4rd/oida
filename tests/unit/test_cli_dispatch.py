@@ -141,19 +141,24 @@ class TestExportResults:
         # list value is JSON-encoded into the cell
         assert "registers" in text
 
-    def test_all_format_writes_both(self, tmp_path):
+    def test_all_format_writes_all(self, tmp_path):
         cli.export_results(self._results(), str(tmp_path), "all", protocol_name="modbus")
         assert (tmp_path / "modbus.json").exists()
         assert (tmp_path / "modbus.csv").exists()
+        assert (tmp_path / "modbus.xml").exists()
 
     def test_empty_results_writes_nothing(self, tmp_path):
         cli.export_results([], str(tmp_path), "json", protocol_name="modbus")
         assert not (tmp_path / "modbus.json").exists()
 
-    def test_xml_warns_unimplemented(self, tmp_path):
-        # XML is a no-op (logs a warning); must not crash or write a file.
+    def test_xml_export_writes_file(self, tmp_path):
+        # XML export writes a well-formed protocol.xml with one <record> per result.
         cli.export_results(self._results(), str(tmp_path), "xml", protocol_name="modbus")
-        assert not (tmp_path / "modbus.xml").exists()
+        xml_path = tmp_path / "modbus.xml"
+        assert xml_path.exists()
+        text = xml_path.read_text()
+        assert "<modbus>" in text
+        assert "<record>" in text
 
     def test_tables_exported_to_dedicated_csv(self, tmp_path):
         results = [
@@ -580,6 +585,23 @@ class TestMainDispatch:
         _, args, _ = rec[0]
         # Config value applied because operator left --threads at its default.
         assert args.threads == 3
+
+    def test_config_timeout_merged_for_active_protocol(self, monkeypatch, tmp_path):
+        """A config `timeout:` must merge using the ACTIVE protocol's own default
+        as the baseline. modbus's --timeout default is 2; the merge must not
+        compare against some other protocol's default (e.g. ads's 5) or the value
+        is silently dropped. Regression guard for the timeout-shadowing fix.
+        """
+        rec = []
+        _stub_scan(monkeypatch, rec)
+        cfg = tmp_path / "scan.yaml"
+        cfg.write_text("timeout: 30\n")
+        # Force modbus to be fully registered (gen_cli_args keys mode off argv).
+        monkeypatch.setattr("sys.argv", ["oida", "-c", str(cfg), "modbus", "10.0.0.1"])
+        rc = cli.main(["-c", str(cfg), "modbus", "10.0.0.1"])
+        assert rc == 0
+        _, args, _ = rec[0]
+        assert args.timeout == 30
 
     def test_bad_config_file_returns_1(self, tmp_path):
         # A missing config path triggers a ValueError -> exit code 1.

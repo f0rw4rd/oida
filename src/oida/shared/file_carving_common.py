@@ -30,6 +30,8 @@ class ExtractedFile:
     protocol: str  # "TCP" or "UDP"
     timestamp: str
     data: bytes = field(repr=False)  # Actual file data
+    # True only when the bytes actually landed in output_dir (see _save_file).
+    saved: bool = False
 
 
 @dataclass
@@ -180,12 +182,17 @@ class FileCarvingMixin:
         self._update_devices(extracted)
 
         if self.output_dir:
-            self._save_file(extracted)
+            extracted.saved = self._save_file(extracted)
 
-    def _save_file(self, extracted: ExtractedFile) -> None:
-        """Save extracted file to disk. Override for safe_output_path variant."""
+    def _save_file(self, extracted: ExtractedFile) -> bool:
+        """Save extracted file to disk. Override for safe_output_path variant.
+
+        Returns True when the file actually landed on disk. Callers use the
+        return value to report honestly: a carve that cannot be saved must not
+        be logged as an extraction.
+        """
         if not self.output_dir:
-            return
+            return False
         try:
             os.makedirs(self.output_dir, exist_ok=True)
             filename = f"{extracted.md5_hash}{extracted.extension}"
@@ -193,8 +200,13 @@ class FileCarvingMixin:
             with open(filepath, "wb") as f:
                 f.write(extracted.data)
             self.logger.debug(f"Saved: {filepath}")
+            return True
         except Exception as e:
-            self.logger.debug(f"Failed to save file: {e}")
+            # Visible, not debug: previously this was swallowed at debug level,
+            # so the operator saw "File carved" and a files summary entry while
+            # nothing had been written.
+            self.logger.error(f"Failed to save carved file to {self.output_dir}: {e}")
+            return False
 
     # ---- device tracking ----
 
@@ -276,7 +288,12 @@ class FileCarvingMixin:
     # ---- public helpers ----
 
     def get_files_summary(self) -> List[Dict[str, Any]]:
-        """Get summary of all extracted files (without data)."""
+        """Get summary of all extracted files (without data).
+
+        ``saved`` reflects whether the bytes actually reached output_dir —
+        False means the file exists only in memory (e.g. the output directory
+        was unwritable).
+        """
         return [
             {
                 "file_type": f.file_type,
@@ -287,6 +304,7 @@ class FileCarvingMixin:
                 "dest_ip": f.dest_ip,
                 "protocol": f.protocol,
                 "timestamp": f.timestamp,
+                "saved": f.saved,
             }
             for f in self.files
         ]

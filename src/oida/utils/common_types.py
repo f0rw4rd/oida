@@ -2,33 +2,12 @@
 # -*- coding: utf-8 -*-
 
 """
-Common type definitions and utility functions for ICS protocol scanners.
+Shared utility functions for ICS protocol scanners (boolean parsing and
+directory-traversal-safe path handling).
 """
 
-from enum import Enum
+import os
 from typing import Optional
-
-
-class Category(str, Enum):
-    """Closed taxonomy for security findings -- a single axis: *what the
-    weakness is*.
-
-    Severity / impact is intentionally NOT modelled as a field. The
-    consequence of a finding (operational risk, life-safety, pivot, etc.)
-    belongs in the finding's ``detail`` string, not in a parallel enum.
-
-    Reported via ``ICSLogger.security_finding(title, category=Category.X)``.
-    """
-
-    AUTHENTICATION = "AUTHENTICATION"  # missing/weak/default creds, anonymous, no RBAC
-    ACCESS_CONTROL = "ACCESS_CONTROL"  # writable without auth, unauthenticated writes/commands
-    ENCRYPTION = "ENCRYPTION"  # cleartext, NoSec, no TLS/DTLS
-    INFO_DISCLOSURE = "INFO_DISCLOSURE"  # credential/PII/config leak, excessive retention
-    CONFIGURATION = "CONFIGURATION"  # insecure defaults, auditing off, IP forwarding
-    PROTOCOL_EXPOSURE = "PROTOCOL_EXPOSURE"  # dangerous service reachable, legacy protocol
-
-    def __str__(self) -> str:
-        return self.value
 
 
 def parse_bool(value):
@@ -38,12 +17,8 @@ def parse_bool(value):
     """
     if isinstance(value, bool):
         return value
-    elif isinstance(value, str):
-        lower_value = value.lower()
-        if lower_value in ("true", "yes", "y", "1"):
-            return True
-        elif lower_value in ("false", "no", "n", "0"):
-            return False
+    if isinstance(value, str) and value.lower() in ("true", "yes", "y", "1"):
+        return True
     return False
 
 
@@ -65,8 +40,6 @@ def safe_file_path(path_str: str, base_dir: Optional[str] = None) -> str:
     Raises:
         ValueError: If the resolved path escapes *base_dir*.
     """
-    import os
-
     if base_dir is None:
         base_dir = os.getcwd()
 
@@ -97,8 +70,6 @@ def safe_output_path(filename: str, output_dir: str) -> str:
     Raises:
         ValueError: If the sanitised path still escapes *output_dir*.
     """
-    import os
-
     basename = os.path.basename(filename.replace("\\", "/"))
     if not basename:
         raise ValueError(f"Invalid filename: '{filename}'")

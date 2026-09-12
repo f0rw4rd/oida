@@ -220,6 +220,64 @@ def test_global_flags_not_clobbered_by_subparser_defaults(main_parser):
     # --json-log before the subcommand must be preserved across protocols.
     ns = main_parser.parse_args(["--json-log", "/tmp/x.jsonl", "iec104", "127.0.0.1"])
     assert ns.json_log == "/tmp/x.jsonl", "global --json-log clobbered by iec104 subparser"
+    # -v before the serial subcommand must survive serial's own store_true -v
+    # (serial detect/list re-declare -v; they must use default=SUPPRESS).
+    ns = main_parser.parse_args(["-vv", "serial", "list"])
+    assert ns.verbose == 2, f"global -vv clobbered to {ns.verbose!r} by serial subparser"
+
+
+def _full_parser(monkeypatch, argv):
+    """Build a parser with the invoked protocol FULLY registered.
+
+    gen_cli_args() keys its parser-build mode off sys.argv (to keep startup
+    fast), so align sys.argv with the argv under test — otherwise the protocol
+    is a lightweight stub that lacks its own flags. Skips if the protocol fell
+    back to a stub anyway (optional dependency missing in this env).
+    """
+    monkeypatch.setattr("sys.argv", ["oida", *argv])
+    parser = gen_cli_args()
+    proto = next((a for a in argv if not a.startswith("-")), None)
+    sub = parser._subparsers_action.choices.get(proto)
+    if sub is not None and not any("--timeout" in ac.option_strings for ac in sub._actions):
+        pytest.skip(f"{proto} subparser not fully registered in this env")
+    return parser
+
+
+def test_timeout_is_per_protocol_flag_after_target(monkeypatch):
+    """--timeout is honored after the target and keeps its per-protocol default.
+
+    Regression guard for the shadowing bug where a global --timeout collided
+    with each protocol's own --timeout dest.
+    """
+    p = _full_parser(monkeypatch, ["modbus", "127.0.0.1", "--timeout", "7"])
+    assert p.parse_args(["modbus", "127.0.0.1", "--timeout", "7"]).timeout == 7
+
+    p = _full_parser(monkeypatch, ["modbus", "127.0.0.1"])
+    assert p.parse_args(["modbus", "127.0.0.1"]).timeout == 2  # modbus default
+
+    # Per-protocol default must NOT collapse to a single global value.
+    p = _full_parser(monkeypatch, ["dicom", "127.0.0.1"])
+    assert p.parse_args(["dicom", "127.0.0.1"]).timeout == 10  # dicom default
+
+
+def test_timeout_before_subcommand_is_rejected(monkeypatch):
+    """The global --timeout was removed. Placing it before the subcommand is now
+    a clean error, not a silently-ignored value (was: clobbered to the subparser
+    default)."""
+    p = _full_parser(monkeypatch, ["--timeout", "30", "modbus", "127.0.0.1"])
+    with pytest.raises(SystemExit):
+        p.parse_args(["--timeout", "30", "modbus", "127.0.0.1"])
+
+
+def test_ads_tase2_keep_connect_timeout_default_5(monkeypatch):
+    """ads/tase2 dropped their reliance on the global --timeout default (5) but
+    must keep that effective default via their own --timeout, and honor an
+    explicit override."""
+    for proto in ("ads", "tase2"):
+        p = _full_parser(monkeypatch, [proto, "127.0.0.1"])
+        assert p.parse_args([proto, "127.0.0.1"]).timeout == 5
+        p = _full_parser(monkeypatch, [proto, "127.0.0.1", "--timeout", "9"])
+        assert p.parse_args([proto, "127.0.0.1", "--timeout", "9"]).timeout == 9
 
 
 def test_main_debug_is_store_true(main_parser):

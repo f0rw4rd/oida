@@ -21,10 +21,7 @@ import threading
 import traceback
 from datetime import datetime, timezone
 from termcolor import colored
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .common_types import Category
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -59,7 +56,7 @@ _print_lock = threading.Lock()
 # =============================================================================
 # When a path is configured via set_json_log_path(), every ICSLogger event
 # also writes a single JSON line to that file.  The file is opened once and
-# kept open for the lifetime of the process (or until close_json_log()).
+# kept open for the lifetime of the process (re-opened if the path changes).
 
 _json_log_path: Optional[str] = None
 _json_log_file = None
@@ -106,13 +103,8 @@ def set_progress_active(active: bool) -> None:
 
 def _clear_progress_line() -> None:
     """Clear the current line if progress is active (carriage return + clear)."""
-    import sys
-
     if _progress_active and sys.stdout.isatty():
         print("\r\033[K", end="", flush=True)
-
-
-_SPONSORS: list = []
 
 
 def print_startup_banner() -> None:
@@ -132,8 +124,6 @@ def print_startup_banner() -> None:
 
         sigil = colored("[+]", "green", attrs=["bold"])
         banner = f"{sigil} OIDA v{__version__} | powered by @f0rw4rd"
-        if _SPONSORS:
-            banner += f" | supported by {', '.join(_SPONSORS)}"
         print(banner)
 
 
@@ -493,37 +483,22 @@ class ICSLogger:
         # Always write to JSON log regardless of verbose setting
         self._json_log("debug", "debug", formatted)
 
-    def vuln(self, vuln_name: str, severity: str = "medium") -> None:
+    def vuln(self, vuln_name: str) -> None:
         """
         Display discovered vulnerability.
 
         Args:
             vuln_name: Vulnerability name/description
-            severity: low, medium, high, critical
         """
-        severity_colors = {
-            "low": "cyan",
-            "medium": "yellow",
-            "high": "red",
-            "critical": "magenta",
-        }
-        color = severity_colors.get(severity.lower(), "yellow")
-        msg = colored(f"VULN: {vuln_name}", color, attrs=["bold"])
-        sigil = colored("[!]", color, attrs=["bold"])
+        msg = colored(f"VULN: {vuln_name}", "yellow", attrs=["bold"])
+        sigil = colored("[!]", "yellow", attrs=["bold"])
         self._print(self._format(f"{sigil} {msg}"))
         self._json_log(
             "warning",
             "security",
             vuln_name,
-            data={"finding": "vulnerability", "severity": severity},
+            data={"finding": "vulnerability"},
         )
-
-    def device(self, device_info: str) -> None:
-        """Display discovered device information."""
-        msg = colored(device_info, "green")
-        sigil = colored("[+]", "green", attrs=["bold"])
-        self._print(self._format(f"{sigil} {msg}"))
-        self._json_log("info", "discovery", device_info)
 
     def progress(
         self, current: int, total: int, success: int = 0, failed: int = 0, end: str = ""
@@ -546,17 +521,13 @@ class ICSLogger:
         # Progress uses simple format without host prefix (it's a global indicator)
         # Use ANSI clear-line (\033[2K) before \r so remnants don't bleed
         # into subsequent log lines.  Only use \r on real TTYs.
-        import sys
-
         with _print_lock:
             if sys.stdout.isatty():
                 print(f"\033[2K\r{sigil} {msg}", end=end, flush=True)
             else:
                 print(f"{sigil} {msg}", end=end or "\n", flush=True)
 
-    def security_finding(
-        self, title: str, category: "str | Category" = "", detail: str = ""
-    ) -> None:
+    def security_finding(self, title: str, detail: str = "", category: str = "") -> None:
         """
         Display and collect a security finding.
 
@@ -565,23 +536,28 @@ class ICSLogger:
 
         Args:
             title: Finding title (e.g., "No encryption")
-            category: Weakness class -- prefer a ``common_types.Category``
-                member (e.g. ``Category.AUTHENTICATION``); plain strings are
-                accepted for back-compat.
             detail: Additional details
+            category: Short taxonomy label for the weakness class, e.g.
+                "ACCESS_CONTROL", "ENCRYPTION", "AUTHENTICATION",
+                "INFO_DISCLOSURE". Surfaced as ``data.category`` in the
+                structured security event (and the export entry) so consumers
+                can group findings; empty when the caller doesn't classify.
 
-        Findings are de-duplicated within a scan by ``(title, category)``: if
-        the same weakness has already been reported for this target, the
-        repeat call is silently dropped (no console line, no export entry, no
-        JSON log). The findings buffer is per-thread and cleared per scan, so
-        dedup is naturally scoped to a single host -- the same finding on a
-        different target in a sweep is still reported. This stops the common
-        case of a scanner and its mixins both reporting the same broker-level
-        issue (e.g. "No encryption") from printing twice.
+        Findings are de-duplicated within a scan by the ``(title, category)``
+        pair: if the same weakness (same title AND same category) has already
+        been reported for this target, the repeat call is silently dropped (no
+        console line, no export entry, no JSON log). The findings buffer is
+        per-thread and cleared per scan, so dedup is naturally scoped to a
+        single host -- the same finding on a different target in a sweep is
+        still reported. This stops the common case of a scanner and its mixins
+        both reporting the same broker-level issue (e.g. "No encryption",
+        neither passing a category) from printing twice, while still allowing
+        two genuinely distinct weaknesses that happen to share a generic title
+        (e.g. "Insecure configuration" for a static-key issue vs. accessible
+        memory areas) to coexist when they carry different category labels.
         """
-        category = str(category) if category else ""
-
-        # Drop intra-scan duplicates keyed on (title, category).
+        # Drop intra-scan duplicates keyed on (title, category). Distinct
+        # weakness classes that reuse a generic title stay distinct via category.
         if any(
             f.get("title") == title and f.get("category", "") == category for f in self._findings
         ):
@@ -589,15 +565,14 @@ class ICSLogger:
 
         # Collect for export
         entry: Dict[str, str] = {"title": title}
-        if category:
-            entry["category"] = category
         if detail:
             entry["detail"] = detail
+        if category:
+            entry["category"] = category
         self._findings.append(entry)
 
         # Print immediately
-        cat_str = f"[{category}] " if category else ""
-        msg = colored(f"{cat_str}{title}", "yellow", attrs=["bold"])
+        msg = colored(f"{title}", "yellow", attrs=["bold"])
         if detail:
             msg += colored(f" - {detail}", "yellow")
         sigil = colored("[!]", "yellow", attrs=["bold"])
@@ -605,10 +580,10 @@ class ICSLogger:
 
         # Structured JSON log
         finding_data: Dict[str, Any] = {"finding": title}
-        if category:
-            finding_data["category"] = category
         if detail:
             finding_data["details"] = detail
+        if category:
+            finding_data["category"] = category
         self._json_log("warning", "security", title, data=finding_data)
 
     @property
@@ -694,44 +669,14 @@ def display(msg: str) -> None:
     _get_logger().display(msg)
 
 
-def info(msg: str) -> None:
-    """Alias for display() - informational message [*]."""
-    _get_logger().display(msg)
-
-
-def success(msg: str) -> None:
-    """Display success message [+]."""
-    _get_logger().success(msg)
-
-
 def fail(msg: str) -> None:
     """Display failure message [-]."""
     _get_logger().fail(msg)
 
 
-def warning(msg: str) -> None:
-    """Display warning message [!]."""
-    _get_logger().warning(msg)
-
-
-def highlight(msg: str) -> None:
-    """Display highlighted message."""
-    _get_logger().highlight(msg)
-
-
 def debug(msg: str) -> None:
     """Display debug message [D] (only if verbose)."""
     _get_logger().debug(msg)
-
-
-def vuln(vuln_name: str, severity: str = "medium") -> None:
-    """Display discovered vulnerability."""
-    _get_logger().vuln(vuln_name, severity)
-
-
-def device(device_info: str) -> None:
-    """Display discovered device."""
-    _get_logger().device(device_info)
 
 
 # =============================================================================
@@ -740,11 +685,6 @@ def device(device_info: str) -> None:
 
 # Default log level for module-level debug control
 _module_log_level = logging.INFO
-
-
-def is_debug() -> bool:
-    """Check if debug-level logging is enabled."""
-    return _module_log_level == logging.DEBUG
 
 
 def setup_debugging(args):
@@ -761,36 +701,7 @@ def setup_debugging(args):
 
     if "debug" in args and parse_bool(args["debug"]):
         _module_log_level = logging.DEBUG
-    return is_debug()
-
-
-def check_dependencies(*library_names, error_prefix=None):
-    """
-    Check and import required libraries with standardized error handling.
-
-    Args:
-        *library_names: Names of libraries to import
-        error_prefix: Optional prefix for error messages
-
-    Returns:
-        tuple: (imported_modules_dict, dependencies_missing_bool)
-    """
-    _logger = logging.getLogger("oida.utils")
-    imported = {}
-    dependencies_missing = False
-
-    for lib_name in library_names:
-        try:
-            imported[lib_name] = __import__(lib_name)
-            _logger.debug(f"Successfully imported {lib_name}")
-        except ImportError as e:
-            _logger.debug("check dependencies failed: %s", e)
-            dependencies_missing = True
-            msg = error_prefix or f"Failed to import {lib_name} library"
-            _logger.error(msg)
-            imported[lib_name] = None
-
-    return imported, dependencies_missing
+    return _module_log_level == logging.DEBUG
 
 
 # =============================================================================
@@ -829,7 +740,7 @@ def log_debug(message):
 
 def log_warn(message):
     """Log a warning message."""
-    log(message, level="warn")
+    log(message, level="warning")
 
 
 def log_error(message):
@@ -908,6 +819,5 @@ def mac_lookup(mac: str, full: bool = False) -> str:
     return _mac_parser.get_manuf(mac_clean)
 
 
-# Backward-compatible aliases matching the old module.py API
+# Backward-compatible alias matching the old module.py API
 warn = log_warn
-error = log_error

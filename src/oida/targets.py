@@ -12,7 +12,7 @@ Supports both IPv4 and IPv6 addresses:
 import ipaddress
 import os
 import re
-from typing import List, Iterator
+from typing import List
 
 from oida.utils.ics_logger import get_module_logger
 
@@ -88,13 +88,28 @@ def parse_targets(target_spec: str) -> List[str]:
         targets.extend(parse_target_file(target_spec))
     # Check if it's a CIDR network (IPv4 or IPv6)
     elif "/" in target_spec:
-        targets.extend(parse_cidr(target_spec))
+        if _is_cidr_like(target_spec):
+            targets.extend(parse_cidr(target_spec))
+        else:
+            # host:port/path with a numeric path (e.g. "10.0.0.1:8080/2") or any
+            # other non-CIDR string containing "/" — treat as a single target
+            # instead of raising out of parse_cidr.
+            targets.append(target_spec)
     # Check if it's an IPv6 range [addr1]-[addr2]
     elif is_ipv6_range(target_spec):
         targets.extend(parse_ipv6_range(target_spec))
     # Check if it's an IPv4 range
     elif "-" in target_spec and is_ip_range(target_spec):
-        targets.extend(parse_ip_range(target_spec))
+        try:
+            targets.extend(parse_ip_range(target_spec))
+        except ValueError as e:
+            # is_ip_range only validates the first half, so a mixed spec like
+            # "192.168.1.1-scan" reaches here. It is a hostname-looking token,
+            # not a crash-worthy input — degrade to a single target. A
+            # well-formed but reversed range stays an operator error.
+            if "is greater than end IP" in str(e):
+                raise
+            targets.append(target_spec)
     # Single target (IP or hostname) - strip brackets for IPv6
     else:
         target = target_spec.strip("[]")
@@ -102,6 +117,26 @@ def parse_targets(target_spec: str) -> List[str]:
 
     logger.debug(f"Parsed {len(targets)} targets from '{target_spec}'")
     return targets
+
+
+def _is_cidr_like(target_spec: str) -> bool:
+    """Return True when *target_spec* plausibly denotes a CIDR network.
+
+    Distinguishes ``10.0.0.0/24`` / ``2001:db8::/64`` (real CIDR, hand to
+    parse_cidr) from strings that merely contain a slash — ``host:8080/2``,
+    ``host/path`` — which must be treated as a single target rather than
+    raising out of parse_cidr.
+    """
+    if "/" not in target_spec:
+        return False
+    addr, _, prefix = target_spec.rpartition("/")
+    if not prefix.isdigit():
+        return False
+    try:
+        ipaddress.ip_address(addr)
+    except ValueError:
+        return False
+    return True
 
 
 def is_ipv6_range(target_spec: str) -> bool:
@@ -126,7 +161,7 @@ def is_ipv6_range(target_spec: str) -> bool:
         ipaddress.IPv6Address(match.group(1))
         ipaddress.IPv6Address(match.group(2))
         return True
-    except (ValueError, ipaddress.AddressValueError) as e:
+    except ValueError as e:  # AddressValueError is a ValueError subclass
         logger.debug(f"Invalid IPv6 address: {e}")
         return False
 
@@ -164,7 +199,8 @@ def parse_ipv6_range(ipv6_range: str) -> List[str]:
 
         # Limit range size to prevent memory issues
         max_range = 65536  # Same as IPv4
-        if end_int - start_int > max_range:
+        # Inclusive span; see the matching comment in parse_ip_range.
+        if end_int - start_int >= max_range:
             raise ValueError(
                 f"IPv6 range too large: {end_int - start_int + 1} addresses. Maximum: {max_range}"
             )
@@ -217,7 +253,6 @@ def parse_ip_range(ip_range: str) -> List[str]:
     Supports formats:
     - 192.168.1.1-254 (last octet range)
     - 192.168.1.1-192.168.1.254 (full IP range)
-    - 10.0.0-2.1 (third octet range)
 
     Args:
         ip_range: IP range string
@@ -262,7 +297,10 @@ def parse_ip_range(ip_range: str) -> List[str]:
 
         # Limit range size to prevent memory issues
         max_range = 65536  # /16 network
-        if end_int - start_int > max_range:
+        # end_int - start_int is the inclusive span; compare with >= so a range
+        # of max_range+1 addresses is rejected (was `>`, which admitted exactly
+        # one address over the cap while the message below counted inclusively).
+        if end_int - start_int >= max_range:
             raise ValueError(
                 f"IP range too large: {end_int - start_int + 1} addresses. Maximum: {max_range}"
             )
@@ -347,7 +385,7 @@ def is_ip_range(target_spec: str) -> bool:
 
     # Check if first part looks like an IP
     first_part = parts[0].strip()
-    if first_part.count(".") not in [3]:  # Must have 3 dots for IPv4
+    if first_part.count(".") != 3:  # Must have 3 dots for IPv4
         return False
 
     try:
@@ -357,158 +395,3 @@ def is_ip_range(target_spec: str) -> bool:
     except Exception as e:
         logger.debug(f"Invalid IPv4 address: {e}")
         return False
-
-
-def expand_targets_lazy(target_spec: str) -> Iterator[str]:
-    """
-    Lazy iterator for large target sets
-
-    Same as parse_targets() but yields targets one at a time
-    instead of building a full list. Useful for very large ranges.
-
-    Supports IPv4 and IPv6 addresses, CIDR notation, and ranges.
-
-    Args:
-        target_spec: Target specification string
-
-    Yields:
-        str: Individual target strings
-
-    Examples:
-        >>> for target in expand_targets_lazy('192.168.1.0/24'):
-        ...     print(target)
-        >>> for target in expand_targets_lazy('2001:db8::/126'):
-        ...     print(target)
-    """
-    # Handle comma-separated targets (be careful with IPv6)
-    if "," in target_spec and not is_ipv6_range(target_spec):
-        for target in target_spec.split(","):
-            yield from expand_targets_lazy(target.strip())
-        return
-
-    # Check for protocol URLs (opc.tcp://, http://, etc.) - treat as single target
-    if "://" in target_spec:
-        yield target_spec
-        return
-
-    # Check if it's a file
-    if os.path.isfile(target_spec):
-        for target in parse_target_file(target_spec):
-            yield target
-    # Check if it's a CIDR network (IPv4 or IPv6)
-    elif "/" in target_spec:
-        try:
-            network = ipaddress.ip_network(target_spec, strict=False)
-            if network.num_addresses <= 2:
-                for ip in network:
-                    yield str(ip)
-            else:
-                for ip in network.hosts():
-                    yield str(ip)
-        except ValueError:
-            yield target_spec
-    # Check if it's an IPv6 range
-    elif is_ipv6_range(target_spec):
-        for target in parse_ipv6_range(target_spec):
-            yield target
-    # Check if it's an IPv4 range
-    elif "-" in target_spec and is_ip_range(target_spec):
-        for target in parse_ip_range(target_spec):
-            yield target
-    # Single target - strip brackets for IPv6
-    else:
-        yield target_spec.strip("[]")
-
-
-def count_targets(target_spec: str, _visited_files: set = None) -> int:
-    """
-    Count total number of targets without expanding them all
-
-    Useful for large ranges to display progress bars.
-    Supports both IPv4 and IPv6 addresses.
-
-    Args:
-        target_spec: Target specification string
-        _visited_files: Internal set to track visited files and prevent circular inclusion
-
-    Returns:
-        int: Number of targets
-    """
-    # Handle comma-separated (be careful with IPv6)
-    if "," in target_spec and not is_ipv6_range(target_spec):
-        return sum(count_targets(t.strip(), _visited_files) for t in target_spec.split(","))
-
-    # Protocol URLs are single targets
-    if "://" in target_spec:
-        return 1
-
-    # File
-    if os.path.isfile(target_spec):
-        if _visited_files is None:
-            _visited_files = set()
-
-        real_path = os.path.realpath(target_spec)
-        if real_path in _visited_files:
-            logger.warning(f"Circular file inclusion detected, skipping: {target_spec}")
-            return 0
-        _visited_files.add(real_path)
-
-        # Count without full expansion
-        count = 0
-        with open(target_spec, "r") as f:
-            for line in f:
-                line = line.strip()
-                if line and not line.startswith("#"):
-                    count += count_targets(line, _visited_files)
-        return count
-
-    # CIDR (IPv4 or IPv6)
-    if "/" in target_spec:
-        try:
-            network = ipaddress.ip_network(target_spec, strict=False)
-            if network.num_addresses <= 2:
-                return network.num_addresses
-            elif network.version == 6:
-                return network.num_addresses
-            else:
-                return network.num_addresses - 2  # Exclude network/broadcast (IPv4 only)
-        except ValueError as e:
-            logger.debug(f"Failed to get network: {e}")
-            return 1
-
-    # IPv6 range
-    if is_ipv6_range(target_spec):
-        pattern = r"^\[([^\]]+)\]-\[([^\]]+)\]$"
-        match = re.match(pattern, target_spec)
-        if match:
-            try:
-                start_ip = ipaddress.IPv6Address(match.group(1))
-                end_ip = ipaddress.IPv6Address(match.group(2))
-                return int(end_ip) - int(start_ip) + 1
-            except Exception as e:
-                logger.debug(f"Failed to get start_ip: {e}")
-                return 1
-        return 1
-
-    # IPv4 range
-    if "-" in target_spec and is_ip_range(target_spec):
-        parts = target_spec.split("-")
-        start_ip_str = parts[0].strip()
-        end_part = parts[1].strip()
-
-        try:
-            start_ip = ipaddress.IPv4Address(start_ip_str)
-            if "." in end_part:
-                end_ip = ipaddress.IPv4Address(end_part)
-            else:
-                start_octets = start_ip_str.split(".")
-                end_octets = start_octets[:-1] + [end_part]
-                end_ip = ipaddress.IPv4Address(".".join(end_octets))
-
-            return int(end_ip) - int(start_ip) + 1
-        except Exception as e:
-            logger.debug(f"Failed to get start_ip: {e}")
-            return 1
-
-    # Single target
-    return 1

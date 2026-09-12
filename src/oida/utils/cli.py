@@ -294,7 +294,13 @@ class MockCLI:
                             dest=dest,
                             default=default,
                             nargs="?",  # Makes the value optional
-                            const=not default,  # Used when flag provided without value
+                            # The bare flag AFFIRMS the option, so its const is
+                            # True regardless of the default. Using
+                            # `not default` inverted safety options with a True
+                            # default: `--read-only` (default True) turned the
+                            # protection OFF. Explicit opt-out is still
+                            # available as `--read-only false`.
+                            const=True,
                             type=MockCLI.parse_bool,  # Use our parse_bool for explicit values
                             help=help,
                             metavar="BOOL",

@@ -173,7 +173,6 @@ def _get_type_boundaries(
     normalized = TYPE_ALIASES.get(
         data_type.upper() if data_type else "", data_type.lower() if data_type else ""
     )
-    len(original) if original else 4
 
     cases: List[Tuple[bytes, str]] = []
 

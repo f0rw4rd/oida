@@ -54,7 +54,13 @@ Examples:
         description="Enumerate all available serial ports on the system.",
     )
     list_parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Show detailed port information"
+        "-v",
+        "--verbose",
+        action="store_true",
+        # SUPPRESS so a subparser-level non-occurrence doesn't clobber a global
+        # `-v` given before the subcommand (the main parser supplies default=0).
+        default=argparse.SUPPRESS,
+        help="Show detailed port information",
     )
 
     # oida serial detect <port> --method <passive|active>
@@ -108,7 +114,13 @@ Examples:
         help="Timeout per test in seconds (default: 5.0)",
     )
     detect_parser.add_argument(
-        "-v", "--verbose", action="store_true", help="Show verbose output during detection"
+        "-v",
+        "--verbose",
+        action="store_true",
+        # SUPPRESS so a subparser-level non-occurrence doesn't clobber a global
+        # `-v` given before the subcommand (the main parser supplies default=0).
+        default=argparse.SUPPRESS,
+        help="Show verbose output during detection",
     )
     detect_parser.add_argument("--json", action="store_true", help="Output result as JSON")
 
