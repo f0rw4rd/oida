@@ -5,7 +5,6 @@ from typing import Any, Dict, Optional
 from ...connection import NetworkConnection
 from ...utils.lazy_import import lazy_import
 from ...utils.permissions import check_raw_socket_capability
-from oida.utils.common_types import Category
 from .gsdml_parser import parse_gsdml, GSDMLDevice
 from .models import ProfinetDevice
 from .mixins import RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin
@@ -240,7 +239,6 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
         # Confirmed device: RPC connection succeeded above (failures return early).
         self.logger.security_finding(
             "No encryption",
-            category=Category.ENCRYPTION,
             detail="PROFINET has no transport encryption",
         )
         self.discovered_devices[device.ip_address] = device
@@ -348,7 +346,6 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
         # Confirmed device discovery via DCP (per-scan dedup collapses the loop).
         self.logger.security_finding(
             "No encryption",
-            category=Category.ENCRYPTION,
             detail="PROFINET has no transport encryption",
         )
         if device.ip_address and device.ip_address != "0.0.0.0":

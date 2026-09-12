@@ -18,6 +18,12 @@ else:
     _ScannerBase = object
 
 
+# Inter-write pacing between fuzz writes. There is no --fuzz-delay CLI flag
+# (only tests/library callers set args["fuzz_delay"]), so name the default
+# rather than leaving it a bare magic number implying a real knob.
+DEFAULT_FUZZ_INTER_WRITE_DELAY = 0.05
+
+
 class FuzzMixin(_ScannerBase):
     """Mixin providing PROFINET fuzzing operations."""
 
@@ -194,7 +200,7 @@ class FuzzMixin(_ScannerBase):
                     failed += 1
                     self.logger.debug(f"    Write failed ({desc}): {e}")
 
-                time.sleep(self._arg("fuzz_delay", 0.05))
+                time.sleep(self._arg("fuzz_delay", DEFAULT_FUZZ_INTER_WRITE_DELAY))
 
             # Restore original value with retry logic. A fuzzed device can
             # be briefly unresponsive after a write storm; 3 attempts with a

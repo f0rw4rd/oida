@@ -158,7 +158,17 @@ class CyclicMixin(_ScannerBase):
 
         # Step 3: Connect with IOCR
         send_clock_factor = 32  # 1ms base
-        reduction_ratio = cycle_ms
+        # reduction_ratio must be a power of two in 1..512 (PROFINET spec). With
+        # send_clock_factor=32 (1ms) cycle_ms maps 1:1 to the ratio, so a value
+        # like 100/200 is out of spec -- snap to the nearest valid power of two
+        # instead of sending an invalid ratio the device would reject.
+        _valid_ratios = [1, 2, 4, 8, 16, 32, 64, 128, 256, 512]
+        reduction_ratio = min(_valid_ratios, key=lambda r: abs(r - cycle_ms))
+        if reduction_ratio != cycle_ms:
+            self.logger.warning(
+                f"  cycle_ms={cycle_ms} is not a valid PROFINET reduction ratio "
+                f"(must be a power of two, 1-512); using nearest valid {reduction_ratio}ms"
+            )
 
         setup = IOCRSetup(
             slots=io_modules,
