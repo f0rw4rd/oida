@@ -57,62 +57,147 @@ from typing import Any, Dict, List, Optional, Tuple
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
-# FINS command codes
+# FINS command codes (from Omron's command_code_cv[] registry, see
+# `tshark -G values | grep omron.command`).
 FINS_COMMANDS = {
     0x0101: "Memory Area Read",
     0x0102: "Memory Area Write",
     0x0103: "Memory Area Fill",
     0x0104: "Multiple Memory Area Read",
+    0x0105: "Memory Area Transfer",
     0x0201: "Parameter Area Read",
     0x0202: "Parameter Area Write",
     0x0203: "Parameter Area Clear",
-    0x0301: "Program Area Read",
-    0x0302: "Program Area Write",
-    0x0303: "Program Area Clear",
+    0x0220: "Data Link Table Read",
+    0x0221: "Data Link Table Write",
+    0x0304: "Program Area Protect",
+    0x0305: "Program Area Protect Clear",
+    0x0306: "Program Area Read",
+    0x0307: "Program Area Write",
+    0x0308: "Program Area Clear",
     0x0401: "Run",
     0x0402: "Stop",
-    0x0501: "CPU Unit Data Read",
+    0x0403: "Reset",
+    0x0501: "Controller Data Read",
     0x0502: "Connection Data Read",
-    0x0601: "CPU Unit Status Read",
-    0x0602: "Cycle Time Read",
-    0x0620: "Clock Read",
-    0x0621: "Clock Write",
-    0x0701: "Message Read",
-    0x0702: "Message Clear",
-    0x0801: "Access Right Acquire",
-    0x0802: "Access Right Release",
-    0x0920: "Error Clear",
-    0x0921: "Error Log Read",
-    0x0922: "Error Log Clear",
-    0x2101: "File Name Read",
-    0x2102: "Single File Read",
-    0x2103: "Single File Write",
-    0x2104: "Memory Card Format",
-    0x2105: "File Delete",
-    0x2201: "Volume Label Create/Delete",
-    0x2301: "File Copy",
-    0x2302: "File Name Change",
-    0x2303: "File Data Check",
-    0x2304: "Memory Area File Transfer",
-    0x2305: "Parameter Area File Transfer",
-    0x2306: "Program Area File Transfer",
+    0x0601: "Controller Status Read",
+    0x0602: "Network Status Read",
+    0x0603: "Data Link Status Read",
+    0x0620: "Cycle Time Read",
+    0x0701: "Clock Read",
+    0x0702: "Clock Write",
+    0x0801: "LOOP-BACK Test",
+    0x0802: "Broadcast Test Results Read",
+    0x0803: "Broadcast Test Data Send",
+    0x0920: "Message Read/Clear/FAL(S) Read",
+    0x0C01: "Access Right Acquire",
+    0x0C02: "Access Right Forced Acquire",
+    0x0C03: "Access Right Release",
+    0x2101: "Error Clear",
+    0x2102: "Error Log Read",
+    0x2103: "Error Log Clear",
+    0x2201: "File Name Read",
+    0x2202: "Single File Read",
+    0x2203: "Single File Write",
+    0x2204: "Memory Card Format",
+    0x2205: "File Delete",
+    0x2206: "Volume Label Create/Delete",
+    0x2207: "File Copy",
+    0x2208: "File Name Change",
+    0x2209: "File Data Check",
+    0x220A: "Memory Area File Transfer",
+    0x220B: "Parameter Area File Transfer",
+    0x220C: "Program Area File Transfer",
+    0x220F: "File Memory Index Read",
+    0x2210: "File Memory Read",
+    0x2211: "File Memory Write",
+    0x2301: "Forced Set/Reset",
+    0x2302: "Forced Set/Reset Cancel",
+    0x230A: "Multiple Forced Status Read",
+    0x2601: "Name Set",
+    0x2602: "Name Delete",
+    0x2603: "Name Read",
 }
 
-# FINS memory area codes
+# FINS memory area codes (from Omron's memory_area_code_cv[] registry, see
+# `tshark -G values | grep omron.memory.area.read`).
 FINS_MEMORY_AREAS = {
-    0x00: "CIO",  # CIO Area (bit)
-    0x80: "CIO",  # CIO Area (word)
-    0x01: "WR",  # Work Area (bit)
-    0x81: "WR",  # Work Area (word)
-    0x02: "HR",  # Holding Area (bit)
-    0x82: "HR/DM",  # Holding Area (word) / Data Memory (word) - overlapping area code
-    0x03: "AR",  # Auxiliary Area (bit)
-    0x83: "AR",  # Auxiliary Area (word)
-    0x20: "TIM",  # Timer (completion flag)
-    0xA0: "TIM",  # Timer (PV)
-    0x09: "EM0",  # Extended Memory bank 0 (bit)
-    0x98: "EM0",  # Extended Memory bank 0 (word)
-    0x06: "DM",  # Data Memory (bit)
+    0x00: "CIO bit",
+    0x40: "CIO bit (forced)",
+    0x80: "CIO word",
+    0xC0: "CIO word (forced)",
+    0x01: "Timer/Counter completion flag",
+    0x41: "Timer/Counter completion flag (forced)",
+    0x81: "Timer/Counter PV",
+    0x82: "DM word",
+    0x03: "Transition flag",
+    0x43: "Transition flag (forced)",
+    0x04: "Step flag",
+    0x44: "Step status",
+    0x84: "Step timer PV",
+    0x05: "Forced status bit",
+    0x85: "Forced status word",
+    0x90: "Expansion DM word (bank E0)",
+    0x91: "Expansion DM word (bank E1)",
+    0x92: "Expansion DM word (bank E2)",
+    0x93: "Expansion DM word (bank E3)",
+    0x94: "Expansion DM word (bank E4)",
+    0x95: "Expansion DM word (bank E5)",
+    0x96: "Expansion DM word (bank E6)",
+    0x97: "Expansion DM word (bank E7)",
+    0x98: "Expansion DM word (current bank)",
+    0x9C: "Register contents / current expansion DM bank",
+    0x1B: "Action flag",
+    0xDD: "Scheduled interrupt interval",
+    0x30: "CS1 CIO Area bit",
+    0x31: "CS1 Work Area bit",
+    0x32: "CS1 Holding Bit Area bit",
+    0x33: "CS1 Auxiliary Area bit",
+    0x70: "CS1 CIO Area bit (forced)",
+    0x71: "CS1 Work Area bit (forced)",
+    0x72: "CS1 Holding Bit Area bit (forced)",
+    0xB0: "CS1 CIO Area word",
+    0xB1: "CS1 Work Area word",
+    0xB2: "CS1 Holding Bit Area word",
+    0xB3: "CS1 Auxiliary Bit Area word",
+    0xF0: "CS1 CIO Area word (forced)",
+    0xF1: "CS1 Work Area word (forced)",
+    0xF2: "CS1 Holding Bit Area word (forced)",
+    0x09: "CS1 Timer/Counter completion flag",
+    0x49: "CS1 Timer/Counter completion flag (forced)",
+    0x89: "CS1 Timer/Counter PV",
+    0x02: "CS1 DM bit",
+    0x20: "CS1 Expansion DM bit (bank E0)",
+    0x21: "CS1 Expansion DM bit (bank E1)",
+    0x22: "CS1 Expansion DM bit (bank E2)",
+    0x23: "CS1 Expansion DM bit (bank E3)",
+    0x24: "CS1 Expansion DM bit (bank E4)",
+    0x25: "CS1 Expansion DM bit (bank E5)",
+    0x26: "CS1 Expansion DM bit (bank E6)",
+    0x27: "CS1 Expansion DM bit (bank E7)",
+    0x28: "CS1 Expansion DM bit (bank E8)",
+    0x29: "CS1 Expansion DM bit (bank E9)",
+    0x2A: "CS1 Expansion DM bit (bank EA)",
+    0x2B: "CS1 Expansion DM bit (bank EB)",
+    0x2C: "CS1 Expansion DM bit (bank EC)",
+    0xA0: "CS1 Expansion DM word (bank E0)",
+    0xA1: "CS1 Expansion DM word (bank E1)",
+    0xA2: "CS1 Expansion DM word (bank E2)",
+    0xA3: "CS1 Expansion DM word (bank E3)",
+    0xA4: "CS1 Expansion DM word (bank E4)",
+    0xA5: "CS1 Expansion DM word (bank E5)",
+    0xA6: "CS1 Expansion DM word (bank E6)",
+    0xA7: "CS1 Expansion DM word (bank E7)",
+    0xA8: "CS1 Expansion DM word (bank E8)",
+    0xA9: "CS1 Expansion DM word (bank E9)",
+    0xAA: "CS1 Expansion DM word (bank EA)",
+    0xAB: "CS1 Expansion DM word (bank EB)",
+    0xAC: "CS1 Expansion DM word (bank EC)",
+    0xBC: "CS1 Register contents / current expansion DM bank",
+    0x06: "CS1 Task flag bit",
+    0x46: "CS1 Task flag status",
+    0xDC: "CS1 Index register contents",
+    0x07: "CS1 Clock pulses / condition flags",
 }
 
 # FINS mode codes
@@ -123,24 +208,40 @@ FINS_MODES = {
     0x04: "Run",
 }
 
-# Write/control commands (security-relevant)
+# Write/control commands (security-relevant), re-derived from the corrected
+# FINS_COMMANDS registry above.
 FINS_WRITE_COMMANDS = {
-    0x0102,
-    0x0103,
-    0x0202,
-    0x0203,
-    0x0302,
-    0x0303,
-    0x0401,
-    0x0402,  # Run, Stop
-    0x0621,  # Clock Write
-    0x0702,  # Message Clear
-    0x0920,
-    0x0922,  # Error Clear, Error Log Clear
-    0x2103,
-    0x2104,
-    0x2105,  # File Write, Format, Delete
+    0x0102,  # Memory Area Write
+    0x0103,  # Memory Area Fill
+    0x0105,  # Memory Area Transfer
+    0x0202,  # Parameter Area Write
+    0x0203,  # Parameter Area Clear
+    0x0221,  # Data Link Table Write
+    0x0304,  # Program Area Protect
+    0x0305,  # Program Area Protect Clear
+    0x0307,  # Program Area Write
+    0x0308,  # Program Area Clear
+    0x0401,  # Run
+    0x0402,  # Stop
+    0x0403,  # Reset
+    0x0702,  # Clock Write
+    0x0C02,  # Access Right Forced Acquire
+    0x2101,  # Error Clear
+    0x2103,  # Error Log Clear
+    0x2203,  # Single File Write
+    0x2204,  # Memory Card Format
+    0x2205,  # File Delete
+    0x2211,  # File Memory Write
+    0x2301,  # Forced Set/Reset
+    0x2302,  # Forced Set/Reset Cancel
+    0x2601,  # Name Set
+    0x2602,  # Name Delete
 }
+
+# Error-log commands (security-relevant: reading or wiping the PLC's error
+# history). Error Clear (0x2101) clears the *current* error, not the log, so
+# it is intentionally excluded here.
+_FINS_ERROR_LOG_COMMANDS = frozenset({0x2102, 0x2103})  # Error Log Read, Error Log Clear
 
 # FINS/TCP command codes (omron.tcp.command)
 FINS_TCP_COMMANDS = {
@@ -155,8 +256,10 @@ FINS_TCP_COMMANDS = {
 _FINS_FATAL_ERROR_FIELDS = (
     "fatal_fals_error",
     "fatal_sfc_error",
+    "fatal_cycle_time_over",
     "fatal_program_error",
     "fatal_io_setting_error",
+    "fatal_io_point_overflow",
     "fatal_cpu_bus_error",
     "fatal_duplication_error",
     "fatal_io_bus_error",
@@ -182,8 +285,10 @@ _FINS_NON_FATAL_ERROR_FIELDS = (
 _FINS_ERROR_FIELD_NAMES = {
     "fatal_fals_error": "FALS",
     "fatal_sfc_error": "SFC",
+    "fatal_cycle_time_over": "Cycle Time Over",
     "fatal_program_error": "Program",
     "fatal_io_setting_error": "I/O Setting",
+    "fatal_io_point_overflow": "I/O Point Overflow",
     "fatal_cpu_bus_error": "CPU Bus",
     "fatal_duplication_error": "Duplication",
     "fatal_io_bus_error": "I/O Bus",
@@ -305,12 +410,13 @@ class FINSPassiveListener(PySharkListenerBase):
         dtb_raw = self.get_field(omron, "icf_dtb", None)
         if dtb_raw is None:
             dtb_raw = self.get_field(omron, "icf.dtb", None)
-        is_response = False
-        if dtb_raw is not None:
-            try:
-                is_response = int(dtb_raw) == 1
-            except (ValueError, TypeError) as e:
-                self.logger.debug(f"Failed to get is_response: {e}")
+        # omron.icf.dtb is FT_BOOLEAN/BASE_HEX, so in pyshark XML mode (the live
+        # capture path) it renders as "0x01"/"0x00"; a bare int() raised and was
+        # swallowed, leaving is_response False for every packet -- responses got
+        # mislabeled as requests, corrupting the direction label, client/server
+        # role assignment and get_write_operations() counting.  _parse_int
+        # auto-detects the 0x prefix.
+        is_response = self._parse_int(dtb_raw, 0) == 1
 
         direction = "response" if is_response else "request"
 
@@ -399,18 +505,19 @@ class FINSPassiveListener(PySharkListenerBase):
         elif cmd_code in (0x0401, 0x0402):
             mode_raw = self.get_field(omron, "mode_code", None)
             if mode_raw:
-                try:
-                    mode = int(mode_raw)
+                # omron.mode_code is FT_UINT8/BASE_HEX -> "0xNN" in XML mode; a
+                # bare int() silently dropped the safety-relevant PLC Run/Program
+                # mode-change detail on the live path. _parse_int handles 0x.
+                mode = self._parse_int(mode_raw, None)
+                if mode is not None:
                     details["mode"] = FINS_MODES.get(mode, f"Mode {mode}")
-                except (ValueError, TypeError) as e:
-                    self.logger.debug(f"FINS: PLC mode_code int parse failed: {e}")
 
         # CPU Unit Data Read / Connection Data Read / Status Read
         elif cmd_code in (0x0501, 0x0502, 0x0601):
             self._process_cpu_status(omron, details, is_response, src_ip, dst_ip)
 
-        # Error Log Read / Error Clear
-        elif cmd_code in (0x0920, 0x0921, 0x0922):
+        # Error Log Read / Error Log Clear
+        elif cmd_code in _FINS_ERROR_LOG_COMMANDS:
             self._process_error_log(omron, details)
 
         # -- Fields that tshark only populates on relevant commands --
@@ -504,12 +611,7 @@ class FINSPassiveListener(PySharkListenerBase):
                 self.logger.debug(f"FINS: failed to parse memory address: {e}")
         details["address"] = address
 
-        num_items = 1
-        if num_raw:
-            try:
-                num_items = int(num_raw)
-            except (ValueError, TypeError) as e:
-                self.logger.debug(f"Failed to get num_items: {e}")
+        num_items = self._parse_int(num_raw, 1)
         details["num_items"] = num_items
 
         # Bit offset within address
@@ -661,7 +763,7 @@ class FINSPassiveListener(PySharkListenerBase):
                 self.discovered_devices[plc_key].fins_passive_data = pdata
 
     def _process_error_log(self, omron, details: Dict[str, Any]) -> None:
-        """Extract error log fields (0x0920, 0x0921, 0x0922)."""
+        """Extract error log fields (0x2102 Error Log Read, 0x2103 Error Log Clear)."""
         fals_no = self._parse_int(self.get_field(omron, "error_reset_fals_no", None), -1)
         if fals_no >= 0:
             details["error_reset_fals_no"] = fals_no
