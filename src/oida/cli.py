@@ -1544,8 +1544,11 @@ def main(argv: Optional[List[str]] = None):
         except Exception as e:
             logger.error(f"Failed to export results: {e}")
             return 1
-        if used_temp_dir and not args.quiet:
-            export_logger.display(f"--format given without -o; results written to {output_path}")
+        if not args.quiet:
+            # Per-file writes inside export_results are debug-level, so say
+            # where the output landed at info level or users can't find it.
+            fallback_note = "--format given without -o; " if used_temp_dir else ""
+            export_logger.display(f"{fallback_note}results written to {output_path}")
 
     return 0 if failed == 0 else 1
 
