@@ -210,6 +210,7 @@ WRITE_COMMANDS: Set[int] = {
 MSG_TYPE_REQUEST = 0
 MSG_TYPE_RESPONSE = 1
 MSG_TYPE_PUBLISH = 2
+MSG_TYPE_ERROR = 3  # tshark hart_ip.message_type == 3 "Error"
 MSG_TYPE_NAK = 15
 
 # HART-IP message IDs
@@ -225,6 +226,21 @@ MSG_ID_NAMES = {
     MSG_ID_PASS_THROUGH: "Pass Through",
 }
 
+# Short field names of a HART-IP header, in either pyshark rendering
+# (XML dotted keys inside icmp._all_fields, or EK underscored nested keys).
+# Used to detect/parse HART-IP quoted inside an ICMP error payload.
+_HART_FIELD_KEYS = frozenset(
+    {
+        "version",
+        "message_type",
+        "message_id",
+        "status",
+        "transaction_id",
+        "msg_length",
+        "data",
+    }
+)
+
 # Device status bit flags (hart_ip.pt.device_status)
 DEVICE_STATUS_FLAGS = {
     0x80: "Device Malfunction",
@@ -235,6 +251,18 @@ DEVICE_STATUS_FLAGS = {
     0x04: "Loop Current Saturated",
     0x02: "Non-PV Out of Limits",
     0x01: "PV Out of Limits",
+}
+
+# Unambiguous compact labels for _decode_device_status().  Keyed by bit.
+_DEVICE_STATUS_ABBREV = {
+    0x80: "Malfunction",
+    0x40: "Config Changed",
+    0x20: "Cold Start",
+    0x10: "More Status",
+    0x08: "Loop Fixed",
+    0x04: "Loop Saturated",
+    0x02: "Non-PV Out",
+    0x01: "PV Out",
 }
 
 # Response codes
@@ -324,6 +352,38 @@ class HARTIPPassiveListener(PySharkListenerBase):
         super().__init__(interface, timeout, nxc_logger)
         self.sessions: Dict[Tuple[str, str], HARTIPSession] = {}
 
+    @staticmethod
+    def _embedded_hart_fields(icmp_layer) -> Optional[Dict[str, Any]]:
+        """Return the HART-IP fields dissected inside an ICMP-quoted payload.
+
+        Mode-agnostic:
+        - XML mode keeps the nested dissection as dotted keys inside
+          ``icmp._all_fields`` (e.g. ``hart_ip.message_id``).
+        - EK mode nests it as a dict under ``_fields_dict["hart_ip"]`` (also
+          reachable via ``icmp.get_field("hart_ip")``), with underscored keys.
+        Returns a flat {short_name: value} dict of the embedded HART-IP
+        fields, or None when the ICMP payload carries no HART-IP.
+        """
+        # XML mode: dotted keys in _all_fields
+        try:
+            all_fields = getattr(icmp_layer, "_all_fields", None) or {}
+            flat = {k.split(".")[-1]: v for k, v in dict(all_fields).items()}
+        except Exception:
+            flat = {}
+        # EK mode: nested dict under the "hart_ip" key
+        try:
+            nested = icmp_layer.get_field("hart_ip")
+            if isinstance(nested, dict):
+                for k, v in nested.items():
+                    # keys like "hart_ip_hart_ip_message_id" -> "message_id"
+                    flat.setdefault(k.split("_")[-1], v)
+        except Exception:
+            pass
+        hart_keys = {k for k in flat if k in _HART_FIELD_KEYS}
+        if not hart_keys:
+            return None
+        return {k: flat[k] for k in hart_keys}
+
     def should_process_packet(self, packet) -> bool:
         """Accept packets with hart_ip layer or ICMP-embedded HART-IP."""
         if super().should_process_packet(packet):
@@ -331,14 +391,11 @@ class HARTIPPassiveListener(PySharkListenerBase):
         # ICMP Port Unreachable may quote the original UDP/HART-IP payload;
         # tshark's display filter matches these so we must handle them.
         if hasattr(packet, "icmp"):
-            try:
-                fd = object.__getattribute__(packet.icmp, "_fields_dict")
-                if isinstance(fd, dict) and "hart_ip" in fd:
-                    return True
-            except (AttributeError, TypeError) as e:
-                self.logger.debug(
-                    f"HART-IP: ICMP _fields_dict access for embedded payload check failed: {e}"
-                )
+            # Mode-agnostic presence check (the old raw ``_fields_dict``
+            # access only exists on EkLayer, so the XML path raised
+            # AttributeError and silently dropped the packet).
+            if self._embedded_hart_fields(packet.icmp) is not None:
+                return True
         return False
 
     def process_packet(self, packet) -> None:
@@ -381,7 +438,12 @@ class HARTIPPassiveListener(PySharkListenerBase):
         # adds non-standard-port robustness.
         if msg_type == MSG_TYPE_REQUEST:
             native: Optional[bool] = True
-        elif msg_type in (MSG_TYPE_RESPONSE, MSG_TYPE_PUBLISH, MSG_TYPE_NAK):
+        elif msg_type in (
+            MSG_TYPE_RESPONSE,
+            MSG_TYPE_PUBLISH,
+            MSG_TYPE_ERROR,  # type 3 "Error" is sent by the device side
+            MSG_TYPE_NAK,
+        ):
             native = False
         else:
             native = None
@@ -868,13 +930,17 @@ class HARTIPPassiveListener(PySharkListenerBase):
 
     @staticmethod
     def _decode_device_status(status: int) -> str:
-        """Decode device status byte into flag abbreviations."""
+        """Decode device status byte into unambiguous flag abbreviations.
+
+        Labels are chosen so no two flags abbreviate to the same first word
+        (the old ``name.split()[0]`` truncation rendered 0xd0 as
+        "Device | Configuration | More" and collided "Loop Current Fixed"
+        with "Loop Current Saturated" on "Loop").
+        """
         flags: List[str] = []
         for bit, name in DEVICE_STATUS_FLAGS.items():
             if status & bit:
-                # Abbreviate for compact display
-                abbrev = name.split()[0]
-                flags.append(abbrev)
+                flags.append(_DEVICE_STATUS_ABBREV.get(bit, name))
         return " | ".join(flags)
 
     # ------------------------------------------------------------------
@@ -1066,18 +1132,19 @@ class HARTIPPassiveListener(PySharkListenerBase):
 
         flow_id = self.get_flow_id(packet)
 
-        # Try to extract basic HART-IP fields from the ICMP layer's nested dict
+        # Try to extract basic HART-IP fields from the ICMP layer's nested
+        # dissection.  _embedded_hart_fields() is mode-agnostic (XML dotted
+        # keys / EK nested dict), so the embedded message id survives either
+        # rendering.
         msg_id_str = ""
         try:
-            icmp_layer = packet.icmp
-            fd = object.__getattribute__(icmp_layer, "_fields_dict")
-            if isinstance(fd, dict):
-                hart_dict = fd.get("hart_ip")
-                if isinstance(hart_dict, dict):
-                    mi = hart_dict.get("hart_ip_hart_ip_message_id", "")
-                    msg_id_str = MSG_ID_NAMES.get(int(mi) if mi else -1, str(mi))
+            hart_fields = self._embedded_hart_fields(packet.icmp)
+            if hart_fields:
+                mi = str(hart_fields.get("message_id", "") or "")
+                if mi:
+                    msg_id_str = MSG_ID_NAMES.get(self._parse_int(mi, -1), str(mi))
         except Exception as e:
-            self.logger.debug(f"Failed to get icmp_layer: {e}")
+            self.logger.debug(f"Failed to extract embedded HART-IP fields: {e}")
 
         icmp_type = self.get_field(packet.icmp, "type", "?")
         icmp_code = self.get_field(packet.icmp, "code", "?")
