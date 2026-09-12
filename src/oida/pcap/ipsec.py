@@ -171,10 +171,14 @@ class IPsecPassiveListener(PySharkListenerBase):
         src_mac, dst_mac = self.get_mac_info(packet)
 
         # IKE version -- tshark uses isakmp.version (combined byte),
-        # isakmp.mjver (major), isakmp.mnver (minor)
+        # isakmp.mjver (major), isakmp.mnver (minor).  mjver is BASE_HEX:
+        # pyshark renders it as "0x01"/"0x02" in XML mode (the live-capture
+        # path) and as the int 1/2 in EK mode, so normalize through
+        # _parse_int() instead of trusting the raw rendering.
         mjver = self.get_field(isakmp, "mjver", None)
         if mjver is not None:
-            ike_version = f"v{mjver}"
+            mjver_int = self._parse_int(mjver, None)
+            ike_version = f"v{mjver_int}" if mjver_int is not None else f"v{mjver}"
         else:
             version_raw = self.get_field(isakmp, "version", None)
             if version_raw is not None:
