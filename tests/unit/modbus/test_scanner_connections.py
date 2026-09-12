@@ -537,7 +537,7 @@ class TestRTUOverTCPConnection:
         mock_tcp_client,
     ):
         """Test RTU-over-TCP connection."""
-        scanner_args["rtu-over-tcp"] = True
+        scanner_args["rtu_over_tcp"] = True
 
         MockTcpClient = MagicMock(return_value=mock_tcp_client)
         mock_tcp.return_value = MockTcpClient
@@ -573,7 +573,7 @@ class TestRTUOverTCPConnection:
         mock_tcp_client,
     ):
         """Test RTU-over-TCP with legacy framer string."""
-        scanner_args["rtu-over-tcp"] = True
+        scanner_args["rtu_over_tcp"] = True
 
         MockTcpClient = MagicMock(return_value=mock_tcp_client)
         mock_tcp.return_value = MockTcpClient
@@ -613,7 +613,7 @@ class TestASCIIOverTCPConnection:
         mock_tcp_client,
     ):
         """Test ASCII-over-TCP connection."""
-        scanner_args["ascii-over-tcp"] = True
+        scanner_args["ascii_over_tcp"] = True
 
         MockTcpClient = MagicMock(return_value=mock_tcp_client)
         mock_tcp.return_value = MockTcpClient

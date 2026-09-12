@@ -208,8 +208,8 @@ class ModbusScanner(
         transport = self.args.get("transport", "tcp")
         use_tls = self.args.get("tls", False) or transport == "tls"
         use_udp = self.args.get("udp", False) or transport == "udp"
-        use_rtu_tcp = self.args.get("rtu-over-tcp", False) or transport == "rtu-tcp"
-        use_ascii_tcp = self.args.get("ascii-over-tcp", False) or transport == "ascii-tcp"
+        use_rtu_tcp = self.args.get("rtu_over_tcp", False) or transport == "rtu-tcp"
+        use_ascii_tcp = self.args.get("ascii_over_tcp", False) or transport == "ascii-tcp"
         use_ascii_serial = self.args.get("ascii", False)
 
         client = None
@@ -515,9 +515,9 @@ class ModbusScanner(
 
         # Determine batch size from the existing --max-registers argument.
         if register_type in ("coils", "discrete_inputs"):
-            max_batch = min(int(self.args.get("max-registers", 2000)), 2000)
+            max_batch = min(int(self.args.get("max_registers", 2000)), 2000)
         else:
-            max_batch = min(int(self.args.get("max-registers", 125)), 125)
+            max_batch = min(int(self.args.get("max_registers", 125)), 125)
 
         # Show progress via batches.
         batches = build_batches(address_range, max_batch)

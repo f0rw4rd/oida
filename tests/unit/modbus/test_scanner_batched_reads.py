@@ -70,7 +70,7 @@ def _create_scanner(args_overrides=None):
         "endian": "big",
         "filter-zero": False,
         "read-only": True,
-        "max-registers": 125,
+        "max_registers": 125,
     }
     if args_overrides:
         defaults.update(args_overrides)
@@ -223,7 +223,7 @@ class TestBatchedHoldingRegisterReads:
 
     def test_custom_max_registers(self):
         """--max-registers controls batch size."""
-        scanner = _create_scanner({"max-registers": 10})
+        scanner = _create_scanner({"max_registers": 10})
         client = MagicMock()
 
         def side_effect(start, count, device_id):
@@ -244,7 +244,7 @@ class TestBatchedHoldingRegisterReads:
 
     def test_partial_batch_at_end(self):
         """Partial batch at the end of a range returns correct results."""
-        scanner = _create_scanner({"max-registers": 4})
+        scanner = _create_scanner({"max_registers": 4})
         client = MagicMock()
 
         def side_effect(start, count, device_id):
@@ -260,7 +260,7 @@ class TestBatchedHoldingRegisterReads:
 
     def test_results_match_individual_reads(self):
         """Batched reads produce the same result dict as individual reads would."""
-        scanner = _create_scanner({"max-registers": 5})
+        scanner = _create_scanner({"max_registers": 5})
         client = MagicMock()
 
         values = [100, 200, 300, 400, 500, 600, 700]
@@ -318,7 +318,7 @@ class TestBatchedCoilReads:
 
     def test_coils_higher_batch_limit(self):
         """Coils default to batch size 2000, not 125."""
-        scanner = _create_scanner({"max-registers": 2000})
+        scanner = _create_scanner({"max_registers": 2000})
         client = MagicMock()
 
         n = 500
@@ -358,7 +358,7 @@ class TestBatchFallback:
 
     def test_fallback_on_error_response(self):
         """Error response from batch read triggers individual reads."""
-        scanner = _create_scanner({"max-registers": 5})
+        scanner = _create_scanner({"max_registers": 5})
         client = MagicMock()
 
         # First batch fails, individual reads succeed
@@ -382,7 +382,7 @@ class TestBatchFallback:
 
     def test_fallback_on_exception(self):
         """Exception from batch read triggers individual reads."""
-        scanner = _create_scanner({"max-registers": 10})
+        scanner = _create_scanner({"max_registers": 10})
         client = MagicMock()
 
         def side_effect(start, count, device_id):
@@ -400,7 +400,7 @@ class TestBatchFallback:
 
     def test_fallback_partial_success(self):
         """Some individual reads fail during fallback, others succeed."""
-        scanner = _create_scanner({"max-registers": 5})
+        scanner = _create_scanner({"max_registers": 5})
         client = MagicMock()
 
         def side_effect(start, count, device_id):
@@ -425,7 +425,7 @@ class TestBatchFallback:
 
     def test_fallback_individual_exception(self):
         """Individual reads that raise exceptions are counted as errors."""
-        scanner = _create_scanner({"max-registers": 5})
+        scanner = _create_scanner({"max_registers": 5})
         client = MagicMock()
 
         def side_effect(start, count, device_id):
@@ -447,7 +447,7 @@ class TestBatchFallback:
 
     def test_short_response_triggers_fallback(self):
         """A batch response with fewer values than expected triggers fallback."""
-        scanner = _create_scanner({"max-registers": 10})
+        scanner = _create_scanner({"max_registers": 10})
         client = MagicMock()
 
         call_num = {"n": 0}
@@ -595,7 +595,7 @@ class TestEdgeCases:
 
     def test_max_registers_capped_at_125_for_registers(self):
         """max-registers larger than 125 is capped for holding/input registers."""
-        scanner = _create_scanner({"max-registers": 500})
+        scanner = _create_scanner({"max_registers": 500})
         client = MagicMock()
 
         def side_effect(start, count, device_id):
@@ -612,7 +612,7 @@ class TestEdgeCases:
 
     def test_max_registers_capped_at_2000_for_coils(self):
         """max-registers larger than 2000 is capped for coils."""
-        scanner = _create_scanner({"max-registers": 5000})
+        scanner = _create_scanner({"max_registers": 5000})
         client = MagicMock()
 
         def side_effect(start, count, device_id):
@@ -640,7 +640,7 @@ class TestEdgeCases:
 
     def test_all_batches_fail(self):
         """All batch reads fail, all individual reads fail -- error count is correct."""
-        scanner = _create_scanner({"max-registers": 5})
+        scanner = _create_scanner({"max_registers": 5})
         client = MagicMock()
 
         client.read_holding_registers.return_value = _make_error_response()
