@@ -318,9 +318,17 @@ class EtherCATScanner(
 
         except Exception as e:
             self.logger.fail(f"Failed to initialize EtherCAT master: {e}")
+            # Stop the cyclic PD thread BEFORE closing the master (mirroring
+            # disconnect()'s teardown order): if it started under --op-state, the
+            # C-extension thread could otherwise call send_processdata() on a
+            # just-closed socket -- a native use-after-free. disconnect() never
+            # runs when connect() returns None, so do it here.
+            if self._pd_thread and self._pd_thread.is_alive():
+                self._pd_thread_stop.set()
+                self._pd_thread.join(timeout=2.0)
+                self._pd_thread = None
             # Close the master if it was opened before the failure, so the raw
-            # socket/interface isn't leaked (disconnect() won't run when connect
-            # returns None).
+            # socket/interface isn't leaked.
             try:
                 if "master" in locals() and master is not None:
                     master.close()
@@ -424,7 +432,7 @@ class EtherCATScanner(
         for i, slave in enumerate(master.slaves):
             # Read bootstrap mailbox config from EEPROM
             try:
-                d = slave.eeprom_read(0x11)  # Bootstrap RX size at word 0x11
+                d = slave.eeprom_read(0x15)  # Bootstrap RX mailbox size at word 0x15
                 boot_rx_size = struct.unpack("<H", d[:2])[0]
                 if boot_rx_size > 0:
                     boot_supported.append(i + 1)
@@ -467,6 +475,9 @@ class EtherCATScanner(
 
     def disconnect(self, connection: Any) -> None:
         """Close EtherCAT master connection"""
+        # Invalidate the per-scan network-info cache (see _get_network_info).
+        self._network_info_cache = None
+
         # Stop processdata thread first
         if self._pd_thread and self._pd_thread.is_alive():
             self._pd_thread_stop.set()
@@ -638,7 +649,17 @@ class EtherCATScanner(
         return results
 
     def _get_network_info(self, master: Any) -> Dict[str, Any]:
-        """Get EtherCAT network information"""
+        """Get EtherCAT network information.
+
+        Cached per instance: both discover() and the CLI runner's host-info
+        display call this, and each runs a 10-iteration process-data loop, so
+        without the cache the bus saw ~22 round trips (and computed cycle_time
+        twice) per NXC scan. The cache is cleared on disconnect().
+        """
+        cached = getattr(self, "_network_info_cache", None)
+        if cached is not None:
+            return cached
+
         info = {
             "interface": self.interface,
             "slave_count": len(master.slaves),
@@ -675,6 +696,7 @@ class EtherCATScanner(
         except Exception as e:
             self.logger.debug(f"Error getting network info: {e}")
 
+        self._network_info_cache = info
         return info
 
     def _discover_slaves(self, master: Any) -> Dict[int, Any]:

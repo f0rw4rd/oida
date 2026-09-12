@@ -108,7 +108,17 @@ class CoeOpsMixin(_ScannerBase):
         if getattr(self, "coe_range", ""):
             try:
                 parsed = parse_coe_ranges(self.coe_range)
-                # Normalize 4-tuples to 3-tuples (drop subs — pysoem scans all subindices)
+                # The pysoem CoE path scans ALL subindices per index and cannot
+                # honor a per-index subindex filter (the ADS scanner does). Reject
+                # ":subindex" specs here rather than silently ignoring them so the
+                # two syntaxes don't behave differently.
+                if any(subs for *_rest, subs in parsed):
+                    self.logger.fail(
+                        "--coe-range ':subindex' filters are not supported on the pysoem "
+                        "path (it scans all subindices); drop the ':N' suffix."
+                    )
+                    return {}
+                # Normalize 4-tuples to 3-tuples (subs already validated as empty).
                 scan_ranges = [(s, e, lbl) for s, e, lbl, _subs in parsed]
                 total_indices = sum(end - start for start, end, _ in scan_ranges)
                 self.logger.display(

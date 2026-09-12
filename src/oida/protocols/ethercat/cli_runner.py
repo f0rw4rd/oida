@@ -6,7 +6,6 @@ from typing import Dict, Any
 
 from ...connection import SerialConnection
 
-from oida.utils.common_types import Category
 
 from . import EtherCATScanner
 
@@ -63,7 +62,6 @@ class ethercat(SerialConnection):
             if network_info.get("slave_count", 0) > 0:
                 self.logger.security_finding(
                     "No encryption",
-                    category=Category.ENCRYPTION,
                     detail="EtherCAT has no transport encryption",
                 )
         except Exception as e:

@@ -63,18 +63,18 @@ def parse_sii_header(data: bytes) -> Dict[str, Any]:
     header = {
         # PDI Configuration (bytes 0x00-0x09)
         "station_alias": struct.unpack_from("<H", data, 0x08)[0],
-        # CRC at byte 0x0E (word 7, high byte)
+        # CRC at byte 0x0E (word 7, low byte)
         "crc": data[0x0E],
         # Device Identity (bytes 0x10-0x1F)
         "vendor_id": struct.unpack_from("<I", data, 0x10)[0],
         "product_code": struct.unpack_from("<I", data, 0x14)[0],
         "revision": struct.unpack_from("<I", data, 0x18)[0],
         "serial_number": struct.unpack_from("<I", data, 0x1C)[0],
-        # Bootstrap Mailbox (bytes 0x20-0x27)
-        "bootstrap_rx_mbx_offset": struct.unpack_from("<H", data, 0x20)[0],
-        "bootstrap_rx_mbx_size": struct.unpack_from("<H", data, 0x22)[0],
-        "bootstrap_tx_mbx_offset": struct.unpack_from("<H", data, 0x24)[0],
-        "bootstrap_tx_mbx_size": struct.unpack_from("<H", data, 0x26)[0],
+        # Bootstrap Mailbox (bytes 0x28-0x2F); 0x20-0x27 is reserved (shall be zero)
+        "bootstrap_rx_mbx_offset": struct.unpack_from("<H", data, 0x28)[0],
+        "bootstrap_rx_mbx_size": struct.unpack_from("<H", data, 0x2A)[0],
+        "bootstrap_tx_mbx_offset": struct.unpack_from("<H", data, 0x2C)[0],
+        "bootstrap_tx_mbx_size": struct.unpack_from("<H", data, 0x2E)[0],
         # Standard Mailbox (bytes 0x30-0x39)
         "std_rx_mbx_offset": struct.unpack_from("<H", data, 0x30)[0],
         "std_rx_mbx_size": struct.unpack_from("<H", data, 0x32)[0],
@@ -341,14 +341,14 @@ def parse_dc_category(data: bytes, strings: List[str]) -> Dict[str, Any]:
     Contains DC synchronization settings.
 
     Args:
-        data: Category data (without header), minimum 18 bytes.
+        data: Category data (without header), minimum 24 bytes.
         strings: String list from STRINGS category.
 
     Returns:
         Dict with DC configuration including cycle times and sync modes.
     """
-    if len(data) < 18:
-        return {"error": "Insufficient data for DC category (need 18 bytes)"}
+    if len(data) < 24:
+        return {"error": "Insufficient data for DC category (need 24 bytes)"}
 
     dc_modes = {
         0x0000: "free_run",
@@ -357,12 +357,15 @@ def parse_dc_category(data: bytes, strings: List[str]) -> Dict[str, Any]:
         0x0700: "dc_sync0_sync1",
     }
 
-    assign_activate = struct.unpack_from("<H", data, 12)[0]
-    name_idx = data[16] if len(data) > 16 else 0
-    desc_idx = data[17] if len(data) > 17 else 0
+    assign_activate = struct.unpack_from("<H", data, 18)[0]
+    name_idx = data[22]
+    desc_idx = data[23]
 
     return {
         "cycle_time0_ns": struct.unpack_from("<I", data, 0)[0],
+        "shift_time0_ns": struct.unpack_from("<I", data, 4)[0],
+        "cycle_time1_ns": struct.unpack_from("<I", data, 8)[0],
+        "shift_time1_ns": struct.unpack_from("<I", data, 12)[0],
         "assign_activate_mode": dc_modes.get(assign_activate, f"mode_0x{assign_activate:04X}"),
         "name": strings[name_idx] if 0 < name_idx < len(strings) else "",
         "description": strings[desc_idx] if 0 < desc_idx < len(strings) else "",
