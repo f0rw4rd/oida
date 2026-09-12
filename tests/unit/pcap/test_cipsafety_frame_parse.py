@@ -323,7 +323,7 @@ class TestSupervisorServices:
                     "manufacture_serial_number": "SN12345",
                     "sw_rev_level": "2.1",
                     "hw_rev_level": "A",
-                    "device_status": "4",  # Running
+                    "device_status": "4",  # Executing
                     "configuration_lock": "1",
                 }
             ),
@@ -334,7 +334,7 @@ class TestSupervisorServices:
         assert d["serial_number"] == "SN12345"
         assert d["sw_revision"] == "2.1"
         assert d["hw_revision"] == "A"
-        assert d["device_status"] == "Running"
+        assert d["device_status"] == "Executing"
         assert d["configuration_lock"] == "1"
 
         # Device name should be derived from manufacturer/model.
@@ -426,14 +426,25 @@ class TestValidatorFrames:
         )
         assert ix.details["producer_consumer"] == "Consumer"
 
-    def test_faulted_state_raises_alert(self):
-        """State 4 (Faulted) raises a validator-fault alert."""
+    def test_unallocated_state_no_alert(self):
+        """State 0 is 'Unallocated' (not the old mislabel 'Idle') and never
+        raises a fault alert."""
+        listener = _make_listener()
+        ix = _feed(listener, _Packet(cipsvalidator={"state": "0"}))
+        assert ix.details["validator_state"] == "Unallocated"
+        assert not any(
+            a["category"] == "cipsafety_validator_fault" for a in listener._alerts
+        )
+
+    def test_wire_nonexistent_state_four_is_unknown(self):
+        """The dissector never emits 4; it renders Unknown(4) and does NOT
+        raise a fault alert (the old table fabricated 'Faulted')."""
         listener = _make_listener()
         ix = _feed(listener, _Packet(cipsvalidator={"state": "4"}))
-        assert ix.details["validator_state"] == "Faulted"
-        faults = [a for a in listener._alerts if a["category"] == "cipsafety_validator_fault"]
-        assert len(faults) == 1
-        assert "state=Faulted" in faults[0]["message"]
+        assert ix.details["validator_state"] == "Unknown(4)"
+        assert not any(
+            a["category"] == "cipsafety_validator_fault" for a in listener._alerts
+        )
 
     def test_connection_failed_state_raises_alert(self):
         listener = _make_listener()
@@ -536,7 +547,7 @@ class TestMultiLayerAndFormatting:
         )
         cols = listener._format_protocol_columns(ix)
         assert cols[0] == SUPERVISOR_SERVICES[0x4F]
-        assert "status=Running" in cols[3]
+        assert "status=Executing" in cols[3]
         assert "ABB" in cols[3]
         assert "[SECURITY]" in cols[3]
 
@@ -544,11 +555,11 @@ class TestMultiLayerAndFormatting:
         listener = _make_listener()
         ix = _feed(
             listener,
-            _Packet(cipsvalidator={"state": "4", "sconn_fault_count": "7"}),
+            _Packet(cipsvalidator={"state": "3", "sconn_fault_count": "7"}),
         )
         cols = listener._format_protocol_columns(ix)
         assert cols[0] == "Validator"
-        assert "state=Faulted" in cols[3]
+        assert "state=Connection failed" in cols[3]
         assert "faults=7" in cols[3]
 
 
@@ -561,7 +572,7 @@ class TestHarvestAndSummary:
     def test_harvest_includes_alerts(self):
         """harvest() merges the protocol-specific alert list into its output."""
         listener = _make_listener()
-        _feed(listener, _Packet(cipsvalidator={"state": "4"}))
+        _feed(listener, _Packet(cipsvalidator={"state": "3"}))  # Connection failed
         harvest = listener.harvest()
         alerts = harvest.get("alerts", [])
         assert any(a["category"] == "cipsafety_validator_fault" for a in alerts)

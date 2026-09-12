@@ -156,25 +156,32 @@ SUPERVISOR_SECURITY_SERVICES = {
     0x59,  # Apply_TUNID_List
 }
 
-# Safety Validator states
+# Safety Validator states (packet-cipsafety.c cip_svalidator_state_vals).
+# The dissector emits exactly 0-3; there is no "Faulted" state 4.
 VALIDATOR_STATES = {
-    0: "Idle",
+    0: "Unallocated",
     1: "Initializing",
     2: "Established",
-    3: "Connection_Failed",
-    4: "Faulted",
+    3: "Connection failed",
 }
 
+# Validator states that trigger a fault alert (real failing state is 3).
+_VALIDATOR_FAULT_STATES = frozenset({3})
+
 # Safety Supervisor device status
+# (packet-cipsafety.c cip_ssupervisor_device_status_type_vals).
 SUPERVISOR_STATUS = {
-    0: "Uninitialized",
-    1: "Self_Testing",
+    0: "Undefined",
+    1: "Self-Testing",
     2: "Idle",
-    3: "Self_Testing_Exception",
-    4: "Running",
-    5: "Exception",
-    6: "Abort",
-    7: "Waiting_for_TUNID",
+    3: "Self-Test Exception",
+    4: "Executing",
+    5: "Abort",
+    6: "Critical Fault",
+    7: "Configuring",
+    8: "Waiting for TUNID",
+    51: "Waiting for TUNID with Torque Permitted",
+    52: "Executing with Torque Permitted",
 }
 
 
@@ -730,8 +737,9 @@ class CIPSafetyPassiveListener(PySharkListenerBase):
         if state_name:
             session.validator_states.add(state_name)
 
-        # Alert on fault states
-        if state_val in (3, 4):  # Connection_Failed or Faulted
+        # Alert on fault states (dissector emits only 3 = "Connection failed";
+        # the fabricated "Faulted" 4 never occurs on the wire)
+        if state_val in _VALIDATOR_FAULT_STATES:
             self._alerts.append(
                 {
                     "level": "fail",
