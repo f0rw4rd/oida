@@ -218,8 +218,14 @@ class J1939PassiveListener(PySharkListenerBase):
         j1939_layer = packet.j1939
         src_mac, dst_mac = self.get_mac_info(packet)
 
-        # Extract J1939 fields
-        can_id = self._parse_int(self.get_field(j1939_layer, "can_id"), 0, base=16)
+        # Extract J1939 fields.
+        # No base=16 here: j1939.can_id is the same masked 29-bit CAN
+        # arbitration identifier as can.id, which tshark renders as bare
+        # DECIMAL in both PDML and EK output despite being BASE_HEX --
+        # forcing base=16 would silently reinterpret a decimal rendering
+        # as hex. _parse_int already auto-detects a "0x" prefix, so this
+        # keeps hex-rendered values working unchanged.
+        can_id = self._parse_int(self.get_field(j1939_layer, "can_id"), 0)
         priority = self._parse_int(self.get_field(j1939_layer, "priority"), 0)
         pgn = self._parse_int(self.get_field(j1939_layer, "pgn"), 0)
         src_addr = self._parse_int(self.get_field(j1939_layer, "src_addr"), 0)

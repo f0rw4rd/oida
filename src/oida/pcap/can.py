@@ -165,7 +165,10 @@ class CANPassiveListener(PySharkListenerBase):
             return
 
         # Extract core CAN fields
-        can_id = self._parse_int(self.get_field(can_layer, "id"), None, base=16)
+        # tshark renders can.id in DECIMAL ("ID: 291 (0x00000123)", show="291";
+        # EK emits the bare int 291).  Forcing base=16 here re-read 291 as 0x291.
+        # _parse_int still auto-detects a "0x" prefix, so hex stays supported.
+        can_id = self._parse_int(self.get_field(can_layer, "id"), None)
         dlc = self._parse_int(self.get_field(can_layer, "len"), 0)
         is_rtr = self._parse_bool(self.get_field(can_layer, "flags_rtr"))
         is_extended = self._parse_bool(self.get_field(can_layer, "flags_xtd"))
@@ -179,7 +182,7 @@ class CANPassiveListener(PySharkListenerBase):
         # If can_id is still None, try canfd layer for the id
         if can_id is None and hasattr(packet, "canfd"):
             canfd_layer = packet.canfd
-            can_id = self._parse_int(self.get_field(canfd_layer, "id"), None, base=16)
+            can_id = self._parse_int(self.get_field(canfd_layer, "id"), None)
 
         # Build flags string for display
         flags = self._build_flags_string(is_rtr, is_extended, is_error, is_fd, is_brs, is_esi)
@@ -216,10 +219,22 @@ class CANPassiveListener(PySharkListenerBase):
         else:
             operation = "can_data"
 
-        # Get data payload as hex for display
+        # Get data payload as hex for display.
+        # The payload is dissected by the generic `data` proto as `data.data` --
+        # a SIBLING layer of `can`, not a field on it (`can.data` does not
+        # exist; tshark rejects it as a display filter). EK mode exposes it as
+        # the `data` layer's `data_data_data`. Verified against a crafted
+        # SocketCAN capture in both XML and EK modes.
         data_hex = ""
         if not is_rtr and not is_error:
-            raw_data = self.get_field(can_layer, "data")
+            raw_data = None
+            data_layer = getattr(packet, "data", None)
+            if data_layer is not None:
+                # EK short name: data.data -> "data_data_data"; XML attr: "data_data".
+                raw_data = self.get_field_any(data_layer, "data_data_data", "data_data")
+            if raw_data is None:
+                # Older dissectors / other encapsulations may carry it here.
+                raw_data = self.get_field_any(can_layer, "data_data_data", "data_data")
             if raw_data:
                 data_hex = str(raw_data).replace(":", " ").upper()
 
