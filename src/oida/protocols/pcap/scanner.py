@@ -11,6 +11,7 @@ import os
 import shutil
 import subprocess
 import time
+from dataclasses import fields
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
@@ -887,6 +888,8 @@ class PcapScanner:
                 self.logger.debug("device merge failed for listener %s: %s", name, e)
                 continue
 
+        self._deduplicate_devices()
+
         # Store tables for per-file export (used by cli.py export_results)
         if all_tables:
             self.results["tables"] = all_tables
@@ -896,6 +899,103 @@ class PcapScanner:
             self._export_hashcat(listeners)
 
         return packet_count
+
+    def _deduplicate_devices(self) -> None:
+        """Fold cross-listener duplicate devices into one entry.
+
+        Each listener keys devices in its own namespace ({proto}:{ip},
+        ssdp:{mac}, netbios:{ip}, ...), so one physical host seen by several
+        listeners (ads + igmp + netbios + ssdp) appears once per key. Group by
+        MAC address (fallback: IP address for MAC-less devices), keep the
+        richest device as the primary, and merge_from() the rest.
+
+        merge_from() only copies declared dataclass fields, so dynamic
+        attributes that listeners set via data_attr= (e.g.
+        netbios_passive_data) are carried over manually afterwards.
+        """
+        from ..discovery.core import DiscoveredDevice, normalize_ipv6
+
+        devices = self.discovered_devices
+        original_count = len(devices)
+        if original_count <= 1:
+            return
+
+        # Union-find by MAC (first) and IP (second) so devices sharing either
+        # identifier collapse into the same group.
+        parent: Dict[str, str] = {}
+
+        def find(k: str) -> str:
+            while parent[k] != k:
+                parent[k] = parent[parent[k]]
+                k = parent[k]
+            return k
+
+        def union(a: str, b: str) -> None:
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[rb] = ra
+
+        groups: Dict[str, List[str]] = {}  # identity key -> [device keys]
+        for key, dev in devices.items():
+            parent[key] = key
+            mac = dev.mac_address.lower()
+            if mac:
+                groups.setdefault(f"mac:{mac}", []).append(key)
+            for ip in dev.ip_addresses:
+                norm = normalize_ipv6(ip) if ":" in ip else ip
+                if norm:
+                    groups.setdefault(f"ip:{norm}", []).append(key)
+
+        for members in groups.values():
+            for other in members[1:]:
+                union(members[0], other)
+
+        clusters: Dict[str, List[str]] = {}
+        for key in devices:
+            clusters.setdefault(find(key), []).append(key)
+
+        if len(clusters) == len(devices):
+            return  # no duplicates
+
+        for members in clusters.values():
+            if len(members) == 1:
+                continue
+
+            # Primary = the device with the most non-empty fields (richest
+            # protocol data); deterministically break ties by key order.
+            def richness(k: str) -> tuple:
+                d = devices[k]
+                filled = sum(1 for v in vars(d).values() if v not in (None, "", [], {}, ()))
+                return (filled, -members.index(k))
+
+            primary = max(members, key=richness)
+            declared = {f.name for f in fields(DiscoveredDevice)}
+            for key in members:
+                if key == primary:
+                    continue
+                other = devices[key]
+                # Preserve the folded device's role ("NetBIOS Host", ...) in
+                # discovery_reasons — merge_from only fills device_type when
+                # the primary's is empty.
+                if other.device_type and other.device_type not in (
+                    devices[primary].device_type,
+                    *devices[primary].discovery_reasons,
+                ):
+                    devices[primary].discovery_reasons.append(other.device_type)
+                merged = devices[primary].merge_from(other)
+                # Carry dynamic (undeclared) listener attrs that merge_from
+                # skips: e.g. netbios_passive_data, s7comm_passive_data.
+                for attr, val in vars(other).items():
+                    if (
+                        attr not in declared
+                        and not hasattr(devices[primary], attr)
+                        and val not in (None, "", [], {}, ())
+                    ):
+                        setattr(devices[primary], attr, val)
+                self.logger.debug("dedup: folded %s into %s (updated: %s)", key, primary, merged)
+                del devices[key]
+
+        self.logger.debug("dedup: %d devices after merge (was %d)", len(devices), original_count)
 
     def _fill_routing_salts(self, listeners: Dict[str, Any]) -> None:
         """Fill OSPF/RIP/EIGRP credential ``net_salt`` from raw packet bytes.
