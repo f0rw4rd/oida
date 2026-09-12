@@ -194,3 +194,31 @@ class TestDiscoverActions:
         res = s.discover(conn)
         assert res["group_write"]["success"] is True
         conn.telegrams.put.assert_awaited()
+
+    def test_domain_serial_action_skips_device_sweep(self, fake_xknx):
+        p2p = FakeP2P([make_response(payload=MagicMock(domain_address=b"\x01\xa2"))])
+        s = make_scanner({"domain-serial": "00010052177F"})
+        conn = make_conn(p2p)
+        res = s.discover(conn)
+        assert res["domain_serial"]["success"] is True
+        assert res["domain_serial"]["domain_address"] == "01A2"
+        # targeted lookup must skip the 255-address discovery sweep
+        assert "devices" not in res
+
+    def test_master_reset_requires_confirm(self, fake_xknx):
+        s = make_scanner(
+            {"master-reset": "factory", "individual-address": "1.1.5", "confirm": False}
+        )
+        conn = make_conn()
+        res = s.discover(conn)
+        assert res["master_reset"]["error"] == "Missing --confirm flag"
+
+    def test_master_reset_action(self, fake_xknx):
+        p2p = FakeP2P([make_response(payload=MagicMock(error_code=0, process_time=3))])
+        s = make_scanner(
+            {"master-reset": "confirmed", "individual-address": "1.1.5", "confirm": True}
+        )
+        conn = make_conn(p2p)
+        res = s.discover(conn)
+        assert res["master_reset"]["success"] is True
+        assert res["master_reset"]["erase_code"] == 0x01

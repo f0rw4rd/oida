@@ -31,7 +31,11 @@ class TestBruteBcuAuth:
         # stopped after the second key (the first valid one)
         assert res["keys_tested"] == 2
         assert len(res["valid_keys"]) == 1
-        assert res["valid_keys"][0] == {"key": "DEADBEEF", "level": 0}
+        assert res["valid_keys"][0] == {
+            "key": "DEADBEEF",
+            "level": 0,
+            "level_meaning": "system / full privilege (highest)",
+        }
         # third key never sent
         assert p2p.call_count == 2
 
@@ -60,7 +64,27 @@ class TestBruteBcuAuth:
         knx = make_knx(p2p)
         res = asyncio.run(host._brute_bcu_auth(knx, "1.1.2", ["CAFEBABE"]))
         assert res["keys_tested"] == 1
-        assert res["valid_keys"] == [{"key": "CAFEBABE", "level": 3}]
+        assert res["valid_keys"] == [
+            {"key": "CAFEBABE", "level": 3, "level_meaning": "lowest privilege"}
+        ]
+
+    def test_level_0_emits_privileged_access_finding(self, host, patch_xknx_cls):
+        # Authenticating at level 0 (system / full privilege) is a distinct
+        # high-severity outcome and must be surfaced as a security finding.
+        p2p = FakeP2P([_auth_resp(0)])
+        knx = make_knx(p2p)
+        asyncio.run(host._brute_bcu_auth(knx, "1.1.2", ["DEADBEEF"]))
+        titles = [t for t, _ in host.logger.records["security_finding"]]
+        assert "Privileged BCU access" in titles
+
+    def test_level_3_does_not_emit_privileged_finding(self, host, patch_xknx_cls):
+        # Only level 0 is "privileged"; a lower-privilege grant must not raise
+        # the level-0 finding.
+        p2p = FakeP2P([_auth_resp(3)])
+        knx = make_knx(p2p)
+        asyncio.run(host._brute_bcu_auth(knx, "1.1.2", ["CAFEBABE"]))
+        titles = [t for t, _ in host.logger.records["security_finding"]]
+        assert "Privileged BCU access" not in titles
 
     def test_per_key_exception_recorded_not_fatal(self, host, patch_xknx_cls):
         p2p = FakeP2P([RuntimeError("timeout"), _auth_resp(0)])
@@ -84,12 +108,37 @@ class TestBruteBcuAuth:
 
 
 class TestWriteBcuKey:
-    def test_not_implemented_but_parses_valid_format(self, host):
-        res = asyncio.run(host._write_bcu_key(None, "1.1.2", "FFFFFFFF:0"))
+    def test_write_success_emits_finding(self, host, patch_xknx_cls):
+        # A_Key_Response returns the level the key was set for -> success.
+        p2p = FakeP2P([make_response(level=0)])
+        knx = make_knx(p2p)
+        res = asyncio.run(host._write_bcu_key(knx, "1.1.2", "AABBCCDD:0"))
+        assert res["success"] is True
+        assert res["new_level"] == 0
+        findings = [t for t, _ in host.logger.findings()]
+        assert "BCU key overwritten" in findings
+
+    def test_write_rejected_level_255(self, host, patch_xknx_cls):
+        # 0xFF is the A_Key_Response "unsuccessful" sentinel.
+        p2p = FakeP2P([make_response(level=0xFF)])
+        knx = make_knx(p2p)
+        res = asyncio.run(host._write_bcu_key(knx, "1.1.2", "AABBCCDD:0"))
         assert res["success"] is False
-        assert "not implemented" in res["error"].lower()
-        # user told it is unimplemented
-        assert any("NOT IMPLEMENTED" in m for m in host.logger.records["fail"])
+        assert res["new_level"] == 0xFF
+        assert "authorization at level 0" in res["error"]
+
+    def test_no_response_recorded(self, host, patch_xknx_cls):
+        p2p = FakeP2P([make_response()])  # payload is None
+        knx = make_knx(p2p)
+        res = asyncio.run(host._write_bcu_key(knx, "1.1.2", "AABBCCDD:0"))
+        assert res["success"] is False
+        assert "No A_Key_Response" in res["error"]
+
+    def test_connection_error_recorded(self, host, patch_xknx_cls):
+        knx = make_knx(connection_error=OSError("no route"))
+        res = asyncio.run(host._write_bcu_key(knx, "1.1.2", "AABBCCDD:0"))
+        assert res["success"] is False
+        assert "no route" in res["error"]
 
     def test_bad_format_rejected(self, host):
         res = asyncio.run(host._write_bcu_key(None, "1.1.2", "FFFFFFFF"))
@@ -98,6 +147,14 @@ class TestWriteBcuKey:
     def test_invalid_hex_key(self, host):
         res = asyncio.run(host._write_bcu_key(None, "1.1.2", "ZZZZ:0"))
         assert "Invalid key/level" in res["error"]
+
+    def test_key_out_of_range(self, host):
+        res = asyncio.run(host._write_bcu_key(None, "1.1.2", "1FFFFFFFF:0"))
+        assert "out of range" in res["error"]
+
+    def test_level_out_of_range(self, host):
+        res = asyncio.run(host._write_bcu_key(None, "1.1.2", "AABBCCDD:99"))
+        assert "Level out of range" in res["error"]
 
 
 # ---------------------------------------------------------------------------

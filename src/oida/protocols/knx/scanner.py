@@ -204,6 +204,22 @@ class KNXScanner(
 
         return results
 
+    def _hint_connection_flags(self) -> None:
+        """Suggest connection flags after a failed tunnel setup.
+
+        UDP tunnelling frequently fails against IP routers that only accept TCP,
+        or on loopback/NAT'd targets where the data-endpoint HPAI can't be
+        routed back. Point the operator at the flags that usually fix it.
+        """
+        if not self.args.get("tcp"):
+            self.logger.display(
+                "Hint: retry with --tcp (TCP tunnelling); many IP routers and "
+                "loopback/NAT'd targets reject UDP tunnelling"
+            )
+        self.logger.display(
+            "Hint: if the gateway is behind NAT, try toggling NAT mode with --no-nat"
+        )
+
     async def _async_discover(self, knx: "XKNX") -> Dict[str, Any]:
         """Async discovery implementation - dispatches to mixin methods"""
         self.logger.debug("_async_discover: starting KNX connection")
@@ -220,9 +236,11 @@ class KNXScanner(
                 self.logger.fail(
                     f"Connection timeout - no KNX gateway found at {self.host}:{self.port}"
                 )
+                self._hint_connection_flags()
                 results["error"] = "Connection timeout"
             except Exception as e:
                 self.logger.fail(f"Connection failed: {e}")
+                self._hint_connection_flags()
                 results["error"] = str(e)
 
             if not connection_ok:
@@ -231,12 +249,14 @@ class KNXScanner(
             # Get gateway information
             results["gateway_info"] = await self._get_gateway_info(knx)
 
-            # Skip device discovery if targeting specific device, bus-scan, or serial-scan is enabled
+            # Skip the device-discovery sweep for targeted operations (specific
+            # device, bus-scan, or serial / domain-serial lookups).
             if (
                 self.scan_mode in ["discovery", "all"]
                 and not self.args.get("bus-scan")
                 and not self.args.get("individual-address")
                 and not self.args.get("serial-scan")
+                and not self.args.get("domain-serial")
             ):
                 # Discover devices (active probing)
                 self.logger.debug("Starting device discovery phase")
@@ -338,6 +358,17 @@ class KNXScanner(
                 else:
                     results["restart"] = await self._restart_device(knx, individual_addr)
 
+            # Master reset (A_Restart_Master_Reset; factory modes wipe config)
+            master_reset_arg = self.args.get("master-reset")
+            if master_reset_arg:
+                individual_addr = self.args.get("individual-address")
+                if not individual_addr:
+                    self.logger.fail("--master-reset requires -i (individual address)")
+                else:
+                    results["master_reset"] = await self._master_reset(
+                        knx, individual_addr, master_reset_arg
+                    )
+
             # Property description (metadata)
             prop_desc_arg = self.args.get("prop-desc")
             if prop_desc_arg:
@@ -350,6 +381,11 @@ class KNXScanner(
             serial_scan_arg = self.args.get("serial-scan")
             if serial_scan_arg:
                 results["serial_scan"] = await self._find_device_by_serial(knx, serial_scan_arg)
+
+            # Powerline/RF domain-address read by serial number
+            domain_serial_arg = self.args.get("domain-serial")
+            if domain_serial_arg:
+                results["domain_serial"] = await self._read_domain_by_serial(knx, domain_serial_arg)
 
             # Phase 2: Advanced reconnaissance
             # Firmware info

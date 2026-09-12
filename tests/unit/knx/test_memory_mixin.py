@@ -132,6 +132,54 @@ class TestRestartDevice:
         assert "boom" in res["error"]
 
 
+class TestMasterReset:
+    def test_requires_confirm(self, host, patch_xknx_cls):
+        host.args = {"confirm": False}
+        knx = make_knx(FakeP2P([]))
+        res = asyncio.run(host._master_reset(knx, "1.1.5", "factory"))
+        assert res["success"] is False
+        assert res["error"] == "Missing --confirm flag"
+
+    def test_unknown_mode_rejected(self, host, patch_xknx_cls):
+        host.args = {"confirm": True}
+        knx = make_knx(FakeP2P([]))
+        res = asyncio.run(host._master_reset(knx, "1.1.5", "bogus"))
+        assert res["success"] is False
+        assert "Unknown mode" in res["error"]
+
+    def test_named_mode_success(self, host, patch_xknx_cls):
+        host.args = {"confirm": True}
+        p2p = FakeP2P([make_response(error_code=0, process_time=3)])
+        knx = make_knx(p2p)
+        res = asyncio.run(host._master_reset(knx, "1.1.5", "factory"))
+        assert res["success"] is True
+        assert res["erase_code"] == 0x02
+        assert res["process_time"] == 3
+
+    def test_raw_erase_code_accepted(self, host, patch_xknx_cls):
+        host.args = {"confirm": True}
+        p2p = FakeP2P([make_response(error_code=0, process_time=1)])
+        knx = make_knx(p2p)
+        res = asyncio.run(host._master_reset(knx, "1.1.5", "0x07"))
+        assert res["success"] is True
+        assert res["erase_code"] == 0x07
+
+    def test_device_refuses(self, host, patch_xknx_cls):
+        host.args = {"confirm": True}
+        p2p = FakeP2P([make_response(error_code=5, process_time=0)])
+        knx = make_knx(p2p)
+        res = asyncio.run(host._master_reset(knx, "1.1.5", "confirmed"))
+        assert res["success"] is False
+        assert "error code 5" in res["error"]
+
+    def test_no_response(self, host, patch_xknx_cls):
+        host.args = {"confirm": True}
+        knx = make_knx(FakeP2P([None]))
+        res = asyncio.run(host._master_reset(knx, "1.1.5", "confirmed"))
+        assert res["success"] is False
+        assert "No A_Restart_Response" in res["error"]
+
+
 class TestParsers:
     def test_parse_memory_range_hex(self, host):
         assert host._parse_memory_range("0x100:256") == (0x100, 256)

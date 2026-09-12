@@ -115,6 +115,39 @@ class TestFindDeviceBySerial:
         assert "no address" in res["error"]
 
 
+class TestReadDomainBySerial:
+    def test_rejects_wrong_length_serial(self, host, patch_xknx_cls):
+        knx = make_knx(FakeP2P([]))
+        res = asyncio.run(host._read_domain_by_serial(knx, "AABB"))
+        assert res["success"] is False
+        assert "12 hex chars" in res["error"]
+
+    def test_found_returns_domain_address(self, host, patch_xknx_cls):
+        payload = make_payload(domain_address=bytes.fromhex("01A2"))
+        p2p = FakeP2P([make_response(payload=payload)])
+        knx = make_knx(p2p)
+        res = asyncio.run(host._read_domain_by_serial(knx, "AABBCCDDEEFF"))
+        assert res["success"] is True
+        assert res["domain_address"] == "01A2"
+
+    def test_no_response(self, host, patch_xknx_cls):
+        p2p = FakeP2P([None])
+        knx = make_knx(p2p)
+        res = asyncio.run(host._read_domain_by_serial(knx, "AABBCCDDEEFF"))
+        assert res["success"] is False
+        assert res["error"] == "No response"
+
+    def test_response_without_domain(self, host, patch_xknx_cls):
+        payload = make_payload()
+        del payload.domain_address
+        payload.domain_address = None
+        p2p = FakeP2P([make_response(payload=payload)])
+        knx = make_knx(p2p)
+        res = asyncio.run(host._read_domain_by_serial(knx, "AABBCCDDEEFF"))
+        assert res["success"] is False
+        assert "no domain address" in res["error"]
+
+
 class TestGatewayInfo:
     def test_reads_connection_type(self, host):
         knx = MagicMock()

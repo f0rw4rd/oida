@@ -295,10 +295,16 @@ def install_fake_xknx_cls(monkeypatch):
         "GroupValueRead",
         "AuthorizeRequest",
         "AuthorizeResponse",
+        "KeyWrite",
+        "KeyResponse",
         "MemoryExtendedRead",
         "MemoryExtendedReadResponse",
         "IndividualAddressSerialRead",
         "IndividualAddressSerialResponse",
+        "DomainAddressSerialNumberRead",
+        "DomainAddressSerialNumberResponse",
+        "RestartMasterReset",
+        "RestartMasterResetResponse",
     ]
     for n in names:
         monkeypatch.setattr(cls, n, MagicMock(side_effect=_make_ctor(n)), raising=False)

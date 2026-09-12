@@ -120,8 +120,14 @@ def _ensure_xknx_classes():
         _xknx_cls.GroupValueWrite = apci["GroupValueWrite"]
         _xknx_cls.AuthorizeRequest = apci["AuthorizeRequest"]
         _xknx_cls.AuthorizeResponse = apci["AuthorizeResponse"]
+        _xknx_cls.KeyWrite = apci["KeyWrite"]
+        _xknx_cls.KeyResponse = apci["KeyResponse"]
         _xknx_cls.IndividualAddressSerialRead = apci["IndividualAddressSerialRead"]
         _xknx_cls.IndividualAddressSerialResponse = apci["IndividualAddressSerialResponse"]
+        _xknx_cls.DomainAddressSerialNumberRead = apci["DomainAddressSerialNumberRead"]
+        _xknx_cls.DomainAddressSerialNumberResponse = apci["DomainAddressSerialNumberResponse"]
+        _xknx_cls.RestartMasterReset = apci["RestartMasterReset"]
+        _xknx_cls.RestartMasterResetResponse = apci["RestartMasterResetResponse"]
 
         # Get extended memory classes (optional)
         _xknx_cls.MemoryExtendedRead, _xknx_cls.MemoryExtendedReadResponse = _get_memory_extended()

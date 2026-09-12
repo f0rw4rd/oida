@@ -4,6 +4,7 @@ This module centralizes all lazy imports for the KNX protocol,
 following the oida import standards.
 """
 
+import ipaddress
 import re
 from functools import lru_cache
 from typing import TYPE_CHECKING, Optional, Any, Generator, Dict, Tuple
@@ -126,8 +127,14 @@ def _get_apci_classes() -> Dict[str, Any]:
         GroupValueWrite,
         AuthorizeRequest,
         AuthorizeResponse,
+        KeyWrite,
+        KeyResponse,
         IndividualAddressSerialRead,
         IndividualAddressSerialResponse,
+        DomainAddressSerialNumberRead,
+        DomainAddressSerialNumberResponse,
+        RestartMasterReset,
+        RestartMasterResetResponse,
     )
 
     return {
@@ -149,8 +156,14 @@ def _get_apci_classes() -> Dict[str, Any]:
         "GroupValueWrite": GroupValueWrite,
         "AuthorizeRequest": AuthorizeRequest,
         "AuthorizeResponse": AuthorizeResponse,
+        "KeyWrite": KeyWrite,
+        "KeyResponse": KeyResponse,
         "IndividualAddressSerialRead": IndividualAddressSerialRead,
         "IndividualAddressSerialResponse": IndividualAddressSerialResponse,
+        "DomainAddressSerialNumberRead": DomainAddressSerialNumberRead,
+        "DomainAddressSerialNumberResponse": DomainAddressSerialNumberResponse,
+        "RestartMasterReset": RestartMasterReset,
+        "RestartMasterResetResponse": RestartMasterResetResponse,
     }
 
 
@@ -256,6 +269,49 @@ def parse_bus_ranges(bus_ranges: str) -> Generator["IndividualAddress", None, No
         logger.debug(f"Parsed {len(targets)} addresses from range specification")
         for raw_addr in sorted(targets):
             yield IndividualAddress(raw_addr)
+
+
+def resolve_local_ip(value: Optional[str]) -> Optional[str]:
+    """Resolve a ``--interface`` value (IPv4 literal or interface name) to a
+    local IPv4 address for xknx to bind discovery to.
+
+    - Falsy value -> ``None`` (let xknx auto-select via the default route).
+    - An IPv4 literal -> returned unchanged.
+    - An interface name -> its first IPv4 address.
+
+    Raises ``ValueError`` for an IPv6 literal, an unknown interface, or an
+    interface with no IPv4 address. KNXnet/IP is IPv4 UDP, so a NIC with no
+    IPv4 has no source address to bind — the caller must surface the error
+    rather than silently fall back to the default-route interface (which would
+    scan the wrong segment and appear to find nothing).
+    """
+    if not value:
+        return None
+    value = value.strip()
+
+    # IP literal? (accept IPv4, reject IPv6 explicitly)
+    try:
+        ip = ipaddress.ip_address(value)
+    except ValueError:
+        ip = None
+    if ip is not None:
+        if ip.version != 4:
+            raise ValueError(f"KNXnet/IP requires an IPv4 local address, got '{value}'")
+        return str(ip)
+
+    # Otherwise treat as an interface name.
+    from ...utils import iface_info
+
+    if value not in iface_info.interfaces():
+        raise ValueError(f"Unknown network interface '{value}'")
+    addrs = iface_info.ifaddresses(value).get(iface_info.AF_INET, [])
+    ips = [a["addr"] for a in addrs if a.get("addr")]
+    if not ips:
+        raise ValueError(
+            f"Interface '{value}' has no IPv4 address - assign one "
+            "(the host must be on the KNX gateway's subnet) or pass --interface <ip>"
+        )
+    return ips[0]
 
 
 def validate_individual_address(addr_str: str) -> str:

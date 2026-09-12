@@ -11,19 +11,16 @@ facade pattern.
 """
 
 import asyncio
-import socket
-import struct
 from pathlib import Path
 
 from ...connection import NetworkConnection
-from ...utils import ics_logger as module
-from ...utils.common_types import Category
 
 from .scanner import (
     KNXScanner,
     _ensure_xknx_classes,
     _xknx_cls,
 )
+from .helpers import resolve_local_ip
 from .ets import (
     get_knxproj_info,
     parse_knxproj,
@@ -94,7 +91,6 @@ class knx(NetworkConnection):
             "property_read",
             "property_write",
             "fuzz_property",
-            "adc_read",
             "group_write",
             "firmware_info",
             "prog_mode",
@@ -111,13 +107,21 @@ class knx(NetworkConnection):
             "key_range",
             "key_write",
             "restart",
+            "master_reset",
             "prop_desc",
             "serial_scan",
+            "domain_serial",
             "listen",
-            "listen_time",
         ]
         for flag in tunnel_flags:
             if getattr(self.args, flag, None):
+                self.logger.debug(f"Tunnel connection required: flag '{flag}' is set")
+                return True
+        # Integer flags where 0 is a VALID value (ADC channel 0, listen forever)
+        # must be gated on `is not None`, not truthiness -- otherwise
+        # `--adc-read 0` / `-L 0` silently fall through to passive discovery.
+        for flag in ("adc_read", "listen_time"):
+            if getattr(self.args, flag, None) is not None:
                 self.logger.debug(f"Tunnel connection required: flag '{flag}' is set")
                 return True
         return False
@@ -129,6 +133,18 @@ class knx(NetworkConnection):
             # Ensure classes are loaded
             _ensure_xknx_classes()
 
+            # Resolve --interface (IPv4 literal or interface name) to a local IP
+            # to bind discovery to. A named NIC with no IPv4 is a hard error: we
+            # must not silently fall back to the default route and scan the wrong
+            # segment (see multi-homed / dedicated-KNX-NIC setups).
+            try:
+                local_ip = resolve_local_ip(getattr(self.args, "interface", None))
+            except ValueError as e:
+                self.logger.fail(str(e))
+                return
+            if local_ip:
+                self.logger.debug(f"Binding discovery to local IP {local_ip}")
+
             is_multicast = self.host.startswith("224.")
             self.logger.debug(f"Gateway discovery: host={self.host}, multicast={is_multicast}")
 
@@ -137,25 +153,19 @@ class knx(NetworkConnection):
                 self.logger.display("Discovering KNX gateways via multicast (timeout 3s)...")
                 xknx_instance = _xknx_cls.XKNX()
                 try:
-                    scanner = _xknx_cls.GatewayScanner(xknx_instance, timeout_in_seconds=3)
+                    scanner = _xknx_cls.GatewayScanner(
+                        xknx_instance, local_ip=local_ip, timeout_in_seconds=3
+                    )
                     gateways = []
                     async for gw in scanner.async_scan():
                         gateways.append(gw)
                         self.logger.debug(
                             f"Multicast: found gateway {gw.name} at {gw.ip_addr}:{gw.port}"
                         )
-                        self._display_gateway_info(gw)
+                        gw_dict = self._gateway_descriptor_to_dict(gw)
+                        self._display_gateway_info_dict(gw_dict)
                         self.results["data"]["gateways"] = self.results["data"].get("gateways", [])
-                        self.results["data"]["gateways"].append(
-                            {
-                                "ip": gw.ip_addr,
-                                "port": gw.port,
-                                "name": gw.name,
-                                "individual_address": (
-                                    str(gw.individual_address) if gw.individual_address else None
-                                ),
-                            }
-                        )
+                        self.results["data"]["gateways"].append(gw_dict)
                     if not gateways:
                         self.logger.fail("No KNX gateways found via multicast")
                     else:
@@ -163,12 +173,12 @@ class knx(NetworkConnection):
                 finally:
                     await xknx_instance.stop()
             else:
-                # Unicast: Send SearchRequest directly to target IP
+                # Unicast: query the target's control endpoint directly.
                 self.logger.display(
                     f"Discovering KNX gateway at {self.host}:{self.port} "
-                    "(SearchRequest, timeout 3s)..."
+                    "(DescriptionRequest, timeout 3s)..."
                 )
-                gw_info = await self._unicast_search(self.host, self.port)
+                gw_info = await self._unicast_search(self.host, self.port, local_ip=local_ip)
                 if gw_info:
                     self._display_gateway_info_dict(gw_info)
                     self.results["data"]["gateway"] = gw_info
@@ -177,212 +187,125 @@ class knx(NetworkConnection):
 
         asyncio.run(do_discovery())
 
-    async def _unicast_search(self, host: str, port: int, timeout: float = 3.0):
-        """Send KNXnet/IP SearchRequest to specific host."""
-        self.logger.debug(f"Unicast search: {host}:{port}, timeout={timeout}s")
-        local_ip = "0.0.0.0"  # nosec B104 - KNXnet/IP HPAI requires wildcard
-        local_port = 0
+    async def _unicast_search(
+        self, host: str, port: int, timeout: float = 3.0, local_ip: str = None
+    ):
+        """Query one KNXnet/IP device for its self-description via xknx.
 
-        # Build HPAI (Host Protocol Address Information)
-        hpai = struct.pack(
-            "!BB4sH",
-            8,  # Structure length
-            1,  # Host protocol: UDP IPv4
-            socket.inet_aton(local_ip),
-            local_port,
-        )
+        Delegates to xknx's ``request_description()``, which sends a unicast
+        DESCRIPTION_REQUEST (0x0203) to the device's control endpoint and — for
+        KNXnet/IP Core v2+ devices — a follow-up SEARCH_REQUEST_EXTENDED. The
+        returned ``GatewayDescriptor`` therefore carries the full capability
+        picture (tunnelling-over-TCP, KNX-Secure support and requirement, and
+        the tunnel-slot table), which the old hand-rolled parser could not see.
 
-        # Build SearchRequest
-        header = struct.pack(
-            "!BBHH",
-            0x06,  # Header size
-            0x10,  # Protocol version
-            0x0201,  # SEARCH_REQUEST
-            6 + len(hpai),  # Total length
-        )
-        search_request = header + hpai
+        A unicast SEARCH_REQUEST (the previous raw implementation) is
+        spec-non-conformant: SEARCH is a *multicast* discovery service that real
+        gateways ignore on a directed socket, so ``oida knx <ip>`` with no flags
+        silently failed against real hardware.
+        """
+        from xknx.exceptions import XKNXException
+        from xknx.io.self_description import request_description
 
-        # TODO: Raw UDP KNXnet/IP SearchRequest — xknx has GatewayScanner
-        # which does the same broadcast discovery. Replace with xknx's
-        # built-in discovery to avoid manual packet construction.
-        sock = None
-        try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-            sock.settimeout(timeout)
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.bind(("0.0.0.0", 0))  # nosec B104 - UDP broadcast receive
-            sock.sendto(search_request, (host, port))
-            self.logger.debug(f"SearchRequest sent ({len(search_request)} bytes)")
-
-            try:
-                data, addr = sock.recvfrom(1024)
-                self.logger.debug(f"Received {len(data)} bytes from {addr[0]}")
-                return self._parse_search_response(data, addr[0])
-            except TimeoutError:
-                self.logger.debug("SearchRequest timed out, no response")
-                return None
-        finally:
-            if sock:
-                try:
-                    sock.close()
-                except Exception as e:
-                    self.logger.debug(f"sock.close(): {e}")
-
-    def _parse_search_response(self, data: bytes, ip: str):
-        """Parse KNXnet/IP SearchResponse."""
-        if len(data) < 14:
-            self.logger.debug(f"SearchResponse too short: {len(data)} bytes")
-            return None
-
-        service_type = (data[2] << 8) | data[3]
-        if service_type != 0x0202:  # SEARCH_RESPONSE
-            self.logger.debug(f"Unexpected service type: 0x{service_type:04X}")
-            return None
-
-        result = {"ip": ip, "port": 3671, "services": {}}
-
-        # Parse HPAI (8 bytes starting at offset 6):
-        #   [0]=length [1]=protocol [2:6]=IPv4 addr [6:8]=port (big-endian)
-        # Decode the advertised control-endpoint port instead of assuming the
-        # default 3671 (gateways behind NAT/port-forward advertise their real
-        # port here, which follow-up tunnels need).
-        offset = 6
-        if len(data) > offset + 8:
-            hpai_len = data[offset]
-            if hpai_len >= 8 and offset + hpai_len <= len(data):
-                result["port"] = (data[offset + 6] << 8) | data[offset + 7]
-            if hpai_len > 0 and offset + hpai_len <= len(data):
-                offset += hpai_len
-            else:
-                return result
-
-        # Parse DIB (Device Information Block)
-        if len(data) > offset + 2:
-            dib_len = data[offset]
-            dib_type = data[offset + 1]
-
-            if dib_type == 0x01 and dib_len >= 54 and len(data) >= offset + 54:  # DEVICE_INFO
-                medium = data[offset + 2]
-                result["medium"] = {0x01: "TP1", 0x02: "PL110", 0x04: "RF", 0x20: "IP"}.get(
-                    medium, f"0x{medium:02X}"
-                )
-
-                status = data[offset + 3]
-                result["programming_mode"] = bool(status & 0x01)
-
-                ia_high = data[offset + 4]
-                ia_low = data[offset + 5]
-                area = (ia_high >> 4) & 0x0F
-                line = ia_high & 0x0F
-                device = ia_low
-                result["individual_address"] = f"{area}.{line}.{device}"
-
-                project_id = (data[offset + 6] << 8) | data[offset + 7]
-                result["project_id"] = project_id
-
-                serial = data[offset + 8 : offset + 14]
-                result["serial"] = serial.hex().upper()
-
-                mcast = data[offset + 14 : offset + 18]
-                result["multicast_address"] = ".".join(str(b) for b in mcast)
-
-                mac = data[offset + 18 : offset + 24]
-                result["mac"] = ":".join(f"{b:02X}" for b in mac)
-
-                name_bytes = data[offset + 24 : offset + 54]
-                name = name_bytes.split(b"\x00")[0].decode("latin-1", errors="ignore")
-                result["name"] = name.strip()
-
-            if dib_len > 0 and offset + dib_len <= len(data):
-                offset += dib_len
-            else:
-                return result
-
-        # Parse Supported Service Families DIB
-        if len(data) > offset + 2:
-            dib_len = data[offset]
-            dib_type = data[offset + 1]
-
-            service_names = {
-                0x02: "KNXnet/IP Core",
-                0x03: "KNXnet/IP Device Management",
-                0x04: "KNXnet/IP Tunneling",
-                0x05: "KNXnet/IP Routing",
-                0x06: "KNXnet/IP Remote Logging",
-                0x07: "KNXnet/IP Remote Configuration",
-                0x08: "KNXnet/IP Object Server",
-                0x09: "KNXnet/IP Security",
-            }
-
-            if dib_type == 0x02:  # SUPP_SVC_FAMILIES
-                i = offset + 2
-                while i + 1 < offset + dib_len and i + 1 < len(data):
-                    family = data[i]
-                    version = data[i + 1]
-                    svc_name = service_names.get(family, f"Service 0x{family:02X}")
-                    result["services"][svc_name] = version
-                    i += 2
-
-        result["supports_tunnelling"] = "KNXnet/IP Tunneling" in result["services"]
-        result["supports_routing"] = "KNXnet/IP Routing" in result["services"]
-
+        # NAT is on by default (--no-nat opts out). route_back=True sends a
+        # wildcard HPAI so the device replies to the UDP packet source.
+        route_back = not getattr(self.args, "no_nat", False)
         self.logger.debug(
-            f"Parsed SearchResponse: name={result.get('name')}, "
-            f"addr={result.get('individual_address')}, "
-            f"tunnel={result['supports_tunnelling']}, route={result['supports_routing']}"
+            f"request_description({host}:{port}, local_ip={local_ip}, "
+            f"route_back={route_back}, timeout={timeout}s)"
         )
+        try:
+            gateway = await asyncio.wait_for(
+                request_description(host, port, local_ip=local_ip, route_back=route_back),
+                timeout=timeout + 3.0,
+            )
+        except (XKNXException, asyncio.TimeoutError, OSError) as e:
+            self.logger.debug(f"DescriptionRequest failed: {e}")
+            return None
+        return self._gateway_descriptor_to_dict(gateway)
 
-        return result
+    @staticmethod
+    def _gateway_descriptor_to_dict(gw) -> dict:
+        """Flatten an xknx ``GatewayDescriptor`` into a JSON-serialisable dict.
 
-    def _display_gateway_info(self, gw):
-        """Display gateway information from xknx GatewayDescriptor."""
-        name = gw.name or "KNX/IP Gateway"
-        self.logger.success(f"{name}")
-
-        if gw.individual_address:
-            self.logger.display(f"  Address: {gw.individual_address}")
-
-        if hasattr(gw, "supports_tunnelling") and gw.supports_tunnelling:
-            self.logger.display("  Tunneling: supported")
-        if hasattr(gw, "supports_routing") and gw.supports_routing:
-            self.logger.display("  Routing: supported")
-
-        # Note: xknx GatewayDescriptor exposes no serial_number/mac_address;
-        # those DIB fields are surfaced by the unicast search-response path.
+        Captures everything xknx derives from the DESCRIPTION_RESPONSE (and the
+        extended search on Core v2+): KNXnet/IP Core version, tunnelling /
+        tunnelling-over-TCP / routing / KNX-Secure support, whether secure is
+        *required* per service, and the per-address tunnel-slot table.
+        """
+        slots: dict = {}
+        free = 0
+        for ia, status in (getattr(gw, "tunnelling_slots", None) or {}).items():
+            is_free = getattr(status, "free", None)
+            slots[str(ia)] = {
+                "usable": getattr(status, "usable", None),
+                "authorized": getattr(status, "authorized", None),
+                "free": is_free,
+            }
+            if is_free:
+                free += 1
+        return {
+            "name": gw.name,
+            "ip": gw.ip_addr,
+            "port": gw.port,
+            "individual_address": (str(gw.individual_address) if gw.individual_address else None),
+            "core_version": gw.core_version,
+            "supports_tunnelling": gw.supports_tunnelling,
+            "supports_tunnelling_tcp": gw.supports_tunnelling_tcp,
+            "supports_routing": gw.supports_routing,
+            "supports_secure": gw.supports_secure,
+            "tunnelling_requires_secure": gw.tunnelling_requires_secure,
+            "routing_requires_secure": gw.routing_requires_secure,
+            "tunnelling_slots": slots,
+            "tunnelling_slots_free": free,
+            "tunnelling_slots_total": len(slots),
+            "local_ip": getattr(gw, "local_ip", "") or None,
+        }
 
     def _display_gateway_info_dict(self, gw: dict):
-        """Display gateway information from parsed dict."""
+        """Display the xknx-derived gateway capability picture."""
         name = gw.get("name") or "KNX/IP Gateway"
         self.logger.success(f"{name}")
 
         if gw.get("individual_address"):
             self.logger.display(f"  KNX Address: {gw['individual_address']}")
+        if gw.get("core_version"):
+            self.logger.display(f"  KNXnet/IP Core: v{gw['core_version']}")
 
-        if gw.get("mac"):
-            mac = gw["mac"]
-            vendor = module.mac_lookup(mac, full=True)
-            if vendor:
-                self.logger.display(f"  MAC: {mac} ({vendor})")
-            else:
-                self.logger.display(f"  MAC: {mac}")
+        caps = []
+        if gw.get("supports_tunnelling"):
+            caps.append("Tunnelling/TCP" if gw.get("supports_tunnelling_tcp") else "Tunnelling/UDP")
+        if gw.get("supports_routing"):
+            caps.append("Routing")
+        self.logger.display(f"  Services: {', '.join(caps) if caps else 'none advertised'}")
 
-        if gw.get("serial"):
-            self.logger.display(f"  Serial: {gw['serial']}")
+        if gw.get("supports_secure"):
+            required = []
+            if gw.get("tunnelling_requires_secure"):
+                required.append("tunnelling")
+            if gw.get("routing_requires_secure"):
+                required.append("routing")
+            suffix = f" (required for: {', '.join(required)})" if required else ""
+            self.logger.warning(f"  KNX Secure: supported{suffix}")
+        else:
+            self.logger.display("  KNX Secure: not advertised")
 
-        if gw.get("multicast_address"):
-            self.logger.display(f"  Multicast: {gw['multicast_address']}")
+        total = gw.get("tunnelling_slots_total") or 0
+        if total:
+            free = gw.get("tunnelling_slots_free") or 0
+            self.logger.display(f"  Tunnel slots: {free}/{total} free")
+            for ia, st in (gw.get("tunnelling_slots") or {}).items():
+                flags = []
+                if st.get("free"):
+                    flags.append("free")
+                if st.get("authorized") is False:
+                    flags.append("unauthorized")
+                if st.get("usable") is False:
+                    flags.append("unusable")
+                self.logger.display(f"    {ia}: {', '.join(flags) or 'in use'}")
 
-        if gw.get("medium"):
-            self.logger.display(f"  Medium: {gw['medium']}")
-
-        if gw.get("programming_mode"):
-            self.logger.warning("  Programming Mode: ACTIVE")
-
-        services = gw.get("services", {})
-        if services:
-            self.logger.display("  Services:")
-            for svc_name, version in services.items():
-                self.logger.display(f"    {svc_name}: v{version}")
+        if gw.get("local_ip"):
+            self.logger.debug(f"  (queried via local IP {gw['local_ip']})")
 
     def create_conn_obj(self):
         """Create KNX connection."""
@@ -399,18 +322,14 @@ class knx(NetworkConnection):
             return
 
         self.logger.debug("Enumerating device information...")
-        try:
-            port = getattr(self.args, "port", 3671)
-            use_tcp = getattr(self.args, "tcp", False)
-            self.results["data"]["device_info"] = {
-                "gateway_ip": self.host,
-                "gateway_port": port,
-                "connection_type": "TCP Tunneling" if use_tcp else "UDP Tunneling",
-                "connected": True,
-            }
-        except Exception as e:
-            self.logger.warning(f"Device enumeration failed: {e}")
-            self.results["data"]["device_info"] = {"connected": True, "enum_error": str(e)}
+        port = getattr(self.args, "port", 3671)
+        use_tcp = getattr(self.args, "tcp", False)
+        self.results["data"]["device_info"] = {
+            "gateway_ip": self.host,
+            "gateway_port": port,
+            "connection_type": "TCP Tunneling" if use_tcp else "UDP Tunneling",
+            "connected": True,
+        }
 
     def print_host_info(self):
         """Abstract-contract no-op; knx overrides proto_flow() which never calls
@@ -496,7 +415,6 @@ class knx(NetworkConnection):
                 if password:
                     self.logger.security_finding(
                         "Weak password",
-                        category=Category.AUTHENTICATION,
                         detail=f"KNX project password found: {password}",
                     )
                 else:

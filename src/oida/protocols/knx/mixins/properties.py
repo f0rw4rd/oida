@@ -438,7 +438,11 @@ class PropertiesMixin:
                                 # Apply operation timeout to prevent hanging
                                 properties = await asyncio.wait_for(
                                     self._enumerate_object_properties(
-                                        p2p_props, obj_idx, max_props=100, delay_ms=150
+                                        p2p_props,
+                                        obj_idx,
+                                        obj_type=obj_info["type"],
+                                        max_props=100,
+                                        delay_ms=150,
                                     ),
                                     timeout=self.operation_timeout,
                                 )
@@ -500,7 +504,7 @@ class PropertiesMixin:
         return result
 
     async def _enumerate_object_properties(
-        self, p2p, obj_idx: int, max_props: int = 255, delay_ms: int = 50
+        self, p2p, obj_idx: int, obj_type: int = 0, max_props: int = 255, delay_ms: int = 50
     ) -> List[Dict]:
         """
         Enumerate properties with VALUES (2024 reference style).
@@ -583,7 +587,11 @@ class PropertiesMixin:
                 properties.append(
                     {
                         "property_id": prop_id,
-                        "name": get_prop_name(obj_idx, prop_id),
+                        # get_property_name keys OBJECT_PROP_TYPES on the object
+                        # TYPE, not the index -- passing obj_idx looked object-
+                        # specific names up under the wrong key (matches the
+                        # correct _dump_all_properties usage).
+                        "name": get_prop_name(obj_type, prop_id),
                         "data_type": get_data_type_name(data_type),
                         "data_type_id": data_type,
                         "max_count": payload.max_count,

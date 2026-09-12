@@ -499,6 +499,70 @@ class DiscoveryMixin:
 
         return result
 
+    async def _read_domain_by_serial(self, knx: "XKNX", serial_hex: str) -> Dict[str, Any]:
+        """Read a Powerline/RF device's domain address by serial number.
+
+        Sends a broadcast ``A_DomainAddress_SerialNumber_Read`` (xknx
+        ``DomainAddressSerialNumberRead``, available since xknx 3.17); the device
+        with the matching 6-byte serial replies with its domain address. This is
+        how PL110 / RF devices are addressed — the domain address is their
+        medium-level network id — so it reaches the bus *behind* a KNX IP
+        interface that our individual-address probes cannot.
+        """
+        self.logger.debug(f"Domain-address serial read: serial={serial_hex}")
+        result = {
+            "serial": serial_hex,
+            "domain_address": None,
+            "success": False,
+            "error": None,
+        }
+
+        try:
+            serial_hex = serial_hex.strip().upper()
+            if len(serial_hex) != 12:
+                raise ValueError(f"Serial must be 12 hex chars (6 bytes), got {len(serial_hex)}")
+            serial_bytes = bytes.fromhex(serial_hex)
+
+            self.logger.display(f"Reading domain address for serial {serial_hex}...")
+            mgmt = knx.management
+            broadcast_addr = _xknx_cls.IndividualAddress("0.0.0")
+
+            async with mgmt.connection(broadcast_addr) as p2p:
+                try:
+                    resp = await asyncio.wait_for(
+                        p2p.request(
+                            _xknx_cls.DomainAddressSerialNumberRead(serial=serial_bytes),
+                            _xknx_cls.DomainAddressSerialNumberResponse,
+                        ),
+                        timeout=5.0,
+                    )
+
+                    if resp and resp.payload is not None:
+                        domain = getattr(resp.payload, "domain_address", None)
+                        if domain:
+                            result["domain_address"] = bytes(domain).hex().upper()
+                            result["success"] = True
+                            self.logger.success(
+                                f"  Serial {serial_hex} -> domain address "
+                                f"0x{result['domain_address']}"
+                            )
+                        else:
+                            result["error"] = "Response received but no domain address"
+                            self.logger.fail("  No domain address in response")
+                    else:
+                        result["error"] = "No response"
+                        self.logger.fail(f"  No device responded for serial {serial_hex}")
+
+                except asyncio.TimeoutError:
+                    result["error"] = "Timeout - no device responded"
+                    self.logger.fail("  No device responded (timeout)")
+
+        except Exception as e:
+            result["error"] = str(e)
+            self.logger.fail(f"Error reading domain by serial: {e}")
+
+        return result
+
     async def _test_routing(self, knx: "XKNX") -> Dict[str, Any]:
         """Test KNX routing capabilities"""
         self.logger.debug("Testing routing capabilities")

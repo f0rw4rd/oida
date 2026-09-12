@@ -1,14 +1,15 @@
-"""Unit tests for KNXnet/IP SearchResponse parsing in cli_runner.knx.
+"""Unit tests for the xknx-based KNXnet/IP unicast discovery in cli_runner.knx.
 
-``_parse_search_response`` decodes a raw KNXnet/IP SEARCH_RESPONSE frame
-(HPAI control endpoint + DEVICE_INFO DIB + SUPP_SVC_FAMILIES DIB).  These
-tests build byte buffers by hand and assert the decoded dict, plus the
-display helpers that consume it.  Only ``self.logger`` is used by the
-parser, so the class is created via ``__new__`` without triggering the
-network ``proto_flow``.
+``_unicast_search`` delegates to xknx's ``request_description`` (a unicast
+DESCRIPTION_REQUEST + extended search) and ``_gateway_descriptor_to_dict``
+flattens the returned ``GatewayDescriptor`` into a JSON-serialisable dict.
+``_display_gateway_info_dict`` renders that capability picture.  Only
+``self.logger``/``self.args`` are used, so the class is created via
+``__new__`` without triggering the network ``proto_flow``.
 """
 
-import struct
+import asyncio
+from types import SimpleNamespace
 
 import pytest
 
@@ -23,123 +24,115 @@ def conn():
     return c
 
 
-def build_search_response(
-    *,
-    service_type=0x0202,
-    ctrl_port=3671,
-    medium=0x02,  # TP1
-    status=0x01,  # programming mode active
-    ia_high=0x11,  # area 1, line 1
-    ia_low=0x05,  # device 5
-    project_id=0x1234,
-    serial=b"\x00\x11\x22\x33\x44\x55",
-    multicast=b"\xe0\x00\x17\x0c",  # 224.0.23.12
-    mac=b"\xaa\xbb\xcc\xdd\xee\xff",
-    name=b"Test Gateway",
-    services=((0x02, 1), (0x04, 1), (0x05, 1)),  # core, tunnelling, routing
-):
-    # KNXnet/IP header (6 bytes); total length filled at the end
-    body = b""
-
-    # HPAI control endpoint: len(8), proto(1=UDP), 4-byte IP, 2-byte port
-    hpai = struct.pack("!BB4sH", 8, 1, b"\x0a\x00\x00\x05", ctrl_port)
-    body += hpai
-
-    # DEVICE_INFO DIB: len(54), type(0x01), then 52 bytes payload
-    name_field = name[:30].ljust(30, b"\x00")
-    dib_dev = bytes([54, 0x01, medium, status, ia_high, ia_low])
-    dib_dev += struct.pack("!H", project_id)
-    dib_dev += serial + multicast + mac + name_field
-    body += dib_dev
-
-    # SUPP_SVC_FAMILIES DIB: len, type(0x02), then (family,version) pairs
-    svc_pairs = b"".join(bytes([f, v]) for f, v in services)
-    dib_svc = bytes([2 + len(svc_pairs), 0x02]) + svc_pairs
-    body += dib_svc
-
-    total = 6 + len(body)
-    header = struct.pack("!BBHH", 0x06, 0x10, service_type, total)
-    return header + body
+def _slot(*, free=True, usable=True, authorized=True):
+    """Stand-in for xknx.io.gateway_scanner.TunnelingSlotStatus."""
+    return SimpleNamespace(free=free, usable=usable, authorized=authorized)
 
 
-class TestParseSearchResponse:
-    def test_full_decode(self, conn):
-        data = build_search_response()
-        res = conn._parse_search_response(data, "10.0.0.5")
-        assert res["ip"] == "10.0.0.5"
-        assert res["port"] == 3671
-        assert res["medium"] == "PL110"  # 0x02
-        assert res["programming_mode"] is True
-        assert res["individual_address"] == "1.1.5"
-        assert res["project_id"] == 0x1234
-        assert res["serial"] == "001122334455"
-        assert res["multicast_address"] == "224.0.23.12"
-        assert res["mac"] == "AA:BB:CC:DD:EE:FF"
-        assert res["name"] == "Test Gateway"
-        assert res["services"]["KNXnet/IP Tunneling"] == 1
-        assert res["services"]["KNXnet/IP Routing"] == 1
-        assert res["supports_tunnelling"] is True
-        assert res["supports_routing"] is True
+def fake_descriptor(**kw):
+    """Stand-in for an xknx GatewayDescriptor (only the attrs we read)."""
+    d = dict(
+        name="IP-Schnittstelle Secure N 148/",
+        ip_addr="192.168.1.196",
+        port=3671,
+        individual_address="1.1.7",
+        core_version=2,
+        supports_tunnelling=True,
+        supports_tunnelling_tcp=True,
+        supports_routing=False,
+        supports_secure=True,
+        tunnelling_requires_secure=None,
+        routing_requires_secure=None,
+        tunnelling_slots={"1.1.255": _slot(), "1.1.254": _slot(free=False)},
+        local_ip="192.168.1.1",
+    )
+    d.update(kw)
+    return SimpleNamespace(**d)
 
-    def test_non_default_control_port_decoded(self, conn):
-        data = build_search_response(ctrl_port=55000)
-        res = conn._parse_search_response(data, "10.0.0.5")
-        assert res["port"] == 55000
 
-    def test_medium_ip(self, conn):
-        data = build_search_response(medium=0x20)
-        res = conn._parse_search_response(data, "1.2.3.4")
-        assert res["medium"] == "IP"
+class TestGatewayDescriptorToDict:
+    def test_flattens_all_capability_fields(self, conn):
+        d = conn._gateway_descriptor_to_dict(fake_descriptor())
+        assert d["name"].startswith("IP-Schnittstelle Secure")
+        assert d["ip"] == "192.168.1.196"
+        assert d["individual_address"] == "1.1.7"
+        assert d["core_version"] == 2
+        assert d["supports_tunnelling"] is True
+        assert d["supports_tunnelling_tcp"] is True
+        assert d["supports_routing"] is False
+        assert d["supports_secure"] is True
+        assert d["tunnelling_slots_total"] == 2
+        assert d["tunnelling_slots_free"] == 1
+        assert d["tunnelling_slots"]["1.1.255"]["free"] is True
+        assert d["tunnelling_slots"]["1.1.254"]["free"] is False
 
-    def test_programming_mode_off(self, conn):
-        data = build_search_response(status=0x00)
-        res = conn._parse_search_response(data, "1.2.3.4")
-        assert res["programming_mode"] is False
+    def test_none_individual_address(self, conn):
+        d = conn._gateway_descriptor_to_dict(fake_descriptor(individual_address=None))
+        assert d["individual_address"] is None
 
-    def test_individual_address_decoding(self, conn):
-        # area 2, line 3, device 10 -> high byte 0x23
-        data = build_search_response(ia_high=0x23, ia_low=10)
-        res = conn._parse_search_response(data, "1.2.3.4")
-        assert res["individual_address"] == "2.3.10"
+    def test_empty_slots(self, conn):
+        d = conn._gateway_descriptor_to_dict(fake_descriptor(tunnelling_slots={}))
+        assert d["tunnelling_slots_total"] == 0
+        assert d["tunnelling_slots_free"] == 0
 
-    def test_no_tunnelling_or_routing(self, conn):
-        data = build_search_response(services=((0x02, 1),))  # core only
-        res = conn._parse_search_response(data, "1.2.3.4")
-        assert res["supports_tunnelling"] is False
-        assert res["supports_routing"] is False
 
-    def test_too_short_returns_none(self, conn):
-        assert conn._parse_search_response(b"\x00" * 10, "1.2.3.4") is None
+class TestUnicastSearch:
+    def test_returns_dict_on_success(self, conn, monkeypatch):
+        conn.args = SimpleNamespace(no_nat=False)
 
-    def test_wrong_service_type_returns_none(self, conn):
-        data = build_search_response(service_type=0x0201)  # SEARCH_REQUEST
-        assert conn._parse_search_response(data, "1.2.3.4") is None
+        async def fake_request(host, port, local_ip=None, route_back=True):
+            assert route_back is True  # NAT on by default
+            return fake_descriptor(ip_addr=host)
 
-    def test_unknown_service_family_labelled(self, conn):
-        data = build_search_response(services=((0x99, 3),))
-        res = conn._parse_search_response(data, "1.2.3.4")
-        assert "Service 0x99" in res["services"]
+        monkeypatch.setattr("xknx.io.self_description.request_description", fake_request)
+        res = asyncio.run(conn._unicast_search("192.168.1.196", 3671))
+        assert res["ip"] == "192.168.1.196"
+        assert res["supports_secure"] is True
+
+    def test_no_nat_sets_route_back_false(self, conn, monkeypatch):
+        conn.args = SimpleNamespace(no_nat=True)
+
+        async def fake_request(host, port, local_ip=None, route_back=True):
+            assert route_back is False
+            return fake_descriptor()
+
+        monkeypatch.setattr("xknx.io.self_description.request_description", fake_request)
+        assert asyncio.run(conn._unicast_search("192.168.1.196", 3671)) is not None
+
+    def test_returns_none_on_failure(self, conn, monkeypatch):
+        from xknx.exceptions import CommunicationError
+
+        conn.args = SimpleNamespace(no_nat=False)
+
+        async def fake_request(host, port, local_ip=None, route_back=True):
+            raise CommunicationError("no response")
+
+        monkeypatch.setattr("xknx.io.self_description.request_description", fake_request)
+        assert asyncio.run(conn._unicast_search("10.0.0.9", 3671)) is None
 
 
 class TestDisplayGatewayInfoDict:
-    def test_displays_parsed_fields(self, conn):
-        gw = {
-            "name": "GW1",
-            "individual_address": "1.1.5",
-            "mac": "AA:BB:CC:DD:EE:FF",
-            "serial": "001122334455",
-            "multicast_address": "224.0.23.12",
-            "medium": "TP1",
-            "programming_mode": True,
-            "services": {"KNXnet/IP Tunneling": 1},
-        }
+    def test_displays_capabilities_and_slots(self, conn):
+        gw = conn._gateway_descriptor_to_dict(fake_descriptor())
         conn._display_gateway_info_dict(gw)
         text = conn.logger.all_text()
-        assert "GW1" in text
-        assert "1.1.5" in text
-        assert "001122334455" in text
-        # programming mode active is a warning
-        assert any("Programming Mode: ACTIVE" in m for m in conn.logger.records["warning"])
+        assert "IP-Schnittstelle Secure" in text
+        assert "1.1.7" in text
+        assert "v2" in text
+        assert "Tunnelling/TCP" in text
+        # KNX Secure supported is surfaced as a warning
+        assert any("KNX Secure: supported" in m for m in conn.logger.records["warning"])
+        assert "Tunnel slots: 1/2 free" in text
+
+    def test_secure_required_annotated(self, conn):
+        gw = conn._gateway_descriptor_to_dict(fake_descriptor(tunnelling_requires_secure=True))
+        conn._display_gateway_info_dict(gw)
+        assert any("required for: tunnelling" in m for m in conn.logger.records["warning"])
+
+    def test_non_secure_gateway_noted(self, conn):
+        gw = conn._gateway_descriptor_to_dict(fake_descriptor(supports_secure=False))
+        conn._display_gateway_info_dict(gw)
+        assert "not advertised" in conn.logger.all_text()
 
     def test_handles_missing_optional_fields(self, conn):
         conn._display_gateway_info_dict({})

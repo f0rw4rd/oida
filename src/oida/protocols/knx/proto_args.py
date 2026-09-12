@@ -45,7 +45,15 @@ def proto_args(parser, parents):
     )
 
     knx_group = knx_parser.add_argument_group("KNX Options")
-    knx_group.add_argument("--interface", type=str, help="Network interface for multicast")
+    knx_group.add_argument(
+        "--interface",
+        type=str,
+        help=(
+            "Bind discovery to a local interface: an interface name (e.g. eth0) "
+            "or a local IPv4 (e.g. 192.168.1.1). Needed for multicast/unicast "
+            "discovery on multi-homed hosts or a dedicated KNX NIC"
+        ),
+    )
 
     knx_group.add_argument(
         "--tcp", action="store_true", help="Use TCP tunneling instead of UDP (for KNX IP routers)"
@@ -161,6 +169,17 @@ def proto_args(parser, parents):
     )
 
     device_group.add_argument(
+        "--master-reset",
+        type=str,
+        metavar="MODE",
+        help=(
+            "Master-reset a device via A_Restart_Master_Reset (requires -i and --confirm). "
+            "MODE: confirmed|factory|reset-ia|reset-ap|reset-params|reset-links|factory-keep-ia "
+            "or a raw erase code. factory* modes wipe configuration (DANGEROUS)"
+        ),
+    )
+
+    device_group.add_argument(
         "--confirm",
         action="store_true",
         help="Confirm dangerous operations (memory/property write, fuzzing, key write)",
@@ -210,6 +229,16 @@ def proto_args(parser, parents):
         type=str,
         metavar="SERIAL",
         help="Find device by serial number (6 bytes hex, e.g., '00FA12345678')",
+    )
+
+    recon_group.add_argument(
+        "--domain-serial",
+        type=str,
+        metavar="SERIAL",
+        help=(
+            "Read a Powerline/RF device's domain address by serial number "
+            "(6 bytes hex) via A_DomainAddress_SerialNumber_Read"
+        ),
     )
 
     recon_group.add_argument(

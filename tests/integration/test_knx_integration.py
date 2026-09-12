@@ -201,7 +201,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
 
     @pytest.mark.containers("knx-calimero")
     def test_basic_unicast_discovery(self, cli_runner, target, port):
-        """Test default unicast SearchRequest discovery against Calimero mock [Category A]"""
+        """Test default unicast DescriptionRequest discovery against Calimero mock [Category A]"""
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -217,7 +217,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         log = result.scan_log
         _assert_log_event_structure(log)
 
-        # Calimero should respond to SearchRequest with gateway info
+        # Calimero should respond to the DescriptionRequest with gateway info
         text = _combined_text(result, log)
         # The gateway name or individual address should appear in output
         assert any(

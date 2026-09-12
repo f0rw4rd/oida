@@ -126,6 +126,25 @@ def _restore_real_modules_after_knx_helpers_tests():
     snapshot = _snapshot_sys_modules()
     yield
     _restore_sys_modules(snapshot)
+    # load_helpers_module() also overwrites ATTRIBUTES on the real parent
+    # packages (e.g. `oida.utils.ics_logger = MagicMock`). `from oida.utils
+    # import ics_logger` reads that attribute in preference to re-importing, so
+    # restoring only the sys.modules entries still leaks the Mock into later
+    # test files -- which is why unrelated tests then see log_warn /
+    # set_json_log_path "not called". Rebind each real submodule as an attribute
+    # on its parent package.
+    for _dotted in _MUTATED_SYS_MODULES:
+        _parent_name, _, _child = _dotted.rpartition(".")
+        if not _parent_name:
+            continue
+        try:
+            setattr(
+                importlib.import_module(_parent_name),
+                _child,
+                importlib.import_module(_dotted),
+            )
+        except Exception:
+            pass
 
 
 @pytest.fixture(scope="module")
@@ -704,6 +723,62 @@ class TestValidateBcuKey:
         assert helpers_module.validate_bcu_key("ABCDEF12") is True
         assert helpers_module.validate_bcu_key("abcdef12") is True
         assert helpers_module.validate_bcu_key("AbCdEf12") is True
+
+
+# ============================================================================
+# Tests for resolve_local_ip (--interface -> local IPv4)
+# ============================================================================
+
+
+class TestResolveLocalIp:
+    """resolve_local_ip accepts an IPv4 literal or an interface name and returns
+    a bindable local IPv4, erroring (never falling back) on unusable input."""
+
+    @staticmethod
+    def _resolve(value):
+        from oida.protocols.knx.helpers import resolve_local_ip
+
+        return resolve_local_ip(value)
+
+    def test_none_and_empty_return_none(self):
+        assert self._resolve(None) is None
+        assert self._resolve("") is None
+
+    def test_ipv4_literal_passthrough(self):
+        assert self._resolve("192.168.1.1") == "192.168.1.1"
+        assert self._resolve("  10.0.0.5 ") == "10.0.0.5"
+
+    def test_ipv6_literal_rejected(self):
+        with pytest.raises(ValueError, match="IPv4"):
+            self._resolve("fe80::1")
+
+    def test_interface_name_resolves_to_ip(self, monkeypatch):
+        from oida.utils import iface_info
+
+        monkeypatch.setattr(iface_info, "interfaces", lambda: ["eth0", "enx0"])
+        monkeypatch.setattr(
+            iface_info,
+            "ifaddresses",
+            lambda i: {iface_info.AF_INET: [{"addr": "192.168.1.1"}]} if i == "enx0" else {},
+        )
+        assert self._resolve("enx0") == "192.168.1.1"
+
+    def test_interface_with_no_ipv4_errors(self, monkeypatch):
+        from oida.utils import iface_info
+
+        monkeypatch.setattr(iface_info, "interfaces", lambda: ["veth0"])
+        monkeypatch.setattr(
+            iface_info, "ifaddresses", lambda i: {iface_info.AF_INET6: [{"addr": "fe80::1"}]}
+        )
+        with pytest.raises(ValueError, match="no IPv4 address"):
+            self._resolve("veth0")
+
+    def test_unknown_interface_errors(self, monkeypatch):
+        from oida.utils import iface_info
+
+        monkeypatch.setattr(iface_info, "interfaces", lambda: ["eth0"])
+        with pytest.raises(ValueError, match="Unknown network interface"):
+            self._resolve("nope0")
 
 
 # ============================================================================

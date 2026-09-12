@@ -288,6 +288,97 @@ class MemoryMixin:
 
         return result
 
+    # KNX A_Restart_Master_Reset erase codes (Application Layer 03.03.07 §3.4.2.2).
+    _MASTER_RESET_MODES = {
+        "confirmed": 0x01,  # confirmed restart (clean reboot, ACKed)
+        "factory": 0x02,  # factory reset (incl. individual address)
+        "reset-ia": 0x03,  # reset individual address to default
+        "reset-ap": 0x04,  # reset application program
+        "reset-params": 0x05,  # reset parameters to default
+        "reset-links": 0x06,  # reset group object links
+        "factory-keep-ia": 0x07,  # factory reset, keep individual address
+    }
+
+    async def _master_reset(self, knx: "XKNX", address: str, mode: str) -> Dict[str, Any]:
+        """Master-reset a KNX device via ``A_Restart_Master_Reset`` (DANGEROUS).
+
+        Unlike a basic restart, a master reset is confirmed at the application
+        layer (``A_Restart_Response`` / ``RestartMasterResetResponse``) and can
+        request a factory reset. ``mode`` is one of ``_MASTER_RESET_MODES`` or a
+        raw erase code (``0xNN``/decimal). Gated behind --confirm at the call
+        site; ``factory*`` modes wipe device configuration.
+        """
+        self.logger.debug(f"Master reset: address={address}, mode={mode}")
+        result: Dict[str, Any] = {
+            "address": address,
+            "mode": mode,
+            "erase_code": None,
+            "success": False,
+            "process_time": None,
+            "error": None,
+        }
+
+        if not self.args.get("confirm"):
+            result["error"] = "Missing --confirm flag"
+            self.logger.fail("--master-reset requires --confirm flag (DANGEROUS)")
+            return result
+
+        # Resolve mode name or raw erase code.
+        key = str(mode).strip().lower()
+        if key in self._MASTER_RESET_MODES:
+            erase_code = self._MASTER_RESET_MODES[key]
+        else:
+            try:
+                erase_code = int(key, 0)
+            except ValueError:
+                result["error"] = (
+                    f"Unknown mode '{mode}'. Use one of "
+                    f"{sorted(self._MASTER_RESET_MODES)} or a raw erase code."
+                )
+                self.logger.fail(result["error"])
+                return result
+        if not 0 <= erase_code <= 0xFF:
+            result["error"] = f"Erase code out of range (0-255): {erase_code}"
+            self.logger.fail(result["error"])
+            return result
+        result["erase_code"] = erase_code
+
+        self.logger.warning(
+            f"Master reset {address}: mode={key} erase_code=0x{erase_code:02X} "
+            "(device will reboot; factory modes wipe configuration)"
+        )
+
+        try:
+            addr = _xknx_cls.IndividualAddress(address)
+            mgmt = knx.management
+            async with mgmt.connection(addr) as p2p:
+                resp = await p2p.request(
+                    _xknx_cls.RestartMasterReset(erase_code=erase_code, channel_number=0),
+                    _xknx_cls.RestartMasterResetResponse,
+                )
+                if resp and resp.payload is not None:
+                    error_code = getattr(resp.payload, "error_code", None)
+                    result["process_time"] = getattr(resp.payload, "process_time", None)
+                    # error_code 0 == success (device accepted the reset).
+                    if error_code == 0:
+                        result["success"] = True
+                        self.logger.success(
+                            f"  Master reset accepted by {address} "
+                            f"(ready in ~{result['process_time']}s)"
+                        )
+                    else:
+                        result["error"] = f"Device returned error code {error_code}"
+                        self.logger.fail(f"  Master reset refused (error code {error_code})")
+                else:
+                    result["error"] = "No A_Restart_Response received"
+                    self.logger.fail(result["error"])
+
+        except Exception as e:
+            result["error"] = str(e)
+            self.logger.fail(f"Error during master reset: {e}")
+
+        return result
+
     def _parse_memory_range(self, memory_arg: str) -> tuple:
         """Parse memory dump argument (START:LENGTH)
 

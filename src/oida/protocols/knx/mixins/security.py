@@ -12,11 +12,26 @@ if TYPE_CHECKING:
 
 from ..constants import _xknx_cls  # noqa: E402
 from ....utils import SecurityAnalyzer
-from oida.utils.common_types import Category
 
 
 class SecurityMixin:
     """Mixin providing security operations."""
+
+    # KNX BCU access levels (EMI/BCU authorization). Level 0 is the most
+    # privileged role; higher numbers are progressively more restricted; 15 is
+    # the unauthenticated / no-access sentinel returned when a key is rejected.
+    _BCU_LEVEL_MEANING = {
+        0: "system / full privilege (highest)",
+        1: "privileged",
+        2: "restricted",
+        3: "lowest privilege",
+        15: "no access (unauthenticated)",
+    }
+
+    @classmethod
+    def _describe_bcu_level(cls, level: int) -> str:
+        """Human-readable meaning of a BCU authorization level."""
+        return cls._BCU_LEVEL_MEANING.get(level, f"level {level}")
 
     async def _brute_bcu_auth(
         self,
@@ -72,10 +87,25 @@ class SecurityMixin:
                             # (0 = highest privilege, 3 = lowest), so any
                             # level other than 15 means the key authenticated.
                             if level != 15:
+                                meaning = self._describe_bcu_level(level)
                                 self.logger.success(
-                                    f"[{i}/{total}] KEY FOUND: 0x{key_hex} -> level {level}"
+                                    f"[{i}/{total}] KEY FOUND: 0x{key_hex} "
+                                    f"-> level {level} ({meaning})"
                                 )
-                                results["valid_keys"].append({"key": key_hex, "level": level})
+                                results["valid_keys"].append(
+                                    {"key": key_hex, "level": level, "level_meaning": meaning}
+                                )
+                                # Authenticating at level 0 grants full/system
+                                # privilege on the device and is a distinct,
+                                # high-severity outcome worth flagging on its own.
+                                if level == 0:
+                                    self.logger.security_finding(
+                                        "Privileged BCU access",
+                                        detail=(
+                                            f"Key 0x{key_hex} authenticated at level 0 "
+                                            f"(system / full privilege) on {address}"
+                                        ),
+                                    )
                                 if not continue_on_success:
                                     self.logger.display("Stopping (first success)")
                                     break
@@ -107,8 +137,12 @@ class SecurityMixin:
         # Summary
         if results["valid_keys"]:
             self.logger.success(f"Found {len(results['valid_keys'])} valid key(s):")
+            self.logger.display(
+                "  BCU levels: 0=system/full privilege (highest) .. 3=lowest, 15=no access"
+            )
             for vk in results["valid_keys"]:
-                self.logger.success(f"  Key: 0x{vk['key']} -> Level {vk['level']}")
+                meaning = vk.get("level_meaning") or self._describe_bcu_level(vk["level"])
+                self.logger.success(f"  Key: 0x{vk['key']} -> Level {vk['level']} ({meaning})")
         else:
             self.logger.display(f"No valid keys found ({results['keys_tested']}/{total} tested)")
 
@@ -118,12 +152,17 @@ class SecurityMixin:
         return results
 
     async def _write_bcu_key(self, knx: "XKNX", address: str, key_arg: str) -> Dict[str, Any]:
-        """Write BCU key (DANGEROUS operation) - NOT IMPLEMENTED.
+        """Write a BCU access key via the KNX ``A_Key_Write`` service (DANGEROUS).
 
-        The actual KeyWriteRequest APCI is not exposed by xknx, so the write
-        cannot be performed yet. We still validate the KEY:LEVEL argument so
-        the operator gets a precise error on malformed input rather than a
-        generic "not implemented".
+        Sends xknx's ``KeyWrite`` APCI (available since xknx 3.17) over a
+        management connection and reads back the ``A_Key_Response``. The response
+        carries the access level the key was set for, or ``0xFF`` (255) when the
+        device rejects the write — typically because the connection is not first
+        authorized at level 0 (``A_Authorize_Request``).
+
+        ``key_arg`` is ``NEWKEY:LEVEL`` (hex key, decimal level); e.g.
+        ``AABBCCDD:0`` sets key 0xAABBCCDD for level 0. Gated behind --confirm at
+        the call site.
         """
         result: Dict[str, Any] = {
             "address": address,
@@ -133,26 +172,72 @@ class SecurityMixin:
             "error": None,
         }
 
-        # Notify user immediately that this feature is not available.
-        self.logger.fail("BCU key writing is NOT IMPLEMENTED in current xknx version")
-        self.logger.display("This feature requires custom APCI implementation (KeyWriteRequest)")
-
+        # Parse and validate NEWKEY:LEVEL.
         try:
-            # Parse KEY:LEVEL format for validation only.
             parts = key_arg.split(":")
             if len(parts) != 2:
-                result["error"] = "Expected format: KEY:LEVEL (e.g., 'FFFFFFFF:0')"
-                return result
-
+                raise ValueError("expected KEY:LEVEL (e.g., 'FFFFFFFF:0')")
             key = int(parts[0], 16)
             level = int(parts[1])
-
-            self.logger.debug(f"Requested key: 0x{key:08X} level: {level} for {address}")
-
-            # Feature not available.
-            result["error"] = "KeyWriteRequest not implemented - requires custom APCI"
         except ValueError as e:
             result["error"] = f"Invalid key/level format: {e}"
+            self.logger.fail(result["error"])
+            return result
+
+        if not 0 <= key <= 0xFFFFFFFF:
+            result["error"] = f"Key out of range (0..0xFFFFFFFF): 0x{key:X}"
+            self.logger.fail(result["error"])
+            return result
+        if not 0 <= level <= 15:
+            result["error"] = f"Level out of range (0-15): {level}"
+            self.logger.fail(result["error"])
+            return result
+
+        self.logger.warning(
+            f"Writing BCU key 0x{key:08X} for level {level} "
+            f"({self._describe_bcu_level(level)}) on {address}"
+        )
+
+        addr = _xknx_cls.IndividualAddress(address)
+        mgmt = knx.management
+        try:
+            async with mgmt.connection(addr) as p2p:
+                resp = await p2p.request(
+                    _xknx_cls.KeyWrite(level=level, key=key),
+                    _xknx_cls.KeyResponse,
+                )
+                if resp and resp.payload is not None:
+                    returned = resp.payload.level
+                    result["new_level"] = returned
+                    # 0xFF (255) is the A_Key_Response "unsuccessful" sentinel.
+                    if returned == 0xFF:
+                        result["error"] = (
+                            "Device rejected key write (level 0xFF) - authorization "
+                            "at level 0 is required first"
+                        )
+                        self.logger.fail(
+                            f"Key write rejected on {address} "
+                            "(needs prior authorization at level 0)"
+                        )
+                    elif returned == level:
+                        result["success"] = True
+                        self.logger.success(
+                            f"Key 0x{key:08X} written for level {level} on {address}"
+                        )
+                        self.logger.security_finding(
+                            "BCU key overwritten",
+                            detail=(
+                                f"A_Key_Write set key 0x{key:08X} for level {level} on {address}"
+                            ),
+                        )
+                    else:
+                        result["error"] = (
+                            f"Unexpected response level {returned} (requested {level})"
+                        )
+                        self.logger.warning(result["error"])
+                else:
+                    result["error"] = "No A_Key_Response received"
+                    self.logger.fail(result["error"])
         except Exception as e:
             result["error"] = str(e)
             self.logger.fail(f"Error writing BCU key: {e}")
@@ -163,6 +248,13 @@ class SecurityMixin:
         """Test read access to devices"""
         read_results = {}
         self.logger.debug(f"Testing read access on {len(devices)} devices")
+
+        # Nothing to test when no devices were discovered (e.g. a targeted
+        # operation like --memory-dump or --key-write on a single address that
+        # didn't run a bus scan). Emitting "Testing read access to 0 devices"
+        # in that case is pure noise, so keep it to the debug channel.
+        if not devices:
+            return read_results
 
         self.logger.display(f"Testing read access to {len(devices)} devices")
 
@@ -233,7 +325,7 @@ class SecurityMixin:
         self.logger.display(f"Testing write access to {len(devices)} devices")
 
         # Mirror _write_memory's guard: never write into system memory.
-        system_memory_end = getattr(self, "SYSTEM_MEMORY_END", 0x00FF)
+        system_memory_end = self.SYSTEM_MEMORY_END
 
         for device in devices:
             if not device.get("accessible"):
@@ -266,9 +358,18 @@ class SecurityMixin:
                             original_data = resp.payload.data if resp and resp.payload else None
                             if original_data:
                                 # Write the same value back via MemoryWrite APCI.
+                                # A_Memory_Write elicits NO response, so request it
+                                # with a None response class (count=len(data)) --
+                                # awaiting MemoryResponse always timed out, so every
+                                # location was falsely reported non-writable even
+                                # against a writable device (see _write_memory()).
                                 await p2p.request(
-                                    _xknx_cls.MemoryWrite(address=mem_addr, data=original_data),
-                                    _xknx_cls.MemoryResponse,
+                                    _xknx_cls.MemoryWrite(
+                                        address=mem_addr,
+                                        count=len(original_data),
+                                        data=original_data,
+                                    ),
+                                    None,
                                 )
                                 device_results["writable_addresses"].append(
                                     {
@@ -309,14 +410,12 @@ class SecurityMixin:
         # Report no encryption
         self.logger.security_finding(
             "No encryption",
-            category=Category.ENCRYPTION,
             detail="KNX protocol does not use encryption",
         )
 
         # Report no authentication
         self.logger.security_finding(
             "No authentication",
-            category=Category.AUTHENTICATION,
             detail="KNX protocol does not require authentication",
         )
 
@@ -336,7 +435,6 @@ class SecurityMixin:
             # Report writable access
             self.logger.security_finding(
                 "Writable access",
-                category=Category.ACCESS_CONTROL,
                 detail=f"{writable_devices} devices with unauthenticated write access",
             )
 
@@ -345,7 +443,6 @@ class SecurityMixin:
             # Report insecure configuration
             self.logger.security_finding(
                 "Insecure configuration",
-                category=Category.CONFIGURATION,
                 detail="KNX routing is accessible without authentication",
             )
 
