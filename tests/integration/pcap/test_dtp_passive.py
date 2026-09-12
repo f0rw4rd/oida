@@ -12,7 +12,9 @@ class TestDTPPassiveEK:
 
     # -- Pcap: wireshark_dtp.pcapng --
     # 2 identical DTP frames from e0:2f:6d:3a:a5:1a (Cisco)
-    # TAS=0x01 (On), TAT=0x05 (802.1Q), TOS=0x01 (On), TOT=0x05 (802.1Q)
+    # TAS=0x01 (On), TAT=0x05 (802.1Q), TOS=0x01 (Trunk), TOT=0x05 (802.1Q)
+    # NOTE: dtp.tos is its own enum (0=Access, 1=Trunk), NOT the admin-status
+    # enum -- see tests/integration/pcap/test_dtp_review.py.
     # Empty domain, sender_id=e0:2f:6d:3a:a5:1a
 
     PCAP = "dtp/wireshark_dtp.pcapng"
@@ -53,7 +55,7 @@ class TestDTPPassiveEK:
         assert d["admin_status_name"] == "On"
 
     def test_dtp_oper_status(self):
-        """Verify Trunk Operating Status is 'On' (TOS=0x01)."""
+        """Verify Trunk Operating Status is 'Trunk' (TOS=0x01)."""
         listener, _, _ = _run_listener_test(
             "dtp",
             "DTPPassiveListener",
@@ -62,7 +64,7 @@ class TestDTPPassiveEK:
             expect_details=["oper_status_name"],
         )
         d = listener.interactions[0].details
-        assert d["oper_status_name"] == "On"
+        assert d["oper_status_name"] == "Trunk"
 
     def test_dtp_trunk_type_802_1q(self):
         """Verify trunk encapsulation type is 802.1Q."""

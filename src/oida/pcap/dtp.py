@@ -40,7 +40,7 @@ from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import lookup_mac_vendor, normalize_mac
 
 
-# DTP trunk status values (admin and operating)
+# DTP Trunk ADMINISTRATIVE Status (dtp.tas), per tshark -G values
 DTP_STATUS = {
     0x01: "On",
     0x02: "Off",
@@ -52,8 +52,19 @@ DTP_STATUS = {
     0x84: "Auto (Operating)",
 }
 
+# DTP Trunk OPERATING Status (dtp.tos) is a SEPARATE enumeration -- a single
+# bit, not the admin mode. tshark -G values registers only:
+#   dtp.tos 0x0 Access, 0x1 Trunk
+# Applying DTP_STATUS here silently rendered a trunking port (tos=1) as "On"
+# and an access port (tos=0) as the raw string "0".
+DTP_OPER_STATUS = {
+    0x00: "Access",
+    0x01: "Trunk",
+}
+
 # DTP trunk type / encapsulation values
 DTP_TYPES = {
+    0x00: "Negotiated",
     0x01: "Native",
     0x02: "ISL",
     0x03: "Negotiate",
@@ -157,7 +168,7 @@ class DTPPassiveListener(PySharkListenerBase):
         # Trunk Operating Status (current operating mode)
         tos_raw = self.get_field(dtp, "tos", None)
         tos_val = self._parse_int(tos_raw, -1)
-        oper_status_name = DTP_STATUS.get(tos_val, str(tos_raw) if tos_raw else "?")
+        oper_status_name = DTP_OPER_STATUS.get(tos_val, str(tos_raw) if tos_raw else "?")
 
         # Trunk Operating Type (current encapsulation)
         tot_raw = self.get_field(dtp, "tot", None)
@@ -169,7 +180,7 @@ class DTPPassiveListener(PySharkListenerBase):
         tlv_lens = str(self.get_field(dtp, "tlv_len", "") or "")
 
         # Determine trunk state from operating status
-        is_trunking = tos_val in (0x01, 0x81)  # On / On (Operating)
+        is_trunking = tos_val == 0x01  # dtp.tos: 0=Access, 1=Trunk
         is_negotiating = tas_val in (0x03, 0x04, 0x83, 0x84)  # Desirable / Auto
 
         # Build flow ID from MAC addresses
