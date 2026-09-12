@@ -15,7 +15,7 @@ Handles controller-specific information retrieval:
 from __future__ import annotations
 
 import re
-from typing import Any, Dict, List, Optional, TYPE_CHECKING
+from typing import Any, Dict, List, TYPE_CHECKING
 
 from ..attacks import DANGEROUS_TAG_PATTERNS
 
@@ -546,29 +546,6 @@ class ControllerInfoMixin(_ScannerBase):
             self.logger.debug(f"Failed to get tag list: {e}")
             return []
 
-    def _read_tag(self, conn: Any, tag: str) -> Optional[Any]:
-        """
-        Read a single tag using pycomm3 LogixDriver.
-
-        Args:
-            conn: pycomm3 LogixDriver connection
-            tag: Tag name to read
-
-        Returns:
-            Tag value or None on failure
-        """
-        if self._driver_type != "logix":
-            return None
-
-        try:
-            result = conn.read(tag)
-            if result and not result.error:
-                return result.value
-        except Exception as e:
-            self.logger.debug(f"Read tag {tag} failed: {e}")
-
-        return None
-
     def _identify_dangerous_tags(self, tags: List[str]) -> List[Dict[str, Any]]:
         """
         Identify potentially dangerous tags that could affect safety/operations.
@@ -608,47 +585,3 @@ class ControllerInfoMixin(_ScannerBase):
                 self.logger.warning(f"  ... and {len(dangerous) - 5} more")
 
         return dangerous
-
-    def _get_device_info(self, conn: Any) -> Dict[str, Any]:
-        """Get additional device information by reading known tags"""
-        device_info = {"tags_found": [], "tag_values": {}}
-
-        # Common Logix/PLC tag patterns to try
-        common_tags = [
-            # Digital I/O
-            "DI_MotorRunning",
-            "DI_PumpRunning",
-            "DI_ValveOpen",
-            "DI_EmergencyStop",
-            "DO_StartMotor",
-            "DO_StopMotor",
-            "DO_StartPump",
-            # Analog I/O
-            "AI_Temperature",
-            "AI_Pressure",
-            "AI_FlowRate",
-            "AI_Level",
-            "AO_SpeedSetpoint",
-            "AO_TempSetpoint",
-            # System
-            "SYS_Uptime",
-            "SYS_CycleCount",
-            "SYS_ErrorCount",
-            # Arrays (read first element only)
-            "SCADA[0]",
-            "DATA[0]",
-            "STATUS[0]",
-            "ALARMS[0]",
-        ]
-
-        for tag in common_tags:
-            val = self._read_tag(conn, tag)
-            if val is not None:
-                tag_name = tag.split("[")[0]  # Remove array index for display
-                device_info["tags_found"].append(tag_name)
-                device_info["tag_values"][tag_name] = val
-                self.logger.debug(f"Found tag {tag}: {val}")
-
-        if device_info["tags_found"]:
-            self.logger.display(f"Discovered {len(device_info['tags_found'])} accessible tags")
-        return device_info

@@ -108,10 +108,15 @@ def parse_mac(data: bytes) -> str:
 
 
 def parse_ipv4(data: bytes) -> str:
-    """Parse IPv4 address (4 bytes, network order for CIP)"""
+    """Parse an IPv4 address from the CIP TCP/IP Interface Object.
+
+    The address is a little-endian UDINT on the wire (Wireshark decodes
+    cip.tcpip.ip_addr as ENC_LITTLE_ENDIAN), so the dotted form reverses the
+    byte order. This previously did NOT reverse, contradicting the
+    network_parsers path (which does and is covered by a matching test).
+    """
     if len(data) >= 4:
-        # CIP uses big-endian for IP addresses
-        return ".".join(str(b) for b in data[:4])
+        return ".".join(str(b) for b in data[3::-1])
     return ""
 
 

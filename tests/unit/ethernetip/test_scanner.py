@@ -358,21 +358,10 @@ class TestEtherNetIPMockOperations(unittest.TestCase):
         self.assertIn(2, attributes)
         self.assertIn(3, attributes)
 
-    def test_device_info_extraction(self):
-        """Test additional device info extraction returns expected structure"""
-        scanner = self.EtherNetIPScanner(self.args)
-        mock_client = MagicMock()
-
-        # Mock _read_tag to return None (no tags found)
-        scanner._read_tag = MagicMock(return_value=None)
-
-        device_info = scanner._get_device_info(mock_client)
-
-        # Method always returns a dict with tags_found and tag_values
-        self.assertIn("tags_found", device_info)
-        self.assertIn("tag_values", device_info)
-        self.assertIsInstance(device_info["tags_found"], list)
-        self.assertIsInstance(device_info["tag_values"], dict)
+    # test_device_info_extraction was removed: _get_device_info/_read_tag were
+    # dead (generic non-Logix CIP devices expose no named tags, so the probe
+    # always found nothing). Generic devices now report zero tags directly in
+    # the scanner without emitting dead CIP reads.
 
 
 class TestEtherNetIPErrorHandling(unittest.TestCase):

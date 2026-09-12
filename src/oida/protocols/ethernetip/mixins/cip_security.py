@@ -18,7 +18,6 @@ import struct
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
 from ....utils.lazy_import import lazy_import
-from oida.utils.common_types import Category
 
 _cryptography = lazy_import(
     "cryptography", "EtherNet/IP", install_hint="pip install oida[ethernetip]"
@@ -50,7 +49,6 @@ class CipSecurityMixin(_ScannerBase):
         if not cip_sec.get("accessible"):
             self.logger.security_finding(
                 "No authentication",
-                category=Category.AUTHENTICATION,
                 detail="CIP Security: NOT SUPPORTED",
             )
             return
@@ -63,7 +61,6 @@ class CipSecurityMixin(_ScannerBase):
             # Factory Default - security exists but not configured
             self.logger.security_finding(
                 "No authentication",
-                category=Category.AUTHENTICATION,
                 detail=f"CIP Security: NOT CONFIGURED ({state_name})",
             )
         else:

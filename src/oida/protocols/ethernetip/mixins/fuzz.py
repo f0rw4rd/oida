@@ -102,6 +102,14 @@ class FuzzMixin(_ScannerBase):
             self.logger.display("Skipping fuzz tests (read-only mode)")
             return fuzz_results
 
+        # Honor --fuzz-iterations (registered via add_dangerous_options) instead
+        # of always using the hardcoded default of 100.
+        args = getattr(self, "args", None) or {}
+        try:
+            iterations = int(args.get("fuzz_iterations") or args.get("fuzz-iterations") or 100)
+        except (TypeError, ValueError, AttributeError):
+            iterations = 100
+
         # Count writable attributes and check blacklist
         writable_count = 0
         blacklisted_count = 0
@@ -192,6 +200,7 @@ class FuzzMixin(_ScannerBase):
                         orig_value,
                         attr_write.get("name", ""),
                         orig_type,
+                        iterations=iterations,
                     )
                     class_fuzz_results["class_attributes"][attr_id_int] = fuzz_result
 
@@ -225,6 +234,7 @@ class FuzzMixin(_ScannerBase):
                             orig_value,
                             attr_write.get("name", ""),
                             orig_type,
+                            iterations=iterations,
                         )
                         inst_fuzz_results[attr_id_int] = fuzz_result
 
@@ -360,7 +370,11 @@ class FuzzMixin(_ScannerBase):
                     attribute=attr_id,
                     request_data=original_value,
                     connected=True,
-                    unconnected_send=True,
+                    # Match the write path exactly (unconnected_send=False): the
+                    # restore is the safety mechanism returning a possibly
+                    # safety-relevant attribute to its captured value, so it must
+                    # not use a different messaging mode than the write it undoes.
+                    unconnected_send=False,
                 )
                 results["restored"] = not restore_result.error
                 if results["restored"]:

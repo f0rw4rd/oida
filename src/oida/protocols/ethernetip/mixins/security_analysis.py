@@ -13,7 +13,6 @@ from __future__ import annotations
 from typing import Any, Dict, TYPE_CHECKING
 
 from ....utils import SecurityAnalyzer
-from oida.utils.common_types import Category
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -127,7 +126,6 @@ class SecurityAnalysisMixin(_ScannerBase):
                 )
                 self.logger.security_finding(
                     "No authentication",
-                    category=Category.AUTHENTICATION,
                     detail="CIP Security in Factory Default state",
                 )
             else:
@@ -136,7 +134,6 @@ class SecurityAnalysisMixin(_ScannerBase):
                 )
                 self.logger.security_finding(
                     "No authentication",
-                    category=Category.AUTHENTICATION,
                     detail="CIP Security not supported",
                 )
 
@@ -144,7 +141,6 @@ class SecurityAnalysisMixin(_ScannerBase):
             analysis["concerns"].append("TLS/DTLS not supported - traffic is unencrypted")
             self.logger.security_finding(
                 "No encryption",
-                category=Category.ENCRYPTION,
                 detail="CIP Security (TLS/DTLS) not supported - traffic is unencrypted",
             )
 
@@ -161,7 +157,6 @@ class SecurityAnalysisMixin(_ScannerBase):
                 )
                 self.logger.security_finding(
                     "Insecure configuration",
-                    category=Category.CONFIGURATION,
                     detail=f"Controller in editable mode: {mode}",
                 )
 
@@ -178,7 +173,6 @@ class SecurityAnalysisMixin(_ScannerBase):
                 analysis["concerns"].append("Controller has active fault condition")
                 self.logger.security_finding(
                     "Insecure configuration",
-                    category=Category.CONFIGURATION,
                     detail="Controller in faulted state - may indicate safety issue",
                 )
 
@@ -201,7 +195,6 @@ class SecurityAnalysisMixin(_ScannerBase):
                 analysis["concerns"].append(f"{writable_count} writable attributes found")
                 self.logger.security_finding(
                     "Writable access",
-                    category=Category.ACCESS_CONTROL,
                     detail=f"{writable_count} CIP attributes are writable",
                 )
 
@@ -217,7 +210,6 @@ class SecurityAnalysisMixin(_ScannerBase):
                 self.logger.fail(f"DANGER: {len(high_risk)} safety-critical tags accessible")
                 self.logger.security_finding(
                     "Insecure configuration",
-                    category=Category.CONFIGURATION,
                     detail=f"Safety-critical tags accessible: {tag_names}",
                 )
             else:
@@ -227,7 +219,6 @@ class SecurityAnalysisMixin(_ScannerBase):
                 tag_names = ", ".join([t["tag"] for t in dangerous_tags[:3]])
                 self.logger.security_finding(
                     "Insecure configuration",
-                    category=Category.CONFIGURATION,
                     detail=f"Potentially dangerous tags accessible: {tag_names}",
                 )
 

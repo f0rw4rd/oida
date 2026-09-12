@@ -197,7 +197,9 @@ class TestNetworkParsers(unittest.TestCase):
         self.assertEqual(parse_mac(b"\x01\x02"), "")
 
     def test_parse_ipv4(self):
-        data = b"\xc0\xa8\x01\x64"  # 192.168.1.100
+        # On-wire CIP IP address is little-endian, so 192.168.1.100 is sent as
+        # 64 01 a8 c0 (reversed for the dotted form).
+        data = b"\x64\x01\xa8\xc0"  # 192.168.1.100 (little-endian)
         self.assertEqual(parse_ipv4(data), "192.168.1.100")
 
     def test_parse_ipv4_short_data(self):
@@ -242,11 +244,12 @@ class TestComplexParsers(unittest.TestCase):
         self.assertIn("raw", result)
 
     def test_parse_interface_config(self):
-        ip = b"\xc0\xa8\x01\x64"  # 192.168.1.100
-        mask = b"\xff\xff\xff\x00"  # 255.255.255.0
-        gw = b"\xc0\xa8\x01\x01"  # 192.168.1.1
+        # Little-endian on-wire byte order (reversed for the dotted form).
+        ip = b"\x64\x01\xa8\xc0"  # 192.168.1.100
+        mask = b"\x00\xff\xff\xff"  # 255.255.255.0
+        gw = b"\x01\x01\xa8\xc0"  # 192.168.1.1
         dns1 = b"\x08\x08\x08\x08"  # 8.8.8.8
-        dns2 = b"\x08\x08\x04\x04"  # 8.8.4.4
+        dns2 = b"\x04\x04\x08\x08"  # 8.8.4.4
         domain = b"example.com\x00"
         data = ip + mask + gw + dns1 + dns2 + domain
         result = parse_interface_config(data)

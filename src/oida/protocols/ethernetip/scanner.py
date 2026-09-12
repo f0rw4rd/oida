@@ -713,15 +713,11 @@ class EtherNetIPScanner(
             if flag:
                 self.logger.display(msg)
 
-        tag_info = self._get_device_info(connection)
-        results["tags"] = {
-            "count": len(tag_info.get("tags_found", [])),
-            "names": tag_info.get("tags_found", []),
-            "values": tag_info.get("tag_values", {}),
-        }
-
-        if tag_info.get("tags_found"):
-            results["dangerous_tags"] = self._identify_dangerous_tags(tag_info["tags_found"])
+        # Generic (non-Logix) CIP devices do not expose named tags -- tag
+        # reading is a Rockwell LogixDriver concept -- so the former common-tags
+        # probe here always found nothing (every read returned None off the
+        # logix path) while emitting ~20 dead CIP requests. Report no tags.
+        results["tags"] = {"count": 0, "names": [], "values": {}}
 
     def _discover_cip_objects(self, connection: Any, results: Dict[str, Any]):
         """Enumerate and parse CIP objects"""
