@@ -25,7 +25,7 @@ PyShark EK-mode VRRP field reference (packet.vrrp.*):
 - ip_addr: Virtual IPv4 address(es) (may be repeated)
 - ipv6_addr: Virtual IPv6 address(es) (may be repeated)
 - checksum: Packet checksum value
-- checksum_status: Checksum validation (1=good, 2=bad)
+- checksum_status: Checksum validation (0=bad, 1=good, 2=unverified)
 - md5_auth_data: MD5 authentication digest (when auth_type=254)
 - auth_string: Simple text auth string (when auth_type=1)
 """
@@ -105,8 +105,9 @@ VRRP_AUTH_TYPES = {
     254: "MD5",
 }
 
-# Checksum validation status values (tshark)
-CHECKSUM_STATUS_BAD = 2
+# Checksum validation status values (tshark -G values vrrp.checksum.status:
+# 0=Bad, 1=Good, 2=Unverified, 3=Not present, 4=Illegal)
+CHECKSUM_STATUS_BAD = 0
 
 
 class VRRPPassiveListener(PySharkListenerBase):
