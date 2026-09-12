@@ -198,3 +198,103 @@ class TestRespondingCredentialDedup:
         assert len(listener.credentials) == 2, (
             "credentials from different clients were collapsed into one"
         )
+
+
+class TestRespondingCredentialDedupRealHandler:
+    """Bug 2 again, but through the real ``_extract_acse_auth`` handler.
+
+    ``TestRespondingCredentialDedup`` mirrors the store/lookup pair by hand,
+    which would keep passing if the handler drifted from the mirror.  These
+    tests drive the production handler directly with a minimal fake ACSE
+    layer (attribute access only, exactly what ``get_field`` uses), so the
+    dedup fix is exercised end to end: extraction -> orientation -> dedup ->
+    storage.  No MMS fixture carries an ACSE auth value, so this is the only
+    way to hit the branch from a test.
+
+    All of these run in the plain (no-pyshark-layer) mode; the handler's
+    dedup logic is mode-independent because it sits downstream of get_field.
+    """
+
+    @staticmethod
+    def _fake_acse(auth_value, direction, mechanism=""):
+        layer = type("Acse", (), {})()
+        if auth_value:
+            setattr(layer, "charstring", auth_value)
+        setattr(layer, "mechanism_name", mechanism)
+        if direction == "calling":
+            setattr(layer, "calling_authentication_value", "1")
+        else:
+            setattr(layer, "responding_authentication_value", "1")
+        return layer
+
+    @classmethod
+    def _feed(cls, listener, direction, src_ip="10.101.1.3", dst_ip="10.101.1.2", auth="s3cr3t"):
+        from oida.pcap.mms import MMSPassiveListener  # noqa: F401  (import sanity)
+
+        listener._extract_acse_auth(
+            cls._fake_acse(auth, direction),
+            src_ip,
+            dst_ip,
+            "2026-01-01T00:00:00",
+            "flow-1",
+            src_port=49152,
+            dst_port=102,
+            stream_id="7",
+        )
+
+    def test_responding_credential_deduped_across_repeated_aare(self):
+        """An association's AARE retransmissions must yield ONE credential.
+
+        Before the dedup-orientation fix this produced one credential per
+        responding packet in the association.
+        """
+        from oida.pcap.mms import MMSPassiveListener
+
+        listener = MMSPassiveListener(interface="lo", timeout=10)
+        for _ in range(5):
+            self._feed(listener, "responding")
+
+        assert len(listener.credentials) == 1, (
+            f"responding credential re-recorded {len(listener.credentials)} times "
+            f"by _extract_acse_auth: {[c.auth_value for c in listener.credentials]}"
+        )
+
+    def test_responding_credential_orientation(self):
+        """The responding branch records the SERVER as src_ip.
+
+        src_ip is the AARE sender (the server); the credential must therefore
+        carry server_ip=src_ip / client_ip=dst_ip, which is also what makes the
+        dedup lookup agree with the stored record.
+        """
+        from oida.pcap.mms import MMSPassiveListener
+
+        listener = MMSPassiveListener(interface="lo", timeout=10)
+        self._feed(listener, "responding", src_ip="10.101.1.2", dst_ip="10.101.1.3")
+
+        assert len(listener.credentials) == 1
+        cred = listener.credentials[0]
+        assert cred.server_ip == "10.101.1.2"
+        assert cred.client_ip == "10.101.1.3"
+        assert cred.auth_direction == "responding"
+
+    def test_calling_and_responding_of_same_value_both_kept(self):
+        """Two directions are two credentials; the fix must not over-dedup."""
+        from oida.pcap.mms import MMSPassiveListener
+
+        listener = MMSPassiveListener(interface="lo", timeout=10)
+        self._feed(listener, "calling", auth="s3cr3t")
+        self._feed(listener, "responding", auth="s3cr3t")
+        assert len(listener.credentials) == 2
+
+    def test_credentials_summary_survives_dedup(self):
+        """get_credentials_summary() sees the single deduped credential."""
+        from oida.pcap.mms import MMSPassiveListener
+
+        listener = MMSPassiveListener(interface="lo", timeout=10)
+        for _ in range(3):
+            self._feed(listener, "responding")
+        summary = listener.get_credentials_summary()
+        assert len(summary) == 1
+        assert summary[0]["username"] == "s3cr3t"
+        assert summary[0]["auth_direction"] == "responding"
+        assert summary[0]["protocol"] == "MMS/ACSE"
