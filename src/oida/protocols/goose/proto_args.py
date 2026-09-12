@@ -13,17 +13,21 @@ from ...utils.proto_args_factory import (
 
 def proto_args(parser, parents):
     """Register GOOSE-specific arguments"""
+    # Interface capture requires --gocb-ref: GooseSubscriber binds to a single
+    # named GoCB, so _create_goose_connection() hard-fails without it. Don't
+    # advertise bare-interface "passive sniffing" -- it isn't implemented.
     examples_epilog = """
 Examples:
-  oida goose eth0                          # Passive GOOSE sniffing on eth0
-  oida goose eth0 --timeout 30             # Listen for 30 seconds
-  oida goose eth0 --appid 1000            # Filter by AppID (decimal)
-  oida goose eth0 --gocb-ref 'LD/LLN0$GO$gcb01'  # Live capture of a known GoCB
-  oida goose --mms-enum 192.168.1.100      # Enumerate GoCBs via MMS
+  oida goose eth0 --gocb-ref 'LD/LLN0$GO$gcb01'              # Capture a known GoCB on eth0
+  oida goose eth0 --gocb-ref 'LD/LLN0$GO$gcb01' --timeout 30 # Listen for 30 seconds
+  oida goose eth0 --gocb-ref 'LD/LLN0$GO$gcb01' --appid 1000 # Filter by AppID (decimal)
+  oida goose --mms-enum 192.168.1.100                        # Enumerate GoCBs via MMS
 
 Security Testing:
-  oida goose eth0 --timeout 60             # Long capture for anomaly detection
-  oida goose --mms-enum 192.168.1.100 --mms-port 102  # Custom MMS port
+  oida goose eth0 --gocb-ref 'LD/LLN0$GO$gcb01' --timeout 60 # Long capture for anomaly detection
+  oida goose --mms-enum 192.168.1.100 --mms-port 102         # Custom MMS port
+
+Tip: use --mms-enum first to discover valid --gocb-ref values from the IED.
 """
 
     # Create parser with standard setup
@@ -31,7 +35,7 @@ Security Testing:
         parser,
         name="goose",
         help_text="IEC 61850 GOOSE scanner",
-        description="Passive GOOSE sniffer, R-GOOSE listener, and GoCB enumerator",
+        description="Known-GoCB GOOSE capture (--gocb-ref), R-GOOSE listener, and GoCB enumerator",
         parents=parents,
         epilog=examples_epilog,
     )

@@ -123,6 +123,10 @@ class GOOSEScanner(SerialScanner):
     3. GoCB enumeration via MMS connection
     """
 
+    # Cap for the in-RAM GOOSE message accumulators (used for the summary); a
+    # busy substation bus over a long --timeout would otherwise grow unbounded.
+    _MAX_GOOSE_MESSAGES = 10000
+
     def __init__(self, args: Dict[str, Any]):
         # Set interface from target before super().__init__
         if not args.get("interface"):
@@ -355,6 +359,12 @@ class GOOSEScanner(SerialScanner):
 
                 msg_info = self._goose_message_to_dict(msg)
                 messages.append(msg_info)
+                # Cap both accumulators: a chatty/hostile substation bus at
+                # hundreds-thousands of frames/s with a large --timeout would
+                # otherwise grow memory unbounded (doubled by the per-source
+                # copy). Trim in chunks so it's amortized O(1) per frame.
+                if len(messages) > 2 * self._MAX_GOOSE_MESSAGES:
+                    del messages[: -self._MAX_GOOSE_MESSAGES]
 
                 gocb = msg_info.get("gocb_ref", "")
                 is_new = gocb and gocb not in seen_gocbs
@@ -366,6 +376,8 @@ class GOOSEScanner(SerialScanner):
                 if src not in self.goose_sources:
                     self.goose_sources[src] = []
                 self.goose_sources[src].append(msg_info)
+                if len(self.goose_sources[src]) > 2 * self._MAX_GOOSE_MESSAGES:
+                    del self.goose_sources[src][: -self._MAX_GOOSE_MESSAGES]
             except Exception as e:
                 self.logger.debug(f"Error processing GOOSE message in callback: {e}")
 

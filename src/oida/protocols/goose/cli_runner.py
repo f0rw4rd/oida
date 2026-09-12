@@ -3,7 +3,6 @@
 """GOOSE NXC-style callable class."""
 
 from ...connection import SerialConnection
-from ...utils.common_types import Category
 from ...utils.permissions import check_raw_socket_capability
 
 from . import GOOSEScanner
@@ -94,7 +93,6 @@ class goose(SerialConnection):
         if scan_results and scan_results.get("goose_messages"):
             self.logger.security_finding(
                 "No encryption",
-                category=Category.ENCRYPTION,
                 detail="GOOSE (IEC 61850) has no encryption or authentication",
             )
 
