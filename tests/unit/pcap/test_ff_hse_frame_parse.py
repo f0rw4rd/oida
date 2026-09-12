@@ -11,6 +11,14 @@ session tracking, device discovery and reporting accessors.
 The listener determines request/response direction from ``hdr.confirm_msg_type``
 (0=Request, 1=Response, 2=Error), and identifies the protocol+service by
 probing FDA/SM/FMS/LAN confirmed and unconfirmed service-id fields in order.
+
+Service IDs are aligned to ``tshark -G values | grep '^V\tff.hdr_srv.'``
+(tshark 4.4.15). An earlier revision of this file asserted the listener's
+invented tables (FDA_Open/FDA_Write/FDA_Identify, LAN confirm 4 =
+LR_DiagnosticMsg, FMS 1=Read/2=Write) -- i.e. the tests were written TO the
+bug. The registry truth: FDA confirm has only 1=OpenSession and 3=Idle;
+FMS confirm 2=Read / 3=Write; SM confirm 3=Identify; LAN confirm 1=GetInfo,
+2=PutInfo, 3=GetStatistics; LAN unconfirm 1=DiagnosticMsg.
 """
 
 from oida.pcap.ff_hse import (
@@ -73,30 +81,33 @@ def _feed(ff_fields, **pkt_kwargs):
 def test_fda_confirmed_open_request():
     listener, ix = _feed(
         {
-            "hdr_srv_fda_service_id_confirm": "1",  # FDA_Open
+            "hdr_srv_fda_service_id_confirm": "1",  # FDA_OpenSession
             "fda_open_sess_req_pd_tag": "TT-101",
             "fda_open_sess_req_sess_idx": "5",
         }
     )
     assert ix.details["protocol"] == "FDA"
-    assert ix.details["service"] == "FDA_Open"
+    assert ix.details["service"] == "FDA_OpenSession"
     assert ix.details["tag"] == "TT-101"
     assert "session=5" in ix.details["detail"]
     assert ix.direction == "request"  # no confirm flag -> request
-    # FDA_Open sets rw="read" in _process_fda but read_count only increments for
-    # services whose name contains Read/Identify/FindTag, so it stays 0 here.
-    assert ix.details["rw"] == "read"
+    # Session establishment is neither a read nor a write. _process_fda used to
+    # label it rw="read" (an "Open" substring match), which both contradicted the
+    # read_count accounting -- which only counts Read/Identify/FindTag -- and
+    # leaked a bogus rw="read" into the JSON/CSV export.
+    assert ix.details["rw"] == ""
     session = listener.sessions[(CLIENT_IP, SERVER_IP)]
     assert session.pd_tag == "TT-101"
-    assert "FDA_Open" in session.services_seen
+    assert "FDA_OpenSession" in session.services_seen
     assert session.read_count == 0
 
 
-def test_fda_write_is_flagged_and_alerted():
-    listener, ix = _feed({"hdr_srv_fda_service_id_confirm": "4"})  # FDA_Write
-    assert ix.details["service"] == "FDA_Write"
+def test_fms_write_is_flagged_and_alerted():
+    # FMS confirmed 3 is Write (the invented tables had Write on 2 == Read).
+    listener, ix = _feed({"hdr_srv_fms_service_id_confirm": "3"})
+    assert ix.details["service"] == "FMS_Write"
     assert ix.details["rw"] == "write"
-    assert "FDA_Write" in FF_WRITE_SERVICES
+    assert "FMS_Write" in FF_WRITE_SERVICES
     session = listener.sessions[(CLIENT_IP, SERVER_IP)]
     assert session.write_count == 1
     # base harvest emits a write alert for protocols exposing get_write_operations.
@@ -109,17 +120,19 @@ def test_fda_write_is_flagged_and_alerted():
 def test_fda_open_records_max_buffer_size():
     _, ix = _feed(
         {
-            "hdr_srv_fda_service_id_confirm": "1",  # FDA_Open
+            "hdr_srv_fda_service_id_confirm": "1",  # FDA_OpenSession
             "fda_open_sess_rsp_max_buf_siz": "1024",
         }
     )
     assert "buf=1024" in ix.details["detail"]
 
 
-def test_fda_unconfirmed_identify_request():
-    _, ix = _feed({"hdr_srv_fda_service_id_unconfirm": "1"})  # FDA_Identify
-    assert ix.details["protocol"] == "FDA"
-    assert ix.details["service"] == "FDA_Identify"
+def test_fms_unconfirmed_information_report_id_zero():
+    # tshark registers NO FDA unconfirmed service table at all; the old
+    # FDA_Identify entry was invented. FMS unconfirmed 0 is InformationReport.
+    _, ix = _feed({"hdr_srv_fms_service_id_unconfirm": "0"})
+    assert ix.details["protocol"] == "FMS"
+    assert ix.details["service"] == "FMS_InformationReport"
 
 
 def test_fda_unknown_confirmed_service_id_synthesizes_name():
@@ -130,7 +143,7 @@ def test_fda_unknown_confirmed_service_id_synthesizes_name():
 def test_sm_identify_response_extracts_device_identity():
     listener, ix = _feed(
         {
-            "hdr_srv_sm_service_id_confirm": "1",  # SM_Identify
+            "hdr_srv_sm_service_id_confirm": "3",  # SM_Identify
             "hdr_confirm_msg_type": "1",  # 1 = Response Message (real direction field)
             "sm_id_rsp_dev_id": "Emerson-3051",
             "sm_id_rsp_pd_tag": "PT-200",
@@ -183,25 +196,25 @@ def test_sm_find_tag_reply():
 
 
 def test_fms_read_and_write_rw_flag():
-    _, ix_read = _feed({"hdr_srv_fms_service_id_confirm": "1"})  # FMS_Read
+    _, ix_read = _feed({"hdr_srv_fms_service_id_confirm": "2"})  # FMS_Read
     assert ix_read.details["protocol"] == "FMS"
     assert ix_read.details["service"] == "FMS_Read"
     assert ix_read.details["rw"] == "read"
 
-    listener, ix_write = _feed({"hdr_srv_fms_service_id_confirm": "2"})  # FMS_Write
+    listener, ix_write = _feed({"hdr_srv_fms_service_id_confirm": "3"})  # FMS_Write
     assert ix_write.details["rw"] == "write"
     assert listener.sessions[(CLIENT_IP, SERVER_IP)].write_count == 1
 
 
-def test_fms_unconfirmed_information_report():
-    _, ix = _feed({"hdr_srv_fms_service_id_unconfirm": "1"})  # FMS_InformationReport
-    assert ix.details["service"] == "FMS_InformationReport"
+def test_fms_unconfirmed_unsolicited_status():
+    _, ix = _feed({"hdr_srv_fms_service_id_unconfirm": "1"})  # FMS_UnsolicitedStatus
+    assert ix.details["service"] == "FMS_UnsolicitedStatus"
 
 
 def test_lan_diagnostic_message():
     _, ix = _feed(
         {
-            "hdr_srv_lan_service_id_confirm": "4",  # LR_DiagnosticMsg
+            "hdr_srv_lan_service_id_unconfirm": "1",  # LR_DiagnosticMsg
             "lr_diagnostic_msg_req_dev_idx": "7",
             "lr_diagnostic_msg_req_pd_tag": "LR-1",
         }
@@ -282,7 +295,7 @@ def test_summary_contains_protocol_service_tag_detail():
             "fda_open_sess_req_sess_idx": "2",
         }
     )
-    assert ix.summary.startswith("FDA FDA_Open")
+    assert ix.summary.startswith("FDA FDA_OpenSession")
     assert "tag=TT-101" in ix.summary
     assert "session=2" in ix.summary
 
@@ -318,7 +331,7 @@ def test_devices_created_for_both_endpoints():
     dev = listener.discovered_devices[f"ff_hse:{CLIENT_IP}"]
     assert dev.device_type == "FF-HSE Device"
     assert dev.ff_hse_passive_data["protocol"] == "FOUNDATION Fieldbus HSE"
-    assert "FDA_Open" in dev.ff_hse_passive_data["services_seen"]
+    assert "FDA_OpenSession" in dev.ff_hse_passive_data["services_seen"]
 
 
 def test_invalid_endpoint_ip_is_skipped_in_device_discovery():
@@ -350,10 +363,10 @@ def test_device_name_uses_pd_tag_from_identify():
 def test_get_write_operations_filters_to_writers():
     listener = _make_listener()
     listener.process_packet(
-        _FakePacket(CLIENT_IP, SERVER_IP, {"hdr_srv_fda_service_id_confirm": "4"})  # write
+        _FakePacket(CLIENT_IP, SERVER_IP, {"hdr_srv_fms_service_id_confirm": "3"})  # write
     )
     listener.process_packet(
-        _FakePacket(CLIENT_IP, SERVER_IP, {"hdr_srv_fda_service_id_confirm": "3"})  # read
+        _FakePacket(CLIENT_IP, SERVER_IP, {"hdr_srv_fms_service_id_confirm": "2"})  # read
     )
     writes = listener.get_write_operations()
     assert len(writes) == 1
@@ -366,16 +379,16 @@ def test_get_sessions_summary_aggregates_services():
         _FakePacket(CLIENT_IP, SERVER_IP, {"hdr_srv_fda_service_id_confirm": "1"})  # FDA_Open
     )
     listener.process_packet(
-        _FakePacket(CLIENT_IP, SERVER_IP, {"hdr_srv_fms_service_id_confirm": "2"})  # FMS_Write
+        _FakePacket(CLIENT_IP, SERVER_IP, {"hdr_srv_fms_service_id_confirm": "3"})  # FMS_Write
     )
     summary = listener.get_sessions_summary()
     assert len(summary) == 1
     s = summary[0]
     assert s["client"] == CLIENT_IP
     assert s["server"] == SERVER_IP
-    assert set(s["services"]) == {"FDA_Open", "FMS_Write"}
+    assert set(s["services"]) == {"FDA_OpenSession", "FMS_Write"}
     assert s["write_count"] == 1
-    # FDA_Open does not count as a read (name lacks Read/Identify/FindTag).
+    # FDA_OpenSession does not count as a read (name lacks Read/Identify/FindTag).
     assert s["read_count"] == 0
 
 
@@ -389,6 +402,6 @@ def test_format_protocol_columns_matches_details():
     )
     cols = listener._format_protocol_columns(ix)
     assert cols[0] == "FDA"
-    assert cols[1] == "FDA_Open"
+    assert cols[1] == "FDA_OpenSession"
     assert cols[2] == "TT-101"
     assert "session=5" in cols[3]

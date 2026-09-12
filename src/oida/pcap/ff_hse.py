@@ -33,7 +33,7 @@ Key tshark fields:
 - ff.hdr_srv.confirm_flag: Confirmed flag (FT_BOOLEAN)
 - ff.hdr_srv.service_id: Service ID (FT_UINT8)
 - ff.hdr_srv.fda.service_id.confirm: FDA confirmed service (FT_UINT8)
-- ff.hdr_srv.fda.service_id.unconfirm: FDA unconfirmed service (FT_UINT8)
+  (no FDA unconfirmed service table is registered in tshark)
 - ff.hdr_srv.sm.service_id.confirm: SM confirmed service (FT_UINT8)
 - ff.hdr_srv.sm.service_id.unconfirm: SM unconfirmed service (FT_UINT8)
 - ff.hdr_srv.fms.service_id.confirm: FMS confirmed service (FT_UINT8)
@@ -67,73 +67,123 @@ from typing import Any, Dict, List, Optional, Set, Tuple
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
-# FDA confirmed service IDs
+# Service-ID tables below are taken verbatim from the registered Wireshark
+# value_strings, re-derived with:
+#   tshark -G values 2>/dev/null | grep -P '^V\tff\.hdr_srv\.'
+# (tshark 4.4.15). Do not hand-edit without re-checking against that output.
+
+# FDA confirmed service IDs (ff.hdr_srv.fda.service_id.confirm)
 FDA_CONFIRMED_SERVICES = {
-    1: "FDA_Open",
-    2: "FDA_Close",
-    3: "FDA_Read",
-    4: "FDA_Write",
-    6: "FDA_Idle",
-    10: "FDA_ReadWithSubindex",
-    11: "FDA_WriteWithSubindex",
-    16: "FDA_GenericOpen",
+    1: "FDA_OpenSession",
+    3: "FDA_Idle",
 }
 
-# FDA unconfirmed service IDs
-FDA_UNCONFIRMED_SERVICES = {
-    1: "FDA_Identify",
-}
+# FDA unconfirmed service IDs: tshark registers NO
+# ff.hdr_srv.fda.service_id.unconfirm value_string at all -- there is no FDA
+# unconfirmed service table.
+FDA_UNCONFIRMED_SERVICES: Dict[int, str] = {}
 
-# SM confirmed service IDs
+# SM confirmed service IDs (ff.hdr_srv.sm.service_id.confirm)
 SM_CONFIRMED_SERVICES = {
-    1: "SM_Identify",
-    2: "SM_FindTag",
-    5: "SM_ClearAddress",
-    6: "SM_SetAddress",
-    15: "SM_DeviceAnnunciation",
+    3: "SM_Identify",
+    12: "SM_ClearAddress",
+    14: "SM_SetAssignmentInfo",
+    15: "SM_ClearAssignmentInfo",
 }
 
-# SM unconfirmed service IDs
+# SM unconfirmed service IDs (ff.hdr_srv.sm.service_id.unconfirm)
 SM_UNCONFIRMED_SERVICES = {
     1: "SM_FindTagQuery",
     2: "SM_FindTagReply",
-    3: "SM_IdentifyRequest",
+    16: "SM_DeviceAnnunciation",
 }
 
-# FMS confirmed service IDs
+# FMS confirmed service IDs (ff.hdr_srv.fms.service_id.confirm)
 FMS_CONFIRMED_SERVICES = {
-    1: "FMS_Read",
-    2: "FMS_Write",
-    3: "FMS_DefineVFD",
-    4: "FMS_DeleteVFD",
-    6: "FMS_GetOD",
-    8: "FMS_Status",
-    9: "FMS_Identify",
-    10: "FMS_GenericRead",
-    11: "FMS_GenericWrite",
-    16: "FMS_EventNotification",
-    17: "FMS_AlterEventConditionMonitoring",
-    20: "FMS_ReadWithSubindex",
-    21: "FMS_WriteWithSubindex",
+    0: "FMS_Status",
+    1: "FMS_Identify",
+    2: "FMS_Read",
+    3: "FMS_Write",
+    4: "FMS_GetOD",
+    7: "FMS_DefineVariableList",
+    8: "FMS_DeleteVariableList",
+    9: "FMS_InitiateDownloadSequence",
+    10: "FMS_DownloadSegment",
+    11: "FMS_TerminateDownloadSequence",
+    12: "FMS_InitiateUploadSequence",
+    13: "FMS_UploadSegment",
+    14: "FMS_TerminateUploadSequence",
+    15: "FMS_RequestDomainDownload",
+    16: "FMS_RequestDomainUpload",
+    17: "FMS_CreateProgramInvocation",
+    18: "FMS_DeleteProgramInvocation",
+    19: "FMS_Start",
+    20: "FMS_Stop",
+    21: "FMS_Resume",
+    22: "FMS_Reset",
+    23: "FMS_Kill",
+    24: "FMS_AlterEventConditionMonitoring",
+    25: "FMS_AcknowledgeEventNotification",
+    28: "FMS_InitiatePutOD",
+    29: "FMS_PutOD",
+    30: "FMS_TerminatePutOD",
+    31: "FMS_GenericInitiateDownloadSequence",
+    32: "FMS_GenericDownloadSegment",
+    33: "FMS_GenericTerminateDownloadSequence",
+    82: "FMS_ReadWithSubindex",
+    83: "FMS_WriteWithSubindex",
+    96: "FMS_Initiate",
 }
 
-# FMS unconfirmed service IDs
+# FMS unconfirmed service IDs (ff.hdr_srv.fms.service_id.unconfirm)
 FMS_UNCONFIRMED_SERVICES = {
-    1: "FMS_InformationReport",
-    2: "FMS_UnsolicedStatus",
-    4: "FMS_EventNotificationUnconfirmed",
+    0: "FMS_InformationReport",
+    1: "FMS_UnsolicitedStatus",
+    2: "FMS_EventNotification",
+    16: "FMS_InformationReportWithSubindex",
+    17: "FMS_InformationReportOnChange",
+    18: "FMS_InformationReportOnChangeWithSubindex",
+    112: "FMS_Abort",
 }
 
-# LAN Redundancy service IDs
+# LAN Redundancy confirmed service IDs (ff.hdr_srv.lan.service_id.confirm)
 LAN_SERVICES = {
-    1: "LR_PutInfo",
-    2: "LR_GetInfo",
+    1: "LR_GetInfo",
+    2: "LR_PutInfo",
     3: "LR_GetStatistics",
-    4: "LR_DiagnosticMsg",
 }
 
-# Write/control services (security-relevant)
-FF_WRITE_SERVICES = {"FDA_Write", "FDA_WriteWithSubindex", "FMS_Write", "FMS_WriteWithSubindex"}
+# LAN Redundancy unconfirmed service IDs (ff.hdr_srv.lan.service_id.unconfirm)
+LAN_UNCONFIRMED_SERVICES = {
+    1: "LR_DiagnosticMsg",
+}
+
+# Write/control services (security-relevant), named by the tables above.
+FF_WRITE_SERVICES = {
+    "FMS_Write",
+    "FMS_WriteWithSubindex",
+    "FMS_PutOD",
+    "FMS_InitiatePutOD",
+    "FMS_TerminatePutOD",
+    "FMS_InitiateDownloadSequence",
+    "FMS_DownloadSegment",
+    "FMS_TerminateDownloadSequence",
+    "FMS_GenericInitiateDownloadSequence",
+    "FMS_GenericDownloadSegment",
+    "FMS_GenericTerminateDownloadSequence",
+    "FMS_RequestDomainDownload",
+    "FMS_Start",
+    "FMS_Stop",
+    "FMS_Resume",
+    "FMS_Reset",
+    "FMS_Kill",
+    "FMS_CreateProgramInvocation",
+    "FMS_DeleteProgramInvocation",
+    "SM_ClearAddress",
+    "SM_SetAssignmentInfo",
+    "SM_ClearAssignmentInfo",
+    "LR_PutInfo",
+}
 
 # Error classes (ff.*.err.err_class)
 FF_ERROR_CLASSES = {
@@ -358,7 +408,7 @@ class FFHSEPassiveListener(PySharkListenerBase):
             ("FDA", FDA_CONFIRMED_SERVICES, FDA_UNCONFIRMED_SERVICES),
             ("SM", SM_CONFIRMED_SERVICES, SM_UNCONFIRMED_SERVICES),
             ("FMS", FMS_CONFIRMED_SERVICES, FMS_UNCONFIRMED_SERVICES),
-            ("LAN", LAN_SERVICES, {}),
+            ("LAN", LAN_SERVICES, LAN_UNCONFIRMED_SERVICES),
         ):
             prefix = proto.lower()
             # Confirmed service
@@ -428,8 +478,13 @@ class FFHSEPassiveListener(PySharkListenerBase):
 
         if "Write" in svc_name:
             rw = "write"
-        elif "Read" in svc_name or "Open" in svc_name:
+        elif "Read" in svc_name:
             rw = "read"
+        # Session management services (FDA_OpenSession / FDA_CloseSession ...) are
+        # neither a read nor a write: they establish or tear down the connection.
+        # Labelling them "read" here contradicted the session accounting in
+        # process_packet(), which only counts Read/Identify/FindTag as reads, and
+        # leaked a bogus rw="read" column into the JSON/CSV export.
 
         return pd_tag, detail, rw
 
