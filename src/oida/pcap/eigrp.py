@@ -30,7 +30,8 @@ PyShark EIGRP field reference -- EK-mode names (packet.eigrp.*):
 - ack: Acknowledgment number (EK mode; XML mode: acknowledge)
 - vrid: Virtual Router ID
 - checksum: Checksum (EkMultiField)
-- checksum_status: Checksum verification status (1=good, 0=bad/unverified)
+- checksum_status: Checksum verification status
+  (tshark convention: 0=Bad, 1=Good, 2=Unverified, 3=Not present, 4=Illegal)
 - release_version: EIGRP release version (packed uint16)
 - tlv_version: TLV version (packed uint16)
 - par_k1..par_k6: K-values (Parameter TLV)
@@ -66,15 +67,21 @@ from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 EIGRP_PROTOCOL = 88
 EIGRP_MULTICAST = "224.0.0.10"
 
-# EIGRP opcodes
+# EIGRP opcodes -- verbatim from `tshark -G values | grep eigrp.opcode`.
+# 2/7/8/9 used to be missing entirely, so those packets rendered as
+# "Unknown(2)" / "Opcode_7" instead of their real names.
 EIGRP_OPCODES = {
     1: "Update",
+    2: "Request",
     3: "Query",
     4: "Reply",
     5: "Hello",
-    6: "IPX SAP",
-    10: "SIA Query",
-    11: "SIA Reply",
+    6: "IPX/SAP Update",
+    7: "Route Probe",
+    8: "Hello (Ack)",
+    9: "Stub-Info",
+    10: "SIA-Query",
+    11: "SIA-Reply",
 }
 
 # EIGRP TLV types
@@ -105,11 +112,19 @@ EIGRP_AUTH_TYPES = {
     3: "SHA-256",
 }
 
-# Checksum status values
+# Checksum status values (tshark -G values eigrp.checksum.status:
+# the standard checksum-status convention 0=Bad, 1=Good, 2=Unverified, ...).
+# Named status codes for the consumers below -- correcting the table alone is
+# not enough; the alert site used to test `== 2` (Unverified).
+CHECKSUM_STATUS_BAD = 0
+CHECKSUM_STATUS_NOT_PRESENT = 3
+
 EIGRP_CHECKSUM_STATUS = {
-    0: "Unverified",
+    0: "Bad",
     1: "Good",
-    2: "Bad",
+    2: "Unverified",
+    3: "Not present",
+    4: "Illegal",
 }
 
 
@@ -272,7 +287,14 @@ class EIGRPPassiveListener(PySharkListenerBase):
 
         # T1: eigrp.checksum + eigrp.checksum.status
         checksum_raw = self.get_field(eigrp, "checksum", "")
-        checksum_status = self._parse_int(self.get_field(eigrp, "checksum_status", "0"), 0)
+        # NB: 0 means "Bad", so an ABSENT field must NOT default to 0 or every
+        # capture without checksum validation would raise a forgery alert.
+        checksum_status_raw = self.get_field(eigrp, "checksum_status", None)
+        checksum_status = (
+            self._parse_int(checksum_status_raw, CHECKSUM_STATUS_NOT_PRESENT)
+            if checksum_status_raw is not None
+            else CHECKSUM_STATUS_NOT_PRESENT
+        )
         checksum_status_name = EIGRP_CHECKSUM_STATUS.get(
             checksum_status, f"Unknown({checksum_status})"
         )
@@ -422,7 +444,7 @@ class EIGRPPassiveListener(PySharkListenerBase):
                 route["external_data"] = extdata
 
         # Alert on bad checksum
-        if checksum_status == 2:  # Bad checksum
+        if checksum_status == CHECKSUM_STATUS_BAD:  # Bad checksum
             self._alerts.append(
                 {
                     "level": "fail",
