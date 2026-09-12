@@ -13,6 +13,7 @@ EtherCAT bridge operations are provided by EtherCATOpsMixin
 import ctypes
 import re
 import struct
+import threading
 from datetime import datetime
 from typing import Dict, Any
 
@@ -26,7 +27,6 @@ from ...utils import (
 )
 from ...utils.cli import run as cli_run
 from ...utils.exceptions import DependencyError
-from oida.utils.common_types import Category
 
 # ADS protocol constants (shared with passive listener)
 from .constants import (
@@ -62,6 +62,18 @@ from .ethercat_ops import EtherCATOpsMixin
 # allocation (self-DoS). Clamp to a plausible maximum, consistent with the
 # MAX_SLAVE_PORTS clamp in ethercat_ops.py.
 MAX_IO_DEVICES = 4096
+
+# pyads exposes a single PROCESS-GLOBAL TwinCAT message-router port via the
+# module-level open_port() / set_local_address() / close_port() API. The CLI
+# scans targets concurrently (ThreadPoolExecutor in cli.py), so without
+# serialization one thread's set_local_address()/close_port() races another
+# thread's in-flight connect() -- corrupting the global local AMS address or
+# tearing the shared router port down mid-handshake (a failed connect closing
+# the port out from under a live one). Serialize the whole connect handshake and
+# the paired close_port() cleanup on this lock. ADS scans are typically a handful
+# of PLCs, so serializing the brief handshake (each bounded by --timeout) is an
+# acceptable cost for correct, non-racy connections.
+_ADS_GLOBAL_PORT_LOCK = threading.RLock()
 
 protocol_options = {
     "netid-ext": {
@@ -179,56 +191,73 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
         """Establish ADS connection"""
         import concurrent.futures
 
-        try:
-            pyads = _get_pyads()
-
-            # Set local AMS Net ID
-            pyads.open_port()
-            pyads.set_local_address(self.local_netid)
-
-            # Create connection
-            ads_port = self._get_ads_port()
-            connection = pyads.Connection(self.ams_netid, ads_port)
-
-            # Use timeout for connection.open() as pyads can block indefinitely
-            timeout = self.timeout
-
-            def do_connect():
-                connection.open()
-
-            # Manage the executor explicitly rather than via `with`: its __exit__
-            # calls shutdown(wait=True), which would block until the (possibly
-            # stuck) open() returns, defeating the timeout this guard exists for.
-            # shutdown(wait=False) returns promptly; on timeout the worker thread
-            # and its stuck open()/connection are left to leak intentionally.
-            executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
-            future = executor.submit(do_connect)
+        # Serialize the whole handshake: set_local_address() writes the shared
+        # global local AMS address that Connection.open() then consumes, so a
+        # concurrent connect in another thread would overwrite it mid-open (and
+        # its close_port() would tear down the shared port). See
+        # _ADS_GLOBAL_PORT_LOCK. The handshake is bounded by --timeout, so a
+        # single stuck target holds the lock for at most that long.
+        with _ADS_GLOBAL_PORT_LOCK:
             try:
-                future.result(timeout=timeout)
-            except concurrent.futures.TimeoutError as e:
-                self.logger.debug("do connect failed: %s", e)
-                self.logger.fail(f"Connection timed out after {timeout}s")
-                pyads.close_port()
+                pyads = _get_pyads()
+
+                # Set local AMS Net ID
+                pyads.open_port()
+                pyads.set_local_address(self.local_netid)
+
+                # Create connection
+                ads_port = self._get_ads_port()
+                connection = pyads.Connection(self.ams_netid, ads_port)
+
+                # Use timeout for connection.open() as pyads can block indefinitely
+                timeout = self.timeout
+
+                def do_connect():
+                    connection.open()
+
+                # Manage the executor explicitly rather than via `with`: its __exit__
+                # calls shutdown(wait=True), which would block until the (possibly
+                # stuck) open() returns, defeating the timeout this guard exists for.
+                # shutdown(wait=False) returns promptly; on timeout the worker thread
+                # and its stuck open()/connection are left to leak intentionally.
+                executor = concurrent.futures.ThreadPoolExecutor(max_workers=1)
+                future = executor.submit(do_connect)
+                try:
+                    future.result(timeout=timeout)
+                except concurrent.futures.TimeoutError as e:
+                    self.logger.debug("do connect failed: %s", e)
+                    self.logger.fail(f"Connection timed out after {timeout}s")
+                    pyads.close_port()
+                    executor.shutdown(wait=False)
+                    return None
                 executor.shutdown(wait=False)
+
+                self.logger.display(f"Connected to {self.ams_netid} (AMS port {ads_port})")
+                return connection
+
+            except DependencyError:
+                raise
+            except Exception as e:
+                self.logger.debug("do connect failed: %s", e)
+                self.logger.fail(f"Connection failed: {e}")
+                # If open_port() succeeded but a later step (set_local_address /
+                # Connection) raised, the global AMS router port would leak; repeated
+                # failed connects in a threaded library context exhaust ports.
+                try:
+                    pyads.close_port()
+                except Exception as ce:
+                    self.logger.debug("close_port() after failed connect: %s", ce)
                 return None
-            executor.shutdown(wait=False)
-
-            self.logger.display(f"Connected to {self.ams_netid} (AMS port {ads_port})")
-            return connection
-
-        except DependencyError:
-            raise
-        except Exception as e:
-            self.logger.debug("do connect failed: %s", e)
-            self.logger.fail(f"Connection failed: {e}")
-            return None
 
     def disconnect(self, connection: Any) -> None:
         """Close ADS connection"""
         if connection:
+            # close_port() acts on the shared global router port, so take the
+            # same lock connect() uses to keep the teardown from racing another
+            # thread's in-flight handshake.
             try:
                 pyads = _get_pyads()
-                with _capture_pyads_stderr(self.logger):
+                with _ADS_GLOBAL_PORT_LOCK, _capture_pyads_stderr(self.logger):
                     connection.close()
                     pyads.close_port()
             except Exception as e:
@@ -914,8 +943,53 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
         return result
 
     def _parse_udp_response(self, data: bytes, device: Dict[str, Any]) -> None:
-        """Parse TLV tags from UDP discovery response."""
-        pos = 0
+        """Parse a UDP identify response body (everything after the 12-byte header).
+
+        Real layout (cross-checked against pyads ``adsGetNetIdForPLC`` and
+        ICSSecurityScripts BeckhoffScan.py), offsets relative to *data*:
+        -   0.. 6: device AMS NetID (6 bytes)
+        -   6.. 8: device AMS port (LE, typically 0x2710 = 10000)
+        -   8..14: static block
+        -  14..16: hostname length (LE, NUL included)
+        -  16..16+len: hostname + NUL
+        -  20+len: Windows kernel version (3 LE DWORDs), then TwinCAT version
+        -  later: <HH> TLV blocks (tag/len LE) — fingerprint etc.
+
+        The old implementation walked TLV tags from offset 0, misreading the
+        NetID + port as tag=0xA840/len=0x6401 and losing every field.
+        """
+        try:
+            # Fixed header: NetID at bytes 0..6 (pyads reads datagram[12:18],
+            # i.e. slice[0:6]) and AMS port at slice[6:8].
+            if len(data) >= 6:
+                device["netid"] = ".".join(str(b) for b in data[:6])
+
+            name_len = 0
+            if len(data) >= 16:
+                (name_len,) = struct.unpack_from("<H", data, 14)
+                hostname = data[16 : 16 + name_len].rstrip(b"\x00").decode(
+                    "utf-8", errors="ignore"
+                )
+                if hostname:
+                    device["hostname"] = hostname
+
+            # Fixed region after the hostname: reserved 4 bytes, Windows kernel
+            # version (3 LE DWORDs = the OS version), then TwinCAT version.
+            base = 16 + name_len + 4
+            if len(data) >= base + 12 and "os_version" not in device:
+                a, b, c = struct.unpack_from("<III", data, base)
+                if a and b < 100 and c < 100000:
+                    device["os_version"] = f"{a}.{b}.{c}"
+            tlv_start = base + 12
+            if len(data) >= tlv_start + 4 and "tc_version" not in device:
+                tc = data[tlv_start : tlv_start + 4]
+                device["tc_version"] = f"{tc[0]}.{tc[1]}.{struct.unpack('<H', tc[2:4])[0]}"
+            tlv_start += 4
+
+            pos = tlv_start
+        except Exception as e:
+            self.logger.debug("parse udp response failed: %s", e)
+            return
 
         while pos + 4 <= len(data):
             try:
@@ -1038,7 +1112,6 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
         issues.append("No authentication mechanism (ADS protocol limitation)")
         self.logger.security_finding(
             "No authentication",
-            category=Category.AUTHENTICATION,
             detail="ADS protocol has no authentication mechanism",
         )
 
@@ -1048,14 +1121,12 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
             issues.append("Weak encryption: TwinCAT 3.x uses static encryption key")
             self.logger.security_finding(
                 "Insecure configuration",
-                category=Category.CONFIGURATION,
                 detail="TwinCAT 3.x credential encryption uses static key - traffic decryptable",
             )
             # Credential sniffing possible
             issues.append("Credentials can be sniffed and decrypted")
             self.logger.security_finding(
                 "[CREDENTIALS] Credential exposure",
-                category=Category.INFO_DISCLOSURE,
                 detail="Login credentials use static encryption key - sniffing/replay attacks possible",
             )
         else:
@@ -1063,7 +1134,6 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
             issues.append("No encryption support (TwinCAT 2.x clear text protocol)")
             self.logger.security_finding(
                 "No encryption",
-                category=Category.ENCRYPTION,
                 detail="TwinCAT 2.x communicates in clear text",
             )
 
@@ -1071,14 +1141,12 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
             issues.append(f"{readable_count} symbols readable without authentication")
             self.logger.security_finding(
                 "Anonymous access allowed",
-                category=Category.AUTHENTICATION,
                 detail=f"{readable_count} symbols readable without authentication",
             )
         if writable_count > 0:
             issues.append(f"{writable_count} symbols writable without authentication")
             self.logger.security_finding(
                 "Writable access",
-                category=Category.ACCESS_CONTROL,
                 detail=f"{writable_count} symbols writable without authentication",
             )
         if accessible_memory > 0:
@@ -1091,8 +1159,8 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
             # correct class and a unique key.
             self.logger.security_finding(
                 "Insecure configuration",
-                category=Category.ACCESS_CONTROL,
                 detail=f"{accessible_memory} memory areas directly accessible",
+                category="ACCESS_CONTROL",
             )
 
         analysis = SecurityAnalyzer.assess_protocol_security(

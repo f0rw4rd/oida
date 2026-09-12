@@ -109,11 +109,6 @@ ADS_IDX_GRP: Dict[str, int] = {
     "IOIMAGE_CREATE": 0xF068,  # Create I/O image
     # Device information
     "DEV_DATA": 0xF100,
-    # Device data sub-offsets (used with DEV_DATA)
-    "DEV_DATA_ADSSTATE": 0x0000,  # ADS state (2 bytes)
-    "DEV_DATA_DEVSTATE": 0x0002,  # Device state (2 bytes)
-    "DEV_DATA_CONFIGID": 0x0004,  # Config ID (1 byte)
-    "DEV_DATA_ADSVERSIONCHECK": 0x0005,  # ADS version check (1 byte)
     # Task data (reserved range 0xF200-0xF2FF)
     "TASK_DATA": 0xF200,
     # License service (port 30)
@@ -154,7 +149,20 @@ ADS_IDX_GRP: Dict[str, int] = {
     "COE_ENTRY_DESC": 0xF3FE,  # CoE entry description
 }
 
-# Reverse lookup: int → name (for decoding captured packets)
+# Device data sub-offsets (index *offsets* used with DEV_DATA's index
+# *group* 0xF100 -- these are NOT index groups themselves and must stay out
+# of ADS_IDX_GRP / its reverse map, or they collide with real low-valued
+# index groups such as HW_ACCESS=0x05).
+ADS_DEV_DATA_OFFSETS: Dict[str, int] = {
+    "DEV_DATA_ADSSTATE": 0x0000,  # ADS state (2 bytes)
+    "DEV_DATA_DEVSTATE": 0x0002,  # Device state (2 bytes)
+    "DEV_DATA_CONFIGID": 0x0004,  # Config ID (1 byte)
+    "DEV_DATA_ADSVERSIONCHECK": 0x0005,  # ADS version check (1 byte)
+}
+
+# Reverse lookup: int → name (for decoding captured packets).  Built only
+# from true index groups -- see ADS_DEV_DATA_OFFSETS above for why the
+# DEV_DATA sub-offsets are excluded.
 ADS_IDX_GRP_NAMES: Dict[int, str] = {v: k for k, v in ADS_IDX_GRP.items()}
 
 # ---------------------------------------------------------------------------

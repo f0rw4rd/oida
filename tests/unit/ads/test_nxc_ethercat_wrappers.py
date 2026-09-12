@@ -23,9 +23,7 @@ from oida.protocols.ads.cli_runner import ads as AdsClass
 def _make_ads_instance(**overrides):
     """Build an ads NXC instance with proto_flow + base __init__ neutralised."""
     with patch("oida.protocols.ads.cli_runner.ads.proto_flow"):
-        with patch(
-            "oida.protocols.ads.cli_runner.NetworkConnection.__init__", return_value=None
-        ):
+        with patch("oida.protocols.ads.cli_runner.NetworkConnection.__init__", return_value=None):
             obj = AdsClass.__new__(AdsClass)
             obj.protocol_name = "ADS"
             obj.default_port = 48898

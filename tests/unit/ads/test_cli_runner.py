@@ -24,9 +24,7 @@ def _make_ads_instance(**overrides):
     to avoid any real initialization.
     """
     with patch("oida.protocols.ads.cli_runner.ads.proto_flow"):
-        with patch(
-            "oida.protocols.ads.cli_runner.NetworkConnection.__init__", return_value=None
-        ):
+        with patch("oida.protocols.ads.cli_runner.NetworkConnection.__init__", return_value=None):
             from oida.protocols.ads.cli_runner import ads as AdsClass
 
             obj = AdsClass.__new__(AdsClass)
@@ -650,12 +648,16 @@ class TestADSConstants(unittest.TestCase):
     def test_ads_idx_grp_names_reverse_lookup(self):
         """Each code in ADS_IDX_GRP_NAMES should map back to a valid key name.
 
-        Note: multiple names can share the same int value (e.g. 0x05 is used
-        by both HW_ACCESS and DEV_DATA_ADSVERSIONCHECK), so the reverse dict
-        only keeps the last-inserted name. We verify each reverse entry
-        exists as a key in the forward dict.
+        DEV_DATA_* entries are index *offsets* used together with the
+        DEV_DATA index *group* (0xF100), not index groups themselves, so
+        they live in ADS_DEV_DATA_OFFSETS and are excluded from ADS_IDX_GRP
+        / its reverse map. That keeps HW_ACCESS (0x05) unambiguous instead
+        of colliding with DEV_DATA_ADSVERSIONCHECK (also 0x05).
         """
         from oida.protocols.ads.constants import ADS_IDX_GRP, ADS_IDX_GRP_NAMES
+
+        self.assertNotIn("DEV_DATA_ADSSTATE", ADS_IDX_GRP)
+        self.assertEqual(ADS_IDX_GRP_NAMES.get(0x05), "HW_ACCESS")
 
         for code, name in ADS_IDX_GRP_NAMES.items():
             self.assertIn(name, ADS_IDX_GRP)

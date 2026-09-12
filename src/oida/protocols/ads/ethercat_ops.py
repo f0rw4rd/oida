@@ -2044,6 +2044,9 @@ class EtherCATOpsMixin:
                         self.logger.display(
                             f"    Port {port}: SoE not supported (AMS router zero-fill detected)"
                         )
+                        # Record the probed port (empty) so it doesn't vanish from
+                        # the output, unlike sibling scanners which record every port.
+                        results[port] = {}
                         continue
                 except RuntimeError as e:
                     self.logger.debug(
@@ -2059,6 +2062,8 @@ class EtherCATOpsMixin:
                         )
                     else:
                         self.logger.display(f"    Port {port}: SoE probe failed ({e})")
+                    # Record the probed port (empty) so it doesn't vanish.
+                    results[port] = {}
                     continue
 
                 progress = ProgressTracker(

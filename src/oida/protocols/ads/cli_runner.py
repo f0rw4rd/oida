@@ -170,7 +170,18 @@ class ads(NetworkConnection):
             self.logger.display(f"State: {state_info['ads_state_name']}")
 
     def _execute_operations(self):
-        """Execute operations based on CLI flags"""
+        """Execute operations based on CLI flags.
+
+        NOTE: proto_flow() runs validate_args() first, which already aborts for
+        every flag in _CONFIRM_REQUIRED_FLAGS when --confirm is absent. The
+        per-operation inline `if not confirm: fail` checks below are therefore
+        redundant defense-in-depth for these destructive ops (they never take
+        their fail branch in normal flow) -- kept intentionally so a direct
+        library call to this method still cannot mutate a device without
+        --confirm. validate_args() is the single source of truth for the policy;
+        keep the two in sync. (--test-write is the one legitimately inline-only
+        gate, as it is not in _CONFIRM_REQUIRED_FLAGS.)
+        """
         if not self.conn:
             return
 
@@ -2008,7 +2019,7 @@ class ads(NetworkConnection):
             )
 
     def _get_slave_ports(self):
-        """Get EtherCAT slave ports, respecting -P for single-port targeting.
+        """Get EtherCAT slave ports, respecting --ads-port for single-port targeting.
 
         Returns list of ports, or None on failure.
         Also stores the full scan result in self._ethercat_scan for slave

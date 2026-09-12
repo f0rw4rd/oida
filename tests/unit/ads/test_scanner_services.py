@@ -496,17 +496,31 @@ class FakeUDPSocket:
 
 
 def _build_udp_response(hostname="CX-012345", netid="192.168.1.100.1.1"):
-    """Build a Beckhoff UDP identify reply: magic header + TLV tags."""
+    """Build a Beckhoff UDP identify reply in the real wire layout.
+
+    Layout cross-checked against pyads ``adsGetNetIdForPLC`` (NetID at bytes
+    12-18, response flag 0x80 at byte 11) and ICSSecurityScripts
+    BeckhoffScan.py ``getDevices`` (hostname length LE16 at bytes 26-28,
+    hostname at byte 28, kernel/TC-version fixed fields, then <HH> TLV
+    blocks). The old helper emitted header + bare TLVs, which no real device
+    sends.
+    """
     header = struct.pack("<III", ADS_UDP_MAGIC, 1, 0x80000001)
 
     def tlv(tag, payload):
         return struct.pack("<HH", tag, len(payload)) + payload
 
+    nid = bytes(int(x) for x in netid.split("."))
+    name = hostname.encode() + b"\x00"
     body = b""
-    body += tlv(ADS_UDP_TAG["HOSTNAME"], hostname.encode() + b"\x00")
-    body += tlv(ADS_UDP_TAG["NETID"], bytes(int(x) for x in netid.split(".")))
-    body += tlv(ADS_UDP_TAG["TC_VERSION"], struct.pack("<BBH", 3, 1, 4024))
-    body += tlv(ADS_UDP_TAG["OS_VERSION"], b"Win10\x00")
+    body += nid  # [12:18] device AMS NetID (fixed position)
+    body += struct.pack("<H", 10000)  # [18:20] device AMS port
+    body += b"\x00\x00\x00\x0c\x00\x00"  # [20:26] static block
+    body += struct.pack("<H", len(name))  # [26:28] hostname length
+    body += name  # [28:..] hostname + NUL
+    body += b"\x00\x00\x00\x00"  # reserved
+    body += struct.pack("<III", 10, 0, 19041)  # kernel 10.0.19041
+    body += struct.pack("<BBH", 3, 1, 4024)  # TwinCAT version
     body += tlv(ADS_UDP_TAG["FINGERPRINT"], b"\xab\xcd")
     return header + body
 
@@ -528,7 +542,9 @@ class TestUDPDiscovery(unittest.TestCase):
         self.assertEqual(dev["hostname"], "CX-012345")
         self.assertEqual(dev["netid"], "192.168.1.100.1.1")
         self.assertEqual(dev["tc_version"], "3.1.4024")
-        self.assertEqual(dev["os_version"], "Win10")
+        # OS version comes from the fixed-position kernel triple (10.0.19041),
+        # matching BeckhoffScan.py's WINVER parsing of a real reply.
+        self.assertEqual(dev["os_version"], "10.0.19041")
         self.assertEqual(dev["fingerprint"], "abcd")
         # The identify request carried the Beckhoff magic
         sent_data, _dest = fake.sent[0]

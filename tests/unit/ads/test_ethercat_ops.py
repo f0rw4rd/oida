@@ -851,8 +851,11 @@ class TestSoEScan(unittest.TestCase):
         obj, fake, pyads_mod = _make_mixin(read_map=read_map)
         with _patch_pyads(pyads_mod):
             results = obj._scan_soe_via_ads([port])
-        # Router zero-fill short-circuits the port loop before recording any IDNs.
-        self.assertNotIn(port, results)
+        # Router zero-fill records the probed port with no IDNs (kept in the
+        # output so the port doesn't vanish), unlike a real SoE slave which
+        # lists decoded IDNs.
+        self.assertIn(port, results)
+        self.assertEqual(results[port], {})
 
     def test_scan_soe_reads_idns(self):
         """Real SoE: probe short-reads, IDN values + names decoded for present IDNs."""

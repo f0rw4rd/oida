@@ -40,7 +40,10 @@ def proto_args(parser, parents):
     add_network_options(
         ads_parser,
         default_port=48898,
-        include_timeout=False,
+        include_timeout=True,
+        default_timeout=5,
+        timeout_help="TCP connect timeout in seconds (default: 5). ADS operation "
+        "timeout is set separately via --ads-timeout.",
         port_help="ADS TCP port (default: 48898)",
     )
 
@@ -94,7 +97,6 @@ def proto_args(parser, parents):
     )
 
     ads_group.add_argument(
-        "-P",
         "--ads-port",
         type=int,
         metavar="PORT",
