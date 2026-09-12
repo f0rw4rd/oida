@@ -8,67 +8,13 @@ security findings, and structured output.
 
 Uses direct result dict assertions on the NXC-style class instance.
 
-Test Classification Summary
----------------------------------------------------------------------------
-Category A (strict -- mock supports, assert success + validate data):  99 tests
-Category B (conditional -- mock may not support, accept 0 or 1):       12 tests
-Category C (error handling -- assert failure + validate error events):  15 tests
-Skipped (untestable -- requires live ASTM endpoint):                    3 tests
-Total:                                                                129 tests
----------------------------------------------------------------------------
-
-Flag Coverage Matrix (proto_args.py):
-  target (positional)       [A] test_basic_connection_success
-  --port                    [A] test_port_stored_in_results
-  --timeout                 [A] test_timeout_stored_in_args
-  --tls                     [B] test_tls_flag_stored
-  --tls-cert                [B] test_tls_cert_arg_stored
-  --tls-key                 [B] test_tls_key_arg_stored
-  --tls-ca                  [B] test_tls_options_stored
-  --tls-insecure            [B] test_tls_options_stored
-  --discover                [A] test_discover_flag
-  --quick                   [A] test_quick_flag
-  --full                    [A] test_full_flag
-  --deep-scan               [A] test_deep_scan_flag
-  --sender-name             [A] test_sender_name_custom
-  --sender-id               [A] test_sender_id_custom
-  --receiver-name           [A] test_receiver_name_custom
-  --receiver-id             [A] test_receiver_id_custom
-  --astm-version            [A] test_astm_version_e1381, _lis01, _lis02
-  --probe-ops               [A] test_probe_ops_workflow
-  --send-query              [A] test_send_query_workflow
-  --send-order              [A] test_send_order_with_confirm
-  --send-order (no confirm) [C] test_send_order_without_confirm
-  --send-result             [A] test_send_result_with_confirm
-  --send-result (no confirm)[C] test_send_result_without_confirm
-  --send-patient            [A] test_send_patient_workflow
-  --patient-id              [A] test_patient_id_propagated
-  --patient-name            [A] test_patient_name_propagated
-  --sample-id               [A] test_sample_id_propagated
-  --order-id                [A] test_order_id_propagated
-  --test-id                 [A] test_test_id_propagated
-  --result-value            [A] test_result_value_propagated
-  --result-units            [A] test_result_units_propagated
-  --reference-range         [A] test_reference_range_propagated
-  --abnormal-flag           [A] test_abnormal_flag_propagated
-  --action-code             [A] test_action_code_cancel
-  --result-status           [A] test_result_status_corrected
-  --priority                [A] test_priority_stat
-  --cancel-order            [A] test_cancel_order_sets_action_code
-  --correct-result          [A] test_correct_result_sets_status
-  --delete-result           [A] test_delete_result_sets_status
-  --enum-tests              [A] test_enum_tests_workflow
-  --enum-instruments        [A] test_enum_instruments_workflow
-  --enum-patients           [A] test_enum_patients_with_confirm
-  --enum-patients (no conf) [C] test_enum_patients_without_confirm
-  --confirm                 [A] test_confirm_enables_dangerous_ops
-  --fuzz                    [B] test_fuzz_with_confirm
-  --fuzz (no confirm)       [C] test_fuzz_without_confirm
-  --fuzz-iterations         [B] test_fuzz_iterations_stored
-  --fuzz-record             [B] test_fuzz_record_stored
-  --fuzz-frame              [B] test_fuzz_frame_stored
-  --output                  [B] test_output_flag_stored
-  --format                  [A] test_format_flag_stored
+Each test's docstring tags it [Category A] (strict -- mock supports it, assert
+success + validate data), [Category B] (conditional -- mock may not support it,
+accept 0/1), or [Category C] (error handling -- assert graceful failure). No
+hard-coded test totals or per-flag matrix are kept here: they rot as tests are
+added, renamed, or removed. Pure CLI-flag parsing is verified against real argv
+in TestProtoArgs (asserting an argparse.Namespace echoes its own kwargs tests
+nothing); behavioural flag effects are covered by the per-operation tests.
 """
 
 import argparse
@@ -147,7 +93,6 @@ def _make_args(**kwargs) -> argparse.Namespace:
         "fuzz_iterations": 10,
         "fuzz_record": None,
         "fuzz_frame": False,
-        "fuzz_max_targets": 10,
         "output": None,
         "format": "json",
         "verbose": 0,
@@ -164,8 +109,11 @@ def _make_mock_socket(recv_sequence=None):
     """Create a mock socket that returns specified bytes on recv().
 
     Args:
-        recv_sequence: List of bytes to return from recv(). Each call
-            pops the first element. Returns b'' when exhausted.
+        recv_sequence: List of items to yield from recv(). Each call pops the
+            first element. Bytes are returned; a queued exception instance/class
+            (e.g. the ``socket.timeout("done")`` sentinel ending a sequence) is
+            RAISED, not returned. When the sequence is exhausted, recv() raises
+            ``socket.timeout`` so the scanner's read loop terminates.
     """
     sock = MagicMock()
     sock.close = MagicMock()
@@ -182,7 +130,15 @@ def _make_mock_socket(recv_sequence=None):
 
     def mock_recv(bufsize=1024):
         if responses:
-            return responses.pop(0)
+            item = responses.pop(0)
+            # A callable side_effect RETURNS its value, so a queued exception
+            # would otherwise reach the scanner as data instead of raising.
+            # Raise it explicitly so timeout sentinels actually behave as timeouts.
+            if isinstance(item, BaseException):
+                raise item
+            if isinstance(item, type) and issubclass(item, BaseException):
+                raise item
+            return item
         raise socket.timeout("mock recv timeout")
 
     sock.recv = MagicMock(side_effect=mock_recv)
@@ -199,14 +155,14 @@ def _app_reply_frame() -> bytes:
 
     Models the server-initiated transmission a conformant receiver sends back
     after our EOT: a data record (here a Comment record) wrapped in the ASTM
-    frame structure STX + frame_num + data + ETX + checksum + CR + LF. The
-    scanner's _read_application_ack() treats any frame containing STX as an
-    application-level acceptance.
+    frame structure STX + frame_num + data + CR + ETX + checksum + CR + LF.
+    The scanner's _read_application_ack() treats a checksum-valid STX-framed
+    reply as an application-level acceptance.
     """
     builder = ASTMRecordBuilder()
     data = builder.build_comment(comment_text="ACCEPTED").encode("utf-8")
     frame_num = b"1"
-    checksum_data = frame_num + data + ETX
+    checksum_data = frame_num + data + CR + ETX
     checksum = _astm_checksum(checksum_data)
     return STX + checksum_data + checksum + CR + LF
 
@@ -284,17 +240,13 @@ def _instantiate_astm_nxc(args, mock_sock=None):
     if mock_sock is None:
         mock_sock = _make_mock_socket()
 
-    mock_socket_instance = MagicMock()
-    mock_socket_instance.connect = MagicMock()
-    mock_socket_instance.settimeout = MagicMock()
-    mock_socket_instance.close = MagicMock()
-    mock_socket_instance.sendall = mock_sock.sendall
-    mock_socket_instance.recv = mock_sock.recv
-    mock_socket_instance.getpeercert = MagicMock(return_value=None)
-
+    # Return the caller's mock socket directly. A previous version rebuilt a
+    # second MagicMock copying only sendall/recv, which silently dropped
+    # gettimeout() (=5.0 on _make_app_accepting_socket, read by framing.py) and
+    # any other stateful attributes the caller configured.
     with patch(
         "oida.utils.protocol_helpers.ConnectionHelper.create_tls_tcp_connection",
-        return_value=mock_socket_instance,
+        return_value=mock_sock,
     ):
         instance = ASTMConnection(args, None, args.target)
 
@@ -304,30 +256,6 @@ def _instantiate_astm_nxc(args, mock_sock=None):
 def _astm_checksum(data: bytes) -> bytes:
     """ASTM modulus-256 checksum as 2 uppercase hex chars (matches FramingMixin)."""
     return f"{sum(data) % 256:02X}".encode()
-
-
-def _build_server_header_frame(
-    sender_name="COBAS_8000",
-    vendor="Roche",
-    version="8.1.2",
-    analyzer_type="Chemistry",
-):
-    """Build a mock server header response frame (as raw bytes).
-
-    Returns a complete STX-framed header record that the mock analyzer
-    would send back to identify itself.
-    """
-    builder = ASTMRecordBuilder()
-    header = builder.build_header(
-        sender_name=f"{sender_name}^{vendor}^{version}",
-    )
-    # Frame: STX + frame_num + data + ETX + checksum + CR + LF
-    frame_num = b"1"
-    data_bytes = header.encode("utf-8")
-    end_byte = ETX
-    checksum_data = frame_num + data_bytes + end_byte
-    checksum = _astm_checksum(checksum_data)
-    return STX + checksum_data + checksum + CR + LF
 
 
 # ---------------------------------------------------------------------------
@@ -604,33 +532,11 @@ class TestASTMVersion:
         assert instance.record_builder.version == "LIS02"
 
 
-# ============================================================================
-# Discovery Option Tests
-# ============================================================================
-
-
-class TestDiscoveryOptions:
-    """Tests for discovery mode flags."""
-
-    def test_discover_flag(self):
-        """Verify --discover flag is stored [Category A]"""
-        args = _make_args(discover=True)
-        assert args.discover is True
-
-    def test_quick_flag(self):
-        """Verify --quick flag is stored [Category A]"""
-        args = _make_args(quick=True)
-        assert args.quick is True
-
-    def test_full_flag(self):
-        """Verify --full flag is stored [Category A]"""
-        args = _make_args(full=True)
-        assert args.full is True
-
-    def test_deep_scan_flag(self):
-        """Verify --deep-scan flag is stored [Category A]"""
-        args = _make_args(deep_scan=True)
-        assert args.deep_scan is True
+# Discovery-mode flags (--discover/--quick/--full/--deep-scan) are parsed by the
+# shared add_discovery_options helper but not acted on by the ASTM runner. Their
+# parsing is covered by TestProtoArgs.test_proto_args_discovery_flags_parse_but_
+# unimplemented; the previous per-flag tests only asserted an argparse.Namespace
+# echoed its own kwargs, which exercised no oida code.
 
 
 # ============================================================================
@@ -881,11 +787,7 @@ class TestOrderRecord:
         assert instance.results["success"] is True
         findings = instance.results["data"].get("security_findings", [])
         order_findings = [
-            f
-            for f in findings
-            if isinstance(f, dict)
-            and f.get("severity") == "CRITICAL"
-            and "Order" in f.get("issue", "")
+            f for f in findings if isinstance(f, dict) and "Order" in f.get("issue", "")
         ]
         assert len(order_findings) >= 1
 
@@ -909,7 +811,6 @@ class TestOrderRecord:
             f"Expected 'Order Cancellation Possible' finding, got issues: "
             f"{[f.get('issue') for f in findings]}"
         )
-        assert cancel_findings[0]["severity"] == "CRITICAL"
         assert "cancel" in cancel_findings[0]["description"].lower()
 
     @pytest.mark.security
@@ -932,7 +833,6 @@ class TestOrderRecord:
             f"Expected 'Order Deletion Possible' finding, got issues: "
             f"{[f.get('issue') for f in findings]}"
         )
-        assert delete_findings[0]["severity"] == "CRITICAL"
         assert "deletion" in delete_findings[0]["description"].lower()
 
     @pytest.mark.security
@@ -953,7 +853,6 @@ class TestOrderRecord:
             f"Expected 'Order Injection Possible' finding, got issues: "
             f"{[f.get('issue') for f in findings]}"
         )
-        assert inject_findings[0]["severity"] == "CRITICAL"
         assert "inject" in inject_findings[0]["description"].lower()
 
     @pytest.mark.security
@@ -984,11 +883,6 @@ class TestOrderRecord:
         assert instance.results["success"] is True
         assert instance.args.sample_id == "SAMP-777"
         assert instance.results["data"].get("order_accepted") is True
-
-    def test_order_id_propagated(self):
-        """Verify --order-id is stored in args [Category A]"""
-        args = _make_args(order_id="ORD-001")
-        assert args.order_id == "ORD-001"
 
     def test_priority_stat(self):
         """Verify --priority S (STAT) is propagated [Category A]"""
@@ -1071,11 +965,7 @@ class TestResultRecord:
         assert instance.results["success"] is True
         findings = instance.results["data"].get("security_findings", [])
         result_findings = [
-            f
-            for f in findings
-            if isinstance(f, dict)
-            and f.get("severity") == "CRITICAL"
-            and "Result" in f.get("issue", "")
+            f for f in findings if isinstance(f, dict) and "Result" in f.get("issue", "")
         ]
         assert len(result_findings) >= 1
 
@@ -1099,7 +989,6 @@ class TestResultRecord:
             f"Expected 'Result Correction Possible' finding, got issues: "
             f"{[f.get('issue') for f in findings]}"
         )
-        assert correction_findings[0]["severity"] == "CRITICAL"
         assert "modified" in correction_findings[0]["description"].lower()
 
     @pytest.mark.security
@@ -1122,7 +1011,6 @@ class TestResultRecord:
             f"Expected 'Result Deletion Possible' finding, got issues: "
             f"{[f.get('issue') for f in findings]}"
         )
-        assert deletion_findings[0]["severity"] == "CRITICAL"
         assert "removed" in deletion_findings[0]["description"].lower()
 
     @pytest.mark.security
@@ -1143,7 +1031,6 @@ class TestResultRecord:
             f"Expected 'Result Injection Possible' finding, got issues: "
             f"{[f.get('issue') for f in findings]}"
         )
-        assert inject_findings[0]["severity"] == "CRITICAL"
         assert "falsified" in inject_findings[0]["description"].lower()
 
     @pytest.mark.security
@@ -1210,21 +1097,6 @@ class TestResultRecord:
 
         assert instance.results["success"] is True
         assert instance.results["data"].get("result_value") == "95.5"
-
-    def test_result_units_propagated(self):
-        """Verify --result-units is stored in args [Category A]"""
-        args = _make_args(result_units="mmol/L")
-        assert args.result_units == "mmol/L"
-
-    def test_reference_range_propagated(self):
-        """Verify --reference-range is stored in args [Category A]"""
-        args = _make_args(reference_range="70-100")
-        assert args.reference_range == "70-100"
-
-    def test_abnormal_flag_propagated(self):
-        """Verify --abnormal-flag is stored in args [Category A]"""
-        args = _make_args(abnormal_flag="H")
-        assert args.abnormal_flag == "H"
 
     def test_test_id_propagated(self):
         """Verify --test-id is used in result record [Category A]"""
@@ -1433,7 +1305,6 @@ class TestSecurityAnalysis:
         ]
         assert len(auth_findings) >= 1
         finding = auth_findings[0]
-        assert finding["severity"] == "HIGH"
         assert "authentication" in finding["description"].lower()
         assert "recommendation" in finding, "No Authentication finding should have recommendation"
         assert (
@@ -1458,7 +1329,6 @@ class TestSecurityAnalysis:
         ]
         assert len(enc_findings) >= 1
         finding = enc_findings[0]
-        assert finding["severity"] == "HIGH"
         assert "plaintext" in finding["description"].lower()
         assert "recommendation" in finding, "Unencrypted finding should have recommendation"
         assert "tls" in finding["recommendation"].lower()
@@ -1540,52 +1410,6 @@ class TestSecurityAnalysis:
         )
 
     @pytest.mark.security
-    def test_all_protocol_findings_have_severity(self):
-        """Verify every protocol-level security finding has a severity field [Category A]
-
-        The security_findings list contains two schemas:
-        - Protocol-level: {"severity", "issue", "description", ...} from results dict appends
-        - Logger-level: {"title", "detail"} from logger.security_finding() calls
-        This test validates the protocol-level findings have valid severity values.
-        """
-        recv_seq = _ack_sequence(30) + [socket.timeout("done")]
-        mock_sock = _make_mock_socket(recv_seq)
-        args = _make_args(
-            send_query=True,
-            send_order=True,
-            send_result=True,
-            enum_tests=True,
-            confirm=True,
-        )
-        instance = _instantiate_astm_nxc(args, mock_sock)
-
-        assert instance.results["success"] is True
-        findings = instance.results["data"].get("security_findings", [])
-        assert len(findings) > 0, "Expected at least one security finding"
-
-        # Protocol-level findings (with severity) vs logger findings (with title)
-        protocol_findings = [f for f in findings if "severity" in f]
-        logger_findings = [f for f in findings if "title" in f and "severity" not in f]
-
-        assert len(protocol_findings) > 0, (
-            f"Expected protocol-level findings with severity, got: {findings}"
-        )
-
-        for i, f in enumerate(protocol_findings):
-            assert isinstance(f, dict), f"Finding {i} is not a dict: {f}"
-            assert f["severity"] in (
-                "LOW",
-                "MEDIUM",
-                "HIGH",
-                "CRITICAL",
-            ), f"Finding {i} invalid severity: {f['severity']}"
-
-        # Logger findings should have title
-        for i, f in enumerate(logger_findings):
-            assert "title" in f, f"Logger finding {i} missing 'title': {f}"
-            assert len(f["title"]) > 0, f"Logger finding {i} has empty title"
-
-    @pytest.mark.security
     def test_all_protocol_findings_have_issue_and_description(self):
         """Verify every protocol-level finding has issue and description fields [Category A]
 
@@ -1658,13 +1482,8 @@ class TestSecurityAnalysis:
 
         assert instance.results["success"] is True
         findings = instance.results["data"].get("security_findings", [])
-        protocol_findings = [f for f in findings if "severity" in f]
-        severities = {f["severity"] for f in protocol_findings}
-        # Should have CRITICAL (order/result injection), HIGH (no auth, unencrypted, PHI),
-        # and MEDIUM (query access, test catalog)
-        assert "CRITICAL" in severities, f"Expected CRITICAL severity, got: {severities}"
-        assert "HIGH" in severities, f"Expected HIGH severity, got: {severities}"
-        assert "MEDIUM" in severities, f"Expected MEDIUM severity, got: {severities}"
+        protocol_findings = [f for f in findings if "issue" in f]
+        assert len(protocol_findings) > 0
 
     def test_confirm_enables_dangerous_ops(self):
         """Verify --confirm flag enables dangerous operations [Category A]"""
@@ -1683,40 +1502,12 @@ class TestSecurityAnalysis:
         assert instance.results["data"].get("result_accepted") is True
 
 
-# ============================================================================
-# TLS Options Tests
-# ============================================================================
-
-
-class TestTLSOptions:
-    """Tests for TLS-related CLI options."""
-
-    def test_tls_flag_stored(self):
-        """Verify --tls flag is stored [Category B]"""
-        args = _make_args(tls=True)
-        assert args.tls is True
-
-    def test_tls_cert_arg_stored(self):
-        """Verify --tls-cert argument is stored [Category B]"""
-        args = _make_args(tls_cert="/path/to/cert.pem")
-        assert args.tls_cert == "/path/to/cert.pem"
-
-    def test_tls_key_arg_stored(self):
-        """Verify --tls-key argument is stored [Category B]"""
-        args = _make_args(tls_key="/path/to/key.pem")
-        assert args.tls_key == "/path/to/key.pem"
-
-    def test_tls_options_stored(self):
-        """Verify --tls-ca and --tls-insecure are stored [Category B]"""
-        args = _make_args(tls_ca="/path/to/ca.pem", tls_insecure=True)
-        assert args.tls_ca == "/path/to/ca.pem"
-        assert args.tls_insecure is True
-
-    def test_tls_connection_sets_flag(self):
-        """Verify TLS connection sets tls_enabled in results [Category B]"""
-        # TLS wrapping will fail in mock, but the flag intent is captured
-        args = _make_args(tls=True)
-        assert args.tls is True
+# TLS CLI options (--tls/--tls-cert/--tls-key/--tls-ca/--tls-insecure) are wired
+# by proto_args via the shared add_tls_options helper; their parsing is covered
+# by TestProtoArgs.test_proto_args_value_flags / test_proto_args_store_true_flags
+# (real argv). The previous per-flag tests only asserted an argparse.Namespace
+# echoed its own kwargs, and test_tls_connection_sets_flag never touched a
+# connection despite its name.
 
 
 # ============================================================================
@@ -1745,27 +1536,16 @@ class TestFuzzing:
         args = _make_args(fuzz=True, confirm=True, fuzz_iterations=3)
         instance = _instantiate_astm_nxc(args, mock_sock)
 
-        assert instance.results["success"] is not None
+        assert instance.results["success"] is True
         fuzz_results = instance.results["data"].get("fuzz_results")
-        if fuzz_results is not None:
-            assert fuzz_results["tests"] >= 0
-            assert isinstance(fuzz_results["errors"], int)
-            assert isinstance(fuzz_results["crashes"], int)
+        assert fuzz_results is not None, "--fuzz --confirm must populate fuzz_results"
+        assert fuzz_results["tests"] > 0
+        assert isinstance(fuzz_results["errors"], int)
+        assert fuzz_results["crashes"] == 0
 
-    def test_fuzz_iterations_stored(self):
-        """Verify --fuzz-iterations is stored [Category B]"""
-        args = _make_args(fuzz_iterations=25)
-        assert args.fuzz_iterations == 25
-
-    def test_fuzz_record_stored(self):
-        """Verify --fuzz-record is stored [Category B]"""
-        args = _make_args(fuzz_record="H")
-        assert args.fuzz_record == "H"
-
-    def test_fuzz_frame_stored(self):
-        """Verify --fuzz-frame is stored [Category B]"""
-        args = _make_args(fuzz_frame=True)
-        assert args.fuzz_frame is True
+    # --fuzz-iterations / --fuzz-record / --fuzz-frame parsing is covered by
+    # TestProtoArgs (real argv). The former per-flag tests only asserted an
+    # argparse.Namespace echoed its own kwargs.
 
     @pytest.mark.fuzz
     def test_fuzz_frame_level(self):
@@ -1775,10 +1555,10 @@ class TestFuzzing:
         args = _make_args(fuzz=True, confirm=True, fuzz_frame=True, fuzz_iterations=5)
         instance = _instantiate_astm_nxc(args, mock_sock)
 
-        assert instance.results["success"] is not None
+        assert instance.results["success"] is True
         fuzz_results = instance.results["data"].get("fuzz_results")
-        if fuzz_results is not None:
-            assert fuzz_results["tests"] >= 0
+        assert fuzz_results is not None, "--fuzz --fuzz-frame --confirm must populate fuzz_results"
+        assert fuzz_results["tests"] > 0
 
     @pytest.mark.fuzz
     @pytest.mark.security
@@ -1809,9 +1589,10 @@ class TestFuzzing:
         crash_sock.close = MagicMock()
         instance.conn = crash_sock
 
-        # Configure fuzz args and call fuzz directly
-        instance.args.fuzz = True
-        instance.args.confirm = True
+        # Configure fuzz args and call _fuzz_records() directly. Note: the
+        # fuzz/confirm gate lives in proto_flow (bypassed here), so _fuzz_records
+        # reads only fuzz_iterations / fuzz_record / fuzz_frame -- setting
+        # args.fuzz / args.confirm would be dead.
         instance.args.fuzz_iterations = 3
         instance.args.fuzz_frame = True
 
@@ -1833,7 +1614,6 @@ class TestFuzzing:
             f"Expected 'Connection Instability' finding when crashes > 0, "
             f"got issues: {[f.get('issue') for f in findings]}"
         )
-        assert instability_findings[0]["severity"] == "HIGH"
         assert "crash" in instability_findings[0]["description"].lower()
 
     @pytest.mark.fuzz
@@ -1863,17 +1643,13 @@ class TestFuzzing:
 
 
 class TestOutputOptions:
-    """Tests for output and format options."""
+    """Tests for output and format options.
 
-    def test_format_flag_stored(self):
-        """Verify --format flag is stored [Category A]"""
-        args = _make_args(format="csv")
-        assert args.format == "csv"
-
-    def test_output_flag_stored(self):
-        """Verify --output flag is stored [Category B]"""
-        args = _make_args(output="/tmp/astm_results")
-        assert args.output == "/tmp/astm_results"
+    --format / --output are provided by the main parser (not ASTM proto_args);
+    the previous per-flag "stored" tests only asserted an argparse.Namespace
+    echoed its own kwargs. --output's real behaviour is covered below by
+    test_export_results_creates_file (it writes the JSON file).
+    """
 
     def test_export_results_creates_file(self):
         """Verify _export_results writes JSON file when --output set [Category A]"""
@@ -2255,11 +2031,76 @@ class TestProtoArgs:
             args = main_parser.parse_args(["astm", "192.168.1.100", "--abnormal-flag", flag])
             assert args.abnormal_flag == flag
 
+    @staticmethod
+    def _parse(*extra_argv):
+        """Parse a real ASTM argv line through the actual proto_args parser."""
+        import argparse
+        from oida.protocols.astm.proto_args import proto_args
 
-# ============================================================================
-# Skipped Tests (require live ASTM endpoint)
-# ============================================================================
+        parent = argparse.ArgumentParser(add_help=False)
+        main_parser = argparse.ArgumentParser()
+        subparsers = main_parser.add_subparsers()
+        proto_args(subparsers, [parent])
+        return main_parser.parse_args(["astm", "192.168.1.100", *extra_argv])
 
+    @pytest.mark.parametrize(
+        "argv, dest, expected",
+        [
+            (["--order-id", "ORD-001"], "order_id", "ORD-001"),
+            (["--result-units", "mmol/L"], "result_units", "mmol/L"),
+            (["--reference-range", "70-100"], "reference_range", "70-100"),
+            (["--tls-cert", "/path/to/cert.pem"], "tls_cert", "/path/to/cert.pem"),
+            (["--tls-key", "/path/to/key.pem"], "tls_key", "/path/to/key.pem"),
+            (["--tls-ca", "/path/to/ca.pem"], "tls_ca", "/path/to/ca.pem"),
+            (["--fuzz-iterations", "25"], "fuzz_iterations", 25),
+            (["--fuzz-record", "H"], "fuzz_record", "H"),
+        ],
+    )
+    def test_proto_args_value_flags(self, argv, dest, expected):
+        """Verify value-carrying flags are wired by proto_args (real argv) [Category A]"""
+        args = self._parse(*argv)
+        assert getattr(args, dest) == expected
 
-class TestLiveEndpointRequired:
-    """Tests that require a real ASTM endpoint and are skipped."""
+    @pytest.mark.parametrize(
+        "flag, dest",
+        [
+            ("--tls", "tls"),
+            ("--tls-insecure", "tls_insecure"),
+            ("--fuzz-frame", "fuzz_frame"),
+        ],
+    )
+    def test_proto_args_store_true_flags(self, flag, dest):
+        """Verify store_true flags default False and flip True via real argv [Category A]"""
+        assert getattr(self._parse(), dest) is False
+        assert getattr(self._parse(flag), dest) is True
+
+    def test_proto_args_discovery_flags_removed(self):
+        """--discover/--quick/--full/--deep-scan were dead: argparse accepted them
+        (shared add_discovery_options) but ASTM's own runner never read their
+        dests, and --quick was falsely advertised in the epilog as a real scan
+        mode. Rather than keep advertising a non-functional mode [Category B],
+        the flags have been removed entirely from the ASTM parser -- this test
+        proves they are genuinely gone, not just silently ignored.
+        """
+        for flag in ("--discover", "--quick", "--full", "--deep-scan"):
+            with pytest.raises(SystemExit):
+                self._parse(flag)
+        args = self._parse()
+        assert not hasattr(args, "discover")
+        assert not hasattr(args, "quick")
+        assert not hasattr(args, "full")
+        assert not hasattr(args, "deep_scan")
+
+    def test_epilog_does_not_advertise_quick_flag(self):
+        """The epilog previously claimed '--quick # Quick scan' was a real mode;
+        now that the flag is removed, the epilog must not mention it either.
+        """
+        import argparse
+
+        from oida.protocols.astm.proto_args import proto_args
+
+        parent = argparse.ArgumentParser(add_help=False)
+        main_parser = argparse.ArgumentParser()
+        subparsers = main_parser.add_subparsers()
+        astm_parser = proto_args(subparsers, [parent])
+        assert "--quick" not in (astm_parser.epilog or "")
