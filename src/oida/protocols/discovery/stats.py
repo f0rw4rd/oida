@@ -974,6 +974,103 @@ class PassiveStatistics:
             ],
         }
 
+    def get_tables(self) -> List[Dict[str, Any]]:
+        """Return the stats tables as export-ready dicts (title/headers/rows).
+
+        Mirrors what ``print_summary`` renders to the console, so callers can
+        register these alongside listener harvest tables for file export.
+        """
+        tables: List[Dict[str, Any]] = []
+
+        if self.mac_conversations:
+            sorted_convs = sorted(self.mac_conversations.values(), key=lambda x: -x.packets)
+            tables.append(
+                {
+                    "title": f"MAC Conversations ({len(sorted_convs)})",
+                    "headers": ["Source", "Vendor", "Destination", "Vendor", "Packets", "Bytes"],
+                    "rows": [
+                        [
+                            conv.src,
+                            self._mac_vendor(conv.src),
+                            conv.dst,
+                            self._mac_vendor(conv.dst),
+                            f"{conv.packets:,}",
+                            self._format_bytes(conv.bytes),
+                        ]
+                        for conv in sorted_convs
+                    ],
+                }
+            )
+
+        if self.ip_conversations:
+            sorted_convs = sorted(self.ip_conversations.values(), key=lambda x: -x.packets)
+            rows = []
+            for conv in sorted_convs:
+                src = f"{conv.src}:{conv.src_port}" if conv.src_port else conv.src
+                dst = f"{conv.dst}:{conv.dst_port}" if conv.dst_port else conv.dst
+                src_mac = self._ip_to_mac.get(conv.src, "")
+                dst_mac = self._ip_to_mac.get(conv.dst, "")
+                src_vendor = self._mac_vendor(src_mac) if src_mac else ""
+                dst_vendor = self._mac_vendor(dst_mac) if dst_mac else ""
+                src_hw = (
+                    f"{src_vendor} ({src_mac[-8:]})"
+                    if src_vendor
+                    else src_mac[-8:]
+                    if src_mac
+                    else ""
+                )
+                dst_hw = (
+                    f"{dst_vendor} ({dst_mac[-8:]})"
+                    if dst_vendor
+                    else dst_mac[-8:]
+                    if dst_mac
+                    else ""
+                )
+                rows.append(
+                    [
+                        src,
+                        src_hw,
+                        dst,
+                        dst_hw,
+                        f"{conv.packets:,}",
+                        self._format_bytes(conv.bytes),
+                        conv.protocol or "",
+                    ]
+                )
+            tables.append(
+                {
+                    "title": f"IP Conversations ({len(sorted_convs)})",
+                    "headers": [
+                        "Source",
+                        "MAC/Vendor",
+                        "Destination",
+                        "MAC/Vendor",
+                        "Packets",
+                        "Bytes",
+                        "Service",
+                    ],
+                    "rows": rows,
+                }
+            )
+
+        if self.open_ports:
+            sorted_ports = sorted(self.open_ports.values(), key=lambda x: (x.ip, x.port))
+            rows = []
+            for op in sorted_ports:
+                svc = f"{op.transport}/{op.port}"
+                if op.service and not op.service.startswith(("tcp/", "udp/")):
+                    svc = f"{svc} ({op.service})"
+                rows.append([op.ip, str(op.port), op.transport, svc, op.evidence[:30]])
+            tables.append(
+                {
+                    "title": "Open Ports Detected",
+                    "headers": ["IP", "Port", "Proto", "Service", "Evidence"],
+                    "rows": rows,
+                }
+            )
+
+        return tables
+
     def print_summary(self, logger=None) -> None:
         """Print formatted console summary using NXC-style logger.
 

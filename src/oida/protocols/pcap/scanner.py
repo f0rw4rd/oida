@@ -185,6 +185,11 @@ class PcapScanner:
         # Print traffic statistics (opt-in via -S/--stats)
         if self.args.get("stats") and self.stats.total_packets > 0:
             self.stats.print_summary(logger=self.logger)
+            # Register the stats tables so they reach file export too, not
+            # just the console render (cli.py exports results["tables"]).
+            if "tables" not in self.results:
+                self.results["tables"] = []
+            self.results["tables"].extend(self.stats.get_tables())
 
         # Build device results (convert to dicts for JSON serialization).
         # Use vars() instead of dataclasses.asdict() because listeners add
