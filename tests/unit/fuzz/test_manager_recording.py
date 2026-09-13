@@ -107,8 +107,12 @@ def test_check_interval_negative_does_not_raise():
 def test_sustained_crash_is_debounced_to_one_episode():
     """A target that stays down for many cases must record ~one crash EVENT.
 
-    Before the fix: N flagged cases -> N store_crash calls, _crash_count == N, and
-    _persisted_ids grew by one int per case. After: a single episode edge.
+    The crash EVENT (the Crash record + the _crash_count statistic) is de-bounced
+    to a single episode edge: N flagged cases -> 1 store_crash call, _crash_count
+    == 1. Each case still gets its own crash ROW (so the recorded crash context is
+    complete and `oida fuzz narrow` can pin the culprit), so _persisted_ids grows
+    LINEARLY (~one id per case), not quadratically (the pre-buffer behaviour
+    re-flushed the whole window per case).
     """
     mgr, db = _make_manager(monitor_check_interval=2, db=_CountingDatabase())
 
@@ -130,9 +134,13 @@ def test_sustained_crash_is_debounced_to_one_episode():
         f"_crash_count must reflect distinct episodes, not case count (got {mgr._crash_count})"
     )
 
-    # _persisted_ids must not grow by one per crashed case.
-    assert len(mgr._persisted_ids) < n_down, (
-        f"_persisted_ids grew unbounded per case ({len(mgr._persisted_ids)} for {n_down} cases)"
+    # _persisted_ids grows LINEARLY (one row per crash case + the warmed-up
+    # context), NOT quadratically. The quadratic (pre-buffer) behaviour re-flushed
+    # the whole rolling window on every crashed case, which would drive this well
+    # past n_down; _persisted_ids stays at ~n_down because each id is written once.
+    assert len(mgr._persisted_ids) <= n_down + mgr._buffer.buffer_size, (
+        f"_persisted_ids grew quadratically ({len(mgr._persisted_ids)} for {n_down} cases; "
+        f"linear bound is n_down + buffer window)"
     )
 
 

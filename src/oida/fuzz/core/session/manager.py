@@ -194,13 +194,11 @@ class TestCaseManager:
         # passing case (episode over). Enables `oida fuzz narrow` culprit-pinning.
         self._crash_context_saved: bool = False
 
-        # Edge-trigger for the crash EVENT itself (counter + crash-row + context
-        # flush). A monitor reports a *state* (crashed=True) on every case while
-        # the target stays down, so without de-bouncing a single outage during a
-        # 250k-case run would report 250k crashes, write a crash row per case, and
-        # grow _persisted_ids unbounded. We treat only the FIRST flagged case of an
-        # episode as a distinct crash; subsequent flagged cases are folded into the
-        # same episode. Reset on the next passing case (episode over).
+        # Edge-trigger for the crash EVENT (Crash record + _crash_count), distinct
+        # from the per-case crash ROW. A monitor reports a crashed *state* on every
+        # case while the target stays down; we write a crash ROW per case (so crash
+        # context is complete) but count/record the EVENT only on the episode edge
+        # (first flagged case). Reset on the next passing case (episode over).
         self._in_crash_episode: bool = False
 
         # Store session metadata for replay validation
@@ -306,7 +304,9 @@ class TestCaseManager:
         # Always buffer in memory (fast, O(1) operation)
         self._buffer.add(test_id, name, payload, timestamp, crc32)
 
-        # A passing case ends any in-flight crash episode: re-arm context capture.
+        # A passing case ends any in-flight crash episode: re-arm the once-per-
+        # episode full-context (with-payload) CrashEvent capture and the crash
+        # EVENT edge trigger.
         if result not in ("fail", "crash", "error"):
             self._crash_context_saved = False
             self._in_crash_episode = False
@@ -322,35 +322,39 @@ class TestCaseManager:
             self.save_session_progress()
 
         # Only persist on crash/failure - flush entire buffer as crash context.
-        # De-bounce the crash EVENT: a monitor's crashed *state* is reported on
-        # every case while the target is down, so we act only on the episode EDGE
-        # (first flagged case). Subsequent flagged cases in the same episode are
-        # skipped -- no counter inflation, no per-case DB write storm, and
-        # _persisted_ids stops growing once the target stays down.
+        # Every crash-flagged case gets its own crash ROW so the recorded crash
+        # context is complete, but the crash EVENT (the Crash record + the
+        # _crash_count statistic) is de-bounced to once per episode: a monitor
+        # reports a crashed *state* on every case while the target stays down, so
+        # counting an event per case would inflate a single outage into thousands
+        # of "crashes". The row write does NOT re-introduce the O(buffer_size)-
+        # per-case write storm -- _flush_crash_context skips context rows already
+        # persisted (via _persisted_ids), so a sustained episode writes the
+        # rolling window once and then ~1 new row (the crash case itself) per
+        # case: linear, not quadratic. The full-buffer-with-payloads CrashEvent
+        # for `oida fuzz narrow` is likewise emitted once per episode, gated by
+        # _crash_context_saved inside _flush_crash_context.
         if result in ["fail", "crash", "error"]:
-            if not self._in_crash_episode:
-                self._in_crash_episode = True
-                self._flush_crash_context(
-                    crash_id=test_id,
-                    crash_info=crash_info,
-                    result=result,
-                    target_ip=target_ip,
-                    target_port=target_port,
-                    protocol=protocol,
-                    duration_ms=duration_ms,
-                    monitor_status=monitor_status,
-                )
+            is_new_episode = not self._in_crash_episode
+            self._flush_crash_context(
+                crash_id=test_id,
+                crash_info=crash_info,
+                result=result,
+                target_ip=target_ip,
+                target_port=target_port,
+                protocol=protocol,
+                duration_ms=duration_ms,
+                monitor_status=monitor_status,
+                record_event=is_new_episode,
+            )
+            if is_new_episode:
                 self._crash_count += 1
-                self._log.debug(
-                    f"Crash recorded: test_case={test_id}, protocol={protocol}, "
-                    f"target={target_ip}:{target_port}, result={result}, "
-                    f"context_size={self._buffer.buffer_size}"
-                )
-            else:
-                self._log.debug(
-                    f"Crash-state case {test_id} folded into active episode "
-                    f"(no new crash record; target still down)"
-                )
+            self._in_crash_episode = True
+            self._log.debug(
+                f"Crash recorded: test_case={test_id}, protocol={protocol}, "
+                f"target={target_ip}:{target_port}, result={result}, "
+                f"context_size={self._buffer.buffer_size}"
+            )
 
         # Legacy mode: store all payloads (if enabled)
         elif self.store_all_payloads:
@@ -384,6 +388,7 @@ class TestCaseManager:
         protocol: Optional[str],
         duration_ms: Optional[float],
         monitor_status: Optional[str],
+        record_event: bool = True,
     ) -> None:
         """
         Flush the rolling buffer to database as crash context.
@@ -400,6 +405,10 @@ class TestCaseManager:
             protocol: Protocol name
             duration_ms: Test execution duration
             monitor_status: Monitor health check status
+            record_event: When True (episode edge) also store the Crash EVENT
+                record. When False (subsequent cases in the same crash episode)
+                only the crash ROW is written, so a sustained outage does not
+                emit a Crash record per case.
         """
         buffer_contents = self._buffer.get_all()
 
@@ -453,8 +462,11 @@ class TestCaseManager:
             # them. The buffer itself is left intact for ongoing crash context.
             self._persisted_ids.update(tc.id for tc in cases_to_store)
 
-        # Second pass: Store crash record (after test case exists)
-        if crash_payload is not None:
+        # Second pass: Store crash record (after test case exists). Only on the
+        # episode edge (record_event) so a sustained outage yields one Crash
+        # record, not one per flagged case; the crash ROW above is still written
+        # every case for complete context.
+        if crash_payload is not None and record_event:
             crash = Crash(
                 test_case_id=crash_id,
                 payload=crash_payload,
