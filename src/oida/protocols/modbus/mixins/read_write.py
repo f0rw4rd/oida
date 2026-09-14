@@ -356,6 +356,8 @@ class MapReadWriteMixin(_ScannerBase):
                     f"  Would write {'ON' if coil_value else 'OFF'} to coil "
                     f"'{entry['name']}' at address {address}"
                 )
+                self.results["success"] = False
+                self.results["data"]["refused"] = "--write-name requires --confirm"
                 return
 
             self.logger.display(
@@ -410,6 +412,8 @@ class MapReadWriteMixin(_ScannerBase):
             self.logger.display(f"  Raw register values: {[hex(r) for r in registers]}")
             if entry.get("description"):
                 self.logger.display(f"  Description: {entry['description']}")
+            self.results["success"] = False
+            self.results["data"]["refused"] = "--write-name requires --confirm"
             return
 
         self.logger.display(

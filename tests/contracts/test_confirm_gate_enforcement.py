@@ -61,6 +61,52 @@ class TestModbusRawFCGate(unittest.TestCase):
         )
 
 
+class TestRefusalSetsSuccessFalse(unittest.TestCase):
+    """A refused destructive op must report results['success'] is False.
+
+    Regression for the systemic "refused destructive write reports success=True" bug:
+    the guards did a bare ``logger.fail(); return`` without touching results['success'],
+    so the base-class None->True default reported a refusal as a success. These call the
+    handlers at runtime (not a source sentinel) and assert the result dict, so deleting a
+    guard body breaks the test.
+    """
+
+    def test_can_send_refusal_sets_success_false(self):
+        from oida.protocols.can.cli_runner import can as Can
+
+        stub = _StubScanner(confirm=False)
+        Can._handle_send(stub, "0x7DF#0201")
+        self.assertIs(stub.results["success"], False)
+
+    def test_modbus_write_coil_refusal_sets_success_false(self):
+        from oida.protocols.modbus.mixins.writes import WritesMixin
+
+        stub = _StubScanner(confirm=False, write_coil="10=1")
+        WritesMixin._handle_write_coil(stub)
+        self.assertIs(stub.results["success"], False)
+
+    def test_modbus_write_multiple_refusal_sets_success_false(self):
+        from oida.protocols.modbus.mixins.writes import WritesMixin
+
+        stub = _StubScanner(confirm=False, write_multiple="10=1,2,3")
+        WritesMixin._handle_write_multiple(stub)
+        self.assertIs(stub.results["success"], False)
+
+    def test_modbus_write_multiple_coils_refusal_sets_success_false(self):
+        from oida.protocols.modbus.mixins.writes import WritesMixin
+
+        stub = _StubScanner(confirm=False, write_multiple_coils="10=1,0,1")
+        WritesMixin._handle_write_multiple_coils(stub)
+        self.assertIs(stub.results["success"], False)
+
+    def test_modbus_canopen_write_refusal_sets_success_false(self):
+        from oida.protocols.modbus.mixins.canopen import CANopenMixin
+
+        stub = _StubScanner(confirm=False, canopen_write="1:0x1000:0:4:100")
+        CANopenMixin._handle_canopen_write(stub)
+        self.assertIs(stub.results["success"], False)
+
+
 class TestModbusDiagClearGate(unittest.TestCase):
     def test_diag_clear_requires_confirm(self):
         """diag with clear in test_list must refuse without --confirm."""

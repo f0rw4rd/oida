@@ -210,11 +210,14 @@ class WritesMixin(_ScannerBase):
                 raise ValueError("Coil value must be 0 or 1")
         except ValueError as e:
             self.logger.fail(f"Invalid write-coil spec: {write_spec} (use ADDR=0|1): {e}")
+            self.results["success"] = False
             return
 
         if not getattr(self.args, "confirm", False):
             self.logger.fail("Write coil requires --confirm flag")
             self.logger.display(f"    Would write {value} to coil {address}")
+            self.results["success"] = False
+            self.results["data"]["refused"] = "write-coil requires --confirm"
             return
 
         if self.broadcast_mode:
@@ -249,11 +252,14 @@ class WritesMixin(_ScannerBase):
             values = [int(v.strip()) for v in values_str.split(",")]
         except ValueError as e:
             self.logger.fail(f"Invalid write-multiple spec: {write_spec} (use ADDR=V1,V2,V3): {e}")
+            self.results["success"] = False
             return
 
         if not getattr(self.args, "confirm", False):
             self.logger.fail("Write multiple registers requires --confirm flag")
             self.logger.display(f"    Would write {values} to registers starting at {address}")
+            self.results["success"] = False
+            self.results["data"]["refused"] = "write-multiple requires --confirm"
             return
 
         if self.broadcast_mode:
@@ -293,11 +299,14 @@ class WritesMixin(_ScannerBase):
             self.logger.fail(
                 f"Invalid write-multiple-coils spec: {write_spec} (use ADDR=1,0,1,1): {e}"
             )
+            self.results["success"] = False
             return
 
         if not getattr(self.args, "confirm", False):
             self.logger.fail("Write multiple coils requires --confirm flag")
             self.logger.display(f"    Would write {values} to coils starting at {address}")
+            self.results["success"] = False
+            self.results["data"]["refused"] = "write-multiple-coils requires --confirm"
             return
 
         if self.broadcast_mode:
