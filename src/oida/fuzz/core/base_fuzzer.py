@@ -1315,19 +1315,18 @@ class BaseFuzzer(ABC):
 
             # Save session progress to database (for resume)
             if self._test_case_manager:
-                # Add monitor crashes to crash count before saving
+                # Reconcile the manager's de-bounced episode count with the monitor's
+                # view. This is only a FLOOR, never a sum: the manager already counts
+                # one crash EVENT per distinct outage episode (de-bounced, commit
+                # 9299535). The monitor's signal is binary evidence ("did the target go
+                # down at all?"), so we bump the count to at least 1 if the monitor saw
+                # a crash the manager somehow missed (e.g. a crash detected right at
+                # session end). It must NOT be seeded from CombinedMonitor.total_failures
+                # -- that increments once per failed CHECK for the whole duration of an
+                # outage, so a single episode lasting N monitor intervals would inflate
+                # the count to N and undo the de-bounce at the reporting layer.
                 if self.monitor:
-                    monitor_crashes = getattr(self.monitor, "total_failures", 0)
-                    if hasattr(self.monitor, "monitors") and self.monitor.monitors:
-                        for child in self.monitor.monitors:
-                            # ProtocolMonitor pattern: crashed is binary, count as 1 if crashed
-                            if getattr(child, "crashed", False):
-                                monitor_crashes = max(monitor_crashes, 1)
-                                break
-                    # Update manager's crash count with monitor crashes
-                    self._test_case_manager._crash_count = max(
-                        self._test_case_manager._crash_count, monitor_crashes
-                    )
+                    self._reconcile_crash_count(self._test_case_manager, self.monitor)
                 self._test_case_manager.save_session_progress(final=True)
 
             # Log distribution statistics if enabled
@@ -1344,6 +1343,41 @@ class BaseFuzzer(ABC):
                     fuzz_log.warning(
                         "Check target is reachable and listening on the specified port"
                     )
+
+    @classmethod
+    def _reconcile_crash_count(cls, manager, monitor) -> None:
+        """Floor the manager's de-bounced crash count with the monitor's binary view.
+
+        A FLOOR, never a sum: ``manager._crash_count`` already counts one crash EVENT
+        per distinct outage episode (de-bounced, commit 9299535). If the monitor saw a
+        crash the manager somehow missed (e.g. detected right at session end), bump the
+        count to at least 1. Never seed from ``CombinedMonitor.total_failures`` -- that
+        counts failed CHECKS, so a single episode spanning N intervals would inflate the
+        count to N and undo the de-bounce at the reporting layer.
+        """
+        if cls._monitor_observed_crash(monitor):
+            manager._crash_count = max(manager._crash_count, 1)
+
+    @staticmethod
+    def _monitor_observed_crash(monitor) -> bool:
+        """Binary: did the monitor see the target crash at least once this run?
+
+        Deliberately NOT a count. A ``CombinedMonitor`` exposes ``total_failures``
+        (incremented once per failed check, i.e. once per ``check_interval`` for the
+        whole span of a single outage) and per-child ``crashed`` flags. Any of those
+        being set is evidence of >=1 crash; how many EPISODES occurred is the
+        manager's de-bounced ``_crash_count``, which this only floors, never replaces.
+        """
+        if getattr(monitor, "crashed", False):
+            return True
+        if getattr(monitor, "total_failures", 0):
+            return True
+        if getattr(monitor, "consecutive_failures", 0):
+            return True
+        for child in getattr(monitor, "monitors", None) or []:
+            if getattr(child, "crashed", False) or getattr(child, "total_failures", 0):
+                return True
+        return False
 
     def _fuzz_only_depth(self, depth: int) -> None:
         """Fuzz ONLY combinatorial depth ``depth``, skipping all lower depths.
