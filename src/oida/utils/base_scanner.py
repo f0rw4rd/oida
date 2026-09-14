@@ -41,7 +41,16 @@ def _normalize_args(args: Any) -> Any:
 
     # Wrap argparse Namespace (or similar) to add dict-style access.
     class _ArgsBridge:
-        """Thin adapter adding dict-style access to an argparse Namespace."""
+        """Thin adapter adding dict-style access to an argparse Namespace.
+
+        Scanner code overwhelmingly calls the dict-style accessors with the
+        flag's CLI spelling (dashes, e.g. "read-only"), but argparse always
+        turns "--read-only" into the Namespace attribute `read_only`
+        (underscores). Without normalizing here, every dashed dict-style
+        read silently misses and falls back to its default, regardless of
+        what the user passed — normalize once, here, rather than at every
+        call site.
+        """
 
         __slots__ = ("_ns",)
 
@@ -55,15 +64,18 @@ def _normalize_args(args: Any) -> Any:
         def __setattr__(self, name: str, value: Any) -> None:
             setattr(object.__getattribute__(self, "_ns"), name, value)
 
-        # --- dict-style access ---
+        # --- dict-style access (dash-normalized) ---
         def get(self, key: str, default: Any = None) -> Any:
-            return getattr(object.__getattribute__(self, "_ns"), key, default)
+            ns = object.__getattribute__(self, "_ns")
+            return getattr(ns, key.replace("-", "_"), default)
 
         def __getitem__(self, key: str) -> Any:
-            return getattr(object.__getattribute__(self, "_ns"), key)
+            ns = object.__getattribute__(self, "_ns")
+            return getattr(ns, key.replace("-", "_"))
 
         def __contains__(self, key: str) -> bool:
-            return hasattr(object.__getattribute__(self, "_ns"), key)
+            ns = object.__getattribute__(self, "_ns")
+            return hasattr(ns, key.replace("-", "_"))
 
         def __repr__(self) -> str:
             return f"_ArgsBridge({object.__getattribute__(self, '_ns')!r})"
