@@ -1475,14 +1475,15 @@ def show_protocol_requests(protocol):
 def run_fuzzing(args, protocol, target):
     """Run the actual fuzzing with NXC-style output"""
     try:
-        from .fuzz.protocols import PROTOCOL_FUZZERS
+        from .fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_IMPORT_ERRORS, install_hint
         from .fuzz import FuzzerApplication
     except ImportError as e:
-        # The fuzzer is built on boofuzz (the optional 'fuzz' extra). Give a
-        # clear, actionable message instead of a raw ModuleNotFoundError.
+        # The fuzzer core is built on boofuzz (the optional 'fuzz' extra). This
+        # only fires if the fuzz subsystem itself cannot import (e.g. boofuzz is
+        # absent). Individual protocol deps no longer break the whole package.
         logger.error(
             "Fuzzing requires the 'fuzz' extra (missing dependency: %s). "
-            "Install it with: pip install oida[fuzz]",
+            'Install it with: pip install "oida[fuzz]"',
             e.name or e,
         )
         return 1
@@ -1491,6 +1492,20 @@ def run_fuzzing(args, protocol, target):
     try:
         fuzzer_class = PROTOCOL_FUZZERS[protocol]
     except KeyError:
+        # A protocol we know about but whose optional dependency failed to
+        # import is recorded in PROTOCOL_IMPORT_ERRORS -- name the missing
+        # module AND the exact extra that provides it, rather than pretending
+        # the protocol does not exist.
+        import_error = PROTOCOL_IMPORT_ERRORS.get(protocol)
+        if import_error is not None:
+            logger.error(
+                "Protocol '%s' is unavailable (missing dependency: %s). "
+                "Install it with: %s",
+                protocol,
+                import_error,
+                install_hint(protocol),
+            )
+            return 1
         logger.error(f"Unknown protocol: {protocol}")
         print("Use 'oida fuzz list' to see available protocols")
         return 1
