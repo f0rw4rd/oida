@@ -180,6 +180,12 @@ class TestCaseManager:
         # Track crash count for statistics
         self._crash_count: int = 0
 
+        # Count of test cases whose recording raised inside record_callback's blanket
+        # except (see register_callbacks). A non-zero value means at least one case's
+        # persistence failed -- and if that case had crashed, the crash may have been
+        # lost -- so it is surfaced in get_progress() rather than silently swallowed.
+        self._record_failures: int = 0
+
         # Ids already persisted to the DB by a crash-context flush. The rolling
         # buffer is intentionally NOT cleared after a flush (it keeps providing
         # crash context for later cases), so the final 'pass' flush must skip
@@ -336,6 +342,16 @@ class TestCaseManager:
         # _crash_context_saved inside _flush_crash_context.
         if result in ["fail", "crash", "error"]:
             is_new_episode = not self._in_crash_episode
+            # Set the episode bookkeeping BEFORE flushing. If the flush raises (e.g. a
+            # transient DB error, swallowed by record_callback's blanket except), we
+            # would otherwise never mark the episode -- so _crash_count would miss this
+            # crash AND _in_crash_episode would stay False, making the next flagged case
+            # look like a *new* episode and re-flush the whole window every case. Setting
+            # the flags first means a failed flush at worst loses one crash ROW while the
+            # count and de-bounce stay honest.
+            if is_new_episode:
+                self._crash_count += 1
+            self._in_crash_episode = True
             self._flush_crash_context(
                 crash_id=test_id,
                 crash_info=crash_info,
@@ -347,9 +363,6 @@ class TestCaseManager:
                 monitor_status=monitor_status,
                 record_event=is_new_episode,
             )
-            if is_new_episode:
-                self._crash_count += 1
-            self._in_crash_episode = True
             self._log.debug(
                 f"Crash recorded: test_case={test_id}, protocol={protocol}, "
                 f"target={target_ip}:{target_port}, result={result}, "
@@ -511,6 +524,7 @@ class TestCaseManager:
             "total_processed": self._buffer.total_count,
             "actual_sends": getattr(self, "_actual_sends", 0),
             "crash_count": self._crash_count,
+            "record_failures": getattr(self, "_record_failures", 0),
             "buffer_size": self._buffer.buffer_size,
             "buffer_maxsize": self._buffer.maxsize,
         }
@@ -752,7 +766,15 @@ class TestCaseManager:
                 )
 
             except Exception as e:
-                self._log.fail(f"Failed to record test case: {e}")
+                # Don't re-raise: aborting the whole boofuzz session on a transient DB
+                # hiccup would be worse than losing one row. But DO count and surface it
+                # -- a swallowed failure on a case that crashed the target silently loses
+                # the crash, so record_failures is exposed via get_progress().
+                self._record_failures += 1
+                self._log.fail(
+                    f"Failed to record test case (recording error #{self._record_failures}): {e}. "
+                    "If the target crashed on this case, that crash may have been lost."
+                )
 
         # Register the callback with the fuzzer's session using boofuzz API
         if hasattr(self.fuzzer, "session") and self.fuzzer.session:

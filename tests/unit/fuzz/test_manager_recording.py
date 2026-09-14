@@ -160,5 +160,38 @@ def test_recovered_then_recrashed_counts_two_episodes():
     assert mgr._crash_count == 2
 
 
+# ---------------------------------------------------------------------------
+# Bug 3 (BUG-5): a raising crash-flush must not corrupt episode bookkeeping.
+# ---------------------------------------------------------------------------
+
+
+def test_raising_flush_still_marks_the_episode():
+    """If _flush_crash_context raises, _crash_count/_in_crash_episode are still set.
+
+    The episode bookkeeping is applied BEFORE the flush, so a transient DB error during
+    the flush (swallowed one layer up by record_callback's blanket except) at worst loses
+    one crash ROW -- it must NOT lose the crash EVENT count or leave the de-bounce flag
+    un-armed (which would make every subsequent flagged case look like a new episode).
+    """
+    mgr, db = _make_manager(monitor_check_interval=2, db=_CountingDatabase())
+    mgr.record_test_case(test_id=1, name="c1", payload=b"\x01", result="pass")
+
+    def _boom(*a, **k):
+        raise RuntimeError("db down during flush")
+
+    mgr._flush_crash_context = _boom
+    with pytest.raises(RuntimeError):
+        mgr.record_test_case(test_id=2, name="c2", payload=b"\x02", result="crash", crash_info="x")
+
+    assert mgr._crash_count == 1, "crash EVENT counted even though the flush raised"
+    assert mgr._in_crash_episode is True, "de-bounce flag armed even though the flush raised"
+
+
+def test_record_failures_counter_exposed_in_progress():
+    """get_progress surfaces record_failures (starts at 0, is not hidden)."""
+    mgr, _ = _make_manager(monitor_check_interval=2)
+    assert mgr.get_progress().get("record_failures") == 0
+
+
 if __name__ == "__main__":
     pytest.main([__file__, "-q"])
