@@ -238,14 +238,24 @@ def test_rtu_good_crc_still_establishes_baseline():
     assert monitor.baseline_function_code == 0x03
 
 
-def test_rtu_exception_response_rejected():
-    """FC|0x80 exception frames with a valid CRC are still not healthy."""
+def test_rtu_exception_response_is_alive_not_a_crash():
+    """A CRC-valid FC|0x80 exception frame proves liveness, not a crash.
+
+    Liveness != content drift (BUG-6): a Modbus exception reply means the slave
+    received the request and deliberately rejected it, so it is framing correctly
+    and answering. _validate_rtu_response now validates framing/CRC only (so the
+    frame is a valid frame), and _process_response scores the exception as alive
+    without drift-comparing it.
+    """
     from src.oida.fuzz.monitors.industrial import ModbusRTUMonitor
 
     monitor = ModbusRTUMonitor("127.0.0.1", transport="tcp")
     frame = _rtu_frame(b"\x01\x83\x02", monitor)
 
-    assert monitor._validate_rtu_response(frame) is False
+    # Framing/CRC is valid ...
+    assert monitor._validate_rtu_response(frame) is True
+    # ... and the exception reply is treated as a live target.
+    assert monitor._process_response(frame, Mock()) is True
 
 
 # ---------------------------------------------------------------------------
@@ -331,8 +341,16 @@ def test_http_ok_first_probe_still_baselines():
     assert monitor.baseline_status == 200
 
 
-def test_http_later_server_error_is_still_a_failure():
-    """After a good baseline, a 5xx is a behavioural change -> failure."""
+def test_http_later_server_error_is_alive_but_logged():
+    """After a good baseline, a later 5xx is drift -> still alive, but logged.
+
+    Liveness != content drift (BUG-6). A live server answering 500 is up, not
+    crashed -- and during fuzzing a 500 is extremely common, so scoring it as a
+    crash halts the run on a false positive. The behavioural change is still
+    surfaced (log_fail) for the operator; it just no longer reports the target
+    as down. (A 5xx as the *first* probe is still refused as a baseline -- see
+    test_http_server_error_is_not_baselined.)
+    """
     from src.oida.fuzz.monitors.application import HTTPGetMonitor
 
     monitor = HTTPGetMonitor("127.0.0.1")
@@ -347,8 +365,12 @@ def test_http_later_server_error_is_still_a_failure():
 
     with patch.object(monitor, "_make_request", return_value=ok):
         assert monitor._check_alive_once(Mock()) is True
+
+    drift_logger = Mock()
     with patch.object(monitor, "_make_request", return_value=bad):
-        assert monitor._check_alive_once(Mock()) is False
+        assert monitor._check_alive_once(drift_logger) is True
+    # The drift is not fatal, but it must still be surfaced.
+    assert drift_logger.log_fail.called
 
 
 if __name__ == "__main__":

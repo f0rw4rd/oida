@@ -30,7 +30,7 @@ class HTTPGetMonitor(ProtocolMonitor):
         compare_body: Compare response body content (default: True)
         compare_size_threshold: Body size difference % to trigger failure (default: 50)
         retry_count: Number of retries before failure (default: 2)
-        failure_threshold: Consecutive failures before reporting down (default: 1)
+        failure_threshold: Consecutive failures before reporting down (default: 2)
     """
 
     def __init__(
@@ -44,7 +44,7 @@ class HTTPGetMonitor(ProtocolMonitor):
         compare_body: bool = True,
         compare_size_threshold: int = 50,
         retry_count: int = 2,
-        failure_threshold: int = 1,
+        failure_threshold: int = 2,
     ):
         super().__init__(
             host=host,
@@ -204,8 +204,13 @@ class HTTPGetMonitor(ProtocolMonitor):
             self._store_baseline(response, fuzz_data_logger)
             return True
 
-        # Compare against baseline
-        return self._compare_responses(response, fuzz_data_logger)
+        # Liveness != content drift. Getting a well-framed HTTP response at all
+        # proves the server is alive; a changed status/size/body is behavioural
+        # drift worth LOGGING (via _compare_responses' log_fail) but is not a
+        # crash and must not halt the run on its own. (Mirrors the modbus
+        # exception-reply=alive fix.)
+        self._compare_responses(response, fuzz_data_logger)
+        return True
 
 
 class _BannerProtocolMonitor(ProtocolMonitor):
@@ -226,7 +231,7 @@ class _BannerProtocolMonitor(ProtocolMonitor):
         timeout: int = 2,
         check_interval: int = 1,
         retry_count: int = 2,
-        failure_threshold: int = 1,
+        failure_threshold: int = 2,
     ):
         super().__init__(
             host=host,
@@ -328,7 +333,12 @@ class _BannerProtocolMonitor(ProtocolMonitor):
             self._store_baseline(response, fuzz_data_logger)
             return True
 
-        return self._compare_responses(response, fuzz_data_logger)
+        # Liveness != content drift. A well-framed status reply proves the
+        # service is alive; a changed status code is behavioural drift worth
+        # LOGGING (via _compare_responses) but is not a crash and must not halt
+        # the run on its own. (Mirrors the modbus exception-reply=alive fix.)
+        self._compare_responses(response, fuzz_data_logger)
+        return True
 
 
 class FTPCommandMonitor(_BannerProtocolMonitor):
@@ -344,7 +354,7 @@ class FTPCommandMonitor(_BannerProtocolMonitor):
         timeout: Request timeout in seconds (default: 2)
         check_interval: Check every N test cases (default: 1)
         retry_count: Number of retries before failure (default: 2)
-        failure_threshold: Consecutive failures before reporting down (default: 1)
+        failure_threshold: Consecutive failures before reporting down (default: 2)
     """
 
     protocol_label = "FTPCommand"
@@ -357,7 +367,7 @@ class FTPCommandMonitor(_BannerProtocolMonitor):
         timeout: int = 2,
         check_interval: int = 1,
         retry_count: int = 2,
-        failure_threshold: int = 1,
+        failure_threshold: int = 2,
     ):
         super().__init__(
             host=host,
@@ -382,7 +392,7 @@ class SMTPCommandMonitor(_BannerProtocolMonitor):
         timeout: Request timeout in seconds (default: 2)
         check_interval: Check every N test cases (default: 1)
         retry_count: Number of retries before failure (default: 2)
-        failure_threshold: Consecutive failures before reporting down (default: 1)
+        failure_threshold: Consecutive failures before reporting down (default: 2)
     """
 
     protocol_label = "SMTPCommand"
@@ -395,7 +405,7 @@ class SMTPCommandMonitor(_BannerProtocolMonitor):
         timeout: int = 2,
         check_interval: int = 1,
         retry_count: int = 2,
-        failure_threshold: int = 1,
+        failure_threshold: int = 2,
     ):
         super().__init__(
             host=host,
@@ -420,7 +430,7 @@ class DNSQueryMonitor(ProtocolMonitor):
         timeout: Request timeout in seconds (default: 2)
         check_interval: Check every N test cases (default: 1)
         retry_count: Number of retries before failure (default: 2)
-        failure_threshold: Consecutive failures before reporting down (default: 1)
+        failure_threshold: Consecutive failures before reporting down (default: 2)
     """
 
     def __init__(
@@ -431,7 +441,7 @@ class DNSQueryMonitor(ProtocolMonitor):
         timeout: int = 2,
         check_interval: int = 1,
         retry_count: int = 2,
-        failure_threshold: int = 1,
+        failure_threshold: int = 2,
     ):
         super().__init__(
             host=host,
@@ -537,8 +547,12 @@ class DNSQueryMonitor(ProtocolMonitor):
             self._store_baseline(response, fuzz_data_logger)
             return True
 
-        # Compare against baseline
-        return self._compare_responses(response, fuzz_data_logger)
+        # Liveness != content drift. A well-framed DNS response (>=12 bytes)
+        # proves the resolver is alive; a >20% size change is behavioural drift
+        # worth LOGGING (via _compare_responses) but is not a crash and must not
+        # halt the run on its own. (Mirrors the modbus exception-reply=alive fix.)
+        self._compare_responses(response, fuzz_data_logger)
+        return True
 
 
 __all__ = [
