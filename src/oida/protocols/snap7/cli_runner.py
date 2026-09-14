@@ -255,6 +255,10 @@ class s7(NetworkConnection):
         self.logger.fail(
             f"--{action.replace('_', '-')} requires --confirm flag (DANGEROUS operation)"
         )
+        # Refusal must be an unambiguous non-success: without this the base class's
+        # None->True default would report a refused dangerous op as a success.
+        self.results["success"] = False
+        self.results["data"]["refused"] = f"--{action.replace('_', '-')} requires --confirm"
         return False
 
     def _execute_action(self):

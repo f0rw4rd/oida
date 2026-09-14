@@ -106,6 +106,23 @@ class TestRefusalSetsSuccessFalse(unittest.TestCase):
         CANopenMixin._handle_canopen_write(stub)
         self.assertIs(stub.results["success"], False)
 
+    def test_bacnet_write_refusal_sets_success_false(self):
+        from oida.protocols.bacnet.mixins.properties import PropertiesMixin
+
+        stub = _StubScanner(confirm=False)
+        PropertiesMixin._handle_write(stub)
+        self.assertIs(stub.results["success"], False)
+
+    def test_snap7_require_confirm_refusal_sets_success_false(self):
+        """The single _require_confirm helper gates all ~16 Snap7 dangerous ops."""
+        from oida.protocols.snap7.cli_runner import s7
+
+        stub = _StubScanner(confirm=False)
+        stub.DANGEROUS_ACTIONS = s7.DANGEROUS_ACTIONS
+        action = next(iter(s7.DANGEROUS_ACTIONS))
+        self.assertIs(s7._require_confirm(stub, action), False)
+        self.assertIs(stub.results["success"], False)
+
 
 class TestModbusDiagClearGate(unittest.TestCase):
     def test_diag_clear_requires_confirm(self):

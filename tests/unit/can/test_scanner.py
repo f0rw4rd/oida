@@ -4356,6 +4356,9 @@ class TestNXCConfirmGate(unittest.TestCase):
         conn.scanner.send_message.return_value = True
         conn.scanner.recv_message.return_value = None
         conn.conn = MagicMock()
+        # The base NetworkConnection provides this; the bare instance must too, since
+        # the refusal guards now record results["success"]=False on refusal.
+        conn.results = {"success": None, "data": {}}
         return conn
 
     def test_send_skipped_without_confirm(self):
@@ -4363,6 +4366,7 @@ class TestNXCConfirmGate(unittest.TestCase):
         conn._handle_send("0x123#DEADBEEF")
         conn.scanner.send_message.assert_not_called()
         conn.logger.fail.assert_called_once()
+        self.assertIs(conn.results["success"], False)
 
     def test_send_runs_with_confirm(self):
         conn = self._make_conn(confirm=True)
@@ -4379,6 +4383,7 @@ class TestNXCConfirmGate(unittest.TestCase):
         conn._handle_send_file(path)
         conn.scanner.send_message.assert_not_called()
         conn.logger.fail.assert_called_once()
+        self.assertIs(conn.results["success"], False)
 
     def test_replay_skipped_without_confirm(self):
         import tempfile
@@ -4395,6 +4400,7 @@ class TestNXCConfirmGate(unittest.TestCase):
         conn.scanner.send_message.assert_not_called()
         conn.conn.send.assert_not_called()
         conn.logger.fail.assert_called_once()
+        self.assertIs(conn.results["success"], False)
 
 
 if __name__ == "__main__":

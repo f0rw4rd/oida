@@ -50,6 +50,8 @@ class MethodsMixin:
                 f"--call-method invokes arbitrary OPC UA method '{method_node_id}' "
                 "(server-side side effects unknown) — requires --confirm"
             )
+            self.results["success"] = False
+            self.results["data"]["refused"] = "--call-method requires --confirm"
             return
         import json
 
