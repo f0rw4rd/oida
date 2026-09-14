@@ -962,6 +962,8 @@ class can(ISOTPMixin, SerialConnection):
             self.logger.fail(
                 "--send injects raw frames onto the bus (can drive actuators) — requires --confirm"
             )
+            self.results["success"] = False
+            self.results["data"]["refused"] = "--send requires --confirm"
             return
         try:
             parts = spec.split("#", 1)
@@ -970,6 +972,7 @@ class can(ISOTPMixin, SerialConnection):
             data = bytes.fromhex(data_hex.replace(" ", ""))
         except (ValueError, IndexError) as e:
             self.logger.fail(f"Invalid send format (expected ID#HEXDATA): {e}")
+            self.results["success"] = False
             return
 
         is_ext = arb_id > CAN_STD_ID_MAX
@@ -991,6 +994,8 @@ class can(ISOTPMixin, SerialConnection):
                 "--send-file injects raw frames onto the bus (can drive actuators) — "
                 "requires --confirm"
             )
+            self.results["success"] = False
+            self.results["data"]["refused"] = "--send-file requires --confirm"
             return
         filepath = os.path.realpath(filepath)
         try:
@@ -998,6 +1003,7 @@ class can(ISOTPMixin, SerialConnection):
                 lines = f.readlines()
         except Exception as e:
             self.logger.fail(f"Could not read send file: {e}")
+            self.results["success"] = False
             return
 
         sent = 0
@@ -1017,6 +1023,8 @@ class can(ISOTPMixin, SerialConnection):
                 "--replay re-sends every captured frame onto the bus (incl. write/diagnostic "
                 "commands) — requires --confirm"
             )
+            self.results["success"] = False
+            self.results["data"]["refused"] = "--replay requires --confirm"
             return
         can_mod = _python_can()
 
@@ -1029,6 +1037,7 @@ class can(ISOTPMixin, SerialConnection):
                 lines = f.readlines()
         except Exception as e:
             self.logger.fail(f"Could not read replay file: {e}")
+            self.results["success"] = False
             return
 
         sent = 0

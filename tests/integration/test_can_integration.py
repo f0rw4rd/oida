@@ -1376,27 +1376,55 @@ class TestCANopen:
 class TestSendReplay:
     """Tests for raw CAN frame sending and traffic replay."""
 
-    def test_send_raw_frame(self):
-        """Verify --send parses ID#DATA format and sends frame [Category A]"""
+    def test_send_refused_without_confirm(self):
+        """--send without --confirm must NOT touch the bus and must report failure.
+
+        Regression for the "refused destructive op reports success=True" bug: raw-frame
+        injection can drive actuators, so a refusal must be an unambiguous non-success,
+        not the base-class None->True default.
+        """
         mock_bus = _make_mock_bus([None] * 5)
-        args = _make_args(no_sniff=True, send="0x7DF#0201000000000000")
+        args = _make_args(no_sniff=True, send="0x7DF#0201000000000000")  # confirm defaults False
         instance = _instantiate_can_nxc(args, mock_bus)
 
-        # The send should have been called on the bus
-        assert instance.results["success"] is True
+        assert mock_bus.send.call_count == 0, "refused --send must not put a frame on the bus"
+        assert instance.results["success"] is False
 
-    def test_send_invalid_format(self):
-        """Verify --send with invalid format is handled gracefully [Category C]"""
+    def test_send_raw_frame_with_confirm(self):
+        """--send WITH --confirm parses ID#DATA and actually sends the frame [Category A]."""
         mock_bus = _make_mock_bus([None] * 5)
-        args = _make_args(no_sniff=True, send="not-valid-frame")
+        args = _make_args(no_sniff=True, send="0x7DF#0201000000000000", confirm=True)
         instance = _instantiate_can_nxc(args, mock_bus)
 
-        # Should not crash
-        assert instance.results["success"] is True
+        assert mock_bus.send.call_count >= 1, "confirmed --send must call bus.send"
+        assert instance.results["success"] is not False
 
-    def test_send_file(self):
-        """Verify --send-file reads and sends frames from file [Category B]"""
-        # Create temp file with CAN frames
+    def test_send_invalid_format_reports_failure(self):
+        """--send with a malformed spec (confirmed) reports failure, does not send [Category C]."""
+        mock_bus = _make_mock_bus([None] * 5)
+        args = _make_args(no_sniff=True, send="not-valid-frame", confirm=True)
+        instance = _instantiate_can_nxc(args, mock_bus)
+
+        assert mock_bus.send.call_count == 0
+        assert instance.results["success"] is False
+
+    def test_send_file_refused_without_confirm(self):
+        """--send-file without --confirm must not read/send and must report failure."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write("0x100#0102030405060708\n")
+            tmpfile = f.name
+        try:
+            mock_bus = _make_mock_bus([None] * 10)
+            args = _make_args(no_sniff=True, send_file=tmpfile)  # confirm defaults False
+            instance = _instantiate_can_nxc(args, mock_bus)
+
+            assert mock_bus.send.call_count == 0
+            assert instance.results["success"] is False
+        finally:
+            os.unlink(tmpfile)
+
+    def test_send_file_with_confirm(self):
+        """--send-file WITH --confirm reads and sends frames from file [Category B]."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("# Comment line\n")
             f.write("0x100#0102030405060708\n")
@@ -1405,24 +1433,39 @@ class TestSendReplay:
 
         try:
             mock_bus = _make_mock_bus([None] * 10)
-            args = _make_args(no_sniff=True, send_file=tmpfile)
+            args = _make_args(no_sniff=True, send_file=tmpfile, confirm=True)
             instance = _instantiate_can_nxc(args, mock_bus)
 
-            assert instance.results["success"] is True
+            assert mock_bus.send.call_count >= 2, "both frames should be sent"
+            assert instance.results["success"] is not False
         finally:
             os.unlink(tmpfile)
 
-    def test_send_file_missing(self):
-        """Verify --send-file with missing file is handled [Category C]"""
+    def test_send_file_missing_reports_failure(self):
+        """--send-file (confirmed) with a missing file reports failure [Category C]."""
         mock_bus = _make_mock_bus([None] * 5)
-        args = _make_args(no_sniff=True, send_file="/nonexistent/file.txt")
+        args = _make_args(no_sniff=True, send_file="/nonexistent/file.txt", confirm=True)
         instance = _instantiate_can_nxc(args, mock_bus)
 
-        # Should not crash
-        assert instance.results["success"] is True
+        assert instance.results["success"] is False
 
-    def test_replay_candump(self):
-        """Verify --replay reads candump format and replays frames [Category B]"""
+    def test_replay_refused_without_confirm(self):
+        """--replay without --confirm must not re-send captured frames; reports failure."""
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False) as f:
+            f.write("(1234567890.123456) vcan0 100#0102030405060708\n")
+            tmpfile = f.name
+        try:
+            mock_bus = _make_mock_bus([None] * 10)
+            args = _make_args(no_sniff=True, replay=tmpfile, replay_speed=0)  # confirm False
+            instance = _instantiate_can_nxc(args, mock_bus)
+
+            assert mock_bus.send.call_count == 0
+            assert instance.results["success"] is False
+        finally:
+            os.unlink(tmpfile)
+
+    def test_replay_candump_with_confirm(self):
+        """--replay WITH --confirm reads candump format and replays frames [Category B]."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".log", delete=False) as f:
             f.write("(1234567890.123456) vcan0 100#0102030405060708\n")
             f.write("(1234567890.223456) vcan0 200#AABBCCDD\n")
@@ -1430,20 +1473,21 @@ class TestSendReplay:
 
         try:
             mock_bus = _make_mock_bus([None] * 10)
-            args = _make_args(no_sniff=True, replay=tmpfile, replay_speed=0)
+            args = _make_args(no_sniff=True, replay=tmpfile, replay_speed=0, confirm=True)
             instance = _instantiate_can_nxc(args, mock_bus)
 
-            assert instance.results["success"] is True
+            assert mock_bus.send.call_count >= 2, "both captured frames should be replayed"
+            assert instance.results["success"] is not False
         finally:
             os.unlink(tmpfile)
 
-    def test_replay_missing_file(self):
-        """Verify --replay with missing file is handled [Category C]"""
+    def test_replay_missing_file_reports_failure(self):
+        """--replay (confirmed) with a missing file reports failure [Category C]."""
         mock_bus = _make_mock_bus([None] * 5)
-        args = _make_args(no_sniff=True, replay="/nonexistent/replay.log")
+        args = _make_args(no_sniff=True, replay="/nonexistent/replay.log", confirm=True)
         instance = _instantiate_can_nxc(args, mock_bus)
 
-        assert instance.results["success"] is True
+        assert instance.results["success"] is False
 
 
 # ============================================================================
