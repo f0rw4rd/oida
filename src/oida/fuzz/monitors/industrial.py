@@ -41,10 +41,10 @@ class ModbusMonitor(ProtocolMonitor):
         self,
         host: str,
         port: int = 502,
-        timeout: float = 0.1,
+        timeout: float = 0.5,
         check_interval: int = 100,
-        retry_count: int = 1,
-        failure_threshold: int = 1,
+        retry_count: int = 2,
+        failure_threshold: int = 2,
     ):
         super().__init__(
             host=host,
@@ -151,9 +151,15 @@ class ModbusMonitor(ProtocolMonitor):
             if len(response) >= 9:
                 protocol_id = struct.unpack(">H", response[2:4])[0]
                 function_code = response[7]
+                probe_fc = 0x03  # _create_read_request() sends Read Holding Registers
 
-                # Protocol ID should be 0 and function code should not be an error
-                if protocol_id == 0 and function_code < 0x80:
+                # Liveness is distinct from content-drift: a well-framed reply to
+                # our probe — a normal read OR a legal Modbus exception (FC|0x80) —
+                # proves the target is still answering. Only route the *normal*
+                # reply through the baseline/drift comparison; an exception reply
+                # (e.g. IllegalFunction because a fuzz case corrupted state) is a
+                # live target, not a crash, so it must NOT be scored as DOWN.
+                if protocol_id == 0 and function_code == probe_fc:
                     # Store baseline on first success
                     if not self.baseline_established:
                         self._store_baseline(response, fuzz_data_logger)
@@ -162,8 +168,16 @@ class ModbusMonitor(ProtocolMonitor):
 
                     # Compare against baseline
                     return self._compare_responses(response, fuzz_data_logger)
+                elif protocol_id == 0 and function_code == (probe_fc | 0x80):
+                    # Legal Modbus exception reply — target is alive.
+                    self.logger.debug(f"Modbus exception reply (FC={function_code:#04x}) — alive")
+                    if fuzz_data_logger:
+                        fuzz_data_logger.log_info(
+                            f"ModbusMonitor: exception reply FC={function_code:#04x} — target alive"
+                        )
+                    return True
                 else:
-                    self.logger.warning(f"Modbus error response: FC={function_code:#04x}")
+                    self.logger.warning(f"Modbus unexpected response: FC={function_code:#04x}")
 
             self.logger.warning(f"Invalid Modbus response format ({len(response)} bytes)")
             if fuzz_data_logger:
@@ -769,8 +783,8 @@ class ModbusRTUMonitor(ProtocolMonitor):
         stopbits: int = 1,
         timeout: float = 1.0,
         check_interval: int = 100,
-        retry_count: int = 1,
-        failure_threshold: int = 1,
+        retry_count: int = 2,
+        failure_threshold: int = 2,
     ):
         # For ProtocolMonitor base class: use tcp_port for TCP, 0 for serial
         monitor_port = tcp_port if transport == "tcp" else 0
@@ -820,12 +834,15 @@ class ModbusRTUMonitor(ProtocolMonitor):
         return pdu + crc
 
     def _validate_rtu_response(self, response: bytes) -> bool:
-        """Validate a Modbus RTU response.
+        """Validate the *framing* of a Modbus RTU response.
 
-        Checks minimum length, slave address, function code, and CRC.
+        Checks minimum length and CRC only. Whether the frame is a normal read
+        or a legal Modbus exception (FC + 0x80) is a liveness question decided by
+        the caller -- a CRC-valid exception reply still proves the device is
+        framing correctly and answering, i.e. alive.
 
         Returns:
-            True if response is a valid non-error Modbus RTU frame.
+            True if response is a CRC-valid Modbus RTU frame (normal or exception).
         """
         # Minimum RTU response: slave(1) + FC(1) + byte_count(1) + data(2) + CRC(2) = 7
         if len(response) < 5:
@@ -844,12 +861,6 @@ class ModbusRTUMonitor(ProtocolMonitor):
             self.logger.warning(
                 f"Modbus RTU CRC mismatch: expected {expected_crc.hex()}, got {actual_crc.hex()}"
             )
-            return False
-
-        # Check function code is not an error response (FC + 0x80)
-        function_code = response[1]
-        if function_code >= 0x80:
-            self.logger.debug(f"Modbus RTU error response: FC=0x{function_code:02x}")
             return False
 
         return True
@@ -960,6 +971,18 @@ class ModbusRTUMonitor(ProtocolMonitor):
             return False
 
         function_code = response[1]
+
+        # Legal Modbus exception reply (FC | 0x80) with a valid CRC -- the device
+        # is still framing correctly and answering, so it is alive. Do not store
+        # it as baseline and do not drift-compare it (that conflates liveness with
+        # content drift and would score a live target as a crash).
+        if function_code >= 0x80:
+            self.logger.debug(f"Modbus RTU exception reply (FC=0x{function_code:02x}) -- alive")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(
+                    f"ModbusRTUMonitor: exception reply FC=0x{function_code:02x} -- target alive"
+                )
+            return True
 
         # Store baseline on first success
         if not self.baseline_established:

@@ -239,6 +239,16 @@ class ProtocolMonitor(BaseMonitor):
         self.failure_threshold = failure_threshold
         self.max_recovery_attempts = max_recovery_attempts
 
+        # Recovery-burst pacing (see _try_recovery). The recovery loop probes
+        # max_recovery_attempts+1 times; without spacing it drains in a tight loop
+        # (~0.6s) and a target that is merely busy for a second or two is declared
+        # dead. Escalating backoff spreads the probes over a few seconds and a
+        # widened probe timeout tolerates the slow first reply of a recovering
+        # target, while a genuinely dead target still exhausts the budget and halts.
+        self.recovery_backoff_base = 0.3  # seconds * attempt number
+        self.recovery_backoff_cap = 1.5  # per-attempt sleep ceiling
+        self.recovery_probe_timeout = 2.0  # min probe timeout used during recovery
+
         # Session filename for crash persistence
         self.session_filename = session_filename
 
@@ -544,11 +554,34 @@ class ProtocolMonitor(BaseMonitor):
             f"(crashed at test case {tc})"
         )
 
+        # Escalating backoff between recovery probes. Without it the whole recovery
+        # burst fires in a tight loop (~0.6s total), so a target that is merely
+        # busy/rebooting for a second or two -- a transient blip, not a crash --
+        # gets its entire recovery budget exhausted before it can answer, halting
+        # the run on a false positive. The backoff spreads the probes over a few
+        # seconds; a genuinely dead target still exhausts all attempts and halts,
+        # only later. Total added wait is bounded (~sum over attempts, capped).
+        backoff = min(
+            self.recovery_attempts * self.recovery_backoff_base, self.recovery_backoff_cap
+        )
+        if backoff > 0:
+            time.sleep(backoff)
+
         # Auto-restart the target once per crash episode before re-probing.
         self._maybe_restart_target(fuzz_data_logger)
 
+        # Widen the probe timeout during recovery: a recovering target often answers
+        # slowly at first, and the steady-state (deliberately tight) monitor timeout
+        # would reject that slow-but-alive reply and keep it counted as down.
+        saved_timeout = self.timeout
+        self.timeout = max(self.timeout, self.recovery_probe_timeout)
+        try:
+            recovered = self._check_alive_once(fuzz_data_logger)
+        finally:
+            self.timeout = saved_timeout
+
         # Try single check
-        if self._check_alive_once(fuzz_data_logger):
+        if recovered:
             # Recovered!
             down_since = self.crash_info["timestamp"] if self.crash_info else "unknown"
             test_case = f"{self.crash_info['test_case']:,}" if self.crash_info else "?"
