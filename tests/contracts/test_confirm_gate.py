@@ -148,6 +148,13 @@ def _enforced_dests_per_protocol() -> dict[str, set[str]]:
                 )
                 | set(re.findall(r"\bself\.([a-z_][a-z0-9_]*)\b", body_src))
             )
+            # The canonical gate helpers (ConfirmGateMixin.require_confirm /
+            # _confirm_flag, in src/oida/utils/confirm_gate.py) read the
+            # ``confirm`` flag internally, so a call to either enforces the
+            # ``confirm`` dest even though the function body no longer contains a
+            # literal ``args.confirm`` reference. This is the preferred idiom.
+            if "require_confirm(" in body_src or "_confirm_flag(" in body_src:
+                referenced.add("confirm")
             out.setdefault(protocol, set()).update(referenced)
     return out
 
@@ -212,3 +219,39 @@ def test_at_least_one_dangerous_flag_was_found():
         f"Only found {total} dangerous flag dests across all protocols — "
         f"predicate is probably too tight."
     )
+
+
+# Raw ``confirm`` reads that bypass the canonical gate. ``self.args.confirm``
+# and ``getattr(self.args, "confirm", ...)`` inside scanner code are forbidden:
+# the check plus its standard failure log belong in one place
+# (``ConfirmGateMixin.require_confirm`` / ``_confirm_flag`` in
+# ``src/oida/utils/confirm_gate.py``). Argument *validation* modules
+# (``proto_args.py``) legitimately read ``args.confirm`` to raise before a scan,
+# so they are exempt.
+_RAW_CONFIRM_READ = re.compile(
+    r"""getattr\(\s*self\.args\s*,\s*['"]confirm['"]"""
+    r"""|self\.args\.confirm\b"""
+)
+_PROTOCOLS_ROOT = SRC_ROOT / "protocols"
+
+
+def test_confirm_gate_idiom_is_the_only_reader():
+    """Protocol scanners must gate via require_confirm / _confirm_flag, never a raw read."""
+    offenders: list[str] = []
+    for path in _PROTOCOLS_ROOT.rglob("*.py"):
+        if path.name == "proto_args.py":
+            continue  # validation layer may raise on args.confirm before scanning
+        text = path.read_text(encoding="utf-8")
+        if "confirm" not in text:
+            continue
+        for lineno, line in enumerate(text.splitlines(), 1):
+            if _RAW_CONFIRM_READ.search(line):
+                rel = path.relative_to(SRC_ROOT.parent.parent)
+                offenders.append(f"  {rel}:{lineno}: {line.strip()}")
+    if offenders:
+        pytest.fail(
+            "Raw confirm reads found — replace with the canonical gate "
+            '`self.require_confirm("--flag")` (hard gate) or '
+            "`self._confirm_flag()` (soft read) from "
+            "oida.utils.confirm_gate.ConfirmGateMixin:\n" + "\n".join(offenders)
+        )

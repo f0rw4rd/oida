@@ -185,7 +185,7 @@ class EnumerationMixin:
             ("O", "Order", self._test_order_record),
             ("R", "Result", self._test_result_record),
         ]
-        if getattr(self.args, "confirm", False):
+        if self._confirm_flag():
             record_types.extend(write_probes)
         else:
             self.logger.display(

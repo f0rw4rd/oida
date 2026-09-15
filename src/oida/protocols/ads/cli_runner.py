@@ -300,9 +300,9 @@ class ads(NetworkConnection):
 
         # --write-coe (requires --confirm)
         if getattr(self.args, "write_coe", None):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail("--write-coe requires --confirm (writes to device)")
-            else:
+            if self.require_confirm(
+                "--write-coe", detail="--write-coe requires --confirm (writes to device)"
+            ):
                 self._write_coe_nxc(self.args.write_coe)
 
         # --scan-coe-access (requires --confirm)
@@ -331,16 +331,16 @@ class ads(NetworkConnection):
 
         # --foe-write (requires --confirm)
         if getattr(self.args, "foe_write", None):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail("--foe-write requires --confirm (writes to device)")
-            else:
+            if self.require_confirm(
+                "--foe-write", detail="--foe-write requires --confirm (writes to device)"
+            ):
                 self._foe_write_nxc(self.args.foe_write)
 
         # --foe-delete (requires --confirm)
         if getattr(self.args, "foe_delete", None):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail("--foe-delete requires --confirm (deletes file on device)")
-            else:
+            if self.require_confirm(
+                "--foe-delete", detail="--foe-delete requires --confirm (deletes file on device)"
+            ):
                 self._foe_delete_nxc(self.args.foe_delete)
 
         # --scan-soe
@@ -361,9 +361,10 @@ class ads(NetworkConnection):
 
         # --add-route (requires --confirm)
         if getattr(self.args, "add_route", None):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail("--add-route requires --confirm (modifies target routing table)")
-            else:
+            if self.require_confirm(
+                "--add-route",
+                detail="--add-route requires --confirm (modifies target routing table)",
+            ):
                 self._add_route_nxc(self.args.add_route)
 
         # --fuzz
@@ -372,9 +373,9 @@ class ads(NetworkConnection):
 
         # --test-write (requires --confirm — writes values back to device)
         if getattr(self.args, "test_write", False):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail("--test-write requires --confirm (writes to device symbols)")
-            else:
+            if self.require_confirm(
+                "--test-write", detail="--test-write requires --confirm (writes to device symbols)"
+            ):
                 self._test_write_access()
 
         # --watch (blocking — runs until Ctrl+C)
@@ -585,10 +586,10 @@ class ads(NetworkConnection):
 
     def _set_state(self, new_state: str):
         """Set PLC state (DANGEROUS)"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("--set-state requires --confirm (DANGEROUS operation)")
+        if not self.require_confirm(
+            "--set-state", detail="--set-state requires --confirm (DANGEROUS operation)"
+        ):
             return
-
         state_map = {
             "RUN": 5,
             "STOP": 6,
@@ -687,10 +688,8 @@ class ads(NetworkConnection):
 
     def _write_symbol(self, arg: str):
         """Write to a symbol"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("--write-symbol requires --confirm")
+        if not self.require_confirm("--write-symbol", detail="--write-symbol requires --confirm"):
             return
-
         try:
             name, value_str = arg.split(":", 1)
             # Try to parse value
@@ -744,10 +743,8 @@ class ads(NetworkConnection):
 
     def _memory_write(self, arg: str):
         """Write memory directly"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("--memory-write requires --confirm")
+        if not self.require_confirm("--memory-write", detail="--memory-write requires --confirm"):
             return
-
         try:
             parts = arg.split(":")
             if len(parts) != 3:
@@ -1373,10 +1370,10 @@ class ads(NetworkConnection):
         Like _scan_coe_nxc but additionally tests write access on each object,
         classifying them as RO/RW/WO. Requires --confirm.
         """
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("--scan-coe-access requires --confirm (writes to device)")
+        if not self.require_confirm(
+            "--scan-coe-access", detail="--scan-coe-access requires --confirm (writes to device)"
+        ):
             return
-
         # Parse --coe-range override
         scan_ranges = self._get_coe_scan_ranges()
         if scan_ranges is False:
@@ -1955,10 +1952,10 @@ class ads(NetworkConnection):
         Requires --confirm. Discovers slaves, finds writable objects,
         and fuzzes them using the central fuzz() utility.
         """
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("--fuzz-coe requires --confirm (writes to device)")
+        if not self.require_confirm(
+            "--fuzz-coe", detail="--fuzz-coe requires --confirm (writes to device)"
+        ):
             return
-
         iterations = getattr(self.args, "fuzz_iterations", 10)
         force_write = getattr(self.args, "force_write", False)
 
@@ -2331,10 +2328,8 @@ class ads(NetworkConnection):
         """Handle fuzzing operations"""
         mode = getattr(self.args, "fuzz", "symbols")
 
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("--fuzz requires --confirm (DANGEROUS)")
+        if not self.require_confirm("--fuzz", detail="--fuzz requires --confirm (DANGEROUS)"):
             return
-
         iterations = getattr(self.args, "fuzz_iterations", 10)
         self.logger.display(f"Fuzzing mode: {mode} ({iterations} iterations)")
 

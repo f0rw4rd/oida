@@ -4,6 +4,6 @@
 
 ## Checklist
 
-- [ ] Tests pass (`python run_tests.py`)
+- [ ] Tests pass (`pytest tests/`)
 - [ ] Code formatted (`ruff check` and `ruff format`)
 - [ ] I agree to the [Contributor License Agreement](CONTRIBUTING.md#contributor-license-agreement)

@@ -146,8 +146,7 @@ class PropertiesMixin:
 
     def _handle_write(self):
         """Write a property value"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Write operations require --confirm flag")
+        if not self.require_confirm("--confirm", detail="Write operations require --confirm flag"):
             self.results["success"] = False
             self.results["data"]["refused"] = "BACnet WriteProperty requires --confirm"
             return
@@ -550,8 +549,7 @@ class PropertiesMixin:
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
 
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Write operations require --confirm flag")
+        if not self.require_confirm("--confirm", detail="Write operations require --confirm flag"):
             self.results["success"] = False
             self.results["data"]["refused"] = "BACnet WriteProperty requires --confirm"
             return

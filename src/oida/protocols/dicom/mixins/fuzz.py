@@ -22,10 +22,10 @@ class FuzzMixin(_ScannerBase):
 
     def _handle_fuzz(self):
         """Handle C-FIND query fuzzing"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("--fuzz requires --confirm flag (potentially dangerous)")
+        if not self.require_confirm(
+            "--fuzz", detail="--fuzz requires --confirm flag (potentially dangerous)"
+        ):
             return
-
         if not self.assoc or not self.assoc.is_established:
             self.logger.fail("Cannot fuzz without established association")
             return

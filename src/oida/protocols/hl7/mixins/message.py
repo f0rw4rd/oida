@@ -27,13 +27,12 @@ class MessageMixin:
         trigger = getattr(self.args, "adt_trigger", "A01")
 
         # All ADT messages are write operations and require --confirm
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                f"ADT^{trigger} is a write operation that modifies patient data. "
-                "Use --confirm to proceed."
-            )
+        if not self.require_confirm(
+            "--confirm",
+            detail=f"ADT^{trigger} is a write operation that modifies patient data. "
+            "Use --confirm to proceed.",
+        ):
             return
-
         # Trigger event descriptions
         trigger_desc = {
             "A01": "Admit",
@@ -85,12 +84,11 @@ class MessageMixin:
     def _send_oru_message(self):
         """Send ORU (Observation Result) test message"""
         # ORU is a write operation - requires --confirm
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "ORU^R01 (Observation Result) is a write operation. Use --confirm to proceed."
-            )
+        if not self.require_confirm(
+            "--confirm",
+            detail="ORU^R01 (Observation Result) is a write operation. Use --confirm to proceed.",
+        ):
             return
-
         # Build from CLI-provided segment args (PID/PV1/ORC/OBR/OBX) so that
         # -I/--obx-value etc. are honored, instead of a hardcoded dummy result.
         msg = self._create_message_with_segments("ORU", "R01")
@@ -110,10 +108,10 @@ class MessageMixin:
     def _send_custom_message(self, msg_type: str):
         """Send custom message type (e.g., 'ORM^O01')"""
         # Custom messages are write operations - require --confirm
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(f"{msg_type} is a write operation. Use --confirm to proceed.")
+        if not self.require_confirm(
+            "--confirm", detail=f"{msg_type} is a write operation. Use --confirm to proceed."
+        ):
             return
-
         self.logger.display(f"Sending {msg_type} message...")
 
         parts = msg_type.split("^")
@@ -133,10 +131,10 @@ class MessageMixin:
     def _send_orm_message(self):
         """Send ORM^O01 (Order) test message with patient/order segments"""
         # ORM is a write operation - requires --confirm
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("ORM^O01 (Order) is a write operation. Use --confirm to proceed.")
+        if not self.require_confirm(
+            "--confirm", detail="ORM^O01 (Order) is a write operation. Use --confirm to proceed."
+        ):
             return
-
         msg = self._create_message_with_segments("ORM", "O01")
         if not msg:
             self.logger.fail("ORM requires patient data. Use --patient-id or --patient-name")
@@ -165,10 +163,11 @@ class MessageMixin:
     def _send_siu_message(self):
         """Send SIU^S12 (Scheduling) test message"""
         # SIU is a write operation - requires --confirm
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("SIU^S12 (Scheduling) is a write operation. Use --confirm to proceed.")
+        if not self.require_confirm(
+            "--confirm",
+            detail="SIU^S12 (Scheduling) is a write operation. Use --confirm to proceed.",
+        ):
             return
-
         msg = self._create_message_with_segments("SIU", "S12")
         if not msg:
             self.logger.fail("SIU requires patient data. Use --patient-id or --patient-name")
@@ -186,10 +185,10 @@ class MessageMixin:
     def _send_mdm_message(self):
         """Send MDM^T02 (Document Notification) test message"""
         # MDM is a write operation - requires --confirm
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("MDM^T02 (Document) is a write operation. Use --confirm to proceed.")
+        if not self.require_confirm(
+            "--confirm", detail="MDM^T02 (Document) is a write operation. Use --confirm to proceed."
+        ):
             return
-
         self.logger.display("Sending MDM^T02 (Document) message...")
 
         msg = self._create_message_with_segments("MDM", "T02")

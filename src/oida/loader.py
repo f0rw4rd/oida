@@ -290,10 +290,18 @@ class ProtocolLoader:
         # Load the protocol module
         protocol_module = self.load_protocol(protocols[protocol_name]["path"])
 
-        # Try to get the protocol class (should match protocol name)
+        # Single dispatch model: the exact-name class is the Layer-2
+        # `connection` entrypoint (e.g. `modbus`, `s7`) that the CLI constructs
+        # with (args, db, host) and which auto-scans via proto_flow. All 26
+        # registered protocols resolve here.
         if hasattr(protocol_module, protocol_name):
             return getattr(protocol_module, protocol_name)
 
+        # Legacy-only fallback: a bare `*Scanner` (Layer-1 BaseScanner) module
+        # with no exact-name Layer-2 wrapper. No registered protocol takes this
+        # path today — `*Scanner` classes are the internal implementation that
+        # the Layer-2 entrypoint wraps, not a second dispatch entrypoint. Kept
+        # for out-of-tree/legacy protocol modules.
         # Fallback: look for Scanner suffix (e.g. "modbus" -> "ModbusScanner")
         scanner_class_name = f"{protocol_name.capitalize()}Scanner"
         if hasattr(protocol_module, scanner_class_name):

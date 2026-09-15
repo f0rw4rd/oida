@@ -16,6 +16,7 @@ from types import SimpleNamespace
 from unittest.mock import MagicMock
 
 from oida.protocols.modbus.mixins.read_write import MapReadWriteMixin
+from oida.utils.confirm_gate import ConfirmGateMixin
 
 
 class FakeLogger:
@@ -70,8 +71,12 @@ def _reg_resp(values):
     return r
 
 
+class _MapHost(MapReadWriteMixin, ConfirmGateMixin):
+    """Compose the gate mixin the production scanner inherits."""
+
+
 def make_mixin(args, resolver):
-    inst = MapReadWriteMixin.__new__(MapReadWriteMixin)
+    inst = _MapHost.__new__(_MapHost)
     inst.logger = FakeLogger()
     inst.conn = MagicMock()
     inst.args = args

@@ -17,10 +17,11 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from oida.protocols.opcua.helpers import _asyncua, ua
 from oida.protocols.opcua.mixins.credentials import CredentialsMixin
+from oida.utils.confirm_gate import ConfirmGateMixin
 from tests.service_gate import require_service
 
 
-class _RBACHarness(CredentialsMixin):
+class _RBACHarness(CredentialsMixin, ConfirmGateMixin):
     """Minimal host exposing just what _test_rbac touches."""
 
     def __init__(self, confirm):

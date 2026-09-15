@@ -79,8 +79,7 @@ class FilesMixin(_ScannerBase):
             return
 
         # Check for confirmation
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("File write requires --confirm flag")
+        if not self.require_confirm("--confirm", detail="File write requires --confirm flag"):
             self.logger.display(
                 f"    Would write {len(data)} bytes to file {file_num} record {record_num}"
             )
@@ -132,8 +131,7 @@ class FilesMixin(_ScannerBase):
             return
 
         # Check for confirmation (mask write modifies data)
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Mask write requires --confirm flag")
+        if not self.require_confirm("--confirm", detail="Mask write requires --confirm flag"):
             self.logger.display(
                 f"    Would apply mask write to register {address}: "
                 f"AND=0x{and_mask:04X}, OR=0x{or_mask:04X}"
@@ -195,8 +193,9 @@ class FilesMixin(_ScannerBase):
             return
 
         # Check for confirmation (atomic write modifies data)
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Atomic read/write requires --confirm flag")
+        if not self.require_confirm(
+            "--confirm", detail="Atomic read/write requires --confirm flag"
+        ):
             self.logger.display(
                 f"    Would read {read_count} registers from {read_addr} and "
                 f"write {len(write_data)} values to {write_addr}"

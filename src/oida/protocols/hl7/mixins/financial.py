@@ -22,12 +22,11 @@ class FinancialMixin:
 
     def _send_bar_message(self):
         """Send BAR^P01 (Add Billing Account) message"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "BAR^P01 (Add Billing Account) is a write operation. Use --confirm to proceed."
-            )
+        if not self.require_confirm(
+            "--confirm",
+            detail="BAR^P01 (Add Billing Account) is a write operation. Use --confirm to proceed.",
+        ):
             return
-
         self.logger.display("Sending BAR^P01 (Add Billing Account) message...")
 
         msg = self._create_bar_message()
@@ -53,13 +52,12 @@ class FinancialMixin:
 
     def _send_dft_message(self):
         """Send DFT^P03 (Post Financial Transaction) message"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "DFT^P03 (Post Financial Transaction) is a write operation. "
-                "Use --confirm to proceed."
-            )
+        if not self.require_confirm(
+            "--confirm",
+            detail="DFT^P03 (Post Financial Transaction) is a write operation. "
+            "Use --confirm to proceed.",
+        ):
             return
-
         self.logger.display("Sending DFT^P03 (Post Financial Transaction) message...")
 
         msg = self._create_dft_message()

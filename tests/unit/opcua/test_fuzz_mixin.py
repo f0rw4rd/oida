@@ -14,6 +14,7 @@ from unittest.mock import AsyncMock, MagicMock, patch
 
 from oida.protocols.opcua.helpers import _asyncua, ua
 from oida.protocols.opcua.mixins.fuzz import FuzzMixin
+from oida.utils.confirm_gate import ConfirmGateMixin
 from tests.service_gate import require_service
 
 
@@ -43,7 +44,7 @@ class _AttrResult:
         self.Value = SimpleNamespace(Value=value)
 
 
-class _FuzzHost(FuzzMixin):
+class _FuzzHost(FuzzMixin, ConfirmGateMixin):
     def __init__(self, args=None):
         self.args = args or SimpleNamespace(confirm=True)
         self.logger = MagicMock()

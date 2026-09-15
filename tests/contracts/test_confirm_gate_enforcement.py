@@ -11,9 +11,16 @@ snapshot — here we exercise actual call paths.
 import unittest
 from unittest.mock import MagicMock
 
+from oida.utils.confirm_gate import ConfirmGateMixin
 
-class _StubScanner:
-    """Minimal stand-in for the scanner facade used by handler mixins."""
+
+class _StubScanner(ConfirmGateMixin):
+    """Minimal stand-in for the scanner facade used by handler mixins.
+
+    Inherits ``ConfirmGateMixin`` so handlers that call the canonical
+    ``self.require_confirm(...)`` / ``self._confirm_flag()`` gate resolve
+    against the same implementation shipped in production.
+    """
 
     def __init__(self, confirm=False, **extra):
         self.args = MagicMock()

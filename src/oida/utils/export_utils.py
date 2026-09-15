@@ -650,7 +650,7 @@ def _export_json(data: List[List[Any]], headers: List[str], file_path: str, logg
             json_data.append(dict(zip(headers, row)))
 
         with open(file_path, "w") as f:
-            json.dump(json_data, f, indent=2)
+            json.dump(json_data, f, indent=2, default=str)
 
         _log_message(logger, f"Data exported to JSON file: {file_path}", level="good")
         return True

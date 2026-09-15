@@ -105,11 +105,11 @@ class SecurityMixin:
         # just read — still a real BACnet WriteProperty), _handle_enumerate_writable
         # (writes to every discovered property), and ReinitializeDevice / OOS
         # probes. All are mutating; require --confirm.
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--assess issues real BACnet WriteProperty + ReinitializeDevice "
-                "probes (anonymous-write check, OOS check) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--assess",
+            detail="--assess issues real BACnet WriteProperty + ReinitializeDevice "
+            "probes (anonymous-write check, OOS check) — requires --confirm",
+        ):
             return
         self.logger.display("\n[Security Assessment]")
 
@@ -155,13 +155,12 @@ class SecurityMixin:
         """
         if not self.objects:
             return
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--test-write issues real BACnet WriteProperty (writes current value back) "
-                "— requires --confirm"
-            )
+        if not self.require_confirm(
+            "--test-write",
+            detail="--test-write issues real BACnet WriteProperty (writes current value back) "
+            "— requires --confirm",
+        ):
             return
-
         for device_id, objects_by_type in self.objects.items():
             device_info = self.devices.get(device_id, {})
             address = device_info.get("address", self.host)
@@ -195,13 +194,12 @@ class SecurityMixin:
         """Find all writable properties"""
         if not self.objects:
             return
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--enumerate-writable issues a WriteProperty against every discovered "
-                "object (pollutes SOE / change-of-value log) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--enumerate-writable",
+            detail="--enumerate-writable issues a WriteProperty against every discovered "
+            "object (pollutes SOE / change-of-value log) — requires --confirm",
+        ):
             return
-
         writable_count = 0
 
         for _dev_id, address, obj_type, instances in self._iter_device_objects(CONTROL_POINT_TYPES):
@@ -1189,7 +1187,7 @@ class SecurityMixin:
                 continue
 
             # Test write (write current value back - non-destructive)
-            if not getattr(self.args, "confirm", False):
+            if not self._confirm_flag():
                 continue
 
             try:
@@ -1241,5 +1239,5 @@ class SecurityMixin:
                 "Writable access",
                 detail=f"{len(writable)} objects have writable outOfService flag - control loops can be disabled",
             )
-        elif not getattr(self.args, "confirm", False) and readable:
+        elif not self._confirm_flag() and readable:
             self.logger.display("  Write test skipped (use --confirm to test writes)")

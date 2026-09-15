@@ -250,7 +250,7 @@ class s7(NetworkConnection):
         """Check --confirm flag for dangerous operations. Returns True if allowed."""
         if action not in self.DANGEROUS_ACTIONS:
             return True
-        if getattr(self.args, "confirm", False):
+        if self._confirm_flag():
             return True
         self.logger.fail(
             f"--{action.replace('_', '-')} requires --confirm flag (DANGEROUS operation)"
@@ -673,10 +673,10 @@ class s7(NetworkConnection):
             return
 
         # Safety check
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("--fuzz requires --confirm flag (DANGEROUS operation)")
+        if not self.require_confirm(
+            "--fuzz", detail="--fuzz requires --confirm flag (DANGEROUS operation)"
+        ):
             return
-
         iterations = getattr(self.args, "fuzz_iterations", 10)
 
         self.logger.display(f"Starting fuzz mode: {mode} ({iterations} iterations)")

@@ -214,10 +214,10 @@ class CallMixin:
         if not spec.callable:
             self.logger.fail(f"Service '{spec.name}' is detect-only (device-emitted / no invoker).")
             return
-        if spec.mutating and not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                f"--call {spec.name} mutates the device ({spec.risk}); re-run with --confirm."
-            )
+        if spec.mutating and not self.require_confirm(
+            f"--call {spec.name}",
+            detail=f"--call {spec.name} mutates the device ({spec.risk}); re-run with --confirm.",
+        ):
             return
         if spec.risk == RISK_CONTROL:
             self.logger.warning(

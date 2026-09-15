@@ -14,10 +14,8 @@ class FuzzMixin:
         """Fuzz HL7 messages with malformed data"""
         from ....utils.fuzzer import fuzz
 
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Fuzzing requires --confirm flag")
+        if not self.require_confirm("--confirm", detail="Fuzzing requires --confirm flag"):
             return
-
         self.logger.display("Starting HL7 message fuzzing...")
         fuzz_results = []
 

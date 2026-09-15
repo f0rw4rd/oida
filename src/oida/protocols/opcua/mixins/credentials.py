@@ -219,7 +219,7 @@ class CredentialsMixin:
                 # The write-back issues a real Write service call against a
                 # live variable — gate it on --confirm like every other write
                 # path. Without --confirm, skip the write column gracefully.
-                if not getattr(self.args, "confirm", False):
+                if not self._confirm_flag():
                     self.logger.display(
                         "  Writable nodes: skipped (write-back probe writes to "
                         "live variables) — requires --confirm"

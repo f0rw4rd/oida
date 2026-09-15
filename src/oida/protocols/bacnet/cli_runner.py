@@ -583,47 +583,46 @@ class bacnet(
                 await self._bacpypes3_check_auth(app, target_addr, device_id, timeout)
 
             if getattr(self.args, "brute_force", False):
-                if not getattr(self.args, "confirm", False):
-                    self.logger.fail("--brute-force requires --confirm flag")
-                else:
+                if self.require_confirm(
+                    "--brute-force", detail="--brute-force requires --confirm flag"
+                ):
                     await self._bacpypes3_brute_force(app, target_addr, device_id, timeout)
 
             if getattr(self.args, "brute_force_dcc", False):
-                if not getattr(self.args, "confirm", False):
-                    self.logger.fail("--brute-force-dcc requires --confirm flag")
-                else:
+                if self.require_confirm(
+                    "--brute-force-dcc", detail="--brute-force-dcc requires --confirm flag"
+                ):
                     await self._bacpypes3_brute_force_dcc(app, target_addr, device_id, timeout)
 
             if getattr(self.args, "brute_force_reinit", False):
-                if not getattr(self.args, "confirm", False):
-                    self.logger.fail("--brute-force-reinit requires --confirm flag")
-                else:
+                if self.require_confirm(
+                    "--brute-force-reinit", detail="--brute-force-reinit requires --confirm flag"
+                ):
                     await self._bacpypes3_brute_force_reinit(app, target_addr, device_id, timeout)
 
             if getattr(self.args, "test_dcc", False):
-                if not getattr(self.args, "confirm", False):
-                    self.logger.fail("--test-dcc requires --confirm flag")
-                else:
+                if self.require_confirm("--test-dcc", detail="--test-dcc requires --confirm flag"):
                     await self._bacpypes3_test_dcc(app, target_addr, device_id, timeout)
 
             if getattr(self.args, "test_reinit_pass", False):
-                if not getattr(self.args, "confirm", False):
-                    self.logger.fail("--test-reinit-pass requires --confirm flag")
-                else:
+                if self.require_confirm(
+                    "--test-reinit-pass", detail="--test-reinit-pass requires --confirm flag"
+                ):
                     await self._bacpypes3_test_reinit(app, target_addr, device_id, timeout)
 
             # Priority write testing
             if getattr(self.args, "test_priority_writes", False):
-                if not getattr(self.args, "confirm", False):
-                    self.logger.fail("--test-priority-writes requires --confirm flag")
-                else:
+                if self.require_confirm(
+                    "--test-priority-writes",
+                    detail="--test-priority-writes requires --confirm flag",
+                ):
                     await self._bacpypes3_test_priority_writes(app, target_addr, device_id, timeout)
 
             # Time sync test
             if getattr(self.args, "test_time_sync", False):
-                if not getattr(self.args, "confirm", False):
-                    self.logger.fail("--test-time-sync requires --confirm flag")
-                else:
+                if self.require_confirm(
+                    "--test-time-sync", detail="--test-time-sync requires --confirm flag"
+                ):
                     await self._bacpypes3_test_time_sync(app, target_addr, device_id, timeout)
 
             # Out-of-Service test
@@ -656,9 +655,7 @@ class bacnet(
             # COV subscriptions — SubscribeCOV creates subscription state on
             # the device (matches --call cov's RISK_WRITE gating below).
             if getattr(self.args, "cov", False):
-                if not getattr(self.args, "confirm", False):
-                    self.logger.fail("--cov requires --confirm flag")
-                else:
+                if self.require_confirm("--cov", detail="--cov requires --confirm flag"):
                     await self._bacpypes3_subscribe_cov(app, target_addr, device_id, timeout)
 
             # ReadRange for trend logs
@@ -730,9 +727,9 @@ class bacnet(
             await self._bacpypes3_enum_routers(app, target_addr, timeout)
 
         if getattr(self.args, "test_bbmd_injection", False):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail("--test-bbmd-injection requires --confirm flag")
-            else:
+            if self.require_confirm(
+                "--test-bbmd-injection", detail="--test-bbmd-injection requires --confirm flag"
+            ):
                 await self._bacpypes3_test_bbmd_injection(app, target_addr, timeout)
 
         # Remote network discovery

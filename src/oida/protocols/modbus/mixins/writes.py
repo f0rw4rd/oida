@@ -70,8 +70,7 @@ class WritesMixin(_ScannerBase):
                 return
 
         # Check for confirmation
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Write operation requires --confirm flag")
+        if not self.require_confirm("--write", detail="Write operation requires --confirm flag"):
             if len(registers) == 1:
                 self.logger.display(f"    Would write {display_value} to register {address}")
             else:
@@ -213,8 +212,7 @@ class WritesMixin(_ScannerBase):
             self.results["success"] = False
             return
 
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Write coil requires --confirm flag")
+        if not self.require_confirm("--write-coil", detail="Write coil requires --confirm flag"):
             self.logger.display(f"    Would write {value} to coil {address}")
             self.results["success"] = False
             self.results["data"]["refused"] = "write-coil requires --confirm"
@@ -255,8 +253,9 @@ class WritesMixin(_ScannerBase):
             self.results["success"] = False
             return
 
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Write multiple registers requires --confirm flag")
+        if not self.require_confirm(
+            "--write-multiple", detail="Write multiple registers requires --confirm flag"
+        ):
             self.logger.display(f"    Would write {values} to registers starting at {address}")
             self.results["success"] = False
             self.results["data"]["refused"] = "write-multiple requires --confirm"
@@ -302,8 +301,9 @@ class WritesMixin(_ScannerBase):
             self.results["success"] = False
             return
 
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Write multiple coils requires --confirm flag")
+        if not self.require_confirm(
+            "--write-multiple-coils", detail="Write multiple coils requires --confirm flag"
+        ):
             self.logger.display(f"    Would write {values} to coils starting at {address}")
             self.results["success"] = False
             self.results["data"]["refused"] = "write-multiple-coils requires --confirm"
@@ -340,8 +340,10 @@ class WritesMixin(_ScannerBase):
         # Destructive mode writes different values into live registers / flips
         # coils with only best-effort restore; gate it behind --confirm.
         # Safe (same-value) mode stays ungated by deliberate decision.
-        if mode == "destructive" and not getattr(self.args, "confirm", False):
-            self.logger.fail("--test-write-thorough (destructive) requires --confirm flag")
+        if mode == "destructive" and not self.require_confirm(
+            "--test-write-thorough",
+            detail="--test-write-thorough (destructive) requires --confirm flag",
+        ):
             return
 
         # Use "0-10" as default if scan_range is None or not set

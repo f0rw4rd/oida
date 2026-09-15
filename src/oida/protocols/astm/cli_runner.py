@@ -63,30 +63,29 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
             self._send_query_record()
 
         if getattr(self.args, "send_patient", False):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail(
-                    "--send-patient injects forged Patient demographics into the LIS — "
-                    "requires --confirm"
-                )
-            else:
+            if self.require_confirm(
+                "--send-patient",
+                detail="--send-patient injects forged Patient demographics into the LIS — "
+                "requires --confirm",
+            ):
                 self._send_patient_record()
 
         if getattr(self.args, "send_order", False):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail("Order records require --confirm flag (dangerous operation)")
-            else:
+            if self.require_confirm(
+                "--send-order",
+                detail="Order records require --confirm flag (dangerous operation)",
+            ):
                 self._send_order_record()
 
         if getattr(self.args, "send_result", False):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail("Result records require --confirm flag (dangerous operation)")
-            else:
+            if self.require_confirm(
+                "--send-result",
+                detail="Result records require --confirm flag (dangerous operation)",
+            ):
                 self._send_result_record()
 
         if getattr(self.args, "fuzz", False):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail("Fuzzing requires --confirm flag")
-            else:
+            if self.require_confirm("--fuzz", detail="Fuzzing requires --confirm flag"):
                 self._fuzz_records()
 
         # Enumeration features
@@ -97,9 +96,9 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
             self._enum_instruments()
 
         if getattr(self.args, "enum_patients", False):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail("Patient enumeration requires --confirm flag (PHI access)")
-            else:
+            if self.require_confirm(
+                "--confirm", detail="Patient enumeration requires --confirm flag (PHI access)"
+            ):
                 self._enum_patients()
 
         # Analyze security

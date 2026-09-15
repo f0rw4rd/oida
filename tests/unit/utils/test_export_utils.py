@@ -503,6 +503,38 @@ class TestLegacyAPI(unittest.TestCase):
             self.assertTrue((Path(tmpdir) / "all_test.json").exists())
             self.assertTrue((Path(tmpdir) / "all_test.xml").exists())
 
+    def test_export_data_json_non_serializable_field(self):
+        """Legacy JSON export must not silently drop non-serializable fields.
+
+        Regression for BUG-3: _export_json lacked default=str (unlike
+        _write_json / export_json), so any bytes/datetime field made the JSON
+        deliverable fail while CSV/XML succeeded -> partially-missing export.
+        """
+        import datetime
+
+        with tempfile.TemporaryDirectory() as tmpdir:
+            headers = ["When", "Blob"]
+            rows = [[datetime.datetime(2026, 9, 14, 12, 0, 0), b"\x01\x02"]]
+
+            result = export_data(
+                rows,
+                headers,
+                output_format="json",
+                output_dir=tmpdir,
+                filename_prefix="nonserial",
+            )
+            self.assertTrue(result)
+
+            json_path = Path(tmpdir) / "nonserial.json"
+            self.assertTrue(json_path.exists())
+
+            with open(json_path) as f:
+                loaded = json.load(f)
+            self.assertEqual(len(loaded), 1)
+            # Stringified via default=str rather than dropped/aborted.
+            self.assertIn("2026-09-14", loaded[0]["When"])
+            self.assertTrue(loaded[0]["Blob"])
+
 
 class TestPrintTable(unittest.TestCase):
     """Test print_table function"""

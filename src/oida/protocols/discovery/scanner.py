@@ -20,6 +20,7 @@ from datetime import datetime
 from typing import Any, Dict, Optional
 
 from ...connection import SerialConnection
+from ...utils.result_types import ScanResult
 from ...utils.base_scanner import SerialScanner
 from ...utils.export_utils import export_data
 from ...utils.permissions import check_raw_socket_capability
@@ -2584,8 +2585,9 @@ class discovery(SerialConnection):
     def _convert_args_to_dict(self) -> Dict[str, Any]:
         """Override to handle discovery interface fallback and debug flag.
 
-        Also preserves underscore keys that DiscoveryScanner expects
-        (the base class converts all underscores to hyphens).
+        The base now returns a normalizing ArgsDict (hyphen/underscore spellings
+        resolve to the same slot), so DiscoveryScanner's underscore reads and any
+        hyphenated reads both hit — no separate key-form preservation needed.
         """
         result = super()._convert_args_to_dict()
         # Interface fallback: --interface > target > self.interface
@@ -2627,7 +2629,7 @@ class discovery(SerialConnection):
         if hasattr(self, "scanner"):
             self.scanner.disconnect(None)
 
-    def get_results(self) -> Dict[str, Any]:
+    def get_results(self) -> ScanResult:
         """Return scan results"""
         if self._scan_results:
             return {

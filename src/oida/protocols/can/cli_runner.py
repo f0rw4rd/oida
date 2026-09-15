@@ -302,13 +302,12 @@ class can(ISOTPMixin, SerialConnection):
         # RequestDownload 0x34...) whose standalone equivalents are all gated;
         # with --extended it also TesterPresent-sweeps 512+ arbitration IDs.
         # Gate it on --confirm like every other active operation in this module.
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--uds-scan actively probes ECUs and enumerates state-changing UDS "
-                "services (disruptive on a live bus) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--uds-scan",
+            detail="--uds-scan actively probes ECUs and enumerates state-changing UDS "
+            "services (disruptive on a live bus) — requires --confirm",
+        ):
             return
-
         self.logger.display("[UDS] Scanning for UDS-capable ECUs...")
         results = self.scanner._scan_uds(self.conn)
 
@@ -417,11 +416,11 @@ class can(ISOTPMixin, SerialConnection):
         # --id-scan floods every standard CAN ID with TesterPresent — this
         # is loud on a live bus and can trigger flood detection / safety
         # interlocks on a vehicle bench. Gated on --confirm.
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--id-scan floods every CAN arbitration ID with TesterPresent "
-                "(disruptive on live bus) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--id-scan",
+            detail="--id-scan floods every CAN arbitration ID with TesterPresent "
+            "(disruptive on live bus) — requires --confirm",
+        ):
             return
         can_mod = _python_can()
 
@@ -479,11 +478,11 @@ class can(ISOTPMixin, SerialConnection):
         """Handle XCP protocol discovery scan."""
         # scan_xcp sends a CONNECT to every arbitration ID (0x000-0x7FF) —
         # comparable bus load to --id-scan, so gate it the same way.
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--xcp-scan sends XCP CONNECT to every arbitration ID "
-                "(disruptive on live bus) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--xcp-scan",
+            detail="--xcp-scan sends XCP CONNECT to every arbitration ID "
+            "(disruptive on live bus) — requires --confirm",
+        ):
             return
         xcp_results = self.scanner.scan_xcp(self.conn)
 
@@ -534,12 +533,11 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_xcp_memory_read(self) -> None:
         """Handle XCP memory read (requires --confirm)."""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "XCP memory read requires --confirm flag. This actively reads ECU memory!"
-            )
+        if not self.require_confirm(
+            "--confirm",
+            detail="XCP memory read requires --confirm flag. This actively reads ECU memory!",
+        ):
             return
-
         xcp_req = getattr(self.args, "xcp_req_id", None)
         xcp_resp = getattr(self.args, "xcp_resp_id", None)
         xcp_addr = getattr(self.args, "xcp_address", None)
@@ -571,11 +569,11 @@ class can(ISOTPMixin, SerialConnection):
         """Handle CCP protocol discovery scan."""
         # scan_ccp broadcasts CONNECT across all 256 station addresses —
         # comparable bus load to --id-scan, so gate it the same way.
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--ccp-scan sends CCP CONNECT to all 256 station addresses "
-                "(disruptive on live bus) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--ccp-scan",
+            detail="--ccp-scan sends CCP CONNECT to all 256 station addresses "
+            "(disruptive on live bus) — requires --confirm",
+        ):
             return
         cro_id = int(getattr(self.args, "ccp_cro_id", None) or "0x701", 0)
         dto_id = int(getattr(self.args, "ccp_dto_id", None) or "0x702", 0)
@@ -599,13 +597,12 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_uds_sessions(self) -> None:
         """Handle UDS session enumeration (requires --confirm)."""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--uds-sessions switches the ECU into programming/extended "
-                "diagnostic sessions (disruptive on a live bus) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--uds-sessions",
+            detail="--uds-sessions switches the ECU into programming/extended "
+            "diagnostic sessions (disruptive on a live bus) — requires --confirm",
+        ):
             return
-
         req_id = self._get_uds_target_id()
         if req_id is None:
             return
@@ -685,13 +682,12 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_uds_routines(self) -> None:
         """Handle UDS RoutineControl enumeration (requires --confirm)."""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--uds-routines runs RoutineControl startRoutine (executes ECU "
-                "routines: actuator tests, resets) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--uds-routines",
+            detail="--uds-routines runs RoutineControl startRoutine (executes ECU "
+            "routines: actuator tests, resets) — requires --confirm",
+        ):
             return
-
         req_id = self._get_uds_target_id()
         if req_id is None:
             return
@@ -704,10 +700,10 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_uds_reset(self) -> None:
         """Handle UDS ECUReset (requires --confirm)."""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("ECU reset requires --confirm flag. This will reset the target ECU!")
+        if not self.require_confirm(
+            "--confirm", detail="ECU reset requires --confirm flag. This will reset the target ECU!"
+        ):
             return
-
         req_id = self._get_uds_target_id()
         if req_id is None:
             return
@@ -958,10 +954,10 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_send(self, spec: str) -> None:
         """Handle sending a single raw CAN frame."""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--send injects raw frames onto the bus (can drive actuators) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--send",
+            detail="--send injects raw frames onto the bus (can drive actuators) — requires --confirm",
+        ):
             self.results["success"] = False
             self.results["data"]["refused"] = "--send requires --confirm"
             return
@@ -989,11 +985,11 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_send_file(self, filepath: str) -> None:
         """Handle sending CAN frames from a file."""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--send-file injects raw frames onto the bus (can drive actuators) — "
-                "requires --confirm"
-            )
+        if not self.require_confirm(
+            "--send-file",
+            detail="--send-file injects raw frames onto the bus (can drive actuators) — "
+            "requires --confirm",
+        ):
             self.results["success"] = False
             self.results["data"]["refused"] = "--send-file requires --confirm"
             return
@@ -1018,11 +1014,11 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_replay(self, filepath: str) -> None:
         """Handle replaying CAN traffic from a log file."""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--replay re-sends every captured frame onto the bus (incl. write/diagnostic "
-                "commands) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--replay",
+            detail="--replay re-sends every captured frame onto the bus (incl. write/diagnostic "
+            "commands) — requires --confirm",
+        ):
             self.results["success"] = False
             self.results["data"]["refused"] = "--replay requires --confirm"
             return
@@ -1161,12 +1157,11 @@ class can(ISOTPMixin, SerialConnection):
 
     def _handle_fuzz(self) -> None:
         """Handle CAN bus fuzzing (requires --confirm)."""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "CAN fuzzing requires --confirm flag. This can disrupt bus operations!"
-            )
+        if not self.require_confirm(
+            "--confirm",
+            detail="CAN fuzzing requires --confirm flag. This can disrupt bus operations!",
+        ):
             return
-
         can_mod = _python_can()
 
         fuzz_id_str = getattr(self.args, "fuzz_id", None)

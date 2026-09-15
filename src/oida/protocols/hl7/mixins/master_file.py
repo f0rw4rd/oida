@@ -24,13 +24,12 @@ class MasterFileMixin:
         mfn_type = getattr(self.args, "mfn_type", "M01")
 
         # MFN messages modify master files - require --confirm
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                f"MFN^{mfn_type} (Master File Notification) modifies master data. "
-                "Use --confirm to proceed."
-            )
+        if not self.require_confirm(
+            "--confirm",
+            detail=f"MFN^{mfn_type} (Master File Notification) modifies master data. "
+            "Use --confirm to proceed.",
+        ):
             return
-
         type_desc = {
             "M01": "General Master File",
             "M02": "Staff/Practitioner Master File",

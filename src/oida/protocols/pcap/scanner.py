@@ -15,6 +15,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from ...connection import SerialConnection
+from ...utils.result_types import ScanResult
 from ...utils.export_utils import configure as configure_export
 from ...utils.export_utils import export_data, get_export_path
 from ...utils.ics_logger import get_logger, get_module_logger, set_progress_active
@@ -1398,7 +1399,7 @@ class pcap(SerialConnection):
             self.logger.debug("pcap scan failed: %s", e)
             self.logger.fail(f"PCAP analysis error: {e}")
 
-    def get_results(self) -> Dict[str, Any]:
+    def get_results(self) -> ScanResult:
         """Return scan results"""
         if self._scan_results:
             return {

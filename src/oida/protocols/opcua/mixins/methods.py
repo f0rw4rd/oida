@@ -45,11 +45,11 @@ class MethodsMixin:
         """Invoke an OPC UA method"""
         # --call-method invokes arbitrary server-defined methods (Restart,
         # ResetCounters, custom site methods etc.) — gate on --confirm.
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                f"--call-method invokes arbitrary OPC UA method '{method_node_id}' "
-                "(server-side side effects unknown) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--call-method",
+            detail=f"--call-method invokes arbitrary OPC UA method '{method_node_id}' "
+            "(server-side side effects unknown) — requires --confirm",
+        ):
             self.results["success"] = False
             self.results["data"]["refused"] = "--call-method requires --confirm"
             return

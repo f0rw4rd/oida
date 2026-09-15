@@ -10,9 +10,10 @@ import unittest
 from unittest.mock import Mock, patch, MagicMock
 
 from oida.protocols.fhir.mixins.crud import CRUDMixin
+from oida.utils.confirm_gate import ConfirmGateMixin
 
 
-class MockCRUDHost(CRUDMixin):
+class MockCRUDHost(CRUDMixin, ConfirmGateMixin):
     """Mock host class that mixes in CRUDMixin for testing."""
 
     def __init__(self, **arg_overrides):

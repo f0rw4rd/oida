@@ -19,6 +19,8 @@ import json
 import unittest
 from unittest.mock import Mock, patch, MagicMock, AsyncMock
 
+from oida.utils.confirm_gate import ConfirmGateMixin
+
 
 # ---------------------------------------------------------------------------
 # Constants tests -- verify structural relationships, not individual values
@@ -980,7 +982,7 @@ class TestDiscoveryMixin(unittest.TestCase):
         from oida.protocols.ocpp.mixins.messages import MessagesMixin
         from oida.protocols.ocpp.mixins.security import SecurityMixin
 
-        class FakeOCPP(DiscoveryMixin, SecurityMixin, MessagesMixin):
+        class FakeOCPP(DiscoveryMixin, SecurityMixin, MessagesMixin, ConfirmGateMixin):
             pass
 
         obj = FakeOCPP()
@@ -1395,7 +1397,7 @@ class TestSecurityMixin(unittest.TestCase):
         from oida.protocols.ocpp.mixins.security import SecurityMixin
         from oida.protocols.ocpp.mixins.messages import MessagesMixin
 
-        class FakeOCPP(SecurityMixin, MessagesMixin):
+        class FakeOCPP(SecurityMixin, MessagesMixin, ConfirmGateMixin):
             pass
 
         obj = FakeOCPP()
@@ -1935,7 +1937,7 @@ class TestChargingMixin(unittest.TestCase):
         from oida.protocols.ocpp.mixins.messages import MessagesMixin
         from oida.protocols.ocpp.mixins.security import SecurityMixin
 
-        class FakeOCPP(ChargingMixin, SecurityMixin, MessagesMixin):
+        class FakeOCPP(ChargingMixin, SecurityMixin, MessagesMixin, ConfirmGateMixin):
             pass
 
         obj = FakeOCPP()
@@ -2331,7 +2333,7 @@ class TestBruteForceHTTPAuth(unittest.TestCase):
         from oida.protocols.ocpp.mixins.security import SecurityMixin
         from oida.protocols.ocpp.mixins.messages import MessagesMixin
 
-        class FakeOCPP(SecurityMixin, MessagesMixin):
+        class FakeOCPP(SecurityMixin, MessagesMixin, ConfirmGateMixin):
             pass
 
         obj = FakeOCPP()
@@ -2420,7 +2422,7 @@ class TestBruteForceIdTags(unittest.TestCase):
         from oida.protocols.ocpp.mixins.security import SecurityMixin
         from oida.protocols.ocpp.mixins.messages import MessagesMixin
 
-        class FakeOCPP(SecurityMixin, MessagesMixin):
+        class FakeOCPP(SecurityMixin, MessagesMixin, ConfirmGateMixin):
             pass
 
         obj = FakeOCPP()

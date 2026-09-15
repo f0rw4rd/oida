@@ -10,7 +10,10 @@ from typing import Dict, List, Tuple, Any
 from datetime import datetime
 from collections import defaultdict
 
+from . import crash_report
 from . import ics_logger as _log
+from .args_dict import ArgsDict
+from .confirm_gate import ConfirmGateMixin
 from .ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
@@ -25,15 +28,17 @@ def _normalize_args(args: Any) -> Any:
     an argparse ``Namespace``.  This helper returns an object that satisfies
     both interfaces so callers never need to care which form was provided.
 
-    If *args* is already a dict it is returned as-is (dicts already support
-    ``.get`` / ``[]`` / ``in``).  For Namespace objects (or anything with
-    ``__dict__``), a thin wrapper is returned that delegates attribute access
-    to the underlying namespace while also providing ``.get()``, ``[]``,
-    and ``in`` support.
+    If *args* is already a dict it is wrapped in an ``ArgsDict`` so that the
+    hyphenated CLI spelling and the underscore argparse spelling of a key
+    resolve to the same slot (unless it is already an ``ArgsDict``).  For
+    Namespace objects (or anything with ``__dict__``), a thin wrapper is
+    returned that delegates attribute access to the underlying namespace while
+    also providing ``.get()``, ``[]``, and ``in`` support.
     """
-    # Plain dicts already satisfy the dict interface used by scanners.
+    # Plain dicts satisfy the dict interface but not the dash/underscore
+    # normalization scanners rely on — wrap so "unit-id" and "unit_id" agree.
     if isinstance(args, dict):
-        return args
+        return args if isinstance(args, ArgsDict) else ArgsDict(args)
 
     # If the object already has a .get() method it's good enough.
     if callable(getattr(args, "get", None)):
@@ -41,7 +46,16 @@ def _normalize_args(args: Any) -> Any:
 
     # Wrap argparse Namespace (or similar) to add dict-style access.
     class _ArgsBridge:
-        """Thin adapter adding dict-style access to an argparse Namespace."""
+        """Thin adapter adding dict-style access to an argparse Namespace.
+
+        Scanner code overwhelmingly calls the dict-style accessors with the
+        flag's CLI spelling (dashes, e.g. "read-only"), but argparse always
+        turns "--read-only" into the Namespace attribute `read_only`
+        (underscores). Without normalizing here, every dashed dict-style
+        read silently misses and falls back to its default, regardless of
+        what the user passed — normalize once, here, rather than at every
+        call site.
+        """
 
         __slots__ = ("_ns",)
 
@@ -55,15 +69,18 @@ def _normalize_args(args: Any) -> Any:
         def __setattr__(self, name: str, value: Any) -> None:
             setattr(object.__getattribute__(self, "_ns"), name, value)
 
-        # --- dict-style access ---
+        # --- dict-style access (dash-normalized) ---
         def get(self, key: str, default: Any = None) -> Any:
-            return getattr(object.__getattribute__(self, "_ns"), key, default)
+            ns = object.__getattribute__(self, "_ns")
+            return getattr(ns, key.replace("-", "_"), default)
 
         def __getitem__(self, key: str) -> Any:
-            return getattr(object.__getattribute__(self, "_ns"), key)
+            ns = object.__getattribute__(self, "_ns")
+            return getattr(ns, key.replace("-", "_"))
 
         def __contains__(self, key: str) -> bool:
-            return hasattr(object.__getattribute__(self, "_ns"), key)
+            ns = object.__getattribute__(self, "_ns")
+            return hasattr(ns, key.replace("-", "_"))
 
         def __repr__(self) -> str:
             return f"_ArgsBridge({object.__getattribute__(self, '_ns')!r})"
@@ -71,7 +88,7 @@ def _normalize_args(args: Any) -> Any:
     return _ArgsBridge(args)
 
 
-class BaseScanner(ABC):
+class BaseScanner(ConfirmGateMixin, ABC):
     """
     Abstract base class for all SCADA protocol scanners.
     Provides common functionality and enforces consistent structure.
@@ -321,6 +338,7 @@ class BaseScanner(ABC):
 
         except Exception as e:
             _log.log_exc(f"Error during {self.get_protocol_name()} scan")
+            crash_report.record(e, protocol=self.get_protocol_name(), args=self.args)
             return {"error": str(e)}
 
         finally:

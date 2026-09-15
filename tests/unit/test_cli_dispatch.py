@@ -376,73 +376,11 @@ class TestExecuteScans:
 
 
 class TestScanTarget:
-    def test_layer1_basescanner_path(self):
-        import argparse
-        from oida.utils.base_scanner import BaseScanner
-
-        class L1(BaseScanner):
-            def __init__(self, args):
-                self.args = args
-
-            def get_protocol_name(self):
-                return "l1"
-
-            def get_default_port(self):
-                return 1
-
-            def check_dependencies(self):
-                return True
-
-            def connect(self):
-                return True
-
-            def disconnect(self):
-                pass
-
-            def discover(self):
-                return {}
-
-            def run_scan(self):
-                return {"data": {"ok": True}}
-
-        args = argparse.Namespace(protocol="l1")
-        result = cli.scan_target(L1, args, "1.2.3.4")
-        assert result["host"] == "1.2.3.4"
-        # "error" absent -> success True
-        assert result["success"] is True
-
-    def test_layer1_error_marks_unsuccessful(self):
-        import argparse
-        from oida.utils.base_scanner import BaseScanner
-
-        class L1Err(BaseScanner):
-            def __init__(self, args):
-                self.args = args
-
-            def get_protocol_name(self):
-                return "x"
-
-            def get_default_port(self):
-                return 1
-
-            def check_dependencies(self):
-                return True
-
-            def connect(self):
-                return True
-
-            def disconnect(self):
-                pass
-
-            def discover(self):
-                return {}
-
-            def run_scan(self):
-                return {"error": "boom"}
-
-        args = argparse.Namespace(protocol="x")
-        result = cli.scan_target(L1Err, args, "5.6.7.8")
-        assert result["success"] is False
+    """scan_target uses a single dispatch model: every protocol class is a
+    Layer-2 ``connection`` taking (args, db, host) and exposing get_results().
+    (The former Layer-1 ``issubclass(BaseScanner)`` branch was removed — no
+    protocol resolves to a bare BaseScanner at the dispatch seam.)
+    """
 
     def test_layer2_connection_path_uses_get_results(self):
         import argparse

@@ -463,12 +463,11 @@ class dicom(
 
         # Recursive bulk export (--dump-all)
         if getattr(self.args, "dump_all", False):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail(
-                    "--dump-all performs recursive bulk C-GET of every patient/study "
-                    "(mass PHI exfiltration) — requires --confirm"
-                )
-            else:
+            if self.require_confirm(
+                "--dump-all",
+                detail="--dump-all performs recursive bulk C-GET of every patient/study "
+                "(mass PHI exfiltration) — requires --confirm",
+            ):
                 self._recursive_bulk_export()
 
         # C-GET operations (retrieve images)
@@ -477,20 +476,18 @@ class dicom(
 
         # C-STORE operations (upload images) — writes an object to the PACS
         if getattr(self.args, "store", False):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail(
-                    "--store uploads a DICOM object to the PACS (state-changing) — requires --confirm"
-                )
-            else:
+            if self.require_confirm(
+                "--store",
+                detail="--store uploads a DICOM object to the PACS (state-changing) — requires --confirm",
+            ):
                 self._cstore_send()
 
         # C-MOVE operations (transfer images) — instructs the PACS to move studies
         if getattr(self.args, "move", False):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail(
-                    "--move instructs the PACS to transfer studies to a destination AET — requires --confirm"
-                )
-            else:
+            if self.require_confirm(
+                "--move",
+                detail="--move instructs the PACS to transfer studies to a destination AET — requires --confirm",
+            ):
                 self._cmove_request()
 
         # Fuzzing

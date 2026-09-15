@@ -28,13 +28,30 @@ class TestBaseScannerArgsNormalization(unittest.TestCase):
         )
         self.assertIn('int(self.args.get("timeout", 2))', src)
 
-    def test_normalize_returns_dict_passthrough(self):
-        """Dict input must pass through unchanged (no wrapping cost)."""
+    def test_normalize_wraps_plain_dict_for_key_normalization(self):
+        """A plain dict is wrapped in ArgsDict so hyphen/underscore key spellings
+        agree — the Layer-1 dict path used to skip this, unlike the Namespace
+        bridge, so a dashed read silently missed. Values are preserved; the
+        result is still a dict."""
+        from oida.utils.args_dict import ArgsDict
         from oida.utils.base_scanner import _normalize_args
 
-        d = {"a": 1, "b": 2}
+        d = {"unit-id": 1, "b": 2}
         out = _normalize_args(d)
-        self.assertIs(out, d)
+        self.assertIsInstance(out, ArgsDict)
+        self.assertIsInstance(out, dict)
+        self.assertEqual(out["unit_id"], 1)  # dashed input, underscore read
+        self.assertEqual(out["unit-id"], 1)
+        self.assertEqual(out["b"], 2)
+
+    def test_normalize_passes_argsdict_through_unchanged(self):
+        """An already-normalizing ArgsDict is returned as-is (idempotent, no
+        double-wrap)."""
+        from oida.utils.args_dict import ArgsDict
+        from oida.utils.base_scanner import _normalize_args
+
+        d = ArgsDict({"a": 1})
+        self.assertIs(_normalize_args(d), d)
 
     def test_normalize_wraps_namespace(self):
         """argparse.Namespace gets a .get() method via the bridge."""

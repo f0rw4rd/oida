@@ -15,6 +15,7 @@ from unittest.mock import AsyncMock, MagicMock
 
 from oida.protocols.opcua.helpers import _asyncua, ua
 from oida.protocols.opcua.mixins.files import FilesMixin
+from oida.utils.confirm_gate import ConfirmGateMixin
 from tests.service_gate import require_service
 
 
@@ -106,7 +107,7 @@ class _ObjectsClient:
         raise RuntimeError("get_node not configured")
 
 
-class _FilesHost(FilesMixin):
+class _FilesHost(FilesMixin, ConfirmGateMixin):
     def __init__(self, objects_node=None, args=None):
         self.args = args or SimpleNamespace(max_depth=4, max_nodes=500)
         self.logger = MagicMock()

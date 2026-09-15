@@ -347,13 +347,12 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         if not active:
             return
 
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "Security probes require --confirm flag. "
-                "These send real commands (Reset, Unlock, etc.) to the target!"
-            )
+        if not self.require_confirm(
+            "--confirm",
+            detail="Security probes require --confirm flag. "
+            "These send real commands (Reset, Unlock, etc.) to the target!",
+        ):
             return
-
         self.logger.debug(
             f"Dispatching {len(active)} active security probes (--security={run_all}): {active}"
         )
@@ -377,13 +376,12 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         if not active:
             return
 
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "Charging flow tests require --confirm flag. "
-                "These send real transactions to the target!"
-            )
+        if not self.require_confirm(
+            "--confirm",
+            detail="Charging flow tests require --confirm flag. "
+            "These send real transactions to the target!",
+        ):
             return
-
         self.logger.debug(
             f"Dispatching {len(active)} charging tests (--charging={run_all}): {active}"
         )

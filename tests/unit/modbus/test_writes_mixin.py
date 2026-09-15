@@ -21,6 +21,7 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from oida.utils.confirm_gate import ConfirmGateMixin
 from tests.service_gate import require_import
 
 require_import("pymodbus", reason="pymodbus library not installed")
@@ -53,7 +54,7 @@ class FakeLogger:
         self.findings.append({"title": title, "category": category, "detail": detail})
 
 
-class FakeWrites:
+class FakeWrites(ConfirmGateMixin):
     """Bind WritesMixin methods onto a configurable bare object."""
 
     def __init__(self, args=None, decode_type=None, endian="big", broadcast=False):

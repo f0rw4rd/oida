@@ -15,10 +15,8 @@ class CRUDMixin:
 
     def _create_patient(self):
         """Create a test Patient resource"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Write operations require --confirm flag")
+        if not self.require_confirm("--confirm", detail="Write operations require --confirm flag"):
             return
-
         self.logger.display("Creating Patient resource...")
 
         try:
@@ -53,10 +51,8 @@ class CRUDMixin:
 
     def _update_patient(self):
         """Update an existing Patient resource"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Write operations require --confirm flag")
+        if not self.require_confirm("--confirm", detail="Write operations require --confirm flag"):
             return
-
         patient_id = getattr(self.args, "update_patient", None)
         if not patient_id:
             self.logger.fail("No patient ID specified for update")
@@ -142,10 +138,8 @@ class CRUDMixin:
 
     def _delete_patient(self):
         """Delete a Patient resource"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Write operations require --confirm flag")
+        if not self.require_confirm("--confirm", detail="Write operations require --confirm flag"):
             return
-
         patient_id = getattr(self.args, "delete_patient", None)
         if not patient_id:
             self.logger.fail("No patient ID specified for delete")
@@ -175,10 +169,8 @@ class CRUDMixin:
 
     def _create_observation(self):
         """Create a test Observation resource"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Write operations require --confirm flag")
+        if not self.require_confirm("--confirm", detail="Write operations require --confirm flag"):
             return
-
         self.logger.display("Creating Observation resource...")
 
         try:

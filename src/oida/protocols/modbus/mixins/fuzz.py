@@ -23,10 +23,10 @@ class FuzzMixin(_ScannerBase):
 
     def _handle_fuzz(self):
         """Handle --fuzz flag for security testing."""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Fuzzing requires --confirm flag (writes to device)")
+        if not self.require_confirm(
+            "--confirm", detail="Fuzzing requires --confirm flag (writes to device)"
+        ):
             return
-
         fuzz_mode = getattr(self.args, "fuzz_mode", "basic")
         iterations = getattr(self.args, "fuzz_iterations", 100)
         register_map = getattr(self.args, "register_map", None)

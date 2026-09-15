@@ -230,10 +230,8 @@ class mqtt(NetworkConnection):
         - Response topic is auto-subscribed if specified
         """
         # Safety check
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Publish requires --confirm flag")
+        if not self.require_confirm("--confirm", detail="Publish requires --confirm flag"):
             return
-
         # Get and parse topics (comma-separated)
         topics_arg = getattr(self.args, "topics", None)
         if not topics_arg or topics_arg == "#":
@@ -301,10 +299,8 @@ class mqtt(NetworkConnection):
             return False
 
         # Safety check
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Publish requires --confirm flag")
+        if not self.require_confirm("--confirm", detail="Publish requires --confirm flag"):
             return True
-
         # Get topic
         topic = getattr(self.args, "topics", None)
         if not topic or topic == "#":
@@ -365,10 +361,10 @@ class mqtt(NetworkConnection):
 
     def _handle_fuzz(self):
         """Handle MQTT publish fuzzing"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("--fuzz requires --confirm flag (publishes to topics)")
+        if not self.require_confirm(
+            "--fuzz", detail="--fuzz requires --confirm flag (publishes to topics)"
+        ):
             return
-
         if not self.conn:
             self.logger.fail("Cannot fuzz without connection")
             return

@@ -88,10 +88,10 @@ class mms(NetworkConnection):
 
     def _handle_fuzz(self, scan_results: Dict) -> None:
         """Handle fuzzing mode (--fuzz)"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("--fuzz requires --confirm flag (DANGEROUS operation)")
+        if not self.require_confirm(
+            "--fuzz", detail="--fuzz requires --confirm flag (DANGEROUS operation)"
+        ):
             return
-
         iterations = getattr(self.args, "fuzz_iterations", 10)
 
         self.logger.display(f"Starting fuzz mode: objects ({iterations} iterations)")

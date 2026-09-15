@@ -198,11 +198,11 @@ class tase2(NetworkConnection):
     def _execute_action(self) -> None:
         """Execute requested action command."""
         # Gate write/control operations behind --confirm
-        if self._needs_confirm() and not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "Write/control operations require --confirm "
-                "(write-point, send-command, operate-device, set-tag, etc.)"
-            )
+        if self._needs_confirm() and not self.require_confirm(
+            "--write/control",
+            detail="Write/control operations require --confirm "
+            "(write-point, send-command, operate-device, set-tag, etc.)",
+        ):
             return
 
         result = None

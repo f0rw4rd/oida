@@ -78,13 +78,11 @@ src/oida/protocols/discovery/ics.py::arg-type::Argument "manufacturer" to "Disco
 src/oida/protocols/discovery/igmp.py::no-redef::Name "Ether" already defined on line 376
 src/oida/protocols/discovery/ipv6.py::index::Unsupported target for indexed assignment ("dict[str, Any] | None")
 src/oida/protocols/discovery/lldp.py::arg-type::Argument 1 to "_filter_industrial_devices" of "LLDPScanner" has incompatible type "Collection[Any]"; expected "list[dict[str, Any]]"
-src/oida/protocols/discovery/lldp.py::arg-type::Argument 1 to "fail" of "ICSLogger" has incompatible type "str | None"; expected "str"
 src/oida/protocols/discovery/mdns.py::arg-type::Argument 1 to "ServiceBrowser" has incompatible type "None"; expected "Zeroconf"
 src/oida/protocols/discovery/mdns.py::valid-type::Variable "ServiceListener" is not valid as a type
 src/oida/protocols/discovery/mdns.py::valid-type::Variable "Zeroconf" is not valid as a type
 src/oida/protocols/discovery/netmanage.py::arg-type::Argument 1 to "calculate_checksum" has incompatible type "bytearray"; expected "bytes"
 src/oida/protocols/discovery/network.py::arg-type::Argument "mac_address" to "DiscoveredDevice" has incompatible type "str | None"; expected "str"
-src/oida/protocols/discovery/scanner.py::arg-type::Argument 1 to "fail" of "ICSLogger" has incompatible type "str | None"; expected "str"
 src/oida/protocols/discovery/scanner.py::index::Unsupported target for indexed assignment ("dict[str, Any] | None")
 src/oida/protocols/discovery/scanner.py::index::Value of type "dict[str, Any] | None" is not indexable
 src/oida/protocols/discovery/scanner.py::operator::Unsupported right operand type for in ("dict[str, Any] | None")
@@ -259,7 +257,7 @@ src/oida/protocols/opcua/mixins/methods.py::arg-type::Argument 1 to "_get_type_n
 src/oida/protocols/opcua/mixins/writes.py::arg-type::Argument 1 to "_convert_value" of "WritesMixin" has incompatible type "Any | None"; expected "str"
 src/oida/protocols/opcua/scanner.py::arg-type::Argument "defaults" to "load_credentials" has incompatible type "None"; expected "list[Any]"
 src/oida/protocols/pcap/scanner.py::arg-type::Argument 2 to "progress" of "ICSLogger" has incompatible type "int | None"; expected "int"
-src/oida/protocols/pcap/scanner.py::no-redef::Name "parts" already defined on line 377
+src/oida/protocols/pcap/scanner.py::no-redef::Name "parts" already defined on line 378
 src/oida/protocols/profinet/__init__.py::arg-type::Argument 1 to "fail" of "ICSLogger" has incompatible type "str | None"; expected "str"
 src/oida/protocols/profinet/__init__.py::arg-type::Argument 1 to "scan" has incompatible type "Any | None"; expected "str"
 src/oida/protocols/snap7/mixins/block_operations.py::arg-type::Argument 1 to "update" of "MutableMapping" has incompatible type "dict[str, str | Any | None]"; expected "SupportsKeysAndGetItem[str, bool]"

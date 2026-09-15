@@ -236,7 +236,7 @@ class coap(NetworkConnection):
             return
 
         self.logger.debug("Enumerating CoAP resources...")
-        confirm = getattr(self.args, "confirm", False)
+        confirm = self._confirm_flag()
         try:
             scan_results = self.scanner.discover(self.conn, confirm=confirm)
             self._scan_results = scan_results
@@ -376,7 +376,7 @@ class coap(NetworkConnection):
         if getattr(self.args, "methods", False):
             resources = self.scanner._resources
             if resources:
-                _confirm = getattr(self.args, "confirm", False)
+                _confirm = self._confirm_flag()
                 if _confirm:
                     self.logger.display("Testing CoAP methods (read + write, --confirm passed)...")
                 else:
@@ -411,7 +411,7 @@ class coap(NetworkConnection):
                 )
 
         # Write operations (require --confirm)
-        confirm = getattr(self.args, "confirm", False)
+        confirm = self._confirm_flag()
 
         put_args = getattr(self.args, "put", None)
         if put_args:

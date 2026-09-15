@@ -18,8 +18,9 @@ class FuzzMixin:
     async def _handle_fuzz(self) -> None:
         """Handle fuzzing operations for OPC UA nodes and methods"""
         # Check confirmation
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Fuzzing requires --confirm flag (writes to device)")
+        if not self.require_confirm(
+            "--confirm", detail="Fuzzing requires --confirm flag (writes to device)"
+        ):
             self.logger.display("Use: oida opcua <target> --fuzz [nodes|methods|all] --confirm")
             return
 

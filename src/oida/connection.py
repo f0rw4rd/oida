@@ -9,10 +9,15 @@ the entire scanning workflow upon instantiation.
 from abc import ABC, abstractmethod
 import copy
 import socket
-from typing import Any, Dict, Optional
+from typing import Any, Dict, Optional, cast
+
+from oida.utils import crash_report
+from oida.utils.args_dict import ArgsDict
+from oida.utils.confirm_gate import ConfirmGateMixin
+from oida.utils.result_types import ScanResult
 
 
-class connection(ABC):
+class connection(ConfirmGateMixin, ABC):
     """
     Base connection class for all protocols (NXC-style)
 
@@ -40,14 +45,19 @@ class connection(ABC):
                 self.scan_registers()
     """
 
-    def __init__(self, args: Any, db: Optional[Any], host: str):
+    def __init__(self, args: Any, db: Optional[Any], host: str, *, autostart: bool = True):
         """
-        Initialize connection and trigger protocol flow
+        Initialize connection and (by default) trigger the protocol flow.
 
         Args:
             args: Parsed command-line arguments (argparse.Namespace)
             db: Database instance for storing results (optional)
             host: Target host (IP address or hostname)
+            autostart: When True (default, preserving CLI behavior), the scan
+                runs during construction via ``run()``. Pass ``autostart=False``
+                to build the object without scanning — the caller then invokes
+                ``run()`` explicitly. This splits construction from execution so
+                the object is constructible (and testable) without side effects.
         """
         from oida.utils.ics_logger import get_logger, update_logger_host, print_startup_banner
 
@@ -82,9 +92,12 @@ class connection(ABC):
                 self.logger.extra["hostname"] = host[:16]
 
         # Store connection results (success=None means "not yet determined").
-        # Typed Dict[str, Any]: the value union is heterogeneous (str, None,
-        # nested dict) and subclasses freely index/mutate results["data"][...];
-        # an inferred narrow value type would make every such access an error.
+        # Kept as a mutable Dict[str, Any] because the value union is
+        # heterogeneous (str, None, nested dict) and subclasses freely
+        # index/mutate results["data"][...]; an inferred narrow value type would
+        # make every such access an error. The documented *envelope* shape is
+        # oida.utils.result_types.ScanResult, applied at the get_results()
+        # boundary via cast — this dict is the flexible backing store.
         self.results: Dict[str, Any] = {
             "host": host,
             "ip": self.ip,
@@ -100,9 +113,21 @@ class connection(ABC):
         # proto_flow() implementations are harmless.
         self.proto_logger()
 
-        # Trigger protocol execution flow
-        # Error handling and cleanup are centralized here so proto_flow()
-        # implementations only need the happy-path logic.
+        # Trigger protocol execution flow unless the caller opted out.
+        # autostart=True (default) preserves the CLI/library contract where
+        # constructing the object runs the scan; autostart=False lets callers
+        # (notably tests) build the object and invoke run() themselves.
+        if autostart:
+            self.run()
+
+    def run(self) -> "ScanResult":
+        """
+        Execute the protocol scan flow and return the result envelope.
+
+        Called automatically from ``__init__`` unless ``autostart=False``.
+        Error handling, cleanup, and success/failure bookkeeping are centralized
+        here so ``proto_flow()`` implementations only need the happy-path logic.
+        """
         try:
             self.proto_flow()
             # Only set success if proto_flow didn't explicitly set it
@@ -121,6 +146,12 @@ class connection(ABC):
                 f"{getattr(self, 'protocol_name', 'unknown').upper()} "
                 f"scan failed for {self.host}: {e}"
             )
+            crash_report.record(
+                e,
+                protocol=getattr(self, "protocol_name", "unknown"),
+                args=self.args,
+                context=f"host={self.host}",
+            )
         finally:
             # Always cleanup connection resources
             try:
@@ -134,6 +165,7 @@ class connection(ABC):
             findings = self.logger.to_list()
             if findings:
                 self.results["data"].setdefault("security_findings", []).extend(findings)
+        return self.get_results()
 
     def _detect_verbose(self) -> bool:
         """Determine verbose mode from args (debug flag or verbose >= 1)."""
@@ -257,33 +289,6 @@ class connection(ABC):
         this no-op default.
         """
 
-    def require_confirm(self, action_name: str) -> bool:
-        """Canonical gate for destructive / live-write operations.
-
-        This is the *single idiom* every protocol should use before actuating a
-        dangerous action (write/control/start/stop/fuzz, etc.). The framework
-        adds ``--confirm`` and the dangerous flags centrally via
-        ``proto_args_factory`` and every help string promises
-        "(requires --confirm)"; this helper enforces that promise with one
-        standard check plus a standard failure log, so a new gated action only
-        needs::
-
-            if not self.require_confirm("--write-value"):
-                return
-
-        Args:
-            action_name: Human-readable name of the gated action (e.g.
-                ``"--write-value"``) used in the failure message.
-
-        Returns:
-            True if ``--confirm`` was supplied and the action may proceed;
-            False (after logging a standard failure line) otherwise.
-        """
-        if getattr(self.args, "confirm", False):
-            return True
-        self.logger.fail(f"{action_name} requires --confirm (dangerous operation)")
-        return False
-
     def cleanup(self):
         """
         Cleanup connection and resources
@@ -300,22 +305,31 @@ class connection(ABC):
             except Exception as e:
                 self.logger.debug(f"Error during cleanup: {e}")
 
-    def get_results(self) -> Dict[str, Any]:
+    def get_results(self) -> ScanResult:
         """
-        Get scan results
+        Get scan results.
 
         Returns:
-            dict: Results dictionary with host info and scan data
+            ScanResult: the typed envelope (``host``/``ip``/``protocol``/
+            ``port``/``success``/``error``/``data``) for this target. The
+            internal container is a mutable ``Dict[str, Any]`` so subclasses can
+            index/mutate ``results["data"][...]`` freely; ``cast`` applies the
+            documented envelope shape at this boundary. See
+            ``oida.utils.result_types.ScanResult``.
         """
-        return self.results
+        return cast(ScanResult, self.results)
 
     def _convert_args_to_dict(self) -> Dict[str, Any]:
         """
-        Convert argparse.Namespace to dict format expected by scanners.
+        Convert argparse.Namespace to the dict format expected by scanners.
 
-        Auto-converts underscore keys to hyphenated (unit_id -> unit-id).
+        Returns an :class:`~oida.utils.args_dict.ArgsDict` — a normalizing dict
+        where the hyphenated CLI spelling and the underscore argparse spelling
+        of a key resolve to the same slot. Each key is therefore stored **once**
+        (underscore form); scanners that read ``args.get("unit-id")`` still hit
+        it. This replaces the old dual-write that stored every key twice.
         """
-        result = {"rhost": self.ip}
+        result = ArgsDict(rhost=self.ip)
         for key, value in vars(self.args).items():
             if value is None:
                 continue
@@ -323,12 +337,7 @@ class connection(ABC):
             if key == "port":
                 result["rport"] = value
             else:
-                # Store both forms: underscore (argparse native) and
-                # hyphenated (legacy scanner convention)
                 result[key] = value
-                hyphenated = key.replace("_", "-")
-                if hyphenated != key:
-                    result[hyphenated] = value
         return result
 
 
@@ -340,13 +349,16 @@ class NetworkConnection(connection):
     port handling and timeout management.
     """
 
-    def __init__(self, args: Any, db: Optional[Any], host: str):
+    def __init__(self, args: Any, db: Optional[Any], host: str, *, autostart: bool = True):
         """Initialize network connection.
 
         The default-port resolution is done on a *copy* of args so the caller's
         namespace is not mutated. Cross-protocol invocations from the dispatcher
         share a single argparse Namespace; writing to ``args.port`` here would
         leak the previous protocol's port to the next.
+
+        ``autostart`` is forwarded to the base ``connection`` (see its docstring):
+        True runs the scan on construct, False builds without scanning.
         """
         # Always copy when we touch args. The old code only copied when
         # port was unset, so a user-supplied -p value persisted on the
@@ -360,7 +372,7 @@ class NetworkConnection(connection):
         if hasattr(self, "default_port") and not getattr(args, "port", None):
             args.port = self.default_port
 
-        super().__init__(args, db, host)
+        super().__init__(args, db, host, autostart=autostart)
 
 
 class SerialConnection(connection):
@@ -371,8 +383,12 @@ class SerialConnection(connection):
     interface handling and packet capture.
     """
 
-    def __init__(self, args: Any, db: Optional[Any], host: str):
-        """Initialize serial connection"""
+    def __init__(self, args: Any, db: Optional[Any], host: str, *, autostart: bool = True):
+        """Initialize serial connection.
+
+        ``autostart`` is forwarded to the base ``connection`` (see its docstring):
+        True runs the scan on construct, False builds without scanning.
+        """
         # For serial protocols, "host" might be an interface name
         self.interface = getattr(args, "interface", None) or host
         # Same isolation contract as NetworkConnection (see its comment): the
@@ -381,4 +397,4 @@ class SerialConnection(connection):
         # place. Without a deep copy those writes bleed into the caller's
         # Namespace and the next protocol invocation in this process.
         args = copy.deepcopy(args)
-        super().__init__(args, db, host)
+        super().__init__(args, db, host, autostart=autostart)

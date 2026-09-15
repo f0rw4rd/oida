@@ -37,12 +37,11 @@ class DeviceMixin:
 
     def _send_pcd01_message(self):
         """Send PCD-01 Device Observation (ORU^R01 with MDC codes)"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "PCD-01 (Device Observation) is a write operation. Use --confirm to proceed."
-            )
+        if not self.require_confirm(
+            "--confirm",
+            detail="PCD-01 (Device Observation) is a write operation. Use --confirm to proceed.",
+        ):
             return
-
         self.logger.display("Sending PCD-01 Device Observation (ORU^R01)...")
 
         msg = self._create_pcd01_message()
@@ -223,12 +222,11 @@ class DeviceMixin:
 
     def _send_pcd03_message(self):
         """Send PCD-03 Infusion Order (RGV^O15 to pump)"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "PCD-03 (Infusion Order) is a dangerous operation. Use --confirm to proceed."
-            )
+        if not self.require_confirm(
+            "--confirm",
+            detail="PCD-03 (Infusion Order) is a dangerous operation. Use --confirm to proceed.",
+        ):
             return
-
         self.logger.display("Sending PCD-03 Infusion Order (RGV^O15)...")
 
         msg = self._create_pcd03_message()
@@ -329,10 +327,10 @@ class DeviceMixin:
 
     def _send_pcd_alarm_message(self):
         """Send PCD-04/10 Device Alarm (ORU^R40/R42)"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("PCD Alarm message is a write operation. Use --confirm to proceed.")
+        if not self.require_confirm(
+            "--confirm", detail="PCD Alarm message is a write operation. Use --confirm to proceed."
+        ):
             return
-
         alarm_type = getattr(self.args, "alarm_type", None) or "generic"
         self.logger.display(f"Sending PCD-10 Device Alarm ({alarm_type})...")
 

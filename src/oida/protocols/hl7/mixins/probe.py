@@ -21,7 +21,7 @@ class ProbeMixin:
         financial, MFN master-file updates etc.). With --confirm the
         operator opts into sending the full dangerous catalogue.
         """
-        confirm = getattr(self.args, "confirm", False)
+        confirm = self._confirm_flag()
 
         # Use shared message types list
         MESSAGE_TYPES = self._get_fuzz_message_types()

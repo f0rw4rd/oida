@@ -350,8 +350,9 @@ class MapReadWriteMixin(_ScannerBase):
                 self.logger.fail(str(e))
                 return
 
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail("Write operation requires --confirm flag")
+            if not self.require_confirm(
+                "--confirm", detail="Write operation requires --confirm flag"
+            ):
                 self.logger.display(
                     f"  Would write {'ON' if coil_value else 'OFF'} to coil "
                     f"'{entry['name']}' at address {address}"
@@ -403,8 +404,7 @@ class MapReadWriteMixin(_ScannerBase):
         addr_range = f"{address}" if reg_count == 1 else f"{address}-{address + reg_count - 1}"
 
         # Check for confirmation
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("Write operation requires --confirm flag")
+        if not self.require_confirm("--confirm", detail="Write operation requires --confirm flag"):
             self.logger.display(
                 f"  Would write {display_value} to '{entry['name']}' "
                 f"(address {addr_range}, type {dtype})"

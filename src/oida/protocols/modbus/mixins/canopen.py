@@ -82,8 +82,9 @@ class CANopenMixin(_ScannerBase):
 
     def _handle_canopen_write(self):
         """Handle --canopen-write flag for SDO download."""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("--canopen-write requires --confirm flag")
+        if not self.require_confirm(
+            "--canopen-write", detail="--canopen-write requires --confirm flag"
+        ):
             self.results["success"] = False
             self.results["data"]["refused"] = "--canopen-write requires --confirm"
             return

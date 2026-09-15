@@ -366,9 +366,7 @@ class modbus(
         if getattr(self.args, "canopen_read", None):
             self._handle_canopen_read()
         if getattr(self.args, "canopen_write", None):
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail("CANopen write requires --confirm flag")
-            else:
+            if self.require_confirm("--confirm", detail="CANopen write requires --confirm flag"):
                 self._handle_canopen_write()
 
         # Monitoring mode (--monitor) - runs last as it's blocking

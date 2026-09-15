@@ -14,7 +14,7 @@ class WritesMixin:
         """Write a value to a specific node."""
         node_id = getattr(self.args, "node_id", None)
         value_str = getattr(self.args, "write_value", None)
-        confirm = getattr(self.args, "confirm", False)
+        confirm = self._confirm_flag()
 
         if not node_id:
             self.logger.fail("--write-value requires --node-id to specify target node")

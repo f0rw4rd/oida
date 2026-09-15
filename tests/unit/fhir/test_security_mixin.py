@@ -10,9 +10,10 @@ import unittest
 from unittest.mock import Mock, patch, MagicMock, mock_open
 
 from oida.protocols.fhir.mixins.security import SecurityMixin
+from oida.utils.confirm_gate import ConfirmGateMixin
 
 
-class MockSecurityHost(SecurityMixin):
+class MockSecurityHost(SecurityMixin, ConfirmGateMixin):
     """Mock host class that mixes in SecurityMixin for testing."""
 
     def __init__(self, **arg_overrides):

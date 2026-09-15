@@ -302,10 +302,10 @@ class FilesMixin:
             return
 
         # Safety check
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail("--write-file requires --confirm flag (dangerous operation)")
+        if not self.require_confirm(
+            "--write-file", detail="--write-file requires --confirm flag (dangerous operation)"
+        ):
             return
-
         file_data = getattr(self.args, "file_data", None)
         if not file_data:
             self.logger.fail("--write-file requires --file-data (path or content)")

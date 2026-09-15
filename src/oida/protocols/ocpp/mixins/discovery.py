@@ -196,7 +196,7 @@ class DiscoveryMixin:
             return
 
         version = self.results["data"].get("ocpp_version", "1.6")
-        confirmed = getattr(self.args, "confirm", False)
+        confirmed = self._confirm_flag()
 
         if version and version.startswith("2."):
             all_actions = list(ALL_ACTIONS_V201)

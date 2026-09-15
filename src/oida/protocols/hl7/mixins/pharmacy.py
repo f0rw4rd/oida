@@ -23,10 +23,10 @@ class PharmacyMixin:
         self, *, msg_type, label, create_fn, finding_issue, finding_description
     ):
         """Common flow for pharmacy send methods that require --confirm."""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(f"{msg_type} modifies pharmacy records. Use --confirm to proceed.")
+        if not self.require_confirm(
+            "--confirm", detail=f"{msg_type} modifies pharmacy records. Use --confirm to proceed."
+        ):
             return
-
         self.logger.display(f"Sending {msg_type} ({label}) message...")
 
         msg = create_fn()

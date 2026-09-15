@@ -32,11 +32,11 @@ class EnumerationMixin(_ScannerBase):
 
     def _aet_brute_force(self):
         """Brute force AE Titles to find valid ones"""
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--aet-brute / --common-ae runs association brute-force "
-                "(trips PACS rate-limit / SIEM) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--aet-brute",
+            detail="--aet-brute / --common-ae runs association brute-force "
+            "(trips PACS rate-limit / SIEM) — requires --confirm",
+        ):
             return
         aet_brute_arg = getattr(self.args, "aet_brute", None)
         ae_wordlist_arg = getattr(self.args, "ae_wordlist", None)

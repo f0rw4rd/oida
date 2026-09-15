@@ -98,12 +98,11 @@ class hart(NetworkConnection):
         probe_calibration = getattr(self.args, "probe_calibration", False)
         probe_write = getattr(self.args, "probe_write", False)
         if probe_calibration or probe_write:
-            if not getattr(self.args, "confirm", False):
-                self.logger.fail(
-                    "--probe-calibration/--probe-write transmit live calibration/write "
-                    "commands to the device — requires --confirm"
-                )
-            else:
+            if self.require_confirm(
+                "--probe-calibration",
+                detail="--probe-calibration/--probe-write transmit live calibration/write "
+                "commands to the device — requires --confirm",
+            ):
                 self._handle_command_probes(calibration=probe_calibration, write=probe_write)
 
         # Security analysis
@@ -468,13 +467,12 @@ class hart(NetworkConnection):
         if not self.scanner:
             return
 
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--enumerate-device-specific blind-probes vendor-defined commands "
-                "(128-253) that may write/trim/reset the device — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--enumerate-device-specific",
+            detail="--enumerate-device-specific blind-probes vendor-defined commands "
+            "(128-253) that may write/trim/reset the device — requires --confirm",
+        ):
             return
-
         # --command-range defaults to "0-48" (shared with other actions), which
         # clamps this sweep to an empty range. Device-specific commands live at
         # 128-253, so fall back to that when the operator left --command-range at
@@ -515,13 +513,12 @@ class hart(NetworkConnection):
         if not self.scanner:
             return
 
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--probe-calibration/--probe-write transmit write and "
-                "calibration commands to the device — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--probe-calibration",
+            detail="--probe-calibration/--probe-write transmit write and "
+            "calibration commands to the device — requires --confirm",
+        ):
             return
-
         self.logger.display("Probing write/calibration command accessibility...")
         # Only transmit the requested category so --probe-write does not put
         # Master Reset / trim commands on the wire (and vice versa).
@@ -645,7 +642,7 @@ class hart(NetworkConnection):
         if not self.scanner:
             return
 
-        confirm = getattr(self.args, "confirm", False)
+        confirm = self._confirm_flag()
         if not confirm:
             self.logger.fail("--fuzz requires --confirm flag")
             return
@@ -682,13 +679,12 @@ class hart(NetworkConnection):
         # --raw-command can issue HART writes (6/17/18/19/41/42/53, etc.) —
         # named-write siblings in this file all gate on --confirm; the raw
         # path was wired around. Re-gated per safety-default policy.
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--raw-command can issue arbitrary HART writes "
-                "(6/17/18/19/41/42/53 etc.) — requires --confirm"
-            )
+        if not self.require_confirm(
+            "--raw-command",
+            detail="--raw-command can issue arbitrary HART writes "
+            "(6/17/18/19/41/42/53 etc.) — requires --confirm",
+        ):
             return
-
         data = b""
         raw_data = getattr(self.args, "raw_data", None)
         if raw_data:
@@ -746,7 +742,7 @@ class hart(NetworkConnection):
         if not self.scanner:
             return
 
-        confirm = getattr(self.args, "confirm", False)
+        confirm = self._confirm_flag()
         if not confirm:
             self.logger.fail("--bruteforce-lock requires --confirm flag")
             return
@@ -777,7 +773,7 @@ class hart(NetworkConnection):
         if not self.scanner:
             return
 
-        confirm = getattr(self.args, "confirm", False)
+        confirm = self._confirm_flag()
 
         unlock_code = getattr(self.args, "unlock", None)
         if unlock_code is not None:
@@ -806,7 +802,7 @@ class hart(NetworkConnection):
         if not self.scanner:
             return
 
-        confirm = getattr(self.args, "confirm", False)
+        confirm = self._confirm_flag()
 
         new_addr = getattr(self.args, "write_poll_addr", None)
         if new_addr is not None:

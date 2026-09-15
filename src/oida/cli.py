@@ -39,7 +39,9 @@ from oida.serial_cli import serial_args, handle_serial_command
 from oida.fuzz_cli import fuzz_args, handle_fuzz_command
 from oida.utils.ics_logger import get_logger
 from oida.utils.export_utils import configure_from_args, _write_xml
+from oida.utils.result_types import ScanResult
 from oida.utils.ics_logger import get_module_logger
+from oida.utils import crash_report
 from oida import __version__
 
 try:
@@ -574,6 +576,12 @@ def gen_cli_args(argv=None):
     # Global options
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--bug", action="store_true", help="Print diagnostic info for bug reports")
+    parser.add_argument(
+        "--no-bug-report",
+        action="store_true",
+        help="Suppress the crash bug-report block on unexpected internal errors "
+        "(also honors OIDA_NO_BUG_REPORT=1)",
+    )
 
     parser.add_argument(
         "-v",
@@ -1373,6 +1381,23 @@ def main(argv: Optional[List[str]] = None):
     Returns:
         int: Exit code (0 for success, non-zero for error)
     """
+    # Top-level crash safety net: anything that escapes _main() despite the
+    # per-scan/per-target handling in connection.py / base_scanner.py /
+    # scan_target() is treated as a genuine unhandled bug and reported the
+    # same way, then re-raised so the process still exits non-zero with a
+    # traceback under -v/--debug.
+    try:
+        return _main(argv)
+    except (KeyboardInterrupt, SystemExit):
+        raise
+    except BaseException as e:
+        crash_report.record(e, protocol="unknown", argv=argv if argv is not None else sys.argv[1:])
+        crash_report.flush()
+        raise
+
+
+def _main(argv: Optional[List[str]] = None):
+    """Implementation of main(); see main() for the public contract."""
     # Windows consoles default to a legacy code page (e.g. cp1252) that can't
     # encode the Unicode in help/output text, which crashes a frozen binary
     # with "charmap codec can't encode character". Force UTF-8 on the standard
@@ -1529,6 +1554,10 @@ def main(argv: Optional[List[str]] = None):
             f"\nCompleted {len(targets)} targets in {elapsed:.2f}s ({successful} ok, {failed} failed)"
         )
 
+    # Emit any deduplicated crash-report blocks now, after the summary line,
+    # instead of interleaved with per-target progress output.
+    crash_report.flush()
+
     # Export results if requested
     if args.output:
         fmt = args.format if args.format != "console" else "json"
@@ -1543,7 +1572,7 @@ def main(argv: Optional[List[str]] = None):
     return 0 if failed == 0 else 1
 
 
-def scan_target(protocol_class, args, target: str):
+def scan_target(protocol_class, args, target: str) -> ScanResult:
     """
     Scan a single target with the protocol.
 
@@ -1553,7 +1582,8 @@ def scan_target(protocol_class, args, target: str):
         target: Target IP/hostname
 
     Returns:
-        dict: Scan results
+        ScanResult: the typed per-target envelope (see
+        ``oida.utils.result_types.ScanResult``).
     """
     try:
         # Build a per-target copy with host/rhost set.
@@ -1567,19 +1597,8 @@ def scan_target(protocol_class, args, target: str):
         target_args.host = target
         target_args.rhost = target
 
-        # Detect Layer 1 (BaseScanner) vs Layer 2 (NetworkConnection) classes.
-        # Layer 2 classes accept (args, db, host) and auto-scan via proto_flow.
-        # Layer 1 classes accept (args) only and require explicit run_scan().
-        from oida.utils.base_scanner import BaseScanner
-
-        if issubclass(protocol_class, BaseScanner):
-            scanner = protocol_class(target_args)
-            result = scanner.run_scan()
-            result["host"] = target
-            result["success"] = "error" not in result
-            return result
-
-        # Layer 2: instantiate with (args, db, host) — triggers scan via proto_flow
+        # Single dispatch model: every protocol is a Layer-2 connection subclass
+        # taking (args, db, host) and auto-scanning via proto_flow on construct.
         scanner = protocol_class(target_args, None, target)
 
         # Get results
@@ -1600,6 +1619,7 @@ def scan_target(protocol_class, args, target: str):
         # Log visibly here too, so unexpected crashes aren't silently
         # swallowed unless -v/--debug is passed.
         logger.error(f"Error scanning {target}: {e}")
+        crash_report.record(e, protocol=getattr(args, "protocol", "unknown"), args=args)
         return {
             "host": target,
             "protocol": getattr(args, "protocol", "unknown"),
