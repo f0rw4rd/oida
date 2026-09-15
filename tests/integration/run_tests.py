@@ -58,7 +58,7 @@ Examples:
 
     parser.add_argument(
         "--output-dir",
-        default="/home/feb/pro/oida/tests/integration/results",
+        default=str(Path(__file__).parent / "results"),
         help="Output directory for test results",
     )
 
