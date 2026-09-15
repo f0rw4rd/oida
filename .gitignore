@@ -174,3 +174,6 @@ libs/
 credentials/
 secrets/
 reference/
+
+# Maintainer dev-container (references private infra; not for public tree)
+.devcontainer/
