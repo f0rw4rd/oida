@@ -11,12 +11,14 @@ import os
 from ....utils.lazy_import import lazy_import
 
 _asyncua_cert_gen = lazy_import(
-    "asyncua.crypto.cert_gen", "OPC UA", install_hint="pip install oida[opcua]"
+    "asyncua.crypto.cert_gen", "OPC UA", install_hint="pip install oida-ics[opcua]"
 )
 _asyncua_sec_policies = lazy_import(
-    "asyncua.crypto.security_policies", "OPC UA", install_hint="pip install oida[opcua]"
+    "asyncua.crypto.security_policies", "OPC UA", install_hint="pip install oida-ics[opcua]"
 )
-_cryptography_x509 = lazy_import("cryptography", "OPC UA", install_hint="pip install oida[opcua]")
+_cryptography_x509 = lazy_import(
+    "cryptography", "OPC UA", install_hint="pip install oida-ics[opcua]"
+)
 
 
 class SecurityMixin:

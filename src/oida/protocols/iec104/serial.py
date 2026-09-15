@@ -272,7 +272,7 @@ class IEC101Mixin:
         """Establish IEC 101 serial connection"""
         from ...utils.lazy_import import lazy_import
 
-        _serial = lazy_import("serial", "IEC 101", install_hint="pip install oida[serial]")
+        _serial = lazy_import("serial", "IEC 101", install_hint="pip install oida-ics[serial]")
         serial = _serial()  # load pyserial module
         parity_map = {
             "N": serial.PARITY_NONE,

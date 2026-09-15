@@ -9,7 +9,7 @@ subsystem.
 Previously every fuzzer was imported eagerly and unconditionally ("let them fail
 if there are issues"), so ``oida fuzz modbus`` transitively pulled in asyncua,
 crc, python-can, pydicom, hl7, ... and, if any were absent, died with a single
-misleading ``install oida[fuzz]`` line (the ``fuzz`` extra does not even contain
+misleading ``install oida-ics[fuzz]`` line (the ``fuzz`` extra does not even contain
 those protocol libs). Now each import is attempted independently: the ones whose
 dependencies are present register in ``PROTOCOL_FUZZERS``; the rest are recorded
 in ``PROTOCOL_IMPORT_ERRORS`` with a precise ``install_hint()`` naming the right
@@ -118,7 +118,7 @@ def _extras_for(key: str) -> tuple[str, ...]:
 
 def install_hint(key: str) -> str:
     """The ``pip install`` line that would make ``key`` importable."""
-    return f'pip install "oida[{",".join(_extras_for(key))}]"'
+    return f'pip install "oida-ics[{",".join(_extras_for(key))}]"'
 
 
 def import_error_for(key: str) -> str | None:

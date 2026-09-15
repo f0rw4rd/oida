@@ -29,11 +29,11 @@ def test_core_only_protocols_are_always_registered():
 
 def test_install_hint_names_the_protocol_extra():
     """The hint points at the *actual* extra, not a blanket ``[fuzz]``."""
-    assert proto.install_hint("modbus") == 'pip install "oida[fuzz,modbus]"'
-    assert proto.install_hint("s7comm") == 'pip install "oida[fuzz,snap7]"'
-    assert proto.install_hint("snmpv2c") == 'pip install "oida[fuzz,snmp]"'
+    assert proto.install_hint("modbus") == 'pip install "oida-ics[fuzz,modbus]"'
+    assert proto.install_hint("s7comm") == 'pip install "oida-ics[fuzz,snap7]"'
+    assert proto.install_hint("snmpv2c") == 'pip install "oida-ics[fuzz,snmp]"'
     # A core-only protocol only needs the fuzz extra.
-    assert proto.install_hint("tcp") == 'pip install "oida[fuzz]"'
+    assert proto.install_hint("tcp") == 'pip install "oida-ics[fuzz]"'
 
 
 def test_one_missing_dependency_does_not_break_the_rest():
@@ -54,7 +54,7 @@ def test_one_missing_dependency_does_not_break_the_rest():
         assert "modbus" in reloaded.PROTOCOL_FUZZERS
         assert "tcp" in reloaded.PROTOCOL_FUZZERS
         # And the hint for the broken protocol is still precise.
-        assert reloaded.install_hint("opcua") == 'pip install "oida[fuzz,opcua]"'
+        assert reloaded.install_hint("opcua") == 'pip install "oida-ics[fuzz,opcua]"'
     finally:
         if saved is not None:
             sys.modules[victim_mod] = saved

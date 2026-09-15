@@ -42,7 +42,7 @@ from .constants import (
 )
 
 # Lazy import for websockets dependency
-_websockets = lazy_import("websockets", "OCPP", install_hint="pip install oida[ocpp]")
+_websockets = lazy_import("websockets", "OCPP", install_hint="pip install oida-ics[ocpp]")
 
 # Backward compatibility flag
 dependencies_missing = not _websockets.is_available
@@ -145,7 +145,9 @@ class OCPPScanner(NetworkScanner):
 
     def check_dependencies(self) -> bool:
         if not _websockets.is_available:
-            self.logger.fail("websockets library required. Install with: pip install oida[ocpp]")
+            self.logger.fail(
+                "websockets library required. Install with: pip install oida-ics[ocpp]"
+            )
             return False
         return True
 

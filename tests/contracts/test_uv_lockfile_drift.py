@@ -63,7 +63,9 @@ class TestLockfileShape(unittest.TestCase):
         import pathlib
 
         content = pathlib.Path("uv.lock").read_text()
-        self.assertIn('name = "oida"', content, "uv.lock must include the oida package itself")
+        self.assertIn(
+            'name = "oida-ics"', content, "uv.lock must include the oida-ics package itself"
+        )
 
     def test_lockfile_records_requires_python(self):
         import pathlib

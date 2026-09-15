@@ -1650,7 +1650,7 @@ class DiscoveryScanner(SerialScanner):
     def _run_dcp_active(self) -> Dict[str, DiscoveredDevice]:
         """Run DCP active identify (PROFINET)"""
         if not _profinet.is_available:
-            logger.debug("DCP: profinet-py not installed (pip install oida[discovery])")
+            logger.debug("DCP: profinet-py not installed (pip install oida-ics[discovery])")
             return {}
         profinet = _profinet()
         from profinet.dcp import read_response, DCPDeviceDescription

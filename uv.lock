@@ -3,7 +3,9 @@ revision = 3
 requires-python = ">=3.10"
 resolution-markers = [
     "python_full_version >= '3.15'",
-    "python_full_version >= '3.11' and python_full_version < '3.15'",
+    "python_full_version == '3.14.*'",
+    "python_full_version == '3.13.*'",
+    "python_full_version >= '3.11' and python_full_version < '3.13'",
     "python_full_version < '3.11'",
 ]
 
@@ -1608,7 +1610,7 @@ wheels = [
 ]
 
 [[package]]
-name = "oida"
+name = "oida-ics"
 source = { editable = "." }
 dependencies = [
     { name = "manuf2" },
@@ -1823,9 +1825,9 @@ requires-dist = [
     { name = "msgpack", marker = "extra == 'dev'", specifier = ">=1.1.0" },
     { name = "mypy", marker = "extra == 'dev'", specifier = ">=1.19.1" },
     { name = "myst-parser", marker = "extra == 'docs'", specifier = ">=4.0.1,<5" },
-    { name = "oida", extras = ["ads", "astm", "bacnet", "bacnetsc", "can", "coap", "dicom", "discovery", "dnp3", "ethercat"], marker = "extra == 'all'" },
-    { name = "oida", extras = ["ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms"], marker = "extra == 'all'" },
-    { name = "oida", extras = ["fuzz", "modbus", "mqtt", "ocpp", "opcua", "pcap", "profinet", "serial", "snap7", "snmp", "tase2"], marker = "extra == 'all'" },
+    { name = "oida-ics", extras = ["ads", "astm", "bacnet", "bacnetsc", "can", "coap", "dicom", "discovery", "dnp3", "ethercat"], marker = "extra == 'all'" },
+    { name = "oida-ics", extras = ["ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms"], marker = "extra == 'all'" },
+    { name = "oida-ics", extras = ["fuzz", "modbus", "mqtt", "ocpp", "opcua", "pcap", "profinet", "serial", "snap7", "snmp", "tase2"], marker = "extra == 'all'" },
     { name = "oida-pyshark", marker = "extra == 'pcap'", specifier = "==0.6.1.post1" },
     { name = "paho-mqtt", marker = "extra == 'mqtt'", specifier = "==2.1.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
@@ -2650,7 +2652,9 @@ version = "8.2.3"
 source = { registry = "https://pypi.org/simple" }
 resolution-markers = [
     "python_full_version >= '3.15'",
-    "python_full_version >= '3.11' and python_full_version < '3.15'",
+    "python_full_version == '3.14.*'",
+    "python_full_version == '3.13.*'",
+    "python_full_version >= '3.11' and python_full_version < '3.13'",
 ]
 dependencies = [
     { name = "alabaster", marker = "python_full_version >= '3.11'" },

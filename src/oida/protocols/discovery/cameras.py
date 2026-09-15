@@ -39,7 +39,7 @@ try:
 except ImportError as _cam_xml_err:  # pragma: no cover — release-checked dep
     raise ImportError(
         "Camera SADP parsing requires defusedxml to protect against XXE / XML-bomb "
-        "attacks on untrusted device responses. Install with: pip install oida[discovery]"
+        "attacks on untrusted device responses. Install with: pip install oida-ics[discovery]"
     ) from _cam_xml_err
 
 from .core import (

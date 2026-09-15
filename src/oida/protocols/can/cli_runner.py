@@ -6,7 +6,7 @@ security testing. Supports passive traffic sniffing, UDS/OBD-II
 service discovery, CANopen node detection, and raw frame operations.
 
 Dependency: python-can >= 4.0.0
-    pip install oida[can]
+    pip install oida-ics[can]
 
 Layer 2 (NXC-style): Instantiation triggers the full scan workflow
 via proto_flow(). For standalone use, see scanner.py (Layer 1).
@@ -107,7 +107,7 @@ class can(ISOTPMixin, SerialConnection):
 
             raise DependencyError(
                 "python-can library required for CAN protocol.\n"
-                "Install with: pip install oida[can]",
+                "Install with: pip install oida-ics[can]",
                 protocol="CAN",
             )
 

@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 
 def _default_install_hint(protocol: str) -> str:
     """Return the canonical install command for a protocol extra."""
-    return f"pip install oida[{protocol.lower()}]"
+    return f"pip install oida-ics[{protocol.lower()}]"
 
 
 class LazyModule:
@@ -53,7 +53,7 @@ class LazyModule:
         Args:
             module_name: Name of the module to import (e.g., "pyads")
             protocol: Protocol name for error messages (e.g., "ADS")
-            install_hint: Optional pip install command (defaults to "pip install oida[protocol]")
+            install_hint: Optional pip install command (defaults to "pip install oida-ics[protocol]")
             submodules: Optional dict of submodule imports {attr_name: "module.path"}
         """
         self._module_name = module_name
@@ -170,7 +170,7 @@ def lazy_import(
     Args:
         module_name: Name of the module to import (e.g., "pyads")
         protocol: Protocol name for error messages (e.g., "ADS")
-        install_hint: Optional pip install command (defaults to "pip install oida[protocol]")
+        install_hint: Optional pip install command (defaults to "pip install oida-ics[protocol]")
         submodules: Optional dict mapping attribute names to submodule paths
 
     Returns:
@@ -278,7 +278,7 @@ def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
         result[extra_name] = {
             "module": import_name,
             "protocol": extra_name,
-            "install": f"pip install oida[{extra_name}]",
+            "install": f"pip install oida-ics[{extra_name}]",
             "pip_name": pip_name,
         }
 

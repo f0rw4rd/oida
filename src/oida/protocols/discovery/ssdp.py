@@ -19,7 +19,7 @@ except ImportError as _ssdp_xml_err:  # pragma: no cover — release-checked dep
     raise ImportError(
         "SSDP/UPnP parsing requires defusedxml to protect against XXE and XML-bomb "
         "attacks on untrusted UPnP device descriptions. Install with: "
-        "pip install oida[discovery]"
+        "pip install oida-ics[discovery]"
     ) from _ssdp_xml_err
 
 from .base import PassiveListenerBase

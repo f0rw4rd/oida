@@ -75,7 +75,7 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
         # Check dependencies
         if not is_fhirclient_available():
             self.logger.fail(
-                "fhirclient library not available. Install with: pip install oida[fhir]"
+                "fhirclient library not available. Install with: pip install oida-ics[fhir]"
             )
             self.results["error"] = "fhirclient not installed"
             return

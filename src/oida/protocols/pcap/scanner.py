@@ -22,9 +22,9 @@ from ...utils.lazy_import import lazy_import
 
 logger = get_module_logger(__name__)
 
-_pyshark = lazy_import("pyshark", "pcap", install_hint="pip install oida[pcap]")
+_pyshark = lazy_import("pyshark", "pcap", install_hint="pip install oida-ics[pcap]")
 _file_extraction = lazy_import(
-    "oida.protocols.discovery.file_extraction", "pcap", install_hint="pip install oida[pcap]"
+    "oida.protocols.discovery.file_extraction", "pcap", install_hint="pip install oida-ics[pcap]"
 )
 
 # Default decode-as hints for common ICS protocols on non-standard ports.
@@ -347,7 +347,7 @@ class PcapScanner:
         self.logger.debug("Active listeners: %s", ", ".join(sorted(listeners.keys())))
 
         if not _pyshark.is_available:
-            self.logger.info("PyShark not available - install pyshark: pip install oida[pcap]")
+            self.logger.info("PyShark not available - install pyshark: pip install oida-ics[pcap]")
             return 0
 
         # Pre-fetch total packet count for progress display (header-only, no decode)

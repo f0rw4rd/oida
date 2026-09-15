@@ -38,7 +38,7 @@ SUNSPEC_SF_MIN = -10
 SUNSPEC_SF_MAX = 10
 
 # Lazy import for pymodbus - only loads when actually used
-_pymodbus = lazy_import("pymodbus", "Modbus", "pip install oida[modbus]")
+_pymodbus = lazy_import("pymodbus", "Modbus", "pip install oida-ics[modbus]")
 
 
 def _get_modbus_mixin():

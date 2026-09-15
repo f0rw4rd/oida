@@ -38,7 +38,7 @@ attach it or describe the minimum reproducer.
 - OIDA version: `oida --version`
 - Python version: `python --version`
 - OS: <Linux/macOS/Windows + version>
-- Installed extras: <e.g. `pip install oida[modbus,opcua]`>
+- Installed extras: <e.g. `pip install oida-ics[modbus,opcua]`>
 - Docker / mock used (if any):
 
 ## Anything else

@@ -26,7 +26,7 @@ from ...utils.lazy_import import lazy_import
 from .segments import HL7SegmentBuilder, HL7SegmentParser
 from .utils import MLLP_END, MLLP_START, extract_ack_code, strip_mllp, wrap_mllp  # noqa: F401 (MLLP_START re-exported)
 
-_hl7apy = lazy_import("hl7apy", "HL7", install_hint="pip install oida[hl7]")
+_hl7apy = lazy_import("hl7apy", "HL7", install_hint="pip install oida-ics[hl7]")
 
 
 __all__ = ["HL7SegmentBuilder", "HL7SegmentParser", "hl7", "HL7APY_AVAILABLE"]
@@ -322,7 +322,7 @@ class hl7(
 
         if not HL7APY_AVAILABLE:
             self.logger.fail(
-                "hl7apy library required for HL7 protocol. Install with: pip install oida[hl7]"
+                "hl7apy library required for HL7 protocol. Install with: pip install oida-ics[hl7]"
             )
             self.results["success"] = False
             self.results["error"] = "hl7apy dependency not available"

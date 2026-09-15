@@ -332,13 +332,13 @@ For protocol-specific options: oida fuzz <protocol> --show-options
     # the monitor *names* are needed here for help text, so a missing extra must
     # not break CLI init for every other protocol (e.g. `oida modbus`). Degrade
     # gracefully: still register the fuzz subcommand; it errors with a clear
-    # "install oida[fuzz]" message at run time via check_dependencies.
+    # "install oida-ics[fuzz]" message at run time via check_dependencies.
     try:
         from .fuzz.monitors.registry import MONITOR_REGISTRY
 
         available_monitors = ", ".join(sorted(MONITOR_REGISTRY.keys()))
     except Exception:
-        available_monitors = "requires the 'fuzz' extra (pip install oida[fuzz])"
+        available_monitors = "requires the 'fuzz' extra (pip install oida-ics[fuzz])"
     fuzz_parser.add_argument(
         "--monitors",
         "-M",
@@ -1483,7 +1483,7 @@ def run_fuzzing(args, protocol, target):
         # absent). Individual protocol deps no longer break the whole package.
         logger.error(
             "Fuzzing requires the 'fuzz' extra (missing dependency: %s). "
-            'Install it with: pip install "oida[fuzz]"',
+            'Install it with: pip install "oida-ics[fuzz]"',
             e.name or e,
         )
         return 1
@@ -1499,8 +1499,7 @@ def run_fuzzing(args, protocol, target):
         import_error = PROTOCOL_IMPORT_ERRORS.get(protocol)
         if import_error is not None:
             logger.error(
-                "Protocol '%s' is unavailable (missing dependency: %s). "
-                "Install it with: %s",
+                "Protocol '%s' is unavailable (missing dependency: %s). Install it with: %s",
                 protocol,
                 import_error,
                 install_hint(protocol),
