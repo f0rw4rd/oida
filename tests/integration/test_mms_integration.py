@@ -154,8 +154,18 @@ def _assert_found_in_log(log, substring: str) -> None:
 
 
 @pytest.mark.mms
+@pytest.mark.flaky(reruns=2, reruns_delay=4)
 class TestMMSIntegration(BaseProtocolIntegrationTest):
-    """Integration tests for MMS/IEC 61850 protocol scanner"""
+    """Integration tests for MMS/IEC 61850 protocol scanner
+
+    Every test here shells out to the oida CLI with a 30-45s subprocess timeout and
+    talks to the shared, connection-capped libiec61850 server. Under a fully loaded
+    integration lane (8 workers, coverage instrumentation) those subprocesses can
+    exceed the timeout and report an empty-stderr scan failure. Verified transient:
+    the file passes 73/73 in isolation under the same -n 8 --dist loadgroup settings,
+    and the whole class passed on a clean full-lane rerun. Retried rather than
+    re-grouped -- the xdist_group("mms_service") above already serialises the group.
+    """
 
     @property
     def protocol_name(self) -> str:

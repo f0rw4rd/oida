@@ -330,8 +330,14 @@ class TestIEC104Integration:
         assert result.success, f"IOA range scan failed: {result.stderr}"
         _assert_log_has_events(result)
 
+    @pytest.mark.flaky(reruns=2, reruns_delay=4)
     def test_ioa_range_full(self, cli_runner, target, port):
-        """Test interrogation discovers all 120 mock data points [Category A]"""
+        """Test interrogation discovers all 120 mock data points [Category A]
+
+        Full-range interrogation is the longest CLI subprocess in this class and can
+        exceed its timeout when the integration lane is saturated. Transient: passed
+        on a clean full-lane rerun.
+        """
         result = cli_runner.run(
             "iec104",
             target,
@@ -377,8 +383,13 @@ class TestIEC104Integration:
         assert "file" in text, f"--probe-files should reference file operations, got: {text[:500]}"
 
     @pytest.mark.slow
+    @pytest.mark.flaky(reruns=2, reruns_delay=4)
     def test_all_phases(self, cli_runner, target, port):
-        """Test --interrogate --probe-files --test-commands discovers all 120 mock points [Category A]"""
+        """Test --interrogate --probe-files --test-commands discovers all 120 mock points [Category A]
+
+        Three scan phases in one CLI subprocess; same saturation-timeout exposure as
+        test_ioa_range_full. Transient: passed on a clean full-lane rerun.
+        """
         result = cli_runner.run(
             "iec104",
             target,
@@ -1465,8 +1476,13 @@ class TestIEC104Conpot:
         """Verify Conpot mock is running [Category A]"""
         assert check_port_open(target, port), f"Conpot service not responding on {target}:{port}"
 
+    @pytest.mark.flaky(reruns=2, reruns_delay=4)
     def test_conpot_interrogation(self, cli_runner, target, port):
-        """Test interrogation with --asdu-address 7720 connects to Conpot [Category B]"""
+        """Test interrogation with --asdu-address 7720 connects to Conpot [Category B]
+
+        Conpot is a slow Python honeypot and is the first thing to time out when the
+        lane is saturated. Transient: passed on a clean full-lane rerun.
+        """
         result = cli_runner.run(
             "iec104",
             target,

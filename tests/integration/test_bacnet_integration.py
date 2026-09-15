@@ -406,13 +406,23 @@ class TestBACnetIntegration:
 
     @pytest.fixture
     def bacnet_host(self):
-        """Get BACnet test host from environment"""
+        """BACnet target: BACNET_TEST_HOST if set, else the local mock.
+
+        Defaults to the mock the rest of this module already uses. Previously this
+        required BACNET_TEST_HOST and nothing sets it, so both consumers errored out
+        under strict mode while bacnet-mock-server sat running on MOCK_PORT.
+        """
         import os
 
         host = os.environ.get("BACNET_TEST_HOST")
-        if not host:
-            require_service("BACNET_TEST_HOST not set")
-        return host
+        if host:
+            return host
+        if not _check_bacnet_mock_alive(MOCK_HOST, MOCK_PORT, timeout=3):
+            require_service(
+                f"BACNET_TEST_HOST not set and BACnet mock not available on "
+                f"{MOCK_HOST}:{MOCK_PORT} (start with: docker compose up -d bacnet-mock)"
+            )
+        return MOCK_HOST
 
     def test_who_is_discovery(self, bacnet_host):
         """Test Who-Is device discovery [Category B]"""

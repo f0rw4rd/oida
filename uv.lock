@@ -821,6 +821,12 @@ wheels = [
 ]
 
 [[package]]
+name = "dtlssocket"
+version = "0.2.3"
+source = { registry = "https://pypi.org/simple" }
+sdist = { url = "https://files.pythonhosted.org/packages/d7/4c/aca9c842a1a3fdd05c973761ff154457663094f14f8a7edf2d5e3e073aee/dtlssocket-0.2.3.tar.gz", hash = "sha256:f06cbe32df8562dbbccbe274aaf27d2773e8492a86c41c334b3a0a70a50037cf", size = 181850, upload-time = "2025-07-24T13:38:44.159Z" }
+
+[[package]]
 name = "exceptiongroup"
 version = "1.3.1"
 source = { registry = "https://pypi.org/simple" }
@@ -1626,6 +1632,7 @@ all = [
     { name = "crc" },
     { name = "cryptography" },
     { name = "defusedxml" },
+    { name = "dtlssocket" },
     { name = "fhirclient" },
     { name = "h2" },
     { name = "hartip-py" },
@@ -1672,6 +1679,7 @@ can = [
 coap = [
     { name = "aiocoap" },
     { name = "cbor2" },
+    { name = "dtlssocket" },
 ]
 dev = [
     { name = "bandit" },
@@ -1805,6 +1813,7 @@ requires-dist = [
     { name = "defusedxml", marker = "extra == 'dev'", specifier = ">=0.7.1" },
     { name = "defusedxml", marker = "extra == 'discovery'", specifier = "==0.7.1" },
     { name = "docker", marker = "extra == 'dev'", specifier = ">=7.1.0" },
+    { name = "dtlssocket", marker = "extra == 'coap'", specifier = "==0.2.3" },
     { name = "fhirclient", marker = "extra == 'fhir'", specifier = "==4.4.0" },
     { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.3.0" },
     { name = "h2", marker = "extra == 'fuzz'", specifier = "==4.3.0" },
