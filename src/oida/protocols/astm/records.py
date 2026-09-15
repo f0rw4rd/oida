@@ -316,7 +316,8 @@ class ASTMRecordBuilder:
             self._escape_field(instrument_specimen_id),  # Instrument specimen ID
             self._escape_composite_field(test_id),  # Universal test ID
             self._escape_field(priority),  # Priority
-            self._escape_field(order_datetime) or self._get_timestamp(),  # Requested/ordered datetime
+            self._escape_field(order_datetime)
+            or self._get_timestamp(),  # Requested/ordered datetime
             self._escape_field(collection_datetime),  # Specimen collection datetime
             self._escape_field(collection_end_datetime),  # Collection end time
             self._escape_field(volume),  # Collection volume

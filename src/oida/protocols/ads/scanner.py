@@ -347,7 +347,7 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
 
     def _discover_symbols(self, connection: Any) -> Dict[str, Any]:
         """Discover ADS symbols"""
-        symbols_result = {
+        symbols_result: Dict[str, Any] = {
             "total": 0,
             "processed": 0,
             "readable": 0,
@@ -634,7 +634,7 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
         import socket
         import ssl
 
-        result = {
+        result: Dict[str, Any] = {
             "available": False,
             "port": ADS_TRANSPORT["TLS"],
             "tls_version": None,
@@ -967,9 +967,7 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
             name_len = 0
             if len(data) >= 16:
                 (name_len,) = struct.unpack_from("<H", data, 14)
-                hostname = data[16 : 16 + name_len].rstrip(b"\x00").decode(
-                    "utf-8", errors="ignore"
-                )
+                hostname = data[16 : 16 + name_len].rstrip(b"\x00").decode("utf-8", errors="ignore")
                 if hostname:
                     device["hostname"] = hostname
 

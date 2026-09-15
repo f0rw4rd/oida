@@ -208,6 +208,8 @@ class OPCUAMonitor(ProtocolMonitor):
                     )
 
             # Compare against baseline (check key fields)
+            if self.baseline is None:
+                return True
             baseline_version = self.baseline.get_field("protocol_version")
             if baseline_version is not None and self.server_protocol_version != baseline_version:
                 self.logger.warning(

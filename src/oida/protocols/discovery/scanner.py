@@ -1870,7 +1870,7 @@ class DiscoveryScanner(SerialScanner):
                     existing = self.discovered_devices[f"ip:{ip}"]
                     existing_key = f"ip:{ip}"
 
-                if existing:
+                if existing and existing_key is not None:
                     # UPDATE: Merge into existing, track what changed
                     changes = existing.merge_from(device)
                     # A previously-seen device is no longer "new"; clearing this
@@ -2312,7 +2312,7 @@ class DiscoveryScanner(SerialScanner):
 
     def _generate_statistics(self) -> Dict[str, Any]:
         """Generate discovery statistics"""
-        stats = {
+        stats: Dict[str, Any] = {
             "total_devices": len(self.discovered_devices),
             "devices_with_mac": 0,
             "devices_with_ip": 0,

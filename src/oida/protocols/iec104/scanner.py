@@ -109,7 +109,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         # Station scan (--station-scan / -S)
         station_scan_raw = args.get("station-scan")
         self.station_scan = station_scan_raw is not None
-        if self.station_scan:
+        if self.station_scan and station_scan_raw is not None:
             try:
                 parts = station_scan_raw.split("-")
                 if len(parts) == 2:

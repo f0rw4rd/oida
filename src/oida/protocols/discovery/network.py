@@ -1095,6 +1095,8 @@ class NetBIOSPassiveListener:
                     if ip and ip not in device.ip_addresses:
                         device.ip_addresses.append(ip)
                 # Add new name if not already present
+                if device.netbios_data is None:
+                    device.netbios_data = {}
                 name_entry = {"name": name, "suffix": suffix, "suffix_desc": suffix_desc}
                 if name_entry not in device.netbios_data.get("names", []):
                     device.netbios_data.setdefault("names", []).append(name_entry)

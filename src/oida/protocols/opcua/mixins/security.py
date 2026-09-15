@@ -556,7 +556,7 @@ class SecurityMixin:
         for ep in endpoints:
             for token in getattr(ep, "UserIdentityTokens", None) or []:
                 ttype = getattr(token, "TokenType", None)
-                tname = ttype.name if hasattr(ttype, "name") else str(ttype)
+                tname = getattr(ttype, "name", None) or str(ttype)
                 if tname == "Certificate":
                     cert_token_endpoints.append(ep)
                     break

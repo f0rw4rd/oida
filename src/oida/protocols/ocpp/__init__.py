@@ -24,6 +24,8 @@ Easy CLI examples:
     oida ocpp ws://host:9000/CP_001 -E                  # Probe OCPP versions
 """
 
+from typing import Any
+
 from .scanner import (
     OCPPScanner,
     metadata,
@@ -179,7 +181,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         self.protocol_name = "OCPP"
         self.default_port = DEFAULT_WS_PORT
         self.conn = None
-        self.scanner = None
+        self.scanner: Any = None
 
         # Determine the target URL from args
         target = getattr(args, "target", host)

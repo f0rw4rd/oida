@@ -92,7 +92,7 @@ class DiscoveryMixin(_ScannerBase):
         Returns:
             Dictionary with block enumeration results
         """
-        block_results = {
+        block_results: Dict[str, Any] = {
             "blocks": {},
             "summary": "",
             "total_supported": 0,

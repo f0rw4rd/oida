@@ -1378,8 +1378,11 @@ def main(argv: Optional[List[str]] = None):
     # with "charmap codec can't encode character". Force UTF-8 on the standard
     # streams so output is encoding-safe on every platform.
     for _stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(_stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
         try:
-            _stream.reconfigure(encoding="utf-8", errors="replace")
+            reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, ValueError):
             pass
 

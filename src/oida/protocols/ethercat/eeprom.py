@@ -41,7 +41,7 @@ def calculate_sii_crc(data: bytes) -> int:
     return crc
 
 
-def parse_sii_header(data: bytes) -> Dict[str, Any]:
+def parse_sii_header(data: bytes | bytearray) -> Dict[str, Any]:
     """Parse SII header (bytes 0x00-0x7F) per ETG.2010.
 
     The SII header contains device identity, mailbox configuration,
@@ -108,7 +108,7 @@ def parse_sii_header(data: bytes) -> Dict[str, Any]:
     return header
 
 
-def parse_strings_category(data: bytes) -> List[str]:
+def parse_strings_category(data: bytes | bytearray) -> List[str]:
     """Parse STRINGS category (type 10).
 
     The strings category contains device description strings referenced
@@ -140,7 +140,7 @@ def parse_strings_category(data: bytes) -> List[str]:
     return strings
 
 
-def parse_general_category(data: bytes, strings: List[str]) -> Dict[str, Any]:
+def parse_general_category(data: bytes | bytearray, strings: List[str]) -> Dict[str, Any]:
     """Parse GENERAL category (type 30) per ETG.2010.
 
     Contains device classification, CoE/FoE/EoE details, and port config.
@@ -208,7 +208,7 @@ def parse_general_category(data: bytes, strings: List[str]) -> Dict[str, Any]:
     return general
 
 
-def parse_syncmanager_category(data: bytes) -> List[Dict[str, Any]]:
+def parse_syncmanager_category(data: bytes | bytearray) -> List[Dict[str, Any]]:
     """Parse SyncManager category (type 41).
 
     Each SyncManager entry is 8 bytes describing memory region for
@@ -256,7 +256,7 @@ def parse_syncmanager_category(data: bytes) -> List[Dict[str, Any]]:
     return sms
 
 
-def parse_fmmu_category(data: bytes) -> List[Dict[str, Any]]:
+def parse_fmmu_category(data: bytes | bytearray) -> List[Dict[str, Any]]:
     """Parse FMMU category (type 40).
 
     Each FMMU entry is 1 byte indicating the FMMU type.
@@ -273,7 +273,7 @@ def parse_fmmu_category(data: bytes) -> List[Dict[str, Any]]:
     ]
 
 
-def parse_pdo_category(data: bytes, strings: List[str]) -> List[Dict[str, Any]]:
+def parse_pdo_category(data: bytes | bytearray, strings: List[str]) -> List[Dict[str, Any]]:
     """Parse TxPDO (type 50) or RxPDO (type 51) category.
 
     PDO categories describe Process Data Objects with their entries.
@@ -335,7 +335,7 @@ def parse_pdo_category(data: bytes, strings: List[str]) -> List[Dict[str, Any]]:
     return pdos
 
 
-def parse_dc_category(data: bytes, strings: List[str]) -> Dict[str, Any]:
+def parse_dc_category(data: bytes | bytearray, strings: List[str]) -> Dict[str, Any]:
     """Parse Distributed Clocks category (type 60).
 
     Contains DC synchronization settings.

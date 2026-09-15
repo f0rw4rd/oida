@@ -152,6 +152,8 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
 
     def enum_host_info(self):
         """Test ASTM connection with ENQ/ACK handshake and header exchange"""
+        if self.record_builder is None:
+            return
         # Step 1: ENQ/ACK handshake
         if not self._send_enq():
             self.logger.warning("ENQ/ACK handshake failed")

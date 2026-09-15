@@ -225,7 +225,7 @@ class OCPPScanner(NetworkScanner):
         self.logger.debug(f"Connecting to {ws_url} with subprotocols {subprotocols}")
 
         # Build connection kwargs
-        connect_kwargs = {
+        connect_kwargs: Dict[str, Any] = {
             "subprotocols": subprotocols,
             "open_timeout": self.timeout,
             "close_timeout": self.timeout,
@@ -315,7 +315,7 @@ class OCPPScanner(NetworkScanner):
         subprotocols = self._get_subprotocols()
         ssl_context = self._build_ssl_context()
 
-        connect_kwargs = {
+        connect_kwargs: Dict[str, Any] = {
             "subprotocols": subprotocols,
             "open_timeout": min(self.timeout, 5),
             "close_timeout": 2,
@@ -755,7 +755,7 @@ class OCPPScanner(NetworkScanner):
 
         ssl_context = self._build_ssl_context()
 
-        connect_kwargs = {
+        connect_kwargs: Dict[str, Any] = {
             "subprotocols": [subprotocol],
             "open_timeout": min(self.timeout, 5),
             "close_timeout": 2,
@@ -850,7 +850,7 @@ class OCPPScanner(NetworkScanner):
         subprotocols = self._get_subprotocols()
         ssl_context = self._build_ssl_context()
 
-        connect_kwargs = {
+        connect_kwargs: Dict[str, Any] = {
             "subprotocols": subprotocols,
             "open_timeout": min(self.timeout, 5),
             "close_timeout": 2,
@@ -1021,7 +1021,7 @@ class OCPPScanner(NetworkScanner):
 
         ssl_context = self._build_ssl_context()
 
-        connect_kwargs = {
+        connect_kwargs: Dict[str, Any] = {
             "subprotocols": subprotocols,
             "open_timeout": min(self.timeout, 5),
             "close_timeout": 2,

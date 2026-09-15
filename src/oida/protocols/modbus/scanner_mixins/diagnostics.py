@@ -37,7 +37,7 @@ class ScannerDiagnosticsMixin(_ScannerBase):
             dict: Diagnostic results
         """
 
-        results = {
+        results: Dict[str, Any] = {
             "supported": False,
             "echo_test": None,
             "diagnostic_register": None,

@@ -625,7 +625,7 @@ class BlockOperationsMixin(_ScannerBase):
         from ..scanner import _suppress_snap7_logging
 
         self.logger.display("Starting S7 security audit%s...", " (quick)" if quick else "")
-        results = {"success": True, "checks": {}}
+        results: Dict[str, Any] = {"success": True, "checks": {}}
 
         with _suppress_snap7_logging():
             # 1. Device identification

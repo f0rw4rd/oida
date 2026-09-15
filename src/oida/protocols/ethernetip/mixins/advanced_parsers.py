@@ -37,7 +37,7 @@ class AdvancedParsersMixin(_ScannerBase):
         The Message Router's Object List attribute reveals all CIP classes
         the device supports - useful for fingerprinting and enumeration.
         """
-        mr_info = {
+        mr_info: Dict[str, Any] = {
             "object_id": 0x02,
             "object_name": "Message Router",
             "accessible": False,
@@ -142,7 +142,7 @@ class AdvancedParsersMixin(_ScannerBase):
         Parameters are configurable device settings. Reading them reveals
         operational configuration and potential security settings.
         """
-        param_info = {
+        param_info: Dict[str, Any] = {
             "object_id": 0x0F,
             "object_name": "Parameter",
             "accessible": False,
@@ -194,7 +194,7 @@ class AdvancedParsersMixin(_ScannerBase):
         File objects can contain firmware, configuration, or log data.
         Important for security assessment.
         """
-        file_info = {
+        file_info: Dict[str, Any] = {
             "object_id": 0x37,
             "object_name": "File",
             "accessible": False,
@@ -417,7 +417,7 @@ class AdvancedParsersMixin(_ScannerBase):
 
         Scans file instances 1-10 and Logix-specific ranges, downloads contents.
         """
-        downloaded = {"files": {}, "total_bytes": 0, "saved_to": None}
+        downloaded: Dict[str, Any] = {"files": {}, "total_bytes": 0, "saved_to": None}
 
         self.logger.display("Downloading files from File Object (0x37)...")
 
@@ -554,7 +554,7 @@ class AdvancedParsersMixin(_ScannerBase):
 
         Port objects describe physical and logical communication ports.
         """
-        port_info = {
+        port_info: Dict[str, Any] = {
             "object_id": 0x47,
             "object_name": "Port",
             "accessible": False,
@@ -618,7 +618,7 @@ class AdvancedParsersMixin(_ScannerBase):
         """
         class_name = wellknown_class_types.get(class_id, f"Vendor_0x{class_id:02X}")
 
-        class_info = {
+        class_info: Dict[str, Any] = {
             "class_id": class_id,
             "class_name": class_name,
             "accessible": False,

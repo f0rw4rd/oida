@@ -70,6 +70,13 @@ jobs:
       - name: Bandit security lint
         run: uv run bandit -r src/oida/ -c pyproject.toml -b .quality/bandit-baseline.json -q
 
+      # Gates only the bug-shaped mypy codes (union-attr, index, arg-type, ...)
+      # against a shrinking baseline. Cosmetic codes (no-untyped-def) and the
+      # dynamic-attr noise (attr-defined) are intentionally NOT gated. New
+      # None/union/arg-type errors fail; fix them, don't baseline them.
+      - name: Mypy bug-shaped types (ratcheted)
+        run: uv run python scripts/quality/mypy_gate.py
+
   test:
     name: Tests (Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest

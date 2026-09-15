@@ -717,7 +717,7 @@ class EtherCATOpsMixin:
         Then connects to each slave port (1001+) to read CoE SDOs:
         - Device name (0x1008:0), HW version (0x1009:0), SW version (0x100A:0)
         """
-        result = {
+        result: Dict[str, Any] = {
             "success": False,
             "master_state": None,
             "slave_count": 0,
@@ -2137,7 +2137,7 @@ class EtherCATOpsMixin:
         for port in slave_ports:
             self.logger.display(f"  Probing FSoE on port {port}...")
             slave_conn = None
-            port_result = {
+            port_result: Dict[str, Any] = {
                 "fsoe_supported": False,
                 "connection_count": None,
                 "objects": [],

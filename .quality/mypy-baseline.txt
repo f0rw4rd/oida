@@ -1,0 +1,292 @@
+# mypy bug-shaped-error baseline (see scripts/quality/mypy_gate.py).
+# Only the bug-shaped codes are gated; noise codes are ignored.
+# This file should only ever get SHORTER. Fix the type error and
+# regenerate — never add a new entry to silence the gate.
+src/oida/cli.py::arg-type::Argument 1 to "parse_targets" has incompatible type "Any | None"; expected "str"
+src/oida/cli.py::arg-type::Argument 3 to "get_logger" has incompatible type "Any | None"; expected "int"
+src/oida/cli.py::list-item::List item 0 has incompatible type "Any | None"; expected "str"
+src/oida/cli.py::list-item::List item 0 has incompatible type "ArgumentParser"; expected "SubcommandHelpParser"
+src/oida/connection.py::return-value::Incompatible return value type (got "str | int", expected "str")
+src/oida/fuzz/core/base_fuzzer.py::operator::Unsupported operand types for - ("None" and "int")
+src/oida/fuzz/core/base_fuzzer.py::operator::Unsupported operand types for / ("int" and "None")
+src/oida/fuzz/core/codecs/opcua.py::arg-type::Argument 1 to "encode_byte_string" of "OPCUACodec" has incompatible type "int | str | bytes | UUID"; expected "bytes | None"
+src/oida/fuzz/core/codecs/opcua.py::arg-type::Argument 1 to "encode_guid" of "OPCUACodec" has incompatible type "int | str | bytes | UUID"; expected "UUID"
+src/oida/fuzz/core/codecs/opcua.py::arg-type::Argument 1 to "encode_string" of "OPCUACodec" has incompatible type "int | str | bytes | UUID"; expected "str | None"
+src/oida/fuzz/core/connections/base.py::return-value::Incompatible return value type (got "Any | None", expected "MockConnection")
+src/oida/fuzz/core/connections/base.py::return-value::Incompatible return value type (got "None", expected "MockConnection")
+src/oida/fuzz/core/connections/stateful.py::has-type::Cannot determine type of "_sock"
+src/oida/fuzz/core/connections/stateful.py::str-bytes-safe::If x = b'abc' then f"{x}" or "{}".format(x) produces "b'abc'", not "abc". If this is desired behavior, use f"{x!r}" or "{!r}".format(x). Otherwise, decode the bytes
+src/oida/fuzz/core/database/orm.py::arg-type::Argument 1 to "contextmanager" has incompatible type "Callable[[SQLAlchemyDatabase], Session]"; expected "Callable[[SQLAlchemyDatabase], Iterator[Never]]"
+src/oida/fuzz/core/mutation/config.py::has-type::Cannot determine type of "_initialized"
+src/oida/fuzz/core/mutation/radamsa_native.py::index::Unsupported target for indexed assignment ("bytes")
+src/oida/fuzz/core/stateful_fuzzer.py::call-arg::Unexpected keyword argument "password" for "ProtocolAuthenticator"
+src/oida/fuzz/core/stateful_fuzzer.py::call-arg::Unexpected keyword argument "username" for "ProtocolAuthenticator"
+src/oida/fuzz/monitors/application.py::operator::Unsupported operand types for - ("int" and "None")
+src/oida/fuzz/monitors/application.py::operator::Unsupported operand types for / ("int" and "None")
+src/oida/fuzz/monitors/application.py::operator::Unsupported operand types for < ("int" and "None")
+src/oida/fuzz/monitors/base.py::arg-type::Argument 1 to "join" of "str" has incompatible type "list[str] | None"; expected "Iterable[str]"
+src/oida/fuzz/monitors/opcua.py::str-bytes-safe::If x = b'abc' then f"{x}" or "{}".format(x) produces "b'abc'", not "abc". If this is desired behavior, use f"{x!r}" or "{!r}".format(x). Otherwise, decode the bytes
+src/oida/fuzz/primitives/smart_string.py::return-value::Incompatible return value type (got "dict[int, dict[str, int]]", expected "dict[str, int]")
+src/oida/fuzz/protocols/ads.py::has-type::Cannot determine type of "baseline_established"
+src/oida/fuzz/protocols/coap.py::override::Return type "list[Any] | None" of "setup_custom_monitors" incompatible with return type "list[Any]" in supertype "oida.fuzz.core.base_fuzzer.BaseFuzzer"
+src/oida/fuzz/protocols/dnp3.py::arg-type::Argument 1 to "Calculator" has incompatible type "Crc16"; expected "Configuration"
+src/oida/fuzz/protocols/ethercat.py::arg-type::Argument 1 to "_mac_to_bytes" of "EtherCATFuzzer" has incompatible type "Any | None"; expected "str"
+src/oida/fuzz/protocols/ethercat.py::override::Return type "list[Any] | None" of "setup_custom_monitors" incompatible with return type "list[Any]" in supertype "oida.fuzz.core.base_fuzzer.BaseFuzzer"
+src/oida/fuzz/protocols/ftp.py::index::Value of type "None" is not indexable
+src/oida/fuzz/protocols/goose.py::arg-type::Argument 1 to "_mac_to_bytes" of "GOOSEFuzzer" has incompatible type "Any | None"; expected "str"
+src/oida/fuzz/protocols/goose.py::override::Return type "list[Any] | None" of "setup_custom_monitors" incompatible with return type "list[Any]" in supertype "oida.fuzz.core.base_fuzzer.BaseFuzzer"
+src/oida/fuzz/protocols/http2.py::override::Return type "list[Any] | None" of "setup_custom_monitors" incompatible with return type "list[Any]" in supertype "oida.fuzz.core.base_fuzzer.BaseFuzzer"
+src/oida/fuzz/protocols/icmpv6.py::override::Return type "list[Any] | None" of "setup_custom_monitors" incompatible with return type "list[Any]" in supertype "oida.fuzz.core.base_fuzzer.BaseFuzzer"
+src/oida/fuzz/protocols/mqtt.py::has-type::Cannot determine type of "_auth_sock"
+src/oida/fuzz/protocols/mqtt.py::override::Return type "list[Any] | None" of "setup_custom_monitors" incompatible with return type "list[Any]" in supertype "oida.fuzz.core.base_fuzzer.BaseFuzzer"
+src/oida/fuzz/protocols/pppoe.py::arg-type::Argument 1 to "_mac_to_bytes" of "PPPoEFuzzer" has incompatible type "Any | None"; expected "str"
+src/oida/fuzz/protocols/pppoe.py::override::Return type "list[Any] | None" of "setup_custom_monitors" incompatible with return type "list[Any]" in supertype "oida.fuzz.core.base_fuzzer.BaseFuzzer"
+src/oida/fuzz/protocols/profinet.py::override::Return type "list[Any] | None" of "setup_custom_monitors" incompatible with return type "list[Any]" in supertype "oida.fuzz.core.base_fuzzer.BaseFuzzer"
+src/oida/fuzz/protocols/tcp.py::arg-type::Argument "source_ip" to "ScapyRawConnection" has incompatible type "Any | None"; expected "str"
+src/oida/fuzz/protocols/tcp.py::override::Return type "list[Any] | None" of "setup_custom_monitors" incompatible with return type "list[Any]" in supertype "oida.fuzz.core.base_fuzzer.BaseFuzzer"
+src/oida/fuzz/protocols/vnc.py::has-type::Cannot determine type of "_auth_sock"
+src/oida/loader.py::dict-item::Dict entry 2 has incompatible type "str": "None"; expected "str": "str"
+src/oida/pcap/file_carving.py::arg-type::Argument 1 to "enumerate" has incompatible type "object"; expected "Iterable[Never]"
+src/oida/pcap/file_carving.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/pcap/file_carving.py::arg-type::Argument 3 to "_record_file" of "FileCarvingMixin" has incompatible type "object"; expected "str"
+src/oida/pcap/file_carving.py::operator::Unsupported operand types for < ("int" and "object")
+src/oida/pcap/file_carving.py::operator::Unsupported operand types for > ("int" and "object")
+src/oida/pcap/file_carving.py::override::Argument 1 of "_try_extract_files" is incompatible with supertype "oida.shared.file_carving_common.FileCarvingMixin"; supertype defines the argument type as "StreamBuffer"
+src/oida/pcap/http.py::arg-type::Argument 1 to "_ensure_device" of "PySharkListenerBase" has incompatible type "tuple[str, int]"; expected "str"
+src/oida/pcap/memcached.py::no-redef::Name "details" already defined on line 355
+src/oida/pcap/redis.py::no-redef::Name "details" already defined on line 259
+src/oida/pcap/rip.py::index::Unsupported target for indexed assignment ("dict[str, Any] | None")
+src/oida/pcap/tls.py::return-value::Incompatible return value type (got "str | bytes", expected "str")
+src/oida/protocols/ads/cli_runner.py::arg-type::Argument 3 to "_read_registry" of "EtherCATOpsMixin" has incompatible type "str | None"; expected "str"
+src/oida/protocols/ads/ethercat_ops.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/ads/scanner.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/ads/scanner.py::index::Unsupported target for indexed assignment ("dict[Any, Any] | bool | None")
+src/oida/protocols/ads/scanner.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/bacnet/constants.py::return-value::Incompatible return value type (got "bool | None", expected "bool")
+src/oida/protocols/bacnet/mixins/discovery.py::arg-type::Argument 1 to "get" of "dict" has incompatible type "int | None"; expected "int"
+src/oida/protocols/bacnet/mixins/discovery.py::operator::Unsupported left operand type for + ("Sequence[object]")
+src/oida/protocols/bacnet/mixins/sc.py::arg-type::Argument 1 to "SCConnection" has incompatible type "Any | str | None"; expected "str"
+src/oida/protocols/bacnet/mixins/state.py::index::Unsupported target for indexed assignment ("Collection[str]")
+src/oida/protocols/bacnet/sc_link.py::arg-type::Argument 1 to "wait_for" has incompatible type "connect"; expected "Future[None] | Generator[Any, None, None] | Awaitable[None]"
+src/oida/protocols/coap/proto_args.py::arg-type::Argument "default_port" to "add_network_options" has incompatible type "None"; expected "int"
+src/oida/protocols/dicom/mixins/fuzz.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/dicom/mixins/fuzz.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/dicom/proto_args.py::arg-type::Argument "default_port" to "add_network_options" has incompatible type "None"; expected "int"
+src/oida/protocols/discovery/file_extraction.py::arg-type::Argument 1 to "join" of "str" has incompatible type "list[str | None]"; expected "Iterable[str]"
+src/oida/protocols/discovery/file_extraction.py::arg-type::Argument 1 to "run" has incompatible type "list[str | None]"; expected "str | bytes | PathLike[str] | PathLike[bytes] | Sequence[str | bytes | PathLike[str] | PathLike[bytes]]"
+src/oida/protocols/discovery/ics.py::arg-type::Argument "manufacturer" to "DiscoveredDevice" has incompatible type "object"; expected "str"
+src/oida/protocols/discovery/igmp.py::no-redef::Name "Ether" already defined on line 376
+src/oida/protocols/discovery/ipv6.py::index::Unsupported target for indexed assignment ("dict[str, Any] | None")
+src/oida/protocols/discovery/lldp.py::arg-type::Argument 1 to "_filter_industrial_devices" of "LLDPScanner" has incompatible type "Collection[Any]"; expected "list[dict[str, Any]]"
+src/oida/protocols/discovery/lldp.py::arg-type::Argument 1 to "fail" of "ICSLogger" has incompatible type "str | None"; expected "str"
+src/oida/protocols/discovery/mdns.py::arg-type::Argument 1 to "ServiceBrowser" has incompatible type "None"; expected "Zeroconf"
+src/oida/protocols/discovery/mdns.py::valid-type::Variable "ServiceListener" is not valid as a type
+src/oida/protocols/discovery/mdns.py::valid-type::Variable "Zeroconf" is not valid as a type
+src/oida/protocols/discovery/netmanage.py::arg-type::Argument 1 to "calculate_checksum" has incompatible type "bytearray"; expected "bytes"
+src/oida/protocols/discovery/network.py::arg-type::Argument "mac_address" to "DiscoveredDevice" has incompatible type "str | None"; expected "str"
+src/oida/protocols/discovery/scanner.py::arg-type::Argument 1 to "fail" of "ICSLogger" has incompatible type "str | None"; expected "str"
+src/oida/protocols/discovery/scanner.py::index::Unsupported target for indexed assignment ("dict[str, Any] | None")
+src/oida/protocols/discovery/scanner.py::index::Value of type "dict[str, Any] | None" is not indexable
+src/oida/protocols/discovery/scanner.py::operator::Unsupported right operand type for in ("dict[str, Any] | None")
+src/oida/protocols/discovery/scanner.py::override::Return type "int | None" of "get_default_port" incompatible with return type "int" in supertype "oida.utils.base_scanner.BaseScanner"
+src/oida/protocols/discovery/ssdp.py::arg-type::Argument "description" to "DiscoveredDevice" has incompatible type "Collection[str]"; expected "str"
+src/oida/protocols/discovery/ssdp.py::arg-type::Argument "device_type" to "DiscoveredDevice" has incompatible type "Collection[str]"; expected "str"
+src/oida/protocols/discovery/ssdp.py::arg-type::Argument "manufacturer" to "DiscoveredDevice" has incompatible type "Collection[str]"; expected "str"
+src/oida/protocols/discovery/ssdp.py::arg-type::Argument "model" to "DiscoveredDevice" has incompatible type "Collection[str]"; expected "str"
+src/oida/protocols/discovery/ssdp.py::arg-type::Argument "name" to "DiscoveredDevice" has incompatible type "Collection[str]"; expected "str"
+src/oida/protocols/discovery/ssdp.py::arg-type::Argument 1 to "classify_device_type" has incompatible type "Sequence[str]"; expected "list[str]"
+src/oida/protocols/discovery/stats.py::arg-type::Argument 1 to "_record_open_port" of "PassiveStatistics" has incompatible type "Any | None"; expected "str"
+src/oida/protocols/discovery/stats.py::index::Invalid index type "tuple[Any, str | None]" for "dict[tuple[int, str], str]"; expected type "tuple[int, str]"
+src/oida/protocols/dnp3/mixins/polling.py::operator::Unsupported operand types for < ("int" and "object")
+src/oida/protocols/ethercat/__init__.py::arg-type::Argument 1 to "_display_slave_tree" of "EtherCATScanner" has incompatible type "Collection[Any]"; expected "dict[str, Any]"
+src/oida/protocols/ethercat/__init__.py::arg-type::Argument 1 to "fail" of "ICSLogger" has incompatible type "str | None"; expected "str"
+src/oida/protocols/ethercat/__init__.py::arg-type::Argument 2 to "_display_slave_tree" of "EtherCATScanner" has incompatible type "Collection[Any]"; expected "dict[str, Any]"
+src/oida/protocols/ethercat/__init__.py::arg-type::Argument 2 to "_enrich_device_info" of "EtherCATScanner" has incompatible type "Collection[Any]"; expected "dict[str, Any]"
+src/oida/protocols/ethercat/__init__.py::call-overload::No overload variant of "get" of "dict" matches argument types "int", "dict[Never, Never]"
+src/oida/protocols/ethercat/__init__.py::index::Unsupported target for indexed assignment ("Collection[Any]")
+src/oida/protocols/ethercat/__init__.py::return-value::Incompatible return value type (got "dict[int, list[dict[str, Any]]]", expected "dict[str, Any]")
+src/oida/protocols/ethercat/advanced_ops.py::arg-type::Argument 1 to "fail" of "ICSLogger" has incompatible type "object"; expected "str"
+src/oida/protocols/ethercat/advanced_ops.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/ethercat/advanced_ops.py::index::Value of type "int" is not indexable
+src/oida/protocols/ethercat/eeprom.py::arg-type::Argument 1 to "calculate_sii_crc" has incompatible type "bytes | bytearray"; expected "bytes"
+src/oida/protocols/ethercat/eeprom_ops.py::index::Value of type "Collection[Any]" is not indexable
+src/oida/protocols/ethercat/fuzzing_ops.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/ethercat/fuzzing_ops.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/ethernetip/mixins/cip_objects.py::arg-type::Argument 4 to "_read_assembly_instances" of "CipObjectsMixin" has incompatible type "object"; expected "dict[int, dict[str, Any]]"
+src/oida/protocols/ethernetip/mixins/cip_security.py::arg-type::Argument 1 to "join" of "str" has incompatible type "object"; expected "Iterable[str]"
+src/oida/protocols/ethernetip/mixins/cip_security.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/ethernetip/mixins/cip_security.py::operator::Unsupported operand types for < ("int" and "object")
+src/oida/protocols/ethernetip/mixins/class_explorer.py::return-value::Incompatible return value type (got "dict[int, Any]", expected "dict[str, Any]")
+src/oida/protocols/ethernetip/mixins/controller_info.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/ethernetip/mixins/discovery.py::call-overload::No overload variant of "get" of "dict" matches argument types "object", "str"
+src/oida/protocols/ethernetip/mixins/discovery.py::index::Value of type "object" is not indexable
+src/oida/protocols/ethernetip/mixins/discovery.py::operator::Unsupported operand types for & ("object" and "int")
+src/oida/protocols/ethernetip/mixins/discovery.py::operator::Unsupported operand types for >> ("object" and "int")
+src/oida/protocols/ethernetip/mixins/fuzz.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/ethernetip/mixins/fuzz.py::call-overload::No overload variant of "get" of "dict" matches argument types "int", "dict[Never, Never]"
+src/oida/protocols/ethernetip/mixins/fuzz.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/ethernetip/mixins/fuzz.py::operator::Unsupported operand types for < ("int" and "object")
+src/oida/protocols/ethernetip/mixins/fuzz.py::return-value::Incompatible return value type (got "dict[int, dict[str, dict[Any, Any]]]", expected "dict[str, Any]")
+src/oida/protocols/ethernetip/mixins/security_analysis.py::dict-item::Dict entry 4 has incompatible type "str": "bool | None"; expected "str": "bool"
+src/oida/protocols/ethernetip/mixins/write_test.py::return-value::Incompatible return value type (got "dict[int, dict[str, dict[Any, Any]]]", expected "dict[str, Any]")
+src/oida/protocols/fhir/cli_runner.py::arg-type::Argument "host" to "check_tls_certificate" has incompatible type "str | None"; expected "str"
+src/oida/protocols/fhir/cli_runner.py::override::Signature of "send" incompatible with supertype "requests.adapters.BaseAdapter"
+src/oida/protocols/fhir/cli_runner.py::override::Signature of "send" incompatible with supertype "requests.adapters.HTTPAdapter"
+src/oida/protocols/goose/__init__.py::arg-type::Argument 2 to "safe_int_conversion" has incompatible type "None"; expected "int"
+src/oida/protocols/hart/mixins/enumeration.py::arg-type::Argument 1 to "join" of "str" has incompatible type "object"; expected "Iterable[str]"
+src/oida/protocols/hart/mixins/security.py::dict-item::Dict entry 2 has incompatible type "str": "int"; expected "str": "str"
+src/oida/protocols/hl7/mixins/response.py::index::Unsupported target for indexed assignment ("Collection[object]")
+src/oida/protocols/hl7/mixins/response.py::index::Value of type "Collection[object]" is not indexable
+src/oida/protocols/hl7/segments.py::index::Unsupported target for indexed assignment ("Collection[Any]")
+src/oida/protocols/hl7/utils.py::arg-type::Argument "timeout" to "create_tcp_socket" of "ConnectionHelper" has incompatible type "float"; expected "int"
+src/oida/protocols/iec104/listen.py::name-defined::Name "c104.Connection" is not defined
+src/oida/protocols/iec104/scanner.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/iec104/scanner.py::index::Unsupported target for indexed assignment ("Collection[Any]")
+src/oida/protocols/iec104/scanner.py::name-defined::Name "c104.Client" is not defined
+src/oida/protocols/iec104/scanner.py::name-defined::Name "c104.Coi" is not defined
+src/oida/protocols/iec104/scanner.py::name-defined::Name "c104.Connection" is not defined
+src/oida/protocols/iec104/scanner.py::name-defined::Name "c104.ConnectionState" is not defined
+src/oida/protocols/iec104/scanner.py::name-defined::Name "c104.IncomingMessage" is not defined
+src/oida/protocols/iec104/scanner.py::name-defined::Name "c104.Station" is not defined
+src/oida/protocols/iec104/scanner.py::name-defined::Name "c104.Type" is not defined
+src/oida/protocols/iec104/scanner.py::name-defined::Name "c104.Umc" is not defined
+src/oida/protocols/iec104/scanner.py::type-var::Value of type variable "SupportsRichComparisonT" of "sorted" cannot be "Any | None"
+src/oida/protocols/iec104/serial.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/iec104/serial.py::has-type::Cannot determine type of "_fcb"
+src/oida/protocols/knx/cli_runner.py::arg-type::Argument "local_ip" to "_unicast_search" of "knx" has incompatible type "str | None"; expected "str"
+src/oida/protocols/knx/ets.py::operator::Unsupported left operand type for + ("object")
+src/oida/protocols/knx/mixins/discovery.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/knx/mixins/discovery.py::operator::Unsupported operand types for < ("int" and "object")
+src/oida/protocols/knx/mixins/properties.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/knx/mixins/properties.py::operator::Unsupported operand types for & ("str" and "int")
+src/oida/protocols/knx/mixins/properties.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/knx/mixins/properties.py::operator::Unsupported operand types for < ("int" and "object")
+src/oida/protocols/knx/mixins/properties.py::operator::Unsupported operand types for >> ("str" and "int")
+src/oida/protocols/knx/mixins/security.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/knx/mixins/security.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/knx/scanner.py::arg-type::Argument 2 to "_test_read_access" of "SecurityMixin" has incompatible type "str | list[dict[str, Any]]"; expected "list[dict[str, Any]]"
+src/oida/protocols/knx/scanner.py::arg-type::Argument 2 to "_test_write_access" of "SecurityMixin" has incompatible type "str | list[dict[str, Any]]"; expected "list[dict[str, Any]]"
+src/oida/protocols/mms/__init__.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/mms/__init__.py::arg-type::Argument 2 to "_discover_data_model" of "MMSScanner" has incompatible type "Collection[Any]"; expected "list[dict[str, Any]]"
+src/oida/protocols/mms/__init__.py::arg-type::Argument 2 to "_fingerprint_device" of "MMSScanner" has incompatible type "Collection[Any]"; expected "list[dict[str, Any]]"
+src/oida/protocols/mms/__init__.py::arg-type::Argument 2 to "_read_data_objects" of "MMSScanner" has incompatible type "Collection[Any]"; expected "list[dict[str, Any]]"
+src/oida/protocols/mms/__init__.py::arg-type::Argument 2 to "_test_write_access" of "MMSScanner" has incompatible type "Collection[Any]"; expected "list[dict[str, Any]]"
+src/oida/protocols/mms/__init__.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/modbus/convert_maps.py::index::Unsupported target for indexed assignment ("dict[Any, Any] | str | Any")
+src/oida/protocols/modbus/convert_maps.py::index::Unsupported target for indexed assignment ("dict[Any, Any] | str")
+src/oida/protocols/modbus/decoder.py::arg-type::Argument "default" to "_strn_length" has incompatible type "None"; expected "int"
+src/oida/protocols/modbus/decoder.py::operator::Unsupported operand types for + ("int" and "None")
+src/oida/protocols/modbus/mixins/fuzz.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/modbus/mixins/fuzz.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/modbus/mixins/read_write.py::has-type::Cannot determine type of "_map_resolver"
+src/oida/protocols/modbus/scanner.py::arg-type::Argument "logger" to "read_registers_batched" has incompatible type "ICSLogger"; expected "Logger | None"
+src/oida/protocols/modbus/scanner.py::arg-type::Argument 1 to "build_tls_context" has incompatible type "Namespace | dict[str, Any]"; expected "dict[Any, Any]"
+src/oida/protocols/modbus/scanner.py::arg-type::Argument 1 to "parse_address_range" of "ProtocolParser" has incompatible type "Any | None"; expected "str"
+src/oida/protocols/modbus/scanner.py::index::Invalid index type "int" for "dict[str, Any]"; expected type "str"
+src/oida/protocols/modbus/scanner_mixins/custom_fc.py::arg-type::Argument 1 to "_get_exception_name" of "ScannerCustomFCMixin" has incompatible type "object"; expected "int"
+src/oida/protocols/modbus/scanner_mixins/discovery.py::dict-item::Dict entry 4 has incompatible type "int": "dict[Any, Any]"; expected "str": "Any"
+src/oida/protocols/modbus/scanner_mixins/discovery.py::index::Invalid index type "str" for "dict[int, dict[str, object]]"; expected type "int"
+src/oida/protocols/modbus/scanner_mixins/discovery.py::return-value::Incompatible return value type (got "dict[int, dict[str, object]]", expected "dict[str, Any]")
+src/oida/protocols/modbus/scanner_mixins/identification.py::has-type::Cannot determine type of "_cached_server_info"
+src/oida/protocols/modbus/scanner_mixins/write_ops.py::arg-type::Argument "logger" to "read_registers_batched" has incompatible type "ICSLogger"; expected "Logger | None"
+src/oida/protocols/modbus/validate_maps.py::arg-type::Argument 1 to "append" of "list" has incompatible type "tuple[str, str]"; expected "str"
+src/oida/protocols/modbus/validate_maps.py::call-overload::No overload variant of "open" matches argument type "TextIOWrapper[_WrappedBuffer]"
+src/oida/protocols/modbus/validate_maps.py::str-unpack::Unpacking a string is disallowed
+src/oida/protocols/mqtt/mixins/auth.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/mqtt/mixins/auth.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/mqtt/mixins/connection.py::arg-type::Argument 1 to "int" has incompatible type "dict[Any, Any] | bool"; expected "str | Buffer | SupportsInt | SupportsIndex | SupportsTrunc"
+src/oida/protocols/mqtt/mixins/connection.py::arg-type::Argument 1 to "join" of "str" has incompatible type "object"; expected "Iterable[str]"
+src/oida/protocols/mqtt/mixins/connection.py::index::Unsupported target for indexed assignment ("dict[Any, Any] | bool | None")
+src/oida/protocols/mqtt/mixins/connection.py::index::Value of type "object" is not indexable
+src/oida/protocols/mqtt/mixins/connection.py::operator::Unsupported right operand type for in ("object")
+src/oida/protocols/mqtt/mixins/connection.py::return-value::Incompatible return value type (got "tuple[bool | None, Literal[True] | str]", expected "tuple[bool, str]")
+src/oida/protocols/mqtt/mixins/connection.py::return-value::Incompatible return value type (got "tuple[dict[Any, Any] | bool | None, Literal[True, 'Unknown'] | dict[Any, Any], dict[Any, Any] | bool | None, bool]", expected "tuple[bool, str, dict[str, Any], bool]")
+src/oida/protocols/mqtt/mixins/messaging.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/mqtt/mixins/topic_discovery.py::arg-type::Argument 1 to "len" has incompatible type "object"; expected "Sized"
+src/oida/protocols/mqtt/mixins/topic_discovery.py::index::Unsupported target for indexed assignment ("Collection[Any]")
+src/oida/protocols/mqtt/mixins/topic_discovery.py::index::Value of type "Collection[Any]" is not indexable
+src/oida/protocols/mqtt/mixins/topic_discovery.py::operator::Unsupported operand types for + ("object" and "int")
+src/oida/protocols/mqtt/proto_args.py::arg-type::Argument "default_port" to "add_network_options" has incompatible type "None"; expected "int"
+src/oida/protocols/mqtt/scanner.py::index::Unsupported target for indexed assignment ("Collection[Any]")
+src/oida/protocols/ocpp/__init__.py::str-unpack::Unpacking a string is disallowed
+src/oida/protocols/ocpp/mixins/messages.py::dict-item::Dict entry 0 has incompatible type "str": "int"; expected "str": "str"
+src/oida/protocols/ocpp/mixins/messages.py::dict-item::Dict entry 0 has incompatible type "str": "str"; expected "str": "dict[str, str]"
+src/oida/protocols/ocpp/mixins/messages.py::dict-item::Dict entry 0 has incompatible type "str": "str"; expected "str": "list[dict[str, Collection[str]]]"
+src/oida/protocols/ocpp/mixins/messages.py::dict-item::Dict entry 1 has incompatible type "str": "str"; expected "str": "list[dict[str, Collection[str]]]"
+src/oida/protocols/ocpp/mixins/security.py::arg-type::Argument "verbose" to "check_tls_certificate" has incompatible type "Literal[True, 0] | Any"; expected "bool"
+src/oida/protocols/ocpp/mixins/security.py::arg-type::Argument 3 to "getattr" has incompatible type "int"; expected "bool"
+src/oida/protocols/ocpp/scanner.py::return-value::Incompatible return value type (got "object", expected "dict[str, Any]")
+src/oida/protocols/opcua/cli_runner.py::call-arg::Unexpected keyword argument "mode"
+src/oida/protocols/opcua/mixins/credentials.py::index::Value of type "str | None" is not indexable
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 0 has incompatible type "bytes"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 0 has incompatible type "datetime"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 0 has incompatible type "float"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 0 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 1 has incompatible type "bytes"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 1 has incompatible type "datetime"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 1 has incompatible type "float"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 1 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 10 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 11 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 12 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 2 has incompatible type "None"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 2 has incompatible type "bytes"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 2 has incompatible type "datetime"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 2 has incompatible type "float"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 2 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 3 has incompatible type "bytes"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 3 has incompatible type "datetime"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 3 has incompatible type "float"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 3 has incompatible type "list[Never]"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 3 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 4 has incompatible type "bytes"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 4 has incompatible type "datetime"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 4 has incompatible type "dict[Never, Never]"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 4 has incompatible type "float"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 4 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 5 has incompatible type "bytes"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 5 has incompatible type "float"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 5 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 6 has incompatible type "float"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 6 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 7 has incompatible type "float"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 7 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 8 has incompatible type "float"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 8 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 9 has incompatible type "float"; expected "int"
+src/oida/protocols/opcua/mixins/fuzz.py::list-item::List item 9 has incompatible type "str"; expected "int"
+src/oida/protocols/opcua/mixins/methods.py::arg-type::Argument 1 to "_get_type_name" of "MethodsMixin" has incompatible type "Any | None"; expected "int"
+src/oida/protocols/opcua/mixins/writes.py::arg-type::Argument 1 to "_convert_value" of "WritesMixin" has incompatible type "Any | None"; expected "str"
+src/oida/protocols/opcua/scanner.py::arg-type::Argument "defaults" to "load_credentials" has incompatible type "None"; expected "list[Any]"
+src/oida/protocols/pcap/scanner.py::arg-type::Argument 2 to "progress" of "ICSLogger" has incompatible type "int | None"; expected "int"
+src/oida/protocols/pcap/scanner.py::no-redef::Name "parts" already defined on line 377
+src/oida/protocols/profinet/__init__.py::arg-type::Argument 1 to "fail" of "ICSLogger" has incompatible type "str | None"; expected "str"
+src/oida/protocols/profinet/__init__.py::arg-type::Argument 1 to "scan" has incompatible type "Any | None"; expected "str"
+src/oida/protocols/snap7/mixins/block_operations.py::arg-type::Argument 1 to "update" of "MutableMapping" has incompatible type "dict[str, str | Any | None]"; expected "SupportsKeysAndGetItem[str, bool]"
+src/oida/protocols/snap7/mixins/block_operations.py::index::Invalid index type "str" for "str"; expected type "SupportsIndex | slice[SupportsIndex | None, SupportsIndex | None, SupportsIndex | None]"
+src/oida/protocols/snap7/mixins/device_info.py::arg-type::Argument 1 to "_identify_series_from_order_code" of "DeviceInfoMixin" has incompatible type "None"; expected "str"
+src/oida/protocols/snap7/mixins/memory.py::type-var::Value of type variable "SupportsRichComparisonT" of "min" cannot be "int | Any | None"
+src/oida/protocols/snap7/scanner.py::arg-type::Argument 2 to "safe_int_conversion" has incompatible type "None"; expected "int"
+src/oida/protocols/snap7/szl_parser.py::call-overload::No overload variant of "max" matches argument types "object", "object", "object"
+src/oida/protocols/snmp/mixins/v3_enumeration.py::call-overload::No overload variant of "get" of "dict" matches argument types "str", "str"
+src/oida/protocols/snmp/mixins/v3_enumeration.py::has-type::Cannot determine type of "enum_v3_target_user"
+src/oida/protocols/snmp/mixins/v3_enumeration.py::index::Invalid index type "str" for "str"; expected type "SupportsIndex | slice[SupportsIndex | None, SupportsIndex | None, SupportsIndex | None]"
+src/oida/protocols/snmp/scanner.py::arg-type::Argument 5 to "_async_walk_write" of "WriteAccessMixin" has incompatible type "Any | None"; expected "str"
+src/oida/protocols/tase2/cli_runner.py::dict-item::Dict entry 0 has incompatible type "str": "bool"; expected "str": "list[Any]"
+src/oida/protocols/tase2/cli_runner.py::dict-item::Dict entry 0 has incompatible type "str": "dict[str, Any]"; expected "str": "list[Any]"
+src/oida/protocols/tase2/cli_runner.py::dict-item::Dict entry 0 has incompatible type "str": "dict[str, bool]"; expected "str": "list[Any]"
+src/oida/protocols/tase2/cli_runner.py::dict-item::Dict entry 0 has incompatible type "str": "dict[str, int]"; expected "str": "list[Any]"
+src/oida/protocols/tase2/cli_runner.py::dict-item::Dict entry 0 has incompatible type "str": "str"; expected "str": "list[Any]"
+src/oida/protocols/tase2/cli_runner.py::dict-item::Dict entry 1 has incompatible type "str": "bool"; expected "str": "list[Any]"
+src/oida/protocols/tase2/cli_runner.py::dict-item::Dict entry 2 has incompatible type "str": "str"; expected "str": "list[Any]"
+src/oida/protocols/tase2/mixins/info_messages.py::arg-type::Argument 1 to "debug" of "ICSLogger" has incompatible type "object"; expected "str"
+src/oida/utils/default_credentials.py::call-overload::No overload variant of "list" matches argument type "object"
+src/oida/utils/fuzzer.py::call-overload::No overload variant matches argument type "bytes"
+src/oida/utils/fuzzer.py::index::Unsupported target for indexed assignment ("bytes")
+src/oida/utils/ics_logger.py::return-value::Incompatible return value type (got "None", expected "str")
+src/oida/utils/lazy_import.py::return-value::Incompatible return value type (got "None", expected "bool")
+src/oida/utils/login_scanner.py::return-value::Incompatible return value type (got "list[str] | list[tuple[Any, ...]]", expected "list[str]")
+src/oida/utils/payload.py::return-value::Incompatible return value type (got "tuple[None, None]", expected "tuple[bytes, str | None]")
+src/oida/utils/protocol_registry.py::arg-type::Argument "additional_options" to "create_common_metadata" has incompatible type "dict[str, Any] | None"; expected "dict[str, Any]"
+src/oida/utils/protocol_registry.py::arg-type::Argument "additional_options" to "create_serial_metadata" has incompatible type "dict[str, Any] | None"; expected "dict[str, Any]"
+src/oida/utils/security_findings.py::arg-type::Argument 1 to "_normalize_org_name" has incompatible type "str | bytes"; expected "str"

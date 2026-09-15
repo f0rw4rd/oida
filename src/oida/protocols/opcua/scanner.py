@@ -754,9 +754,7 @@ class OPCUAScanner(NetworkScanner):
                 f"Supported: {', '.join(_supported_security_modes())}"
             )
 
-        security_string = (
-            f"{policy},{mode},{self.certificate_path},{self.private_key_path}"
-        )
+        security_string = f"{policy},{mode},{self.certificate_path},{self.private_key_path}"
         try:
             await client.set_security_string(security_string)
         except Exception as e:

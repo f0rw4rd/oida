@@ -618,6 +618,8 @@ class StatefulFuzzer(BaseFuzzer):
         self.log.fail("Authentication failed")
 
         # Show credentials that were used
+        if self.authenticator is None:
+            return
         creds = self.authenticator.get_credentials()
         if "username" in creds:
             self.log.fail(f"Credentials: {creds.get('username', '')} / ***")
@@ -850,7 +852,7 @@ class StatefulFuzzer(BaseFuzzer):
         Args:
             results: List of StateReachabilityResult from _preflight_state_check
         """
-        if not results:
+        if not results or self.state_machine is None:
             return
 
         self.log.display(f"State machine: {len(results)} states defined")

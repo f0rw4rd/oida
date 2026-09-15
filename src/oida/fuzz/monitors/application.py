@@ -149,7 +149,7 @@ class HTTPGetMonitor(ProtocolMonitor):
                 return False
 
         # Optionally compare body content
-        if self.compare_body:
+        if self.compare_body and self.baseline_body is not None:
             current_body = current.text
 
             # Simple comparison - check if bodies are identical

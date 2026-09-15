@@ -231,7 +231,7 @@ class ProtocolMonitor(BaseMonitor):
         self.restart_delay = restart_delay
         if command_runner is None and self.restart_command:
             command_runner = RealCommandRunner()
-        self.command_runner = command_runner
+        self.command_runner: Any = command_runner
 
         # Check settings
         self.check_interval = check_interval

@@ -403,7 +403,7 @@ class Snap7Scanner(
             self.slot,
             self.rack,
         )
-        results = {
+        results: Dict[str, Any] = {
             "cpu_info": {},
             "plc_status": {},
             "firmware_info": {},

@@ -231,7 +231,7 @@ class ClassExplorerMixin(_ScannerBase):
         from ..cip_definitions import parse_attribute, get_object_name
 
         class_name = get_object_name(class_id)
-        result = {
+        result: Dict[str, Any] = {
             "class_id": class_id,
             "class_name": class_name,
             "class_attributes": {},

@@ -17,6 +17,8 @@ The class uses mixins for feature-specific handler methods:
     - SunSpecMixin: SunSpec runtime model discovery
 """
 
+from typing import Any
+
 from ...connection import NetworkConnection
 from ...utils.exceptions import DependencyError
 from ...utils.lazy_import import lazy_import
@@ -71,7 +73,7 @@ class modbus(
         # Scan automatically executes via proto_flow()
     """
 
-    def __init__(self, args, db, host):
+    def __init__(self, args: Any, db, host):
         """
         Initialize and trigger Modbus scan
 
@@ -166,9 +168,11 @@ class modbus(
         self.create_conn_obj()
 
         if not self.conn:
-            self.logger.fail(f"Failed to connect to {self.ip}:{self.args.port}")
+            self.logger.fail(f"Failed to connect to {self.ip}:{getattr(self.args, 'port', 502)}")
             self.results["success"] = False
-            self.results["error"] = f"Connection failed to {self.ip}:{self.args.port}"
+            self.results["error"] = (
+                f"Connection failed to {self.ip}:{getattr(self.args, 'port', 502)}"
+            )
             return
 
         self.logger.debug("Connection established")
@@ -222,7 +226,7 @@ class modbus(
                 "    Only write operations (FC 5, 6, 15, 16) are meaningful in broadcast mode"
             )
             # Override unit_id to 0 for broadcast
-            self.args.unit_id = 0
+            setattr(self.args, "unit_id", 0)
 
         # --discover: Quick recon (identify only)
         if discover_mode:
@@ -255,7 +259,7 @@ class modbus(
 
         # --sunspec-assess implies --sunspec
         if getattr(self.args, "sunspec_assess", False):
-            self.args.sunspec = True
+            setattr(self.args, "sunspec", True)
 
         # SunSpec discovery (--sunspec)
         if getattr(self.args, "sunspec", False) or full_mode:
@@ -863,7 +867,7 @@ class modbus(
         else:
             transport = "TCP"
 
-        self.logger.info(f"Connecting to {self.ip}:{self.args.port}")
+        self.logger.info(f"Connecting to {self.ip}:{getattr(self.args, 'port', 502)}")
 
         # Use scanner's connect method
         self.conn = self.scanner.connect()

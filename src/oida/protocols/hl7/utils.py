@@ -368,7 +368,7 @@ def probe_server_capabilities(
     Returns:
         Dictionary with detected capabilities
     """
-    capabilities = {
+    capabilities: Dict[str, Any] = {
         "message_types": set(),
         "rejected_types": set(),
         "server_app": None,

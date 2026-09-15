@@ -92,7 +92,7 @@ class DiscoveryMixin:
     async def _listen_bus_traffic(self, knx: "XKNX", duration: int = 30) -> Dict[str, Any]:
         """Passive bus traffic monitoring - listens without sending probes"""
         self.logger.debug(f"Passive bus listen: duration={duration}s")
-        traffic_data = {
+        traffic_data: Dict[str, Any] = {
             "duration": duration,
             "telegrams": [],
             "group_addresses": {},

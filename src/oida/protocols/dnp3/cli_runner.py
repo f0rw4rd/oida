@@ -17,7 +17,7 @@ class dnp3(NetworkConnection):
     def __init__(self, args, db, host):
         self.protocol_name = "DNP3"
         self.default_port = 20000
-        self.scanner = None
+        self.scanner: Any = None
         super().__init__(args, db, host)
 
     def proto_flow(self):

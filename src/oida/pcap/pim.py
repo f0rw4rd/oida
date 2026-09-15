@@ -411,6 +411,8 @@ class PIMPassiveListener(PySharkListenerBase):
                 f"cksum={cksum_status_name}"
             )
         else:
+            if device.pim_data is None:
+                device.pim_data = {}
             # Update neighbors if new ones found
             existing_neighbors = device.pim_data.get("neighbors", [])
             for n in neighbors:

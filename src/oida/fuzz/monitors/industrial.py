@@ -291,7 +291,7 @@ class IEC104Monitor(ProtocolMonitor):
         try:
             if not self.socket:
                 self.logger.debug("No socket, attempting connection")
-                if not self._connect():
+                if not self._connect() or not self.socket:
                     self.logger.warning("IEC 104 connection failed")
                     return False
 
@@ -321,15 +321,17 @@ class IEC104Monitor(ProtocolMonitor):
                     self.logger.display(f"IEC 104 baseline established: {response.hex()}")
 
                 # Compare with baseline (using standardized baseline)
+                if self.baseline is None:
+                    return False
                 baseline_raw = self.baseline.raw_response
                 if response != baseline_raw:
                     self.logger.warning(
-                        f"TESTFR response changed! Expected: {self.baseline_response.hex()}, Got: {response.hex()}"
+                        f"TESTFR response changed! Expected: {baseline_raw.hex()}, Got: {response.hex()}"
                     )
                     if fuzz_data_logger:
                         fuzz_data_logger.log_info(
                             f"IEC 104 TESTFR response changed! "
-                            f"Expected: {self.baseline_response.hex()}, "
+                            f"Expected: {baseline_raw.hex()}, "
                             f"Got: {response.hex()}"
                         )
                     # Response changed - reset socket to get fresh connection
@@ -523,7 +525,7 @@ class MMSMonitor(ProtocolMonitor):
         try:
             if not self.socket or not self.connected:
                 self.logger.debug("No MMS session, attempting connection")
-                if not self._connect():
+                if not self._connect() or not self.socket:
                     self.logger.warning("MMS connection failed")
                     if fuzz_data_logger:
                         fuzz_data_logger.log_info("MMSMonitor: Failed to connect")
@@ -707,6 +709,8 @@ class MQTTMonitor(ProtocolMonitor):
                 return True
 
             # Compare with baseline (reason code should match)
+            if self.baseline is None:
+                return False
             baseline_reason = self.baseline.get_field("reason_code")
             if response[3] != baseline_reason:
                 self.logger.warning(

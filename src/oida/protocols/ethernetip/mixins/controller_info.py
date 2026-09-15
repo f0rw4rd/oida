@@ -161,7 +161,7 @@ class ControllerInfoMixin(_ScannerBase):
         - External access settings
         - Firmware version indicators (v21+ instance addressing)
         """
-        result = {
+        result: Dict[str, Any] = {
             "total_tags": 0,
             "atomic_tags": 0,
             "struct_tags": 0,

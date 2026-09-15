@@ -2278,6 +2278,8 @@ class FTPFuzzer(StatefulFuzzer):
                 # full path (running each state's setup callback on the fresh
                 # connection). require_state() only does a single hop and would
                 # be rejected in enforce mode.
+                if self.state_machine is None:
+                    return
                 self.state_machine.reset_to_initial()
                 self.log.debug(f"Authenticating via state machine (gen {generation})")
                 try:

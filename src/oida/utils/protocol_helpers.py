@@ -159,7 +159,7 @@ class ConnectionHelper:
         ------
         TimeoutError, ConnectionRefusedError, Exception on failure.
         """
-        log = logger or _logger
+        log: Any = logger or _logger
         log.info(f"Connecting to {host}:{port}")
         sock = ConnectionHelper.create_tcp_socket(host, port, timeout=timeout)
         try:

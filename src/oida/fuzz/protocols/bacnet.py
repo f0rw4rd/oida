@@ -921,9 +921,7 @@ class BACnetFuzzer(BaseFuzzer):
                             "NPDU_Header_IAM",
                             children=(
                                 Byte("NPDU_Version", 0x01),
-                                Byte(
-                                    "NPDU_Control", 0x00
-                                ),  # No network layer message, no dest/src
+                                Byte("NPDU_Control", 0x00),  # No network layer message, no dest/src
                             ),
                         ),
                         Block(
@@ -943,9 +941,7 @@ class BACnetFuzzer(BaseFuzzer):
                         Byte("Max_APDU_Tag", 0x22),  # Application tag 2 (unsigned), length 2
                         Word("Max_APDU_Length", 1476, endian=">"),
                         # Segmentation Supported (application tag 9, 1 byte)
-                        Byte(
-                            "Segmentation_Tag", 0x91
-                        ),  # Application tag 9 (enumerated), length 1
+                        Byte("Segmentation_Tag", 0x91),  # Application tag 9 (enumerated), length 1
                         Byte("Segmentation_Support", 0x03),  # No segmentation
                         # Vendor ID (application tag 2, 1 byte)
                         Byte("Vendor_ID_Tag", 0x21),  # Application tag 2 (unsigned), length 1
@@ -1004,9 +1000,7 @@ class BACnetFuzzer(BaseFuzzer):
                         ),
                         # Object identifier with context tag [0]
                         Byte("Object_ID_Tag", 0x0C),  # Context tag 0, length 4
-                        DWord(
-                            "Object_ID", 0x020004D2, endian=">"
-                        ),  # Device object, instance 1234
+                        DWord("Object_ID", 0x020004D2, endian=">"),  # Device object, instance 1234
                         # Property identifier with context tag [1]
                         Byte("Property_ID_Tag", 0x19),  # Context tag 1, length 1
                         Byte("Property_Value", 0x4D),  # Object-Name property (77)
@@ -1490,9 +1484,7 @@ class BACnetFuzzer(BaseFuzzer):
                         ),
                         # Requesting Device Identifier (context tag 0)
                         Byte("Req_Device_Tag", 0x0C),
-                        DWord(
-                            "Requesting_Device_ID", 0x020004D2, endian=">"
-                        ),  # Device 1234
+                        DWord("Requesting_Device_ID", 0x020004D2, endian=">"),  # Device 1234
                         # Requesting Device Address (context tag 1)
                         Byte("Req_Addr_Tag", 0x1E),  # Opening tag
                         Byte("Network_Tag", 0x21),

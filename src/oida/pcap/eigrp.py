@@ -654,6 +654,9 @@ class EIGRPPassiveListener(PySharkListenerBase):
             )
         else:
             data = self.discovered_devices[device_key].eigrp_data
+            if data is None:
+                data = {}
+                self.discovered_devices[device_key].eigrp_data = data
             # Update routes if new ones found
             existing_routes = data.get("routes", [])
             existing_networks = {r.get("network") for r in existing_routes}

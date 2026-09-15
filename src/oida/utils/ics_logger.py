@@ -756,11 +756,12 @@ def log_info(message):
 def log_exc(message=None, level="error", include_traceback=True):
     """Log an exception with optional traceback."""
     exc_type, exc_value, exc_tb = sys.exc_info()
+    exc_name = exc_type.__name__ if exc_type else "Exception"
 
     if message:
-        error_msg = f"{message}: {exc_type.__name__}: {exc_value}"
+        error_msg = f"{message}: {exc_name}: {exc_value}"
     else:
-        error_msg = f"{exc_type.__name__}: {exc_value}"
+        error_msg = f"{exc_name}: {exc_value}"
 
     log(error_msg, level=level)
 

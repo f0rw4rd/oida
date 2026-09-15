@@ -121,7 +121,7 @@ def make_password_scanner(
 
         log(f"Testing {len(passwords)} passwords against {host}:{port}")
 
-        results = {
+        results: Dict[str, Any] = {
             "success": False,
             "tested": 0,
             "password": None,

@@ -197,7 +197,7 @@ class SecurityMixin(_ScannerBase):
         from ....utils import ProgressTracker
         from ..scanner import _suppress_snap7_logging
 
-        results = {
+        results: Dict[str, Any] = {
             "success": False,
             "password": None,
             "attempts": 0,

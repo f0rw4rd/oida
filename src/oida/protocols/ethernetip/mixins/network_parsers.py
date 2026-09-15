@@ -230,7 +230,7 @@ class NetworkParsersMixin(_ScannerBase):
         Enumerates I/O connection points and their sizes.
         Reference: CIP Vol 1, Section 5-5
         """
-        assembly_info = {
+        assembly_info: Dict[str, Any] = {
             "object_id": 0x04,
             "object_name": "Assembly",
             "accessible": False,

@@ -115,7 +115,7 @@ class CipObjectsMixin(_ScannerBase):
 
         Returns topology map with ports, slots, and discovered routes.
         """
-        topology = {
+        topology: Dict[str, Any] = {
             "ports": [],
             "slots": {},  # Backplane slots
             "remote_devices": {},  # Devices on other ports (ControlNet, DeviceNet, etc.)

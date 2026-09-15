@@ -173,7 +173,7 @@ class FuzzMixin(_ScannerBase):
             class_blacklist = self.FUZZ_BLACKLIST.get(class_id_int, {})
 
             # Get original attribute data
-            attr_data = attributes.get(class_id, attributes.get(class_id_int, {}))
+            attr_data: Any = attributes.get(class_id, attributes.get(class_id_int, {}))
 
             # Fuzz class attributes
             for attr_id, attr_write in write_info.get("class_attributes", {}).items():

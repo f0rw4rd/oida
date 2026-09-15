@@ -275,12 +275,13 @@ class OSPFPassiveListener(PassiveListenerBase):
 
                 logger.debug(f"OSPF: {src_ip} RID={router_id} Area={area_id} {role}")
             else:
-                self.discovered_devices[device_key].last_seen = datetime.now().isoformat()
+                dev = self.discovered_devices[device_key]
+                dev.last_seen = datetime.now().isoformat()
+                if dev.ospf_data is None:
+                    dev.ospf_data = {}
                 # Update neighbors if new ones found
-                existing_neighbors = self.discovered_devices[device_key].ospf_data.get(
-                    "neighbors", []
-                )
+                existing_neighbors = dev.ospf_data.get("neighbors", [])
                 for n in neighbors:
                     if n not in existing_neighbors:
                         existing_neighbors.append(n)
-                self.discovered_devices[device_key].ospf_data["neighbors"] = existing_neighbors
+                dev.ospf_data["neighbors"] = existing_neighbors

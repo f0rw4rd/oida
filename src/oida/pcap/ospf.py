@@ -556,6 +556,8 @@ class OSPFPassiveListener(PySharkListenerBase):
 
             self.logger.debug(f"OSPF: {src_ip} RID={router_id} Area={area_id} {role}")
         else:
+            if device.ospf_data is None:
+                device.ospf_data = {}
             # Update neighbors if new ones found
             existing_neighbors = device.ospf_data.get("neighbors", [])
             for n in neighbors:

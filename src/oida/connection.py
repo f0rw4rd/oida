@@ -81,8 +81,11 @@ class connection(ABC):
             if host != self.ip:
                 self.logger.extra["hostname"] = host[:16]
 
-        # Store connection results (success=None means "not yet determined")
-        self.results = {
+        # Store connection results (success=None means "not yet determined").
+        # Typed Dict[str, Any]: the value union is heterogeneous (str, None,
+        # nested dict) and subclasses freely index/mutate results["data"][...];
+        # an inferred narrow value type would make every such access an error.
+        self.results: Dict[str, Any] = {
             "host": host,
             "ip": self.ip,
             "protocol": protocol_name,

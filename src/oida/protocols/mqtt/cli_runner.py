@@ -207,6 +207,8 @@ class mqtt(NetworkConnection):
                 with open(payload_file, "rb") as f:
                     return f.read(), None
             else:
+                if message is None:
+                    return None, "No message, payload file, or null flag provided"
                 if getattr(self.args, "hex", False):
                     clean = message.replace(":", "").replace(" ", "").replace("0x", "")
                     return bytes.fromhex(clean), None

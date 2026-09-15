@@ -3,6 +3,7 @@
 """CoAP NXC-style callable class."""
 
 import time as _time
+from typing import Any
 
 from ...connection import NetworkConnection
 from ...utils.payload import resolve_file_payload
@@ -50,7 +51,7 @@ class coap(NetworkConnection):
     default_port = 5683
 
     def __init__(self, args, db, host):
-        self.scanner = None
+        self.scanner: Any = None
         self._scan_results = None
         # Capture the user-supplied port (None when -p is omitted) BEFORE
         # super().__init__() — NetworkConnection.__init__ clobbers args.port

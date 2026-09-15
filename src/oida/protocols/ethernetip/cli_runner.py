@@ -6,6 +6,8 @@ EtherNet/IP NXC-Style Connection Class
 NXC-style callable class that executes scanning on instantiation.
 """
 
+from typing import Any
+
 from ...connection import NetworkConnection
 from .scanner import EtherNetIPScanner, _pycomm3
 
@@ -17,7 +19,7 @@ class ethernetip(NetworkConnection):
         self.protocol_name = "EtherNet/IP"
         self.default_port = 44818
         self.conn = None
-        self.scanner = None
+        self.scanner: Any = None
         super().__init__(args, db, host)
 
     def _convert_args_to_dict(self):

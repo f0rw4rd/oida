@@ -75,7 +75,7 @@ class DeviceInfoMixin:
             PID 56: MAX_APDU_LENGTH
             PID 16: PEI_TYPE
         """
-        info = {
+        info: Dict[str, Any] = {
             "address": address,
             "manufacturer_id": None,
             "manufacturer_name": "Unknown",
@@ -336,7 +336,7 @@ class DeviceInfoMixin:
     async def _read_firmware_info(self, knx: "XKNX", address: str) -> Dict[str, Any]:
         """Read firmware and BCU information from device"""
         self.logger.debug(f"Reading firmware info from {address}")
-        info = {
+        info: Dict[str, Any] = {
             "address": address,
             "firmware_revision": None,
             "mask_version": None,

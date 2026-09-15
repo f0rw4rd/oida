@@ -79,6 +79,7 @@ def _normalize_md5_salt(salt: Any) -> str:
         return ""
     return s
 
+
 # Transaction status byte values from ReadyForQuery
 TRANSACTION_STATUS = {
     "73": "idle",  # 'I' = idle (not in a transaction)

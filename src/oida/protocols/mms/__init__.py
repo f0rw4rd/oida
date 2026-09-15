@@ -46,14 +46,17 @@ class _Lib:
     smoothed over by ``MMSScanner._normalize_read``.
     """
 
-    MMSClient = None
-    FC = None
-    MmsType = None
-    ServerIdentity = None
-    MMSError = None
-    ConnectionFailedError = None
-    ReadError = None
-    WriteError = None
+    # Runtime-populated by require(); typed Any so attribute access on the
+    # lazily-loaded binding (e.g. FC.DC, MmsType.STRUCTURE) is not flagged as
+    # access on the None placeholder.
+    MMSClient: Any = None
+    FC: Any = None
+    MmsType: Any = None
+    ServerIdentity: Any = None
+    MMSError: Any = None
+    ConnectionFailedError: Any = None
+    ReadError: Any = None
+    WriteError: Any = None
 
     @classmethod
     def require(cls):

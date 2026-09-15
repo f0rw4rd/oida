@@ -580,6 +580,8 @@ class ValidCaseMonitor(ProtocolMonitor):
             self.logger.display(f"Valid-case baseline established ({len(response)} bytes)")
             return True
 
+        if self.baseline is None:
+            return True
         if response == self.baseline.raw_response:
             return True
         self.logger.warning(

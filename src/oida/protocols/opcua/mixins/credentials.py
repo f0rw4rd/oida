@@ -5,7 +5,7 @@ Provides credential testing, RBAC analysis, and brute force functionality.
 """
 
 import asyncio
-
+from typing import Any, Dict
 
 from ..helpers import _get_client_class, ua
 
@@ -171,7 +171,7 @@ class CredentialsMixin:
             auth_name = auth["name"]
             self.logger.display(f"\n--- Testing: {auth_name} ---")
 
-            access = {
+            access: Dict[str, Any] = {
                 "connected": False,
                 "readable_nodes": [],
                 "writable_nodes": [],

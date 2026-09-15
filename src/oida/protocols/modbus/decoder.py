@@ -860,15 +860,16 @@ def decode_with_map(
         regs_needed = _required_registers(definition)
 
         # Collect register values
-        reg_values = []
+        reg_values: List[int] = []
+        complete = True
         for i in range(regs_needed):
             if addr + i in registers:
                 reg_values.append(registers[addr + i])
             else:
-                reg_values = None
+                complete = False
                 break
 
-        if reg_values is None:
+        if not complete:
             results[name] = {
                 "value": None,
                 "error": "missing_registers",

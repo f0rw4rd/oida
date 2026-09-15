@@ -1100,6 +1100,8 @@ class SMTPFuzzer(BaseFuzzer):
             return
 
         self.log.display("Starting SMTP STARTTLS upgrade sequence")
+        if self.state_machine is None:
+            return
         try:
             self.state_machine.transition_to("EHLO_SENT")
             self.state_machine.transition_to("STARTTLS_SENT")

@@ -28,7 +28,7 @@ the reference for the facade pattern.
 
 import asyncio
 import os
-from typing import Any, Dict
+from typing import Any, Dict, Optional
 
 from ...connection import NetworkConnection
 from ...utils.lazy_import import lazy_import
@@ -84,7 +84,7 @@ class opcua(
     def __init__(self, args, db, host):
         self.protocol_name = "OPC UA"
         self.default_port = 4840
-        self._client = None
+        self._client: Any = None
         self._original_url = None
 
         # Parse OPC UA URL - supports opc.tcp://host:port/path or just host:port.
@@ -226,11 +226,11 @@ class opcua(
         self,
         usernames: list,
         passwords: list,
-        cert_path: str,
-        key_path: str,
+        cert_path: Optional[str],
+        key_path: Optional[str],
         use_anonymous: bool,
         needs_secure_channel: bool,
-        auto_cert_path: str,
+        auto_cert_path: Optional[str],
         requested_mode: str,
     ):
         """Setup authentication based on provided credentials.
@@ -294,8 +294,8 @@ class opcua(
         self,
         usernames: list,
         passwords: list,
-        cert_path: str,
-        key_path: str,
+        cert_path: Optional[str],
+        key_path: Optional[str],
         security_mode: str = "None",
     ):
         """Store authentication and security info in results.
@@ -432,6 +432,9 @@ class opcua(
 
             self.logger.debug("Starting OPC UA async workflow")
             url = self._original_url
+            if url is None:
+                self.logger.fail("No target URL configured")
+                return
             self.logger.debug(f"Target URL: {url}")
 
             # Parse credentials
@@ -536,7 +539,7 @@ class opcua(
             if needs_secure_channel and not (cert_path and key_path):
                 auto_cert_path, auto_key_path = await self._generate_client_cert()
 
-            if needs_secure_channel and auto_cert_path:
+            if needs_secure_channel and auto_cert_path and auto_key_path:
                 await self._configure_secure_channel(
                     auto_cert_path, auto_key_path, requested_mode, requested_policy
                 )

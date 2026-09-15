@@ -451,7 +451,7 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
 
     def _parse_security_info(self, cap_stmt) -> Dict[str, Any]:
         """Parse security information from CapabilityStatement"""
-        security_info = {
+        security_info: Dict[str, Any] = {
             "cors_enabled": False,
             "security_services": [],
             "oauth_endpoints": {},

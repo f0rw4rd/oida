@@ -1022,6 +1022,8 @@ class VNCFuzzer(BaseFuzzer):
                 self.log.debug(f"VNC handshake on connection gen {generation}")
 
                 # Reset state machine for the new connection
+                if self.state_machine is None:
+                    return
                 self.state_machine.reset_to_initial()
 
                 if self._handshake_on_socket(raw_sock):

@@ -18,7 +18,7 @@ Sources:
 - Common ICS configurations
 """
 
-from typing import List, Tuple, Union
+from typing import List, Optional, Tuple, Union
 
 from oida.utils.ics_logger import get_module_logger
 
@@ -423,7 +423,7 @@ OCPP_ID_TAGS: List[str] = [
 ]
 
 
-def parse_credential_input(value: str):
+def parse_credential_input(value: Optional[str]) -> Tuple[List[str], bool]:
     """
     Parse credential input - NXC style auto-detection.
 
