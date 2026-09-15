@@ -108,3 +108,72 @@ jobs:
         # credential-leak, dead-import resolution, …) — run them here so they
         # actually gate PRs.
         run: uv run pytest tests/unit/ tests/contracts/ --ignore=tests/unit/pcap -x -q --timeout=15
+
+  pcap:
+    name: Dissector tests (pinned tshark)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "0.11.18"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.12"
+
+      - name: Sync environment from lockfile
+        run: uv sync --all-extras --frozen
+
+      # The job the `test` step's comment has been promising: tests/unit/pcap
+      # asserts on real tshark dissector output, so it needs a tshark whose
+      # version is known rather than whatever the runner image happens to ship.
+      - name: Install tshark
+        run: |
+          sudo DEBIAN_FRONTEND=noninteractive apt-get update
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y tshark
+          tshark --version | head -1
+
+      - name: Dissector tests
+        run: uv run pytest tests/unit/pcap -q --timeout=60
+
+  integration:
+    name: Integration (docker mocks)
+    runs-on: ubuntu-latest
+    # 5,448 tests that ran in no workflow before this job existed — the mock
+    # stack makes them too heavy for the unit lane but they are the only
+    # coverage the protocol scanners get against real servers.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "0.11.18"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.12"
+
+      - name: Sync environment from lockfile
+        run: uv sync --all-extras --frozen
+
+      - name: Bring up the core mock stack
+        run: uv run python services.py up core --quiet-pull
+
+      # Same topology as scripts/run-all-tests.sh: --dist loadgroup keeps each
+      # xdist_group (one per shared mock) pinned to a single worker.
+      - name: Integration tests
+        run: uv run pytest tests/integration -p no:randomly -n 8 --dist loadgroup
+
+      # `services.py logs` follows and would hang the job, so report status only.
+      - name: Mock status on failure
+        if: failure()
+        run: uv run python services.py status || true
+
+      - name: Tear down mocks
+        if: always()
+        run: uv run python services.py down || true

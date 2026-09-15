@@ -4,12 +4,15 @@
 # `pytest tests/` in one pass hangs (integration/coverage open real sockets to
 # the Docker mocks and fixtures aren't timed). This runs the lanes with the
 # right flags each, and keeps going even if a lane fails so you see the full
-# picture. See docs/TESTING.md for the why.
+# picture. See "Which tests run when" in CLAUDE.md for the why.
 #
 # Usage:
 #   ./scripts/run-all-tests.sh [lane] [select-opts] [-- pytest-args]
 #
 # Lanes (positional, default 'all'):  all | unit | integration | coverage
+#   'all' = unit + integration. The coverage lane is opt-in: it is a scorecard
+#   suite designed to skip on unreachable targets, which strict mode below would
+#   turn into hard failures. It runs non-gating in the coverage-nightly workflow.
 #
 # Select WHICH tests run within the chosen lane(s):
 #   -k, --keyword EXPR   pytest -k expr   (e.g. -k bacnet, -k 'hart or astm',
@@ -24,7 +27,8 @@
 #   -h, --help  show this usage and exit.
 #
 # Examples:
-#   ./scripts/run-all-tests.sh                         # all lanes
+#   ./scripts/run-all-tests.sh                         # unit + integration
+#   ./scripts/run-all-tests.sh coverage                # scorecard lane (opt-in)
 #   ./scripts/run-all-tests.sh integration -k bacnet   # bacnet integration tests
 #   ./scripts/run-all-tests.sh integration -m hart     # hart-marked integration
 #   ./scripts/run-all-tests.sh unit -k modbus          # modbus unit tests
@@ -106,22 +110,27 @@ need_mocks() {
 
 if [[ "$LANE" == "all" || "$LANE" == "unit" ]]; then
     run_lane "unit + contracts (parallel)" \
-        uv run pytest tests/unit tests/contracts -p no:randomly -n auto --dist worksteal -q \
+        uv run pytest tests/unit tests/contracts -p no:randomly -n auto --dist worksteal \
             "${SEL[@]}" "${COV_ARGS[@]}"
 fi
 
 if [[ "$LANE" == "all" || "$LANE" == "integration" ]]; then
     if need_mocks; then
         run_lane "integration (bounded + loadgroup)" \
-            uv run pytest tests/integration -p no:randomly -n 8 --dist loadgroup -q \
+            uv run pytest tests/integration -p no:randomly -n 8 --dist loadgroup \
                 "${SEL[@]}" "${COV_ARGS[@]}"
     else rc=1; fi
 fi
 
-if [[ "$LANE" == "all" || "$LANE" == "coverage" ]]; then
+# Opt-in only, NOT part of `all`. tests/coverage is a scorecard suite: it is
+# designed to skip when a target container is unreachable, and this runner is
+# strict, so including it in `all` turned those designed-in skips into hard
+# failures (hart/can/tase2). It runs non-gating in the coverage-nightly workflow;
+# ask for it explicitly here with `run-all-tests.sh coverage`.
+if [[ "$LANE" == "coverage" ]]; then
     if need_mocks; then
         run_lane "coverage (serial)" \
-            uv run pytest tests/coverage -m "$COVMARK" -p no:randomly -q \
+            uv run pytest tests/coverage -m "$COVMARK" -p no:randomly \
                 "${CSEL[@]}" "${COV_ARGS[@]}"
     else rc=1; fi
 fi

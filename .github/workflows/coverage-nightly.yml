@@ -1,9 +1,11 @@
 name: Coverage (nightly)
 
 # Real-coverage suite (tests/coverage/) — the axes that need the live docker
-# mock stack and are too slow/heavy for the PR lane. Currently runs axis-2
-# CVE replication: drive each protocol fuzzer at its vulnerable mock and record
-# whether it crashed. Never gates PRs — it publishes a trend scorecard.
+# mock stack and are too slow/heavy for the PR lane. Runs axis-1 scanner field
+# coverage (how much of each protocol's tshark field surface a scanner actually
+# populates) and axis-2 CVE replication (drive each protocol fuzzer at its
+# vulnerable mock and record whether it crashed). Neither gates PRs — they
+# publish trend scorecards.
 #
 # The fuzzer×mock pairs are discovered from the compose `oida.*` labels at
 # collection time, so this needs no per-CVE maintenance here.
@@ -64,6 +66,52 @@ jobs:
         with:
           name: cve-replication-scorecard-${{ github.run_id }}
           path: tests/coverage/results/cve_replication_*.json
+          if-no-files-found: warn
+
+      - name: Tear down mocks
+        if: always()
+        run: uv run python services.py down || true
+
+  scanner-field-coverage:
+    name: Scanner field coverage (axis 1)
+    runs-on: ubuntu-latest
+    # tests/coverage/scanner measures how much of each protocol's tshark field
+    # surface a scanner actually populates. Its own docstring says "only the
+    # nightly coverage job runs it" — but until this job existed it ran in no
+    # workflow, and the one place it did run (scripts/run-all-tests.sh) is strict,
+    # which turned its designed-in "target unreachable" skips into hard failures.
+    # Scorecard only, like the CVE axis: never gates.
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "0.11.18"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.12"
+
+      - name: Sync environment from lockfile
+        run: uv sync --all-extras --frozen
+
+      - name: Bring up the core mock stack
+        run: uv run python services.py up core --quiet-pull
+
+      - name: Run scanner field-coverage suite
+        continue-on-error: true
+        env:
+          OIDA_COVERAGE_RUN_ID: ${{ github.run_id }}
+        run: uv run pytest tests/coverage/scanner -m coverage -v --timeout=0
+
+      - name: Upload scanner scorecard
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: scanner-field-coverage-${{ github.run_id }}
+          path: tests/coverage/results/scanner_*.json
           if-no-files-found: warn
 
       - name: Tear down mocks
