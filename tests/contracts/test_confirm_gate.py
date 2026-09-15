@@ -113,8 +113,12 @@ def _enforced_dests_per_protocol() -> dict[str, set[str]]:
     """
     out: dict[str, set[str]] = {}
     for py in SRC_ROOT.glob("protocols/*/**/*.py"):
-        if py.name == "proto_args.py":
-            continue
+        # proto_args.py declares the flags, so scanning its whole body would
+        # self-credit every dest. The one exception is validate_args(): several
+        # protocols (dnp3, ads) gate their dangerous ops centrally there, raising
+        # before the scan runs — and the failure message below explicitly names
+        # validate_args() as a valid gate location. Scan that function only.
+        proto_args_file = py.name == "proto_args.py"
         protocol = py.relative_to(SRC_ROOT / "protocols").parts[0]
         try:
             tree = safe_parse(py.read_text())
@@ -123,6 +127,8 @@ def _enforced_dests_per_protocol() -> dict[str, set[str]]:
         for fn in (
             n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
         ):
+            if proto_args_file and fn.name != "validate_args":
+                continue
             try:
                 body_src = ast.unparse(fn)
             except Exception:  # noqa: BLE001

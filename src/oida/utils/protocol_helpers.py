@@ -324,3 +324,37 @@ def safe_int_conversion(value: Any, default: int = 0) -> int:
     except (ValueError, TypeError) as e:
         _logger.debug(f"int conversion failed: {e}")
         return default
+
+
+def refuse_without_confirm(scanner: Any, reason: str, preview: str = "") -> bool:
+    """Refuse a dangerous operation that was invoked without --confirm.
+
+    Returns True when the operation was refused (caller must return immediately),
+    False when --confirm is set and the caller may proceed.
+
+    Refusing means all of the following, which is the contract the scanner result
+    consumers rely on:
+
+    - ``results["success"]`` is False, so a refused run is never reported as a
+      successful one. Guards that only called ``logger.fail()`` and returned left
+      ``success`` at its optimistic default; that exact bug shipped four times
+      (see the modbus/bacnet/opcua/snap7 "refused ... reported success=True" fixes).
+    - ``results["data"]["refused"]`` carries the human-readable reason, so output
+      formatters and tests can tell "refused" apart from "attempted and failed".
+    - nothing is written to the wire.
+
+    Args:
+        scanner: the scanner/connection, with ``.args``, ``.logger`` and ``.results``.
+        reason: why it was refused, e.g. ``"--write-coil requires --confirm"``.
+        preview: optional dry-run line describing what *would* have happened.
+    """
+    if getattr(scanner.args, "confirm", False):
+        return False
+
+    scanner.logger.fail(f"{reason} (dangerous operation requires --confirm)")
+    if preview:
+        scanner.logger.display(f"  Would {preview}")
+
+    scanner.results["success"] = False
+    scanner.results.setdefault("data", {})["refused"] = reason
+    return True

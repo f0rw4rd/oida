@@ -6,6 +6,7 @@ Provides data change and event subscription functionality.
 
 import asyncio
 
+from ....utils.protocol_helpers import refuse_without_confirm
 from ..handlers import DataChangeHandler, EventHandler
 from ..helpers import ua
 
@@ -122,11 +123,12 @@ class SubscriptionsMixin:
         # This is a DoS ramp against the live server — opens subscriptions
         # until it hits the limit, then more until the server falls over.
         # Gated on --confirm.
-        if not getattr(self.args, "confirm", False):
-            self.logger.fail(
-                "--test-subscription-limits performs a DoS ramp against the live "
-                "server (opens subscriptions until rejection) — requires --confirm"
-            )
+        if refuse_without_confirm(
+            self,
+            "--test-subscription-limits performs a DoS ramp against the live "
+            "server (opens subscriptions until rejection)",
+            preview="open subscriptions until the server rejects them",
+        ):
             return
         self.logger.display("Testing subscription limits...")
 

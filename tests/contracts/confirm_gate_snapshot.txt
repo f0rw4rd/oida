@@ -1,7 +1,7 @@
 # OIDA confirm-gate-missing snapshot — flags advertised as dangerous in proto_args.py
 # whose protocol code does NOT show an explicit `args.<dest>` ↔ `confirm` enforcement.
 #
-# 145 sites locked at snapshot time. Each line: <protocol>:<dest>.
+# 83 sites locked at snapshot time. Each line: <protocol>:<dest>.
 # Drift in either direction (new gap OR resolved gap) fails the contract test
 # and forces an explicit acknowledgement.
 #
@@ -26,28 +26,6 @@ coap:content_format
 coap:psk
 coap:psk_identity
 dicom:probe_ops
-dnp3:activate_config
-dnp3:ao_direct
-dnp3:ao_sbo
-dnp3:ao_value
-dnp3:assign_class
-dnp3:bo_direct
-dnp3:bo_sbo
-dnp3:cold_restart
-dnp3:delete_file
-dnp3:disable_unsol
-dnp3:enable_unsol
-dnp3:file_auth
-dnp3:init_app
-dnp3:init_data
-dnp3:save_config
-dnp3:start_app
-dnp3:stop_app
-dnp3:time_sync
-dnp3:warm_restart
-dnp3:write_data
-dnp3:write_deadband
-dnp3:write_file
 ethercat:eeprom_write
 ethercat:fuzz
 ethercat:sdo_write

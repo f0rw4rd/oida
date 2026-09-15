@@ -840,9 +840,13 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         # policy.
         if self.clock_read:
             if not self.args.get("confirm", False):
-                self.logger.fail(
-                    "--clock-read issues a clock-sync write (C_CS_NA_1) — requires --confirm"
-                )
+                reason = "--clock-read issues a clock-sync write (C_CS_NA_1) — requires --confirm"
+                self.logger.fail(reason)
+                # Record it. This is one phase of a larger scan, so the scan's
+                # overall success still reflects the other phases — but a refusal
+                # that leaves no trace in results is indistinguishable downstream
+                # from "we read the clock and found nothing".
+                results["clock"] = {"refused": reason}
             else:
                 results["clock"] = self._read_clock(client, conn)
 
