@@ -71,10 +71,53 @@ _OPERATIONAL_EXCEPTION_TYPES = (ICSProtocolError, OSError, ImportError, EOFError
 # Control-flow exceptions: never a "bug", never reported.
 _NEVER_REPORT = (KeyboardInterrupt, SystemExit, GeneratorExit)
 
-# Flag-name pattern whose *value* is always redacted, regardless of how
-# permissive argv reproduction otherwise is.
-_CRED_FLAG_RE = re.compile(r"(password|passwd|secret|key|token|auth)", re.IGNORECASE)
-_CRED_SHORT_FLAGS = {"-P"}
+# Credential terms. A long flag's value is redacted when ANY of its
+# hyphen/underscore-separated parts equals one of these. Whole-part (not
+# substring) matching is deliberate: it catches --snmp-priv-pass, --psk and
+# --tls-pin while NOT firing on --no-passive ("passive") or --no-ping ("ping"),
+# which a naive `"pass" in flag` / `"pin" in flag` substring test would wrongly
+# redact (and, for store_true flags, wrongly redact the following token). We err
+# toward over-redaction for genuine credential parts — losing a bit of repro
+# context is acceptable; leaking a passphrase into a crash report is not.
+_CRED_TERMS = frozenset(
+    {
+        "password",
+        "passwd",
+        "pass",
+        "passphrase",
+        "secret",
+        "token",
+        "psk",
+        "pin",
+        "priv",
+        "cred",
+        "creds",
+        "credential",
+        "credentials",
+        "passwords",
+        "key",
+        "keys",
+        "auth",
+        "privatekey",
+        "privkey",
+        # Smashed (no-separator) forms the [-_] split would otherwise miss.
+        "apikey",
+        "secretkey",
+        "keyfile",
+        "keystore",
+        "authtoken",
+        "sessionkey",
+    }
+)
+# Value-bearing credential short flags whose next token (or attached value) is
+# redacted: -P (password, nxc convention), -X (SNMPv3 privacy passphrase).
+_CRED_SHORT_FLAGS = {"-P", "-X"}
+
+
+def _is_cred_flag(flag_name: str) -> bool:
+    """True if *flag_name* (no leading dashes) names a credential-bearing flag."""
+    return any(part in _CRED_TERMS for part in re.split(r"[-_]", flag_name.lower()))
+
 
 _lock = threading.Lock()
 _seen_fingerprints: set = set()
@@ -136,14 +179,24 @@ def sanitize_argv(argv: List[str]) -> List[str]:
     redact_next = False
     for tok in argv:
         if redact_next:
-            out.append("***")
             redact_next = False
-            continue
+            # A credential-*named* store_true flag (e.g. --default-creds,
+            # --test-reinit-pass, or -X in hl7/pcap/iec104 where it is NOT the
+            # SNMPv3 passphrase) consumes no value: the following token is the
+            # next flag, not a secret. Only redact a token that actually looks
+            # like a value — one that does not itself start with "-". Otherwise
+            # fall through and process it as its own (possibly credential) flag,
+            # so we never clobber, and thereby leak the value of, a real
+            # credential flag that happens to follow a boolean one.
+            if not tok.startswith("-"):
+                out.append("***")
+                continue
+            # else: fall through to normal processing of this flag token.
 
         if tok.startswith("--") and "=" in tok:
             flag, _, _val = tok.partition("=")
             flag_name = flag.lstrip("-")
-            if _CRED_FLAG_RE.search(flag_name):
+            if _is_cred_flag(flag_name):
                 out.append(f"{flag}=***")
             else:
                 out.append(tok)
@@ -152,7 +205,7 @@ def sanitize_argv(argv: List[str]) -> List[str]:
         if tok.startswith("--"):
             flag_name = tok.lstrip("-")
             out.append(tok)
-            if _CRED_FLAG_RE.search(flag_name):
+            if _is_cred_flag(flag_name):
                 redact_next = True
             continue
 

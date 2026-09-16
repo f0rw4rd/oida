@@ -59,6 +59,111 @@ class TestSanitizeArgv:
         argv = ["modbus", "192.168.1.1", "--unit-id", "1", "-u", "alice", "--scan-range", "0-100"]
         assert crash_report.sanitize_argv(argv) == argv
 
+    def test_redacts_compound_credential_flags(self):
+        # The whole-part matcher must catch credential words anywhere in a
+        # hyphenated flag name, not just as a leading substring.
+        out = crash_report.sanitize_argv(
+            [
+                "snmp",
+                "10.0.0.1",
+                "--snmp-priv-pass",
+                "p1",
+                "--snmp-auth-pass",
+                "a1",
+                "--psk",
+                "k1",
+                "--tls-pin",
+                "abcd",
+                "--default-creds",
+                "admin:admin",
+            ]
+        )
+        assert out == [
+            "snmp",
+            "10.0.0.1",
+            "--snmp-priv-pass",
+            "***",
+            "--snmp-auth-pass",
+            "***",
+            "--psk",
+            "***",
+            "--tls-pin",
+            "***",
+            "--default-creds",
+            "***",
+        ]
+
+    def test_redacts_plural_credential_flags(self):
+        # Regression: --credentials and --passwords are real declared flags; the
+        # [-_]-split whole-part matcher must catch the plural stems, not just
+        # the singular ("cred"/"password") forms.
+        out = crash_report.sanitize_argv(
+            [" ", "--credentials", "admin:admin", "--passwords", "wordlist.txt"]
+        )
+        assert out == [" ", "--credentials", "***", "--passwords", "***"]
+
+    def test_redacts_smashed_credential_flags(self):
+        # No-separator credential spellings the split would otherwise miss.
+        out = crash_report.sanitize_argv(
+            ["--apikey", "k", "--secretkey", "s", "--keyfile", "id_rsa", "--authtoken", "t"]
+        )
+        assert out == [
+            "--apikey",
+            "***",
+            "--secretkey",
+            "***",
+            "--keyfile",
+            "***",
+            "--authtoken",
+            "***",
+        ]
+
+    def test_redacts_short_flag_dash_x(self):
+        out = crash_report.sanitize_argv(["snmp", "10.0.0.1", "-X", "privpass"])
+        assert out == ["snmp", "10.0.0.1", "-X", "***"]
+
+    def test_store_true_flags_do_not_swallow_the_next_token(self):
+        # Regression: a naive substring match ("pass" in "no-passive",
+        # "pin" in "no-ping") would wrongly redact the token AFTER a boolean
+        # store_true flag — here the scan target and a numeric unit id.
+        argv = ["modbus", "--no-passive", "192.168.1.1", "--no-ping", "--unit-id", "5"]
+        assert crash_report.sanitize_argv(argv) == argv
+
+    def test_credential_named_store_true_flag_does_not_leak_following_secret(self):
+        # HIGH regression: --test-reinit-pass (bacnet) and --default-creds (snmp)
+        # are credential-NAMED store_true flags that take NO value. Arming
+        # redact_next on them used to redact the *next flag's name* and leak the
+        # real secret that came after it. The next token here starts with "-",
+        # so it must be processed as its own flag, not consumed as a value.
+        assert crash_report.sanitize_argv(["--test-reinit-pass", "--password", "hunter2"]) == [
+            "--test-reinit-pass",
+            "--password",
+            "***",
+        ]
+        assert crash_report.sanitize_argv(["--default-creds", "--snmp-auth-pass", "s3cret"]) == [
+            "--default-creds",
+            "--snmp-auth-pass",
+            "***",
+        ]
+
+    def test_credential_named_store_true_flag_preserves_following_boolean(self):
+        # --default-creds followed by another boolean must leave it intact.
+        assert crash_report.sanitize_argv(
+            ["snmp", "192.168.1.1", "--default-creds", "--confirm"]
+        ) == [
+            "snmp",
+            "192.168.1.1",
+            "--default-creds",
+            "--confirm",
+        ]
+
+    def test_dash_x_collision_with_non_credential_short_flag(self):
+        # -X is the SNMPv3 privacy passphrase in snmp, but a non-credential
+        # store_true short flag in hl7/pcap/iec104. The value-shape guard means
+        # a following flag token (starts with "-") is not clobbered.
+        argv = ["hl7", "10.0.0.5", "-X", "--extract-fields", "PID.3"]
+        assert crash_report.sanitize_argv(argv) == argv
+
 
 class TestSanitizeTraceback:
     def test_strips_home_directory(self, monkeypatch):
