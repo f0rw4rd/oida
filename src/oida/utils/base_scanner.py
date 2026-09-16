@@ -269,6 +269,11 @@ class BaseScanner(ConfirmGateMixin, ABC):
         info = {
             "protocol": self.get_protocol_name(),
             "timestamp": datetime.now().isoformat(),
+            # The discovered secret is the deliverable of an authorized-pentest
+            # scan and must reach the results store; without this it was silently
+            # dropped (only **kwargs landed in info). Logs stay secret-free below.
+            "username": username,
+            "password": password,
             **kwargs,
         }
         host = kwargs.get("host", "unknown")

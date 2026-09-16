@@ -89,8 +89,7 @@ class connection(ConfirmGateMixin, ABC):
             update_logger_host(protocol_name, host, port, self.ip, hostname=host)
             # Update logger's host to use resolved IP for display
             self.logger.extra["host"] = self.ip
-            if host != self.ip:
-                self.logger.extra["hostname"] = host[:16]
+            self.logger.extra["hostname"] = host[:16]
 
         # Store connection results (success=None means "not yet determined").
         # Kept as a mutable Dict[str, Any] because the value union is
@@ -166,6 +165,15 @@ class connection(ConfirmGateMixin, ABC):
             findings = self.logger.to_list()
             if findings:
                 self.results["data"].setdefault("security_findings", []).extend(findings)
+            # Surface arg-key typo suspects: keys the scanner read that were
+            # neither present nor a declared flag (recorded by ArgsDict). Debug
+            # only — this is the consumer that makes the tracking observable.
+            args_dict = getattr(self, "_args_dict", None)
+            if isinstance(args_dict, ArgsDict):
+                undeclared = args_dict.undeclared_reads
+                if undeclared:
+                    keys = ", ".join(sorted(undeclared))
+                    self.logger.debug(f"arg keys read but never declared (possible typo): {keys}")
         return self.get_results()
 
     def _detect_verbose(self) -> bool:
@@ -358,6 +366,10 @@ class connection(ConfirmGateMixin, ABC):
                 result["rport"] = value
             else:
                 result[key] = value
+        # Cache the produced mapping so run() can surface any typo'd arg-key
+        # reads (see undeclared_reads). Overrides mutate this object in place and
+        # return it, so the reference stays the one the scanner reads from.
+        self._args_dict = result
         return result
 
 

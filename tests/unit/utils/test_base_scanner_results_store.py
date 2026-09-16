@@ -73,3 +73,14 @@ def test_report_helpers_still_append(scanner):
     assert len(scanner.results["services"]) == 1
     assert len(scanner.results["vulnerabilities"]) == 1
     assert len(scanner.results["credentials"]) == 1
+
+
+def test_report_credential_retains_the_discovered_password(scanner):
+    # Regression: the discovered password (the deliverable of an authorized
+    # scan) was silently dropped — only **kwargs reached the stored record.
+    scanner.report_credential("operator", "s3cr3t!", host="10.0.0.1", port=502)
+
+    record = scanner.results["credentials"][0]["10.0.0.1:operator"]
+    assert record["username"] == "operator"
+    assert record["password"] == "s3cr3t!"
+    assert record["port"] == 502

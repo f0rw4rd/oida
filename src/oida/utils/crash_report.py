@@ -430,7 +430,7 @@ def flush(print_fn=None) -> int:
     blocks printed."""
     printer = print_fn or print
     with _lock:
-        blocks, _pending_blocks_copy = _pending_blocks[:], None
+        blocks = _pending_blocks[:]
         _pending_blocks.clear()
     for block in blocks:
         try:
