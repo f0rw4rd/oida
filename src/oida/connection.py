@@ -8,6 +8,7 @@ the entire scanning workflow upon instantiation.
 
 from abc import ABC, abstractmethod
 import copy
+import os
 import socket
 from typing import Any, Dict, Optional, cast
 
@@ -328,8 +329,27 @@ class connection(ConfirmGateMixin, ABC):
         of a key resolve to the same slot. Each key is therefore stored **once**
         (underscore form); scanners that read ``args.get("unit-id")`` still hit
         it. This replaces the old dual-write that stored every key twice.
+
+        ``known_keys`` is the complete declared arg surface — argparse
+        materializes every flag as a Namespace attribute (``None`` when unset),
+        so ``vars(self.args)`` names every valid key even after the ``None``
+        values are dropped below. That lets the ArgsDict distinguish a genuine
+        typo'd read from a legitimately-absent optional. Strict raising is
+        opt-in via ``OIDA_STRICT_ARGS`` and behavior-preserving by default.
+
+        .. warning::
+           ``OIDA_STRICT_ARGS`` is **experimental — do not enable it in CI yet.**
+           ``known_keys`` here is only the argparse dest surface; protocols that
+           *synthesize* dict keys (e.g. dnp3's ``cli_runner``: ``read-class``,
+           ``master-address``, ``control``) would trip false positives until
+           those keys are folded in. See ``ArgsDict`` for details.
         """
-        result = ArgsDict(rhost=self.ip)
+        declared = {"rhost", "rport", *vars(self.args).keys()}
+        result = ArgsDict(
+            rhost=self.ip,
+            known_keys=declared,
+            strict=os.environ.get("OIDA_STRICT_ARGS", "").lower() in ("1", "true", "yes"),
+        )
         for key, value in vars(self.args).items():
             if value is None:
                 continue

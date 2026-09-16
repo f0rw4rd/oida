@@ -8,7 +8,6 @@ import ipaddress
 from abc import ABC, abstractmethod
 from typing import Dict, List, Tuple, Any
 from datetime import datetime
-from collections import defaultdict
 
 from . import crash_report
 from . import ics_logger as _log
@@ -89,9 +88,20 @@ def _normalize_args(args: Any) -> Any:
 
 
 class BaseScanner(ConfirmGateMixin, ABC):
-    """
-    Abstract base class for all SCADA protocol scanners.
-    Provides common functionality and enforces consistent structure.
+    """Internal implementation base for the ``*Scanner`` classes — **not** a
+    protocol dispatch entrypoint.
+
+    OIDA has a single dispatch model: the Layer-2 ``connection`` subclass
+    (``NetworkConnection``/``SerialConnection`` in ``connection.py``) is the one
+    the CLI/loader constructs and runs. A Layer-2 class typically *wraps* one of
+    these ``*Scanner`` implementations (e.g. ``modbus`` wraps ``ModbusScanner``)
+    and delegates the connect/discover/scan mechanics to it.
+
+    Treat this family as reusable library building blocks: subclass it to
+    implement the six abstract methods below, then expose the protocol through a
+    ``connection`` subclass. Do **not** register a bare ``*Scanner`` as a
+    protocol's dispatched class — the loader's ``*Scanner`` name fallback is
+    legacy/out-of-tree only and no in-tree protocol resolves through it.
     """
 
     def __init__(self, args: Any):
@@ -100,7 +110,19 @@ class BaseScanner(ConfirmGateMixin, ABC):
         print_startup_banner()
 
         self.args = _normalize_args(args)
-        self.results = defaultdict(list)
+        # Layer-1 collection envelope. A plain dict with the four known
+        # collections pre-seeded — NOT a defaultdict: arbitrary-key
+        # autovivification silently turned typo'd reads into empty lists and
+        # masked bugs, and it left the store a different container type than the
+        # Layer-2 `connection.results` dict, so `get_results() -> ScanResult`
+        # was casting across incompatible types. The report_* helpers append to
+        # these pre-seeded keys; any other key is set explicitly by subclasses.
+        self.results: Dict[str, Any] = {
+            "hosts": [],
+            "services": [],
+            "vulnerabilities": [],
+            "credentials": [],
+        }
         self.start_time = datetime.now()
         # Use self.args (the bridge), NOT the raw 'args' parameter — when
         # the caller passes a bare argparse.Namespace it has no .get()
@@ -354,7 +376,11 @@ class BaseScanner(ConfirmGateMixin, ABC):
 
 
 class NetworkScanner(BaseScanner):
-    """Base class for network-based protocol scanners"""
+    """Internal implementation base for network (TCP/UDP) ``*Scanner`` classes.
+
+    Like :class:`BaseScanner`, this is a library building block wrapped by a
+    Layer-2 ``NetworkConnection`` subclass — not a dispatch entrypoint.
+    """
 
     def __init__(self, args: Any):
         super().__init__(args)
@@ -362,7 +388,11 @@ class NetworkScanner(BaseScanner):
 
 
 class SerialScanner(BaseScanner):
-    """Base class for serial/bus-based protocol scanners"""
+    """Internal implementation base for serial/bus-based ``*Scanner`` classes.
+
+    Like :class:`BaseScanner`, this is a library building block wrapped by a
+    Layer-2 ``SerialConnection`` subclass — not a dispatch entrypoint.
+    """
 
     def __init__(self, args: Any):
         # Set interface BEFORE super().__init__() so get_target_info() works

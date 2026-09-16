@@ -58,9 +58,10 @@ class dnp3(NetworkConnection):
         """Build scanner args dict, mapping CLI attribute names to scanner parameter names."""
         args_dict = self._convert_args_to_dict()
 
-        # Map CLI arg names (hyphenated by _convert_args_to_dict) to scanner parameter
-        # names. _convert_args_to_dict stores both hyphen and underscore forms and the
-        # scanner reads hyphenated keys directly, so only genuine renames belong here.
+        # Map CLI arg names to scanner parameter names. _convert_args_to_dict
+        # returns an ArgsDict where hyphen and underscore spellings resolve to
+        # the same slot, so pure ``-``/``_`` differences need no entry here —
+        # only genuine renames (e.g. master-addr -> master-address) belong below.
         mapping = {
             "master-addr": "master-address",
             "outstation-addr": "outstation-address",

@@ -48,7 +48,33 @@ class ArgsDict(dict):
     on every insert and lookup, so ``d["unit-id"]`` and ``d["unit_id"]`` address
     one slot and the mapping never holds both. Non-string keys pass through
     unchanged.
+
+    Optional typo detection (``known_keys``)
+    ----------------------------------------
+    argparse always materializes *every* declared flag as a Namespace attribute
+    (``None`` when unset), so ``set(vars(namespace))`` is the complete declared
+    arg surface. Passing that as ``known_keys`` lets this mapping tell a genuine
+    typo (``args.get("unti_id")`` — a key that was *never a flag*) apart from a
+    legitimately-absent optional (``args.get("timeout")`` when ``timeout=None``,
+    which was dropped on the way in but is still a declared key). Reads of keys
+    that are neither present nor declared are recorded in
+    :attr:`undeclared_reads`; with ``strict=True`` they raise instead — off by
+    default so production behavior is unchanged.
+
+    .. warning::
+       Strict mode is **experimental and not yet CI-safe.** ``known_keys`` today
+       is only the argparse dest surface, but some protocols *synthesize* dict
+       keys that were never flags (e.g. dnp3's ``cli_runner`` writes
+       ``read-class``/``master-address``/``control``). Reading such a key when
+       it happens to be absent would raise a false positive under ``strict``.
+       Do not enable ``OIDA_STRICT_ARGS`` in CI until those synthesized/renamed
+       keys are folded into ``known_keys``.
     """
+
+    # Class-level defaults so construction paths that bypass __init__
+    # (dict.copy, fromkeys, unpickling) never hit a missing-attribute error.
+    _known_keys: Optional[frozenset] = None
+    _strict: bool = False
 
     @staticmethod
     def _norm(key: Any) -> Any:
@@ -57,23 +83,55 @@ class ArgsDict(dict):
     def __init__(
         self,
         data: Optional[Union[Mapping[Any, Any], Iterable[Any]]] = None,
+        *,
+        known_keys: Optional[Iterable[Any]] = None,
+        strict: bool = False,
         **kwargs: Any,
     ) -> None:
         super().__init__()
+        self._known_keys = (
+            frozenset(self._norm(k) for k in known_keys) if known_keys is not None else None
+        )
+        self._strict = strict
+        self._undeclared_reads: set = set()
         if data is not None:
             self.update(data)
         if kwargs:
             self.update(kwargs)
 
+    # --- typo detection ---
+    def _note_read(self, norm_key: Any) -> None:
+        """Record/raise on a read of a key that is neither present nor declared."""
+        known = self._known_keys
+        if known is None or norm_key in known or super().__contains__(norm_key):
+            return
+        self._undeclared_reads.add(norm_key)
+        if self._strict:
+            raise KeyError(
+                f"undeclared argument key {norm_key!r} "
+                f"(not among declared flags: {sorted(known)!r}) — likely a typo"
+            )
+
+    @property
+    def undeclared_reads(self) -> "set":
+        """Normalized keys read but neither present nor declared (typo suspects)."""
+        return set(getattr(self, "_undeclared_reads", set()))
+
     # --- reads ---
     def __getitem__(self, key: Any) -> Any:
-        return super().__getitem__(self._norm(key))
+        norm = self._norm(key)
+        self._note_read(norm)
+        return super().__getitem__(norm)
 
     def __contains__(self, key: Any) -> bool:
-        return super().__contains__(self._norm(key))
+        norm = self._norm(key)
+        self._note_read(norm)
+        return super().__contains__(norm)
 
     def get(self, key: Any, default: Any = None) -> Any:
-        return super().get(self._norm(key), default)
+        norm = self._norm(key)
+        self._note_read(norm)
+        return super().get(norm, default)
 
     # --- writes ---
     def __setitem__(self, key: Any, value: Any) -> None:
@@ -98,3 +156,40 @@ class ArgsDict(dict):
                 self[k] = v
         for k, v in kwargs.items():
             self[k] = v
+
+    # --- copy / merge: keep the ArgsDict type + normalization ---
+    # The built-in dict.copy(), `|`, `|=` and fromkeys() are implemented in C and
+    # bypass the overrides above, silently returning a plain (un-normalizing)
+    # dict or, for `|=`, storing a raw un-normalized key. Override them so a key
+    # never escapes normalization.
+    def copy(self) -> "ArgsDict":
+        return ArgsDict(self, known_keys=self._known_keys, strict=self._strict)
+
+    def __copy__(self) -> "ArgsDict":
+        return self.copy()
+
+    def __or__(self, other: Mapping[Any, Any]) -> "ArgsDict":
+        # Preserve this operand's typo-detection config on the merge result.
+        merged = ArgsDict(self, known_keys=self._known_keys, strict=self._strict)
+        merged.update(other)
+        return merged
+
+    def __ror__(self, other: Mapping[Any, Any]) -> "ArgsDict":
+        # ``other | self`` — self is the ArgsDict; carry its config forward.
+        merged = ArgsDict(other, known_keys=self._known_keys, strict=self._strict)
+        merged.update(self)
+        return merged
+
+    def __ior__(self, other: Mapping[Any, Any]) -> "ArgsDict":  # type: ignore[override]
+        # Narrower `other` type than dict.__ior__ (mapping only, which is all we
+        # merge here); route through update() so keys are normalized rather than
+        # C-level in-place stored raw.
+        self.update(other)
+        return self
+
+    @classmethod
+    def fromkeys(cls, iterable: Iterable[Any], value: Any = None) -> "ArgsDict":  # type: ignore[override]
+        out = cls()
+        for k in iterable:
+            out[k] = value
+        return out
