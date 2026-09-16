@@ -9,8 +9,6 @@ Scanner implementation for Siemens S7 PLCs using the Snap7 library.
 
 from typing import Dict, List, Optional, Any
 from ...utils import (
-    register_protocol,
-    create_protocol_module,
     NetworkScanner,
     safe_int_conversion,
 )
@@ -225,14 +223,6 @@ protocol_options = {
 }
 
 
-@register_protocol(
-    name="Siemens S7 Scanner",
-    description="""Siemens S7 PLC scanner using Snap7 protocol""",
-    default_port=102,
-    authors=["f0rw4rd"],
-    references=[{"type": "url", "ref": "http://snap7.sourceforge.net"}],
-    protocol_options=protocol_options,
-)
 class Snap7Scanner(
     SlotScanMixin,
     DeviceInfoMixin,
@@ -476,6 +466,3 @@ class Snap7Scanner(
 
 
 # Module-level metadata and run function
-metadata, run = create_protocol_module(
-    Snap7Scanner, dependencies_check_func=lambda: not _snap7.is_available
-)

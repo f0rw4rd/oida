@@ -28,8 +28,6 @@ from typing import Any
 
 from .scanner import (
     OCPPScanner,
-    metadata,
-    run,
     dependencies_missing,
 )
 
@@ -772,8 +770,6 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
 __all__ = [
     # Scanner exports
     "OCPPScanner",
-    "metadata",
-    "run",
     "dependencies_missing",
     # NXC-style class
     "ocpp",

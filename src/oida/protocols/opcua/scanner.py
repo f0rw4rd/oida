@@ -12,8 +12,6 @@ import ipaddress
 from typing import Dict, List, Tuple, Any, TYPE_CHECKING
 
 from ...utils import (
-    register_protocol,
-    create_protocol_module,
     NetworkScanner,
     SecurityAnalyzer,
     ProgressTracker,
@@ -145,17 +143,6 @@ def _canonical_security_mode(name: str) -> Any:
     return _security_mode_names().get(str(name).replace("-", "").replace("_", "").lower())
 
 
-@register_protocol(
-    name="OPC UA Scanner",
-    description="""OPC UA server scanner for nodes, endpoints, and security configs""",
-    default_port=4840,
-    authors=["f0rw4rd"],
-    references=[
-        {"type": "url", "ref": "https://opcfoundation.org"},
-        {"type": "url", "ref": "https://github.com/FreeOpcUa/python-opcua"},
-    ],
-    protocol_options=protocol_options,
-)
 class OPCUAScanner(NetworkScanner):
     """OPC UA Scanner implementing the base scanner interface"""
 
@@ -842,9 +829,3 @@ class OPCUAScanner(NetworkScanner):
                 "Writable access",
                 detail=f"{len(writable_nodes)} writable nodes",
             )
-
-
-# Create metadata and run function using protocol module factory
-metadata, run = create_protocol_module(
-    OPCUAScanner, dependencies_check_func=lambda: not _asyncua.is_available
-)

@@ -30,13 +30,11 @@ from .decoder import (
 # Import from scanner module
 from .scanner import (
     ModbusScanner,
-    protocol_options,
-    metadata,
-    run,
 )
 
 # Import constants (previously re-exported via scanner)
 from .constants import (
+    PROTOCOL_OPTIONS as protocol_options,
     ModbusFunctionCode,
     ModbusExceptionCode,
     MEIType,
@@ -75,7 +73,5 @@ __all__ = [
     "EXCEPTION_CODES",
     "DISCOVERY_FUNCTION_CODES",
     "protocol_options",
-    "metadata",
-    "run",
     "modbus",
 ]

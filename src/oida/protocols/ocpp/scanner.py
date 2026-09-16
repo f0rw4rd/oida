@@ -21,8 +21,6 @@ from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
 from ...utils import (
-    register_protocol,
-    create_protocol_module,
     NetworkScanner,
     parse_bool,
 )
@@ -35,7 +33,6 @@ from .constants import (
     DEFAULT_WS_PORT,
     DEFAULT_WSS_PORT,
     DEFAULT_CP_ID,
-    PROTOCOL_OPTIONS,
     MessageType,
     MAX_INCOMING_CALLS_PER_EXCHANGE,
     DEFAULT_HEARTBEAT_INTERVAL,
@@ -48,20 +45,6 @@ _websockets = lazy_import("websockets", "OCPP", install_hint="pip install oida-i
 dependencies_missing = not _websockets.is_available
 
 
-@register_protocol(
-    name="OCPP Scanner",
-    description="Open Charge Point Protocol (OCPP) scanner for EV charging infrastructure",
-    default_port=DEFAULT_WS_PORT,
-    authors=["f0rw4rd"],
-    references=[
-        {
-            "type": "url",
-            "ref": "https://openchargealliance.org/protocols/open-charge-point-protocol/",
-        },
-        {"type": "url", "ref": "https://en.wikipedia.org/wiki/Open_Charge_Point_Protocol"},
-    ],
-    protocol_options=PROTOCOL_OPTIONS,
-)
 class OCPPScanner(NetworkScanner):
     """
     OCPP Protocol Scanner
@@ -1108,4 +1091,3 @@ class OCPPScanner(NetworkScanner):
 
 
 # Create protocol module exports
-metadata, run = create_protocol_module(OCPPScanner)

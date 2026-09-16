@@ -34,10 +34,8 @@ _logger = get_module_logger(__name__)
 # Import from scanner module (Layer 1 - traditional scanner pattern)
 from .scanner import (
     EtherNetIPScanner,
-    protocol_options,
-    metadata,
-    run,
     dependencies_missing,
+    protocol_options,
 )
 
 # Import from attacks module
@@ -181,8 +179,6 @@ __all__ = [
     # Scanner exports
     "EtherNetIPScanner",
     "protocol_options",
-    "metadata",
-    "run",
     "dependencies_missing",
     # Attack exports
     "ATTACK_STOPCPU_PAYLOAD",

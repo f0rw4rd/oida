@@ -8,8 +8,6 @@ import time as _time
 from typing import Any, Dict, List
 
 from ...utils import (
-    create_protocol_module,
-    register_protocol,
     NetworkScanner,
 )
 from ...utils.ics_logger import get_module_logger
@@ -20,7 +18,6 @@ from .constants import (
     COMMON_PATHS,
     LWM2M_OBJECTS,
     LWM2M_SEC_MODES,
-    protocol_options,
 )
 from .helpers import (
     _get_aiocoap,
@@ -41,17 +38,6 @@ logger = get_module_logger(__name__)
 _aiocoap = lazy_import("aiocoap", "CoAP")
 
 
-@register_protocol(
-    name="CoAP Scanner",
-    description="CoAP IoT/ICS device scanner with LwM2M fingerprinting",
-    default_port=DEFAULT_PORT,
-    authors=["f0rw4rd"],
-    references=[
-        {"type": "url", "ref": "https://tools.ietf.org/html/rfc7252"},
-        {"type": "url", "ref": "https://tools.ietf.org/html/rfc6690"},
-    ],
-    protocol_options=protocol_options,
-)
 class CoAPScanner(NetworkScanner):
     """Scanner for CoAP (Constrained Application Protocol) devices.
 
@@ -512,7 +498,3 @@ class CoAPScanner(NetworkScanner):
                 self.logger.info("Observed %d notifications from %s", len(notifs), path)
 
         return observations
-
-
-# Module-level exports
-metadata, run = create_protocol_module(CoAPScanner, lambda: not _aiocoap.is_available)

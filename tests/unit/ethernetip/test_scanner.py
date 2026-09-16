@@ -431,35 +431,9 @@ class TestEtherNetIPIntegration(unittest.TestCase):
     """Test EtherNet/IP scanner integration with framework"""
 
     def setUp(self):
-        from oida.protocols.ethernetip import EtherNetIPScanner, metadata
+        from oida.protocols.ethernetip import EtherNetIPScanner
 
         self.EtherNetIPScanner = EtherNetIPScanner
-        self.metadata = metadata
-
-    def test_metadata_structure(self):
-        """Test module metadata structure"""
-        self.assertIn("name", self.metadata)
-        self.assertIn("description", self.metadata)
-        self.assertIn("authors", self.metadata)
-        self.assertIn("references", self.metadata)
-        self.assertIn("options", self.metadata)
-
-        # Check default port
-        self.assertEqual(self.metadata["options"]["rport"]["default"], 44818)
-
-        # Check rhost is defined (default is None in base_scanner)
-        self.assertIn("rhost", self.metadata["options"])
-
-    def test_protocol_options(self):
-        """Test protocol-specific options"""
-        options = self.metadata["options"]
-
-        self.assertIn("maxclass", options)
-        self.assertIn("lhost", options)
-        self.assertIn("exploreclass", options)
-        self.assertIn("write", options)
-        self.assertIn("maxattributes", options)
-        self.assertIn("fuzz", options)
 
     @patch("oida.protocols.ethernetip.scanner.dependencies_missing", True)
     def test_missing_dependencies(self):

@@ -23,7 +23,6 @@ from typing import Any, Dict
 from ...utils import (
     SerialScanner,
     parse_bool,
-    register_protocol,
 )
 from ...utils.lazy_import import lazy_import
 from .constants import (
@@ -64,17 +63,6 @@ protocol_options = {
 }
 
 
-@register_protocol(
-    name="CAN Scanner",
-    description="Controller Area Network (CAN) bus scanner and analyzer",
-    authors=["f0rw4rd"],
-    references=[
-        {"type": "url", "ref": "https://www.iso.org/standard/63648.html"},
-        {"type": "url", "ref": "https://python-can.readthedocs.io/"},
-    ],
-    protocol_options=protocol_options,
-    protocol_type="serial",
-)
 class CANScanner(ISOTPMixin, TrafficMixin, UDSMixin, XCPMixin, CANopenMixin, SerialScanner):
     """
     CAN bus protocol scanner implementing the SerialScanner interface.

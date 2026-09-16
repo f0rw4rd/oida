@@ -61,20 +61,11 @@ class TestMockCliBoolDefaults(unittest.TestCase):
     def test_bare_flag_on_false_default_enables(self):
         meta = {
             "name": "t",
-            "options": {"verbose": {"type": "bool", "default": False,
-                                    "description": "verbosity"}},
+            "options": {"verbose": {"type": "bool", "default": False, "description": "verbosity"}},
         }
         sys.argv = ["prog", "--verbose"]
         params = self.cli.parse(meta)["params"]
         self.assertIs(params["verbose"], True)
-
-    def test_real_modbus_metadata_bare_read_only_is_true(self):
-        """End-to-end against real scanner metadata (the documented standalone path)."""
-        from oida.protocols.modbus import scanner as modbus_scanner
-
-        sys.argv = ["prog", "-r", "10.0.0.1", "--read-only"]
-        params = self.cli.parse(modbus_scanner.metadata)["params"]
-        self.assertIs(params["read-only"], True)
 
 
 if __name__ == "__main__":

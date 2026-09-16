@@ -46,7 +46,7 @@ from .constants import (
 from ._deps import _c104, _serial, _get_c104, c104, PYSERIAL_AVAILABLE
 
 # Scanner
-from .scanner import IEC104Scanner, metadata, run
+from .scanner import IEC104Scanner
 
 # NXC-style class
 from .cli_runner import iec104
@@ -82,8 +82,6 @@ __all__ = [
     "PYSERIAL_AVAILABLE",
     # Scanner
     "IEC104Scanner",
-    "metadata",
-    "run",
     # NXC
     "iec104",
 ]

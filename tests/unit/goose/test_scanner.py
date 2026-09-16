@@ -185,15 +185,6 @@ class TestGOOSEImports(unittest.TestCase):
 
         self.assertIsNotNone(GooseConnection)
 
-    def test_import_metadata_and_run(self):
-        """Test importing metadata and run function."""
-        from oida.protocols.goose import metadata, run
-
-        self.assertIsNotNone(metadata)
-        self.assertIsNotNone(run)
-        self.assertIsInstance(metadata, dict)
-        self.assertTrue(callable(run))
-
 
 # ===========================================================================
 # GOOSEScanner.__init__
@@ -1754,33 +1745,5 @@ class TestGooseProtoArgs(unittest.TestCase):
 
 
 # ===========================================================================
-# Metadata / module factory
-# ===========================================================================
-
-
-class TestGOOSEMetadata(unittest.TestCase):
-    """Test module-level metadata structure."""
-
-    def test_metadata_has_required_keys(self):
-        """Test metadata dict contains required fields."""
-        from oida.protocols.goose import metadata
-
-        self.assertIn("name", metadata)
-        self.assertIn("description", metadata)
-        self.assertIn("authors", metadata)
-
-    def test_metadata_name(self):
-        """Test metadata scanner name."""
-        from oida.protocols.goose import metadata
-
-        self.assertEqual(metadata["name"], "GOOSE Scanner")
-
-    def test_run_is_callable(self):
-        """Test run function is callable."""
-        from oida.protocols.goose import run
-
-        self.assertTrue(callable(run))
-
-
 if __name__ == "__main__":
     unittest.main()

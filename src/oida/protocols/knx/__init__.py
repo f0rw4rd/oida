@@ -11,8 +11,6 @@ warnings.filterwarnings("ignore", message=".*Future exception was never retrieve
 # Re-export from scanner module
 from .scanner import (
     KNXScanner,
-    metadata,
-    run,
 )
 
 # Re-export from helpers module
@@ -62,8 +60,6 @@ __all__ = [
     # Scanner
     "KNXScanner",
     "knx",
-    "metadata",
-    "run",
     "protocol_options",
     # Helpers
     "is_xknx_available",

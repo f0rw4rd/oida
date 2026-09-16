@@ -15,8 +15,6 @@ import time
 from typing import Dict, List, Any, Optional
 
 from ...utils import (
-    register_protocol,
-    create_protocol_module,
     NetworkScanner,
     SecurityAnalyzer,
     ProgressTracker,
@@ -156,16 +154,6 @@ protocol_options = {
 }
 
 
-@register_protocol(
-    name="MMS Scanner",
-    description="""Manufacturing Message Specification (MMS) protocol scanner""",
-    default_port=102,
-    authors=["f0rw4rd"],
-    references=[
-        {"type": "url", "ref": "https://en.wikipedia.org/wiki/Manufacturing_Message_Specification"}
-    ],
-    protocol_options=protocol_options,
-)
 class MMSScanner(NetworkScanner):
     """IEC 61850 MMS Scanner implementing the base scanner interface.
 
@@ -894,9 +882,6 @@ class MMSScanner(NetworkScanner):
 
 
 # Create metadata and run function using protocol module factory
-metadata, run = create_protocol_module(
-    MMSScanner, dependencies_check_func=lambda: not _pyiec61850.is_available
-)
 
 
 # Re-export NXC-style callable class

@@ -7,13 +7,10 @@ from typing import Dict, List, Any
 
 from ...utils import (
     NetworkScanner,
-    register_protocol,
-    create_protocol_module,
     ProtocolParser,
     ProgressTracker,
     parse_bool,
 )
-from ...utils.cli import run as cli_run
 from ...utils.lazy_import import lazy_import
 
 # Lazy import for pymodbus - only loads when actually used.
@@ -121,23 +118,8 @@ from .scanner_mixins import (
 
 
 # Import protocol options from canonical location in constants.py
-from .constants import PROTOCOL_OPTIONS as protocol_options  # noqa: N811
 
 
-@register_protocol(
-    name="Modbus Scanner",
-    description="""
-        This module scans Modbus TCP/RTU devices to discover supported function codes,
-        read register values, and test write access.
-    """,
-    default_port=502,
-    authors=["f0rw4rd"],
-    references=[
-        {"type": "url", "ref": "https://modbus.org/specs.php"},
-        {"type": "url", "ref": "https://github.com/riptideio/pymodbus"},
-    ],
-    protocol_options=protocol_options,
-)
 class ModbusScanner(
     ScannerIdentificationMixin,
     ScannerDiscoveryMixin,
@@ -755,11 +737,3 @@ if _pymodbus.is_available:
 
 # Create metadata and run function using protocol module factory
 # This replaces ~70 lines of boilerplate code
-metadata, run = create_protocol_module(
-    ModbusScanner, dependencies_check_func=lambda: not _pymodbus.is_available
-)
-
-
-if __name__ == "__main__":
-    # Standalone mode
-    cli_run(metadata, run)

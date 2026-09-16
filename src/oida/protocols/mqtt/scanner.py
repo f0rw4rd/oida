@@ -19,8 +19,6 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Any, Set
 
 from ...utils import (
-    register_protocol,
-    create_protocol_module,
     NetworkScanner,
     parse_bool,
 )
@@ -510,18 +508,6 @@ protocol_options = {
 from .mixins import ConnectionMixin, TopicDiscoveryMixin, AuthMixin, MessagingMixin, SecurityMixin
 
 
-@register_protocol(
-    name="MQTT Scanner",
-    description="MQTT broker scanner with topic enumeration and Sparkplug B support",
-    default_port=1883,
-    authors=["f0rw4rd"],
-    references=[
-        {"type": "url", "ref": "https://mqtt.org"},
-        {"type": "url", "ref": "https://sparkplug.eclipse.org"},
-        {"type": "url", "ref": "https://owasp.org/www-project-mqtt-guide/"},
-    ],
-    protocol_options=protocol_options,
-)
 class MQTTScanner(
     ConnectionMixin,
     TopicDiscoveryMixin,
@@ -798,4 +784,3 @@ class MQTTScanner(
 
 
 # Create protocol module exports
-metadata, run = create_protocol_module(MQTTScanner)

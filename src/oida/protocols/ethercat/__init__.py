@@ -7,14 +7,11 @@ import threading
 from typing import Dict, List, Any, Optional
 from datetime import datetime
 from ...utils import (
-    register_protocol,
-    create_protocol_module,
     SerialScanner,
     parse_bool,
     ProtocolParser,
 )
 from ...utils.permissions import check_raw_socket_capability
-from ...utils.cli import run as cli_run
 from ...utils.lazy_import import lazy_import
 
 # Import from submodules
@@ -111,14 +108,6 @@ protocol_options = {
 }
 
 
-@register_protocol(
-    name="EtherCAT Scanner",
-    description="""EtherCAT industrial Ethernet protocol scanner""",
-    authors=["f0rw4rd"],
-    references=[{"type": "url", "ref": "https://www.ethercat.org"}],
-    protocol_options=protocol_options,
-    protocol_type="serial",
-)
 class EtherCATScanner(
     EepromOpsMixin,
     CoeOpsMixin,
@@ -915,17 +904,6 @@ class EtherCATScanner(
     def _get_al_status_error(self, al_status_code: int) -> str:
         """Decode AL Status Code. Delegates to constants module."""
         return get_al_status_error(al_status_code)
-
-
-# Create metadata and run function using protocol module factory
-metadata, run = create_protocol_module(
-    EtherCATScanner, dependencies_check_func=lambda: not _pysoem.is_available
-)
-
-
-if __name__ == "__main__":
-    # Standalone mode
-    cli_run(metadata, run)
 
 
 # NXC-style callable class

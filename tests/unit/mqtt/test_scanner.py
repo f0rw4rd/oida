@@ -542,11 +542,10 @@ class TestMQTTModuleImport(unittest.TestCase):
 
     def test_module_import(self):
         """Test that MQTT module can be imported"""
-        from oida.protocols.mqtt import mqtt, MQTTScanner, metadata
+        from oida.protocols.mqtt import mqtt, MQTTScanner
 
         self.assertIsNotNone(mqtt)
         self.assertIsNotNone(MQTTScanner)
-        self.assertIsNotNone(metadata)
 
     def test_nxc_class_exists(self):
         """Test that NXC-style class exists"""
@@ -563,17 +562,6 @@ class TestMQTTModuleImport(unittest.TestCase):
         self.assertTrue(hasattr(mqtt, "enum_host_info"))
         self.assertTrue(hasattr(mqtt, "cleanup"))
         self.assertTrue(hasattr(mqtt, "check_dependencies"))
-
-    def test_metadata_structure(self):
-        """Test module metadata structure"""
-        from oida.protocols.mqtt import metadata
-
-        self.assertIn("name", metadata)
-        self.assertIn("description", metadata)
-        self.assertIn("options", metadata)
-
-        # Check default port
-        self.assertEqual(metadata["options"]["rport"]["default"], 1883)
 
 
 class TestMQTTDiscoverWorkflow(unittest.TestCase):

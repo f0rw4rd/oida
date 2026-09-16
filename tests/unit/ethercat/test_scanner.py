@@ -59,7 +59,7 @@ import unittest
 from unittest.mock import Mock
 
 
-from oida.protocols.ethercat import EtherCATScanner, ethercat, protocol_options, metadata
+from oida.protocols.ethercat import EtherCATScanner, ethercat
 from oida.protocols.ethercat.constants import (
     AL_STATUS_CODES,
     FMMU_TYPES,
@@ -1406,62 +1406,6 @@ class TestNXCConnection(unittest.TestCase):
 
 # ===========================================================================
 # Protocol Options and Metadata Tests [Category A]
-# ===========================================================================
-
-
-class TestProtocolOptionsAndMetadata(unittest.TestCase):
-    """Test protocol_options and metadata exports [Category A]"""
-
-    def test_protocol_options_exist(self):
-        """Test protocol_options is exported [Category A]"""
-        self.assertIsInstance(protocol_options, dict)
-
-    def test_protocol_options_has_all_features(self):
-        """Test protocol_options includes all expected keys [Category A]"""
-        expected_keys = [
-            "dump",
-            "fuzz",
-            "fuzz-iterations",
-            "sdo",
-            "eeprom",
-            "scan-range",
-            "foe-read",
-            "foe-write",
-            "dc-analysis",
-            "emergency-monitor",
-            "eeprom-dump",
-        ]
-        for key in expected_keys:
-            self.assertIn(key, protocol_options, f"Missing protocol option: {key}")
-
-    def test_protocol_options_types(self):
-        """Test protocol_options have correct types [Category A]"""
-        self.assertEqual(protocol_options["foe-read"]["type"], "string")
-        self.assertEqual(protocol_options["dc-analysis"]["type"], "bool")
-        self.assertEqual(protocol_options["fuzz-iterations"]["type"], "int")
-
-    def test_metadata_exists(self):
-        """Test metadata is exported [Category A]"""
-        self.assertIsInstance(metadata, dict)
-
-    def test_metadata_has_required_fields(self):
-        """Test metadata has required fields [Category A]"""
-        for field in ["name", "description", "authors", "type"]:
-            self.assertIn(field, metadata)
-
-    def test_metadata_type(self):
-        """Test metadata type is scanner [Category A]"""
-        self.assertEqual(metadata["type"], "scanner")
-
-    def test_run_function_exists(self):
-        """Test run function is exported [Category A]"""
-        from oida.protocols.ethercat import run
-
-        self.assertTrue(callable(run))
-
-
-# ===========================================================================
-# Data Structure Tests [Category A]
 # ===========================================================================
 
 

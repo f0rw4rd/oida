@@ -13,7 +13,6 @@ Usage:
     oida tase2 192.168.1.100 --test-rbe --test-control
 """
 
-from ...utils import create_protocol_module
 from ...utils.lazy_import import lazy_import
 
 from .scanner import TASE2Scanner
@@ -23,9 +22,4 @@ _pyiec61850_tase2 = lazy_import(
     "pyiec61850.tase2", "TASE.2", install_hint="pip install oida-ics[tase2]"
 )
 
-__all__ = ["tase2", "TASE2Scanner", "metadata", "run"]
-
-# Create metadata and run function
-metadata, run = create_protocol_module(
-    TASE2Scanner, dependencies_check_func=lambda: not _pyiec61850_tase2.is_available
-)
+__all__ = ["tase2", "TASE2Scanner"]
