@@ -20,6 +20,12 @@ from .mixins import FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin
 class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkConnection):
     """ASTM/LIS E1381/E1394 Scanner (NXC-style)"""
 
+    # Class-level default so the connection-1 false-positive gate works on any
+    # construction path, including harnesses that bypass __init__. Defaults to
+    # False so an uninitialized gate fails safe (claims no success) rather than
+    # raising AttributeError.
+    _astm_response_seen: bool = False
+
     name = "ASTM"
     protocol_name = "astm"
     # 12000 is the most common ASTM/LIS instrument port (Sysmex/Abbott default).

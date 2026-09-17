@@ -35,6 +35,7 @@ def _get_mock_types(chunk_bytes, file_size):
     """
     AbortPDU = type("AbortPDU", (), {})
     ErrorPDU = type("ErrorPDU", (), {})
+    ErrorRejectAbortNack = type("ErrorRejectAbortNack", (BaseException,), {})
     RejectPDU = type("RejectPDU", (), {})
     Error = type("Error", (), {})
 
@@ -54,6 +55,7 @@ def _get_mock_types(chunk_bytes, file_size):
         "AtomicReadFileRequest": Mock(side_effect=atomic_request),
         "AbortPDU": AbortPDU,
         "ErrorPDU": ErrorPDU,
+        "ErrorRejectAbortNack": ErrorRejectAbortNack,
         "RejectPDU": RejectPDU,
         "Error": Error,
     }

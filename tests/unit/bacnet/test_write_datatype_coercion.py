@@ -20,6 +20,7 @@ from tests.unit.bacnet.conftest import create_mock_args, create_mock_logger
 def _get_mock_types():
     AbortPDU = type("AbortPDU", (), {})
     ErrorPDU = type("ErrorPDU", (), {})
+    ErrorRejectAbortNack = type("ErrorRejectAbortNack", (BaseException,), {})
     RejectPDU = type("RejectPDU", (), {})
     Error = type("Error", (), {})
 
@@ -33,6 +34,7 @@ def _get_mock_types():
         "AnyAtomic": Mock(return_value=Mock(name="AnyAtomic")),
         "AbortPDU": AbortPDU,
         "ErrorPDU": ErrorPDU,
+        "ErrorRejectAbortNack": ErrorRejectAbortNack,
         "RejectPDU": RejectPDU,
         "Error": Error,
     }

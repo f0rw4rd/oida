@@ -67,6 +67,12 @@ class bacnet(
     transport.
     """
 
+    # Class-level default so the connection-1 false-positive gate works on any
+    # construction path, including harnesses that bypass __init__. Defaults to
+    # False so an uninitialized gate fails safe (claims no success) rather than
+    # raising AttributeError.
+    _bacnet_response_seen: bool = False
+
     def __init__(self, args: Any, db: Optional[Any], host: str):
         self.protocol_name = "bacnet"
         self.default_port = 47808

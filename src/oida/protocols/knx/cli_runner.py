@@ -322,9 +322,13 @@ class knx(NetworkConnection):
         self.logger.display(f"Connecting to {self.ip}:{self.args.port}")
         self.conn = self.scanner.connect()
         if self.conn:
-            self.logger.success(f"Connected to KNX device at {self.ip}:{self.args.port}")
+            # scanner.connect() only BUILDS the XKNX object -- it performs no
+            # network I/O at all; the tunnel is opened later by knx.start()
+            # inside scanner.discover(). Announcing "Connected" here claimed a
+            # session with any host that merely had an IP address.
+            self.logger.debug(f"KNX tunnel configured for {self.ip}:{self.args.port}")
         else:
-            self.logger.fail(f"Connection failed to {self.ip}:{self.args.port}")
+            self.logger.fail(f"Could not configure KNX connection to {self.ip}:{self.args.port}")
 
     def enum_host_info(self):
         """Enumerate KNX device information."""
@@ -334,11 +338,12 @@ class knx(NetworkConnection):
         self.logger.debug("Enumerating device information...")
         port = getattr(self.args, "port", 3671)
         use_tcp = getattr(self.args, "tcp", False)
+        # No "connected" key here: at this point nothing has been sent on the
+        # wire. _execute_scan() fills it in from the tunnel's actual outcome.
         self.results["data"]["device_info"] = {
             "gateway_ip": self.host,
             "gateway_port": port,
             "connection_type": "TCP Tunneling" if use_tcp else "UDP Tunneling",
-            "connected": True,
         }
 
     def print_host_info(self):
@@ -356,6 +361,28 @@ class knx(NetworkConnection):
         scan_results = self.scanner.discover(self.conn)
         self.results["data"]["scan_results"] = scan_results
         self.logger.debug(f"Scan completed, result keys: {list(scan_results.keys())}")
+
+        # Only claim success when the tunnel actually came up. discover() sets a
+        # top-level "error" for a failed/timed-out knx.start() (and for the outer
+        # exception handler) and otherwise always returns gateway_info, so
+        # "no error and non-empty" is the evidence that we spoke KNX.
+        #
+        # Without this the tunnel branch inherited NetworkConnection.run()'s
+        # default success=True, and every field above it was fabricated: a run
+        # against a host that refused tunnelling still reported success=true and
+        # device_info.connected=true next to an "error" in scan_results
+        # (connection-1 bug -- the passive-discovery branch was already gated,
+        # this branch was not).
+        tunnel_ok = bool(scan_results) and not scan_results.get("error")
+        self.results["data"].setdefault("device_info", {})["connected"] = tunnel_ok
+        if not tunnel_ok:
+            self.results["success"] = False
+            self.results["error"] = (
+                self.results.get("error")
+                or scan_results.get("error")
+                or "KNX tunnel could not be established"
+            )
+            self.logger.fail(f"KNX scan failed: {self.results['error']}")
 
     def cleanup(self):
         """Cleanup KNX connection."""

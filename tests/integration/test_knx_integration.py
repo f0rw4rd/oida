@@ -1104,71 +1104,105 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
     # Write Safety Tests (--confirm requirement)
     # ========================================================================
 
-    @pytest.mark.containers("knx-calimero")
-    def test_group_write_without_confirm(self, cli_runner, target, port):
-        """Test that group write without --confirm is handled gracefully [Category C]
+    def _assert_write_not_performed(self, cli_runner, target, tmp_path, result_key, *cli_args):
+        """Run a dangerous write WITHOUT --confirm and assert it never happened.
 
-        The scanner may or may not require --confirm for group writes.
-        The important thing is it does not crash.
+        SCOPE -- read before trusting this as safety-gate coverage. Against the
+        Calimero mock, discover() bails out at its connection_ok check (the mock
+        never establishes a tunnel), so the write-handling code is never reached
+        and the result key is simply absent. That makes this test a smoke-level
+        guard, NOT proof that the --confirm gate works: it was mutation-checked
+        by replacing the gate body with a permissive {"success": True}, and it
+        stayed green. The real, mutation-verified coverage of the gate lives in
+        tests/unit/knx/test_scanner_discover.py::TestConfirmSafetyGates, which
+        drives discover() with a stub connection so the gate is actually
+        reachable.
+
+        What this test still buys: if the mock ever does start completing a
+        tunnel, a write reported as performed without --confirm fails here
+        rather than passing silently, which is what the old
+        `assert result.returncode != -1` form did.
         """
+        import json
+
         result = cli_runner.run(
             self.protocol_name,
             target,
+            *cli_args,
+            "--output",
+            str(tmp_path),
+            format="json",
+            json_log=False,
+            expect_json=False,
+            timeout=30,
+        )
+        assert result.returncode != -1
+
+        json_path = tmp_path / "knx.json"
+        assert json_path.exists(), f"Expected {json_path} to be written"
+        payload = json.loads(json_path.read_text())
+        data = payload[-1] if isinstance(payload, list) else payload
+
+        entry = (data.get("data") or {}).get(result_key)
+        if entry is None:
+            entry = data.get(result_key)
+        if entry is None:
+            return  # gate short-circuited before producing a result: nothing was written
+
+        assert isinstance(entry, dict), f"Unexpected {result_key} payload: {entry!r}"
+        assert entry.get("success") is not True, (
+            f"{result_key} reported success WITHOUT --confirm -- the safety gate "
+            f"has regressed and a dangerous write was performed: {entry!r}"
+        )
+        assert entry.get("written") is not True, (
+            f"{result_key} reports written=True WITHOUT --confirm: {entry!r}"
+        )
+
+    @pytest.mark.containers("knx-calimero")
+    def test_group_write_without_confirm(self, cli_runner, target, port, tmp_path):
+        """Group write without --confirm must not perform the write [Category A]"""
+        self._assert_write_not_performed(
+            cli_runner,
+            target,
+            tmp_path,
+            "group_write",
             "--port",
             str(port),
             "--group-write",
             "1/0/1:01",
-            timeout=30,
-            json_log=True,
         )
 
-        # Should not crash
-        assert result.returncode != -1
-
     @pytest.mark.containers("knx-calimero")
-    def test_write_without_confirm_rejected(self, cli_runner, target, port):
-        """Test that property write without --confirm is properly handled [Category C]
-
-        Property writes are dangerous operations that should require --confirm.
-        """
-        result = cli_runner.run(
-            self.protocol_name,
+    def test_write_without_confirm_rejected(self, cli_runner, target, port, tmp_path):
+        """Property write without --confirm must not perform the write [Category A]"""
+        self._assert_write_not_performed(
+            cli_runner,
             target,
+            tmp_path,
+            "property_write",
             "--port",
             str(port),
             "--property-write",
             "0:19:00",
             "-i",
             "1.1.0",
-            timeout=30,
-            json_log=True,
         )
 
-        # Should handle gracefully (might reject or succeed depending on implementation)
-        assert result.returncode != -1
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
-
     @pytest.mark.containers("knx-calimero")
-    def test_key_write_without_confirm(self, cli_runner, target, port):
-        """Test that key write without --confirm is rejected [Category C]"""
-        result = cli_runner.run(
-            self.protocol_name,
+    def test_key_write_without_confirm(self, cli_runner, target, port, tmp_path):
+        """Key write without --confirm must not perform the write [Category A]"""
+        self._assert_write_not_performed(
+            cli_runner,
             target,
+            tmp_path,
+            "key_write",
             "--port",
             str(port),
             "--key-write",
             "FFFFFFFF:0",
             "-i",
             "1.1.0",
-            timeout=30,
-            json_log=True,
         )
-
-        # Should not crash; might report error about missing --confirm
-        assert result.returncode != -1
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
 
     # ========================================================================
     # Error Handling Tests

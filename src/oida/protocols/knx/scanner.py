@@ -192,11 +192,16 @@ class KNXScanner(
 
             results = asyncio.run(_run_with_handler())
 
-            # Run security analysis
-            results["security_analysis"] = self._analyze_security(results)
-
-            # Report findings
-            self._report_findings(results)
+            # Security analysis and finding reports describe THIS target, so they
+            # are only meaningful if we actually reached it. _async_discover sets
+            # a top-level "error" when the tunnel never came up; analysing that
+            # empty result still emitted "No encryption" / "No authentication"
+            # findings and a 0/12 security score for a device we never spoke to.
+            if results.get("error"):
+                self.logger.debug("Skipping security analysis: no KNX session established")
+            else:
+                results["security_analysis"] = self._analyze_security(results)
+                self._report_findings(results)
 
         except Exception as e:
             self.logger.fail(f"Error during discovery: {e}")
