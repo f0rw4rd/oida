@@ -6,6 +6,7 @@ Main CLI entry point:
 
 Examples:
     oida modbus 192.168.1.100 --unit-id 1 -r 0-100
+    oida modbus 10.0.0.5:5020            # port in the target, no -p needed
     oida opcua opc.tcp://192.168.1.100:4840 --auth Anonymous
     oida s7 192.168.1.10 --rack 0 --slot 2
 """
@@ -961,7 +962,11 @@ def _format_protocol_sections(parser=None) -> Optional[str]:
 def _show_usage_and_exit(parser=None) -> int:
     """Show grouped, colored usage information when no arguments provided."""
     print_banner()
-    print(f"{_c('Usage:', 'yellow', attrs=['bold'])} oida <protocol> <target> [options]\n")
+    print(f"{_c('Usage:', 'yellow', attrs=['bold'])} oida <protocol> <target> [options]")
+    print(
+        f"       {_c('<target>', 'yellow')} may carry a port, e.g. "
+        f"{_c('oida modbus 10.0.0.5:5020', 'green')} (no -p needed)\n"
+    )
 
     sections = _format_protocol_sections(parser)
     if sections is None:

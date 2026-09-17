@@ -47,7 +47,7 @@ Examples:
     add_network_options(
         coap_parser,
         default_port=None,
-        port_help="Target port (default: 5683 for CoAP, 5684 for DTLS/CoAPs)",
+        port_help="Target port (default: 5683 for CoAP, 5684 for DTLS/CoAPs; a port in the target wins)",
     )
 
     # Discovery options

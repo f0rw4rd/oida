@@ -44,7 +44,9 @@ Write / fuzz testing (DANGEROUS - require --confirm):
     add_target_argument(mms_parser)
 
     # Add network options (port, timeout)
-    add_network_options(mms_parser, default_port=102, port_help="MMS port (default: 102)")
+    add_network_options(
+        mms_parser, default_port=102, port_help="MMS port (default: 102; a port in the target wins)"
+    )
 
     # MMS-specific options (match scanner protocol_options)
     mms_group = mms_parser.add_argument_group("MMS Options")

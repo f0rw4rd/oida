@@ -81,6 +81,16 @@ First stable release.
 - **`oida fuzz` port precedence now matches the scanner.** A port embedded in
   the target (`oida fuzz modbus 10.0.0.5:5020`) previously lost to `--port`; it
   now wins, and the run banner says when `--port` is being ignored.
+- **Usage text advertises the `<host>:<port>` shorthand everywhere.** The
+  module `--help` examples and the `oida` no-args banner now show a `host:port`
+  target, and the six protocols that override `--port` help (ads, coap, dicom,
+  mms, mqtt, ocpp) append "a port in the target wins" like the default help —
+  previously only the shared target/port help mentioned the shorthand.
+- **OCPP wss:// default-port resolution uses the explicit-port signal.** A
+  `wss://host/CP` target with no port now bumps to 443 based on whether `-p`
+  (or a `host:port` target) was actually supplied (`args._port_explicit`),
+  replacing a `port == 9000` magic-number heuristic that mistook a user who
+  deliberately passed `-p 9000` for one who passed nothing.
 - **Argument dicts stop storing every key twice.** `_convert_args_to_dict` used
   to dual-write each flag under both its underscore (`unit_id`) and hyphen
   (`unit-id`) spelling so legacy scanners reading the CLI spelling would hit —

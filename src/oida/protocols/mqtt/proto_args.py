@@ -69,7 +69,7 @@ Examples:
         default_port=None,
         include_timeout=True,
         default_timeout=10,
-        port_help="MQTT port (default: 1883, or 8883 with --tls)",
+        port_help="MQTT port (default: 1883, or 8883 with --tls; a port in the target wins)",
     )
 
     # === Authentication Options ===
