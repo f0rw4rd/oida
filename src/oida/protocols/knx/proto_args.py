@@ -30,7 +30,13 @@ def proto_args(parser, parents):
     )
 
     network_group = knx_parser.add_argument_group("Network Options")
-    network_group.add_argument("--port", type=int, default=3671, help="KNX port (default: 3671)")
+    network_group.add_argument(
+        "--port",
+        "-p",
+        type=int,
+        default=3671,
+        help="KNX port (default: 3671; a port in the target wins)",
+    )
     network_group.add_argument(
         "-t",
         "--timeout",

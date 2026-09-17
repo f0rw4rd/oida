@@ -1004,7 +1004,7 @@ def _list_serial_ports(for_iec101: bool = False) -> int:
         return 1
 
 
-def _resolve_targets(args, protocol_name: str, is_serial_protocol: bool) -> Optional[List[str]]:
+def _resolve_targets(args, protocol_name: str) -> Optional[List[str]]:
     """
     Parse and resolve targets from arguments.
 
@@ -1016,10 +1016,6 @@ def _resolve_targets(args, protocol_name: str, is_serial_protocol: bool) -> Opti
 
     if list_maps and not target_input:
         return ["list-maps"]
-
-    if is_serial_protocol:
-        logger.info(f"Serial port target: {target_input}")
-        return [target_input]
 
     # File-path protocols (e.g. pcap) pass the path through directly
     if protocol_name in FILE_TARGET_PROTOCOLS:
@@ -1074,7 +1070,17 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
     # protocol's real default via add_network_options(..., default_port=N),
     # so prefer it and only fall back to the (usually absent) class attribute.
     default_port = getattr(args, "port", None) or getattr(protocol_class, "default_port", 0)
-    progress_logger = get_logger(protocol_name.upper(), "*", default_port)
+    # When every target carries the same embedded "<host>:<port>" port, show it
+    # in the banner instead of the flag/default -- otherwise (mixed or no
+    # embedded ports) fall back to the run-global default. Each scan still uses
+    # its own per-target port regardless of what the banner says.
+    embedded_ports = {
+        port
+        for port in (split_host_port(t)[1] for t in targets if _accepts_host_port(protocol_name, t))
+        if port is not None
+    }
+    banner_port = embedded_ports.pop() if len(embedded_ports) == 1 else default_port
+    progress_logger = get_logger(protocol_name.upper(), "*", banner_port)
 
     _warn_on_port_conflict(args, targets, protocol_name, progress_logger)
 
@@ -1116,9 +1122,6 @@ PROTOCOL_ALIASES = {
     "discover": "discovery",  # oida discover -> discovery (verb form)
 }
 
-# Serial protocols (use serial port as target instead of IP)
-SERIAL_PROTOCOLS: set = set()
-
 # Protocols whose target is a file path (bypass IP/CIDR target parsing)
 FILE_TARGET_PROTOCOLS = {"pcap"}
 
@@ -1133,15 +1136,15 @@ def _accepts_host_port(protocol_name: Optional[str], target: str) -> bool:
     """Whether "<host>:<port>" shorthand should be split off this target.
 
     URL targets keep their own parsing (opcua/ocpp/fhir already read the port
-    out of the endpoint), and serial devices, pcap file paths and interface
-    names are not hosts at all.
+    out of the endpoint), and pcap file paths and interface names are not
+    hosts at all.
     """
     if not target or "://" in target:
         return False
     # args.protocol carries the CLI name, so "discover" has to fold into
     # "discovery" before the exemption sets are consulted.
     canonical = PROTOCOL_ALIASES.get(protocol_name, protocol_name)
-    if canonical in SERIAL_PROTOCOLS or canonical in FILE_TARGET_PROTOCOLS:
+    if canonical in FILE_TARGET_PROTOCOLS:
         return False
     return canonical not in INTERFACE_TARGET_PROTOCOLS
 
@@ -1546,11 +1549,6 @@ def _main(argv: Optional[List[str]] = None):
 
     # Resolve protocol alias
     protocol_name = PROTOCOL_ALIASES.get(args.protocol, args.protocol)
-    is_serial_protocol = protocol_name in SERIAL_PROTOCOLS
-
-    # Handle --list-ports for serial protocols
-    if is_serial_protocol and getattr(args, "list_ports", False):
-        return _list_serial_ports(for_iec101=False)
 
     # Reuse the ProtocolLoader from gen_cli_args() (its cache is already warm)
     p_loader = parser._protocol_loader
@@ -1583,10 +1581,7 @@ def _main(argv: Optional[List[str]] = None):
             args.target = "rgoose"
 
     if not target_input and not list_maps:
-        if is_serial_protocol:
-            logger.error("No serial port specified. Usage: oida iec101 /dev/ttyUSB0")
-            logger.error("Use --list-ports to see available serial ports")
-        elif protocol_name == "discovery":
+        if protocol_name == "discovery":
             logger.error("No interface specified. Usage: oida discovery <interface>")
             logger.error("Example: oida discovery eth0")
         else:
@@ -1595,7 +1590,7 @@ def _main(argv: Optional[List[str]] = None):
         return 1
 
     # Resolve targets
-    targets = _resolve_targets(args, protocol_name, is_serial_protocol)
+    targets = _resolve_targets(args, protocol_name)
     if targets is None or not targets:
         if targets is not None:  # Empty list case
             logger.error(f"No valid targets found in: {target_input}")

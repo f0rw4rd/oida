@@ -91,6 +91,13 @@ First stable release.
   (or a `host:port` target) was actually supplied (`args._port_explicit`),
   replacing a `port == 9000` magic-number heuristic that mistook a user who
   deliberately passed `-p 9000` for one who passed nothing.
+- **`knx` gained the `-p` short flag** to match every other host-based
+  protocol; `oida knx host:3671` also works via the shorthand.
+- **The scan progress banner shows the target port when unambiguous.** When
+  every target in a run carries the same embedded `<host>:<port>` port, the
+  `PROTOCOL *:<port>` banner now shows that port instead of the flag/default;
+  mixed or portless runs still show the run-global default (each scan always
+  uses its own per-target port regardless).
 - **Argument dicts stop storing every key twice.** `_convert_args_to_dict` used
   to dual-write each flag under both its underscore (`unit_id`) and hyphen
   (`unit-id`) spelling so legacy scanners reading the CLI spelling would hit —
@@ -220,6 +227,11 @@ First stable release.
 
 ### Removed
 
+- **Dead `SERIAL_PROTOCOLS` set** in `cli.py` — an empty set that gated a
+  serial-target branch, a `--list-ports` branch and an error message, all
+  provably unreachable (serial devices go through the `oida serial`
+  subcommand). Removed the set and its dead branches; `_resolve_targets` lost
+  its unused `is_serial_protocol` parameter.
 - **`SQLiteDatabase`** (raw SQL backend) — `SQLAlchemyDatabase` is the single
   canonical backend and `fuzz_cli.py` replay now uses it too; `MockDatabase`
   (moved to its own file) remains for tests. The two backends had drifting
