@@ -10,6 +10,15 @@ First stable release.
 
 ### Added
 
+- **`<host>:<port>` target shorthand, for every host-based protocol** — any
+  target form may now carry a port (`10.0.0.5:5020`, `10.0.0.0/24:5020`,
+  `192.168.1.1-254:5020`, `[2001:db8::1]:5020`, or per line in a target file),
+  so `-p/--port` no longer has to be repeated, and hosts on different ports can
+  be scanned in one run. The port in the target wins over `-p` (warned once per
+  run when they disagree). URL targets (`opc.tcp://`, `ws://`, `https://`),
+  pcap file paths, serial devices and interface targets (`can`, `goose`,
+  `ethercat`, `discovery`, `profinet`) are left untouched. The splitter used by
+  `oida fuzz` is now shared: `oida.targets.split_host_port()`.
 - **Fuzzer depth controls `--max-depth` / `--only-depth`** — cap a boofuzz run
   at depths 1..N, or fuzz only depth N so those cases go out from the first
   packet. Mutually exclusive. Replaces seek-by-test-case-index, which boofuzz
@@ -69,6 +78,9 @@ First stable release.
 
 ### Changed
 
+- **`oida fuzz` port precedence now matches the scanner.** A port embedded in
+  the target (`oida fuzz modbus 10.0.0.5:5020`) previously lost to `--port`; it
+  now wins, and the run banner says when `--port` is being ignored.
 - **Argument dicts stop storing every key twice.** `_convert_args_to_dict` used
   to dual-write each flag under both its underscore (`unit_id`) and hyphen
   (`unit-id`) spelling so legacy scanners reading the CLI spelling would hit —
@@ -107,6 +119,10 @@ First stable release.
 
 ### Fixed
 
+- **Bracketed IPv6 targets are no longer mangled.** `parse_targets` stripped
+  only the leading bracket off `[2001:db8::1]:502`, yielding the unresolvable
+  `2001:db8::1]:502`. Brackets are now parsed properly, and IPv6 targets keep
+  their bracketed form when a port is attached during CIDR/range expansion.
 - **`--timeout` is per-protocol, and config-file `timeout:` is honored.** It was
   declared both globally and per-subparser against the same dest, so the
   subparser default silently clobbered `oida --timeout 30 modbus HOST` and made

@@ -34,7 +34,7 @@ except ImportError:
     HAS_YAML = False
 
 from oida.loader import ProtocolLoader
-from oida.targets import parse_targets
+from oida.targets import parse_targets, split_host_port
 from oida.serial_cli import serial_args, handle_serial_command
 from oida.fuzz_cli import fuzz_args, handle_fuzz_command
 from oida.utils.ics_logger import get_logger
@@ -740,12 +740,12 @@ def gen_cli_args(argv=None):
             "target",
             nargs="?",
             default="127.0.0.1",
-            help="Target IP, hostname, CIDR, range, or file",
+            help="Target IP, hostname, CIDR, range, or file (may carry a port, e.g. 10.0.0.1:5020)",
         )
         stub.add_argument(
             "--port",
             type=int,
-            help="Target port (protocol default if not specified)",
+            help="Target port (protocol default if not specified; a port in the target wins)",
         )
 
     # Register each protocol's arguments
@@ -1030,6 +1030,27 @@ def _resolve_targets(args, protocol_name: str, is_serial_protocol: bool) -> Opti
         return None
 
 
+def _warn_on_port_conflict(args, targets: List[str], protocol_name: str, out) -> None:
+    """Warn once when "<host>:<port>" targets override an explicit -p/--port.
+
+    The embedded port wins (see scan_target), which is silent enough to be
+    confusing when the operator also passed -p, so say it once per run rather
+    than once per target -- on the NXC-style logger, which prints at default
+    verbosity, unlike the module logger.
+    """
+    if not getattr(args, "_port_explicit", False):
+        return
+    flag_port = getattr(args, "port", None)
+    conflicting = {
+        port
+        for port in (split_host_port(t)[1] for t in targets if _accepts_host_port(protocol_name, t))
+        if port is not None and port != flag_port
+    }
+    if conflicting:
+        ports = ", ".join(str(p) for p in sorted(conflicting))
+        out.warning(f"Port in target ({ports}) overrides --port {flag_port}")
+
+
 def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str) -> tuple:
     """
     Execute scans concurrently against all targets.
@@ -1049,6 +1070,8 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
     # so prefer it and only fall back to the (usually absent) class attribute.
     default_port = getattr(args, "port", None) or getattr(protocol_class, "default_port", 0)
     progress_logger = get_logger(protocol_name.upper(), "*", default_port)
+
+    _warn_on_port_conflict(args, targets, protocol_name, progress_logger)
 
     with ThreadPoolExecutor(max_workers=args.threads) as executor:
         # Submit all scan tasks
@@ -1093,6 +1116,29 @@ SERIAL_PROTOCOLS: set = set()
 
 # Protocols whose target is a file path (bypass IP/CIDR target parsing)
 FILE_TARGET_PROTOCOLS = {"pcap"}
+
+# Protocols whose target is a network interface name (eth0, can0, ...) rather
+# than a host, so a trailing ":<digits>" must not be read as a port.
+# profinet is dual-mode (interface, or an IP with --rpc-only); it stays here
+# because the interface reading is the default one.
+INTERFACE_TARGET_PROTOCOLS = {"can", "goose", "ethercat", "discovery", "profinet"}
+
+
+def _accepts_host_port(protocol_name: Optional[str], target: str) -> bool:
+    """Whether "<host>:<port>" shorthand should be split off this target.
+
+    URL targets keep their own parsing (opcua/ocpp/fhir already read the port
+    out of the endpoint), and serial devices, pcap file paths and interface
+    names are not hosts at all.
+    """
+    if not target or "://" in target:
+        return False
+    # args.protocol carries the CLI name, so "discover" has to fold into
+    # "discovery" before the exemption sets are consulted.
+    canonical = PROTOCOL_ALIASES.get(protocol_name, protocol_name)
+    if canonical in SERIAL_PROTOCOLS or canonical in FILE_TARGET_PROTOCOLS:
+        return False
+    return canonical not in INTERFACE_TARGET_PROTOCOLS
 
 
 def print_bug_report() -> None:
@@ -1449,6 +1495,15 @@ def _main(argv: Optional[List[str]] = None):
     # Parse arguments
     args = parser.parse_args(argv)
 
+    # Record whether -p/--port was actually typed (vs. left at the protocol's
+    # registered default). Only used to decide whether a target's embedded port
+    # is worth warning about; best-effort, so a missing subparser is not fatal.
+    args._port_explicit = False
+    if parser._subparsers_action is not None:
+        subparser = parser._subparsers_action.choices.get(getattr(args, "protocol", None))
+        if subparser is not None and getattr(args, "port", None) is not None:
+            args._port_explicit = args.port != subparser.get_default("port")
+
     # Load config file if specified
     if args.config:
         try:
@@ -1594,12 +1649,24 @@ def scan_target(protocol_class, args, target: str) -> ScanResult:
         # a shallow vars() copy aliased them, making an in-place mutation in
         # one target's scan a data race visible to every other target.
         target_args = copy.deepcopy(args)
-        target_args.host = target
-        target_args.rhost = target
+
+        # "<host>:<port>" shorthand: the embedded port is the most specific spec
+        # (it is the only way to give per-target ports in a file or comma list),
+        # so it wins over -p/--port. Only assign when one is actually present --
+        # dicom/coap/mqtt register --port with default=None and branch on that
+        # "unset" sentinel to pick their plain-vs-TLS default.
+        host = target
+        if _accepts_host_port(getattr(args, "protocol", None), target):
+            host, embedded_port = split_host_port(target)
+            if embedded_port is not None:
+                target_args.port = embedded_port
+
+        target_args.host = host
+        target_args.rhost = host
 
         # Single dispatch model: every protocol is a Layer-2 connection subclass
         # taking (args, db, host) and auto-scanning via proto_flow on construct.
-        scanner = protocol_class(target_args, None, target)
+        scanner = protocol_class(target_args, None, host)
 
         # Get results
         if hasattr(scanner, "get_results"):
