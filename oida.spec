@@ -51,8 +51,16 @@ for _imp, _dists in packages_distributions().items():
 _SKIP_EXTRAS = {"dev", "docs", "all"}
 _extra_re = _re.compile(r'extra\s*==\s*["\']([^"\']+)["\']')
 
+# The import package is `oida` but the PyPI distribution is `oida-ics`, and
+# importlib.metadata keys off the DISTRIBUTION name -- requires("oida") raises
+# PackageNotFoundError and aborts the whole build. Ask packages_distributions()
+# (already mapped above) which distribution actually provides `oida`, so this
+# keeps working if the distribution is ever renamed again.
+_oida_dists = packages_distributions().get("oida") or ["oida-ics"]
+_OIDA_DIST = _oida_dists[0]
+
 _wanted_dists: set = set()
-for _line in requires("oida") or []:
+for _line in requires(_OIDA_DIST) or []:
     _m = _extra_re.search(_line)
     if not _m or _m.group(1) in _SKIP_EXTRAS:
         continue
@@ -153,7 +161,8 @@ if _sys.platform == "win32":
         VSVersionInfo,
     )
 
-    _ver = _pkg_version("oida")
+    # Distribution name, not import name -- see _OIDA_DIST above.
+    _ver = _pkg_version(_OIDA_DIST)
     _parts = _ver.split("+")[0].replace("-", ".").split(".") + ["0", "0", "0", "0"]
     _vnum = tuple(int(x) if x.isdigit() else 0 for x in _parts[:4])
     _version_info = VSVersionInfo(

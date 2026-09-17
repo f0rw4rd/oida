@@ -235,6 +235,35 @@ _IMPORT_OVERRIDES: Dict[str, str] = {
 _SKIP_EXTRAS = frozenset({"dev", "docs", "all", "fuzz", "serial", "bacnetsc"})
 
 
+# The import package is ``oida`` but the PyPI *distribution* is ``oida-ics``
+# (pyproject.toml: the bare "oida" name was already taken). importlib.metadata
+# keys off the distribution name, so metadata("oida") raises
+# PackageNotFoundError. Resolve the real name instead of hardcoding either:
+# packages_distributions() maps import package -> distribution, and the explicit
+# candidates cover odd installs where that mapping is unavailable.
+_DIST_CANDIDATES = ("oida-ics", "oida")
+
+
+def _resolve_dist_name() -> str:
+    """Return the installed distribution name providing the ``oida`` package."""
+    from importlib.metadata import PackageNotFoundError, distribution, packages_distributions
+
+    try:
+        for name in packages_distributions().get("oida", ()):
+            return name
+    except Exception:  # pragma: no cover - defensive, varies by importlib backend
+        pass
+
+    for name in _DIST_CANDIDATES:
+        try:
+            distribution(name)
+            return name
+        except PackageNotFoundError:
+            continue
+
+    raise PackageNotFoundError(f"none of {_DIST_CANDIDATES} is installed")
+
+
 def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
     """Build PROTOCOL_DEPENDENCIES from installed oida package metadata."""
     import re
@@ -242,9 +271,10 @@ def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
     from importlib.metadata import requires, metadata
 
     result: Dict[str, Dict[str, Any]] = {}
+    dist_name = _resolve_dist_name()
 
     # Get all declared extras (includes empty-dep protocols like astm, ocpp)
-    all_extras = set(metadata("oida").get_all("Provides-Extra") or [])
+    all_extras = set(metadata(dist_name).get_all("Provides-Extra") or [])
 
     # Seed every protocol extra with an empty entry
     for extra in sorted(all_extras):
@@ -256,7 +286,7 @@ def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
     #   e.g.  "pyads>=3.4.0 ; extra == \"ads\""
     _extra_re = re.compile(r'extra\s*==\s*"([^"]+)"')
 
-    for line in requires("oida") or []:
+    for line in requires(dist_name) or []:
         m = _extra_re.search(line)
         if not m:
             continue
@@ -288,6 +318,19 @@ def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
 try:
     PROTOCOL_DEPENDENCIES: Dict[str, Any] = _build_protocol_dependencies()
 except Exception as e:
-    # Fallback: package metadata not yet available (e.g. during build)
-    logger.debug("Failed to build PROTOCOL_DEPENDENCIES from package metadata: %s", e)
+    # Fallback: package metadata not available. That is EXPECTED in a frozen
+    # PyInstaller build, which bundles the modules but no .dist-info, so keep
+    # that case quiet. Anywhere else it means dependency hints, install
+    # suggestions and _KNOWN_PROTOCOLS are all silently dead -- which is exactly
+    # how the oida -> oida-ics distribution rename went unnoticed. Say so.
+    import sys
+
+    if getattr(sys, "frozen", False):
+        logger.debug("PROTOCOL_DEPENDENCIES unavailable in frozen build: %s", e)
+    else:
+        logger.warning(
+            "Failed to build PROTOCOL_DEPENDENCIES from package metadata (%s); "
+            "dependency hints and install suggestions are disabled",
+            e,
+        )
     PROTOCOL_DEPENDENCIES = {}
