@@ -139,6 +139,7 @@ import contextlib
 import json
 import socket
 import threading
+import time
 
 import pytest
 from typing import Optional
@@ -2241,6 +2242,66 @@ def _dummy_tcp_server():
         thread.join(timeout=2)
 
 
+@contextlib.contextmanager
+def _garbage_tcp_server():
+    """A local TCP server that replies with non-DICOM junk and keeps the
+    connection open indefinitely (never closes its end).
+
+    Safety: binds only to 127.0.0.1 on an ephemeral port. This reproduces the
+    hang regression below: a malformed/wrong-protocol responder that never
+    hangs up, which used to make the DICOM association-abort teardown block
+    forever on a stuck reader thread.
+    """
+    junk = bytes(range(256))
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind(("127.0.0.1", 0))
+    srv.listen(8)
+    port = srv.getsockname()[1]
+    stop = threading.Event()
+    conns = []
+
+    def _handle(conn):
+        try:
+            conn.sendall(junk)
+            conn.settimeout(0.5)
+            while not stop.is_set():
+                try:
+                    data = conn.recv(8192)
+                    if not data:
+                        break
+                    conn.sendall(junk)
+                except socket.timeout:
+                    continue
+        except OSError:
+            pass
+
+    def _serve():
+        srv.settimeout(0.5)
+        while not stop.is_set():
+            try:
+                conn, _ = srv.accept()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            conns.append(conn)
+            threading.Thread(target=_handle, args=(conn,), daemon=True).start()
+
+    thread = threading.Thread(target=_serve, daemon=True)
+    thread.start()
+    try:
+        yield port
+    finally:
+        stop.set()
+        with contextlib.suppress(OSError):
+            srv.close()
+        for conn in conns:
+            with contextlib.suppress(OSError):
+                conn.close()
+        thread.join(timeout=2)
+
+
 class TestDICOMP1FalsePositiveRegression:
     """Regression guard for the connection-1 false-positive identification bug.
 
@@ -2312,3 +2373,43 @@ class TestDICOMP1FalsePositiveRegression:
             "connection-1 regression: a closed port was reported as a successful "
             f"DICOM identification. Payload: {last}"
         )
+
+    def test_garbage_responder_does_not_hang_past_timeout(self, cli_runner, tmp_path):
+        """A peer that keeps the socket open and replies with a malformed
+        (non-DICOM) PDU must not hang the CLI well past --timeout.
+
+        Regression for: Association.abort() calls DUL.kill(), which joins the
+        DUL reader thread; if that thread is blocked in a plain socket.recv()
+        with no timeout (because the peer never closes the connection), the
+        whole CLI process hung indefinitely even though "Association Aborted"
+        had already been logged. Fix: _disconnect() now force-closes the
+        transport socket before calling abort()/shutdown(), unblocking the
+        reader thread immediately.
+        """
+        with _garbage_tcp_server() as port:
+            out_dir = tmp_path / "hang_regression"
+            start = time.monotonic()
+            result = cli_runner.run(
+                "dicom",
+                "127.0.0.1",
+                "--port",
+                str(port),
+                "--timeout",
+                "3",
+                format="json",
+                output=str(out_dir),
+                expect_json=False,
+                timeout=20,  # generous wall-clock cap; the bug hung past this
+            )
+            elapsed = time.monotonic() - start
+            assert elapsed < 15, (
+                "dicom hang regression: CLI took "
+                f"{elapsed:.1f}s (--timeout was 3s) against a garbage/malformed "
+                f"responder that keeps the connection open. combined_output="
+                f"{result.combined_output[:800]}"
+            )
+            last = self._read_result_payload(out_dir, result)
+            assert last["success"] is False, (
+                "a garbage/malformed responder was reported as a successful "
+                f"DICOM identification. Payload: {last}"
+            )

@@ -757,13 +757,49 @@ class dicom(
             return "Not established"
 
     def _disconnect(self):
-        """Release DICOM association"""
-        if self.assoc and self.assoc.is_established:
-            try:
-                self.assoc.release()
-            except Exception as e:
-                self.logger.debug(f"Association release failed: {e}")
+        """Release DICOM association and stop all pynetdicom background threads.
+
+        An association that never reached is_established (rejected, aborted, or
+        a malformed/non-DICOM responder) still leaves the pynetdicom AE's
+        internal DUL reader thread running, blocked in a plain socket.recv()
+        with no timeout on a peer that keeps the TCP connection open. Calling
+        Association.abort() alone is not enough: it calls into DUL.kill(),
+        which joins that reader thread and therefore blocks right along with
+        it, hanging the whole CLI well past --timeout. For that path only, we
+        forcibly close the underlying transport socket first, which unblocks
+        the stuck recv() so abort()/shutdown() can complete promptly.
+
+        An ESTABLISHED association must NOT get that treatment: a clean
+        A-RELEASE-RQ/RP exchange needs the socket open, and closing it first
+        downgrades every normal disconnect to an abort (is_aborted=True,
+        "Association Aborted"). Real PACS log and alarm on abnormal
+        association termination, so the well-behaved read-only path releases
+        gracefully.
+        """
+        if self.assoc:
+            if self.assoc.is_established:
+                try:
+                    self.assoc.release()
+                except Exception as e:
+                    self.logger.debug(f"Association release failed: {e}")
+            else:
+                try:
+                    dul = getattr(self.assoc, "dul", None)
+                    sock = getattr(dul, "socket", None) if dul is not None else None
+                    if sock is not None:
+                        sock.close()
+                except Exception as e:
+                    self.logger.debug(f"Forced transport socket close failed: {e}")
+                try:
+                    self.assoc.abort()
+                except Exception as e:
+                    self.logger.debug(f"Association abort failed: {e}")
             self.assoc = None
+        if self.ae is not None:
+            try:
+                self.ae.shutdown()
+            except Exception as e:
+                self.logger.debug(f"AE shutdown failed: {e}")
 
     def cleanup(self):
         """Ensure the DICOM association is released even on an error path.

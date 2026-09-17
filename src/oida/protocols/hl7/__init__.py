@@ -16,6 +16,7 @@ CLI examples:
     oida hl7 192.168.1.100 --fuzz       # Message fuzzing
 """
 
+import re
 import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -874,12 +875,19 @@ class hl7(
         if app_upper in HL7_VENDOR_MAP:
             return HL7_VENDOR_MAP[app_upper]
 
-        # Check if any key is a substring (for compound names like "EPIC_LAB")
+        # Check if any key appears as a whole word/token (for compound names
+        # like "EPIC_LAB"). Unanchored substring matching would let names
+        # like "IMAGE_STORAGE_SYS" (contains "GE_") or "MYSTATION" (contains
+        # a short vendor code) be misidentified as a specific vendor that
+        # was never actually claimed by the device -- fabricated identity.
+        # Require the match to sit on a word boundary (non-alphanumeric or
+        # start/end of string) on both sides.
         for key, (vendor, product) in HL7_VENDOR_MAP.items():
-            if key in app_upper or app_upper.startswith(key):
+            pattern = r"(?:^|[^A-Z0-9])" + re.escape(key) + r"(?:$|[^A-Z0-9])"
+            if re.search(pattern, app_upper):
                 return (vendor, product)
 
-        # Try to identify by common patterns
+        # Try to identify by common patterns (same word-boundary rule)
         patterns = [
             ("EPIC", ("Epic Systems", "EMR")),
             ("CERNER", ("Cerner Corporation", "EMR")),
@@ -887,12 +895,13 @@ class hl7(
             ("ALLSCRIPTS", ("Allscripts", "EMR")),
             ("MIRTH", ("NextGen", "Mirth Connect")),
             ("RHAPSODY", ("Rhapsody", "Integration Engine")),
-            ("GE_", ("GE Healthcare", "Healthcare IT")),
+            ("GE", ("GE Healthcare", "Healthcare IT")),
             ("PHILIPS", ("Philips", "Healthcare IT")),
             ("SIEMENS", ("Siemens Healthineers", "Healthcare IT")),
         ]
-        for pattern, result in patterns:
-            if pattern in app_upper:
+        for token, result in patterns:
+            pattern = r"(?:^|[^A-Z0-9])" + re.escape(token) + r"(?:$|[^A-Z0-9])"
+            if re.search(pattern, app_upper):
                 return result
 
         return (None, None)

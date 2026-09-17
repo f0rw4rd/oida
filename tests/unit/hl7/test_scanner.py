@@ -273,6 +273,50 @@ class TestHL7VendorIdentification(unittest.TestCase):
         self.assertIsNone(vendor)
         self.assertIsNone(product)
 
+    @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
+    def test_identify_vendor_does_not_fabricate_from_coincidental_substring(self):
+        """Regression: unanchored substring matching against device-supplied
+        MSH-3 must not fabricate a vendor identity from a coincidental
+        substring match (e.g. "GE_" matching inside "IMAGE_STORAGE", or a
+        short vendor key matching inside an unrelated word).
+
+        This mirrors the ASTM fix in identify_vendor_from_name(): a vendor
+        token must sit on a word boundary in the device-supplied name, not
+        merely appear anywhere inside it.
+        """
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
+
+        # "IMAGE_STORAGE_SYS" coincidentally contains "GE_" -- must NOT be
+        # reported as GE Healthcare.
+        vendor, product = scanner._identify_vendor("IMAGE_STORAGE_SYS")
+        self.assertIsNone(vendor, f"fabricated vendor {vendor!r} from coincidental substring")
+        self.assertIsNone(product)
+
+        # "SATIRISK" coincidentally contains "IRIS" (an interface-engine key
+        # in HL7_VENDOR_MAP) -- must NOT be reported as that vendor.
+        vendor, product = scanner._identify_vendor("SATIRISK")
+        self.assertIsNone(vendor, f"fabricated vendor {vendor!r} from coincidental substring")
+        self.assertIsNone(product)
+
+        # "MYGE_APP" -- "GE" appears but not as a standalone token
+        # (immediately preceded by "Y", an alphanumeric character).
+        vendor, product = scanner._identify_vendor("MYGE_APP")
+        self.assertIsNone(vendor, f"fabricated vendor {vendor!r} from coincidental substring")
+
+    @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
+    def test_identify_vendor_still_matches_genuine_token(self):
+        """A vendor token that IS a genuine standalone component of the
+        device-supplied name (delimited by non-alphanumeric characters, e.g.
+        underscores) should still be identified -- the fix must not become
+        so strict it stops recognizing legitimate compound names."""
+        scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
+
+        vendor, product = scanner._identify_vendor("GE_CARESCAPE")
+        self.assertEqual(vendor, "GE Healthcare")
+
+        vendor, product = scanner._identify_vendor("LEGACY_EPIC_SYSTEM")
+        self.assertEqual(vendor, "Epic Systems")
+
 
 class TestHL7Connection(unittest.TestCase):
     """Test HL7 MLLP connection logic"""

@@ -44,6 +44,7 @@ hard-coded test totals or per-flag matrix are kept here: they rot as tests are
 added, renamed, or removed.
 """
 
+import json
 import pytest
 from typing import Optional
 
@@ -2239,3 +2240,79 @@ class TestCoAPDTLSCertInterop:
                 "cert",
             ]
         ), f"Expected DTLS cert auth output: {text[:500]}"
+
+
+@pytest.mark.coap
+class TestCoAPPingFalsePositiveRegression:
+    """Regression test for a connection-1-style false positive in coap_ping().
+
+    Root cause was: coap_ping() (src/oida/protocols/coap/helpers.py) sent an
+    empty CoAP CON ping and treated ANY non-empty UDP datagram received in
+    reply as evidence of "CoAP server responding" (`return len(data) > 0`),
+    with no validation that the reply was actually a well-formed CoAP
+    message. A UDP endpoint that simply echoes/replies with arbitrary
+    non-CoAP bytes was therefore misidentified as a live CoAP server, and
+    CoAPScanner.connect() took the "alive" fast path straight into
+    success:true with no further protocol validation.
+
+    Fix: coap_ping() now requires the reply to look like a real CoAP
+    message: the CoAP version bits (top 2 bits of byte 0) must equal 1, and
+    the message ID (bytes 2-3) must echo the one we sent. Arbitrary/garbage
+    UDP replies fail this check and coap_ping() returns False, falling
+    through to the (already-correct) GET-fallback validation path.
+    """
+
+    def test_garbage_udp_responder_is_not_a_false_positive(self, cli_runner, tmp_path):
+        """CoAP against a UDP responder that echoes non-CoAP junk must report success:false"""
+        import socket
+        import threading
+
+        junk = bytes(range(256))
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        sock.bind(("127.0.0.1", 0))
+        junk_port = sock.getsockname()[1]
+        stop = threading.Event()
+
+        def _serve():
+            sock.settimeout(0.2)
+            while not stop.is_set():
+                try:
+                    data, addr = sock.recvfrom(8192)
+                    sock.sendto(junk, addr)
+                except socket.timeout:
+                    continue
+                except OSError:
+                    break
+
+        thread = threading.Thread(target=_serve, daemon=True)
+        thread.start()
+        try:
+            out_dir = tmp_path / "coap_ping_fp"
+            result = cli_runner.run(
+                "coap",
+                "127.0.0.1",
+                "--port",
+                str(junk_port),
+                "--timeout",
+                "3",
+                "--output",
+                str(out_dir),
+                format="json",
+                timeout=20,
+            )
+
+            json_path = out_dir / "coap.json"
+            assert json_path.exists(), f"Expected {json_path} to be written; stderr={result.stderr}"
+            data = json.loads(json_path.read_text())
+            record = data[0] if isinstance(data, list) else data
+
+            assert record["success"] is False, (
+                "coap reported success:true against a UDP responder that only echoes "
+                "non-CoAP garbage -- the coap_ping() false-positive fix has regressed."
+            )
+        finally:
+            stop.set()
+            sock.close()
+            thread.join(timeout=2)
