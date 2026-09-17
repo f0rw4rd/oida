@@ -99,6 +99,8 @@ Flag Coverage Matrix (proto_args.py):
   --download-db             [C] test_download_db_missing_file
   --monitor-size            [B] test_monitor_with_size
   --monitor-bits            [B] test_monitor_with_bits
+  --monitor-areas           [A] test_monitor_with_areas
+  --output-file             [B] test_upload_db_writes_output_file
   --connection-type S7Basic [B] test_connection_type_s7basic
   --pdu-size 960            [B] test_pdu_size_960
   --restart                 [Skip] not implemented in cli_runner
@@ -1904,6 +1906,96 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             term in text
             for term in ["monitor", "monitoring", "bit", "polling", "watch", "failed", "error"]
         ), f"Expected monitor mode terms in output: {text[:500]}"
+
+    def test_monitor_with_areas(self, cli_runner, target, port, docker_services):
+        """Test --monitor-areas selects specific memory areas to monitor [Category A].
+
+        --monitor-areas parses "DB1" area specs and drives conn.db_read, distinct
+        from the default I,Q,M areas used by test_monitor_mode. The monitor loop is
+        bounded by --duration (checked before the first sleep-poll iteration and on
+        every subsequent iteration; see Snap7Scanner.monitor in
+        mixins/block_operations.py), so this is a real bounded run against the live
+        mock -- not the closed-port workaround needed for genuinely unbounded loops.
+        """
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--monitor",
+            "--monitor-areas",
+            "I,Q,DB1",
+            "--duration",
+            "2",
+            "--interval",
+            "1",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text
+            for term in ["monitor", "monitoring", "db1", "polling", "watch", "failed", "error"]
+        ), f"Expected monitor mode terms mentioning the configured areas: {text[:500]}"
+
+    def test_upload_db_writes_output_file(self, cli_runner, target, port, docker_services):
+        """Test --output-file saves --upload-db data to disk [Category B, conditional A].
+
+        Snap7Scanner.upload_db writes the raw DB bytes to output_file via
+        Path.write_bytes when --output-file is given (mixins/block_operations.py).
+        Like test_upload_db above, the upload itself can fail against the mock
+        ("Not connected") depending on connection/session state, so the outer
+        result is Category B (returncode 0 or 1); when it does succeed we assert
+        real file content (Category A behaviour): DB1 byte0=1 (db_num marker),
+        byte1=0 (status).
+
+        NOTE: safe_file_path() confines --output-file to the CLI process CWD (it
+        defaults base_dir to os.getcwd() -- see src/oida/utils/common_types.py), so
+        the destination must be created under CWD; pytest's tmp_path fixture lives
+        under /tmp and is rejected as "Path traversal blocked". Same workaround as
+        test_opcua_integration.py::test_file_output.
+        """
+        import os
+        import tempfile
+        from pathlib import Path
+
+        fd, out_name = tempfile.mkstemp(prefix="snap7_db1_", suffix=".bin", dir=os.getcwd())
+        os.close(fd)
+        out_path = Path(out_name)
+        try:
+            result = cli_runner.run(
+                self.protocol_name,
+                target,
+                "--port",
+                str(port),
+                "--upload-db",
+                "1",
+                "--output-file",
+                str(out_path),
+                format="json",
+                json_log=True,
+                timeout=20,
+            )
+
+            assert result.returncode in [0, 1], f"Unexpected returncode: {result.returncode}"
+            text = _combined_text(result, result.scan_log)
+            assert any(
+                term in text
+                for term in ["upload", "db1", "db 1", "output", "saved", "failed", "error"]
+            ), f"Expected upload/output-file terms in output: {text[:500]}"
+
+            if result.success:
+                assert out_path.exists(), "--output-file should have created the dump file"
+                data = out_path.read_bytes()
+                assert len(data) > 0, "Dumped DB file should not be empty"
+                # Known mock data: DB1 byte0 = db_num (1), byte1 = status (0)
+                assert data[0] == 1, f"Expected DB1 byte0 == 1 (db_num marker), got {data[0]}"
+                assert data[1] == 0, f"Expected DB1 byte1 == 0 (status byte), got {data[1]}"
+        finally:
+            out_path.unlink(missing_ok=True)
 
     # ========================================================================
     # Additional Fuzzing Tests (--fuzz all mode)

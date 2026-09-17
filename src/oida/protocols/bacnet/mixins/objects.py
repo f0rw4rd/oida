@@ -332,6 +332,7 @@ class ObjectsMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types["ErrorRejectAbortNack"]
 
         self.logger.display("\n[Deep Device Walk - Device {}]".format(device_id))
 
@@ -356,7 +357,7 @@ class ObjectsMixin:
                     return response
             except (asyncio.TimeoutError, TimeoutError) as e:
                 self.logger.debug(f"read prop failed: {e}")
-            except Exception as e:
+            except (Exception, ErrorRejectAbortNack) as e:
                 self.logger.debug(f"Deep enum read {prop_name} failed: {e}")
             return None
 

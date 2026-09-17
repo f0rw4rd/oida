@@ -73,6 +73,44 @@ class ScannerIdentificationMixin(_ScannerBase):
         self._cached_server_info = info
         return info
 
+    def verify_responsive(self, client: Any) -> bool:
+        """Return True only if the peer returns a valid Modbus PDU.
+
+        A bare TCP connect to a non-Modbus port (a different protocol, or a
+        generic listener) succeeds at the socket level but never produces a
+        valid Modbus response -- every request raises a transport error. A
+        genuine Modbus device answers with either real data or a proper Modbus
+        exception response (exception_code 1..11), both of which prove it speaks
+        Modbus. Without this gate the base NetworkConnection.run() defaults
+        success=True and falsely reports the endpoint as a Modbus device
+        (the framework-wide "connection-1" false-positive).
+        """
+        unit_id = getattr(self, "unit_id", 1)
+
+        def _is_modbus_response(resp: Any) -> bool:
+            if resp is None:
+                return False
+            is_error = resp.isError() if hasattr(resp, "isError") else False
+            if not is_error:
+                return True
+            # A valid Modbus exception response still proves the peer is Modbus.
+            exc = getattr(resp, "exception_code", None)
+            return isinstance(exc, int) and 1 <= exc <= 11
+
+        probes = (
+            lambda: client.read_holding_registers(address=0, count=1, device_id=unit_id),
+            lambda: client.read_coils(address=0, count=1, device_id=unit_id),
+            lambda: client.report_device_id(device_id=unit_id),
+        )
+        for probe in probes:
+            try:
+                resp = probe()
+            except Exception:
+                continue
+            if _is_modbus_response(resp):
+                return True
+        return False
+
     def _read_device_identification(
         self,
         client: Any,

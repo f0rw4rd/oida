@@ -187,6 +187,16 @@ class knx(NetworkConnection):
 
         asyncio.run(do_discovery())
 
+        # Only claim success when a real KNXnet/IP device actually answered the
+        # DESCRIPTION_REQUEST (unicast) or SEARCH (multicast). Without this, the
+        # base NetworkConnection.run() defaults success=True for any non-raising
+        # return -- so pointing knx at a closed or wrong-protocol port would be
+        # reported as a successfully identified KNX gateway (connection-1 bug).
+        found = self.results["data"].get("gateway") or self.results["data"].get("gateways")
+        if not found:
+            self.results["success"] = False
+            self.results["error"] = self.results.get("error") or "No KNX gateway found"
+
     async def _unicast_search(
         self, host: str, port: int, timeout: float = 3.0, local_ip: str = None
     ):

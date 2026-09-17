@@ -237,6 +237,14 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             remaining_flags = [f for f in self._OPERATION_FLAGS if f != "ws_brute"]
             if not any(getattr(self.args, f, None) for f in remaining_flags):
                 self.logger.debug("No remaining flags after ws_brute, skipping connection phase")
+                # P1 false-positive guard: a standalone brute-force that found no
+                # reachable WebSocket endpoint is not an OCPP identification.
+                if not self.results.get("data", {}).get("ws_brute", {}).get("endpoints_found"):
+                    self.results["success"] = False
+                    self.results.setdefault(
+                        "error",
+                        "No OCPP response (no reachable WebSocket endpoint found)",
+                    )
                 return
 
         # --- Connection phase ---
@@ -244,6 +252,15 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         self.create_conn_obj()
         if not self.conn:
             self.logger.debug("Connection failed, aborting proto_flow")
+            # P1 false-positive guard: a WebSocket handshake only completes
+            # against a real ws:// endpoint (101 Switching Protocols). A bare
+            # TCP connect to a silent/non-WS port never upgrades, so run() must
+            # not default success=True here.
+            self.results["success"] = False
+            self.results.setdefault(
+                "error",
+                "No OCPP response (WebSocket handshake failed / not an OCPP endpoint)",
+            )
             return
 
         # --- Post-connection: always run basic info ---

@@ -86,11 +86,46 @@ Flag Coverage Matrix (oida ethercat -h):
   --help                     [B] test_help_output (inherited but also explicit)
   -v (global)                [B] test_verbose_output (overridden)
   --debug (global)           [B] test_debug_output (overridden)
+
+  Long-form alias flags (same underlying dest as the short flags above,
+  driven with the literal alias string so each spelling is CLI-verified):
+  --slave                    [B] test_slave_long_flag
+  --eeprom-dump              [B] test_eeprom_dump_long_flag
+  --esc-debug                [B] test_esc_debug_alias_flag
+  --scan-fsoe                [B] test_scan_fsoe_alias_flag
+  --scan-coe                 [B] test_scan_coe_alias_flag
+  --sdo-scan                 [B] test_sdo_scan_alias_flag
+  --read-coe                 [B] test_read_coe_alias_flag
+  --sdo-read                 [B] test_sdo_read_alias_flag
+  --write-coe                [B] test_write_coe_alias_flag, [C] test_write_coe_alias_without_confirm
+  --sdo-write                [B] test_sdo_write_alias_flag
+
+Bug-hunt Findings (see TestEtherCATP1FalsePositiveRegression and
+TestEtherCATArgValidationAndHygiene at the bottom of this file):
+  P1  (false-positive identification): NOT AFFECTED. ethercat's cli_runner.py
+      proto_flow() explicitly sets self.results["success"] = False when
+      create_conn_obj() fails to connect (interface open failure or missing
+      raw-socket capability), so it does not fall through to connection.py's
+      default-success-on-no-exception path. Verified with both a
+      no-capability run and a root/no-such-interface run -- both report
+      "success": false in the JSON output. See the regression test for the
+      exact reproduction commands.
+  P1b (--timeout bounding): N/A. `oida ethercat -h` has no --timeout flag
+      (EtherCAT is a raw-L2 protocol with no request/response timeout
+      concept at the CLI layer); pysoem.Master.open() either raises
+      immediately or succeeds, so there is nothing for a CLI --timeout to
+      bound.
 """
+
+import json
 
 import pytest
 
-from .conftest import skip_unless_l2_docker
+from .conftest import (
+    check_raw_socket_capability,
+    check_sudo_available,
+    skip_unless_l2_docker,
+)
 from tests.service_gate import require_service
 
 
@@ -729,6 +764,168 @@ class TestEtherCATIntegration:
         _assert_ethercat_attempted(result)
 
     # ========================================================================
+    # Long-form Flag Alias Tests
+    #
+    # Several flags have multiple spellings (short, long, and legacy-alias
+    # long forms). The tests above exercise the short forms; these exercise
+    # the alternate long-form spellings directly so each literal flag string
+    # is proven to be recognized by argparse and forwarded to the scanner.
+    # ========================================================================
+
+    def test_slave_long_flag(self, cli_runner):
+        """Test --slave (long form of -S) selects a single slave [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--slave",
+            "2",
+            json_log=True,
+            timeout=15,
+        )
+
+        assert result.returncode in [0, 1]
+        _assert_ethercat_attempted(result)
+
+    def test_eeprom_dump_long_flag(self, cli_runner):
+        """Test --eeprom-dump (long form of -e) [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--eeprom-dump",
+            json_log=True,
+            timeout=15,
+        )
+
+        assert result.returncode in [0, 1]
+        _assert_ethercat_attempted(result)
+
+    def test_esc_debug_alias_flag(self, cli_runner):
+        """Test --esc-debug (alias of --esc-registers) [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--esc-debug",
+            json_log=True,
+            timeout=15,
+        )
+
+        assert result.returncode in [0, 1]
+        _assert_ethercat_attempted(result)
+
+    def test_scan_fsoe_alias_flag(self, cli_runner):
+        """Test --scan-fsoe (alias of --fsoe) [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--scan-fsoe",
+            json_log=True,
+            timeout=15,
+        )
+
+        assert result.returncode in [0, 1]
+        _assert_ethercat_attempted(result)
+
+    def test_scan_coe_alias_flag(self, cli_runner):
+        """Test --scan-coe (long-form alias of -C) [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--scan-coe",
+            json_log=True,
+            timeout=15,
+        )
+
+        assert result.returncode in [0, 1]
+        _assert_ethercat_attempted(result)
+
+    def test_sdo_scan_alias_flag(self, cli_runner):
+        """Test --sdo-scan (alias of -C / --scan-coe) [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--sdo-scan",
+            json_log=True,
+            timeout=15,
+        )
+
+        assert result.returncode in [0, 1]
+        _assert_ethercat_attempted(result)
+
+    def test_read_coe_alias_flag(self, cli_runner):
+        """Test --read-coe (long-form alias of -r) [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--read-coe",
+            "1:0x1008:0",
+            json_log=True,
+            timeout=15,
+        )
+
+        assert result.returncode in [0, 1]
+        _assert_ethercat_attempted(result)
+
+    def test_sdo_read_alias_flag(self, cli_runner):
+        """Test --sdo-read (alias of -r / --read-coe) [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--sdo-read",
+            "0x1008:0",
+            json_log=True,
+            timeout=15,
+        )
+
+        assert result.returncode in [0, 1]
+        _assert_ethercat_attempted(result)
+
+    def test_write_coe_alias_flag(self, cli_runner):
+        """Test --write-coe (long-form alias of -w) requires --confirm [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--write-coe",
+            "1:0x7000:1:0xFF",
+            "--confirm",
+            json_log=True,
+            timeout=15,
+        )
+
+        assert result.returncode in [0, 1]
+        _assert_ethercat_attempted(result)
+
+    def test_sdo_write_alias_flag(self, cli_runner):
+        """Test --sdo-write (alias of -w / --write-coe) requires --confirm [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--sdo-write",
+            "1:0x7000:1:0xFF",
+            "--confirm",
+            json_log=True,
+            timeout=15,
+        )
+
+        assert result.returncode in [0, 1]
+        _assert_ethercat_attempted(result)
+
+    def test_write_coe_alias_without_confirm(self, cli_runner):
+        """Test --write-coe without --confirm is refused [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--write-coe",
+            "1:0x7000:1:0xFF",
+            json_log=True,
+            timeout=15,
+        )
+
+        text = _combined_text(result, result.scan_log)
+        assert any(term in text for term in ["confirm", "failed", "error"]), (
+            f"Expected confirm-gate or error message: {text[:500]}"
+        )
+
+    # ========================================================================
     # Verbose / Debug Output Tests
     # ========================================================================
 
@@ -1339,3 +1536,234 @@ class TestEtherCATDocker:
         assert len(result.combined_output) > 100, (
             f"Verbose output unexpectedly short: {len(result.combined_output)} chars"
         )
+
+
+# ============================================================================
+# P1 false-positive verdict: DEFINITIVELY RESOLVED.
+#
+# ethercat is NOT affected by the connection.py "default success=True on
+# non-raising return" systemic bug. src/oida/protocols/ethercat/cli_runner.py
+# proto_flow() explicitly does:
+#
+#     self.create_conn_obj()
+#     if not self.conn:
+#         self.logger.fail(f"Failed to connect to {self.host}")
+#         self.results["success"] = False
+#         self.results["error"] = "Connection failed"
+#         return
+#
+# so a failed connect() (interface won't open, or no raw-socket capability)
+# sets success=False *before* returning -- it never reaches connection.py's
+# "if self.results.get('success') is None: self.results['success'] = True"
+# fallback. This test pins that behavior with a real subprocess run and
+# fails loudly (success flips to True) if this explicit set is ever removed.
+# ============================================================================
+@pytest.mark.ethercat
+class TestEtherCATP1FalsePositiveRegression:
+    """Documents that EtherCAT correctly reports success=False on connect failure."""
+
+    protocol_name = "ethercat"
+
+    def test_p1_no_capability_reports_success_false(self, cli_runner, tmp_path):
+        """Reproduction: oida ethercat <blackhole-iface> --output DIR --format json
+        without raw-socket capability. Observed: success == false (correct).
+
+        This is the exact repro command from the task brief, run without sudo
+        so check_raw_socket_capability() fails before any socket is opened.
+        """
+        out_dir = tmp_path / "p1_no_cap"
+        result = cli_runner.run(
+            self.protocol_name,
+            "nonexistent-blackhole-if0",
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1]
+        out_file = out_dir / "ethercat.json"
+        assert out_file.exists(), result.combined_output[:500]
+        payload = json.loads(out_file.read_text())
+        last = payload[-1] if isinstance(payload, list) else payload
+        # CORRECT BEHAVIOR (unlike the connection-1 systemic bug): this must
+        # stay False. If it ever becomes True, ethercat's cli_runner.py has
+        # regressed into the connection.py default-success fallback --
+        # update/remove this regression test only after confirming why.
+        assert last["success"] is False, (
+            "REGRESSION: ethercat now reports success=True on a connection "
+            f"it never made -- the connection-1 false-positive bug has "
+            f"reached ethercat. Got: {last}"
+        )
+        assert last["data"] == {}
+        assert last["error"] == "Connection failed"
+
+    def test_p1_nonexistent_interface_with_capability_reports_success_false(
+        self, cli_runner, tmp_path
+    ):
+        """Same repro but with raw-socket capability granted (needs_sudo),
+        so the failure path is pysoem's 'could not open interface' instead
+        of the capability check. Both paths must set success=False."""
+        if not check_raw_socket_capability()[0] and not check_sudo_available():
+            pytest.skip("No raw-socket capability and no passwordless sudo available")
+        out_dir = tmp_path / "p1_with_cap"
+        result = cli_runner.run(
+            self.protocol_name,
+            "zzz-nonexistent-if99",
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+            use_sudo=True,
+        )
+        assert result.returncode in [0, 1]
+        out_file = out_dir / "ethercat.json"
+        assert out_file.exists(), result.combined_output[:500]
+        payload = json.loads(out_file.read_text())
+        last = payload[-1] if isinstance(payload, list) else payload
+        assert last["success"] is False, (
+            "REGRESSION: ethercat now reports success=True for a nonexistent "
+            f"interface it never opened. Got: {last}"
+        )
+        assert last["data"] == {}
+
+
+# ============================================================================
+# P2/P3/P6: numeric-range validation, hostile input, and flag hygiene.
+# P4 (confirm-gate) is already covered above (write/set-alias/eeprom-write/
+# fuzz/set-coe/set-mailbox *_without_confirm tests, plus the --write-coe and
+# --sdo-write alias *_with_confirm / *_without_confirm tests).
+# ============================================================================
+@pytest.mark.ethercat
+class TestEtherCATArgValidationAndHygiene:
+    """Malformed input, unknown flags, and typo flags [Category C]."""
+
+    protocol_name = "ethercat"
+
+    def test_unknown_flag_rejected(self, cli_runner):
+        """An unknown flag must be a usage error, not silently ignored [P6]."""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--not-a-real-flag",
+            expect_json=False,
+        )
+        assert result.returncode != 0, "Unknown flag was silently accepted"
+        text = result.combined_output.lower()
+        assert "traceback" not in text
+        assert any(term in text for term in ["unrecognized", "usage", "error"]), (
+            f"Expected argparse usage error: {text[:500]}"
+        )
+
+    def test_typo_flag_rejected(self, cli_runner):
+        """A transposed typo of a real flag (--san-coe for --scan-coe) must
+        be rejected, not silently accepted as a different flag [P6]."""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--san-coe",
+            expect_json=False,
+        )
+        assert result.returncode != 0, "Typo'd flag was silently accepted"
+        text = result.combined_output.lower()
+        assert "traceback" not in text
+        assert any(term in text for term in ["unrecognized", "usage", "error"]), (
+            f"Expected argparse usage error: {text[:500]}"
+        )
+
+    def test_foreign_protocol_flag_rejected(self, cli_runner):
+        """A flag belonging to a different protocol (--slave-id is Modbus,
+        not EtherCAT) must be rejected [P6]."""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--slave-id",
+            "1",
+            expect_json=False,
+        )
+        assert result.returncode != 0, "Foreign-protocol flag was silently accepted"
+        text = result.combined_output.lower()
+        assert "traceback" not in text
+        assert any(term in text for term in ["unrecognized", "usage", "error"]), (
+            f"Expected argparse usage error: {text[:500]}"
+        )
+
+    def test_slave_non_numeric_rejected(self, cli_runner):
+        """--slave must be an integer; a non-numeric value is a usage error,
+        not a crash [P2/P3 wrong-type]."""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "--slave",
+            "notanumber",
+            expect_json=False,
+        )
+        assert result.returncode != 0, "Non-numeric --slave was accepted"
+        text = result.combined_output.lower()
+        assert "traceback" not in text
+        assert any(term in text for term in ["invalid", "usage", "error"]), (
+            f"Expected argparse type error: {text[:500]}"
+        )
+
+    def test_fuzz_iterations_non_numeric_rejected(self, cli_runner):
+        """--fuzz-iterations must be an integer [P2/P3 wrong-type]."""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "-F",
+            "--fuzz-iterations",
+            "lots",
+            "--confirm",
+            expect_json=False,
+        )
+        assert result.returncode != 0, "Non-numeric --fuzz-iterations was accepted"
+        text = result.combined_output.lower()
+        assert "traceback" not in text
+        assert any(term in text for term in ["invalid", "usage", "error"]), (
+            f"Expected argparse type error: {text[:500]}"
+        )
+
+    def test_negative_fuzz_iterations_no_crash(self, cli_runner):
+        """A negative --fuzz-iterations count must not crash the scanner
+        [P2 unvalidated numeric bound]."""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "-F",
+            "--fuzz-iterations",
+            "-5",
+            "--confirm",
+            json_log=True,
+            timeout=15,
+        )
+        assert "Traceback" not in result.combined_output
+        # Either argparse rejects the negative value outright, or the
+        # scanner treats it as zero/empty iterations and reports the
+        # connection attempt cleanly -- both are acceptable, a traceback
+        # is not.
+        assert result.returncode in [0, 1, 2]
+
+    def test_malformed_coe_index_no_crash(self, cli_runner):
+        """A malformed SLAVE:INDEX:SUBINDEX string for -r must fail cleanly,
+        not crash while parsing [P3 hostile input]."""
+        result = cli_runner.run(
+            self.protocol_name,
+            _TEST_INTERFACE,
+            "-r",
+            "not-a-valid-coe-address",
+            json_log=True,
+            timeout=15,
+        )
+        assert "Traceback" not in result.combined_output
+        assert result.returncode in [0, 1, 2]
+
+    def test_empty_target_file_like_interface(self, cli_runner, tmp_path):
+        """Passing a path to an empty file as the interface target must fail
+        cleanly with an interface/connection error, never a traceback."""
+        empty = tmp_path / "empty_iface_name"
+        empty.write_text("")
+        result = cli_runner.run(
+            self.protocol_name,
+            str(empty),
+            json_log=True,
+            timeout=15,
+        )
+        assert "Traceback" not in result.combined_output
+        assert result.returncode in [0, 1, 2]

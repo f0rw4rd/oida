@@ -542,16 +542,20 @@ class TASE2Server:
 
     def _add_data_object(self, ln, name: str, point: IndicationPoint):
         """Add a data object to the model"""
-        do = iec61850.DataObject_create(name, ln, 0)
+        # Convert LogicalNode to ModelNode* for SWIG type system
+        ln_modelnode = iec61850.toModelNode(ln)
+        do = iec61850.DataObject_create(name, ln_modelnode, 0)
+        do_modelnode = iec61850.toModelNode(do)
 
         # Add value attribute based on type
+        # DataAttribute_create signature: (name, parent, type, fc, triggerOptions, arrayElements, sAddr)
         if point.point_type in (
             IndicationPointType.DATA_REAL,
             IndicationPointType.DATA_REAL_Q,
             IndicationPointType.DATA_REAL_Q_TIMETAG,
         ):
             iec61850.DataAttribute_create(
-                "mag", do, iec61850.IEC61850_FC_MX, iec61850.IEC61850_FLOAT32, 0
+                "mag", do_modelnode, iec61850.IEC61850_FLOAT32, iec61850.IEC61850_FC_MX, 0, 0, 0
             )
         elif point.point_type in (
             IndicationPointType.DATA_STATE,
@@ -559,7 +563,7 @@ class TASE2Server:
             IndicationPointType.DATA_STATE_Q_TIMETAG,
         ):
             iec61850.DataAttribute_create(
-                "stVal", do, iec61850.IEC61850_FC_ST, iec61850.IEC61850_INT32, 0
+                "stVal", do_modelnode, iec61850.IEC61850_INT32, iec61850.IEC61850_FC_ST, 0, 0, 0
             )
         elif point.point_type in (
             IndicationPointType.DATA_DISCRETE,
@@ -567,52 +571,58 @@ class TASE2Server:
             IndicationPointType.DATA_DISCRETE_Q_TIMETAG,
         ):
             iec61850.DataAttribute_create(
-                "stVal", do, iec61850.IEC61850_FC_ST, iec61850.IEC61850_INT32, 0
+                "stVal", do_modelnode, iec61850.IEC61850_INT32, iec61850.IEC61850_FC_ST, 0, 0, 0
             )
 
         # Add quality if present
         if point.has_quality():
             iec61850.DataAttribute_create(
-                "q", do, iec61850.IEC61850_FC_ST, iec61850.IEC61850_QUALITY, 0
+                "q", do_modelnode, iec61850.IEC61850_QUALITY, iec61850.IEC61850_FC_ST, 0, 0, 0
             )
 
         # Add timestamp if present
         if point.has_timestamp():
             iec61850.DataAttribute_create(
-                "t", do, iec61850.IEC61850_FC_ST, iec61850.IEC61850_TIMESTAMP, 0
+                "t", do_modelnode, iec61850.IEC61850_TIMESTAMP, iec61850.IEC61850_FC_ST, 0, 0, 0
             )
 
     def _add_control_object(self, ln, name: str, cp: ControlPoint):
         """Add a control object to the model (Block 5)"""
-        do = iec61850.DataObject_create(name, ln, 0)
+        # Convert LogicalNode to ModelNode* for SWIG type system
+        ln_modelnode = iec61850.toModelNode(ln)
+        do = iec61850.DataObject_create(name, ln_modelnode, 0)
+        do_modelnode = iec61850.toModelNode(do)
 
+        # DataAttribute_create signature: (name, parent, type, fc, triggerOptions, arrayElements, sAddr)
         if cp.control_type == ControlPointType.COMMAND:
             # Binary command
             iec61850.DataAttribute_create(
-                "ctlVal", do, iec61850.IEC61850_FC_CO, iec61850.IEC61850_BOOLEAN, 0
+                "ctlVal", do_modelnode, iec61850.IEC61850_BOOLEAN, iec61850.IEC61850_FC_CO, 0, 0, 0
             )
         else:
             # Setpoint
             iec61850.DataAttribute_create(
-                "setVal", do, iec61850.IEC61850_FC_CO, iec61850.IEC61850_FLOAT32, 0
+                "setVal", do_modelnode, iec61850.IEC61850_FLOAT32, iec61850.IEC61850_FC_CO, 0, 0, 0
             )
 
         # SBO check-back ID
         if cp.device_class == DeviceClass.SBO:
             sbo_name = f"{name}_SBO"
-            sbo_do = iec61850.DataObject_create(sbo_name, ln, 0)
+            sbo_do = iec61850.DataObject_create(sbo_name, ln_modelnode, 0)
+            sbo_do_modelnode = iec61850.toModelNode(sbo_do)
             iec61850.DataAttribute_create(
-                "ctlVal", sbo_do, iec61850.IEC61850_FC_CO, iec61850.IEC61850_INT32, 0
+                "ctlVal", sbo_do_modelnode, iec61850.IEC61850_INT32, iec61850.IEC61850_FC_CO, 0, 0, 0
             )
 
         # Tag value
         tag_name = f"{name}_TAG"
-        tag_do = iec61850.DataObject_create(tag_name, ln, 0)
+        tag_do = iec61850.DataObject_create(tag_name, ln_modelnode, 0)
+        tag_do_modelnode = iec61850.toModelNode(tag_do)
         iec61850.DataAttribute_create(
-            "tagVal", tag_do, iec61850.IEC61850_FC_ST, iec61850.IEC61850_INT32, 0
+            "tagVal", tag_do_modelnode, iec61850.IEC61850_INT32, iec61850.IEC61850_FC_ST, 0, 0, 0
         )
         iec61850.DataAttribute_create(
-            "tagReason", tag_do, iec61850.IEC61850_FC_ST, iec61850.IEC61850_VISIBLE_STRING_255, 0
+            "tagReason", tag_do_modelnode, iec61850.IEC61850_VISIBLE_STRING_255, iec61850.IEC61850_FC_ST, 0, 0, 0
         )
 
     def _simulation_loop(self):

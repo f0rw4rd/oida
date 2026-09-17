@@ -35,6 +35,7 @@ class NetworkMixin:
             try:
                 response = await asyncio.wait_for(app.request(request), timeout=timeout)
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
+                    self._bacnet_response_seen = True
                     self.logger.success(f"  Object '{object_name}' found!")
                     if hasattr(response, "deviceIdentifier"):
                         self.logger.display(f"    Device: {response.deviceIdentifier}")
@@ -62,6 +63,7 @@ class NetworkMixin:
             try:
                 response = await asyncio.wait_for(app.request(request), timeout=timeout)
                 if response:
+                    self._bacnet_response_seen = True
                     self.logger.success("  BBMD Table readable!")
                     self.logger.display(f"    Response: {response}")
                 else:
@@ -87,6 +89,7 @@ class NetworkMixin:
             try:
                 response = await asyncio.wait_for(app.request(request), timeout=timeout)
                 if response:
+                    self._bacnet_response_seen = True
                     self.logger.success("  Foreign Device Table readable!")
                     self.logger.warning("  [!] FDT access may allow rogue device registration")
                     self.logger.display(f"    Response: {response}")
@@ -113,6 +116,7 @@ class NetworkMixin:
             try:
                 response = await asyncio.wait_for(app.request(request), timeout=timeout)
                 if response:
+                    self._bacnet_response_seen = True
                     self.logger.success("  Router(s) found!")
                     self.logger.display(f"    Response: {response}")
                 else:
@@ -134,6 +138,7 @@ class NetworkMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types["ErrorRejectAbortNack"]
 
         self.logger.display("\n[Remote Network Discovery]")
         self.logger.display("  Scanning for BACnet networks behind router...")
@@ -164,6 +169,7 @@ class NetworkMixin:
                     if response and not isinstance(
                         response, (AbortPDU, ErrorPDU, RejectPDU, Error)
                     ):
+                        self._bacnet_response_seen = True
                         port_name = "unknown"
                         if hasattr(response, "propertyValue") and hasattr(
                             response.propertyValue, "tagList"
@@ -261,7 +267,7 @@ class NetworkMixin:
                 except asyncio.TimeoutError as e:
                     self.logger.debug(f"bacpypes3 discover networks failed: {e}")
                     continue
-            except Exception as e:
+            except (Exception, ErrorRejectAbortNack) as e:
                 self.logger.debug(f"bacpypes3 discover networks failed: {e}")
                 continue
 
@@ -311,6 +317,7 @@ class NetworkMixin:
             try:
                 response = await asyncio.wait_for(app.request(request), timeout=timeout)
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
+                    self._bacnet_response_seen = True
                     responses.append(response)
             except asyncio.TimeoutError as e:
                 self.logger.debug(f"bacpypes3 scan remote network failed: {e}")
@@ -495,6 +502,7 @@ class NetworkMixin:
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
         Address = types["Address"]
+        ErrorRejectAbortNack = types["ErrorRejectAbortNack"]
 
         error_types = (AbortPDU, ErrorPDU, RejectPDU, Error)
 
@@ -521,7 +529,7 @@ class NetworkMixin:
             except asyncio.TimeoutError as e:
                 self.logger.debug(f"read prop failed: {e}")
                 return None
-            except Exception as e:
+            except (Exception, ErrorRejectAbortNack) as e:
                 self.logger.debug(f"  Read {prop_name} from {obj_id} failed: {e}")
                 return None
 

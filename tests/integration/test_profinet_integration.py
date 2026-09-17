@@ -31,12 +31,23 @@ Mock Server (from docker/mocks/services/Dockerfile.profinet):
 
 Test Classification Summary
 ---------------------------------------------------------------------------
-Category A (strict -- mock supports, assert success + validate data):    0 tests
-Category B (conditional -- accepts 0 or 1, unconditional output check): 33 tests
+Category A (strict -- mock supports, assert success + validate data):    1 test
+Category B (conditional -- accepts 0 or 1, unconditional output check): 45 tests
   - TestPROFINETIntegration (loopback, no raw socket):                  22 tests
   - TestPROFINETDocker (Docker bridge, raw socket):                     11 tests
-Category C (error handling -- assert failure + validate error events):    7 tests
-Total defined in file:                                                  40 tests
+  - TestPROFINETRpcOnly (loopback, UDP RPC on port 34964, no raw socket): 12 tests
+Category C (error handling -- assert failure + validate error events):  15 tests
+  - TestPROFINETIntegration / TestPROFINETDocker:                        7 tests
+  - TestPROFINETRpcOnly:                                                 8 tests
+Total defined in file:                                                  61 tests
+
+TestPROFINETRpcOnly (added for flag-coverage + bug-hunt work, see its own class
+docstring below for the full flag matrix) uses `-R`/`--rpc-only` mode, which talks
+plain UDP DCE/RPC on a fixed port (34964) and needs no CAP_NET_RAW/root -- unlike the
+DCP path above, this exercises real (non-mocked-away) CLI code. It found a genuine
+false-positive-identification bug: RPC-only mode reports success=True for a device
+that never sent a single byte back (see "Bugs/drift found" in the coverage report /
+test_false_positive_device_on_no_response).
 ---------------------------------------------------------------------------
 
 Docker Tests (TestPROFINETDocker -- Category B with raw socket):
@@ -73,9 +84,61 @@ Flag Coverage Matrix (oida profinet -h):
   --debug (global)           [B] test_debug_output
 """
 
+import json
+import socket
+import threading
+import time
+
 import pytest
 
 from .conftest import skip_unless_l2_docker
+
+# PROFINET RPC-only mode (-R) talks DCE/RPC over UDP on a fixed port -- this lets us
+# exercise real, non-raw-socket CLI code paths in a sandbox with no CAP_NET_RAW.
+_RPC_PORT = 34964
+_RPC_TARGET = "127.0.0.1"
+
+
+class _UdpMock:
+    """A minimal background UDP responder bound to the fixed PROFINET RPC port.
+
+    Runs in the pytest process; the CLI under test is a separate subprocess talking
+    to it over loopback. ``reply`` is called for every received datagram and its
+    return value (bytes or None) is sent back; return None to stay silent (exercises
+    the client's read timeout instead of the connect path).
+    """
+
+    def __init__(self, reply):
+        self._reply = reply
+        self._stop = threading.Event()
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._sock.bind((_RPC_TARGET, _RPC_PORT))
+        self._sock.settimeout(0.3)
+        self._thread = threading.Thread(target=self._serve, daemon=True)
+
+    def _serve(self):
+        while not self._stop.is_set():
+            try:
+                data, addr = self._sock.recvfrom(4096)
+            except (TimeoutError, OSError):
+                continue
+            reply = self._reply(data)
+            if reply is not None:
+                try:
+                    self._sock.sendto(reply, addr)
+                except OSError:
+                    pass
+
+    def __enter__(self):
+        self._thread.start()
+        time.sleep(0.2)
+        return self
+
+    def __exit__(self, *exc):
+        self._stop.set()
+        self._thread.join(timeout=2)
+        self._sock.close()
 
 
 # ---------------------------------------------------------------------------
@@ -836,3 +899,526 @@ class TestPROFINETDocker:
         assert result.returncode in [0, 1]
         _assert_docker_scan_attempted(result)
         assert "Traceback" not in result.combined_output
+
+
+@pytest.mark.profinet
+@pytest.mark.xdist_group(name="profinet_rpc_udp")
+class TestPROFINETRpcOnly:
+    """RPC-only mode (``-R``) targets an IP and speaks DCE/RPC over UDP port 34964.
+
+    Unlike the DCP path above (raw L2, always ``permission_error`` in this sandbox),
+    ``-R`` uses a plain UDP socket and needs no CAP_NET_RAW/root, so these tests
+    exercise real, non-mocked-away CLI code paths: argument wiring, RPC-unsupported
+    warnings, confirm-gates, and range/value validation. A same-process background
+    UDP responder (``_UdpMock``) stands in for a PROFINET device on loopback; no
+    Docker mock exists for PROFINET RPC (no TCP/UDP-listening mock service).
+
+    Flag coverage matrix (flags newly covered here; see module docstring above for
+    flags already covered by ``TestPROFINETIntegration``):
+      --mac            [B] test_mac_long_flag_dcp_path
+      --slots          [B] test_slots_flag_dcp_path
+      --write-im2      [B] test_write_im2_flag_dcp_path
+      --write-im3      [B] test_write_im3_flag_dcp_path
+      --set-ip         [B] test_set_ip_flag_dcp_path
+      --cyclic         [B] test_cyclic_flags_dcp_path
+      --cyclic-duration[B] test_cyclic_flags_dcp_path
+      --cyclic-cycle-ms[B] test_cyclic_flags_dcp_path (validation floor untestable here, see docstring)
+      --cyclic-slot    [B] test_cyclic_flags_dcp_path
+      --read-index     [B] test_rpc_unsupported_flags_warn
+      --write-index    [B] test_rpc_unsupported_flags_warn
+      --test-write     [B] test_rpc_unsupported_flags_warn
+      --enum           [B] test_enum_full_sweep_against_fast_mock
+      --enum-range     [B] test_enum_range_against_fast_mock / [C] test_enum_range_inverted_rejected_or_empty
+      --gsdml          [C] test_gsdml_missing_file_no_crash
+      --show-data      [B] test_enum_range_against_fast_mock
+      --slot           [B] test_slot_filter_against_fast_mock
+      --detect-write-only [C] test_detect_write_only_confirm_gate
+      --fuzz-indices   [B] test_fuzz_indices_and_iterations
+      --fuzz-iterations[B] test_fuzz_indices_and_iterations / [C] test_fuzz_iterations_negative_value
+      --enum-all       [B] test_enum_all_bounded_smoke (slow flag, bounded/killed)
+
+    Bug-hunt coverage:
+      P1  false-positive identification -- test_false_positive_device_on_no_response
+      P1b timeout honored               -- test_timeout_honored_against_blackhole
+      P2  malformed range/value          -- test_enum_range_inverted_rejected_or_empty,
+                                            test_fuzz_iterations_negative_value
+      P3  no traceback on bad input      -- asserted throughout via _no_traceback()
+      P4  confirm-gate                   -- test_detect_write_only_confirm_gate
+      P6  flag hygiene                   -- test_unknown_flag_rejected,
+                                            test_transposed_flag_typo_rejected,
+                                            test_borrowed_flag_rejected
+    """
+
+    def _no_traceback(self, result):
+        assert "Traceback" not in result.combined_output
+
+    # -- DCP-path (target=interface) flags: always hit permission_error early in
+    # this sandbox (no CAP_NET_RAW), matching the established pattern in
+    # TestPROFINETIntegration, but these specific literal long-form flags are new. --
+
+    def test_mac_long_flag_dcp_path(self, cli_runner):
+        """--mac (long form) accepted on the DCP path; sandbox lacks raw sockets."""
+        result = cli_runner.run(
+            "profinet",
+            "lo",
+            "--mac",
+            "AA:BB:CC:DD:EE:FF",
+            "--flash",
+            "--confirm",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(result)
+        text = result.combined_output.lower()
+        assert "permission" in text or "raw socket" in text or "capability" in text
+
+    def test_slots_flag_dcp_path(self, cli_runner):
+        """--slots is accepted and attempted on the DCP path."""
+        result = cli_runner.run("profinet", "lo", "--slots", format="json", json_log=True)
+        self._no_traceback(result)
+        text = result.combined_output.lower()
+        assert "permission" in text or "raw socket" in text or "capability" in text
+
+    def test_write_im2_flag_dcp_path(self, cli_runner):
+        """--write-im2 requires --confirm and -m; accepted then hits raw-socket gate."""
+        result = cli_runner.run(
+            "profinet",
+            "lo",
+            "--mac",
+            "AA:BB:CC:DD:EE:FF",
+            "--write-im2",
+            "2024-01-01",
+            "--confirm",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(result)
+        text = result.combined_output.lower()
+        assert "permission" in text or "raw socket" in text or "capability" in text
+
+    def test_write_im3_flag_dcp_path(self, cli_runner):
+        """--write-im3 requires --confirm and -m; accepted then hits raw-socket gate."""
+        result = cli_runner.run(
+            "profinet",
+            "lo",
+            "--mac",
+            "AA:BB:CC:DD:EE:FF",
+            "--write-im3",
+            "test-descriptor",
+            "--confirm",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(result)
+        text = result.combined_output.lower()
+        assert "permission" in text or "raw socket" in text or "capability" in text
+
+    def test_set_ip_flag_dcp_path(self, cli_runner):
+        """--set-ip is a DCP-only write op; requires -m and --confirm to be attempted."""
+        result = cli_runner.run(
+            "profinet",
+            "lo",
+            "--mac",
+            "AA:BB:CC:DD:EE:FF",
+            "--set-ip",
+            "192.168.1.100/24/192.168.1.1",
+            "--confirm",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(result)
+        text = result.combined_output.lower()
+        assert "permission" in text or "raw socket" in text or "capability" in text
+
+    def test_cyclic_flags_dcp_path(self, cli_runner):
+        """--cyclic + all its sub-flags combined (maximal combo) on the DCP path.
+
+        Also: --cyclic-cycle-ms has a documented >=8ms floor in
+        mixins/cyclic.py, but that validation lives past the raw-socket gate this
+        sandbox always trips first, so a below-floor value cannot be observed to be
+        rejected here; that is reported as untestable-in-this-sandbox (P2), not
+        silently skipped.
+        """
+        result = cli_runner.run(
+            "profinet",
+            "lo",
+            "--cyclic",
+            "--cyclic-duration",
+            "1",
+            "--cyclic-cycle-ms",
+            "16",
+            "--cyclic-slot",
+            "1/1:8:8",
+            "--confirm",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(result)
+        text = result.combined_output.lower()
+        assert "permission" in text or "raw socket" in text or "capability" in text
+
+    # -- RPC-only path (-R, target=IP): real, non-raw-socket code paths. --
+
+    def test_rpc_unsupported_flags_warn(self, cli_runner):
+        """--read-index/--write-index/--test-write are explicitly unsupported under
+        -R and produce a deterministic warning before any network I/O -- no mock
+        server or timeout wait needed.
+        """
+        result = cli_runner.run(
+            "profinet",
+            _RPC_TARGET,
+            "-R",
+            "--read-index",
+            "0xAFF0",
+            "--write-index",
+            "0x8029:01020304",
+            "--test-write",
+            "--confirm",
+            "-T",
+            "1",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(result)
+        text = result.combined_output
+        assert "does not support" in text
+        assert "--read-index" in text
+        assert "--write-index" in text
+        assert "--test-write" in text
+        assert "ignored" in text
+
+    def test_no_false_positive_device_on_no_response(self, cli_runner, tmp_path):
+        """P1 regression: RPC-only mode must NOT report success for a target that
+        never sent a single byte back.
+
+        Nothing is bound to UDP 127.0.0.1:34964 in this test (a genuinely closed
+        port). ``src/oida/protocols/profinet/__init__.py`` catches the AR-connect
+        failure and falls back to "implicit mode"; previously it then
+        unconditionally recorded the target as a discovered device with
+        success=True (the connection-1 false-positive bug). The fix gates device
+        identification on real protocol evidence (an established AR or actual
+        implicit I&M/diagnosis data), so with no response success must be False.
+        """
+        out_dir = tmp_path / "pnout"
+        result = cli_runner.run(
+            "profinet",
+            _RPC_TARGET,
+            "-R",
+            "-T",
+            "1",
+            "--output",
+            str(out_dir),
+            format="json",
+        )
+        self._no_traceback(result)
+        json_path = out_dir / "profinet.json"
+        assert json_path.exists(), f"expected {json_path} to be written"
+        data = json.loads(json_path.read_text())
+        entries = data if isinstance(data, list) else [data]
+        assert len(entries) >= 1
+        entry = entries[0]
+        # FIXED (P1 false-positive identification): success must be False because
+        # the target never responded to a single RPC datagram.
+        assert entry.get("success") is False
+        assert entry.get("error")
+        # No real I&M0 read ever succeeded -- confirms the False verdict is
+        # correct (there is no actual device data backing an identification).
+        assert "I&M0:" not in result.combined_output
+
+    def test_timeout_honored_against_blackhole(self, cli_runner):
+        """P1b: -R against an unreachable (blackhole) host must not hang -- the
+        per-request --timeout should bound the run to roughly a small multiple of
+        the requested timeout, not run away indefinitely.
+        """
+        start = time.monotonic()
+        result = cli_runner.run(
+            "profinet",
+            "10.255.255.1",
+            "-R",
+            "-T",
+            "2",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        elapsed = time.monotonic() - start
+        self._no_traceback(result)
+        assert result.returncode != -1, "run was killed by the harness -- looks like a hang"
+        assert elapsed < 15, f"expected the run to finish well within budget, took {elapsed:.1f}s"
+
+    def test_enum_full_sweep_against_fast_mock(self, cli_runner):
+        """--enum sweeps its full fixed index list; against a fast garbage-reply
+        mock every probe fails immediately (parse error) instead of waiting out
+        the timeout, so the full sweep finishes in well under a second.
+        """
+        with _UdpMock(reply=lambda _data: b"\x00" * 24):
+            result = cli_runner.run(
+                "profinet",
+                _RPC_TARGET,
+                "-R",
+                "--enum",
+                "-T",
+                "1",
+                format="json",
+                json_log=True,
+            )
+        self._no_traceback(result)
+        assert "I&M0:" not in result.combined_output
+
+    def test_enum_range_against_fast_mock(self, cli_runner):
+        """--enum-range and --show-data against a fast garbage-responding mock.
+
+        The mock replies immediately to every datagram with junk bytes so every
+        probed index fails fast (parse error) instead of waiting out the timeout --
+        keeps a real end-to-end run of these flags fast and deterministic.
+        """
+        with _UdpMock(reply=lambda _data: b"\x00" * 24):
+            result = cli_runner.run(
+                "profinet",
+                _RPC_TARGET,
+                "-R",
+                "--enum-range",
+                "0xAFF0-0xAFF5",
+                "--show-data",
+                "-T",
+                "1",
+                format="json",
+                json_log=True,
+            )
+        self._no_traceback(result)
+        # No real device data was ever obtained from junk bytes.
+        assert "I&M0:" not in result.combined_output
+
+    def test_enum_range_inverted_rejected_or_empty(self, cli_runner):
+        """P2: an inverted hex range (high-low) must not silently scan garbage or
+        crash -- either it's rejected up front or it produces an empty enumeration.
+        """
+        result = cli_runner.run(
+            "profinet",
+            _RPC_TARGET,
+            "-R",
+            "--enum-range",
+            "0xAFF5-0xAFF0",
+            "-T",
+            "1",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(result)
+        # The scanner rejects the inverted range up front with a clear message
+        # rather than silently iterating garbage or crashing.
+        assert "invalid range" in result.combined_output.lower()
+        assert result.returncode in (0, 1)
+
+    def test_slot_filter_against_fast_mock(self, cli_runner):
+        """--slot filters the enumeration to a specific slot/subslot."""
+        with _UdpMock(reply=lambda _data: b"\x00" * 24):
+            result = cli_runner.run(
+                "profinet",
+                _RPC_TARGET,
+                "-R",
+                "--enum-range",
+                "0xAFF0-0xAFF2",
+                "--slot",
+                "1/1",
+                "-T",
+                "1",
+                format="json",
+                json_log=True,
+            )
+        self._no_traceback(result)
+        assert result.returncode in (0, 1)
+        assert "I&M0:" not in result.combined_output
+
+    def test_gsdml_missing_file_no_crash(self, cli_runner):
+        """P3: a nonexistent --gsdml path must not crash the scan; the GSDML parser
+        catches its own errors and the scan continues without GSDML context.
+        """
+        result = cli_runner.run(
+            "profinet",
+            _RPC_TARGET,
+            "-R",
+            "--gsdml",
+            "/nonexistent/does-not-exist.xml",
+            "-T",
+            "1",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(result)
+        # The scan must complete cleanly despite the bad GSDML path -- the parser
+        # swallows its own errors and the scan proceeds without GSDML context.
+        assert result.returncode in (0, 1)
+
+    def test_detect_write_only_confirm_gate(self, cli_runner):
+        """P4: --detect-write-only refuses without --confirm, proceeds with it.
+
+        --detect-write-only only takes effect when paired with an enumeration flag
+        (--enum/--enum-range/etc); the confirm-gate check in
+        mixins/enumeration.py fires before any index is read, so this is fast and
+        deterministic even against a target that never responds.
+        """
+        refused = cli_runner.run(
+            "profinet",
+            _RPC_TARGET,
+            "-R",
+            "--enum-range",
+            "0xAFF0-0xAFF0",
+            "--detect-write-only",
+            "-T",
+            "1",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(refused)
+        assert "requires --confirm" in refused.combined_output
+
+        allowed = cli_runner.run(
+            "profinet",
+            _RPC_TARGET,
+            "-R",
+            "--enum-range",
+            "0xAFF0-0xAFF0",
+            "--detect-write-only",
+            "--confirm",
+            "-T",
+            "1",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(allowed)
+
+    def test_fuzz_indices_and_iterations(self, cli_runner):
+        """--fuzz-indices and --fuzz-iterations combined with --fuzz --confirm."""
+        with _UdpMock(reply=lambda _data: b"\x00" * 24):
+            result = cli_runner.run(
+                "profinet",
+                _RPC_TARGET,
+                "-R",
+                "--fuzz",
+                "basic",
+                "--fuzz-indices",
+                "0xAFF0-0xAFF1",
+                "--fuzz-iterations",
+                "2",
+                "--confirm",
+                "-T",
+                "1",
+                format="json",
+                json_log=True,
+            )
+        self._no_traceback(result)
+        # Both explicitly requested indices were actually probed.
+        assert "0xAFF0" in result.combined_output
+        assert "0xAFF1" in result.combined_output
+        assert result.returncode in (0, 1)
+
+    def test_fuzz_iterations_negative_value(self, cli_runner):
+        """P2: a negative --fuzz-iterations must not crash or silently misbehave.
+
+        Drift: the CLI silently accepts a nonsensical negative iteration count
+        (echoed back verbatim as "(-5 iterations)") instead of rejecting it -- see
+        the "Bugs/drift found" section of the coverage report.
+        """
+        result = cli_runner.run(
+            "profinet",
+            _RPC_TARGET,
+            "-R",
+            "--fuzz",
+            "basic",
+            "--fuzz-iterations",
+            "-5",
+            "--confirm",
+            "-T",
+            "1",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(result)
+        assert result.returncode in (0, 1)
+        assert "-5" in result.combined_output
+
+    @pytest.mark.slow
+    @pytest.mark.timeout(30)
+    def test_enum_all_bounded_smoke(self, cli_runner):
+        """--enum-all sweeps ~65536 indices (documented SLOW) -- cannot complete in
+        a test budget even against a fast responder. This is a bounded smoke test:
+        it must start real progress and must not crash; being killed by the harness
+        here is EXPECTED (the flag is inherently slow), not the P1b hang bug (which
+        is about --timeout being ignored on a simple connect, not about an
+        intentionally large sweep).
+        """
+        with _UdpMock(reply=lambda _data: b"\x00" * 24):
+            result = cli_runner.run(
+                "profinet",
+                _RPC_TARGET,
+                "-R",
+                "--enum-all",
+                "-T",
+                "1",
+                format="json",
+                json_log=True,
+                timeout=8,
+            )
+        self._no_traceback(result)
+        if result.returncode == -1:
+            # Killed by the harness -- expected for this inherently unbounded sweep.
+            assert "Progress" in result.combined_output or result.combined_output != ""
+        else:
+            assert result.returncode in (0, 1)
+
+    # -- Flag hygiene / hostile-argument tests (P6). --
+
+    def test_unknown_flag_rejected(self, cli_runner):
+        """An unrecognized flag must be rejected with a clean usage error."""
+        result = cli_runner.run(
+            "profinet",
+            _RPC_TARGET,
+            "-R",
+            "--not-a-real-flag",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(result)
+        assert result.returncode != 0
+        assert (
+            "unrecognized" in result.combined_output.lower()
+            or "usage" in result.combined_output.lower()
+        )
+
+    def test_transposed_flag_typo_rejected(self, cli_runner):
+        """A transposed typo of a real flag (--enmu for --enum) must not silently
+        match a different option or be swallowed -- argparse rejects it outright
+        since no opt-in typo-suggestion is configured to fire here as a match.
+        """
+        result = cli_runner.run(
+            "profinet",
+            _RPC_TARGET,
+            "-R",
+            "--enmu",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(result)
+        assert result.returncode != 0
+        assert (
+            "unrecognized" in result.combined_output.lower()
+            or "usage" in result.combined_output.lower()
+        )
+
+    def test_borrowed_flag_rejected(self, cli_runner):
+        """A flag borrowed from another protocol (--port; profinet has no --port,
+        RPC target port is fixed) must be rejected, not silently ignored.
+        """
+        result = cli_runner.run(
+            "profinet",
+            _RPC_TARGET,
+            "-R",
+            "--port",
+            "5021",
+            format="json",
+            json_log=True,
+        )
+        self._no_traceback(result)
+        assert result.returncode != 0
+        assert "unrecognized" in result.combined_output.lower()

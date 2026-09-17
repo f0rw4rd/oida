@@ -120,6 +120,7 @@ Flag Coverage Matrix (proto_args.py):
   --output-dir              [B] test_dump_all_bulk_export
   --dest-aet                [B] test_c_move_transfer
   --store-file              [B] test_c_store_missing_file
+  --store-dir               [A] test_c_store_dir_uploads_files
   --max-patients            [B] test_dump_all_bulk_export
   --max-studies             [B] test_dump_all_bulk_export
   --aet-brute               [A] test_brute_ae_open_server, [B] test_brute_ae_strict_server
@@ -133,6 +134,11 @@ Flag Coverage Matrix (proto_args.py):
   invalid host              [C] test_invalid_target (inherited)
   wrong port                [C] test_connection_refused (inherited)
 """
+
+import contextlib
+import json
+import socket
+import threading
 
 import pytest
 from typing import Optional
@@ -1030,6 +1036,65 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
         assert any(
             x in text for x in ["no dicom files", "not found", "no such file", "error", "fail"]
         ), f"Expected error message about missing file: {text[:500]}"
+
+    def test_c_store_dir_uploads_files(self, cli_runner, target, port, tmp_path):
+        """Test --store --store-dir uploads every .dcm file found in a directory [Category A]"""
+        pytest.importorskip("pydicom")
+        from pydicom.dataset import Dataset, FileMetaDataset
+        from pydicom.uid import CTImageStorage, ExplicitVRLittleEndian, generate_uid
+
+        store_dir = tmp_path / "store_dir"
+        store_dir.mkdir()
+
+        for i in range(2):
+            file_meta = FileMetaDataset()
+            file_meta.MediaStorageSOPClassUID = CTImageStorage
+            file_meta.MediaStorageSOPInstanceUID = generate_uid()
+            file_meta.TransferSyntaxUID = ExplicitVRLittleEndian
+
+            ds = Dataset()
+            ds.file_meta = file_meta
+            ds.is_little_endian = True
+            ds.is_implicit_VR = False
+            ds.SOPClassUID = CTImageStorage
+            ds.SOPInstanceUID = file_meta.MediaStorageSOPInstanceUID
+            ds.PatientName = f"TEST^STOREDIR{i}"
+            ds.PatientID = f"STOREDIRTEST{i}"
+            ds.Modality = "CT"
+            ds.StudyInstanceUID = generate_uid()
+            ds.SeriesInstanceUID = generate_uid()
+
+            ds.save_as(str(store_dir / f"image_{i}.dcm"), enforce_file_format=True)
+
+        # A non-.dcm file in the same directory must be ignored by the glob.
+        (store_dir / "readme.txt").write_text("not a dicom file")
+
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--store",
+            "--store-dir",
+            str(store_dir),
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+
+        assert result.returncode in [0, 1], f"C-STORE --store-dir crashed: rc={result.returncode}"
+        text = _combined_text(result, result.scan_log if result.scan_log else None)
+        assert "requires --confirm" not in text, (
+            f"C-STORE should run with --confirm, not bail on the gate: {text[:500]}"
+        )
+        # Exactly the two .dcm files must be picked up -- readme.txt excluded.
+        assert "uploading 2 dicom file" in text, (
+            f"Expected scanner to find exactly 2 .dcm files from --store-dir: {text[:500]}"
+        )
+        assert "uploaded: image_" in text, (
+            f"Expected at least one successful upload from --store-dir: {text[:500]}"
+        )
 
     def test_brute_ae_strict_server(self, cli_runner, mock_host, mock_ports):
         """Test --aet-brute against strict server (AET whitelist) [Category B]"""
@@ -2131,3 +2196,119 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
     # NOTE: --fuzz-pdu / --fuzz-dimse tests were removed — those flags no longer
     # exist on the DICOM CLI (fuzzing is driven by --fuzz, see test_fuzz_*
     # C-FIND coverage above). They were never implemented as PDU/DIMSE modes.
+
+
+@contextlib.contextmanager
+def _dummy_tcp_server():
+    """A local TCP server that accepts connections but never speaks DICOM.
+
+    Safety: binds only to 127.0.0.1 on an ephemeral port. It provides a
+    "TCP connects but is not a DICOM SCP" target for the connection-1
+    false-positive regression below — it never touches a real device or external
+    network. Accepted sockets are held open and silent so the A-ASSOCIATE never
+    receives an A-ASSOCIATE-AC.
+    """
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind(("127.0.0.1", 0))
+    srv.listen(8)
+    port = srv.getsockname()[1]
+    stop = threading.Event()
+    conns = []
+
+    def _serve():
+        srv.settimeout(0.5)
+        while not stop.is_set():
+            try:
+                conn, _ = srv.accept()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            conns.append(conn)
+
+    thread = threading.Thread(target=_serve, daemon=True)
+    thread.start()
+    try:
+        yield port
+    finally:
+        stop.set()
+        with contextlib.suppress(OSError):
+            srv.close()
+        for conn in conns:
+            with contextlib.suppress(OSError):
+                conn.close()
+        thread.join(timeout=2)
+
+
+class TestDICOMP1FalsePositiveRegression:
+    """Regression guard for the connection-1 false-positive identification bug.
+
+    A bare TCP connect to a port that speaks *something other than DICOM* opens
+    the channel but the A-ASSOCIATE request never gets an A-ASSOCIATE-AC. Before
+    the fix, proto_flow returned early on a failed association without setting
+    success=False, so the base ``NetworkConnection.run()`` defaulted
+    success=True and OIDA reported a false-positive DICOM SCP on any open TCP
+    port. The fix sets success=False when ``create_conn_obj()`` reports the
+    association was not established.
+
+    Safety: targets only a local in-process dummy TCP server bound to 127.0.0.1
+    and a closed local port — never a real device or external network.
+    """
+
+    def _read_result_payload(self, out_dir, result):
+        candidates = sorted(out_dir.glob("*.json"))
+        assert candidates, (
+            "no JSON result file was written to the output directory; "
+            f"combined output: {result.combined_output[:800]}"
+        )
+        payload = json.loads(candidates[-1].read_text())
+        return payload[0] if isinstance(payload, list) else payload
+
+    def test_non_dicom_tcp_port_is_not_a_false_positive(self, cli_runner, tmp_path):
+        """A TCP-connectable but non-DICOM port must report success=False."""
+        with _dummy_tcp_server() as port:
+            out_dir = tmp_path / "p1_non_dicom"
+            result = cli_runner.run(
+                "dicom",
+                "127.0.0.1",
+                "--port",
+                str(port),
+                "--timeout",
+                "3",
+                format="json",
+                output=str(out_dir),
+                expect_json=False,
+                timeout=30,
+            )
+            last = self._read_result_payload(out_dir, result)
+            assert last["success"] is False, (
+                "connection-1 regression: a non-DICOM TCP port was reported as a "
+                f"successful DICOM identification. Payload: {last}"
+            )
+
+    def test_closed_port_is_not_a_false_positive(self, cli_runner, tmp_path):
+        """A closed local port must report success=False (never a phantom SCP)."""
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        probe.bind(("127.0.0.1", 0))
+        closed_port = probe.getsockname()[1]
+        probe.close()
+
+        out_dir = tmp_path / "p1_closed"
+        result = cli_runner.run(
+            "dicom",
+            "127.0.0.1",
+            "--port",
+            str(closed_port),
+            "--timeout",
+            "3",
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+            timeout=30,
+        )
+        last = self._read_result_payload(out_dir, result)
+        assert last["success"] is False, (
+            "connection-1 regression: a closed port was reported as a successful "
+            f"DICOM identification. Payload: {last}"
+        )

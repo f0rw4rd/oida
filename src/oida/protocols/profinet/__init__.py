@@ -74,6 +74,11 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
 
         self.timeout = float(self._arg_from(args, "timeout", 3.0))
         self.discovered_devices: Dict[str, ProfinetDevice] = {}
+        # P1 false-positive guard: opening a raw DCP socket or an RPC/UDP
+        # socket does not prove a PROFINET device exists. Require real
+        # evidence — a DCP Identify reply, an established AR, or actual
+        # implicit I&M/diagnosis data — before reporting success.
+        self._profinet_response_seen = False
         self._my_mac = None
         self._gsdml: Optional[GSDMLDevice] = None
 
@@ -105,6 +110,22 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
             if self.conn:
                 self.enum_host_info()
                 self.print_host_info()
+
+        # P1 false-positive guard: unless a real PROFINET response was seen,
+        # do not let run() default success=True on a silent/non-PROFINET host.
+        self._profinet_response_gate()
+
+    def _profinet_response_gate(self):
+        """Mark the scan unsuccessful when no real PROFINET response was seen.
+
+        connection-1 bug class: creating a DCP/RPC socket never raises against
+        a silent or non-PROFINET endpoint, so identification must be gated on
+        actual protocol evidence (a DCP Identify reply, an established AR, or
+        implicit I&M/diagnosis data).
+        """
+        if not self._profinet_response_seen:
+            self.results["success"] = False
+            self.results.setdefault("error", "No PROFINET response (no device identified)")
 
     def create_conn_obj(self):
         """Validate interface for DCP operations."""
@@ -206,6 +227,8 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
             try:
                 con.connect(fake_mac)
                 self.logger.success(f"RPC AR established to {self.target_ip}")
+                # A real AR could be established: this is a genuine PROFINET peer.
+                self._profinet_response_seen = True
                 use_implicit = False
             except Exception as e:
                 self.logger.debug(f"AR establishment failed: {e}, falling back to implicit reads")
@@ -236,7 +259,18 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
         finally:
             con.close()
 
-        # Confirmed device: RPC connection succeeded above (failures return early).
+        # Only a real response confirms a device. RPCCon() creating a UDP
+        # socket does NOT prove a PROFINET endpoint exists: against a silent or
+        # closed port, con.connect() fails and implicit reads return nothing,
+        # yet we still reached here. Require actual protocol evidence (a real
+        # AR or implicit I&M/diagnosis data) before recording the device.
+        if not self._profinet_response_seen:
+            self.logger.fail(
+                f"No PROFINET response from {self.target_ip} "
+                "(no AR, no I&M/diagnosis data) - not identified as a device"
+            )
+            return
+
         self.logger.security_finding(
             "No encryption",
             detail="PROFINET has no transport encryption",
@@ -268,6 +302,9 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
         if not devices:
             self.logger.fail("No PROFINET devices found")
             return
+
+        # A DCP device only appears here if it answered the Identify multicast.
+        self._profinet_response_seen = True
 
         no_rpc = self._arg("no_rpc", False)
 

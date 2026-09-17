@@ -199,6 +199,8 @@ class RPCMixin(_ScannerBase):
         try:
             im0 = con.read_implicit(0, 0, 1, profinet_mod.indices.IM0)
             if im0 and im0.payload:
+                # Real implicit I&M0 data came back: a genuine PROFINET device.
+                self._profinet_response_seen = True
                 parsed = profinet_mod.PNInM0(im0.payload)
                 order_id = (
                     parsed.order_id.decode("ascii", errors="ignore").strip()
@@ -254,6 +256,8 @@ class RPCMixin(_ScannerBase):
         try:
             diag = con.read_implicit(0, 0, 0, 0xF000)
             if diag and diag.payload:
+                # Real implicit diagnosis data: a genuine PROFINET device.
+                self._profinet_response_seen = True
                 self.logger.display(f"Diagnosis data: {len(diag.payload)} bytes")
         except Exception as e:
             self.logger.debug(f"Failed to read diagnosis: {e}")

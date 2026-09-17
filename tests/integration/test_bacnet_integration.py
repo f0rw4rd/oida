@@ -52,6 +52,7 @@ Category B (conditional -- mock may not support, accept 0 or 1):    17 tests
 """
 
 import pytest
+import socket
 import subprocess
 import sys
 from pathlib import Path
@@ -1528,3 +1529,57 @@ class TestBACnetSecurityFindings(BaseProtocolIntegrationTest):
                 "device",
             ]
         ), f"Expected --confirm warning in output: {text[:500]}"
+
+
+class TestBACnetP1FalsePositiveRegression:
+    """Regression: a bare UDP send must not be reported as a BACnet device.
+
+
+
+
+
+    connection-1 bug class. BACnet/IP is connectionless UDP, so Who-Is to a
+
+
+    silent or non-BACnet endpoint never raises and run() would default
+
+
+    success=True. Only a real I-Am / device / network-layer reply counts.
+
+
+    """
+
+    def test_silent_udp_port_is_not_a_false_positive(self):
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        s.bind(("127.0.0.1", 0))
+
+        port = s.getsockname()[1]
+
+        try:
+            res = CLIRunner(timeout=45).run(
+                "bacnet", "127.0.0.1", port=port, timeout=8, format="json"
+            )
+
+        finally:
+            s.close()
+
+        assert res.success is False
+
+        if res.json_output:
+            assert res.json_output.get("success") is False
+
+    def test_closed_udp_port_is_not_a_false_positive(self):
+
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+
+        s.bind(("127.0.0.1", 0))
+
+        port = s.getsockname()[1]
+
+        s.close()
+
+        res = CLIRunner(timeout=45).run("bacnet", "127.0.0.1", port=port, timeout=8, format="json")
+
+        assert res.success is False

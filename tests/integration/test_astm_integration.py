@@ -18,9 +18,11 @@ nothing); behavioural flag effects are covered by the per-operation tests.
 """
 
 import argparse
+import contextlib
 import os
 import socket
 import tempfile
+import threading
 from unittest.mock import MagicMock, patch
 
 import pytest
@@ -328,7 +330,8 @@ class TestASTMConnection:
         ):
             instance = ASTMConnection(args, None, "127.0.0.1")
 
-        assert instance.results["success"] is True
+        # A refused connection is not an ASTM device: must not be a false positive.
+        assert instance.results["success"] is False
         assert instance.results["data"]["connected"] is False
 
     def test_connection_timeout(self):
@@ -343,7 +346,8 @@ class TestASTMConnection:
         ):
             instance = ASTMConnection(args, None, "127.0.0.1")
 
-        assert instance.results["success"] is True
+        # A connection timeout is not an ASTM device: must not be a false positive.
+        assert instance.results["success"] is False
         assert instance.results["data"]["connected"] is False
 
     def test_connection_generic_error(self):
@@ -358,7 +362,8 @@ class TestASTMConnection:
         ):
             instance = ASTMConnection(args, None, "127.0.0.1")
 
-        assert instance.results["success"] is True
+        # A failed connection is not an ASTM device: must not be a false positive.
+        assert instance.results["success"] is False
         assert instance.results["data"]["connected"] is False
 
     def test_disconnect_closes_socket(self):
@@ -401,7 +406,8 @@ class TestENQACKHandshake:
         args = _make_args()
         instance = _instantiate_astm_nxc(args, mock_sock)
 
-        assert instance.results["success"] is True
+        # NAK to ENQ means no ASTM handshake: not a valid identification.
+        assert instance.results["success"] is False
         # Header should not be accepted since ENQ was NAK'd
         assert instance.results["data"].get("header_accepted") is not True
 
@@ -413,7 +419,8 @@ class TestENQACKHandshake:
         args = _make_args()
         instance = _instantiate_astm_nxc(args, mock_sock)
 
-        assert instance.results["success"] is True
+        # Unexpected (non-ACK) reply to ENQ is not a valid ASTM handshake.
+        assert instance.results["success"] is False
         assert instance.results["data"].get("header_accepted") is not True
 
     def test_enq_timeout(self):
@@ -429,7 +436,8 @@ class TestENQACKHandshake:
         args = _make_args()
         instance = _instantiate_astm_nxc(args, mock_sock)
 
-        assert instance.results["success"] is True
+        # No response to ENQ (timeout) is not a valid ASTM handshake.
+        assert instance.results["success"] is False
         assert instance.results["data"].get("header_accepted") is not True
 
 
@@ -2104,3 +2112,83 @@ class TestProtoArgs:
         subparsers = main_parser.add_subparsers()
         astm_parser = proto_args(subparsers, [parent])
         assert "--quick" not in (astm_parser.epilog or "")
+
+
+# ============================================================================
+# P1 False-Positive Regression (connection-1 bug class)
+# ============================================================================
+
+
+@contextlib.contextmanager
+def _dummy_tcp_server():
+    """A TCP server that accepts connections but never sends an ASTM reply.
+
+    Models a silent or non-ASTM service. A bare TCP connect to it succeeds,
+    but no ENQ is ever ACKed, so identification must NOT report success.
+    """
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind(("127.0.0.1", 0))
+    srv.listen(8)
+    port = srv.getsockname()[1]
+    stop = threading.Event()
+    conns = []
+
+    def _serve():
+        srv.settimeout(0.3)
+        while not stop.is_set():
+            try:
+                c, _ = srv.accept()
+                conns.append(c)
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+
+    t = threading.Thread(target=_serve, daemon=True)
+    t.start()
+    try:
+        yield port
+    finally:
+        stop.set()
+        with contextlib.suppress(OSError):
+            srv.close()
+        for c in conns:
+            with contextlib.suppress(OSError):
+                c.close()
+
+
+class TestASTMP1FalsePositiveRegression:
+    """Regression: a bare TCP connect must not be reported as an ASTM device.
+
+    connection-1 bug class: connection.run() defaults success=True on any
+    non-raising proto_flow(). Only a real ASTM analyzer ACKs our ENQ, so a
+    silent/non-ASTM listener (and a closed port) must yield success is False.
+    """
+
+    def test_silent_tcp_port_is_not_a_false_positive(self):
+        from oida.protocols.astm import astm as ASTMConnection
+
+        with _dummy_tcp_server() as port:
+            args = _make_args(port=port, timeout=2)
+            instance = ASTMConnection(args, None, "127.0.0.1")
+
+        assert instance.results["data"]["connected"] is True
+        assert instance.results["success"] is False
+        assert instance.results.get("error")
+
+    def test_closed_port_is_not_a_false_positive(self):
+        from oida.protocols.astm import astm as ASTMConnection
+
+        # Bind then immediately close to obtain a port with nothing listening.
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        s.bind(("127.0.0.1", 0))
+        port = s.getsockname()[1]
+        s.close()
+
+        args = _make_args(port=port, timeout=2)
+        instance = ASTMConnection(args, None, "127.0.0.1")
+
+        assert instance.results["data"]["connected"] is False
+        assert instance.results["success"] is False
+        assert instance.results.get("error")

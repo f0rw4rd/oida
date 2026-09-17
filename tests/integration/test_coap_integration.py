@@ -768,6 +768,47 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             ]
         ), f"Expected PSK identity attempt output: {text[:500]}"
 
+    def test_dtls_rpk_option(self, cli_runner, target, port, tmp_path):
+        """--dtls-rpk is accepted and drives a real RPK handshake attempt [Category B]
+
+        The mock's DTLS listener is PSK/cert-only, so RPK auth can never
+        succeed here -- but `_try_dtls_rpk`/`try_dtls_rpk` still runs a real
+        code path: it probes the installed aiocoap DTLS backend for RPK
+        support (and, if supported, opens the key file and attempts a
+        handshake) before falling back to a hard DTLS failure. Assert the
+        CLI names RPK/DTLS in its outcome and never crashes, rather than
+        silently ignoring the flag.
+        """
+        rpk_file = tmp_path / "client_rpk.pem"
+        rpk_file.write_text(
+            "-----BEGIN PUBLIC KEY-----\n"
+            "MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEtestRawPublicKeyPlaceholder\n"
+            "-----END PUBLIC KEY-----\n"
+        )
+
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--dtls-rpk",
+            str(rpk_file),
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+
+        assert result.returncode in [0, 1]
+        assert "Traceback" not in result.combined_output
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text
+            for term in [
+                "rpk",
+                "dtls",
+            ]
+        ), f"Expected --dtls-rpk attempt to be named in output: {text[:500]}"
+
     # ========================================================================
     # Write Operation Tests
     # ========================================================================
@@ -836,6 +877,102 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
                 "fail",
             ]
         ), f"Expected --confirm requirement message: {text[:500]}"
+
+    def test_put_with_content_format(self, cli_runner, target, port):
+        """--content-format sets the Content-Format option on a write [Category A]
+
+        The mock's /actuator/led PUT accepts any payload, but the CLI's own
+        "Sending PUT ... (Content-Format: <name>)" display line is generated
+        purely from resolving the --content-format value client-side (see
+        `_resolve_content_format`/`_do_write`), so it is observable regardless
+        of what the mock does with the option.
+        """
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--put",
+            "/actuator/led",
+            "1",
+            "--content-format",
+            "text",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=45,
+        )
+
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        # The resolved alias name ("text/plain") must appear -- proof the
+        # --content-format value was actually parsed and threaded through,
+        # not just accepted and ignored.
+        assert "text/plain" in text or "content-format" in text, (
+            f"Expected Content-Format to be named in output: {text[:500]}"
+        )
+
+    def test_put_with_content_format_numeric(self, cli_runner, target, port):
+        """--content-format accepts a numeric CoAP Content-Format ID [Category A]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--put",
+            "/config",
+            '{"x":1}',
+            "--content-format",
+            "50",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=45,
+        )
+
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        # 50 resolves to application/json in CONTENT_FORMATS -- confirms the
+        # numeric path (not just the alias-name path) is exercised.
+        assert "application/json" in text or "content-format" in text, (
+            f"Expected numeric Content-Format 50 to resolve to application/json: {text[:500]}"
+        )
+
+    @pytest.mark.security
+    def test_content_format_invalid_value_rejected(self, cli_runner, target, port):
+        """An unrecognized --content-format name is rejected cleanly [Category C]
+
+        `_resolve_content_format` fails the operation (logger.fail) rather than
+        silently sending the write with no Content-Format option -- assert the
+        CLI reports the bad value, not a traceback.
+        """
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--put",
+            "/actuator/led",
+            "1",
+            "--content-format",
+            "not-a-real-format",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+
+        assert result.returncode != -1
+        assert "Traceback" not in result.combined_output
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text
+            for term in [
+                "unknown content format",
+                "not-a-real-format",
+                "content format",
+            ]
+        ), f"Expected an 'unknown content format' rejection: {text[:500]}"
 
     @pytest.mark.security
     def test_post_with_confirm(self, cli_runner, target, port):

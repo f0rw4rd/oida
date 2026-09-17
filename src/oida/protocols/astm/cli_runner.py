@@ -33,6 +33,9 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
         self.record_builder: Optional[ASTMRecordBuilder] = None
         self.detected_analyzer: Optional[str] = None
         self.frame_number: int = 1
+        # P1 false-positive guard: only a real ASTM analyzer ACKs our ENQ.
+        # A bare TCP connect to a silent/non-ASTM port must not report success.
+        self._astm_response_seen: bool = False
         super().__init__(args, db, host)
 
     def proto_flow(self):
@@ -44,11 +47,15 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
 
         # Create connection
         if not self.create_conn_obj():
+            # Closed/refused port is not an ASTM device — do not report success.
+            self.results["success"] = False
+            self.results.setdefault("error", "Connection failed")
             return
 
         # Probe operations if requested (runs before other operations)
         if getattr(self.args, "probe_ops", False):
             self._probe_operations()
+            self._astm_response_gate()
             self._analyze_security()
             self._export_results()
             self._disconnect()
@@ -56,6 +63,7 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
 
         # Enumerate host info (ENQ/ACK test + header exchange)
         self.enum_host_info()
+        self._astm_response_gate()
         self.print_host_info()
 
         # Record operations based on args
@@ -109,6 +117,18 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
 
         # Cleanup
         self._disconnect()
+
+    def _astm_response_gate(self):
+        """P1 false-positive guard.
+
+        A bare TCP connect succeeds against any listening socket, including
+        silent or non-ASTM services. Only a real ASTM analyzer answers our
+        ENQ with an ACK (tracked via self._astm_response_seen). If we never
+        saw that, mark the scan unsuccessful so identification is not faked.
+        """
+        if not self._astm_response_seen:
+            self.results["success"] = False
+            self.results.setdefault("error", "No valid ASTM response (ENQ/ACK handshake failed)")
 
     def create_conn_obj(self) -> bool:
         """Establish TCP connection (optionally with TLS)"""

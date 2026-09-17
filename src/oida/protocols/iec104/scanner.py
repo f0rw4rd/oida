@@ -231,6 +231,11 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         self._listen_output_fh = None
 
         # Discovery state (populated during scan)
+        # _apdu_received: set True the moment the peer sends ANY valid APDU
+        # (I/U/S-frame). A bare TCP connect to a non-IEC104 port opens the
+        # channel but never produces an APDU, so this is the discriminator that
+        # prevents a false-positive IEC 104 identification (connection-1).
+        self._apdu_received = False
         self._discovered_points: Dict[int, Dict[str, Any]] = {}
         self._discovered_types: Set[str] = set()
         self._discovered_stations: Set[int] = set()
@@ -326,6 +331,10 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
             self.logger.debug(f"Point IOA={io_address} Type={type_name}")
 
         def on_receive_raw(connection: c104.Connection, data: bytes) -> None:
+            # Any APDU from the peer (I/U/S-frame: start byte 0x68 + length) is
+            # proof this is a real IEC 104 endpoint, not just an open TCP port.
+            if len(data) >= 2 and data[0] == 0x68:
+                scanner._apdu_received = True
             if len(data) >= 7:
                 # Check if this is an I-frame (data transfer) - bit 0 of ctrl1 = 0
                 if len(data) >= 6 and (data[2] & IFRAME_MASK) == 0:

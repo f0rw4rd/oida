@@ -142,6 +142,32 @@ class dnp3(NetworkConnection):
         scan_results = self.scanner.discover(self.conn)
         self.results["data"]["scan_results"] = scan_results
 
+        # A bare TCP connect to a wrong-protocol or non-DNP3 port opens the
+        # channel but never yields a DNP3 application-layer response. Only claim
+        # success when the outstation actually answered (a parsed IIN, collected
+        # data points/device attributes, or a succeeded operation); otherwise
+        # the base NetworkConnection.run() defaults success=True and reports a
+        # false-positive DNP3 identification (connection-1).
+        if not self._got_dnp3_response(scan_results):
+            self.results["success"] = False
+            self.results.setdefault("error", "No valid DNP3 response from outstation")
+
+    @staticmethod
+    def _got_dnp3_response(scan_results: Any) -> bool:
+        """True if the outstation returned a valid DNP3 application-layer response."""
+        if not isinstance(scan_results, dict):
+            return False
+        if scan_results.get("iin") is not None:
+            return True
+        if scan_results.get("data_points") or scan_results.get("device_attributes"):
+            return True
+        operations = scan_results.get("operations", {})
+        if isinstance(operations, dict):
+            for op in operations.values():
+                if isinstance(op, dict) and op.get("success") is True:
+                    return True
+        return False
+
     def _execute_range_scan(self, scan_range: str):
         """Execute address range scan"""
         parts = scan_range.split("-")
@@ -154,6 +180,10 @@ class dnp3(NetworkConnection):
             "found": found,
             "count": len(found),
         }
+        # No outstation answered anywhere in the range -> not a successful scan.
+        if not found:
+            self.results["success"] = False
+            self.results.setdefault("error", "No DNP3 outstations found in range")
 
     def cleanup(self):
         """Cleanup DNP3 connection"""

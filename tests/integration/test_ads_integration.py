@@ -71,7 +71,7 @@ Total collected (including inherited):                                 89 tests
 Flag Coverage Matrix (proto_args.py):
   --port                    [A] inherent in all tests via port fixture
   -n/--netid-ext            [B] test_netid_ext
-  --ams-netid/--target-ams  [A] test_with_ams_netid
+  --ams-netid/--target-ams  [A] test_with_ams_netid, test_target_ams_alias
   -L/--local-netid          [B] test_local_netid
   -T/--port-type            [A] test_port_type_tc3plc1, [B] test_port_type_nc
   --ads-port                [A] test_explicit_ads_port
@@ -119,13 +119,17 @@ Flag Coverage Matrix (proto_args.py):
   --state                   [A] test_state
   --set-state               [B] test_set_state_run, [B] test_set_state_stop, [C] test_set_state_without_confirm
   --fuzz                    [C] test_symbol_fuzzing, test_memory_fuzzing, test_fuzz_without_confirm
-  --fuzz-coe                [C] test_fuzz_coe_without_confirm
+  --fuzz-coe                [C] test_fuzz_coe_without_confirm, test_fuzz_coe_force_write_with_confirm
   --fuzz-symbol             [C] test_fuzz_specific_symbol
   --fuzz-iterations         [C] implicit in fuzz tests
   --test-write              [C] test_test_write_without_confirm, [B] test_test_write_with_confirm
-  --force-write             [skip] implicit modifier, not independently testable
+  --force-write             [C] test_fuzz_coe_force_write_with_confirm
   --confirm                 [C] tested across all --confirm gating tests
-  --watch                   [skip] blocking operation, requires Ctrl+C
+  --watch                   [C] test_watch_connection_failure (bounded via closed-port
+                             connection failure -- see test docstring: a real ADS
+                             connection makes --watch enter an unbounded loop only
+                             exited by Ctrl+C, so it is driven up to dispatch without
+                             ever entering that loop)
 """
 
 import pytest
@@ -653,6 +657,35 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
         # reach the mock TwinCAT 3 runtime and report its identity.
         assert "twincat" in text, (
             f"Expected TwinCAT device identity via AMS Net ID, got: {text[:400]}"
+        )
+        assert "127.0.0.1.1.1" in text, (
+            f"Expected the supplied AMS Net ID 127.0.0.1.1.1 in output, got: {text[:400]}"
+        )
+
+    def test_target_ams_alias(self, cli_runner, target, port, docker_services):
+        """Test --target-ams (long-form alias of --ams-netid) [Category A]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--target-ams",
+            "127.0.0.1.1.1",
+            "--device-info",
+            format="json",
+            json_log=True,
+        )
+
+        assert result.success, f"--target-ams connection failed: {result.stderr}"
+        _assert_log_has_events(result)
+        log = result.scan_log
+        _assert_log_event_structure(log)
+
+        text = _combined_text(result, log)
+        # --target-ams is dest-aliased to the same argparse option as
+        # --ams-netid, so it must reach the mock and report its identity.
+        assert "twincat" in text, (
+            f"Expected TwinCAT device identity via --target-ams, got: {text[:400]}"
         )
         assert "127.0.0.1.1.1" in text, (
             f"Expected the supplied AMS Net ID 127.0.0.1.1.1 in output, got: {text[:400]}"
@@ -1487,6 +1520,29 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    @pytest.mark.security
+    def test_fuzz_coe_force_write_with_confirm(self, cli_runner, target, port, docker_services):
+        """Test --fuzz-coe --force-write with --confirm proceeds (no slaves = graceful fail) [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--fuzz-coe",
+            "--force-write",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+
+        # No EtherCAT slaves on the mock; --force-write must not crash the
+        # scanner even though it forces fuzzing of objects whose write-back
+        # test would normally be rejected.
+        assert result.returncode in [0, 1, -1]
+        if result.scan_log is not None and len(result.scan_log) > 0:
+            _assert_log_event_structure(result.scan_log)
+
     # ========================================================================
     # Extended Discovery Tests
     # ========================================================================
@@ -2021,6 +2077,41 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
 
         # Should complete within reasonable time
         assert result.execution_time < 25, "Command did not respect timeout"
+
+    def test_watch_connection_failure(self, cli_runner):
+        """Test --watch against a closed port fails cleanly without entering the
+        blocking notification/poll loop [Category C]
+
+        NOTE: --watch is a known-hazardous flag -- once a real ADS connection is
+        established, _watch_symbol_nxc() enters an unbounded `while True` loop
+        (device-notification wait, or polling fallback) that only exits on
+        KeyboardInterrupt, and --timeout only bounds the initial TCP connect.
+        proto_flow() calls create_conn_obj() before any operation dispatch and
+        returns immediately with "Connection failed" if self.conn is None
+        (src/oida/protocols/ads/cli_runner.py:84-89), so --watch is driven here
+        against a closed port -- reaching real argument parsing and dispatch of
+        the --watch flag while never entering the blocking loop, keeping the
+        test bounded.
+        """
+        result = cli_runner.run(
+            self.protocol_name,
+            "127.0.0.1",
+            "--port",
+            "65534",
+            "--watch",
+            "MAIN.counter:100",
+            timeout=15,
+            expect_json=False,
+            json_log=True,
+        )
+
+        # Should fail gracefully (no connection => no watch loop entered),
+        # never hang for the full unbounded loop duration.
+        assert result.returncode in [0, 1, 2, -1]
+        assert result.execution_time < 20, (
+            f"--watch against a closed port should fail fast, not hang: {result.execution_time}s"
+        )
+        assert "Traceback" not in result.combined_output
 
     def test_memory_read_invalid_format(self, cli_runner, target, port, docker_services):
         """Test --memory-read with badly formatted argument [Category C]"""

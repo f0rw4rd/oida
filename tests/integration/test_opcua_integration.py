@@ -2823,3 +2823,191 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         assert result.stdout or result.stderr, "Should produce output"
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
+
+    # ========================================================================
+    # Long-form flag aliases (--dump-all, --security-mode, --security-policy,
+    # --scan-writable, --fuzz-mode) — proto_args.py exposes these as the long
+    # forms of -D/--mode/--policy plus two flags with no short-flag test
+    # coverage yet.
+    # ========================================================================
+
+    @pytest.mark.containers("opcua-insecure")
+    def test_dump_all_long_flag(self, cli_runner, mock_host, mock_ports):
+        """Test --dump-all (long form of -D) shows access levels [Category A]"""
+        target = self.get_target(mock_host, mock_ports["opcua_insecure"])
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--dump-all",
+            "--max-depth",
+            "3",
+            format="json",
+            json_log=True,
+        )
+
+        assert result.success, f"Failed: {result.stderr}"
+        assert result.returncode == 0, f"Expected return code 0, got {result.returncode}"
+        _assert_log_has_events(result)
+        log = result.scan_log
+        _assert_log_event_structure(log)
+
+        text = _combined_text(result, log)
+        assert any(
+            x in text for x in ["access", "currentread", "currentwrite", "rw", "rh", "rwh"]
+        ) or (
+            "variable" in text and any(x in text for x in MOCK_SENSOR_NAMES + MOCK_ACTUATOR_NAMES)
+        ), f"Expected access level info in --dump-all. Got: {text[:500]}"
+
+    @pytest.mark.security
+    @pytest.mark.containers("opcua-insecure")
+    def test_security_mode_long_flag(self, cli_runner, mock_host, mock_ports):
+        """Test --security-mode (long form of --mode) is accepted [Category B]"""
+        target = self.get_target(mock_host, mock_ports["opcua_insecure"])
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--security-mode",
+            "Sign",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+
+        assert result.returncode != -1, "--security-mode Sign timed out"
+        assert result.returncode in [0, 1], (
+            f"--security-mode Sign unexpected returncode: {result.returncode}"
+        )
+        assert result.stdout or result.stderr, "Should produce output"
+
+    @pytest.mark.security
+    @pytest.mark.containers("opcua-advanced")
+    def test_security_policy_long_flag(self, cli_runner, mock_host, mock_ports):
+        """Test --security-policy (long form of --policy) is accepted [Category B]"""
+        target = self.get_target(mock_host, mock_ports["opcua"])
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--security-policy",
+            "Basic256",
+            "--security-mode",
+            "Sign",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+
+        assert result.returncode != -1, "--security-policy Basic256 timed out"
+        assert result.returncode in [0, 1], (
+            f"--security-policy Basic256 unexpected returncode: {result.returncode}"
+        )
+        assert result.stdout or result.stderr, "Should produce output"
+        if result.scan_log is not None and len(result.scan_log) > 0:
+            _assert_log_event_structure(result.scan_log)
+
+    @pytest.mark.security
+    @pytest.mark.containers("opcua-insecure")
+    def test_scan_writable(self, cli_runner, mock_host, mock_ports):
+        """Test --scan-writable finds writable nodes via AccessLevel [Category A]
+
+        The insecure mock exposes multiple writable Variable nodes (Temperature1,
+        MotorSpeed, ...) via anonymous access, so --scan-writable's read-only
+        AccessLevel check should surface at least one of them.
+        """
+        target = self.get_target(mock_host, mock_ports["opcua_insecure"])
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--scan-writable",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+
+        assert result.returncode != -1, "--scan-writable timed out"
+        assert result.returncode in [0, 1], (
+            f"--scan-writable unexpected returncode: {result.returncode}"
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "writable" in text or any(x in text for x in MOCK_WRITABLE_NAMES), (
+            f"Expected writable-node info from --scan-writable. Got: {text[:500]}"
+        )
+
+    @pytest.mark.fuzz
+    @pytest.mark.containers("opcua-insecure")
+    def test_fuzz_mode_methods(self, cli_runner, mock_host, mock_ports):
+        """Test --fuzz-mode methods restricts fuzzing to callable methods [Category C]"""
+        target = self.get_target(mock_host, mock_ports["opcua_insecure"])
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--fuzz",
+            "--fuzz-mode",
+            "methods",
+            "--fuzz-iterations",
+            "2",
+            "--fuzz-max-targets",
+            "3",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=60,
+        )
+
+        assert result.returncode != -1, "--fuzz-mode methods should not hang"
+        assert result.returncode in [0, 1, 2], (
+            f"--fuzz-mode methods unexpected returncode: {result.returncode}"
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "method" in text or "fuzz" in text or not result.success, (
+            f"Expected method-fuzzing indication. Got: {text[:500]}"
+        )
+
+    @pytest.mark.fuzz
+    @pytest.mark.containers("opcua-insecure")
+    def test_fuzz_mode_all(self, cli_runner, mock_host, mock_ports):
+        """Test --fuzz-mode all fuzzes both writable nodes and methods [Category C]"""
+        target = self.get_target(mock_host, mock_ports["opcua_insecure"])
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--fuzz",
+            "--fuzz-mode",
+            "all",
+            "--fuzz-iterations",
+            "2",
+            "--fuzz-max-targets",
+            "3",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=60,
+        )
+
+        assert result.returncode != -1, "--fuzz-mode all should not hang"
+        assert result.returncode in [0, 1, 2], (
+            f"--fuzz-mode all unexpected returncode: {result.returncode}"
+        )
+
+    @pytest.mark.containers("opcua-insecure")
+    def test_fuzz_mode_invalid_value_rejected(self, cli_runner, mock_host, mock_ports):
+        """Test --fuzz-mode with an invalid choice is rejected by argparse [Category C]"""
+        target = self.get_target(mock_host, mock_ports["opcua_insecure"])
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--fuzz",
+            "--fuzz-mode",
+            "bogus-mode",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+
+        assert result.returncode not in (0, -1), (
+            f"Invalid --fuzz-mode value should be rejected, got {result.returncode}"
+        )
+        text = (result.stderr or "") + (result.stdout or "")
+        assert "invalid choice" in text.lower() or "fuzz-mode" in text.lower(), (
+            f"Expected argparse rejection for invalid --fuzz-mode. Got: {text[:500]}"
+        )

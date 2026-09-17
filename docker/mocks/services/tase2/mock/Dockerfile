@@ -14,6 +14,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     swig \
     python3-dev \
+    wget \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone libiec61850
@@ -23,7 +24,13 @@ RUN git clone --depth 1 https://github.com/mz-automation/libiec61850.git
 # Clone FreeTase2 for TASE.2 abstractions
 RUN git clone --depth 1 https://github.com/aklira/FreeTase2.git
 
-# Build libiec61850 with Python bindings
+# Download and extract mbedtls 3.6.0 for R-GOOSE support
+WORKDIR /build/libiec61850/third_party/mbedtls
+RUN wget -q https://github.com/Mbed-TLS/mbedtls/archive/refs/tags/v3.6.0.tar.gz && \
+    tar xzf v3.6.0.tar.gz && \
+    rm v3.6.0.tar.gz
+
+# Build libiec61850 with Python bindings and R-GOOSE support
 WORKDIR /build/libiec61850
 RUN mkdir build && cd build && \
     cmake .. \
@@ -35,11 +42,24 @@ RUN mkdir build && cd build && \
     make -j$(nproc) && \
     make install
 
-# Find and collect Python bindings
+# Find and collect Python bindings.
+# The SWIG build produces pyiec61850.py + _pyiec61850.so (module name is
+# "pyiec61850", not "iec61850") -- the old patterns here ("_iec61850.so",
+# "iec61850.py") never matched anything, so the compiled extension was never
+# copied and the container crash-looped with "No module named 'iec61850'".
+# FreeTase2 (vendored below) imports `iec61850` directly, so also drop in a
+# compatibility shim re-exporting the real module under that name.
 RUN mkdir -p /build/python_bindings && \
-    find /build/libiec61850 -name "*.py" -path "*pyiec61850*" -exec cp {} /build/python_bindings/ \; && \
-    find /build/libiec61850 -name "_iec61850.so" -exec cp {} /build/python_bindings/ \; && \
-    find /build/libiec61850 -name "iec61850.py" -exec cp {} /build/python_bindings/ \;
+    find /build/libiec61850 -name "pyiec61850.py" -exec cp {} /build/python_bindings/ \; && \
+    find /build/libiec61850 -name "_pyiec61850.so" -exec cp {} /build/python_bindings/ \; && \
+    printf '%s\n' \
+        '"""Compat shim: FreeTase2 imports `iec61850`; the built SWIG module is `pyiec61850`."""' \
+        'from pyiec61850 import *  # noqa: F401,F403' \
+        > /build/python_bindings/iec61850.py
+
+# Verify SWIG bindings are properly linked
+RUN ldconfig && \
+    python3 -c "import sys; sys.path.insert(0, '/build/python_bindings'); import iec61850; print('✓ libiec61850 SWIG bindings OK')"
 
 # Runtime image
 FROM python:3.11-slim-bookworm

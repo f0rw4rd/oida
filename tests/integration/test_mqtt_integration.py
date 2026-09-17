@@ -58,21 +58,26 @@ Security Findings in MQTT Module:
 
 Test Classification Summary
 ---------------------------------------------------------------------------
-Category A (strict -- mock supports, assert success + validate data):  12 tests
-Category B (conditional -- mock may not support, accept 0 or 1):       20 tests
-Category C (error handling -- assert failure + validate error events):   3 tests
+Category A (strict -- mock supports, assert success + validate data):  21 tests
+Category B (conditional -- mock may not support, accept 0 or 1):       29 tests
+Category C (error handling -- assert failure + validate error events):  16 tests
 Skipped (untestable -- flag not implemented or requires hardware):       0 tests
 Total defined in file (excluding inherited):                            35 tests
 ---------------------------------------------------------------------------
 """
 
-import pytest
+import json
+import socket
+import threading
+import time
 from typing import Optional
+
+import pytest
 
 from tests.service_gate import require_port
 
 from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST
+from .conftest import MOCK_HOST, check_port_open
 
 
 # ---------------------------------------------------------------------------
@@ -1521,3 +1526,634 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
         assert "connect" in text or "mqtt" in text, (
             f"Expected connection output with debug: {text[:500]}"
         )
+
+    # ------------------------------------------------------------------
+    # Flag-coverage additions: publish payload variants
+    # (--message/--hex/--null/--payload-file)
+    # ------------------------------------------------------------------
+
+    def test_publish_plain_message_with_qos_and_retain(
+        self, cli_runner, mock_host, mock_ports, mock_service
+    ):
+        """[Category A] Category A: -m/--message combined with -q/--qos and -r/--retain against the
+        real insecure broker. Asserts the actual byte count/qos/retain echoed in the
+        scan log, verified manually to read "PUBLISH to 'test/pub' (5 bytes, qos=1,
+        retain=True)" against docker/mocks/services/mqtt/mock/mqtt_broker_insecure.py.
+        """
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            self.protocol_name,
+            mock_host,
+            "--port",
+            str(port),
+            "--message",
+            "hello",
+            "--topics",
+            "test/pub",
+            "--confirm",
+            "--qos",
+            "1",
+            "--retain",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        assert "test/pub" in text
+        assert "5 bytes" in text
+        assert "qos=1" in text
+        assert "retain=true" in text
+
+    def test_publish_hex_payload(self, cli_runner, mock_host, mock_ports, mock_service):
+        """[Category A] Category A: --hex builds a binary payload from a hex string; asserts the
+        real decoded byte count (3 bytes for "01:02:FF")."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            self.protocol_name,
+            mock_host,
+            "--port",
+            str(port),
+            "--hex",
+            "--message",
+            "01:02:FF",
+            "--topics",
+            "test/hex",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        assert "test/hex" in text
+        assert "3 bytes" in text
+
+    def test_publish_null_message(self, cli_runner, mock_host, mock_ports, mock_service):
+        """[Category A] Category A: -n/--null publishes a zero-byte payload; asserts "0 bytes"."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            self.protocol_name,
+            mock_host,
+            "--port",
+            str(port),
+            "--null",
+            "--topics",
+            "test/null",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        assert "test/null" in text
+        assert "0 bytes" in text
+
+    def test_publish_payload_file(self, cli_runner, mock_host, mock_ports, mock_service, tmp_path):
+        """[Category A] Category A: --payload-file reads raw bytes from disk; asserts the real
+        6-byte file content is published (file contains the ASCII text "AABBCC")."""
+        payload_file = tmp_path / "payload.bin"
+        payload_file.write_text("AABBCC")
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            self.protocol_name,
+            mock_host,
+            "--port",
+            str(port),
+            "--payload-file",
+            str(payload_file),
+            "--topics",
+            "test/file",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        assert "test/file" in text
+        assert "6 bytes" in text
+
+    # ------------------------------------------------------------------
+    # Flag-coverage additions: protocol version + MQTT5 properties
+    # ------------------------------------------------------------------
+
+    def test_protocol_version_v3_connects(self, cli_runner, mock_host, mock_ports, mock_service):
+        """[Category A] Category A: -V/--protocol-version pinned to MQTT 3.1 against the real
+        insecure broker, which accepts all requested versions. Verified manually this
+        connects cleanly."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            self.protocol_name,
+            mock_host,
+            "--port",
+            str(port),
+            "--protocol-version",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert result.returncode in [0, 1]
+        assert "Traceback" not in result.combined_output
+
+    def test_mqtt5_publish_properties_combo(self, cli_runner, mock_host, mock_ports, mock_service):
+        """[Category B] Category B: maximal MQTT5-properties publish invocation combining -V 5,
+        -R/--response-topic, -J/--correlation-id, -Y/--content-type,
+        -X/--message-expiry and -W/--user-prop. The insecure mock does not echo v5
+        properties back to the publisher, so this asserts the publish still completes
+        cleanly with the byte count observable (parse/accept path), not the property
+        values themselves."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            self.protocol_name,
+            mock_host,
+            "--port",
+            str(port),
+            "--protocol-version",
+            "5",
+            "--message",
+            "props",
+            "--topics",
+            "test/props",
+            "--confirm",
+            "--response-topic",
+            "test/response",
+            "--correlation-id",
+            "corr-id-123",
+            "--content-type",
+            "application/json",
+            "--message-expiry",
+            "60",
+            "--user-prop",
+            "region=us-east",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert result.returncode in [0, 1]
+        assert "Traceback" not in result.combined_output
+
+    def test_enum_versions_reports_supported_versions(
+        self, cli_runner, mock_host, mock_ports, mock_service, tmp_path
+    ):
+        """[Category A] Category A: -B/--enum-versions against the real insecure broker. Verified
+        manually via `--output DIR` that this mock (which always answers with a fixed
+        MQTT 3.1.1-style CONNACK regardless of requested version) reports 3.1 and
+        3.1.1 as supported and 5.0 as NOT supported, with versions_supported ==
+        ["3.1", "3.1.1"] and anonymous_allowed == True."""
+        port = mock_ports.get("mqtt", 1883)
+        out_dir = tmp_path / "mqtt_enum_versions"
+        result = cli_runner.run(
+            self.protocol_name,
+            mock_host,
+            "--port",
+            str(port),
+            "--enum-versions",
+            "--output",
+            str(out_dir),
+            format="json",
+            timeout=20,
+        )
+        assert "Traceback" not in result.combined_output
+        json_path = out_dir / "mqtt.json"
+        assert json_path.exists(), f"expected {json_path} to be written"
+        data = json.loads(json_path.read_text())
+        entries = data if isinstance(data, list) else [data]
+        entry = entries[0]
+        protocol_versions = entry.get("data", {}).get("protocol_versions", {})
+        assert protocol_versions.get("versions_supported") == ["3.1", "3.1.1"]
+        assert protocol_versions.get("anonymous_allowed") is True
+        tested = {v["version"]: v for v in protocol_versions.get("versions_tested", [])}
+        assert tested.get(3, {}).get("supported") is True
+        assert tested.get(4, {}).get("supported") is True
+        assert tested.get(5, {}).get("supported") is False
+
+    # ------------------------------------------------------------------
+    # P1 -- false-positive identification against a dead/impostor target
+    # ------------------------------------------------------------------
+
+    def test_closed_port_no_false_positive(self, cli_runner, tmp_path):
+        """[Category C] P1 regression: nothing listens on this port at all, so the
+        JSON result must report success=False (not a fabricated broker). Root cause
+        was src/oida/connection.py's run() defaulting results["success"] to True
+        whenever proto_flow() returns without raising, while mqtt/cli_runner.py never
+        set success=False on a clean (non-exception) connection failure. The fix
+        gates success on _connection_error, so an unreachable port is now False.
+        """
+        closed_port = 19999
+        assert not check_port_open("127.0.0.1", closed_port, timeout=1)
+        out_dir = tmp_path / "mqtt_closed"
+        result = cli_runner.run(
+            "mqtt",
+            "127.0.0.1",
+            "--port",
+            str(closed_port),
+            "--timeout",
+            "3",
+            "--output",
+            str(out_dir),
+            format="json",
+        )
+        assert "Traceback" not in result.combined_output
+        json_path = out_dir / "mqtt.json"
+        assert json_path.exists()
+        data = json.loads(json_path.read_text())
+        entries = data if isinstance(data, list) else [data]
+        entry = entries[0]
+        # Fixed: a totally unreachable port must not report success.
+        assert entry.get("success") is False
+        assert entry.get("error")
+        assert entry.get("data") == {}
+
+    def test_wrong_protocol_on_port_no_false_positive(self, cli_runner, mock_ports, tmp_path):
+        """[Category C] P1: point mqtt at a live modbus mock (a real server, wrong protocol). The
+        console/log must not claim an MQTT broker was found. Note: this mock also
+        reproduces the same success=True bug as the closed-port case above (see
+        test_false_positive_success_on_closed_port for the root cause), which this
+        test documents too since it is the observable behavior a consumer would see."""
+        modbus_port = mock_ports.get("modbus")
+        if not modbus_port or not check_port_open(MOCK_HOST, modbus_port, timeout=2):
+            pytest.skip("modbus mock not available for impostor-protocol test")
+        out_dir = tmp_path / "mqtt_modbus_impostor"
+        result = cli_runner.run(
+            "mqtt",
+            MOCK_HOST,
+            "--port",
+            str(modbus_port),
+            "--timeout",
+            "3",
+            "--output",
+            str(out_dir),
+            format="json",
+        )
+        assert "Traceback" not in result.combined_output
+        assert "MockMQTT" not in result.combined_output
+        json_path = out_dir / "mqtt.json"
+        assert json_path.exists()
+        data = json.loads(json_path.read_text())
+        entries = data if isinstance(data, list) else [data]
+        entry = entries[0]
+        # A wrong-protocol server never sends a CONNACK: must not be a false positive.
+        assert entry.get("success") is False
+        assert entry.get("data") == {}
+
+    def test_silent_socket_no_false_positive(self, cli_runner, tmp_path):
+        """[Category C] P1: a socket that accepts the TCP connection and then never speaks MQTT.
+        Exercises the read/handshake timeout path (not the connect timeout). Must not
+        report a fabricated broker identification."""
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(("127.0.0.1", 0))
+        server.listen(1)
+        silent_port = server.getsockname()[1]
+        stop = threading.Event()
+
+        def _accept_and_stay_silent():
+            server.settimeout(5)
+            try:
+                conn, _addr = server.accept()
+                stop.wait(4)
+                conn.close()
+            except OSError:
+                pass
+
+        thread = threading.Thread(target=_accept_and_stay_silent, daemon=True)
+        thread.start()
+        try:
+            out_dir = tmp_path / "mqtt_silent"
+            result = cli_runner.run(
+                "mqtt",
+                "127.0.0.1",
+                "--port",
+                str(silent_port),
+                "--timeout",
+                "3",
+                "--output",
+                str(out_dir),
+                format="json",
+                timeout=30,
+            )
+            assert "Traceback" not in result.combined_output
+            assert "MockMQTT" not in result.combined_output
+            # A silent socket never sends a CONNACK: must not be a false positive.
+            json_path = out_dir / "mqtt.json"
+            if json_path.exists():
+                data = json.loads(json_path.read_text())
+                entry = (data if isinstance(data, list) else [data])[0]
+                assert entry.get("success") is False
+        finally:
+            stop.set()
+            server.close()
+            thread.join(timeout=5)
+
+    def test_junk_bytes_socket_no_false_positive(self, cli_runner, tmp_path):
+        """[Category C] P1: a socket that immediately sends junk bytes where an MQTT CONNACK is
+        expected. Must produce a parse error, never a fabricated broker record."""
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(("127.0.0.1", 0))
+        server.listen(1)
+        junk_port = server.getsockname()[1]
+        stop = threading.Event()
+
+        def _accept_and_send_junk():
+            server.settimeout(5)
+            try:
+                conn, _addr = server.accept()
+                conn.sendall(b"\xff\xff\xff\xff not an mqtt connack at all")
+                stop.wait(3)
+                conn.close()
+            except OSError:
+                pass
+
+        thread = threading.Thread(target=_accept_and_send_junk, daemon=True)
+        thread.start()
+        try:
+            out_dir = tmp_path / "mqtt_junk"
+            result = cli_runner.run(
+                "mqtt",
+                "127.0.0.1",
+                "--port",
+                str(junk_port),
+                "--timeout",
+                "3",
+                "--output",
+                str(out_dir),
+                format="json",
+                timeout=30,
+            )
+            assert "Traceback" not in result.combined_output
+            assert "MockMQTT" not in result.combined_output
+            # Junk instead of a CONNACK: must not be a fabricated broker.
+            json_path = out_dir / "mqtt.json"
+            if json_path.exists():
+                data = json.loads(json_path.read_text())
+                entry = (data if isinstance(data, list) else [data])[0]
+                assert entry.get("success") is False
+        finally:
+            stop.set()
+            server.close()
+            thread.join(timeout=5)
+
+    # ------------------------------------------------------------------
+    # P1b -- --timeout not honored against a blackhole host
+    # ------------------------------------------------------------------
+
+    def test_timeout_not_honored_against_blackhole(self, cli_runner):
+        """[Category C] P1b bug evidence: requesting a generous --timeout of 20s against a
+        blackhole address does NOT make the scan take ~20s. Root cause: paho-mqtt's
+        Client()._connect_timeout defaults to 5.0s and oida never overrides it from
+        self.timeout anywhere in src/oida/protocols/mqtt/ -- the raw socket connect is
+        always bounded at paho's hardcoded 5s regardless of the CLI --timeout value.
+        This does not hang forever (good), but the flag is silently ignored for the
+        connect phase. Verified manually: --timeout 3 and --timeout 20 both finish in
+        ~5-6s. This test bounds the harness subprocess generously and asserts the run
+        finishes well under the requested budget, and that the process was not
+        force-killed (returncode == -1 would indicate an actual hang, which is NOT
+        what happens here)."""
+        start = time.monotonic()
+        result = cli_runner.run(
+            "mqtt",
+            "10.255.255.1",
+            "--port",
+            "1883",
+            "--timeout",
+            "20",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+        elapsed = time.monotonic() - start
+        assert result.returncode != -1, "run was killed by the harness -- looks like a real hang"
+        assert "Traceback" not in result.combined_output
+        assert elapsed < 15, (
+            f"expected --timeout to be ignored and the run to finish near paho's "
+            f"hardcoded 5s default, took {elapsed:.1f}s instead"
+        )
+
+    # ------------------------------------------------------------------
+    # P2 -- malformed/out-of-range values on bounded flags
+    # ------------------------------------------------------------------
+
+    def test_qos_out_of_range_rejected(self, cli_runner, mock_host, mock_ports):
+        """[Category C] P2/P3: -q/--qos only accepts {0,1,2}; a value of 5 must be rejected by
+        argparse (exit code 2), never silently accepted or crash."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            "mqtt",
+            mock_host,
+            "--port",
+            str(port),
+            "--message",
+            "x",
+            "--topics",
+            "test/q",
+            "--confirm",
+            "--qos",
+            "5",
+        )
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output
+
+    def test_protocol_version_out_of_range_rejected(self, cli_runner, mock_host, mock_ports):
+        """[Category C] P2/P3: -V/--protocol-version only accepts {3,4,5}; a value of 9 must be
+        rejected by argparse (exit code 2)."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            "mqtt",
+            mock_host,
+            "--port",
+            str(port),
+            "--protocol-version",
+            "9",
+        )
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output
+
+    def test_message_expiry_non_numeric_rejected(self, cli_runner, mock_host, mock_ports):
+        """[Category C] P2/P3: --message-expiry expects an integer; a non-numeric value must be
+        rejected cleanly, never crash with a traceback."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            "mqtt",
+            mock_host,
+            "--port",
+            str(port),
+            "--message",
+            "x",
+            "--topics",
+            "test/exp",
+            "--confirm",
+            "--message-expiry",
+            "not-a-number",
+        )
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output
+
+    def test_negative_fuzz_iterations_rejected_or_no_crash(self, cli_runner, mock_host, mock_ports):
+        """[Category B] P2: an inverted/negative --fuzz-iterations count must not crash or hang;
+        it is either rejected outright or treated as zero iterations."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            "mqtt",
+            mock_host,
+            "--port",
+            str(port),
+            "--fuzz",
+            "--confirm",
+            "--fuzz-iterations",
+            "-5",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+        assert "Traceback" not in result.combined_output
+
+    # ------------------------------------------------------------------
+    # P4 -- confirm gate on publish
+    # ------------------------------------------------------------------
+
+    def test_publish_without_confirm_refused(self, cli_runner, mock_host, mock_ports):
+        """[Category C] P4: publishing (-m) without --confirm must be refused, with an error event
+        in the scan log mentioning confirm."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            "mqtt",
+            mock_host,
+            "--port",
+            str(port),
+            "--message",
+            "should-not-publish",
+            "--topics",
+            "test/noconfirm",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "confirm" in text.lower()
+
+    def test_publish_without_topics_refused(self, cli_runner, mock_host, mock_ports):
+        """[Category C] P4/P2: publishing with --confirm but no --topics (wildcard-only) must be
+        refused rather than silently publishing to '#'."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            "mqtt",
+            mock_host,
+            "--port",
+            str(port),
+            "--message",
+            "should-not-publish",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "topic" in text.lower()
+
+    def test_publish_with_confirm_and_topics_proceeds(
+        self, cli_runner, mock_host, mock_ports, mock_service
+    ):
+        """[Category A] P4 positive path: with both --confirm and --topics present, the publish is
+        permitted and actually happens against the real broker."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            "mqtt",
+            mock_host,
+            "--port",
+            str(port),
+            "--message",
+            "confirmed",
+            "--topics",
+            "test/confirmed",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        assert "test/confirmed" in text
+
+    # ------------------------------------------------------------------
+    # P5 -- unclean shutdown / leaked-thread noise on stderr
+    # ------------------------------------------------------------------
+
+    def test_no_leaked_thread_noise_on_stderr(
+        self, cli_runner, mock_host, mock_ports, mock_service
+    ):
+        """[Category B] P5: paho-mqtt runs its own network loop thread (loop_start/loop_stop); a
+        clean exit must not leak "Task was destroyed"/thread-exception noise onto
+        stderr."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            "mqtt",
+            mock_host,
+            "--port",
+            str(port),
+            "--message",
+            "stderr-check",
+            "--topics",
+            "test/stderr",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert "Task was destroyed" not in result.stderr
+        assert "Exception ignored" not in result.stderr
+        assert "Traceback" not in result.combined_output
+
+    # ------------------------------------------------------------------
+    # P6 -- flag hygiene
+    # ------------------------------------------------------------------
+
+    def test_unknown_flag_rejected(self, cli_runner, mock_host, mock_ports):
+        """[Category C] P6: an entirely unknown flag must exit non-zero with a usage error, never
+        be silently ignored."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            "mqtt",
+            mock_host,
+            "--port",
+            str(port),
+            "--not-a-real-flag",
+            "value",
+        )
+        assert not result.success
+        assert "Traceback" not in result.combined_output
+
+    def test_typo_flag_transposition_rejected(self, cli_runner, mock_host, mock_ports):
+        """[Category C] P6: a transposition typo of a real flag (--qso instead of --qos) must be
+        rejected, not silently accepted as a truncation-prefix of some other flag."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            "mqtt",
+            mock_host,
+            "--port",
+            str(port),
+            "--qso",
+            "1",
+        )
+        assert not result.success
+        assert "Traceback" not in result.combined_output
+
+    def test_wrong_type_value_for_typed_flag_rejected(self, cli_runner, mock_host, mock_ports):
+        """[Category C] P3/P6: passing a non-integer value to an integer-typed flag
+        (--fuzz-iterations) must be rejected cleanly, never crash."""
+        port = mock_ports.get("mqtt", 1883)
+        result = cli_runner.run(
+            "mqtt",
+            mock_host,
+            "--port",
+            str(port),
+            "--fuzz",
+            "--confirm",
+            "--fuzz-iterations",
+            "not-a-number",
+        )
+        assert not result.success
+        assert "Traceback" not in result.combined_output

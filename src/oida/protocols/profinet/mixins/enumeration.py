@@ -492,6 +492,10 @@ class EnumerationMixin(_ScannerBase):
 
             self.logger.display("")
 
+            if all_readable or write_only_indices:
+                # Real record reads/writes succeeded: a genuine PROFINET device.
+                self._profinet_response_seen = True
+
             # Build and display results
             all_indices = sorted(all_readable + write_only_indices)
             table_data = self._build_table_data(all_indices, options["show_data"])

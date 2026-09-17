@@ -654,6 +654,7 @@ class MonitoringMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types["ErrorRejectAbortNack"]
 
         self.logger.display("\n[ReadRange - Trend Log Data]")
 
@@ -723,7 +724,7 @@ class MonitoringMixin:
                 except (asyncio.TimeoutError, TimeoutError) as e:
                     self.logger.debug(f"bacpypes3 read range failed: {e}")
                     continue
-                except Exception as e:
+                except (Exception, ErrorRejectAbortNack) as e:
                     self.logger.debug(f"bacpypes3 read range failed: {e}")
                     continue
 
@@ -771,7 +772,7 @@ class MonitoringMixin:
                 except (asyncio.TimeoutError, TimeoutError) as e:
                     self.logger.debug(f"bacpypes3 read range failed: {e}")
                     break
-                except Exception as e:
+                except (Exception, ErrorRejectAbortNack) as e:
                     self.logger.debug(f"bacpypes3 read range failed: {e}")
                     break
 

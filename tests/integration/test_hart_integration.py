@@ -18,14 +18,14 @@ Mock Server Data (from docker/mocks/services/hart_server.py):
   Session Init/Close/KeepAlive management supported
   v2 Session Initiate is NAK'd (v1-only server)
 
-Test Classification Summary (61 defined + 10 inherited from BaseProtocolIntegrationTest)
+Test Classification Summary (69 defined + 10 inherited from BaseProtocolIntegrationTest)
 ---------------------------------------------------------------------------
 Category A (strict -- mock supports, assert success + validate data):  14 tests
-Category B (conditional -- mock may not support, accept 0 or 1):       34 tests
-Category C (error handling -- assert failure + validate error events):  13 tests
+Category B (conditional -- mock may not support, accept 0 or 1):       39 tests
+Category C (error handling -- assert failure + validate error events):  16 tests
 Skipped (untestable -- requires hardware or missing mock support):      0 tests
-Total defined in file:                                                 61 tests
-Total collected (including inherited):                                 71 tests
+Total defined in file:                                                 69 tests
+Total collected (including inherited):                                 79 tests
 ---------------------------------------------------------------------------
 
 Flag Coverage Matrix (oida hart -h):
@@ -63,6 +63,13 @@ Flag Coverage Matrix (oida hart -h):
   --self-test (no confirm)    [C] test_self_test_without_confirm
   --master-reset (no confirm) [C] test_master_reset_without_confirm
   --master-reset + confirm    [B] test_master_reset_with_confirm
+  --enumerate-device-specific (no conf) [C] test_enumerate_device_specific_without_confirm
+  --enumerate-device-specific + confirm [B] test_enumerate_device_specific_with_confirm
+  --probe-calibration (no conf) [C] test_probe_calibration_without_confirm
+  --probe-calibration + confirm [B] test_probe_calibration_with_confirm
+  --probe-write (no confirm)  [C] test_probe_write_without_confirm
+  --probe-write + confirm     [B] test_probe_write_with_confirm
+  (combined: calib+write)     [B] test_probe_calibration_and_probe_write_combined
   --confirm (alone)           [C] test_confirm_without_action
   --fuzz (no confirm)         [C] test_fuzz_without_confirm
   --fuzz + confirm            [B] test_fuzz_with_confirm
@@ -1674,6 +1681,219 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
                 "performing",
             ]
         ), f"Expected master reset attempt output: {text[:500]}"
+
+    @pytest.mark.security
+    def test_enumerate_device_specific_without_confirm(self, cli_runner, target, port):
+        """Test --enumerate-device-specific without --confirm is rejected [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--enumerate-device-specific",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+
+        assert result.returncode != -1
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text
+            for term in [
+                "confirm",
+                "requires",
+                "device-specific",
+                "device specific",
+                "hart",
+                "connected",
+                "warning",
+            ]
+        ), f"Expected --confirm requirement message: {text[:500]}"
+
+    @pytest.mark.slow
+    @pytest.mark.timeout(150)
+    @pytest.mark.security
+    def test_enumerate_device_specific_with_confirm(self, cli_runner, target, port):
+        """Test --enumerate-device-specific with --confirm sweeps 128-253 [Category B]
+
+        The mock's supported command list (0,1,2,3,6,13,15,17,18,20,38,41,42,48)
+        contains no device-specific (128-253) commands, so an empty result set
+        is the expected/correct outcome -- this asserts the sweep ran and
+        reported its (possibly empty) findings, not that it found anything.
+        """
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--enumerate-device-specific",
+            "--command-range",
+            "128-140",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=90,
+        )
+
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text
+            for term in [
+                "device-specific",
+                "device specific",
+                "enumerat",
+                "hart",
+                "connected",
+                "no device-specific",
+            ]
+        ), f"Expected device-specific enumeration output: {text[:500]}"
+
+    @pytest.mark.security
+    def test_probe_calibration_without_confirm(self, cli_runner, target, port):
+        """Test --probe-calibration without --confirm is rejected [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--probe-calibration",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+
+        assert result.returncode != -1
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text
+            for term in [
+                "confirm",
+                "requires",
+                "calibration",
+                "hart",
+                "connected",
+                "warning",
+            ]
+        ), f"Expected --confirm requirement message: {text[:500]}"
+
+    @pytest.mark.security
+    def test_probe_calibration_with_confirm(self, cli_runner, target, port):
+        """Test --probe-calibration with --confirm probes dangerous commands [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--probe-calibration",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=45,
+        )
+
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text
+            for term in [
+                "calibration",
+                "probing",
+                "probe",
+                "hart",
+                "connected",
+                "accessible",
+            ]
+        ), f"Expected calibration probe output: {text[:500]}"
+
+    @pytest.mark.security
+    def test_probe_write_without_confirm(self, cli_runner, target, port):
+        """Test --probe-write without --confirm is rejected [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--probe-write",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+
+        assert result.returncode != -1
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text
+            for term in [
+                "confirm",
+                "requires",
+                "write",
+                "hart",
+                "connected",
+                "warning",
+            ]
+        ), f"Expected --confirm requirement message: {text[:500]}"
+
+    @pytest.mark.security
+    def test_probe_write_with_confirm(self, cli_runner, target, port):
+        """Test --probe-write with --confirm probes write command accessibility [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--probe-write",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=45,
+        )
+
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text
+            for term in [
+                "write",
+                "probing",
+                "probe",
+                "hart",
+                "connected",
+                "accessible",
+            ]
+        ), f"Expected write probe output: {text[:500]}"
+
+    @pytest.mark.security
+    def test_probe_calibration_and_probe_write_combined(self, cli_runner, target, port):
+        """Test --probe-calibration + --probe-write combined with --confirm [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--probe-calibration",
+            "--probe-write",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=45,
+        )
+
+        assert result.returncode in [0, 1]
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text
+            for term in [
+                "calibration",
+                "write",
+                "probing",
+                "probe",
+                "hart",
+                "connected",
+                "accessible",
+            ]
+        ), f"Expected combined calibration/write probe output: {text[:500]}"
 
     def test_confirm_without_action(self, cli_runner, target, port):
         """Test --confirm alone has no harmful effect [Category C]"""

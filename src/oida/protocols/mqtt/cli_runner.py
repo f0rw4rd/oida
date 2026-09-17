@@ -99,6 +99,14 @@ class mqtt(NetworkConnection):
             self.results["data"]["protocol_versions"] = version_results
             # If only doing version enum, we're done
             if not self._should_continue_after_version_enum():
+                # P1 false-positive guard: no version returned a CONNACK means
+                # nothing on the port speaks MQTT — do not report success.
+                if not version_results.get("versions_supported"):
+                    self.results["success"] = False
+                    self.results.setdefault(
+                        "error",
+                        "No MQTT response (no protocol version answered / not an MQTT broker)",
+                    )
                 return
 
         # Create connection
@@ -109,8 +117,17 @@ class mqtt(NetworkConnection):
             self.enum_host_info()
             self.print_host_info()
 
-        # Stop here if connection failed (no service detected)
+        # Stop here if connection failed (no service detected).
+        # P1 false-positive guard: a bare TCP connect to a silent or non-MQTT
+        # port succeeds, but no CONNACK is ever received, so run() must not
+        # default success=True. _connection_error is set precisely when there
+        # was a network error or no MQTT-layer response (as opposed to a broker
+        # that answered with a CONNACK, even an auth-refused one).
         if self._connection_error:
+            self.results["success"] = False
+            self.results.setdefault(
+                "error", "No MQTT response (connection failed / not an MQTT broker)"
+            )
             return
 
         # Check if both publish and listen are requested

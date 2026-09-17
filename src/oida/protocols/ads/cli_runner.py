@@ -456,6 +456,15 @@ class ads(NetworkConnection):
                     f"{self.scanner._get_ads_port()} "
                     f"— Net ID may not exist. Try -r to discover active Net IDs."
                 )
+                # read_device_info failed AND the probe found nothing alive: the
+                # local AMS port opened (self.conn is truthy) but no real ADS
+                # device ever answered. Without this the base
+                # NetworkConnection.run() defaults success=True and reports a
+                # false-positive ADS identification (connection-1).
+                self.results["success"] = False
+                self.results.setdefault(
+                    "error", "No ADS response (Net ID not reachable / not an ADS device)"
+                )
                 return
 
         # --- UDP discovery (hostname, TwinCAT version, OS) ---

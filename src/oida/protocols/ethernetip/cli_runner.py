@@ -153,6 +153,34 @@ class ethernetip(NetworkConnection):
         results = self.scanner.run_scan()
         self.results["data"]["scan_results"] = results
 
+        # A bare TCP connect to a wrong-protocol port opens the channel but never
+        # yields a valid EtherNet/IP encapsulation response. self.conn is truthy
+        # after any successful TCP connect, so without this gate the base
+        # NetworkConnection.run() defaults success=True and reports a
+        # false-positive EtherNet/IP identification (connection-1).
+        #
+        # NOTE: the scanner's identity dict is NOT a reliable signal on its own —
+        # _discover_logix_features() always writes identity["name"]/["keyswitch"]
+        # from the pycomm3 driver, so the dict is non-empty even against a silent
+        # socket. The authoritative discriminator is a real ListIdentity reply:
+        # scanner._discover_ucmm_commands() only fills identity["vendor_id"] when
+        # _list_identity() actually succeeds, and per ODVA CIP Vol.2 every
+        # EtherNet/IP device MUST answer ListIdentity on 44818. Require that (or a
+        # confirmed device_info) before claiming success.
+        info = self.results["data"].get("device_info", {})
+        scan = results if isinstance(results, dict) else {}
+        identity = scan.get("identity") or {}
+        got_identity = (
+            bool(info.get("success"))
+            or identity.get("vendor_id") is not None
+            or identity.get("serial_number") is not None
+        )
+        if not got_identity:
+            self.results["success"] = False
+            self.results.setdefault(
+                "error", "No valid EtherNet/IP response (not an EtherNet/IP device)"
+            )
+
     def cleanup(self):
         """Close EtherNet/IP connection"""
         if self.conn:

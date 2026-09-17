@@ -173,6 +173,8 @@ class FramingMixin:
                 # transmission's EOT/reset ever ran (it may have aborted
                 # mid-stream without reaching _send_eot's success path).
                 self.frame_number = 1
+                # Evidence of a real ASTM peer: silences the P1 false-positive.
+                self._astm_response_seen = True
                 return True
             elif response == NAK:
                 self.logger.debug("Received NAK to ENQ")

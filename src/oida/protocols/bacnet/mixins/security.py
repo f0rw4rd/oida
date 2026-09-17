@@ -685,11 +685,11 @@ class SecurityMixin:
                 except asyncio.TimeoutError as e:
                     self.logger.debug(f"bacpypes3 test reinit failed: {e}")
                     continue
-                except Exception as e:
+                except (Exception, err_types["ErrorRejectAbortNack"]) as e:
                     self.logger.debug(f"bacpypes3 test reinit failed: {e}")
                     continue
 
-            except Exception as e:
+            except (Exception, err_types["ErrorRejectAbortNack"]) as e:
                 self.logger.debug(f"bacpypes3 test reinit failed: {e}")
                 continue
 

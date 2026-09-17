@@ -21,6 +21,7 @@ import socket
 from typing import Any, Optional
 
 from ...connection import NetworkConnection
+from ...utils.exceptions import ConfigurationError
 
 from .constants import (
     _is_bac0_available,
@@ -72,6 +73,11 @@ class bacnet(
         self.bacnet = None  # BAC0 connection
         self.devices = {}  # Discovered devices {device_id: device_info}
         self.objects = {}  # Enumerated objects {device_id: [objects]}
+        # P1 false-positive guard: BACnet/IP is UDP, so there is no TCP
+        # "connection" to prove liveness — a bare bind/send always "succeeds".
+        # Only a real BACnet peer answers (I-Am, ReadProperty, or a
+        # network-layer reply). Set True wherever such a response is parsed.
+        self._bacnet_response_seen = False
         # --sc engages the BACnet/SC transport (SCMixin). It rewrites the
         # wss:// target to a bare host (so the base resolves/labels it) and
         # stashes the normalized URI + port on args; must run BEFORE the base
@@ -90,6 +96,22 @@ class bacnet(
             }
         else:
             self.results["data"]["device_info"] = {"connected": True}
+
+    def _bacnet_response_gate(self):
+        """P1 false-positive guard.
+
+        BACnet/IP has no connection handshake: sending Who-Is/ReadProperty to
+        a silent or non-BACnet UDP endpoint never raises, so ``run()`` would
+        otherwise default success=True with zero evidence. Require that at
+        least one real BACnet response (I-Am, ReadProperty, or a network-layer
+        reply) was parsed; otherwise mark the scan unsuccessful.
+        """
+        if not self._bacnet_response_seen:
+            self.results["success"] = False
+            self.results.setdefault(
+                "error",
+                "No BACnet response (no I-Am or device/network-layer reply)",
+            )
 
     def print_host_info(self):
         """Print discovered BACnet device information"""
@@ -229,6 +251,7 @@ class bacnet(
             # Mirror the raw path: populate results["data"]["device_info"] (the
             # structured result surface returned by get_results()) before export
             # so --use-bac0 scans don't come back with an empty results["data"].
+            self._bacnet_response_gate()
             self.enum_host_info()
             self._export_results()
 
@@ -407,8 +430,35 @@ class bacnet(
         """BACnet scan using bacpypes3 library for remote devices"""
         asyncio.run(self._async_raw_scan())
 
+    def _install_bacpypes3_loop_exception_handler(self) -> None:
+        """Suppress noisy-but-benign asyncio "exception was never retrieved"
+        tracebacks from bacpypes3's own internal SAP dispatch tasks.
+
+        Some bacpypes3 code paths (e.g. remote-network broadcasts used by
+        --discover-mstp) fire background tasks internally that we never get
+        a handle to; when the local transport wasn't opened for that kind
+        of send (e.g. a directed broadcast to a remote DNET over a plain
+        unicast UDP socket) they fail with a RuntimeError the library
+        raises and never awaits. Left alone, asyncio's default handler
+        dumps a full traceback to stderr even though the scan itself
+        completed successfully and the failure was already logged (or is
+        safely ignorable) at the call site. We still log anything else at
+        debug level rather than silently swallowing it.
+        """
+        loop = asyncio.get_running_loop()
+
+        def _handler(loop, context):
+            exc = context.get("exception")
+            if isinstance(exc, RuntimeError) and "broadcast" in str(exc).lower():
+                self.logger.debug(f"bacpypes3 background broadcast task failed: {exc}")
+                return
+            loop.default_exception_handler(context)
+
+        loop.set_exception_handler(_handler)
+
     async def _async_raw_scan(self):
         """Async BACnet scan using bacpypes3 for remote/unicast communication"""
+        self._install_bacpypes3_loop_exception_handler()
         types = _load_bacpypes3()
         DeviceObject = types["DeviceObject"]
         DeviceStatus = types["DeviceStatus"]
@@ -419,6 +469,24 @@ class bacnet(
         port = getattr(self.args, "port", 47808)
         device_id = getattr(self.args, "device_id", None)
         timeout = getattr(self.args, "timeout", 5.0)
+
+        # Validate the target *before* standing up any transport. A target
+        # that isn't a resolvable host/IP (e.g. a junk line from a malformed
+        # target file) makes bacpypes3's Address() raise a bare ValueError.
+        # Doing this check up front — rather than after the UDP endpoints
+        # are already open — avoids tearing down (app.close()) a transport
+        # whose async endpoint-creation callbacks are still in flight, which
+        # otherwise makes asyncio's default exception handler dump
+        # "Exception in callback ... CancelledError" noise to stderr. Raise
+        # ConfigurationError (an ICSProtocolError) rather than a bare
+        # ValueError so connection.run()'s crash reporter treats this as an
+        # expected operational failure instead of an OIDA bug.
+        try:
+            Address(f"{target}:{port}")
+        except ValueError as e:
+            raise ConfigurationError(
+                f"invalid BACnet target {target!r}: {e}", protocol="bacnet"
+            ) from e
 
         self.logger.display(f"Connecting to {target}:{port}...")
 
@@ -479,6 +547,7 @@ class bacnet(
                 f"Connected to BACnet/IP {target}:{port} (local {local_ip}:{shown_port})"
             )
 
+            # Already validated above; safe to construct unconditionally.
             target_addr = Address(f"{target}:{port}")
 
             await self._bacpypes3_run_actions(app, target_addr, device_id, timeout)
@@ -488,6 +557,7 @@ class bacnet(
         # Persist discovered devices into results["data"] before export — the
         # scan stores them in self.devices, but without this the JSON output
         # (and results["data"]) come back empty despite a successful scan.
+        self._bacnet_response_gate()
         self.enum_host_info()
         self._export_results()
 

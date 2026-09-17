@@ -15,6 +15,11 @@ Mock profiles:
 Uses structured JSON log assertions for precise validation.
 """
 
+import json
+import socket
+import threading
+import time
+
 import pytest
 
 from .conftest import DOCKER_COMPOSE_PATH, MOCK_HOST, MOCK_PORTS, check_port_open
@@ -130,12 +135,62 @@ def _get_scan_summary(log) -> str:
 
 
 # ---------------------------------------------------------------------------
+class _HostileServer:
+    """Raw TCP listener for hostile-path tests (not a cli_runner wrapper).
+
+    behavior="silent": accept the connection and send nothing back.
+    behavior="junk": accept the connection and send garbage bytes back.
+    """
+
+    def __init__(self, behavior: str = "silent") -> None:
+        self.behavior = behavior
+        self._sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._sock.bind(("127.0.0.1", 0))
+        self._sock.listen(1)
+        self.port = self._sock.getsockname()[1]
+        self._stop = threading.Event()
+        self._thread = threading.Thread(target=self._serve, daemon=True)
+        self._thread.start()
+
+    def _serve(self) -> None:
+        self._sock.settimeout(10)
+        try:
+            conn, _addr = self._sock.accept()
+        except OSError:
+            return
+        try:
+            if self.behavior == "junk":
+                conn.sendall(b"\xff\xff\xff\xffGARBAGE_NOT_IEC104" * 4)
+            self._stop.wait(6)
+        except OSError:
+            pass
+        finally:
+            conn.close()
+
+    def close(self) -> None:
+        self._stop.set()
+        try:
+            self._sock.close()
+        except OSError:
+            pass
+        self._thread.join(timeout=5)
+
+
 # Test Classification Summary
 # ---------------------------------------------------------------------------
-# Category A (strict -- mock supports, assert success + validate data):   35 tests
-# Category B (conditional -- mock may not support, accept 0 or 1):        25 tests
-# Category C (error handling -- assert failure + validate error events):   13 tests
-# Total:                                                                   73 tests
+# Category A (strict -- mock supports, assert success + validate data):   43 tests
+# Category B (conditional -- mock may not support, accept 0 or 1):        32 tests
+# Category C (error handling -- assert failure + validate error events):   28 tests
+# Total:                                                                   103 tests
+#
+# New in this pass (flag coverage: --balanced --iec101 --interrogate-groups
+# --link-address --list-ports --originator --param-activate --param-float
+# --param-normalized --param-scaled --reset-process --station-scan --t1 --t3
+# --test-command-ioa) plus P1 false-positive-identification bug hunt,
+# P1b timeout-honored check, P2 inverted-range check, P4 confirm-gate checks,
+# and P6 flag-hygiene checks (unknown flag / typo transposition / borrowed
+# flag / wrong-type value).
 # ---------------------------------------------------------------------------
 
 
@@ -1240,9 +1295,654 @@ class TestIEC104Integration:
                 f"(even on connection failure). Found findings: {findings}"
             )
 
+    # -----------------------------------------------------------------
+    # IEC 101 serial mode / port listing (--iec101, --list-ports,
+    # --link-address, --balanced)
+    # -----------------------------------------------------------------
+
+    def test_list_ports_lists_serial_ports_without_connecting(self, cli_runner, target):
+        """Test --list-ports enumerates serial ports and exits cleanly [Category B]
+
+        `target` is still a required positional even though --list-ports
+        never opens a network or serial connection.
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--list-ports",
+            expect_json=False,
+            timeout=10,
+        )
+        assert result.returncode == 0, (
+            f"--list-ports should exit 0, got rc={result.returncode}: "
+            f"{result.combined_output[:300]}"
+        )
+        text = result.combined_output.lower()
+        assert "port" in text, f"Expected port listing text, got: {text[:300]}"
+        assert "traceback" not in text
+
+    def test_iec101_serial_invalid_port_clean_error(self, cli_runner, target):
+        """Test --iec101 with --link-address and --balanced against a
+        nonexistent serial device fails cleanly, no traceback [Category C]
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--iec101",
+            "/dev/ttyUSB99:9600:E:1",
+            "--link-address",
+            "5",
+            "--balanced",
+            "--timeout",
+            "3",
+            expect_json=False,
+            json_log=True,
+            timeout=15,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "traceback" not in text
+        assert "serial" in text or "ttyusb" in text or "no such" in text or "error" in text, (
+            f"Expected a clean serial-open error, got: {text[:400]}"
+        )
+
+    def test_iec101_malformed_connection_string_rejected(self, cli_runner, target):
+        """Test --iec101 with a malformed PORT:BAUD:PARITY:STOP string
+        fails cleanly rather than crashing [Category C]
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--iec101",
+            "not-a-valid-serial-spec",
+            expect_json=False,
+            json_log=True,
+            timeout=15,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "traceback" not in text
+        assert result.returncode != 0 or "error" in text or "serial" in text
+
+    # -----------------------------------------------------------------
+    # Station scan (--station-scan), originator/timers (--originator,
+    # --t1, --t3), group interrogation (--interrogate-groups)
+    # -----------------------------------------------------------------
+
+    def test_station_scan_range_identifies_active_station(self, cli_runner, target, port):
+        """Test --station-scan finds the active CA=1 station and reports
+        the others as no-response, using real point/type data [Category A]
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--station-scan",
+            "1-3",
+            "--timeout",
+            "2",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+        summary = _get_scan_summary(result.scan_log)
+        text = _combined_text(result, result.scan_log)
+        assert "1 active" in summary or "1 active" in text, (
+            f"Expected station-scan to find exactly 1 active CA, got: {text[:400]}"
+        )
+        assert str(MOCK_POINT_COUNT) in text, (
+            f"Expected the known {MOCK_POINT_COUNT}-point CA=1 station in output: {text[:400]}"
+        )
+
+    def test_station_scan_inverted_range_rejected(self, cli_runner, target, port):
+        """Test --station-scan with an inverted range (start > end) fails
+        cleanly instead of silently scanning nothing or crashing [Category C]
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--station-scan",
+            "100-1",
+            "--timeout",
+            "2",
+            expect_json=False,
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "traceback" not in text, f"Inverted range crashed: {text[:400]}"
+
+    def test_originator_and_timers_with_interrogate(self, cli_runner, target, port):
+        """Test --originator, --t1 and --t3 combine with -I and a full
+        interrogation still succeeds and finds all known points [Category A]
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--interrogate",
+            "--originator",
+            "42",
+            "--t1",
+            "5",
+            "--t3",
+            "10",
+            "--timeout",
+            "5",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+        assert result.returncode == 0, (
+            f"Interrogation with custom originator/timers should succeed, "
+            f"got rc={result.returncode}: {result.combined_output[:300]}"
+        )
+        text = _combined_text(result, result.scan_log)
+        assert str(MOCK_POINT_COUNT) in text, (
+            f"Expected {MOCK_POINT_COUNT} points discovered, got: {text[:400]}"
+        )
+
+    @pytest.mark.slow
+    @pytest.mark.timeout(90)
+    def test_interrogate_groups_discovers_group_one(self, cli_runner, target, port):
+        """Test --interrogate-groups walks groups 1-16 and finds the
+        known CA=1 points under group 1 [Category A]
+
+        Slow: 16 sequential group interrogations at --wait-time 1 take
+        roughly 50s wall-clock against the real mock.
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--interrogate-groups",
+            "--wait-time",
+            "1",
+            format="json",
+            json_log=True,
+            timeout=85,
+        )
+        assert result.returncode == 0, (
+            f"Group interrogation should succeed, got rc={result.returncode}: "
+            f"{result.combined_output[:300]}"
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "group 1" in text or "group1" in text, (
+            f"Expected group 1 to report the known points, got: {text[:400]}"
+        )
+        assert str(MOCK_POINT_COUNT) in text, (
+            f"Expected {MOCK_POINT_COUNT} points under group 1, got: {text[:400]}"
+        )
+
+    # -----------------------------------------------------------------
+    # Confirm-gated write/control actions: --reset-process,
+    # --param-normalized/--param-scaled/--param-float/--param-activate,
+    # --test-commands/--test-command-ioa [P4]
+    # -----------------------------------------------------------------
+
+    def test_reset_process_requires_confirm(self, cli_runner, target, port):
+        """Test --reset-process without --confirm is refused [Category C, P4]"""
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--reset-process",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "confirm" in text, f"Expected a --confirm gate message, got: {text[:400]}"
+
+    def test_reset_process_with_confirm(self, cli_runner, target, port):
+        """Test --reset-process --confirm actually sends the control
+        command (mock rejects the unsupported type, but the flag path
+        executes) [Category B]
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--reset-process",
+            "--confirm",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "traceback" not in text
+        assert "reset" in text, f"Expected reset-process activity, got: {text[:400]}"
+
+    def test_param_commands_require_confirm(self, cli_runner, target, port):
+        """Test parameter commands (--param-scaled here, representative of
+        the whole --param-* family) are refused without --confirm [Category C, P4]
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--param-scaled",
+            "600:100",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "confirm" in text, f"Expected a --confirm gate message, got: {text[:400]}"
+
+    def test_param_normalized_with_confirm(self, cli_runner, target, port):
+        """Test --param-normalized --confirm sends the parameter command
+        at a real known IOA [Category B]
+        """
+        ioa = MOCK_IOA_RANGES["normalized"][0]
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--param-normalized",
+            f"{ioa}:0.5",
+            "--confirm",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "traceback" not in text
+        assert "param" in text or str(ioa) in text, (
+            f"Expected param-normalized activity for IOA={ioa}, got: {text[:400]}"
+        )
+
+    def test_param_scaled_with_confirm(self, cli_runner, target, port):
+        """Test --param-scaled --confirm sends the parameter command at a
+        real known IOA [Category B]
+        """
+        ioa = MOCK_IOA_RANGES["scaled"][0]
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--param-scaled",
+            f"{ioa}:100",
+            "--confirm",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "traceback" not in text
+        assert "param" in text or str(ioa) in text, (
+            f"Expected param-scaled activity for IOA={ioa}, got: {text[:400]}"
+        )
+
+    def test_param_float_with_confirm(self, cli_runner, target, port):
+        """Test --param-float --confirm sends the parameter command at a
+        real known IOA [Category B]
+        """
+        ioa = MOCK_IOA_RANGES["float"][0]
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--param-float",
+            f"{ioa}:1.5",
+            "--confirm",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "traceback" not in text
+        assert "param" in text or str(ioa) in text, (
+            f"Expected param-float activity for IOA={ioa}, got: {text[:400]}"
+        )
+
+    def test_param_activate_with_confirm(self, cli_runner, target, port):
+        """Test --param-activate --confirm sends the activate-parameter
+        command at a real known IOA [Category B]
+        """
+        ioa = MOCK_IOA_RANGES["scaled"][0]
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--param-activate",
+            f"{ioa}:1",
+            "--confirm",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "traceback" not in text
+        assert "param" in text or str(ioa) in text, (
+            f"Expected param-activate activity for IOA={ioa}, got: {text[:400]}"
+        )
+
+    def test_test_commands_requires_confirm(self, cli_runner, target, port):
+        """Test --test-commands without --confirm is refused [Category C, P4]"""
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--test-commands",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "confirm" in text, f"Expected a --confirm gate message, got: {text[:400]}"
+
+    def test_test_commands_with_confirm_activates_known_ioa(self, cli_runner, target, port):
+        """Test --test-commands --test-command-ioa --confirm sends a real
+        control command at a known single-point IOA; the mock accepts the
+        unauthenticated C_SC_NA_1 command [Category A]
+        """
+        ioa = MOCK_IOA_RANGES["single_points"][0]
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--test-commands",
+            "--test-command-ioa",
+            str(ioa),
+            "--confirm",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "traceback" not in text
+        assert str(ioa) in text, (
+            f"Expected --test-command-ioa={ioa} to appear in output: {text[:400]}"
+        )
+        assert "activated" in text or "accepted" in text or "command" in text, (
+            f"Expected control-command activity, got: {text[:400]}"
+        )
+
+    # -----------------------------------------------------------------
+    # P1 — false-positive identification regression guard (FIXED).
+    #
+    # src/oida/connection.py's NetworkConnection.run() defaults
+    # results["success"] = True whenever proto_flow() returns without
+    # raising, unless proto_flow explicitly set it False first. Because a
+    # bare TCP connect to a wrong-protocol port succeeds (c104's
+    # is_connected only reflects the TCP/APCI channel being open, not a
+    # confirmed STARTDT), iec104 used to report success=true with a full
+    # device record for a server that is demonstrably not an IEC 104
+    # outstation.
+    #
+    # FIX (Option A, localized): the scanner now records _apdu_received
+    # the moment the peer sends ANY valid APDU (I/U/S-frame, start byte
+    # 0x68 — e.g. STARTDT_CON / TESTFR_CON / data). cli_runner.py's
+    # _execute_scan() gates success=False unless _apdu_received is True.
+    # The tests below now assert the corrected behavior against a
+    # wrong-protocol port (a live Modbus mock), a silent socket, and a
+    # junk-bytes impostor; the real-mock scan (port 2404) still reports
+    # success=True, so this is not a false negative.
+    # -----------------------------------------------------------------
+
+    def test_closed_port_reports_success_false(self, cli_runner, target, tmp_path):
+        """Test a closed port is correctly reported as a failed connection
+        (this path is NOT affected by the false-positive bug: connect()
+        returns None on ECONNREFUSED, so cli_runner.py's explicit
+        `if not self.conn` branch fires) [Category C]
+        """
+        outdir = tmp_path / "closed"
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            "1",
+            "--timeout",
+            "2",
+            output=str(outdir),
+            format="json",
+            timeout=15,
+        )
+        data_file = outdir / "iec104.json"
+        assert data_file.exists(), f"No JSON output written: {result.combined_output[:300]}"
+        records = json.loads(data_file.read_text())
+        assert records[0]["success"] is False, (
+            f"Closed port must not report success=True: {records[0]}"
+        )
+
+    def test_wrong_protocol_port_reports_success_false(self, cli_runner, target, tmp_path):
+        """Pointing iec104 at a live Modbus mock (wrong protocol on the
+        port) must report success=False: TCP connect succeeds but the
+        IEC 104 application layer never sends an APDU, so the
+        _apdu_received gate keeps success=False instead of claiming a
+        false-positive identification. [Category C, P1 — regression guard]
+        """
+        modbus_port = MOCK_PORTS.get("modbus", 502)
+        if not check_port_open(target, modbus_port):
+            pytest.skip("Modbus mock not reachable for wrong-protocol test")
+        outdir = tmp_path / "wrongproto"
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(modbus_port),
+            "--timeout",
+            "3",
+            output=str(outdir),
+            format="json",
+            timeout=20,
+        )
+        data_file = outdir / "iec104.json"
+        assert data_file.exists(), f"No JSON output written: {result.combined_output[:300]}"
+        records = json.loads(data_file.read_text())
+        record = records[0]
+        assert record["success"] is False, (
+            "connection-1 regression: iec104 reported success=True against a "
+            f"Modbus server (not an IEC 104 outstation). Got: {record}"
+        )
+
+    def test_silent_socket_reports_success_false(self, cli_runner, target, tmp_path):
+        """A socket that accepts the TCP connection and then sends nothing
+        at all must report success=False (no APDU ever arrives, so the
+        _apdu_received gate holds). Same regression guard as
+        test_wrong_protocol_port_reports_success_false. [Category C, P1]
+        """
+        server = _HostileServer("silent")
+        try:
+            outdir = tmp_path / "silent"
+            result = cli_runner.run(
+                "iec104",
+                target,
+                "--port",
+                str(server.port),
+                "--timeout",
+                "3",
+                output=str(outdir),
+                format="json",
+                timeout=20,
+            )
+            data_file = outdir / "iec104.json"
+            assert data_file.exists(), f"No JSON output written: {result.combined_output[:300]}"
+            records = json.loads(data_file.read_text())
+            record = records[0]
+            assert record["success"] is False, (
+                "connection-1 regression: a silent socket was reported as "
+                f"success=True. Got: {record}"
+            )
+            assert "traceback" not in result.combined_output.lower()
+        finally:
+            server.close()
+
+    def test_junk_bytes_impostor_reports_success_false(self, cli_runner, target, tmp_path):
+        """A socket that accepts the TCP connection and then sends garbage
+        bytes (no valid IEC 104 APCI header, start byte != 0x68) must
+        report success=False. Same regression guard as
+        test_wrong_protocol_port_reports_success_false. [Category C, P1]
+        """
+        server = _HostileServer("junk")
+        try:
+            outdir = tmp_path / "junk"
+            result = cli_runner.run(
+                "iec104",
+                target,
+                "--port",
+                str(server.port),
+                "--timeout",
+                "3",
+                output=str(outdir),
+                format="json",
+                timeout=20,
+            )
+            data_file = outdir / "iec104.json"
+            assert data_file.exists(), f"No JSON output written: {result.combined_output[:300]}"
+            records = json.loads(data_file.read_text())
+            record = records[0]
+            assert record["success"] is False, (
+                "connection-1 regression: a junk-bytes impostor server was "
+                f"reported as success=True. Got: {record}"
+            )
+            assert "traceback" not in result.combined_output.lower()
+        finally:
+            server.close()
+
+    def test_blackhole_host_timeout_honored(self, cli_runner, target, tmp_path):
+        """Test a blackhole host (nothing responds at the TCP level) times
+        out near the requested --timeout budget and correctly reports
+        success: false — this path raises an exception during connect,
+        so it is NOT affected by the P1 false-positive bug [Category C, P1b]
+        """
+        outdir = tmp_path / "blackhole"
+        start = time.monotonic()
+        result = cli_runner.run(
+            "iec104",
+            "10.255.255.1",
+            "--port",
+            "2404",
+            "--timeout",
+            "3",
+            output=str(outdir),
+            format="json",
+            timeout=15,
+        )
+        elapsed = time.monotonic() - start
+        assert elapsed < 10, (
+            f"--timeout 3 should be honored, run took {elapsed:.1f}s "
+            f"(returncode={result.returncode})"
+        )
+        data_file = outdir / "iec104.json"
+        if data_file.exists():
+            records = json.loads(data_file.read_text())
+            assert records[0]["success"] is False, (
+                f"Blackhole host must not report success=True: {records[0]}"
+            )
+
+    # -----------------------------------------------------------------
+    # Flag hygiene [P6]
+    # -----------------------------------------------------------------
+
+    def test_unknown_flag_rejected(self, cli_runner, target, port):
+        """Test an unknown flag is rejected with a usage error, not
+        silently ignored [Category C, P6]
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--not-a-real-flag",
+            expect_json=False,
+            timeout=10,
+        )
+        assert result.returncode != 0, "Unknown flag must not be silently accepted"
+        text = result.combined_output.lower()
+        assert "traceback" not in text
+        assert "unrecognized" in text or "usage" in text
+
+    def test_typo_flag_transposition_not_silently_accepted(self, cli_runner, target, port):
+        """Test a transposed typo of --asdu-address (--adsu-address) is
+        rejected as unrecognized rather than silently ignored or
+        auto-corrected [Category C, P6]
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--adsu-address",
+            "5",
+            expect_json=False,
+            timeout=10,
+        )
+        assert result.returncode != 0
+        text = result.combined_output.lower()
+        assert "traceback" not in text
+        assert "unrecognized" in text or "usage" in text
+
+    def test_flag_borrowed_from_other_protocol_rejected(self, cli_runner, target, port):
+        """Test a flag that belongs to another protocol (Modbus's
+        --unit-id) is rejected rather than silently accepted [Category C, P6]
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            str(port),
+            "--unit-id",
+            "1",
+            expect_json=False,
+            timeout=10,
+        )
+        assert result.returncode != 0
+        text = result.combined_output.lower()
+        assert "traceback" not in text
+        assert "unrecognized" in text or "usage" in text
+
+    def test_flag_wrong_type_value_rejected(self, cli_runner, target):
+        """Test --port given a non-numeric value fails cleanly with a
+        usage error, never a traceback [Category C, P6]
+        """
+        result = cli_runner.run(
+            "iec104",
+            target,
+            "--port",
+            "not-a-port-number",
+            expect_json=False,
+            timeout=10,
+        )
+        assert result.returncode != 0
+        text = result.combined_output.lower()
+        assert "traceback" not in text
+        assert "invalid" in text or "usage" in text
+
     # NOT COVERED (no test exists — do not add skipped placeholders):
-    #   - IEC 101 serial mode, serial port listing, and --tls-ca: need a
-    #     physical serial device / a CA-backed TLS endpoint.
+    #   - --tls-ca: needs a CA-backed TLS endpoint, which this mock fleet
+    #     does not provide.
 
     # NOTE: --fuzz-max-targets was removed from the IEC 104 CLI — it is a
     # multi-target cap that never applied to IEC 104's single --fuzz-ioa fuzzer

@@ -107,6 +107,16 @@ class iec104(NetworkConnection):
         scan_results = self.scanner.discover(self.conn)
         self.results["data"]["scan_results"] = scan_results
 
+        # A bare TCP connect to a wrong-protocol port opens the channel but never
+        # yields an IEC 104 APDU. c104's is_connected only reflects the TCP/APCI
+        # channel being open, so without this gate the base NetworkConnection.run()
+        # defaults success=True and reports a false-positive IEC 104 device
+        # (connection-1). Only claim success when the peer actually sent at least
+        # one valid APDU (I/U/S-frame, e.g. STARTDT_CON, TESTFR_CON, or data).
+        if not self.scanner._apdu_received:
+            self.results["success"] = False
+            self.results.setdefault("error", "No valid IEC 104 response (not an IEC 104 device)")
+
     def cleanup(self):
         """Cleanup Iec104 connection"""
         # Signal listen mode to stop (graceful shutdown on KeyboardInterrupt)

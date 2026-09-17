@@ -28,22 +28,24 @@ Mock Server Data (server_example_password_auth, port 10108):
 Proto_args.py flags:
   --port, --timeout, -i/--identify, -l/--get-name-list, -r/--variable,
   --read-values, --test-write, --max-objects, --confirm, --fuzz,
-  --fuzz-iterations, --fuzz-max-targets, --fuzz-reference
+  --fuzz-iterations, --fuzz-max-targets, --fuzz-reference,
+  --tls, --tls-port, --tls-ca, --tls-pin, --tls-client-cert, --tls-client-key
 
 JSON Log Structure (event_type values):
   info:  connection, discovery, scan progress, results
   debug: per-object discovery, read operations
 
-Test Classification Summary (70 defined + 3 inherited from BaseProtocolIntegrationTest)
+Test Classification Summary (70 defined + 3 inherited from BaseProtocolIntegrationTest,
+plus TestMMSTLSFlagCoverage / TestMMSArgValidationAndHygiene / TestMMSP1Verdict below)
 ---------------------------------------------------------------------------
 Category A (strict -- mock supports, assert success + validate data):  36 tests
 Category B (conditional -- mock may not support, accept 0 or 1):       14 tests
 Category C (error handling -- assert failure + validate error events):  20 tests
-Total defined in file:                                                 70 tests
+Total defined in file (original class):                                70 tests
 Total collected (including inherited):                                 73 tests
 ---------------------------------------------------------------------------
 
-Flag Coverage Matrix (proto_args.py):
+Flag Coverage Matrix (proto_args.py / `oida mms -h`):
   --port                    [A] inherent in all tests via port fixture
   --timeout                 [A] inherited test_timeout_handling, test_short_timeout
   -i/--identify             [A] test_identify, test_identify_output_structure
@@ -60,7 +62,31 @@ Flag Coverage Matrix (proto_args.py):
   format (global)           [A] test_csv_output, test_xml_output, test_json_output
   -v (global)               [A] test_verbose_output
   --debug (global)          [A] test_debug_output
+
+  -- TLS flags below driven against the LIVE mms-libiec61850 mock (plaintext,
+     no TLS listener exists in this fleet), so they are exercised as hostile/
+     negative paths: a real MMS/TCP server refusing a TLS handshake, and
+     clean, non-crashing errors for bad certificate paths. See
+     TestMMSTLSFlagCoverage. --
+
+  --tls                     [C] test_tls_against_plaintext_server_fails_cleanly
+  --tls-port                [B] test_tls_port_flag_is_actually_used
+  --tls-ca                  [C] test_tls_ca_nonexistent_file_fails_cleanly
+  --tls-pin                 [C] test_tls_pin_nonexistent_file_fails_cleanly
+  --tls-client-cert         [C] test_tls_client_cert_and_key_nonexistent_fail_cleanly
+  --tls-client-key          [C] test_tls_client_cert_and_key_nonexistent_fail_cleanly
+
+Bug-hunt classes appended below the original class:
+  TestMMSP1Verdict                  -- P1 false-positive identification verdict
+                                        (mms is CORRECT / NOT affected; see class
+                                        docstring for the reproduction and why).
+  TestMMSTLSFlagCoverage            -- --tls/--tls-port/--tls-ca/--tls-pin/
+                                        --tls-client-cert/--tls-client-key coverage.
+  TestMMSArgValidationAndHygiene    -- P2 (unvalidated numeric ranges), P3
+                                        (wrong-type args), P6 (unknown/typo flags).
 """
+
+import json
 
 import pytest
 from typing import Optional
@@ -1810,3 +1836,389 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
         assert any("mms" in m.lower() for m in modules if m), (
             f"Expected 'mms' module in log events. Found modules: {modules}"
         )
+
+
+# ============================================================================
+# P1 false-positive-identification verdict.
+#
+# connection.py's NetworkConnection.run() defaults results["success"] to True
+# whenever proto_flow() returns without raising an exception. Several
+# protocol modules never explicitly flip that default back to False on a
+# connect failure, which produces a false "success": true in the final
+# --output JSON even though nothing was ever validly identified (the
+# "connection-1" systemic bug, deferred -- connection.py itself is NOT to be
+# touched here).
+#
+# MMS's cli_runner.py (src/oida/protocols/mms/cli_runner.py) is NOT affected:
+#
+#   def proto_flow(self):
+#       ...
+#       self.create_conn_obj()
+#       if not self.conn:
+#           self.logger.fail(f"Failed to connect to {self.host}")
+#           self.results["success"] = False
+#           self.results["error"] = "Connection failed"
+#           return
+#
+# `self.conn` comes from MMSScanner.connect() (src/oida/protocols/mms/__init__.py),
+# which performs a REAL MMS/ISO association (`_Lib.MMSClient(...).connect(host,
+# port)` -- an actual OSI presentation/session/ACSE handshake over the TCP
+# byte stream, not just a bare TCP connect) and returns None whenever that
+# association fails for any reason (TCP refused, TCP accepted but no valid
+# MMS/ISO response, TLS handshake failure). Only a successful MMS association
+# yields a non-None client, so success=False is the correct outcome whenever
+# the responder is not really an MMS/IEC 61850 server.
+#
+# This is the pattern other modules should crib for their own connection-1
+# fix: gate "success" on the protocol-layer handshake completing (an actual
+# parsed protocol response), not on "raw TCP connect succeeded" or "no
+# exception was raised".
+# ============================================================================
+@pytest.mark.mms
+class TestMMSP1Verdict:
+    """Reproduces and documents the P1 false-positive-identification verdict
+    for MMS: CORRECT / NOT affected by the connection.py default-success bug."""
+
+    protocol_name = "mms"
+
+    def test_p1_closed_port_reports_success_false(self, cli_runner, tmp_path):
+        """A closed TCP port never yields a real MMS association, so the
+        final JSON must report success: false [Category C, P1 verdict]."""
+        out_dir = tmp_path / "p1_closed"
+        result = cli_runner.run(
+            "mms",
+            MOCK_HOST,
+            "--port",
+            "65530",
+            "--timeout",
+            "3",
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        out_file = out_dir / "mms.json"
+        assert out_file.exists(), result.combined_output[:500]
+        payload = json.loads(out_file.read_text())
+        last = payload[-1] if isinstance(payload, list) else payload
+        assert last["success"] is False, (
+            "MMS is expected to be CORRECT (not affected by the connection.py "
+            f"default-success bug): closed port must report success=False. Got: {last}"
+        )
+        assert last.get("error") == "Connection failed"
+
+    def test_p1_wrong_protocol_on_port_reports_success_false(self, cli_runner, tmp_path):
+        """Pointing MMS at a live Modbus mock (wrong protocol on the port)
+        must also report success: false -- no false-positive MMS
+        identification of a non-MMS responder [Category C, P1 verdict,
+        impostor server]."""
+        out_dir = tmp_path / "p1_wrong_proto"
+        result = cli_runner.run(
+            "mms",
+            MOCK_HOST,
+            "--port",
+            str(MOCK_PORTS["modbus"]),
+            "--timeout",
+            "3",
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        out_file = out_dir / "mms.json"
+        assert out_file.exists(), result.combined_output[:500]
+        payload = json.loads(out_file.read_text())
+        last = payload[-1] if isinstance(payload, list) else payload
+        assert last["success"] is False, (
+            "MMS is expected to be CORRECT: a Modbus responder on the probed "
+            f"port must never be reported as a successful MMS scan. Got: {last}"
+        )
+        text = result.combined_output.lower()
+        assert "connected to mms device" not in text, (
+            f"Must not falsely report a successful MMS connection to a Modbus port: {text[:500]}"
+        )
+
+    @pytest.mark.slow
+    @pytest.mark.timeout(30)
+    def test_p1b_timeout_bounds_connect_to_blackhole(self, cli_runner):
+        """--timeout must actually bound the connect attempt against an
+        unreachable (blackhole) address; the process must not hang well past
+        the requested timeout [Category C, P1b]."""
+        result = cli_runner.run(
+            "mms",
+            "10.255.255.1",
+            "--port",
+            "102",
+            "--timeout",
+            "3",
+            format="json",
+            timeout=20,
+            expect_json=False,
+        )
+        assert result.execution_time < 15, (
+            f"--timeout 3 should bound the run to well under 15s, took "
+            f"{result.execution_time:.1f}s: {result.combined_output[:400]}"
+        )
+        assert "Traceback" not in result.combined_output
+
+
+# ============================================================================
+# --tls/--tls-port/--tls-ca/--tls-pin/--tls-client-cert/--tls-client-key
+# coverage. There is no TLS-listening MMS mock in this fleet (MMS-over-TLS
+# would need a server on 3782), so these flags are exercised as hostile/
+# negative paths against the live plaintext mms-libiec61850 mock: a real MMS
+# server refusing a TLS handshake, and clean, non-crashing errors for bad
+# certificate paths. This mirrors TestGOOSEMmsEnumAndTLS in
+# test_goose_integration.py.
+# ============================================================================
+@pytest.mark.mms
+class TestMMSTLSFlagCoverage:
+    """Flag coverage for --tls/--tls-port/--tls-ca/--tls-pin/--tls-client-cert/
+    --tls-client-key, driven against the live mms-libiec61850 mock [Category C]."""
+
+    protocol_name = "mms"
+
+    def test_tls_against_plaintext_server_fails_cleanly(self, cli_runner):
+        """--tls against a real plaintext MMS server must fail the TLS
+        handshake cleanly, not hang or crash, and never report a successful
+        connection [Category C, TLS mismatch]."""
+        result = cli_runner.run(
+            "mms",
+            MOCK_HOST,
+            "--port",
+            str(MOCK_PORTS["mms"]),
+            "--tls",
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+        text = result.combined_output.lower()
+        assert "connected to mms device" not in text, (
+            f"--tls must not report a successful connection to a plaintext server: {text[:500]}"
+        )
+
+    def test_tls_ca_nonexistent_file_fails_cleanly(self, cli_runner):
+        """--tls-ca pointed at a file that does not exist must produce a
+        clean, readable error instead of crashing [Category C]."""
+        result = cli_runner.run(
+            "mms",
+            MOCK_HOST,
+            "--port",
+            str(MOCK_PORTS["mms"]),
+            "--tls",
+            "--tls-ca",
+            "/nonexistent/ca.pem",
+            "--timeout",
+            "3",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+        assert "/nonexistent/ca.pem" in result.combined_output, result.combined_output[:500]
+
+    def test_tls_pin_nonexistent_file_fails_cleanly(self, cli_runner):
+        """--tls-pin pointed at a file that does not exist must produce a
+        clean, readable error instead of crashing [Category C]."""
+        result = cli_runner.run(
+            "mms",
+            MOCK_HOST,
+            "--port",
+            str(MOCK_PORTS["mms"]),
+            "--tls",
+            "--tls-pin",
+            "/nonexistent/pin.pem",
+            "--timeout",
+            "3",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+        assert "/nonexistent/pin.pem" in result.combined_output, result.combined_output[:500]
+
+    def test_tls_client_cert_and_key_nonexistent_fail_cleanly(self, cli_runner):
+        """--tls-client-cert/--tls-client-key with missing files must fail
+        cleanly rather than crash [Category C]."""
+        result = cli_runner.run(
+            "mms",
+            MOCK_HOST,
+            "--port",
+            str(MOCK_PORTS["mms"]),
+            "--tls",
+            "--tls-client-cert",
+            "/nonexistent/client.pem",
+            "--tls-client-key",
+            "/nonexistent/client.key",
+            "--timeout",
+            "3",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+        assert "/nonexistent/client.pem" in result.combined_output, result.combined_output[:500]
+
+    def test_tls_port_flag_is_actually_used(self, cli_runner):
+        """--tls-port must change which port is dialed: pointing it at a
+        closed port must surface that port number in the resulting error,
+        proving the flag is wired rather than ignored [Category B]."""
+        result = cli_runner.run(
+            "mms",
+            MOCK_HOST,
+            "--tls",
+            "--tls-port",
+            "19999",
+            "--timeout",
+            "3",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+        assert "19999" in result.combined_output, (
+            f"--tls-port value not reflected in connection attempt: {result.combined_output[:500]}"
+        )
+
+
+# ============================================================================
+# P2 (unvalidated numeric ranges), P3 (wrong-type args), P4 (confirm-gate
+# consistency check for --test-write/--fuzz, both already covered in the main
+# class -- reconfirmed here against negative values), P6 (unknown/typo flag
+# hygiene).
+# ============================================================================
+@pytest.mark.mms
+class TestMMSArgValidationAndHygiene:
+    """Numeric validation, bad-type inputs, confirm-gate re-check with
+    negative values, and unknown/typo flags."""
+
+    protocol_name = "mms"
+
+    def test_max_objects_negative_value_not_validated(self, cli_runner):
+        """--max-objects accepts a negative value without validation: the
+        scanner treats it as an (unreachable) cap and discovers zero objects
+        instead of rejecting the bad input outright [Category C, P2
+        unvalidated range -- documents a real gap, not a crash]."""
+        result = cli_runner.run(
+            "mms",
+            MOCK_HOST,
+            "--port",
+            str(MOCK_PORTS["mms"]),
+            "--max-objects",
+            "-5",
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+        text = result.combined_output.lower()
+        assert "discovered 0 logical devices" in text, (
+            "KNOWN GAP: --max-objects -5 is accepted by argparse and silently "
+            f"caps discovery at 0 objects instead of being rejected. Got: {text[:500]}"
+        )
+
+    def test_timeout_non_numeric_rejected_by_parser(self, cli_runner):
+        """--timeout must be numeric; a non-numeric value is a usage error,
+        not a crash [Category C, P3 wrong-type]."""
+        result = cli_runner.run("mms", MOCK_HOST, "--timeout", "notanumber", expect_json=False)
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output
+
+    def test_port_non_numeric_rejected_by_parser(self, cli_runner):
+        """--port must be numeric; a non-numeric value is a usage error, not
+        a crash [Category C, P3 wrong-type]."""
+        result = cli_runner.run(
+            "mms", MOCK_HOST, "--port", "notaport", "--timeout", "2", expect_json=False
+        )
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output
+
+    def test_fuzz_iterations_negative_value_does_not_crash(self, cli_runner):
+        """A negative --fuzz-iterations is accepted by argparse but must not
+        crash the scanner downstream [Category C, P2 unvalidated range]."""
+        result = cli_runner.run(
+            "mms",
+            MOCK_HOST,
+            "--port",
+            str(MOCK_PORTS["mms"]),
+            "--fuzz",
+            "--confirm",
+            "--fuzz-iterations",
+            "-3",
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+
+    def test_fuzz_max_targets_negative_value_does_not_crash(self, cli_runner):
+        """A negative --fuzz-max-targets is accepted by argparse but must not
+        crash the scanner [Category C, P2 unvalidated range]."""
+        result = cli_runner.run(
+            "mms",
+            MOCK_HOST,
+            "--port",
+            str(MOCK_PORTS["mms"]),
+            "--fuzz",
+            "--confirm",
+            "--fuzz-max-targets",
+            "-1",
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+
+    def test_fuzz_without_confirm_refuses(self, cli_runner):
+        """--fuzz without --confirm must refuse to run the dangerous
+        operation [Category C, P4 confirm-gate]."""
+        result = cli_runner.run(
+            "mms",
+            MOCK_HOST,
+            "--port",
+            str(MOCK_PORTS["mms"]),
+            "--fuzz",
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        text = result.combined_output.lower()
+        assert "requires --confirm" in text, (
+            f"--fuzz without --confirm should be refused. Got: {text[:500]}"
+        )
+
+    def test_test_write_without_confirm_refuses(self, cli_runner):
+        """--test-write without --confirm must refuse the write probe
+        [Category C, P4 confirm-gate]."""
+        result = cli_runner.run(
+            "mms",
+            MOCK_HOST,
+            "--port",
+            str(MOCK_PORTS["mms_control"]),
+            "--test-write",
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        text = result.combined_output.lower()
+        assert "requires --confirm" in text, (
+            f"--test-write without --confirm should be refused. Got: {text[:500]}"
+        )
+
+    def test_unknown_flag_rejected(self, cli_runner):
+        """An entirely unknown flag must exit non-zero with a usage error,
+        never be silently ignored [Category C, P6 flag hygiene]."""
+        result = cli_runner.run("mms", MOCK_HOST, "--not-a-real-flag", "foo", expect_json=False)
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output
+
+    def test_transposed_typo_flag_rejected(self, cli_runner):
+        """A transposed typo of --tls (--tsl) must be rejected as an unknown
+        flag, not silently accepted or truncated-matched [Category C, P6
+        flag hygiene]."""
+        result = cli_runner.run("mms", MOCK_HOST, "--tsl", "--timeout", "1", expect_json=False)
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output

@@ -303,6 +303,11 @@ class hl7(
         self.segment_builder = None
         self.all_responses = []  # Track all responses for export
         self.detected_version = None  # Auto-detected from server response
+        # Set True as soon as the peer returns a valid HL7 message (an MSH
+        # segment). A bare TCP connect to a non-HL7 port opens the socket but
+        # never sends an HL7 ACK, so this is the discriminator that prevents a
+        # false-positive HL7 identification (connection-1).
+        self._hl7_response_seen = False
         super().__init__(args, db, host)
 
     def _get_version(self) -> str:
@@ -344,11 +349,21 @@ class hl7(
 
         # Create connection
         if not self.create_conn_obj():
+            # TCP connect failed outright (closed/filtered port). Without this
+            # the base NetworkConnection.run() defaults success=True and reports
+            # a false-positive HL7 identification (connection-1).
+            self.results["success"] = False
+            self.results.setdefault("error", "Connection failed")
             return
 
         # Probe operations if requested (runs before other operations)
         if getattr(self.args, "probe_ops", False):
             self._probe_operations()
+            if not self._hl7_response_seen:
+                # See the note on the main path below: no HL7 message came back,
+                # so this is not a confirmed HL7 endpoint (connection-1).
+                self.results["success"] = False
+                self.results.setdefault("error", "No valid HL7 response (not an HL7/MLLP endpoint)")
             self._analyze_security()
             self._export_results()
             self._disconnect()
@@ -450,6 +465,14 @@ class hl7(
 
         if getattr(self.args, "enum_locations", False):
             self._enum_locations()
+
+        # No HL7 message ever came back: create_conn_obj() only did a bare TCP
+        # connect, which succeeds against any open port. Without this the base
+        # NetworkConnection.run() defaults success=True and reports a
+        # false-positive HL7 identification (connection-1).
+        if not self._hl7_response_seen:
+            self.results["success"] = False
+            self.results.setdefault("error", "No valid HL7 response (not an HL7/MLLP endpoint)")
 
         # Analyze security
         self._analyze_security()
@@ -737,6 +760,11 @@ class hl7(
                     return None
 
             stripped = strip_mllp(response)
+            # A valid HL7 response always carries an MSH segment. Requiring it
+            # (not just any bytes) means a non-HL7 peer that echoes junk inside
+            # MLLP framing is not mistaken for a real HL7 endpoint.
+            if stripped and b"MSH" in stripped:
+                self._hl7_response_seen = True
             self._handle_response_options(stripped)
             return stripped
         except TimeoutError:

@@ -50,6 +50,11 @@ Return code / success assertions:                                     117 tests 
 ---------------------------------------------------------------------------
 """
 
+import contextlib
+import json
+import socket
+import threading
+
 import pytest
 from typing import Optional
 
@@ -520,7 +525,11 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
         _assert_log_has_events(result)
 
     def test_send_adt_with_full_patient_data(self, cli_runner, target, port):
-        """Test ADT with all patient data segments (PID, PV1, DG1, PR1) [Category A]"""
+        """Test ADT with all patient data segments (PID, PV1, DG1, PR1) [Category A]
+
+        Also drives --dx-clinician (DG1 diagnosing clinician), --pr-type and
+        --pr-practitioner (PR1 procedure type/practitioner).
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -555,10 +564,16 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "A",
             "--dx-priority",
             "1",
+            "--dx-clinician",
+            "SMITH^JANE^MD",
             "--pr-code",
             "99213",
             "--pr-description",
             "Office visit",
+            "--pr-type",
+            "P",
+            "--pr-practitioner",
+            "JONES^ROBERT^MD",
             "--confirm",
             format="json",
             json_log=True,
@@ -1098,13 +1113,22 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
         assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
 
     def test_send_rds(self, cli_runner, target, port):
-        """Test RDS^O13 pharmacy dispense [Category B]"""
+        """Test RDS^O13 pharmacy dispense [Category B]
+
+        Also drives --dispense-amount and --dispense-units, which populate
+        the RXD (Pharmacy Dispense) segment's actual-amount/actual-units
+        fields.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
             "--port",
             str(port),
             "--send-rds",
+            "--dispense-amount",
+            "10",
+            "--dispense-units",
+            "mL",
             "--confirm",
             format="json",
             json_log=True,
@@ -1158,7 +1182,11 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             _assert_log_event_structure(result.scan_log)
 
     def test_send_mfn_m02_staff(self, cli_runner, target, port):
-        """Test MFN^M02 master file staff notification [Category B]"""
+        """Test MFN^M02 master file staff notification [Category B]
+
+        Also drives --department (STF-11), which is only meaningful on
+        MFN^M02 staff master-file messages.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -1173,6 +1201,36 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "SMITH^JOHN",
             "--staff-type",
             "MD",
+            "--department",
+            "CARDIOLOGY",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+
+        assert result.returncode in [0, 1]
+        if result.scan_log is not None and len(result.scan_log) > 0:
+            _assert_log_event_structure(result.scan_log)
+
+    def test_send_mfn_m04_charge(self, cli_runner, target, port):
+        """Test MFN^M04 charge description master file notification [Category B]
+
+        Drives --charge-code and --charge-price, which populate the PRC
+        (Pricing) segment and are only meaningful on MFN^M04 messages.
+        """
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--send-mfn",
+            "--mfn-type",
+            "M04",
+            "--charge-code",
+            "CHG100",
+            "--charge-price",
+            "250.00",
             "--confirm",
             format="json",
             json_log=True,
@@ -1247,7 +1305,11 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             _assert_log_event_structure(result.scan_log)
 
     def test_send_bar_with_insurance(self, cli_runner, target, port):
-        """Test BAR^P01 with insurance data [Category B]"""
+        """Test BAR^P01 with insurance data [Category B]
+
+        Also drives --guarantor-phone, which populates GT1-6 on the
+        guarantor segment.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -1262,6 +1324,8 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "GRP123",
             "--policy-number",
             "POL456",
+            "--guarantor-phone",
+            "(555)987-6543",
             "--confirm",
             format="json",
             json_log=True,
@@ -1289,7 +1353,11 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
         assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
 
     def test_send_dft(self, cli_runner, target, port):
-        """Test DFT^P03 financial transaction [Category B]"""
+        """Test DFT^P03 financial transaction [Category B]
+
+        Also drives --transaction-description, which populates FT1-8 on the
+        financial transaction segment.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -1304,6 +1372,8 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "99213",
             "--transaction-type",
             "CG",
+            "--transaction-description",
+            "Cardiology Consultation",
             "--confirm",
             format="json",
             json_log=True,
@@ -1337,7 +1407,12 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
         assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
 
     def test_pcd01_infusion_pump(self, cli_runner, target, port):
-        """Test PCD-01 device observation for infusion pump [Category B]"""
+        """Test PCD-01 device observation for infusion pump [Category B]
+
+        Also drives --device-id (MSH sending app suffix), --volume-delivered,
+        --drug-concentration and --dose-rate, which each add an OBX metric to
+        the PCD-01 ORU^R01 message.
+        """
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -1346,10 +1421,18 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--pcd-01",
             "--device-type",
             "lvp",
+            "--device-id",
+            "DEV123",
             "--flow-rate",
             "125",
             "--vtbi",
             "500",
+            "--volume-delivered",
+            "50",
+            "--drug-concentration",
+            "5.0",
+            "--dose-rate",
+            "2.5",
             "--confirm",
             format="json",
             json_log=True,
@@ -1676,6 +1759,32 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
         )
 
         assert result.returncode in [0, 1]
+
+    def test_save_response(self, cli_runner, target, port, tmp_path):
+        """Test --save-response writes the raw MLLP ACK to a file [Category A]"""
+        response_file = tmp_path / "hl7_response.raw"
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--send-adt",
+            "--patient-id",
+            "PT001",
+            "--save-response",
+            str(response_file),
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+
+        assert result.success, f"ADT with --save-response failed: {result.stderr}"
+        assert response_file.exists(), "Expected --save-response to create the response file"
+        content = response_file.read_bytes()
+        assert b"MSH" in content, (
+            f"Expected a raw HL7 MSH segment in the saved response, got: {content[:200]!r}"
+        )
 
     # ========================================================================
     # Security Analysis Tests
@@ -2769,6 +2878,28 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
                 f"Expected connection error in log, got: {messages[:300]}"
             )
 
+    def test_pcd01_invalid_dose_rate_rejected(self, cli_runner, target, port):
+        """Test that a non-numeric --dose-rate is rejected by argument parsing [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--pcd-01",
+            "--dose-rate",
+            "not-a-number",
+            "--confirm",
+            format="json",
+            json_log=True,
+            timeout=15,
+            expect_json=False,
+        )
+
+        assert result.returncode != 0, "Non-numeric --dose-rate should be rejected"
+        assert "Traceback" not in result.combined_output, (
+            f"Invalid --dose-rate should not crash with a traceback: {result.combined_output[:500]}"
+        )
+
     # ========================================================================
     # Verbose / Debug Output Tests
     # ========================================================================
@@ -2994,3 +3125,119 @@ class TestHl7PythonMock(BaseProtocolIntegrationTest):
         _assert_log_has_events(result)
         messages = _all_messages(result.scan_log)
         assert "tls" in messages or "certificate" in messages or "connected" in messages
+
+
+@contextlib.contextmanager
+def _dummy_tcp_server():
+    """A local TCP server that accepts connections but never speaks HL7/MLLP.
+
+    Safety: binds only to 127.0.0.1 on an ephemeral port. It provides a
+    "TCP connects but is not an HL7 endpoint" target for the connection-1
+    false-positive regression below — it never touches a real device or external
+    network. Accepted sockets are held open and silent so the MLLP query never
+    receives an HL7 ACK.
+    """
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind(("127.0.0.1", 0))
+    srv.listen(8)
+    port = srv.getsockname()[1]
+    stop = threading.Event()
+    conns = []
+
+    def _serve():
+        srv.settimeout(0.5)
+        while not stop.is_set():
+            try:
+                conn, _ = srv.accept()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            conns.append(conn)
+
+    thread = threading.Thread(target=_serve, daemon=True)
+    thread.start()
+    try:
+        yield port
+    finally:
+        stop.set()
+        with contextlib.suppress(OSError):
+            srv.close()
+        for conn in conns:
+            with contextlib.suppress(OSError):
+                conn.close()
+        thread.join(timeout=2)
+
+
+class TestHL7P1FalsePositiveRegression:
+    """Regression guard for the connection-1 false-positive identification bug.
+
+    A bare TCP connect to a port that speaks *something other than HL7/MLLP*
+    opens the channel but never returns an HL7 ACK. Before the fix,
+    create_conn_obj() only performed a TCP connect (which succeeds on any open
+    port) and proto_flow never set success=False, so the base
+    ``NetworkConnection.run()`` defaulted success=True and OIDA reported a
+    false-positive HL7 endpoint. The fix tracks whether the peer ever returned a
+    valid HL7 message (an MSH segment) and gates success=False otherwise.
+
+    Safety: targets only a local in-process dummy TCP server bound to 127.0.0.1
+    and a closed local port — never a real device or external network.
+    """
+
+    def _read_result_payload(self, out_dir, result):
+        candidates = sorted(out_dir.glob("*.json"))
+        assert candidates, (
+            "no JSON result file was written to the output directory; "
+            f"combined output: {result.combined_output[:800]}"
+        )
+        payload = json.loads(candidates[-1].read_text())
+        return payload[0] if isinstance(payload, list) else payload
+
+    def test_non_hl7_tcp_port_is_not_a_false_positive(self, cli_runner, tmp_path):
+        """A TCP-connectable but non-HL7 port must report success=False."""
+        with _dummy_tcp_server() as port:
+            out_dir = tmp_path / "p1_non_hl7"
+            result = cli_runner.run(
+                "hl7",
+                "127.0.0.1",
+                "--port",
+                str(port),
+                "--timeout",
+                "3",
+                format="json",
+                output=str(out_dir),
+                expect_json=False,
+                timeout=30,
+            )
+            last = self._read_result_payload(out_dir, result)
+            assert last["success"] is False, (
+                "connection-1 regression: a non-HL7 TCP port was reported as a "
+                f"successful HL7 identification. Payload: {last}"
+            )
+
+    def test_closed_port_is_not_a_false_positive(self, cli_runner, tmp_path):
+        """A closed local port must report success=False (never a phantom endpoint)."""
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        probe.bind(("127.0.0.1", 0))
+        closed_port = probe.getsockname()[1]
+        probe.close()
+
+        out_dir = tmp_path / "p1_closed"
+        result = cli_runner.run(
+            "hl7",
+            "127.0.0.1",
+            "--port",
+            str(closed_port),
+            "--timeout",
+            "3",
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+            timeout=30,
+        )
+        last = self._read_result_payload(out_dir, result)
+        assert last["success"] is False, (
+            "connection-1 regression: a closed port was reported as a successful "
+            f"HL7 identification. Payload: {last}"
+        )

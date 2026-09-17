@@ -259,6 +259,7 @@ class PropertiesMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types["ErrorRejectAbortNack"]
 
         if device_id not in self.objects:
             self.logger.warning("No objects enumerated. Run with --enumerate-objects first.")
@@ -287,7 +288,11 @@ class PropertiesMixin:
                     except (asyncio.TimeoutError, TimeoutError) as e:
                         self.logger.debug(f"bacpypes3 read present values failed: {e}")
                         continue
-                    except Exception as e:
+                    # bacpypes3 raises Error/Reject/Abort (all ErrorRejectAbortNack
+                    # subclasses) as BaseException, not Exception - must be caught
+                    # explicitly or a single unsupported property (e.g. presentValue
+                    # on a device/file/program/schedule object) crashes the scan.
+                    except (Exception, ErrorRejectAbortNack) as e:
                         self.logger.debug(f"bacpypes3 read present values failed: {e}")
                         continue
 

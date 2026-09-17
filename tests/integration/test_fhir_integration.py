@@ -46,11 +46,16 @@ Total collected (including inherited from BaseProtocolIntegrationTest): 54 tests
 ---------------------------------------------------------------------------
 """
 
+import socket
+import threading
+
 import pytest
 from typing import Optional
 
 from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST
+from .conftest import MOCK_HOST, check_port_open
+
+pytestmark = [pytest.mark.fhir, pytest.mark.xdist_group("fhir_service")]
 
 
 # ---------------------------------------------------------------------------
@@ -1335,3 +1340,759 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
         assert any(term in text for term in ["error", "fail", "not found", "404", "connection"]), (
             f"Expected error for invalid endpoint: {text[:500]}"
         )
+
+    # ========================================================================
+    # Discovery flag-coverage tests (--capability-statement / --enum-all)
+    # ========================================================================
+    def test_capability_statement_long_flag(self, cli_runner, target, port, mock_service):
+        """Literal --capability-statement alias returns real mock CapabilityStatement [Category A]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--capability-statement",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "4.0.1" in text, f"Expected served FHIR version 4.0.1: {text[:800]}"
+        assert "oida" in text.lower(), f"Expected mock server/publisher name: {text[:800]}"
+
+    def test_enum_all_long_flag_expands_unsupported_resource_searches(
+        self, cli_runner, target, port, mock_service
+    ):
+        """--enum-all expands to every resource search; mock lacks routes for several [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--enum-all",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        # The mock has no routes for these resource types -> each must fail cleanly,
+        # never crash, never be silently skipped.
+        for resource in ("diagnosticreport", "practitioner", "organization"):
+            assert resource in text.lower(), (
+                f"--enum-all should have attempted {resource} search: {text[:1500]}"
+            )
+
+    # ========================================================================
+    # Unsupported-resource search flags (mock has no route -> clean 404, Category B)
+    # ========================================================================
+    def test_search_diagnostics_unsupported_resource(self, cli_runner, target, port, mock_service):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--search-diagnostics",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert "diagnosticreport" in text.lower() or "404" in text, (
+            f"Expected clean unsupported-resource error: {text[:500]}"
+        )
+
+    def test_search_documents_unsupported_resource(self, cli_runner, target, port, mock_service):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--search-documents",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert "documentreference" in text.lower() or "404" in text, (
+            f"Expected clean unsupported-resource error: {text[:500]}"
+        )
+
+    def test_search_practitioners_unsupported_resource(
+        self, cli_runner, target, port, mock_service
+    ):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--search-practitioners",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert "practitioner" in text.lower() or "404" in text, (
+            f"Expected clean unsupported-resource error: {text[:500]}"
+        )
+
+    def test_search_organizations_unsupported_resource(
+        self, cli_runner, target, port, mock_service
+    ):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--search-organizations",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert "organization" in text.lower() or "404" in text, (
+            f"Expected clean unsupported-resource error: {text[:500]}"
+        )
+
+    def test_search_locations_unsupported_resource(self, cli_runner, target, port, mock_service):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--search-locations",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert "location" in text.lower() or "404" in text, (
+            f"Expected clean unsupported-resource error: {text[:500]}"
+        )
+
+    def test_search_devices_unsupported_resource(self, cli_runner, target, port, mock_service):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--search-devices",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert "device" in text.lower() or "404" in text, (
+            f"Expected clean unsupported-resource error: {text[:500]}"
+        )
+
+    def test_search_orders_unsupported_resource(self, cli_runner, target, port, mock_service):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--search-orders",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert "servicerequest" in text.lower() or "404" in text, (
+            f"Expected clean unsupported-resource error: {text[:500]}"
+        )
+
+    # ========================================================================
+    # --no-tls: only observable against a schemeless target (fhir has no --port
+    # flag, so the port must be embedded directly in the target string).
+    # ========================================================================
+    def test_no_tls_bare_target_connects_over_plain_http(self, cli_runner, port, mock_service):
+        """--no-tls on a schemeless target reaches the plaintext mock [Category A]"""
+        bare_target = f"{MOCK_HOST}:{port}/fhir"
+        result = cli_runner.run(
+            self.protocol_name,
+            bare_target,
+            "--no-tls",
+            "--caps",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert "4.0.1" in text, f"--no-tls should reach the plaintext mock: {text[:800]}"
+
+    def test_default_tls_bare_target_fails_cleanly_against_plaintext_mock(
+        self, cli_runner, port, mock_service
+    ):
+        """Without --no-tls, TLS is attempted against a plaintext port and fails
+        cleanly (also exercises hostile-catalogue item: TLS/plaintext mismatch)
+        [Category C]"""
+        bare_target = f"{MOCK_HOST}:{port}/fhir"
+        result = cli_runner.run(
+            self.protocol_name,
+            bare_target,
+            "--caps",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert result.returncode != -1, "TLS mismatch must fail fast, not hang"
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert any(
+            term in text.lower() for term in ["ssl", "tls", "wrong_version", "error", "fail"]
+        ), f"Expected a clean TLS failure against the plaintext mock: {text[:800]}"
+
+    # ========================================================================
+    # --include / --revinclude / --patient-dob: accepted but the mock ignores
+    # them entirely (no birthdate filter, no _include support). Category B.
+    # ========================================================================
+    def test_include_revinclude_and_patient_dob_are_silently_ignored_by_mock(
+        self, cli_runner, target, port, mock_service
+    ):
+        """Document that --include/--revinclude/--patient-dob are parsed and sent
+        but have zero observable filtering effect against this mock: a DOB filter
+        that should match exactly one of five patients still returns all five."""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--search-patients",
+            "--include",
+            "Patient:organization",
+            "--revinclude",
+            "Observation:patient",
+            "--patient-dob",
+            "1980-01-15",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        for patient_id in ("pt001", "pt002", "pt003", "pt004", "pt005"):
+            assert patient_id in text, (
+                f"--patient-dob=1980-01-15 should only match PT001 on a real FHIR "
+                f"server, but the mock ignores the filter entirely and returns "
+                f"every patient: {text[:1000]}"
+            )
+
+    # ========================================================================
+    # Write operations: --confirm gate consistency (crud.py gates all four
+    # write ops with the identical 'Write operations require --confirm flag'
+    # message), then a clean failure against the GET-only mock (501).
+    # ========================================================================
+    def test_create_patient_refused_without_confirm(self, cli_runner, target, port, mock_service):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--create-patient",
+            "--patient-given-name",
+            "John",
+            "--patient-family-name",
+            "Doe",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        errors = result.scan_log.get_errors() if result.scan_log else []
+        error_text = " ".join(str(e) for e in errors).lower() + result.combined_output.lower()
+        assert "confirm" in error_text, f"Expected confirm-gate refusal: {error_text[:500]}"
+
+    def test_create_patient_with_confirm_fails_cleanly_against_get_only_mock(
+        self, cli_runner, target, port, mock_service
+    ):
+        """With --confirm the write is attempted; the mock has no POST handler
+        (stdlib HTTPServer -> 501) so it must fail cleanly, never crash [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--create-patient",
+            "--confirm",
+            "--patient-given-name",
+            "John",
+            "--patient-family-name",
+            "Doe",
+            "--patient-data",
+            '{"resourceType": "Patient"}',
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert any(term in text.lower() for term in ["failed", "error", "501"]), (
+            f"Expected a clean failure against the GET-only mock: {text[:800]}"
+        )
+
+    def test_create_patient_malformed_patient_data_json_no_crash(
+        self, cli_runner, target, port, mock_service
+    ):
+        """Malformed --patient-data JSON must produce a clean error, never a
+        traceback [Category C / P3]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--create-patient",
+            "--confirm",
+            "--patient-data",
+            "{not valid json",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output, (
+            f"Malformed --patient-data must not crash: {result.combined_output[:800]}"
+        )
+        assert "failed" in text.lower() or "error" in text.lower(), (
+            f"Expected a clean JSON-parse failure message: {text[:800]}"
+        )
+
+    def test_update_patient_refused_without_confirm(self, cli_runner, target, port, mock_service):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--update-patient",
+            "PT001",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "confirm" in text.lower(), f"Expected confirm-gate refusal: {text[:500]}"
+
+    def test_update_patient_with_confirm_fails_cleanly(
+        self, cli_runner, target, port, mock_service
+    ):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--update-patient",
+            "PT001",
+            "--confirm",
+            "--patient-data",
+            '{"resourceType": "Patient", "id": "PT001"}',
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert any(term in text.lower() for term in ["failed", "error", "501"]), (
+            f"Expected a clean failure against the GET-only mock: {text[:800]}"
+        )
+
+    def test_delete_patient_refused_without_confirm(self, cli_runner, target, port, mock_service):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--delete-patient",
+            "PT001",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "confirm" in text.lower(), f"Expected confirm-gate refusal: {text[:500]}"
+
+    def test_delete_patient_with_confirm_fails_cleanly(
+        self, cli_runner, target, port, mock_service
+    ):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--delete-patient",
+            "PT001",
+            "--confirm",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert any(term in text.lower() for term in ["failed", "error", "501"]), (
+            f"Expected a clean failure against the GET-only mock: {text[:800]}"
+        )
+
+    def test_create_observation_refused_without_confirm(
+        self, cli_runner, target, port, mock_service
+    ):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--create-observation",
+            "--patient-id",
+            "PT001",
+            "--observation-code",
+            "8867-4",
+            "--observation-value",
+            "72",
+            "--observation-unit",
+            "/min",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "confirm" in text.lower(), f"Expected confirm-gate refusal: {text[:500]}"
+
+    def test_create_observation_with_confirm_fails_cleanly(
+        self, cli_runner, target, port, mock_service
+    ):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--create-observation",
+            "--confirm",
+            "--patient-id",
+            "PT001",
+            "--observation-code",
+            "8867-4",
+            "--observation-value",
+            "72",
+            "--observation-unit",
+            "/min",
+            "--observation-data",
+            "{}",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert any(term in text.lower() for term in ["failed", "error", "501", "patient-id"]), (
+            f"Expected a clean failure against the GET-only mock: {text[:800]}"
+        )
+
+    # ========================================================================
+    # Brute-force wordlist flags. The mock never enforces authentication, so
+    # the scanner's own baseline check short-circuits before per-credential
+    # OAuth2 requests run — --client-id/--client-secret/--scope/--auth-url/
+    # --token-url are parsed but that code path is unreachable here. The
+    # wordlist files themselves ARE exercised (their line counts are echoed).
+    # ========================================================================
+    def test_brute_force_wordlists_detect_anonymous_access(
+        self, cli_runner, target, port, mock_service, tmp_path
+    ):
+        user_file = tmp_path / "users.txt"
+        pass_file = tmp_path / "pass.txt"
+        user_file.write_text("admin\n")
+        pass_file.write_text("admin123\n")
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--brute",
+            "--confirm",
+            "--user-file",
+            str(user_file),
+            "--pass-file",
+            str(pass_file),
+            "--brute-method",
+            "oauth2",
+            "--client-id",
+            "test-client",
+            "--client-secret",
+            "test-secret",
+            "--scope",
+            "patient/*.read",
+            "--auth-url",
+            f"http://{MOCK_HOST}:{port}/auth",
+            "--token-url",
+            f"http://{MOCK_HOST}:{port}/token",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        text = _combined_text(result, result.scan_log)
+        assert "Traceback" not in result.combined_output
+        assert "1 usernames" in text.lower() or "loaded 1" in text.lower(), (
+            f"Expected --user-file/--pass-file to be loaded: {text[:800]}"
+        )
+        assert "anonymous" in text.lower(), (
+            f"Mock allows unauthenticated access; brute force should short-circuit "
+            f"and report it: {text[:800]}"
+        )
+
+    # ========================================================================
+    # BUG (P2): -n/--max-results has no bounds validation. A negative value is
+    # silently accepted by argparse (type=int) and produces a Python negative
+    # slice (results[:-5] on 5 mock patients == []), silently returning "no
+    # patients found" instead of a validation error. Documented, not fixed.
+    # ========================================================================
+    def test_negative_max_results_silently_returns_empty_bug(
+        self, cli_runner, target, port, mock_service
+    ):
+        negative_result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--search-patients",
+            "-n",
+            "-5",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        positive_result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--search-patients",
+            "-n",
+            "5",
+            "--timeout",
+            "10",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        negative_text = _combined_text(negative_result, negative_result.scan_log)
+        positive_text = _combined_text(positive_result, positive_result.scan_log)
+        assert "Traceback" not in negative_result.combined_output
+        # BUG: -n -5 is accepted without a validation error and, via Python's
+        # negative-slice semantics, silently returns zero results instead of
+        # rejecting the invalid value or clamping it.
+        assert "pt001" not in negative_text, (
+            "BUG regression check failed: -n -5 unexpectedly returned patient data "
+            "-- if this now fails, the negative --max-results bug may have been "
+            f"fixed (verify and update this test): {negative_text[:800]}"
+        )
+        assert any(term in negative_text for term in ["no patients found", "0 patient"]), (
+            f"Expected the documented silent-empty-result bug for -n -5: {negative_text[:800]}"
+        )
+        assert "pt001" in positive_text, (
+            f"Sanity check: -n 5 must return real patient data: {positive_text[:800]}"
+        )
+
+    def test_max_results_non_numeric_rejected_by_argparse(self, cli_runner, target):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--search-patients",
+            "-n",
+            "notanumber",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        assert not result.success
+        assert "Traceback" not in result.combined_output
+
+    # ========================================================================
+    # Hostile-server catalogue
+    # ========================================================================
+    def test_wrong_protocol_on_port_hangs_ignoring_timeout_bug(self, cli_runner, mock_ports):
+        """BUG (P1/timeout): pointing fhir at a live but non-HTTP TCP service
+        (the modbus mock) causes the scanner to hang indefinitely during the
+        initial CapabilityStatement fetch -- --timeout is NOT honoured for this
+        phase. Verified manually: the process had to be killed externally after
+        20s despite --timeout 5. This harness kills the subprocess after
+        `timeout=` seconds and reports returncode == -1 in that case."""
+        modbus_port = mock_ports.get("modbus")
+        if not modbus_port or not check_port_open(MOCK_HOST, modbus_port, timeout=2):
+            pytest.skip("modbus mock not available for impostor-protocol test")
+        bad_target = f"http://{MOCK_HOST}:{modbus_port}/fhir"
+        result = cli_runner.run(
+            self.protocol_name,
+            bad_target,
+            "--timeout",
+            "5",
+            format="json",
+            json_log=True,
+            timeout=12,
+        )
+        assert "Traceback" not in result.combined_output
+        text = _combined_text(result, result.scan_log)
+        assert "4.0.1" not in text, "Must never claim a FHIR CapabilityStatement from a modbus port"
+        assert result.returncode == -1, (
+            "Documented bug: fhir's --timeout is not honoured against a "
+            "wrong-protocol live port; the scan hangs until the harness kills "
+            f"it. If this now fails, the hang may be fixed: {text[:500]}"
+        )
+
+    def test_unreachable_host_hangs_ignoring_timeout_bug(self, cli_runner):
+        """BUG (P1/timeout): a blackhole address also hangs past --timeout,
+        confirming the hang is not specific to impostor protocols but affects
+        any connection that never completes an HTTP response."""
+        bad_target = "http://10.255.255.1:8081/fhir"
+        result = cli_runner.run(
+            self.protocol_name,
+            bad_target,
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=12,
+        )
+        assert "Traceback" not in result.combined_output
+        assert result.returncode == -1, (
+            "Documented bug: fhir's --timeout is not honoured against an "
+            "unreachable host; the scan hangs until the harness kills it "
+            f"(expected to end within ~3s): {result.combined_output[:500]}"
+        )
+
+    def test_silent_socket_no_false_positive(self, cli_runner):
+        """A socket that accepts and then sends nothing must not be identified
+        as a FHIR server and must not crash. (May also hit the timeout-hang bug
+        documented above; the harness-level timeout is the safety net.)"""
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(("127.0.0.1", 0))
+        server.listen(1)
+        silent_port = server.getsockname()[1]
+        stop = threading.Event()
+
+        def _accept_and_stay_silent():
+            server.settimeout(10)
+            try:
+                conn, _addr = server.accept()
+                stop.wait(9)
+                conn.close()
+            except OSError:
+                pass
+
+        thread = threading.Thread(target=_accept_and_stay_silent, daemon=True)
+        thread.start()
+        try:
+            target = f"http://127.0.0.1:{silent_port}/fhir"
+            result = cli_runner.run(
+                self.protocol_name,
+                target,
+                "--timeout",
+                "3",
+                format="json",
+                json_log=True,
+                timeout=12,
+            )
+            text = _combined_text(result, result.scan_log)
+            assert "4.0.1" not in text, "Must never claim a FHIR CapabilityStatement from silence"
+            assert "Traceback" not in result.combined_output
+        finally:
+            stop.set()
+            server.close()
+            thread.join(timeout=5)
+
+    def test_junk_bytes_socket_no_false_positive(self, cli_runner):
+        """A socket that returns junk bytes where an HTTP response belongs must
+        be reported as a clean parse/connection error, never a false-positive
+        FHIR identification and never a crash."""
+        server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        server.bind(("127.0.0.1", 0))
+        server.listen(1)
+        junk_port = server.getsockname()[1]
+        stop = threading.Event()
+
+        def _accept_and_send_junk():
+            server.settimeout(10)
+            try:
+                conn, _addr = server.accept()
+                conn.sendall(b"\x00\x01\x02NOT-HTTP-GARBAGE\xff\xfe")
+                stop.wait(2)
+                conn.close()
+            except OSError:
+                pass
+
+        thread = threading.Thread(target=_accept_and_send_junk, daemon=True)
+        thread.start()
+        try:
+            target = f"http://127.0.0.1:{junk_port}/fhir"
+            result = cli_runner.run(
+                self.protocol_name,
+                target,
+                "--timeout",
+                "3",
+                format="json",
+                json_log=True,
+                timeout=12,
+            )
+            text = _combined_text(result, result.scan_log)
+            assert "4.0.1" not in text, (
+                "Must never claim a FHIR CapabilityStatement from garbage bytes"
+            )
+            assert "Traceback" not in result.combined_output
+        finally:
+            stop.set()
+            server.close()
+            thread.join(timeout=5)
+
+    # ========================================================================
+    # False flags: unknown flags, transposition typos, and borrowed flags must
+    # all be rejected -- never silently ignored or prefix-matched.
+    # ========================================================================
+    def test_unknown_flag_rejected(self, cli_runner, target):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--not-a-real-fhir-flag",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        assert not result.success
+        assert "Traceback" not in result.combined_output
+
+    def test_typo_transposition_flag_rejected(self, cli_runner, target):
+        """A transposed flag name must be rejected as unknown, never silently
+        prefix-matched onto the real flag (argparse only does that for
+        truncations, not transpositions)."""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--serach-patients",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        assert not result.success
+        assert "Traceback" not in result.combined_output
+        assert "PT001" not in result.combined_output, (
+            "A typo'd flag must never silently run a real patient search"
+        )
+
+    def test_borrowed_flag_from_other_protocol_rejected(self, cli_runner, target):
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--unit-id",
+            "1",
+            format="json",
+            json_log=True,
+            timeout=15,
+        )
+        assert not result.success
+        assert "Traceback" not in result.combined_output

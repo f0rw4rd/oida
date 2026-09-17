@@ -7,7 +7,7 @@ services:
       dockerfile: Dockerfile
     container_name: oida-tase2
     ports:
-      - "102:102"
+      - "20102:102"
     environment:
       - PYTHONUNBUFFERED=1
     restart: unless-stopped

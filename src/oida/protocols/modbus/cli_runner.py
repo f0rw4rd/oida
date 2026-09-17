@@ -177,6 +177,23 @@ class modbus(
 
         self.logger.debug("Connection established")
 
+        # A successful TCP connect does NOT mean the peer speaks Modbus: a bare
+        # socket to a different protocol still "connects". Require a valid Modbus
+        # PDU (real data or a proper Modbus exception) before treating this as a
+        # Modbus device, otherwise the base run() defaults success=True and
+        # reports a false-positive identification (connection-1). The
+        # discover_units sweep does its own per-unit probing, so skip the gate
+        # there and let that mode decide.
+        if not getattr(
+            self.scanner, "discover_units", False
+        ) and not self.scanner.verify_responsive(self.conn):
+            self.logger.fail(
+                f"No valid Modbus response from {self.ip}:{getattr(self.args, 'port', 502)}"
+            )
+            self.results["success"] = False
+            self.results["error"] = "No valid Modbus response (not a Modbus device)"
+            return
+
         # Enumerate device information
         self.logger.debug("Enumerating device information...")
         self.enum_host_info()

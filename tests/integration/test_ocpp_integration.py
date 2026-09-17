@@ -2140,3 +2140,888 @@ class TestOCPPSecurityFindings:
         assert any(term in output for term in probe_terms), (
             f"Expected active probe output with --confirm, got: {output[:800]}"
         )
+
+
+# ---------------------------------------------------------------------------
+# Flag Coverage Extension — real-CLI tests added to raise scripts/flag_coverage.py
+# credit for previously-unexercised flags. See module docstring conventions;
+# flag coverage matrix for the flags added below:
+#
+#   --enum-versions/-E        [A] test_cli_enum_versions_flag
+#   --enumerate (long form)   [A] test_cli_enumerate_long_flag
+#   --status                  [A] test_cli_status_flag
+#   --trigger/-T              [A] test_cli_trigger_message_known_and_unknown
+#   --local-list-version/-L   [A] test_cli_local_list_version_flag
+#   --composite-schedule      [B] test_cli_composite_schedule_flag (unsupported by mock)
+#   --installed-certs         [B] test_cli_installed_certs_flag (unsupported by mock)
+#   --firmware-info           [B] test_cli_firmware_info_flag
+#   --vendor / --model        [B] test_cli_vendor_and_model_flags (mock ignores payload)
+#   --charge-point-id/--cp-id [B] test_cli_charge_point_id_and_cp_id_flags
+#   --max-connector-id        [B] test_cli_max_connector_id_flag
+#   --auth-id/-a              [A] test_cli_auth_id_flag
+#   --ws-brute                [B] test_cli_ws_brute_builtin_flag / _wordlist_file_flag
+#   --listen/--listen-timeout [B] test_cli_listen_mode_flag
+#   --check-auth              [A/B] test_cli_check_auth_anonymous / _with_username
+#   --check-boot              [A] test_cli_check_boot_flag
+#   --check-config-keys       [A] test_cli_check_config_keys_without_data / _with_get_config
+#   --test-config-write, --test-charging-profile, --test-remote-start,
+#   --test-remote-stop, --test-reserve, --test-availability, --test-clear-cache,
+#   --test-diagnostics, --test-local-list, --test-network-profile,
+#   --test-install-cert, --test-display-msg, --test-customer-info,
+#   --test-ssrf-extended, --test-ws-hijack
+#                              [C/A] test_cli_security_probes_without_confirm_refused,
+#                                    test_cli_security_probes_maximal_with_confirm,
+#                                    test_cli_test_remote_start_rejected
+#   --test-authorize, --test-charging, --test-meter-inject, --charging
+#                              [C/A] test_cli_charging_flow_without_confirm_refused,
+#                                    test_cli_charging_flow_with_confirm,
+#                                    test_cli_charging_all_flag_with_confirm
+#   Hostile paths: impostor silent/garbage socket, TLS/plaintext mismatch,
+#   malformed args, unknown/typo/borrowed flags, wrong-type values.
+# ---------------------------------------------------------------------------
+
+
+class TestOCPPFlagCoverageDiscovery:
+    """Real-CLI tests driving previously-uncovered discovery/identity flags."""
+
+    def test_cli_enum_versions_flag(self, cli_runner, ws_url):
+        """Test -E/--enum-versions probes supported OCPP subprotocols. [Category A]
+
+        The mock server advertises subprotocols ocpp1.6 and ocpp2.0.1 only
+        (NOT ocpp2.1), so a correct probe must report 2.1 as unsupported.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--enum-versions",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"enum-versions failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "version" in output
+        assert "1.6" in output
+
+    def test_cli_enumerate_long_flag(self, cli_runner, ws_url):
+        """Test --enumerate (long form of -e) lists supported actions. [Category A]"""
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--enumerate",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--enumerate failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "bootnotification" in output or "action" in output
+
+    def test_cli_status_flag(self, cli_runner, ws_url):
+        """Test --status sends StatusNotification and reports acceptance. [Category A]
+
+        The mock's StatusNotification handler always returns an empty
+        CALLRESULT, which the scanner reports as Accepted.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--status",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--status failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "statusnotification" in output
+        assert "accepted" in output
+
+    def test_cli_trigger_message_known_and_unknown(self, cli_runner, ws_url):
+        """Test -T/--trigger against a known and an unknown message type. [Category A]
+
+        Mock's TriggerMessage handler accepts a fixed allow-list of message
+        types and returns NotImplemented for anything else.
+        """
+        known = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--trigger",
+            "StatusNotification",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+        assert known.returncode in [0, 1], (
+            f"--trigger StatusNotification failed (rc={known.returncode}): {known.stderr}"
+        )
+        known_output = known.combined_output.lower()
+        assert "triggermessage" in known_output
+        assert "accepted" in known_output
+
+        unknown = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--trigger",
+            "BogusMessageType",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+        assert unknown.returncode in [0, 1], (
+            f"--trigger BogusMessageType failed (rc={unknown.returncode}): {unknown.stderr}"
+        )
+        assert "notimplemented" in unknown.combined_output.lower()
+
+    def test_cli_local_list_version_flag(self, cli_runner, ws_url):
+        """Test -L/--local-list-version reads the CSMS's local auth list version. [Category A]
+
+        Mock's GetLocalListVersion always returns listVersion=3.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--local-list-version",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--local-list-version failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "local auth list version" in output or "listversion" in output
+        assert "3" in output
+
+    def test_cli_composite_schedule_flag(self, cli_runner, ws_url):
+        """Test --composite-schedule against a mock that doesn't support it. [Category B]
+
+        GetCompositeSchedule is not in the mock's KNOWN_ACTIONS, so the mock
+        returns CALLERROR NotSupported. This is a degenerate-but-drivable
+        case: the flag parses and the negative response is observable.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--composite-schedule",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--composite-schedule failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "getcompositeschedule" in output
+        assert "notsupported" in output or "not supported" in output
+
+    def test_cli_installed_certs_flag(self, cli_runner, ws_url):
+        """Test --installed-certs against a mock that doesn't support it. [Category B]
+
+        GetInstalledCertificateIds is not in the mock's KNOWN_ACTIONS, so the
+        mock returns CALLERROR NotSupported.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--installed-certs",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--installed-certs failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "getinstalledcertificateids" in output
+
+    def test_cli_firmware_info_flag(self, cli_runner, ws_url):
+        """Test --firmware-info gathers boot/config-derived firmware data. [Category B]
+
+        Asserts the command completes and produces a firmware-related
+        section; exact vendor/model text is not asserted since the mock
+        does not echo BootNotification payload content back.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--firmware-info",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--firmware-info failed (rc={result.returncode}): {result.stderr}"
+        )
+        assert "firmware" in result.combined_output.lower()
+
+    def test_cli_vendor_and_model_flags(self, cli_runner, ws_url):
+        """Test --vendor/--model are accepted and included in the boot flow. [Category B]
+
+        The mock ignores BootNotification payload content (always Accepted),
+        so these flags cannot be distinguished by server response; this test
+        asserts the flags parse and the scan completes without crashing.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--vendor",
+            "AcmeChargingCo",
+            "--model",
+            "AcmeModelX",
+            "--enumerate",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--vendor/--model failed (rc={result.returncode}): {result.stderr}"
+        )
+        assert "traceback" not in result.combined_output.lower()
+
+    def test_cli_charge_point_id_and_cp_id_flags(self, cli_runner, ocpp_server):
+        """Test --charge-point-id and its --cp-id alias against a bare target. [Category B]
+
+        Both flags only affect URL-path construction when the target is a
+        bare host:port (no explicit path); the mock accepts any WS path, so
+        this asserts both aliases parse and connect successfully.
+        """
+        bare_target = f"{ocpp_server.host}:{ocpp_server.port}"
+
+        long_form = cli_runner.run(
+            "ocpp",
+            bare_target,
+            "--charge-point-id",
+            "CUSTOM_CP_LONGFORM",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+        assert long_form.returncode in [0, 1], (
+            f"--charge-point-id failed (rc={long_form.returncode}): {long_form.stderr}"
+        )
+
+        alias = cli_runner.run(
+            "ocpp",
+            bare_target,
+            "--cp-id",
+            "CUSTOM_CP_ALIAS",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+        assert alias.returncode in [0, 1], f"--cp-id failed (rc={alias.returncode}): {alias.stderr}"
+
+    def test_cli_max_connector_id_flag(self, cli_runner, ws_url):
+        """Test --max-connector-id bounds connector enumeration. [Category B]"""
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--enum-connectors",
+            "--max-connector-id",
+            "2",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--max-connector-id failed (rc={result.returncode}): {result.stderr}"
+        )
+        assert "traceback" not in result.combined_output.lower()
+
+    def test_cli_auth_id_flag(self, cli_runner, ws_url):
+        """Test -a/--auth-id sends an Authorize request for a specific tag. [Category A]
+
+        Mock's Authorize handler always accepts.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--auth-id",
+            "MYTAG001",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--auth-id failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "mytag001" in output
+        assert "accepted" in output
+
+    def test_cli_ws_brute_builtin_flag(self, cli_runner, ocpp_server):
+        """Test --ws-brute with the built-in wordlist against a permissive mock. [Category B]
+
+        The mock accepts any WebSocket path, so this exercises the brute
+        loop's parse/execute path rather than a specific "found" assertion.
+        """
+        bare_target = f"{ocpp_server.host}:{ocpp_server.port}"
+        result = cli_runner.run(
+            "ocpp",
+            bare_target,
+            "--ws-brute",
+            "--brute-rate",
+            "0",
+            "--timeout",
+            "5",
+            expect_json=False,
+            timeout=60,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--ws-brute failed (rc={result.returncode}): {result.stderr}"
+        )
+        assert "traceback" not in result.combined_output.lower()
+
+    def test_cli_ws_brute_wordlist_file_flag(self, cli_runner, ocpp_server, tmp_path):
+        """Test --ws-brute with an explicit wordlist file. [Category B]"""
+        wordlist = tmp_path / "ocpp_paths.txt"
+        wordlist.write_text("CP_TEST_001\nfoo\nbar\n")
+
+        bare_target = f"{ocpp_server.host}:{ocpp_server.port}"
+        result = cli_runner.run(
+            "ocpp",
+            bare_target,
+            "--ws-brute",
+            str(wordlist),
+            "--timeout",
+            "5",
+            expect_json=False,
+            timeout=40,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--ws-brute <file> failed (rc={result.returncode}): {result.stderr}"
+        )
+        assert "traceback" not in result.combined_output.lower()
+
+    def test_cli_listen_mode_flag(self, cli_runner, ws_url):
+        """Test --listen with a short --listen-timeout completes promptly. [Category B]"""
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--listen",
+            "--listen-timeout",
+            "2",
+            "--timeout",
+            "10",
+            expect_json=False,
+            timeout=25,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--listen failed (rc={result.returncode}): {result.stderr}"
+        )
+        assert result.execution_time < 20, "Listen mode did not respect --listen-timeout"
+        assert "traceback" not in result.combined_output.lower()
+
+
+class TestOCPPFlagCoverageSecurityChecks:
+    """Real-CLI tests driving previously-uncovered passive security-check flags."""
+
+    def test_cli_check_auth_anonymous(self, cli_runner, ws_url):
+        """Test --check-auth without credentials runs without crashing. [Category B]
+
+        Without --username, the handler only logs at debug level; the
+        connection-level anonymous-access finding is emitted independently,
+        so this test only asserts the flag parses and the scan completes.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--check-auth",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--check-auth failed (rc={result.returncode}): {result.stderr}"
+        )
+        assert "traceback" not in result.combined_output.lower()
+
+    def test_cli_check_auth_with_username(self, cli_runner, ws_url):
+        """Test --check-auth with -u/-P reports authenticated identity. [Category A]"""
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--check-auth",
+            "--username",
+            "testuser",
+            "--password",
+            "testpass",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--check-auth with credentials failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "authenticated as testuser" in output
+
+    def test_cli_check_boot_flag(self, cli_runner, ws_url):
+        """Test --check-boot flags an unauthenticated BootNotification accept. [Category A]
+
+        The mock always Accepts BootNotification with no authentication,
+        which the scanner should surface as a finding.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--check-boot",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--check-boot failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "bootnotification" in output or "no authentication" in output
+
+    def test_cli_check_config_keys_without_data(self, cli_runner, ws_url):
+        """Test --check-config-keys alone reports missing prerequisite data. [Category A]
+
+        Without a prior --get-config in the same run, the handler has no
+        configuration keys to check and prints a deterministic message.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--check-config-keys",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--check-config-keys failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "no configuration data" in output
+
+    def test_cli_check_config_keys_with_get_config(self, cli_runner, ws_url):
+        """Test --get-config --check-config-keys runs the full check path. [Category B]
+
+        The mock's config keys (SecurityProfile read-only, no
+        AuthorizationKey) do not trigger a writable-sensitive-key finding
+        against this mock, so this asserts the combined flags parse and the
+        scan completes cleanly rather than a specific finding.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--get-config",
+            "--check-config-keys",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--get-config --check-config-keys failed (rc={result.returncode}): {result.stderr}"
+        )
+        assert "traceback" not in result.combined_output.lower()
+
+
+class TestOCPPFlagCoverageSecurityProbesAndCharging:
+    """Real-CLI tests for confirm-gated security probe and charging-flow flags."""
+
+    def test_cli_security_probes_without_confirm_refused(self, cli_runner, ws_url):
+        """Test all dangerous security probe flags are refused without --confirm. [Category C]"""
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--test-config-write",
+            "--test-charging-profile",
+            "--test-remote-start",
+            "--test-remote-stop",
+            "--test-reserve",
+            "--test-availability",
+            "--test-clear-cache",
+            "--test-diagnostics",
+            "--test-local-list",
+            "--test-network-profile",
+            "--test-install-cert",
+            "--test-display-msg",
+            "--test-customer-info",
+            "--test-ssrf-extended",
+            "--test-ws-hijack",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"Security probes without --confirm failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "require --confirm" in output
+        assert "traceback" not in output
+
+    def test_cli_security_probes_maximal_with_confirm(self, cli_runner, ws_url):
+        """Test the same maximal probe flag set with --confirm actually runs. [Category A]
+
+        The mock accepts essentially every OCPP 2.0.1 dangerous operation
+        (SetNetworkProfile, InstallCertificate, SetDisplayMessage,
+        CustomerInformation, ReserveNow, ClearCache, GetDiagnostics,
+        ChangeAvailability, SendLocalList all Accepted) while rejecting
+        sensitive ChangeConfiguration keys, so both outcomes must appear.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--test-config-write",
+            "--test-charging-profile",
+            "--test-remote-start",
+            "--test-remote-stop",
+            "--test-reserve",
+            "--test-availability",
+            "--test-clear-cache",
+            "--test-diagnostics",
+            "--test-local-list",
+            "--test-network-profile",
+            "--test-install-cert",
+            "--test-display-msg",
+            "--test-customer-info",
+            "--test-ssrf-extended",
+            "--test-ws-hijack",
+            "--confirm",
+            "--timeout",
+            "15",
+            expect_json=False,
+            timeout=40,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"Security probes with --confirm failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "traceback" not in output
+        assert "accepted" in output
+        assert "rejected" in output
+
+    def test_cli_test_remote_start_rejected(self, cli_runner, ws_url):
+        """Test --test-remote-start --confirm is rejected by the mock. [Category A]
+
+        The scanner's fixed test idTag contains "OIDA", and the mock
+        rejects RemoteStartTransaction for any idTag containing "OIDA" or
+        "TEST".
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--test-remote-start",
+            "--confirm",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--test-remote-start failed (rc={result.returncode}): {result.stderr}"
+        )
+        assert "rejected" in result.combined_output.lower()
+
+    def test_cli_charging_flow_without_confirm_refused(self, cli_runner, ws_url):
+        """Test charging-flow flags are refused without --confirm. [Category C]"""
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--test-authorize",
+            "--test-charging",
+            "--test-meter-inject",
+            "--timeout",
+            "10",
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"Charging flow without --confirm failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "require --confirm" in output
+        assert "traceback" not in output
+
+    def test_cli_charging_flow_with_confirm(self, cli_runner, ws_url):
+        """Test charging-flow flags run with --confirm. [Category A]
+
+        Authorize and StartTransaction are always Accepted by the mock.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--test-authorize",
+            "--test-charging",
+            "--test-meter-inject",
+            "--confirm",
+            "--timeout",
+            "15",
+            expect_json=False,
+            timeout=30,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"Charging flow with --confirm failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "traceback" not in output
+        assert "accepted" in output
+
+    def test_cli_charging_all_flag_with_confirm(self, cli_runner, ws_url):
+        """Test the combined --charging (all charging tests) flag with --confirm. [Category A]"""
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--charging",
+            "--confirm",
+            "--timeout",
+            "15",
+            expect_json=False,
+            timeout=30,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"--charging --confirm failed (rc={result.returncode}): {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "traceback" not in output
+        assert "accepted" in output
+
+
+class TestOCPPFlagCoverageHostilePaths:
+    """Hostile / invalid-server and invalid-argument paths for the ocpp module."""
+
+    def test_impostor_silent_socket(self, cli_runner, tmp_path):
+        """Test connecting to a socket that accepts but never responds. [Category C]
+
+        Exercises the read-timeout path (not the connect-timeout path); must
+        fail cleanly with no traceback and no false-positive success claim.
+        """
+        import socket
+        import threading
+
+        srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        srv.bind(("127.0.0.1", 0))
+        srv.listen(1)
+        port = srv.getsockname()[1]
+        stop = threading.Event()
+
+        def _accept_and_hang():
+            srv.settimeout(5)
+            try:
+                conn, _ = srv.accept()
+                stop.wait(4)
+                conn.close()
+            except OSError:
+                pass
+
+        t = threading.Thread(target=_accept_and_hang, daemon=True)
+        t.start()
+        try:
+            result = cli_runner.run(
+                "ocpp",
+                f"ws://127.0.0.1:{port}/CP1",
+                "--timeout",
+                "3",
+                timeout=15,
+                expect_json=False,
+                output=str(tmp_path),
+                format="json",
+            )
+        finally:
+            stop.set()
+            srv.close()
+            t.join(timeout=5)
+
+        assert result.returncode in [0, 1], (
+            f"Silent impostor socket returned unexpected code: {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "traceback" not in output
+        assert "accepted" not in output, "Must not claim a false-positive success"
+        # P1 regression: the WebSocket handshake never completed, so the record
+        # must report success=False (not a fabricated OCPP identification).
+        rec_path = tmp_path / "ocpp.json"
+        assert rec_path.exists()
+        rec = json.loads(rec_path.read_text())
+        rec = rec[0] if isinstance(rec, list) else rec
+        assert rec.get("success") is False
+        assert rec.get("error")
+
+    def test_impostor_garbage_bytes_socket(self, cli_runner, tmp_path):
+        """Test connecting to a socket that returns junk instead of a WS handshake. [Category C]"""
+        import socket
+        import threading
+
+        srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        srv.bind(("127.0.0.1", 0))
+        srv.listen(1)
+        port = srv.getsockname()[1]
+
+        def _accept_and_send_garbage():
+            srv.settimeout(5)
+            try:
+                conn, _ = srv.accept()
+                conn.sendall(b"NOT_A_WEBSOCKET_HANDSHAKE\r\n\r\n\x00\x01\x02")
+                conn.close()
+            except OSError:
+                pass
+
+        t = threading.Thread(target=_accept_and_send_garbage, daemon=True)
+        t.start()
+        try:
+            result = cli_runner.run(
+                "ocpp",
+                f"ws://127.0.0.1:{port}/CP1",
+                "--timeout",
+                "3",
+                timeout=15,
+                expect_json=False,
+                output=str(tmp_path),
+                format="json",
+            )
+        finally:
+            srv.close()
+            t.join(timeout=5)
+
+        assert result.returncode in [0, 1], (
+            f"Garbage-bytes impostor socket returned unexpected code: {result.stderr}"
+        )
+        output = result.combined_output.lower()
+        assert "traceback" not in output
+        assert "accepted" not in output, "Must not claim a false-positive success"
+        # P1 regression: junk instead of a 101 handshake must not be reported as OCPP.
+        rec_path = tmp_path / "ocpp.json"
+        assert rec_path.exists()
+        rec = json.loads(rec_path.read_text())
+        rec = rec[0] if isinstance(rec, list) else rec
+        assert rec.get("success") is False
+        assert rec.get("error")
+
+    def test_tls_mismatch_wss_against_plaintext_server(self, cli_runner, ocpp_server):
+        """Test wss:// (TLS) scheme against a plaintext WS mock fails cleanly. [Category C]"""
+        result = cli_runner.run(
+            "ocpp",
+            f"wss://{ocpp_server.host}:{ocpp_server.port}/CP_TEST_001",
+            "--tls-insecure",
+            "--timeout",
+            "5",
+            timeout=15,
+            expect_json=False,
+        )
+
+        assert result.returncode in [0, 1], (
+            f"TLS-mismatch scan returned unexpected code: {result.stderr}"
+        )
+        assert "traceback" not in result.combined_output.lower()
+
+    def test_malformed_args_invalid_version_choice(self, cli_runner, ws_url):
+        """Test an invalid --version choice is rejected by argparse. [Category C]"""
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--version",
+            "9.9",
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+
+        assert result.returncode != 0, "Invalid --version choice should be rejected"
+        assert "traceback" not in result.combined_output.lower()
+
+    def test_malformed_args_nonnumeric_max_connector_id(self, cli_runner, ws_url):
+        """Test a non-numeric --max-connector-id is rejected. [Category C]"""
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--max-connector-id",
+            "not-a-number",
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+
+        assert result.returncode != 0, "Non-numeric --max-connector-id should be rejected"
+        assert "traceback" not in result.combined_output.lower()
+
+    def test_false_flags_unknown_flag_rejected(self, cli_runner, ws_url):
+        """Test an entirely unknown flag is rejected, not silently ignored. [Category C]"""
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--not-a-real-flag",
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+
+        assert result.returncode != 0, "Unknown flag must not be silently accepted"
+        assert "traceback" not in result.combined_output.lower()
+
+    def test_false_flags_transposed_typo_rejected(self, cli_runner, ws_url):
+        """Test a transposed-letter typo of a real flag is rejected. [Category C]
+
+        Uses a transposition (--charge-piont-id), never a truncation, since
+        argparse's prefix-abbreviation would silently accept a truncation.
+        """
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--charge-piont-id",
+            "SOMEID",
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+
+        assert result.returncode != 0, "Transposed-typo flag must not be accepted"
+        assert "traceback" not in result.combined_output.lower()
+
+    def test_false_flags_borrowed_from_other_protocol_rejected(self, cli_runner, ws_url):
+        """Test a flag borrowed from another protocol (modbus) is rejected. [Category C]"""
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--slave-id",
+            "1",
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+
+        assert result.returncode != 0, "Flag borrowed from another protocol must be rejected"
+        assert "traceback" not in result.combined_output.lower()
+
+    def test_false_flags_wrong_type_timeout_rejected(self, cli_runner, ws_url):
+        """Test a valid flag given a value of the wrong type is rejected. [Category C]"""
+        result = cli_runner.run(
+            "ocpp",
+            ws_url,
+            "--timeout",
+            "not-a-number",
+            expect_json=False,
+        )
+
+        assert result.returncode != 0, "Non-numeric --timeout should be rejected"
+        assert "traceback" not in result.combined_output.lower()

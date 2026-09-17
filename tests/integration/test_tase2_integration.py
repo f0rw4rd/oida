@@ -1628,3 +1628,793 @@ class TestTASE2CompositeSecurity(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+# =============================================================================
+# Real-CLI integration tests against the live tase2 docker mock
+# =============================================================================
+#
+# The class above uses in-process mocked pyiec61850 objects. This section
+# adds real subprocess ("oida tase2 ...") coverage against the live TASE.2
+# docker mock (container "oida-tase2", built from
+# docker/mocks/services/tase2/mock/{Dockerfile,tase2_server_spec.py}), which
+# serves 3 domains (FreeTASE2ICC1, FreeTASE2ICC2, FreeTASE2VCC) over
+# libiec61850 + FreeTase2. It listens on host port 20102 (container port
+# 102). This is a DIFFERENT, working mock from the one registered as
+# MOCK_PORTS["tase2"] == 10103 in conftest.py (tase2-libiec61850-server,
+# which crash-loops) -- do not use that port here.
+#
+# Mock behavior notes (all captured directly against the live container):
+#   - Domains/variables enumerate cleanly: 3 domains, 1 top-level MMS
+#     variable ("LLN0") each.
+#   - Point reads (--read-point/--read-points/--get-data-type) succeed and
+#     return deterministic placeholder values (0.0 / VALID / type UNKNOWN)
+#     rather than the richer values defined in the Python data model --
+#     the FreeTase2/libiec61850 MMS bridge does not surface those Block 1
+#     abstractions over the wire in this build. This is real, deterministic
+#     server behavior, not a scanner fabrication, so it is asserted as such.
+#   - Data sets / transfer sets / BLT / conformance blocks / IM stores all
+#     enumerate as empty/unset (0 members, "Table Count: 0", all blocks
+#     "NO", "No IM stores found"). Confirmed deterministic across runs.
+#   - --select-device and --get-tag are the two write/control-adjacent
+#     reads that succeed cleanly ("Device selected", "Tag ...: NO_TAG").
+#   - All other write/control/data-set/message mutation flags reach the
+#     server and get a clean, real MMS-layer error back (e.g. "MMS error
+#     object-non-existent") -- never a traceback. Those are asserted as
+#     Category B (flag drives real wire traffic, clean non-crashing
+#     handling) or Category C (validation/confirm-gate rejection) tests.
+#
+# Flag coverage matrix (flag -> [A|B|C] test_name):
+#   --list-domains        A  test_list_domains
+#   --list-variables       A  test_list_variables
+#   --list-data-sets       B  test_list_data_sets
+#   --list-transfer-sets   B  test_list_transfer_sets
+#   --read-point            A  test_read_point
+#   --write-point            C  test_write_point_requires_confirm /
+#                              B  test_write_point_with_confirm_reaches_server
+#   --send-command           C  test_send_command_invalid_value_rejected /
+#                              B  test_send_command_with_confirm_reaches_server
+#   --select-device          C  test_select_device_requires_confirm /
+#                              A  test_select_device_with_confirm_succeeds
+#   --operate-device         B  test_operate_device_with_confirm_reaches_server
+#   --enable-rbe             B  test_enable_rbe_with_confirm_reaches_server
+#   --disable-rbe            B  test_disable_rbe_with_confirm_reaches_server
+#   --get-blt                B  test_get_blt
+#   --get-features           B  test_get_features
+#   --get-version            B  test_get_version
+#   --get-data-type          B  test_get_data_type
+#   --read-points            A  test_read_points
+#   --get-ds-members         B  test_get_ds_members
+#   --read-data-set          B  test_read_data_set
+#   --create-data-set        B  test_create_data_set_with_confirm_reaches_server
+#   --delete-data-set        B  test_delete_data_set_with_confirm_reaches_server
+#   --get-tag                A  test_get_tag
+#   --set-tag                B  test_set_tag_with_confirm_reaches_server
+#   --list-im-stores         B  test_list_im_stores
+#   --list-messages          B  test_list_messages
+#   --read-message           B  test_read_message
+#   --write-message          B  test_write_message_with_confirm_reaches_server
+#   --delete-message         B  test_delete_message_with_confirm_clean_unsupported /
+#                              C  test_delete_message_requires_confirm
+#   --test-im                B  test_test_im
+#
+# Combined/maximal invocation: test_maximal_read_combo drives several
+# compatible read-only flags together in one CLI invocation.
+# =============================================================================
+
+import pytest
+
+from .base_protocol_test import BaseProtocolIntegrationTest
+from .cli_runner import CLIResult
+from .conftest import MOCK_HOST, check_port_open
+
+TASE2_MOCK_PORT = 20102
+
+# Real domain names as reported by the CLI against this mock.
+DOM_VCC = "FreeTASE2VCC"
+DOM_ICC1 = "FreeTASE2ICC1"
+DOM_ICC2 = "FreeTASE2ICC2"
+
+pytestmark = [pytest.mark.tase2, pytest.mark.xdist_group("tase2_service")]
+
+
+def _all_messages(result: CLIResult) -> str:
+    """Lowercase, space-joined text of every scan_log message (plus combined
+    stdout/stderr as a fallback), for substring assertions against real
+    mock data returned by the CLI.
+    """
+    parts = [result.combined_output]
+    if result.scan_log is not None:
+        parts.extend(str(e.get("message", "")) for e in result.scan_log.events)
+    return " ".join(parts).lower()
+
+
+class TestTase2CliCoverage(BaseProtocolIntegrationTest):
+    """Real-CLI coverage for ``oida tase2`` against the live docker mock
+    (container oida-tase2, host port 20102).
+    """
+
+    @property
+    def protocol_name(self) -> str:
+        return "tase2"
+
+    @property
+    def default_port(self) -> int:
+        return TASE2_MOCK_PORT
+
+    def get_target(self, host: str = MOCK_HOST, port=None) -> str:
+        del port
+        return host
+
+    @pytest.fixture(autouse=True, scope="class")
+    def _start_mock(self, docker_setup):
+        """Override the base fixture: it keys off MOCK_PORTS["tase2"] == 10103,
+        which is the broken tase2-libiec61850-server container. We target the
+        working oida-tase2 mock (host port 20102) instead.
+        """
+        del docker_setup
+        if not check_port_open(MOCK_HOST, TASE2_MOCK_PORT, timeout=2):
+            pytest.fail(
+                f"tase2 mock ({MOCK_HOST}:{TASE2_MOCK_PORT}) is not reachable. "
+                "Bring it up with: cd docker/mocks/services/tase2/mock && "
+                "docker compose up -d"
+            )
+
+    @pytest.fixture
+    def port(self) -> int:
+        return TASE2_MOCK_PORT
+
+    # ------------------------------------------------------------------
+    # Action Commands
+    # ------------------------------------------------------------------
+
+    def test_list_domains(self, cli_runner, target, port):
+        """--list-domains [Category A]: real 3 domains are named in output."""
+        result = cli_runner.run(
+            "tase2", target, "--port", str(port), "--timeout", "8", "--list-domains", json_log=True
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert DOM_VCC.lower() in text
+        assert DOM_ICC1.lower() in text
+        assert DOM_ICC2.lower() in text
+        assert "traceback" not in text
+
+    def test_list_variables(self, cli_runner, target, port):
+        """--list-variables DOMAIN [Category A]: real LLN0 MMS variable is named."""
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--list-variables",
+            DOM_ICC1,
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "lln0" in text
+        assert "traceback" not in text
+
+    def test_list_data_sets(self, cli_runner, target, port):
+        """--list-data-sets [optional DOMAIN] [Category B]: parses/executes
+        cleanly; this mock's MMS bridge reports zero data sets over the
+        wire (deterministic).
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--list-data-sets",
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "listing data sets" in text
+        assert "traceback" not in text
+
+    def test_list_transfer_sets(self, cli_runner, target, port):
+        """--list-transfer-sets DOMAIN [Category B]: executes cleanly against
+        the real server; mock exposes zero transfer sets over MMS.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--list-transfer-sets",
+            DOM_ICC1,
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "listing transfer sets" in text
+        assert DOM_ICC1.lower() in text
+        assert "traceback" not in text
+
+    # ------------------------------------------------------------------
+    # Data Access Commands
+    # ------------------------------------------------------------------
+
+    def test_read_point(self, cli_runner, target, port):
+        """--read-point DOMAIN/NAME [Category A]: real read round-trip,
+        deterministic Value/Quality returned by the live server.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--read-point",
+            f"{DOM_ICC1}/Bus_Voltage_kV",
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "value:" in text
+        assert "quality:" in text
+        assert "traceback" not in text
+
+    def test_write_point_requires_confirm(self, cli_runner, target, port):
+        """--write-point without --confirm [Category C]: must refuse cleanly."""
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--write-point",
+            f"{DOM_ICC1}/Bus_Voltage_kV:100.0",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "require --confirm" in text or "requires --confirm" in text
+        assert "traceback" not in text
+
+    def test_write_point_with_confirm_reaches_server(self, cli_runner, target, port):
+        """--write-point with --confirm [Category B]: real write attempt
+        reaches the server and gets a clean MMS-layer error, no crash.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--write-point",
+            f"{DOM_ICC1}/Bus_Voltage_kV:100.0",
+            "--confirm",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "writing 100.0" in text
+        assert "traceback" not in text
+
+    # ------------------------------------------------------------------
+    # Control Commands (Block 5)
+    # ------------------------------------------------------------------
+
+    def test_send_command_invalid_value_rejected(self, cli_runner, target, port):
+        """--send-command with a non-integer command [Category C]: rejected
+        with a clean validation error (not a server round trip).
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--send-command",
+            f"{DOM_ICC1}/Breaker1:CLOSE",
+            "--confirm",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "must be an integer" in text
+        assert "traceback" not in text
+
+    def test_send_command_with_confirm_reaches_server(self, cli_runner, target, port):
+        """--send-command with a valid integer command + --confirm
+        [Category B]: reaches the server, clean MMS-layer error.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--send-command",
+            f"{DOM_ICC1}/Breaker1:1",
+            "--confirm",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "command" in text
+        assert "traceback" not in text
+
+    def test_select_device_requires_confirm(self, cli_runner, target, port):
+        """--select-device without --confirm [Category C]: refused cleanly."""
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--select-device",
+            f"{DOM_ICC1}/Breaker1",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "require --confirm" in text or "requires --confirm" in text
+        assert "traceback" not in text
+
+    def test_select_device_with_confirm_succeeds(self, cli_runner, target, port):
+        """--select-device with --confirm [Category A]: this is the one
+        control op the mock accepts outright -- real "Device selected".
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--select-device",
+            f"{DOM_ICC1}/Breaker1",
+            "--confirm",
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "device selected" in text
+        assert "traceback" not in text
+
+    def test_operate_device_with_confirm_reaches_server(self, cli_runner, target, port):
+        """--operate-device with --confirm [Category B]: real operate
+        attempt reaches server, clean MMS-layer error.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--operate-device",
+            f"{DOM_ICC1}/Breaker1:1",
+            "--confirm",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "operating" in text
+        assert "traceback" not in text
+
+    # ------------------------------------------------------------------
+    # Transfer Set Commands (Block 2)
+    # ------------------------------------------------------------------
+
+    def test_enable_rbe_with_confirm_reaches_server(self, cli_runner, target, port):
+        """--enable-rbe with --confirm [Category B]: real enable attempt,
+        clean MMS-layer error from the server.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--enable-rbe",
+            f"{DOM_ICC1}/TS_01",
+            "--confirm",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "enabling transfer set" in text
+        assert "traceback" not in text
+
+    def test_disable_rbe_with_confirm_reaches_server(self, cli_runner, target, port):
+        """--disable-rbe with --confirm [Category B]: real disable attempt,
+        clean MMS-layer error from the server.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--disable-rbe",
+            f"{DOM_ICC1}/TS_01",
+            "--confirm",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "disabling transfer set" in text
+        assert "traceback" not in text
+
+    # ------------------------------------------------------------------
+    # Information Commands
+    # ------------------------------------------------------------------
+
+    def test_get_blt(self, cli_runner, target, port):
+        """--get-blt [Category B]: real, deterministic empty bilateral
+        table response from this mock.
+        """
+        result = cli_runner.run(
+            "tase2", target, "--port", str(port), "--timeout", "8", "--get-blt", json_log=True
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "table id" in text
+        assert "table count" in text
+        assert "traceback" not in text
+
+    def test_get_features(self, cli_runner, target, port):
+        """--get-features [Category B]: real conformance block enumeration
+        (all blocks report NO on this mock, deterministically).
+        """
+        result = cli_runner.run(
+            "tase2", target, "--port", str(port), "--timeout", "8", "--get-features", json_log=True
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "conformance blocks" in text
+        assert "block1" in text
+        assert "traceback" not in text
+
+    def test_get_version(self, cli_runner, target, port):
+        """--get-version [Category B]: real version query round trip."""
+        result = cli_runner.run(
+            "tase2", target, "--port", str(port), "--timeout", "8", "--get-version", json_log=True
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "version:" in text
+        assert "traceback" not in text
+
+    # ------------------------------------------------------------------
+    # Data Type Operations (Block 1)
+    # ------------------------------------------------------------------
+
+    def test_get_data_type(self, cli_runner, target, port):
+        """--get-data-type DOMAIN/NAME [Category B]: real type query round
+        trip; this mock's bridge reports UNKNOWN deterministically.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--get-data-type",
+            f"{DOM_ICC1}/Bus_Voltage_kV",
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "type" in text
+        assert "traceback" not in text
+
+    def test_read_points(self, cli_runner, target, port):
+        """--read-points DOMAIN/NAME1,NAME2 [Category A]: real bulk read,
+        both requested points echoed back with their real quality.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--read-points",
+            f"{DOM_ICC1}/Bus_Voltage_kV,ACE_MW",
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "bus_voltage_kv" in text
+        assert "ace_mw" in text
+        assert "valid" in text
+        assert "traceback" not in text
+
+    # ------------------------------------------------------------------
+    # Data Set Operations (Block 1)
+    # ------------------------------------------------------------------
+
+    def test_get_ds_members(self, cli_runner, target, port):
+        """--get-ds-members DOMAIN/DATASET [Category B]: real query round
+        trip; mock reports zero members deterministically.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--get-ds-members",
+            f"{DOM_VCC}/DS_System",
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "members" in text
+        assert "traceback" not in text
+
+    def test_read_data_set(self, cli_runner, target, port):
+        """--read-data-set DOMAIN/DATASET [Category B]: real read round trip."""
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--read-data-set",
+            f"{DOM_VCC}/DS_System",
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "reading values from" in text
+        assert "traceback" not in text
+
+    def test_create_data_set_with_confirm_reaches_server(self, cli_runner, target, port):
+        """--create-data-set DOMAIN/NAME:VARS with --confirm [Category B]:
+        real create attempt, clean server-side rejection.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--create-data-set",
+            f"{DOM_VCC}/MySet:Bus_Voltage_kV",
+            "--confirm",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "creating data set" in text
+        assert "traceback" not in text
+
+    def test_delete_data_set_with_confirm_reaches_server(self, cli_runner, target, port):
+        """--delete-data-set DOMAIN/DATASET with --confirm [Category B]:
+        real delete attempt, clean server-side rejection.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--delete-data-set",
+            f"{DOM_VCC}/DS_System",
+            "--confirm",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "deleting data set" in text
+        assert "traceback" not in text
+
+    # ------------------------------------------------------------------
+    # Device Tag Operations (Block 5)
+    # ------------------------------------------------------------------
+
+    def test_get_tag(self, cli_runner, target, port):
+        """--get-tag DOMAIN/DEVICE [Category A]: real tag read, deterministic
+        NO_TAG value from the live server.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--get-tag",
+            f"{DOM_ICC1}/Breaker1",
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "no_tag" in text
+        assert "traceback" not in text
+
+    def test_set_tag_with_confirm_reaches_server(self, cli_runner, target, port):
+        """--set-tag DOMAIN/DEVICE:TAG[:REASON] with --confirm [Category B]:
+        real set-tag attempt, clean server-side rejection.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--set-tag",
+            f"{DOM_ICC1}/Breaker1:CLOSE_ONLY:Maintenance",
+            "--confirm",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "setting tag" in text
+        assert "traceback" not in text
+
+    # ------------------------------------------------------------------
+    # Information Messages (Block 4)
+    # ------------------------------------------------------------------
+
+    def test_list_im_stores(self, cli_runner, target, port):
+        """--list-im-stores [optional DOMAIN] [Category B]: real query,
+        deterministic "No IM stores found" from this mock.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--list-im-stores",
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "im stores" in text
+        assert "traceback" not in text
+
+    def test_list_messages(self, cli_runner, target, port):
+        """--list-messages DOMAIN/STORE [Category B]: real query round trip."""
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--list-messages",
+            f"{DOM_ICC1}/OperatorMessages",
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "listing messages" in text
+        assert "traceback" not in text
+
+    def test_read_message(self, cli_runner, target, port):
+        """--read-message DOMAIN/STORE/MSGID [Category B]: real read attempt,
+        clean "not found" error since the mock has no messages.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--read-message",
+            f"{DOM_ICC1}/OperatorMessages/MSG001",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "reading message" in text
+        assert "not found" in text
+        assert "traceback" not in text
+
+    def test_write_message_with_confirm_reaches_server(self, cli_runner, target, port):
+        """--write-message DOMAIN/STORE:CONTENT with --confirm [Category B]:
+        real write attempt, clean server-side rejection.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--write-message",
+            f"{DOM_ICC1}/OperatorMessages:hello",
+            "--confirm",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "writing message to" in text
+        assert "traceback" not in text
+
+    def test_delete_message_requires_confirm(self, cli_runner, target, port):
+        """--delete-message without --confirm [Category C]: refused cleanly."""
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--delete-message",
+            f"{DOM_ICC1}/OperatorMessages/MSG001",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "require --confirm" in text or "requires --confirm" in text
+        assert "traceback" not in text
+
+    def test_delete_message_with_confirm_clean_unsupported(self, cli_runner, target, port):
+        """--delete-message with --confirm [Category B]: reaches the client
+        library, which reports IM deletion is unsupported -- a real, clean
+        (non-crashing) capability limitation, not a scanner bug.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--delete-message",
+            f"{DOM_ICC1}/OperatorMessages/MSG001",
+            "--confirm",
+            json_log=True,
+        )
+        text = _all_messages(result)
+        assert "deleting message" in text
+        assert "not supported" in text
+        assert "traceback" not in text
+
+    def test_test_im(self, cli_runner, target, port):
+        """--test-im [Category B]: real Block 4 capability probe."""
+        result = cli_runner.run(
+            "tase2", target, "--port", str(port), "--timeout", "8", "--test-im", json_log=True
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert "information message" in text
+        assert "traceback" not in text
+
+    # ------------------------------------------------------------------
+    # Combined invocation
+    # ------------------------------------------------------------------
+
+    def test_maximal_read_combo(self, cli_runner, target, port):
+        """Several read-only action/info flags passed together in one
+        invocation, mirroring how an operator would try to chain them.
+        The scanner only executes a single action per run (--list-domains
+        wins here); this asserts that combining multiple action flags does
+        not crash and still performs the winning action correctly rather
+        than silently doing nothing.
+        """
+        result = cli_runner.run(
+            "tase2",
+            target,
+            "--port",
+            str(port),
+            "--timeout",
+            "8",
+            "--list-domains",
+            "--get-features",
+            "--get-version",
+            "--get-blt",
+            json_log=True,
+        )
+        assert result.success, result.combined_output
+        text = _all_messages(result)
+        assert DOM_VCC.lower() in text
+        assert "traceback" not in text

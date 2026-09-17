@@ -30,12 +30,24 @@ class goose(SerialConnection):
             self.create_conn_obj()
             if self.conn:
                 self._execute_scan()
+            else:
+                # No MMS connection established -> nothing was enumerated.
+                # Without this, connection.py's run() would default
+                # results["success"] to True and fabricate a false positive.
+                self.results["success"] = False
+                self.results.setdefault(
+                    "error",
+                    "No GOOSE/MMS response (connection failed / no GoCB enumerated)",
+                )
         elif rgoose:
             # R-GOOSE UDP mode - not yet supported
             self.logger.fail(
                 "R-GOOSE mode not yet supported in the high-level API. "
                 "R-GOOSE support will be added when pyiec61850-ng provides a wrapper."
             )
+            # Nothing was scanned -> do not report a false-positive success.
+            self.results["success"] = False
+            self.results.setdefault("error", "R-GOOSE mode not supported (no scan performed)")
         else:
             # Passive GOOSE sniffing - needs raw socket
             has_cap, msg = check_raw_socket_capability()
@@ -46,6 +58,11 @@ class goose(SerialConnection):
                 )
                 if msg:
                     self.logger.fail(f"  Detail: {msg}")
+                self.results["success"] = False
+                self.results.setdefault(
+                    "error",
+                    "Raw socket access required for GOOSE sniffing (capability missing)",
+                )
                 return
 
             self.create_conn_obj()
@@ -53,6 +70,15 @@ class goose(SerialConnection):
                 self.enum_host_info()
                 self.print_host_info()
                 self._execute_scan()
+            else:
+                # Interface could not be opened (e.g. nonexistent interface) ->
+                # no capture happened. Explicitly fail rather than inheriting
+                # the connection.py default-success false positive.
+                self.results["success"] = False
+                self.results.setdefault(
+                    "error",
+                    "No GOOSE response (interface could not be opened / connection failed)",
+                )
 
     def create_conn_obj(self):
         """Create GOOSE connection object."""

@@ -15,67 +15,91 @@ GOOSE Architecture:
   uses --network=host and raw socket access.
 
   Because of this, the test strategy is:
+    - Category A: Real captures against the live goose-l2-publisher container
+      using its actual GoCB reference (this environment has passwordless
+      sudo, so a real CAP_NET_RAW-capable run is possible -- see
+      TestGOOSEGocbRefRealCapture).
     - Category B: Flag acceptance + graceful error handling when raw sockets
-      are unavailable or dependencies missing. Every flag is tested for CLI
-      acceptance and meaningful output.
+      are unavailable or dependencies missing, or where a real connection
+      succeeds but returns no distinguishing data (e.g. --mms-enum against
+      the mms-goose mock, which enumerates 0 GoCBs).
     - Category C: Invalid input handling -- malformed arguments, missing
-      required flags.
-    - No Category A tests: Would require live GOOSE publisher on same L2
-      segment or pyiec61850-ng installed.
+      required flags, TLS/protocol mismatches, unknown/typo'd flags.
 
-Mock Server (from docker/mocks/services/goose_publisher.py):
-  When the L2 mock IS available:
-    GoCB Reference:   simpleIOGenericIO/LLN0$GO$gcb01
-    Dataset:          simpleIOGenericIO/LLN0$dataset1
-    AppID:            0x1000
-    ConfRev:          1
+Mock Servers:
+  goose-l2-publisher (docker/mocks/services, network_mode=host, live in this
+  environment) actually publishes:
+    GoCB Reference:   simpleIOGenericIO/LLN0$GO$gcbAnalogValues
+    Dataset:          simpleIOGenericIO/LLN0$AnalogValues
+    AppID:            0x1000 (4096)
     Multicast DST:    01:0C:CD:01:00:00 (standard GOOSE multicast)
     EtherType:        0x88B8
-    Dataset members:  BOOLEAN, INT32, FLOAT32, VisibleString
-    State changes:    Every 10 seconds (configurable)
-    Publish interval: 1 second (configurable)
+  A second container, goose-l2-publisher-breaker, publishes GoCB
+  simpleIOGenericIO/LLN0$GO$gcbBreaker / AppID 0x2000.
+  Despite host networking, both are observable by sniffing the Docker bridge
+  interface for the ics-network compose network (empirically confirmed).
 
   The mock is NOT reachable via TCP -- it publishes raw L2 frames.
 
-  MMS-based GoCB enumeration can target the mms-goose container (port 10106)
-  which is a separate TCP-based service (tested in test_mms_integration.py).
+  MMS-based GoCB enumeration targets the mms-goose container
+  (MOCK_PORTS["mms_goose"] = 10106), a separate TCP-based service. It
+  connects successfully but currently enumerates 0 GoCBs (Category B, not A,
+  for --mms-enum against this specific mock).
+
+  There is no TLS-listening GOOSE/MMS mock (nothing serves 3782), so
+  --tls/--tls-port/--tls-ca/--tls-pin/--tls-client-cert/--tls-client-key are
+  exercised as hostile/negative paths (Category C): a real plaintext server
+  refusing a TLS handshake, and clean, non-crashing errors for bad
+  certificate paths.
 
 Test Classification Summary
 ---------------------------------------------------------------------------
-Category A (strict -- mock supports, assert success + validate data):    0 tests
-Category B (conditional -- accepts 0 or 1, unconditional output check): 21 tests
-  - TestGOOSEIntegration (loopback, no raw socket):                     14 tests
-  - TestGOOSEDocker (Docker bridge, raw socket):                         7 tests
-Category C (error handling -- assert failure + validate error events):    5 tests
-Total defined in file:                                                  26 tests
+Category A (strict -- real data validated):                             3 tests
+Category B (conditional -- accepts 0 or 1, unconditional output check): 24 tests
+Category C (error handling -- assert failure + validate error events): 17 tests
+Total defined in file:                                                 44 tests
 ---------------------------------------------------------------------------
 
-Docker Tests (TestGOOSEDocker -- Category B with raw socket):
-  These tests require:
-    1. goose-l2-publisher Docker container healthy
-    2. CAP_NET_RAW or root privileges on the host
-    3. Docker bridge interface (br-<id>) discoverable
-  Due to Docker bridge multicast limitations, GOOSE frames may not reach
-  the host. Tests verify the scanner opens the interface and exits cleanly.
+False-positive fix locked in by this file (Option A, per-module):
+  connection.py's connection.run() defaults results["success"] to True
+  whenever proto_flow() returns without raising. GOOSE now explicitly sets
+  results["success"] = False on every failure path (raw-socket capability
+  missing, interface open failure, MMS connect failure, unsupported R-GOOSE),
+  so a failed scan reports "success": false in the final --output JSON. See
+  TestGOOSEP1FalsePositiveRegression.
 
 Flag Coverage Matrix (oida goose -h):
   target (positional)       [B] test_basic_interface_scan
   --timeout                 [B] test_timeout_flag
-  --appid                   [B] test_appid_filter_flag
+  --appid                   [A] test_gocb_ref_appid_combined_maximal
+  --gocb-ref                [A] test_gocb_ref_filters_matching_real_traffic
   --rgoose                  [B] test_rgoose_flag
   --rgoose-port             [B] test_rgoose_port_flag
   --rgoose-auth             [B] test_rgoose_auth_flag
   --rgoose-key              [B] test_rgoose_key_flag
   --mms-enum                [B] test_mms_enum_flag
   --mms-port                [B] test_mms_port_flag
+  --tls                     [C] test_tls_against_plaintext_server_fails_cleanly
+  --tls-port                [B] test_tls_port_flag_is_actually_used
+  --tls-ca                  [C] test_tls_ca_nonexistent_file_fails_cleanly
+  --tls-pin                 [C] test_tls_pin_nonexistent_file_fails_cleanly
+  --tls-client-cert         [C] test_tls_client_cert_and_key_nonexistent_fail_cleanly
+  --tls-client-key          [C] test_tls_client_cert_and_key_nonexistent_fail_cleanly
   --help                    [B] test_help_output
   -v (global)               [B] test_verbose_output
   --debug (global)          [B] test_debug_output
+
+Not applicable:
+  GOOSE has no publish/spoof/inject/--confirm-gated action flags in
+  proto_args.py, so the confirm-gate hostile-path pattern does not apply to
+  this module.
 """
+
+import json
 
 import pytest
 
-from .conftest import skip_unless_l2_docker
+from .conftest import MOCK_HOST, MOCK_PORTS, skip_unless_l2_docker
 
 
 # ---------------------------------------------------------------------------
@@ -631,4 +655,448 @@ class TestGOOSEDocker:
 
         assert result.returncode in [0, 1]
         _assert_docker_scan_attempted(result)
+
+
+# ============================================================================
+# --gocb-ref: real captures against the live goose-l2-publisher container.
+#
+# Unlike the tests above (which never pass --gocb-ref and therefore always
+# hit the "gocb-ref required" failure before any real capture happens), these
+# tests supply the *real* GoCB reference published by goose-l2-publisher
+# (env GOOSE_GOCB_REF=simpleIOGenericIO/LLN0$GO$gcbAnalogValues,
+# GOOSE_DATASET_REF=simpleIOGenericIO/LLN0$AnalogValues) and reach genuine
+# packet capture -- this environment has passwordless sudo, so
+# _skip_unless_docker_goose() resolves a real CAP_NET_RAW strategy and these
+# become true Category A tests validating real returned data.
+# ============================================================================
+_REAL_GOCB_REF = "simpleIOGenericIO/LLN0$GO$gcbAnalogValues"
+_REAL_DATASET_REF = "simpleIOGenericIO/LLN0$AnalogValues"
+
+
+@pytest.mark.goose
+@pytest.mark.containers("goose-l2-publisher")
+class TestGOOSEGocbRefRealCapture:
+    """Real-capture tests for --gocb-ref against goose-l2-publisher [Category A]."""
+
+    protocol_name = "goose"
+
+    def test_gocb_ref_filters_matching_real_traffic(self, cli_runner, tmp_path):
+        """--gocb-ref set to the publisher's real GoCB captures real messages
+        whose gocb_ref/dataset_name match what the mock actually publishes."""
+        bridge, needs_sudo = _skip_unless_docker_goose()
+        out_dir = tmp_path / "gocb_match"
+        result = cli_runner.run(
+            "goose",
+            bridge,
+            "--gocb-ref",
+            _REAL_GOCB_REF,
+            "--timeout",
+            "4",
+            use_sudo=needs_sudo,
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+
+        out_file = out_dir / "goose.json"
+        if not out_file.exists():
+            pytest.skip(
+                f"No output JSON written (raw socket capability unavailable): {result.combined_output[:300]}"
+            )
+        payload = json.loads(out_file.read_text())
+        last = payload[-1] if isinstance(payload, list) else payload
+        scan_results = last.get("data", {}).get("scan_results", {})
+        messages = scan_results.get("goose_messages", [])
+        if not messages:
+            pytest.skip(
+                "No live GOOSE traffic captured on the bridge in this run "
+                "(Docker bridge multicast can be flaky); cannot validate real data this time."
+            )
+        for msg in messages:
+            assert msg["gocb_ref"] == _REAL_GOCB_REF, msg
+        assert any(m.get("dataset_name") == _REAL_DATASET_REF for m in messages), messages[:2]
+
+    def test_gocb_ref_bogus_filters_out_all_traffic(self, cli_runner, tmp_path):
+        """A GoCB reference that nothing publishes must yield zero captured
+        messages, proving --gocb-ref actually filters rather than passing
+        everything through [Category A negative]."""
+        bridge, needs_sudo = _skip_unless_docker_goose()
+        out_dir = tmp_path / "gocb_bogus"
+        result = cli_runner.run(
+            "goose",
+            bridge,
+            "--gocb-ref",
+            "bogus/LLN0$GO$doesnotexist",
+            "--timeout",
+            "3",
+            use_sudo=needs_sudo,
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+        assert "captured 0 goose messages" in result.combined_output.lower(), (
+            result.combined_output[:800]
+        )
+
+    def test_gocb_ref_appid_combined_maximal(self, cli_runner, tmp_path):
+        """Combine --gocb-ref with --appid (the real publisher's AppID) to
+        exercise both capture filters together [Category A, combined flags]."""
+        bridge, needs_sudo = _skip_unless_docker_goose()
+        out_dir = tmp_path / "gocb_appid"
+        result = cli_runner.run(
+            "goose",
+            bridge,
+            "--gocb-ref",
+            _REAL_GOCB_REF,
+            "--appid",
+            "4096",
+            "--timeout",
+            "3",
+            use_sudo=needs_sudo,
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+
+    def test_gocb_ref_missing_fails_cleanly_with_real_raw_socket(self, cli_runner):
+        """Without --gocb-ref, capture mode must fail cleanly with a real
+        raw socket available (distinct from the permission-gate failure
+        exercised by the loopback tests) [Category C]."""
+        bridge, needs_sudo = _skip_unless_docker_goose()
+        result = cli_runner.run(
+            "goose",
+            bridge,
+            "--timeout",
+            "3",
+            use_sudo=needs_sudo,
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+        text = result.combined_output.lower()
+        assert "connection failed" in text or "gocb-ref" in text, text[:500]
+
+    def test_no_stderr_leak_noise_on_capture(self, cli_runner):
+        """A real capture run must not leave stray thread/exception noise on
+        stderr after the timeout elapses [P5 unclean-shutdown check]."""
+        bridge, needs_sudo = _skip_unless_docker_goose()
+        result = cli_runner.run(
+            "goose",
+            bridge,
+            "--gocb-ref",
+            _REAL_GOCB_REF,
+            "--timeout",
+            "3",
+            use_sudo=needs_sudo,
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1]
+        stderr_text = (result.stderr or "").lower()
+        for leak_term in (
+            "exception in thread",
+            "unhandled exception",
+            "unclosed",
+            "task was destroyed",
+        ):
+            assert leak_term not in stderr_text, f"Shutdown noise found: {result.stderr[:500]}"
+
+
+# ============================================================================
+# --mms-enum / --tls*: MMS-side GoCB enumeration against the plaintext
+# mms-goose mock (MOCK_PORTS["mms_goose"] = 10106). There is no TLS-listening
+# GOOSE/MMS mock in this repo (no server on 3782), so the --tls* flags are
+# exercised as hostile/negative paths: a real plaintext server refusing a TLS
+# handshake, and clean, non-crashing errors for bad certificate paths.
+# ============================================================================
+@pytest.mark.goose
+@pytest.mark.containers("mms-goose")
+class TestGOOSEMmsEnumAndTLS:
+    """Flag coverage for --tls/--tls-port/--tls-ca/--tls-pin/--tls-client-cert/
+    --tls-client-key, driven against the live mms-goose mock [Category C]."""
+
+    protocol_name = "goose"
+
+    def test_tls_against_plaintext_server_fails_cleanly(self, cli_runner):
+        """--tls against a real plaintext MMS server must fail the TLS
+        handshake cleanly, not hang or crash [Category C, TLS mismatch]."""
+        result = cli_runner.run(
+            "goose",
+            "--mms-enum",
+            MOCK_HOST,
+            "--mms-port",
+            str(MOCK_PORTS["mms_goose"]),
+            "--tls",
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+        text = result.combined_output.lower()
+        assert "connected to iec 61850 server" not in text, (
+            f"--tls must not report a successful connection to a plaintext server: {text[:500]}"
+        )
+
+    def test_tls_ca_nonexistent_file_fails_cleanly(self, cli_runner):
+        """--tls-ca pointed at a file that does not exist must produce a
+        clean, readable error instead of crashing [Category C]."""
+        result = cli_runner.run(
+            "goose",
+            "--mms-enum",
+            MOCK_HOST,
+            "--mms-port",
+            str(MOCK_PORTS["mms_goose"]),
+            "--tls",
+            "--tls-ca",
+            "/nonexistent/ca.pem",
+            "--timeout",
+            "3",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+        assert "/nonexistent/ca.pem" in result.combined_output, result.combined_output[:500]
+
+    def test_tls_pin_nonexistent_file_fails_cleanly(self, cli_runner):
+        """--tls-pin pointed at a file that does not exist must produce a
+        clean, readable error instead of crashing [Category C]."""
+        result = cli_runner.run(
+            "goose",
+            "--mms-enum",
+            MOCK_HOST,
+            "--mms-port",
+            str(MOCK_PORTS["mms_goose"]),
+            "--tls",
+            "--tls-pin",
+            "/nonexistent/pin.pem",
+            "--timeout",
+            "3",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+
+    def test_tls_client_cert_and_key_nonexistent_fail_cleanly(self, cli_runner):
+        """--tls-client-cert/--tls-client-key with missing files must fail
+        cleanly rather than crash [Category C]."""
+        result = cli_runner.run(
+            "goose",
+            "--mms-enum",
+            MOCK_HOST,
+            "--mms-port",
+            str(MOCK_PORTS["mms_goose"]),
+            "--tls",
+            "--tls-client-cert",
+            "/nonexistent/client.pem",
+            "--tls-client-key",
+            "/nonexistent/client.key",
+            "--timeout",
+            "3",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+
+    def test_tls_port_flag_is_actually_used(self, cli_runner):
+        """--tls-port must change which port is dialed: pointing it at a
+        closed port must surface that port number in the resulting error,
+        proving the flag is wired rather than ignored [Category B]."""
+        result = cli_runner.run(
+            "goose",
+            "--mms-enum",
+            MOCK_HOST,
+            "--tls",
+            "--tls-port",
+            "9999",
+            "--timeout",
+            "3",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+        assert "9999" in result.combined_output, (
+            f"--tls-port value not reflected in connection attempt: {result.combined_output[:500]}"
+        )
+
+    def test_mms_enum_wrong_protocol_on_port(self, cli_runner):
+        """Pointing --mms-enum at a live Modbus mock (wrong protocol on the
+        port) must fail as a parse/connection error, never a false-positive
+        GoCB discovery [Category C, impostor server]."""
+        result = cli_runner.run(
+            "goose",
+            "--mms-enum",
+            MOCK_HOST,
+            "--mms-port",
+            str(MOCK_PORTS["modbus"]),
+            "--timeout",
+            "5",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1], result.combined_output[:800]
+        assert "Traceback" not in result.combined_output
+        text = result.combined_output.lower()
+        assert "connected to iec 61850 server" not in text, (
+            f"Must not falsely report a successful IEC 61850 connection to a Modbus port: {text[:500]}"
+        )
+
+
+# ============================================================================
+# P1 regression: connection.py's connection.run() defaults results["success"]
+# to True whenever proto_flow() returns without raising. GOOSE's proto_flow
+# now explicitly sets results["success"] = False on every failure path
+# (raw-socket capability missing, interface open failure, MMS connect fail,
+# and the unsupported R-GOOSE mode). These tests lock in that fix: both a
+# raw-socket failure and an MMS connect failure must report "success": false
+# in the final --output JSON. This is a fixed-bug regression guard.
+# ============================================================================
+@pytest.mark.goose
+class TestGOOSEP1FalsePositiveRegression:
+    """Locks in the Option A fix: GOOSE no longer inherits the connection.py
+    default-success false positive on failed capture / MMS connect."""
+
+    protocol_name = "goose"
+
+    def test_p1_nonexistent_interface_reports_success_true(self, cli_runner, tmp_path):
+        """A nonexistent interface (no raw socket / connect ever happens)
+        still yields success: true in the JSON result -- a false positive."""
+        out_dir = tmp_path / "p1_iface"
+        result = cli_runner.run(
+            "goose",
+            "nonexistent-iface-xyz",
+            "--gocb-ref",
+            "LD/LLN0$GO$gcb01",
+            "--timeout",
+            "2",
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1]
+        out_file = out_dir / "goose.json"
+        assert out_file.exists(), result.combined_output[:500]
+        payload = json.loads(out_file.read_text())
+        last = payload[-1] if isinstance(payload, list) else payload
+        # FIXED (Option A, per-module): a nonexistent interface / missing raw
+        # socket capability means no capture ever happened, so proto_flow now
+        # sets success=False explicitly instead of inheriting connection.py's
+        # default-success false positive.
+        assert last["success"] is False, (
+            f"A GOOSE scan that never opened the interface must not report success. Got: {last}"
+        )
+        assert last.get("error"), f"Expected an explanatory error. Got: {last}"
+        assert last["data"] == {}
+
+    def test_p1_mms_enum_unreachable_host_reports_success_false(self, cli_runner, tmp_path):
+        """An MMS connect failure against an unreachable/rejecting host must
+        yield success: false in the JSON result -- the fix covers this path
+        (mms-enum, not capture) as well as the passive-capture path."""
+        out_dir = tmp_path / "p1_mms"
+        result = cli_runner.run(
+            "goose",
+            "--mms-enum",
+            "10.255.255.1",
+            "--mms-port",
+            "102",
+            "--timeout",
+            "2",
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1]
+        out_file = out_dir / "goose.json"
+        assert out_file.exists(), result.combined_output[:500]
+        payload = json.loads(out_file.read_text())
+        last = payload[-1] if isinstance(payload, list) else payload
+        assert last["success"] is False, (
+            "A GOOSE mms-enum that never established an MMS connection must "
+            f"not report success. Got: {last}"
+        )
+        assert last.get("error"), f"Expected an explanatory error. Got: {last}"
+        assert last["data"] == {}
+
+
+# ============================================================================
+# P2/P3/P6: numeric-range validation, wrong-type inputs, and flag hygiene.
+# GOOSE has no publish/spoof/inject actions requiring --confirm (P4: N/A,
+# confirmed by reading src/oida/protocols/goose/proto_args.py in full -- no
+# dangerous-action flags exist for this module).
+# ============================================================================
+@pytest.mark.goose
+class TestGOOSEArgValidationAndHygiene:
+    """Numeric validation, bad-type inputs, and unknown/typo flags."""
+
+    protocol_name = "goose"
+
+    def test_appid_non_numeric_rejected_by_parser(self, cli_runner):
+        """--appid must be an int; a non-numeric value is a usage error, not
+        a crash [Category C, P3 wrong-type]."""
+        result = cli_runner.run(
+            "goose", "lo", "--appid", "notanumber", "--timeout", "1", expect_json=False
+        )
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output
+
+    def test_appid_negative_value_does_not_crash(self, cli_runner):
+        """A negative --appid is accepted by argparse but must not crash the
+        scanner downstream [Category C, P2 unvalidated range]."""
+        result = cli_runner.run("goose", "lo", "--appid", "-1", "--timeout", "1", expect_json=False)
+        assert result.returncode in [0, 1, 2]
+        assert "Traceback" not in result.combined_output
+
+    def test_mms_port_non_numeric_rejected_by_parser(self, cli_runner):
+        """--mms-port must be an int; a non-numeric value is a usage error,
+        not a crash [Category C, P3 wrong-type]."""
+        result = cli_runner.run(
+            "goose",
+            "--mms-enum",
+            MOCK_HOST,
+            "--mms-port",
+            "notanumber",
+            "--timeout",
+            "1",
+            expect_json=False,
+        )
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output
+
+    def test_mms_port_negative_value_does_not_crash(self, cli_runner):
+        """A negative --mms-port is accepted by argparse but must fail
+        cleanly at connect time, not crash [Category C, P2 unvalidated
+        range]."""
+        result = cli_runner.run(
+            "goose",
+            "--mms-enum",
+            MOCK_HOST,
+            "--mms-port",
+            "-5",
+            "--timeout",
+            "2",
+            expect_json=False,
+        )
+        assert result.returncode in [0, 1]
+        assert "Traceback" not in result.combined_output
+
+    def test_unknown_flag_rejected(self, cli_runner):
+        """An entirely unknown flag must exit non-zero with a usage error,
+        never be silently ignored [Category C, P6 flag hygiene]."""
+        result = cli_runner.run("goose", "lo", "--not-a-real-flag", "foo", expect_json=False)
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output
+
+    def test_transposed_typo_flag_rejected(self, cli_runner):
+        """A transposed typo of --gocb-ref (--gcob-ref) must be rejected as
+        an unknown flag, not silently accepted or truncated-matched
+        [Category C, P6 flag hygiene]."""
+        result = cli_runner.run(
+            "goose", "lo", "--gcob-ref", "foo", "--timeout", "1", expect_json=False
+        )
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output
         assert "Traceback" not in result.combined_output

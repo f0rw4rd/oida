@@ -232,6 +232,7 @@ class SCMixin:
             await link.close()
             await sc_conn.close()
 
+        self._bacnet_response_gate()
         self.enum_host_info()
         self._export_results()
 

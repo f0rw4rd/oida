@@ -437,6 +437,13 @@ class dicom(
 
         # Create connection
         if not self.create_conn_obj():
+            # create_conn_obj() returns False when the A-ASSOCIATE was rejected,
+            # aborted, or never answered (a bare TCP connect to a non-DICOM port
+            # opens the socket but never yields an A-ASSOCIATE-AC). Without this
+            # the base NetworkConnection.run() defaults success=True and reports
+            # a false-positive DICOM identification (connection-1).
+            self.results["success"] = False
+            self.results.setdefault("error", "No DICOM association (rejected or not a DICOM SCP)")
             return
 
         # Enumerate host info (C-ECHO)

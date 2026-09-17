@@ -31,14 +31,14 @@ Mock Server Data (from docker/mocks/services/modbus_server.py):
     0x1009:0 = "1.0.0" (Hardware Version)
     0x100A:0 = "2.0.0" (Software Version)
 
-Test Classification Summary (125 defined + 9 inherited from BaseProtocolIntegrationTest)
+Test Classification Summary (131 defined + 9 inherited from BaseProtocolIntegrationTest)
 ---------------------------------------------------------------------------
-Category A (strict -- mock supports, assert success + validate data):  48 tests
-Category B (conditional -- mock may not support, accept 0 or 1):       67 tests
-Category C (error handling -- assert failure + validate error events):  10 tests
-Skipped (untestable -- flag not implemented or requires hardware):     12 tests
-Total defined in file:                                                125 tests
-Total collected (including inherited):                                134 tests
+Category A (strict -- mock supports, assert success + validate data):  50 tests
+Category B (conditional -- mock may not support, accept 0 or 1):       68 tests
+Category C (error handling -- assert failure + validate error events):  11 tests
+Skipped (untestable -- flag not implemented or requires hardware):     11 tests
+Total defined in file:                                                131 tests
+Total collected (including inherited):                                140 tests
 ---------------------------------------------------------------------------
 
 Flag Coverage Matrix (proto_args.py):
@@ -54,7 +54,7 @@ Flag Coverage Matrix (proto_args.py):
   --serial-port             [skip] requires physical serial hardware
   --baudrate                [skip] requires physical serial hardware
   --parity                  [skip] requires physical serial hardware
-  --ascii                   [skip] requires physical serial hardware
+  --ascii                   [B] test_ascii_serial_flag_over_tcp_is_noop
   -r/--scan-range           [A] test_read_holding_registers
   -R/--register-type        [A] test_read_holding_registers, _input, _coils, _discrete, _all
   --unit-id                 [A] test_specific_unit_id
@@ -73,6 +73,8 @@ Flag Coverage Matrix (proto_args.py):
   --test-write-thorough     [B] test_test_write_thorough
   --restore-on-exit         [B] test_restore_on_exit
   --diag                    [B] test_diagnostics_echo, _counters
+  --diag-data               [A] test_diagnostics_echo_with_custom_diag_data
+                            [C] test_diagnostics_invalid_diag_data_rejected
   -i/--identify             [A] test_mei_device_identification
   --mei-object              [A] test_mei_object_basic, _regular, _extended, _specific
   --mei-object-id           [A] test_mei_object_id_vendor, _product_code
@@ -106,6 +108,7 @@ Flag Coverage Matrix (proto_args.py):
   --scan-mode               [A] test_quick_mode, test_full_mode, test_discover_mode
   --max-registers           [B] test_max_registers
   --raw-fc                  [B] test_raw_fc_standard_code
+  --custom-fc (alias)       [A] test_custom_fc_alias_reads_holding_registers
   --payload                 [B] test_raw_fc_standard_code
   --response-format         [B] test_raw_fc_hexdump_format
   --save-response           [B] test_raw_fc_save_response
@@ -127,7 +130,11 @@ Flag Coverage Matrix (proto_args.py):
   --help (global)           [A] test_help_output
 """
 
+import contextlib
+import json
 import re
+import socket
+import threading
 
 import pytest
 from typing import Optional
@@ -1048,6 +1055,60 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             _assert_log_has_events(result)
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
+
+    def test_diagnostics_echo_with_custom_diag_data(
+        self, cli_runner, target, port, docker_services
+    ):
+        """--diag-data supplies the FC 8 echo payload (parsed as hex by
+        scanner_mixins/diagnostics.py `_run_diagnostics`, default 0x1234 if
+        omitted). Send a distinct value (0xABCD) and assert the mock echoes
+        it back correctly, proving --diag-data actually reached the wire
+        request rather than the default being used [Category A].
+        """
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--diag",
+            "echo",
+            "--diag-data",
+            "0xABCD",
+            format="json",
+            json_log=True,
+        )
+
+        assert result.success, f"Diagnostics echo with --diag-data failed: {result.stderr}"
+        text = _combined_text(result, result.scan_log)
+        assert "echo test: pass" in text, (
+            f"Expected echo of custom --diag-data 0xABCD to match (PASS), got: {text[:500]}"
+        )
+
+    def test_diagnostics_invalid_diag_data_rejected(
+        self, cli_runner, target, port, docker_services
+    ):
+        """A non-hex --diag-data value must be rejected cleanly with a
+        readable error (no traceback), and diagnostics must report
+        unsupported/no echo rather than silently falling back [Category C].
+        """
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--diag",
+            "echo",
+            "--diag-data",
+            "not-a-hex-value",
+            format="json",
+            json_log=True,
+        )
+
+        assert "Traceback" not in result.combined_output
+        text = _combined_text(result, result.scan_log)
+        assert "invalid --diag-data value" in text, (
+            f"Expected an explicit invalid --diag-data error, got: {text[:500]}"
+        )
 
     def test_communication_events(self, cli_runner, target, port, docker_services):
         """Test communication events (FC 11/12) [Category B]"""
@@ -2244,6 +2305,40 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    def test_ascii_serial_flag_over_tcp_is_noop(self, cli_runner, target, port, docker_services):
+        """Test --ascii (serial ASCII framing) is accepted and has no effect
+        over a TCP target [Category B]
+
+        --ascii only changes the client framer when a --serial-port is also
+        given (see ModbusScanner.connect(): `use_ascii_serial` is only
+        consulted inside the `if self.serial_port` branch). We have no
+        serial/RTU hardware mock, so this exercises the real, observable
+        behaviour reachable in this suite: the flag parses cleanly and the
+        scan proceeds normally over TCP, unaffected, against the live mock
+        holding registers (see module docstring for HR[0..3] values).
+        """
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--ascii",
+            "--scan-range",
+            "0-3",
+            "--register-type",
+            "holding",
+            format="json",
+            json_log=True,
+        )
+
+        assert result.success, f"--ascii over TCP should be a no-op, got: {result.stderr}"
+        assert result.returncode == 0
+        _assert_log_has_events(result)
+        text = _combined_text(result, result.scan_log)
+        assert any(term in text for term in ["addr", "value", "holding", "register"]), (
+            f"Expected normal holding-register table output with --ascii, got: {text[:500]}"
+        )
+
     def test_udp_transport(self, cli_runner, target, port, docker_services):
         """Test UDP transport [Category B]"""
         result = cli_runner.run(
@@ -3059,6 +3154,43 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
+    def test_custom_fc_alias_reads_holding_registers(
+        self, cli_runner, target, port, docker_services
+    ):
+        """--custom-fc is the documented alias for --raw-fc (same argparse
+        destination, see proto_args.py `"--raw-fc", "--custom-fc"`).
+        Drive it standalone (never combined with --raw-fc) against FC 3
+        (read holding registers) with --confirm and assert the scanner
+        actually transmitted the request and got a real response back
+        [Category A].
+        """
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--custom-fc",
+            "3",
+            "--payload",
+            "00 00 00 01",  # addr=0, count=1
+            "--confirm",
+            expect_json=False,
+            json_log=True,
+        )
+
+        assert result.success, f"--custom-fc FC3 read failed: {result.stderr}"
+        log = result.scan_log
+        assert log is not None and len(log) > 0, "scan_log should be populated"
+        _assert_log_event_structure(log)
+        messages = _all_messages(log)
+        text = _combined_text(result, log)
+        assert "raw function code 3" in messages or "raw function code 3" in text, (
+            f"Expected FC 3 to be transmitted via --custom-fc, got: {text[:500]}"
+        )
+        assert "response (3 bytes)" in text or "response (" in text, (
+            f"Expected a real response to the --custom-fc FC3 request, got: {text[:500]}"
+        )
+
     def test_raw_fc_unsupported_code(self, cli_runner, target, port, docker_services):
         """Send to unsupported FC 99, expect no usable response [Category C]
 
@@ -3415,3 +3547,130 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             _assert_log_has_events(result)
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
+
+
+@contextlib.contextmanager
+def _dummy_tcp_server():
+    """A local TCP server that accepts connections but never speaks Modbus.
+
+    Safety: binds only to 127.0.0.1 on an ephemeral port. It exists purely to
+    provide a "TCP connects but is not a Modbus device" target for the
+    connection-1 false-positive regression below — it never touches a real
+    device or external network. Accepted sockets are held open and silent so
+    that Modbus reads time out rather than getting a valid PDU.
+    """
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind(("127.0.0.1", 0))
+    srv.listen(8)
+    port = srv.getsockname()[1]
+    stop = threading.Event()
+    conns = []
+
+    def _serve():
+        srv.settimeout(0.5)
+        while not stop.is_set():
+            try:
+                conn, _ = srv.accept()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            # Hold the connection open without ever sending a valid Modbus PDU.
+            conns.append(conn)
+
+    thread = threading.Thread(target=_serve, daemon=True)
+    thread.start()
+    try:
+        yield port
+    finally:
+        stop.set()
+        with contextlib.suppress(OSError):
+            srv.close()
+        for conn in conns:
+            with contextlib.suppress(OSError):
+                conn.close()
+        thread.join(timeout=2)
+
+
+class TestModbusP1FalsePositiveRegression:
+    """Regression guard for the connection-1 false-positive identification bug.
+
+    A bare TCP connect to a port that speaks *something other than Modbus*
+    opens the channel but never yields a valid Modbus PDU. Before the fix, the
+    base ``NetworkConnection.run()`` defaulted ``success=True`` on any
+    non-raising ``proto_flow()``, so OIDA reported a false-positive Modbus
+    device on any open TCP port. The fix adds a ``verify_responsive()`` gate in
+    the modbus scanner: identification only succeeds when the target returns a
+    real Modbus response (a normal reply, or a valid exception response with an
+    exception code in 1..11).
+
+    Safety: these tests target only a local in-process dummy TCP server bound to
+    127.0.0.1 and a closed local port — never a real device or external network.
+    """
+
+    def _read_result_payload(self, out_dir, result):
+        """Return the last result record written to the --output directory."""
+        candidates = sorted(out_dir.glob("*.json"))
+        assert candidates, (
+            "no JSON result file was written to the output directory; "
+            f"combined output: {result.combined_output[:800]}"
+        )
+        payload = json.loads(candidates[-1].read_text())
+        return payload[-1] if isinstance(payload, list) else payload
+
+    def test_non_modbus_tcp_port_is_not_a_false_positive(self, cli_runner, tmp_path):
+        """A TCP-connectable but non-Modbus port must report success=False.
+
+        This is the core connection-1 regression: prior to the verify_responsive
+        gate this scan reported a successful Modbus identification purely because
+        the TCP connect succeeded.
+        """
+        with _dummy_tcp_server() as port:
+            out_dir = tmp_path / "p1_non_modbus"
+            result = cli_runner.run(
+                "modbus",
+                "127.0.0.1",
+                "--port",
+                str(port),
+                "--timeout",
+                "1",
+                format="json",
+                output=str(out_dir),
+                expect_json=False,
+                timeout=30,
+            )
+
+            last = self._read_result_payload(out_dir, result)
+            assert last["success"] is False, (
+                "connection-1 regression: a non-Modbus TCP port was reported as a "
+                f"successful Modbus identification. Payload: {last}"
+            )
+
+    def test_closed_port_is_not_a_false_positive(self, cli_runner, tmp_path):
+        """A closed local port must report success=False (never a phantom device)."""
+        # Grab an ephemeral port, then close it so nothing is listening.
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        probe.bind(("127.0.0.1", 0))
+        closed_port = probe.getsockname()[1]
+        probe.close()
+
+        out_dir = tmp_path / "p1_closed"
+        result = cli_runner.run(
+            "modbus",
+            "127.0.0.1",
+            "--port",
+            str(closed_port),
+            "--timeout",
+            "1",
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+            timeout=30,
+        )
+
+        last = self._read_result_payload(out_dir, result)
+        assert last["success"] is False, (
+            "connection-1 regression: a closed port was reported as a successful "
+            f"Modbus identification. Payload: {last}"
+        )

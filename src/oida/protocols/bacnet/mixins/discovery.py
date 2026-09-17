@@ -161,7 +161,11 @@ class DiscoveryMixin:
                 self.logger.debug(f"bacpypes3 I-Am parse failed: {e}")
                 continue
 
-        return min(instances) if instances else None
+        if instances:
+            # A directed I-Am came back: a real BACnet device answered.
+            self._bacnet_response_seen = True
+            return min(instances)
+        return None
 
     async def _bacpypes3_discover_device(self, app, target_addr, timeout: float) -> Optional[int]:
         """Discover the device instance.
@@ -224,6 +228,7 @@ class DiscoveryMixin:
                     continue
 
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
+                    self._bacnet_response_seen = True
                     self.logger.success(f"Discovered device ID: {test_id}")
                     return test_id
             except Exception as e:
@@ -288,6 +293,7 @@ class DiscoveryMixin:
                     continue
 
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU)):
+                    self._bacnet_response_seen = True
                     if hasattr(response, "propertyValue"):
                         pv = response.propertyValue
                         if hasattr(pv, "cast_out"):
@@ -335,6 +341,7 @@ class DiscoveryMixin:
         ErrorPDU = types["ErrorPDU"]
         RejectPDU = types["RejectPDU"]
         Error = types["Error"]
+        ErrorRejectAbortNack = types["ErrorRejectAbortNack"]
 
         self.logger.display("\n[Vendor-Specific / Proprietary Scan]")
 
@@ -353,6 +360,7 @@ class DiscoveryMixin:
             try:
                 response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
                 if response and not isinstance(response, (AbortPDU, ErrorPDU, RejectPDU, Error)):
+                    self._bacnet_response_seen = True
                     pv = getattr(response, "propertyValue", None)
                     if pv is not None and hasattr(pv, "cast_out"):
                         try:
@@ -435,7 +443,7 @@ class DiscoveryMixin:
                     except (asyncio.TimeoutError, TimeoutError) as e:
                         self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
                         continue
-                    except Exception as e:
+                    except (Exception, ErrorRejectAbortNack) as e:
                         self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
                         continue
 
@@ -553,7 +561,7 @@ class DiscoveryMixin:
                     except (asyncio.TimeoutError, TimeoutError) as e:
                         self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
                         continue
-                    except Exception as e:
+                    except (Exception, ErrorRejectAbortNack) as e:
                         self.logger.debug(f"bacpypes3 vendor scan failed: {e}")
                         continue
 

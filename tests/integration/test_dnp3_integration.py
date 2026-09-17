@@ -48,6 +48,8 @@ Total collected (including 8 inherited from BaseProtocolIntegrationTest): 94 tes
 ---------------------------------------------------------------------------
 """
 
+import json
+
 import pytest
 from typing import Optional
 
@@ -1626,11 +1628,11 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
 
         assert not result.success, "Invalid octet group should fail"
 
-    # NOT COVERED (no test exists — do not add skipped placeholders for these):
-    #   - Serial transport (--serial, baud/parity/data-bits/stop-bits): needs a
-    #     physical serial device.
-    #   - Secure Authentication v5: needs a compatible outstation and an
-    #     opendnp3 build with SA support.
+    # Serial transport (--serial-device/--baud/--data-bits/--stop-bits/--parity)
+    # and Secure Authentication v5 (--sa/--sa-user/--sa-key/--file-auth) are
+    # covered further below (see "Serial Transport" and "Secure Authentication
+    # v5" sections) using the argument-parsing/error paths, since there is no
+    # physical serial device or SA-capable opendnp3 build available here.
 
     # ========================================================================
     # UDP Transport Tests
@@ -1973,3 +1975,443 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
 
         # Should fail but not crash
         assert not result.success, "Should fail with nonexistent cert"
+
+    # ========================================================================
+    # Long-Form Flag Coverage
+    #
+    # The flags below already have behavioral coverage elsewhere in this file
+    # via their short-form aliases (-r/-c/-a/-e/-g/-d/-n). These tests exercise
+    # the same behavior through the literal long-form flag so the CLI's
+    # long-form spelling is itself under real-CLI test, not just the alias.
+    # ========================================================================
+
+    def test_scan_range_long_form(self, cli_runner, target, port, docker_services):
+        """Test --scan-range (long form of -r) scans an outstation address [Category A]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--scan-range",
+            f"{BASIC_OUTSTATION_ADDR}-{BASIC_OUTSTATION_ADDR}",
+            "--scan-timeout",
+            "2",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+        assert result.success, f"--scan-range failed: {result.stderr}"
+        _assert_log_has_events(result)
+        messages = _all_messages(result.scan_log)
+        assert str(BASIC_OUTSTATION_ADDR) in messages
+
+    def test_class_poll_long_form(self, cli_runner, target, port, docker_services):
+        """Test --class-poll (long form of -c) polls class 0 [Category A]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "-o",
+            str(BASIC_OUTSTATION_ADDR),
+            "--class-poll",
+            "0",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+        assert result.success, f"--class-poll failed: {result.stderr}"
+        _assert_log_has_events(result)
+
+    def test_dump_attrs_long_form(self, cli_runner, target, port, docker_services):
+        """Test --dump-attrs (long form of -a) dumps device attributes [Category A]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "-o",
+            str(BASIC_OUTSTATION_ADDR),
+            "--dump-attrs",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+        assert result.success, f"--dump-attrs failed: {result.stderr}"
+        _assert_log_has_events(result)
+        messages = _all_messages(result.scan_log)
+        assert BASIC_VENDOR.lower() in messages or BASIC_SERIAL.lower() in messages
+
+    def test_enumerate_points_long_form(self, cli_runner, target, port, docker_services):
+        """Test --enumerate-points (long form of -e) enumerates point ranges [Category A]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "-o",
+            str(BASIC_OUTSTATION_ADDR),
+            "--enumerate-points",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+        assert result.success, f"--enumerate-points failed: {result.stderr}"
+        _assert_log_has_events(result)
+
+    def test_read_variation_long_form(self, cli_runner, target, port, docker_services):
+        """Test --read-variation (long form of -g) reads analog inputs as g30v0 [Category A]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "-o",
+            str(BASIC_OUTSTATION_ADDR),
+            "--read-variation",
+            "30.0",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+        assert result.success, f"--read-variation failed: {result.stderr}"
+        _assert_log_has_events(result)
+
+    def test_delay_measure_long_form(self, cli_runner, target, docker_services):
+        """Test --delay-measure (long form of -d) [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(MOCK_PORTS["dnp3_enhanced"]),
+            "-o",
+            str(ENHANCED_OUTSTATION_ADDR),
+            "--delay-measure",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+        assert result.returncode in [0, 1]
+        if result.scan_log is not None and len(result.scan_log) > 0:
+            _assert_log_event_structure(result.scan_log)
+
+    def test_no_ack_long_form(self, cli_runner, target, port, docker_services):
+        """Test --no-ack (long form of -n) requests NR variants for the integrity poll [Category A]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "-o",
+            str(BASIC_OUTSTATION_ADDR),
+            "--no-ack",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+        assert result.success, f"--no-ack failed: {result.stderr}"
+        _assert_log_has_events(result)
+
+    # ========================================================================
+    # Secure Authentication v5 (--sa / --sa-user / --sa-key / --file-auth)
+    #
+    # The docker mocks do not implement SA v5, and the vendored opendnp3
+    # binding used by this build exposes no API to register SA credentials
+    # (confirmed manually: "This binding was built without SA credential
+    # support"). These tests are Category C: the flags must parse and be
+    # forwarded correctly, and the scan must fail cleanly with a readable
+    # error instead of a traceback or a silent no-op.
+    # ========================================================================
+
+    def test_secure_authentication_flags(self, cli_runner, target, port, docker_services):
+        """Test --sa/--sa-user/--sa-key are parsed and rejected cleanly (no SA support) [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "-o",
+            str(BASIC_OUTSTATION_ADDR),
+            "--sa",
+            "--sa-user",
+            "1",
+            "--sa-key",
+            "0123456789abcdef",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert not result.success, "SA v5 should fail cleanly without binding support"
+        assert "Traceback" not in result.combined_output
+        messages = (
+            _all_messages(result.scan_log) if result.scan_log else result.combined_output.lower()
+        )
+        assert "secure authentication" in messages or "sa " in messages or "--sa" in messages
+
+    @pytest.mark.containers("dnp3-filetransfer")
+    def test_file_auth_requires_confirm(self, cli_runner, target, docker_services):
+        """Test --file-auth without --confirm is refused (P4 confirm gate) [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(MOCK_PORTS["dnp3_filetransfer"]),
+            "-o",
+            str(FT_SLAVE_ADDR),
+            "-m",
+            str(FT_MASTER_ADDR),
+            "--file-auth",
+            "/tmp/nonexistent_target_file.bin",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert not result.success, "--file-auth without --confirm must be refused"
+        assert "Traceback" not in result.combined_output
+        messages = (
+            _all_messages(result.scan_log) if result.scan_log else result.combined_output.lower()
+        )
+        assert "--confirm" in messages
+
+    @pytest.mark.containers("dnp3-filetransfer")
+    def test_file_auth_with_confirm(self, cli_runner, target, docker_services):
+        """Test --file-auth with --confirm runs the SA file-auth op against the mock [Category B]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(MOCK_PORTS["dnp3_filetransfer"]),
+            "-o",
+            str(FT_SLAVE_ADDR),
+            "-m",
+            str(FT_MASTER_ADDR),
+            "--file-auth",
+            "/tmp/nonexistent_target_file.bin",
+            "--confirm",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert result.returncode in [0, 1]
+        assert "Traceback" not in result.combined_output
+        if result.scan_log is not None and len(result.scan_log) > 0:
+            _assert_log_event_structure(result.scan_log)
+
+    # ========================================================================
+    # Serial Transport (--transport serial + --serial-device/--baud/
+    # --data-bits/--stop-bits/--parity)
+    #
+    # No physical serial device is available in this environment. These tests
+    # are Category C: they confirm the flags parse and are forwarded, and that
+    # the CLI fails cleanly (no traceback) rather than hanging or crashing.
+    #
+    # BUG FOUND (reported, not fixed -- see report): with --transport=serial,
+    # the scan still fails with a TCP-style "Failed to connect to
+    # <host>:<port> within Ns" error instead of a serial-open error (e.g. "No
+    # such file or directory: /dev/ttyUSB0"). This indicates the framework's
+    # connect preflight ignores --transport and always attempts TCP, so
+    # DNP3Scanner._connect_serial() is never actually reached through the
+    # CLI. This looks rooted in the shared connection.py preflight, which is
+    # explicitly out of scope to fix here.
+    # ========================================================================
+
+    def test_serial_transport_flags(self, cli_runner):
+        """Test --transport serial with device/baud/data-bits/stop-bits/parity fails cleanly [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            MOCK_HOST,
+            "--transport",
+            "serial",
+            "--serial-device",
+            "/dev/ttyUSB0",
+            "--baud",
+            "19200",
+            "--data-bits",
+            "7",
+            "--stop-bits",
+            "2",
+            "--parity",
+            "even",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert not result.success, "Serial transport with no real device should fail, not hang"
+        assert "Traceback" not in result.combined_output
+
+    # ========================================================================
+    # P2: Unvalidated numeric index bounds on control operations
+    #
+    # --bo-direct/--bo-sbo/--ao-direct/--ao-sbo are plain argparse type=int
+    # with no CLI-level range or non-negativity check (confirmed by reading
+    # proto_args.py). A negative index is forwarded straight into the native
+    # opendnp3 binding, which raises a raw pybind11 TypeError. The CLI catches
+    # it and reports it as a control error string instead of crashing, but
+    # the message leaks the C++ binding signature and the index is never
+    # validated up front. Documented here as a known quality gap, not fixed.
+    # ========================================================================
+
+    @pytest.mark.containers("dnp3-enhanced")
+    def test_bo_direct_negative_index_no_crash(self, cli_runner, target, docker_services):
+        """Test --bo-direct with a negative index fails cleanly instead of crashing [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(MOCK_PORTS["dnp3_enhanced"]),
+            "-o",
+            str(ENHANCED_OUTSTATION_ADDR),
+            "--bo-direct",
+            "-1",
+            "--confirm",
+            "--timeout",
+            "3",
+            format="json",
+            json_log=True,
+            timeout=20,
+        )
+        assert result.returncode in [0, 1]
+        assert "Traceback" not in result.combined_output
+
+    # ========================================================================
+    # P6: Flag hygiene -- unknown flags and typos must be rejected, never
+    # silently ignored.
+    # ========================================================================
+
+    def test_unknown_flag_rejected(self, cli_runner, target):
+        """Test an unknown flag is rejected with a non-zero exit and no traceback [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--not-a-real-flag",
+            expect_json=False,
+            timeout=15,
+        )
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output
+        assert (
+            "unrecognized" in result.combined_output.lower()
+            or "error" in result.combined_output.lower()
+        )
+
+    def test_typo_flag_rejected(self, cli_runner, target):
+        """Test a transposed-typo flag (--dump-atrs for --dump-attrs) is rejected [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--dump-atrs",
+            expect_json=False,
+            timeout=15,
+        )
+        assert result.returncode != 0
+        assert "Traceback" not in result.combined_output
+
+    def test_cold_restart_without_confirm_rejected(self, cli_runner, target, port, docker_services):
+        """Test --cold-restart without --confirm is refused (P4 confirm gate) [Category C]"""
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "-o",
+            str(BASIC_OUTSTATION_ADDR),
+            "--cold-restart",
+            "--timeout",
+            "3",
+            expect_json=False,
+            timeout=15,
+        )
+        assert not result.success, "--cold-restart without --confirm must be refused"
+        assert "Traceback" not in result.combined_output
+        assert "--confirm" in result.combined_output
+
+
+# ---------------------------------------------------------------------------
+# P1 False-Positive Regression (connection.py connection-1, known systemic bug)
+# ---------------------------------------------------------------------------
+
+
+class TestDNP3P1FalsePositiveRegression:
+    """Regression test for the P1 false-positive fix in dnp3/cli_runner.py.
+
+    Root cause was: dnp3 scanner.connect() only waits for the raw TCP channel
+    to open; it never validates a DNP3 application-layer response. Pointing
+    dnp3 at a live port serving a *different* protocol therefore opened the
+    channel, the integrity poll silently failed, and the base
+    NetworkConnection.run() defaulted the envelope to success:true with empty
+    DNP3 data -- a false-positive device identification (connection-1).
+
+    Fix: _execute_scan now requires evidence of a real DNP3 response (a parsed
+    IIN, collected data points/device attributes, or a succeeded operation)
+    before leaving success unset; otherwise it sets success=False. These tests
+    pin the corrected behavior -- a wrong-protocol or closed port must report
+    success:false.
+    """
+
+    def test_wrong_protocol_port_reports_false_positive_success(self, cli_runner, tmp_path):
+        """DNP3 against a live modbus port must report success:false (P1 fixed)"""
+        out_dir = tmp_path / "dnp3_p1_wrong"
+        result = cli_runner.run(
+            "dnp3",
+            MOCK_HOST,
+            "--port",
+            str(MOCK_PORTS["modbus"]),
+            "--timeout",
+            "2",
+            "--scan-timeout",
+            "1",
+            "--output",
+            str(out_dir),
+            format="json",
+            timeout=20,
+        )
+
+        json_path = out_dir / "dnp3.json"
+        assert json_path.exists(), f"Expected {json_path} to be written; stderr={result.stderr}"
+        data = json.loads(json_path.read_text())
+        record = data[0] if isinstance(data, list) else data
+
+        # P1 FIXED: nothing DNP3-valid responded on the modbus port, so the
+        # envelope must report success:false. Verified with:
+        #   oida dnp3 127.0.0.1 --port 502 --timeout 2 --scan-timeout 1 \
+        #       --output <dir> --format json
+        # -> dnp3.json shows "success": false, error "No valid DNP3 response".
+        assert record["success"] is False, (
+            "dnp3 reported success:true against a wrong-protocol port -- the P1 "
+            "false-positive fix in dnp3/cli_runner._execute_scan has regressed."
+        )
+        scan_results = record["data"]["scan_results"]
+        assert scan_results["data_points"] == {}
+        assert scan_results["device_attributes"] == {}
+
+    def test_closed_port_correctly_reports_failure(self, cli_runner, tmp_path):
+        """DNP3 against a closed port correctly reports success:false [Category C, contrast case]"""
+        out_dir = tmp_path / "dnp3_p1_closed"
+        result = cli_runner.run(
+            "dnp3",
+            MOCK_HOST,
+            "--port",
+            "65534",
+            "--timeout",
+            "2",
+            "--scan-timeout",
+            "1",
+            "--output",
+            str(out_dir),
+            format="json",
+            timeout=20,
+        )
+
+        json_path = out_dir / "dnp3.json"
+        assert json_path.exists(), f"Expected {json_path} to be written; stderr={result.stderr}"
+        data = json.loads(json_path.read_text())
+        record = data[0] if isinstance(data, list) else data
+        assert record["success"] is False, "A closed port must not report success"

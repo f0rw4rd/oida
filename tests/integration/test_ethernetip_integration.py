@@ -73,6 +73,7 @@ Flag Coverage Matrix (oida ethernetip -h):
   --max-file-size           [B] test_max_file_size
   --cpu-stop                [C] test_cpu_stop_without_confirm
   --crash-ethernet          [C] test_crash_ethernet_without_confirm
+  --crash-cpu               [C] test_crash_cpu_without_confirm
   --reset-ethernet          [B] test_reset_ethernet
   --confirm                 [C] test_confirm_flag_with_cpu_stop
 
@@ -90,6 +91,11 @@ Security Finding Coverage (findings tested by specific tests):
   All findings on default scan                        [A] test_security_findings_all_present_on_default_scan
   --no-check-security suppresses report_status        [A] test_no_check_security_suppresses_report_status
 """
+
+import contextlib
+import json
+import socket
+import threading
 
 import pytest
 from typing import Optional
@@ -1805,6 +1811,44 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
         ), f"Expected --confirm requirement message: {text[:500]}"
 
     @pytest.mark.security
+    def test_crash_cpu_without_confirm(self, cli_runner, target, port):
+        """Test --crash-cpu without --confirm is rejected [Category C]
+
+        --crash-cpu is a destructive DoS action (malformed CIP message intended
+        to crash the PLC CPU). This test only verifies the --confirm gate
+        rejects the request without --confirm; it never sends the malformed
+        request and is run only against the local disposable docker mock.
+        """
+        result = cli_runner.run(
+            self.protocol_name,
+            target,
+            "--port",
+            str(port),
+            "--crash-cpu",
+            format="json",
+            json_log=True,
+            timeout=30,
+        )
+
+        assert result.returncode != -1
+        text = _combined_text(result, result.scan_log)
+        assert any(
+            term in text
+            for term in [
+                "confirm",
+                "requires",
+                "missing",
+                "crash",
+                "cpu",
+                "malformed",
+                "caution",
+                "connected",
+                "ethernet/ip",
+                "ethernetip",
+            ]
+        ), f"Expected --confirm requirement message: {text[:500]}"
+
+    @pytest.mark.security
     def test_confirm_flag_with_cpu_stop(self, cli_runner, target, port):
         """Test --cpu-stop with --confirm attempts attack (mock won't crash) [Category C]"""
         result = cli_runner.run(
@@ -2224,4 +2268,124 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
         info_events = log.get_events(level="info")
         assert len(info_events) > 0, (
             f"Expected info-level events, got 0. All levels: {[e.get('level') for e in log.events]}"
+        )
+
+
+@contextlib.contextmanager
+def _dummy_tcp_server():
+    """A local TCP server that accepts connections but never speaks EtherNet/IP.
+
+    Safety: binds only to 127.0.0.1 on an ephemeral port. It provides a
+    "TCP connects but is not an EtherNet/IP device" target for the connection-1
+    false-positive regression below — it never touches a real device or external
+    network. Accepted sockets are held open and silent so that ListIdentity /
+    RegisterSession never receive a valid encapsulation reply.
+    """
+    srv = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    srv.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    srv.bind(("127.0.0.1", 0))
+    srv.listen(8)
+    port = srv.getsockname()[1]
+    stop = threading.Event()
+    conns = []
+
+    def _serve():
+        srv.settimeout(0.5)
+        while not stop.is_set():
+            try:
+                conn, _ = srv.accept()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+            conns.append(conn)
+
+    thread = threading.Thread(target=_serve, daemon=True)
+    thread.start()
+    try:
+        yield port
+    finally:
+        stop.set()
+        with contextlib.suppress(OSError):
+            srv.close()
+        for conn in conns:
+            with contextlib.suppress(OSError):
+                conn.close()
+        thread.join(timeout=2)
+
+
+class TestEtherNetIPP1FalsePositiveRegression:
+    """Regression guard for the connection-1 false-positive identification bug.
+
+    A bare TCP connect to a port that speaks *something other than EtherNet/IP*
+    opens the channel but never yields a valid ENIP encapsulation reply. Before
+    the fix, the base ``NetworkConnection.run()`` defaulted ``success=True`` on
+    any non-raising ``proto_flow()``, so OIDA reported a false-positive
+    EtherNet/IP device on any open TCP port (the scanner even fabricated an
+    identity dict from pycomm3 placeholder driver info).
+
+    The fix gates success in ``cli_runner._execute_scan()`` on a real
+    ListIdentity reply: identity must carry a ``vendor_id``/``serial_number``
+    (populated only when ``_list_identity()`` truly succeeds), which per ODVA
+    CIP Vol.2 every EtherNet/IP device must answer on 44818.
+
+    Safety: targets only a local in-process dummy TCP server bound to 127.0.0.1
+    and a closed local port — never a real device or external network.
+    """
+
+    def _read_result_payload(self, out_dir, result):
+        candidates = sorted(out_dir.glob("*.json"))
+        assert candidates, (
+            "no JSON result file was written to the output directory; "
+            f"combined output: {result.combined_output[:800]}"
+        )
+        payload = json.loads(candidates[-1].read_text())
+        return payload[0] if isinstance(payload, list) else payload
+
+    def test_non_enip_tcp_port_is_not_a_false_positive(self, cli_runner, tmp_path):
+        """A TCP-connectable but non-EtherNet/IP port must report success=False."""
+        with _dummy_tcp_server() as port:
+            out_dir = tmp_path / "p1_non_enip"
+            result = cli_runner.run(
+                "ethernetip",
+                "127.0.0.1",
+                "--port",
+                str(port),
+                "--timeout",
+                "2",
+                format="json",
+                output=str(out_dir),
+                expect_json=False,
+                timeout=30,
+            )
+            last = self._read_result_payload(out_dir, result)
+            assert last["success"] is False, (
+                "connection-1 regression: a non-EtherNet/IP TCP port was reported "
+                f"as a successful EtherNet/IP identification. Payload: {last}"
+            )
+
+    def test_closed_port_is_not_a_false_positive(self, cli_runner, tmp_path):
+        """A closed local port must report success=False (never a phantom device)."""
+        probe = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        probe.bind(("127.0.0.1", 0))
+        closed_port = probe.getsockname()[1]
+        probe.close()
+
+        out_dir = tmp_path / "p1_closed"
+        result = cli_runner.run(
+            "ethernetip",
+            "127.0.0.1",
+            "--port",
+            str(closed_port),
+            "--timeout",
+            "2",
+            format="json",
+            output=str(out_dir),
+            expect_json=False,
+            timeout=30,
+        )
+        last = self._read_result_payload(out_dir, result)
+        assert last["success"] is False, (
+            "connection-1 regression: a closed port was reported as a successful "
+            f"EtherNet/IP identification. Payload: {last}"
         )
