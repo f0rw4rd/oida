@@ -119,6 +119,14 @@ First stable release.
 
 ### Fixed
 
+- **Runtime metadata lookups use the real distribution name.** The import
+  package and the `oida` command are unchanged, but the published distribution
+  is `oida-ics`, so `importlib.metadata` calls asking for `oida` silently
+  returned nothing: `PROTOCOL_DEPENDENCIES` came out empty (losing every
+  protocol dependency hint, and every protocol in a frozen build) and
+  `oida --bug` crashed with `PackageNotFoundError`. All lookups now go through
+  `oida.utils.lazy_import.dist_name()`, which resolves the distribution from
+  the import package, and `pip install ...` hints are built from it.
 - **Bracketed IPv6 targets are no longer mangled.** `parse_targets` stripped
   only the leading bracket off `[2001:db8::1]:502`, yielding the unresolvable
   `2001:db8::1]:502`. Brackets are now parsed properly, and IPv6 targets keep

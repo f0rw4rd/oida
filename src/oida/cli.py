@@ -1180,7 +1180,9 @@ def print_bug_report() -> None:
         try:
             from importlib.metadata import distribution
 
-            dist = distribution("oida")
+            from oida.utils.lazy_import import dist_name
+
+            dist = distribution(dist_name())
             direct_url = dist.read_text("direct_url.json")
             if direct_url and "dir_info" in direct_url:
                 lines.append("Install:      editable (pip install -e)")
@@ -1310,12 +1312,12 @@ def print_bug_report() -> None:
     except ImportError:
         from importlib_metadata import requires as _requires  # type: ignore[no-redef]
 
-    from oida.utils.lazy_import import _IMPORT_OVERRIDES, _SKIP_EXTRAS
+    from oida.utils.lazy_import import _IMPORT_OVERRIDES, _SKIP_EXTRAS, dist_name
 
     _extra_re = re.compile(r'extra\s*==\s*"([^"]+)"')
     _seen_pkgs: set = set()
     dep_packages = []
-    for line in _requires("oida") or []:
+    for line in _requires(dist_name()) or []:
         m = _extra_re.search(line)
         if not m:
             continue
