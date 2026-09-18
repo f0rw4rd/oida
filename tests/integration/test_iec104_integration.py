@@ -2536,9 +2536,14 @@ class TestIEC104TLS:
             f"Expected 'Anonymous access allowed' finding, got: {findings}"
         )
 
-    @_C104_TLS_XFAIL
     def test_tls_cert_probe(self, cli_runner, target, port):
-        """Test --tls scan probes and logs certificate info [Category B]"""
+        """Test --tls scan probes and logs certificate info [Category B]
+
+        Not marked xfail (unlike the other c104 TLS tests, iec104-python#64):
+        this is a lenient probe that only asserts rc in [0, 1] and that the
+        output mentions tls/cert/connect. It never relied on the broken mbedtls
+        handshake, so it passes deterministically.
+        """
         result = cli_runner.run(
             "iec104",
             target,

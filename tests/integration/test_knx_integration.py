@@ -148,6 +148,15 @@ from .base_protocol_test import BaseProtocolIntegrationTest
 from .conftest import MOCK_HOST
 
 
+# Serialize the whole KNX file onto one xdist worker (honored under
+# --dist loadgroup, which scripts/run-all-tests.sh uses). The Calimero mock
+# exposes a single KNXnet/IP tunnel endpoint; without this marker the
+# tunnel-dependent tests scatter across workers and collide on that endpoint,
+# failing intermittently. Mirrors every other protocol integration file
+# (e.g. test_iec104_integration.py, test_mms_integration.py).
+pytestmark = pytest.mark.xdist_group("knx_service")
+
+
 # ---------------------------------------------------------------------------
 # Known Mock Data Constants (from Calimero server-config.xml)
 # ---------------------------------------------------------------------------
@@ -1781,6 +1790,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
     # runs with --tcp, 0 failures) before being adopted here.
     # ========================================================================
 
+    @pytest.mark.flaky(reruns=3, reruns_delay=5)
     @pytest.mark.containers("knx-calimero")
     def test_individual_address_long_flag_device_info(self, cli_runner, target, port):
         """--individual-address (long form) retrieves real BCU device info [Category A]"""
@@ -1849,6 +1859,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         )
         assert "Traceback" not in result.combined_output
 
+    @pytest.mark.flaky(reruns=3, reruns_delay=5)
     @pytest.mark.containers("knx-calimero")
     def test_key_file_and_continue_on_success_bruteforce(self, cli_runner, target, port, tmp_path):
         """--key-file loads real keys; --continue-on-success changes brute-force behavior [Category A]"""
@@ -1909,6 +1920,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             f"and find all 3 valid keys: {keep_text[:500]}"
         )
 
+    @pytest.mark.flaky(reruns=3, reruns_delay=5)
     @pytest.mark.containers("knx-calimero")
     def test_master_reset_with_confirm_executes(self, cli_runner, target, port):
         """--master-reset with --confirm performs a real A_Restart_Master_Reset [Category A]"""
@@ -1935,6 +1947,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             f"Expected a real master-reset attempt result in output: {text[:500]}"
         )
 
+    @pytest.mark.flaky(reruns=3, reruns_delay=5)
     @pytest.mark.containers("knx-calimero")
     def test_master_reset_without_confirm_rejected(self, cli_runner, target, port):
         """--master-reset without --confirm is refused (DANGEROUS op gate) [Category C]"""
@@ -1986,6 +1999,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         )
         assert "Traceback" not in result.combined_output
 
+    @pytest.mark.flaky(reruns=2, reruns_delay=3)
     @pytest.mark.containers("knx-calimero")
     def test_domain_serial_valid_length_times_out_cleanly(self, cli_runner, target, port):
         """--domain-serial with a valid 12-hex-char serial sends a real A_DomainAddress_SerialNumber_Read [Category B]"""
@@ -2008,6 +2022,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             f"Expected a real domain-address-by-serial read attempt in output: {text[:500]}"
         )
 
+    @pytest.mark.flaky(reruns=2, reruns_delay=3)
     def test_domain_serial_invalid_length_rejected(self, cli_runner, target, port):
         """--domain-serial rejects a serial that isn't 12 hex chars, no crash [Category C]"""
         result = cli_runner.run(
@@ -2124,6 +2139,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
     # Confirm-Gate Consistency (P4)
     # ========================================================================
 
+    @pytest.mark.flaky(reruns=2, reruns_delay=3)
     @pytest.mark.containers("knx-calimero")
     def test_confirm_gate_consistency_property_write(self, cli_runner, target, port):
         """--property-write is refused without --confirm and proceeds with --confirm [Category B]

@@ -569,6 +569,14 @@ class KNXScanner(
                 )  # Connection cleanup timeout - safe to ignore
             except Exception as e:
                 self.logger.debug(f"Error during connection cleanup: {e}")
+            # Brief cooldown so the KNXnet/IP tunnel slot is released before the
+            # process exits; a single-endpoint gateway (e.g. the Calimero mock)
+            # can otherwise reject the next tunnel open while the prior one is
+            # still torn down server-side.
+            try:
+                await asyncio.sleep(0.5)
+            except Exception:
+                pass
 
         return results
 

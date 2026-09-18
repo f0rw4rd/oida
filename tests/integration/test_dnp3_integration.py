@@ -115,6 +115,7 @@ FT_MASTER_ADDR = 2
 
 
 @pytest.mark.dnp3
+@pytest.mark.xdist_group("dnp3_service")
 class TestDnp3Integration(BaseProtocolIntegrationTest):
     """Integration tests for DNP3 scanner"""
 
