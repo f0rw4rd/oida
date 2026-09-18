@@ -72,7 +72,12 @@ fhir = ["fhirclient==4.4.0", "requests==2.34.2"]
 goose = ["pyiec61850-ng==1.6.1.9"]
 hart = ["hartip-py==0.3.0"]
 hl7 = ["hl7apy==1.3.5"]
-iec104 = ["c104==2.2.1"]
+# Pinned to upstream main (2.2.2-dev): fixes the garbage-bytes SIGSEGV in the
+# native parser (iec104-python#76, ~9% of junk-impostor runs) — verified 40/40
+# clean against this commit vs a segv at run 11 on the 2.2.1 wheel. Every c104
+# API OIDA uses is unchanged. Swap back to a PyPI pin (`c104==2.2.2`) the day
+# it ships; the flaky(reruns=3) shim on the junk-bytes test can then be retired.
+iec104 = ["c104 @ git+https://github.com/Fraunhofer-FIT-DIEN/iec104-python@5c78d42d3969bbcb0411e06962938c00b465cdfb"]
 knx = ["xknx==3.19.0", "xknxproject==3.9.0"]
 mms = ["pyiec61850-ng==1.6.1.9"]
 modbus = ["pymodbus==3.13.0", "PyYAML==6.0.3"]
