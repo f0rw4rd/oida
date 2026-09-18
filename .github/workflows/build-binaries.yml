@@ -91,7 +91,11 @@ jobs:
               export PATH="$HOME/.local/bin:$PATH"
               export UV_PYTHON_PREFERENCE=only-managed
               uv sync $EXTRAS --python 3.12 --frozen
-              uv pip install pyinstaller pytest pytest-timeout
+              # pyinstaller ships in the `dev` dependency-group and is installed
+              # (at its uv.lock-pinned version) by the sync above. Only the smoke
+              # harness — pytest/pytest-timeout, which sit in the `dev` extra that
+              # is not synced here — needs an ad-hoc install.
+              uv pip install pytest pytest-timeout
               .venv/bin/pyinstaller oida.spec --clean --noconfirm
               .venv/bin/pytest tests/integration/test_binary_smoke.py -m binary -q
               chown -R "$(stat -c "%u:%g" /workspace)" /workspace/dist
@@ -114,13 +118,14 @@ jobs:
         # dev/test tooling.
         run: uv sync ${{ matrix.extras }} --frozen
 
-      - name: Install build + test tools
+      - name: Install smoke-test harness
         if: runner.os == 'Windows'
-        # pyinstaller (build) and pytest (smoke harness) are NOT runtime deps
-        # and are NOT bundled into the binary (the spec excludes pytest). They
-        # live outside pyproject/uv.lock so the lockfile-drift contract test
-        # stays green and the release env carries no dev extra.
-        run: uv pip install pyinstaller pytest pytest-timeout
+        # pyinstaller is in the `dev` dependency-group, so the `uv sync` above
+        # already installed it at its uv.lock-pinned version. pytest/pytest-timeout
+        # (the smoke harness) live in the `dev` extra, which is NOT synced for the
+        # release env, so install just those ad-hoc. None of them are runtime deps
+        # and none are bundled into the binary (the spec excludes them).
+        run: uv pip install pytest pytest-timeout
 
       - name: Build binary
         if: runner.os == 'Windows'
