@@ -56,6 +56,20 @@ class knx(NetworkConnection):
         args_dict = self._convert_args_to_dict()
         self.scanner = KNXScanner(args_dict, logger=self.logger)
 
+        # Validate memory-range arguments before opening any connection. The
+        # range parser emits the operator-facing "Invalid memory range format"
+        # error; running it up front means malformed input (e.g.
+        # --memory-dump abc:xyz) is rejected cleanly instead of being masked by
+        # a later tunnel failure -- and no network I/O happens on bad input.
+        if not self._validate_memory_ranges():
+            return
+
+        # Operations that act on a specific device (--master-reset, --restart)
+        # are meaningless without -i; reject them before opening a connection so
+        # they fail fast instead of hanging on a tunnel until timeout.
+        if not self._validate_required_individual_address():
+            return
+
         # Check if any action requires tunnel connection
         needs_connection = self._needs_tunnel_connection()
         self.logger.debug(f"proto_flow: needs_tunnel_connection={needs_connection}")
@@ -125,6 +139,49 @@ class knx(NetworkConnection):
                 self.logger.debug(f"Tunnel connection required: flag '{flag}' is set")
                 return True
         return False
+
+    def _validate_memory_ranges(self) -> bool:
+        """Reject malformed --memory-dump/--memory-ext/--memory-user ranges early.
+
+        These flags take a START:LENGTH argument parsed by the scanner's memory
+        mixin. Validate them here, before any connection is opened, so bad input
+        fails with the operator-facing "Invalid memory range format" error rather
+        than being masked by a downstream tunnel failure. Returns False (after
+        the parser has logged the failure and the result marked unsuccessful)
+        when a supplied range cannot be parsed, so proto_flow can abort cleanly.
+        """
+        for flag in ("memory_dump", "memory_ext", "memory_user"):
+            arg = getattr(self.args, flag, None)
+            if not arg:
+                continue
+            start, _ = self.scanner._parse_memory_range(arg)
+            if start is None:
+                self.results["success"] = False
+                self.results["error"] = f"Invalid memory range format '{arg}'"
+                return False
+        return True
+
+    def _validate_required_individual_address(self) -> bool:
+        """Reject --master-reset/--restart without -i before connecting.
+
+        Both operations act on one specific device addressed by its individual
+        address, so they are meaningless without -i. The scanner enforces this
+        too, but only after the tunnel is opened -- so without -i the CLI would
+        otherwise hang on a pointless connection until timeout instead of failing
+        fast. Mirror the scanner's message so the rejection reads identically
+        wherever it fires. Returns False (result marked unsuccessful) when a
+        target-required operation is requested without -i.
+        """
+        if getattr(self.args, "individual_address", None):
+            return True
+        for flag, label in (("master_reset", "--master-reset"), ("restart", "--restart")):
+            if getattr(self.args, flag, None):
+                msg = f"{label} requires -i (individual address)"
+                self.logger.fail(msg)
+                self.results["success"] = False
+                self.results["error"] = msg
+                return False
+        return True
 
     def _discover_gateway(self):
         """Passive gateway discovery via multicast or unicast."""

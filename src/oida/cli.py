@@ -1263,9 +1263,12 @@ def print_bug_report() -> None:
     import re
 
     try:
-        from importlib.metadata import requires as _requires
+        from importlib.metadata import PackageNotFoundError, requires as _requires
     except ImportError:
-        from importlib_metadata import requires as _requires  # type: ignore[no-redef]
+        from importlib_metadata import (  # type: ignore[no-redef]
+            PackageNotFoundError,
+            requires as _requires,
+        )
 
     from oida.utils.lazy_import import _IMPORT_OVERRIDES, _SKIP_EXTRAS, _resolve_dist_name
 
@@ -1273,7 +1276,15 @@ def print_bug_report() -> None:
     _seen_pkgs: set = set()
     dep_packages = []
     # Distribution name ("oida-ics"), not the import name -- see _resolve_dist_name.
-    for line in _requires(_resolve_dist_name()) or []:
+    # A frozen bundle (PyInstaller) ships no .dist-info, so neither the
+    # distribution name nor its declared requirements can be resolved from
+    # metadata; the bug report simply omits the optional-dependency table
+    # rather than crashing on the unhandled PackageNotFoundError.
+    try:
+        _requires_lines = _requires(_resolve_dist_name()) or []
+    except PackageNotFoundError:
+        _requires_lines = []
+    for line in _requires_lines:
         m = _extra_re.search(line)
         if not m:
             continue

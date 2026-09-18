@@ -18,6 +18,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 import os
+import sys
 import random
 import threading
 import time
@@ -873,6 +874,11 @@ class BaseFuzzer(ABC):
             restart_timeout=self.config.restart_timeout,
             restart_callbacks=[restart_target],
             web_port=web_port,
+            # boofuzz blocks on input() ("Press ENTER to close webinterface") after the
+            # run when keep_web_open is True and a web port is set. Under a non-interactive
+            # stdin (CI, pytest, piped invocation) that read hits EOF and surfaces as a
+            # spurious traceback. Only keep the UI waiting when someone is actually at a TTY.
+            keep_web_open=bool(getattr(sys.stdin, "isatty", lambda: False)()),
             check_data_received_each_request=False,
             receive_data_after_each_request=self.config.receive_data_after_each_request,
             receive_data_after_fuzz=self.config.receive_data_after_fuzz,

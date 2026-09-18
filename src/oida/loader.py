@@ -37,11 +37,13 @@ def _is_frozen() -> bool:
     return bool(getattr(sys, "frozen", False)) or ("__compiled__" in globals())
 
 
-# All known protocol package names.  Used as the fallback discovery
-# mechanism when running inside a PyInstaller frozen bundle where
-# filesystem scanning is not possible.
-# Derived from PROTOCOL_DEPENDENCIES; underscore-prefixed keys are
-# shared/utility entries, not protocol directories.
+# Metadata-derived protocol package names, used only as a last-resort
+# fallback for frozen-bundle discovery. Derived from PROTOCOL_DEPENDENCIES;
+# underscore-prefixed keys are shared/utility entries, not protocol
+# directories. NOTE: a frozen bundle has no .dist-info, so
+# PROTOCOL_DEPENDENCIES -- and therefore this list -- is EMPTY there. Frozen
+# discovery must not rely on it; it enumerates the bundled oida.protocols
+# subpackages directly (see ProtocolLoader._frozen_protocol_names).
 _KNOWN_PROTOCOLS = sorted(k for k in PROTOCOL_DEPENDENCIES if not k.startswith("_"))
 
 
@@ -191,7 +193,7 @@ class ProtocolLoader:
         gracefully, so listing by convention here is safe.
         """
         protocols: Dict[str, Dict[str, str]] = {}
-        for name in _KNOWN_PROTOCOLS:
+        for name in self._frozen_protocol_names():
             module_name = f"oida.protocols.{name}"
             protocols[name] = {
                 "path": module_name,
@@ -201,6 +203,34 @@ class ProtocolLoader:
                 "dbpath": None,
             }
         return protocols
+
+    @staticmethod
+    def _frozen_protocol_names() -> list:
+        """Return the protocol package names bundled in a frozen build.
+
+        Protocol *discovery* must not depend on package *metadata*: a frozen
+        bundle ships no .dist-info, so PROTOCOL_DEPENDENCIES (and hence
+        _KNOWN_PROTOCOLS) is empty and the CLI would register zero protocols.
+        Enumerate the actually-bundled ``oida.protocols`` subpackages via
+        ``pkgutil.iter_modules`` -- PyInstaller's frozen importer implements
+        it -- and fall back to the metadata-derived list only if enumeration
+        turns up nothing.
+        """
+        try:
+            import pkgutil
+            import oida.protocols as protocols_pkg
+
+            names = sorted(
+                m.name
+                for m in pkgutil.iter_modules(protocols_pkg.__path__)
+                if m.ispkg and not m.name.startswith("_")
+            )
+            if names:
+                return names
+            logger.debug("pkgutil found no bundled protocol packages; using metadata list")
+        except Exception as e:
+            logger.debug("pkgutil protocol enumeration failed in frozen bundle: %s", e)
+        return list(_KNOWN_PROTOCOLS)
 
     def load_protocol(self, protocol_path: str) -> Any:
         """

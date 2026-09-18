@@ -410,3 +410,8 @@ prerelease = "if-necessary"
 
 # Constrain to the Python versions actually supported.
 python-version = "3.10"
+
+[dependency-groups]
+dev = [
+    "pyinstaller>=6.22.3",
+]

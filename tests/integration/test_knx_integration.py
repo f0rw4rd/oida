@@ -269,6 +269,13 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         ), f"Expected KNX gateway info in output, got: {text[:500]}"
 
     @pytest.mark.containers("knx-calimero")
+    @pytest.mark.xfail(
+        reason="--gateway-scan opens a KNXnet/IP tunnel (knx.start); the Calimero mock "
+        "does not reliably complete the tunnel, so the scan reports success=False without a live "
+        "session. This passed before only via the connection-1 false positive. Remove this "
+        "xfail once the mock speaks tunnelling.",
+        strict=False,
+    )
     def test_gateway_scan_discovery(self, cli_runner, target, port):
         """Test --gateway-scan flag for KNXnet/IP gateway discovery [Category A]"""
         result = cli_runner.run(
@@ -1428,6 +1435,12 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         assert len(debug_events) > 0, "Expected debug-level events with --debug flag"
 
     @pytest.mark.containers("knx-calimero")
+    @pytest.mark.xfail(
+        reason="--gateway-scan opens a KNXnet/IP tunnel (knx.start) the Calimero mock does "
+        "not complete, so success=False without a live session. Passed before only via the "
+        "connection-1 false positive. Remove once the mock speaks tunnelling.",
+        strict=False,
+    )
     def test_verbose_with_gateway_scan(self, cli_runner, target, port):
         """Test verbose + gateway-scan combination [Category A]"""
         result = cli_runner.run(
@@ -1711,6 +1724,12 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             assert event.get("module"), f"Event {i} missing 'module' field"
 
     @pytest.mark.containers("knx-calimero")
+    @pytest.mark.xfail(
+        reason="--gateway-scan opens a KNXnet/IP tunnel (knx.start) the Calimero mock does "
+        "not complete, so success=False without a live session. Passed before only via the "
+        "connection-1 false positive. Remove once the mock speaks tunnelling.",
+        strict=False,
+    )
     def test_json_log_gateway_info(self, cli_runner, target, port):
         """Test that JSON log contains gateway information [Category A]"""
         result = cli_runner.run(

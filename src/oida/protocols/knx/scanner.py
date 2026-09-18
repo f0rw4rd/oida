@@ -192,15 +192,23 @@ class KNXScanner(
 
             results = asyncio.run(_run_with_handler())
 
-            # Security analysis and finding reports describe THIS target, so they
-            # are only meaningful if we actually reached it. _async_discover sets
-            # a top-level "error" when the tunnel never came up; analysing that
-            # empty result still emitted "No encryption" / "No authentication"
-            # findings and a 0/12 security score for a device we never spoke to.
+            # _analyze_security describes inherent properties of the KNX protocol
+            # -- no encryption, no authentication -- which are true of every KNX
+            # target regardless of whether this scan reached one, so run it
+            # unconditionally. Its device-specific concerns (accessible/writable
+            # devices, routing) are already gated on real result data inside.
+            results["security_analysis"] = self._analyze_security(results)
+
+            # _report_findings, by contrast, asserts the host is UP and records
+            # target-specific vulnerabilities. _async_discover sets a top-level
+            # "error" when the tunnel never came up; reporting a live host we
+            # never spoke to is the connection-1 false positive, so gate only
+            # this on an actual session.
             if results.get("error"):
-                self.logger.debug("Skipping security analysis: no KNX session established")
+                self.logger.debug(
+                    "Skipping host/vulnerability reporting: no KNX session established"
+                )
             else:
-                results["security_analysis"] = self._analyze_security(results)
                 self._report_findings(results)
 
         except Exception as e:
