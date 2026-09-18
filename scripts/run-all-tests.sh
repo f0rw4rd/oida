@@ -92,6 +92,22 @@ if [[ $COV -eq 1 ]]; then
     uv run coverage erase
 fi
 
+# Integration-lane parallelism. Each integration test spawns a separate `oida`
+# subprocess (so one xdist worker occupies ~2 cores) and they all share the one
+# docker mock stack, so running a worker per core oversubscribes the machine and
+# starves the scans/mocks — timing-sensitive probes then miss their 30-60s
+# timeouts and flake. Default to half the cores, clamped to [2, 4]; override with
+# OIDA_TEST_WORKERS=<n> (e.g. bump it on a dedicated box, drop it to 2 when other
+# worktrees are hammering the same mocks).
+if [[ -n "${OIDA_TEST_WORKERS:-}" ]]; then
+    WORKERS="$OIDA_TEST_WORKERS"
+else
+    _cores="$(nproc 2>/dev/null || echo 4)"
+    WORKERS=$(( _cores / 2 ))
+    (( WORKERS < 2 )) && WORKERS=2
+    (( WORKERS > 4 )) && WORKERS=4
+fi
+
 run_lane() { echo -e "\n${BLUE}== $1 ==${NC}"; shift; "$@" || rc=1; }
 
 need_mocks() {
@@ -116,8 +132,8 @@ fi
 
 if [[ "$LANE" == "all" || "$LANE" == "integration" ]]; then
     if need_mocks; then
-        run_lane "integration (bounded + loadgroup)" \
-            uv run pytest tests/integration -p no:randomly -n 8 --dist loadgroup \
+        run_lane "integration ($WORKERS workers + loadgroup)" \
+            uv run pytest tests/integration -p no:randomly -n "$WORKERS" --dist loadgroup \
                 "${SEL[@]}" "${COV_ARGS[@]}"
     else rc=1; fi
 fi

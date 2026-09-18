@@ -172,9 +172,20 @@ jobs:
         run: uv run python services.py up core --quiet-pull
 
       # Same topology as scripts/run-all-tests.sh: --dist loadgroup keeps each
-      # xdist_group (one per shared mock) pinned to a single worker.
+      # xdist_group (one per shared mock) pinned to a single worker. Workers are
+      # half the runner's cores, clamped to [2, 4]: each integration test spawns
+      # an oida subprocess (~2 cores) and shares the one mock stack, so a
+      # worker-per-core run oversubscribes the box and makes timing-sensitive
+      # scans miss their timeouts and flake. The upper cap holds regardless of
+      # core count because the shared mock stack — not the CPU — is the limit,
+      # so a bigger runner must not push more workers at it.
       - name: Integration tests
-        run: uv run pytest tests/integration -p no:randomly -n 8 --dist loadgroup
+        run: |
+          workers=$(( $(nproc) / 2 ))
+          [ "$workers" -lt 2 ] && workers=2
+          [ "$workers" -gt 4 ] && workers=4
+          echo "Running integration tests with -n $workers on $(nproc) cores"
+          uv run pytest tests/integration -p no:randomly -n "$workers" --dist loadgroup
 
       # `services.py logs` follows and would hang the job, so report status only.
       - name: Mock status on failure
