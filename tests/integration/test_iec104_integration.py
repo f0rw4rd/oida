@@ -1799,11 +1799,19 @@ class TestIEC104Integration:
         finally:
             server.close()
 
+    @pytest.mark.flaky(reruns=3, reruns_delay=2)
     def test_junk_bytes_impostor_reports_success_false(self, cli_runner, target, tmp_path):
         """A socket that accepts the TCP connection and then sends garbage
         bytes (no valid IEC 104 APCI header, start byte != 0x68) must
         report success=False. Same regression guard as
         test_wrong_protocol_port_reports_success_false. [Category C, P1]
+
+        The c104 C extension intermittently segfaults parsing garbage bytes
+        (~10% of runs; faulthandler pins it to scanner.py connect(), i.e.
+        the native parser thread, not our code — see upstream
+        iec104-python#76, a null-deref in _c104*.so with no fix). A segv
+        kills the oida subprocess (rc=-11, banner-only output, no JSON), so
+        the first attempt can fail spuriously; reruns absorb it.
         """
         server = _HostileServer("junk")
         try:
