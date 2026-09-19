@@ -322,7 +322,13 @@ class _UsedNamesVisitor(ast.NodeVisitor):
 
 @pytest.fixture(scope="module")
 def main_parser():
-    return gen_cli_args()
+    # Force FULL registration of every protocol subparser. gen_cli_args()
+    # keys its build mode off sys.argv when no argv is passed, and pytest's
+    # xdist workers run with sys.argv == ['-c'] (no positional token), which
+    # stubs every protocol and would leave this test comparing the AST scan
+    # against a 71-dest stub parser. A sentinel positional that matches no
+    # protocol alias makes _select_parser_mode return ("all", None).
+    return gen_cli_args(argv=["oida", "force-full-registration"])
 
 
 @pytest.fixture(scope="module")

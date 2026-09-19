@@ -281,6 +281,14 @@ markers = [
     "network: marks tests requiring network access",
     "auth: marks tests requiring authentication",
     "fuzz: marks fuzzing tests (potentially dangerous)",
+    # core/unit classify a test's lane/tier rather than gating it; nothing
+    # selects on them via -m, but pytest 9.1 + --strict-markers requires
+    # every used marker to be registered here.
+    "core: core-functionality tests (the always-green tier; unit + fuzz regression guards)",
+    "unit: unit-level tests that live outside tests/unit/ (pcap + protocol review regressions)",
+    "stress: long-running load/stress tests (deselect with '-m \"not stress\"')",
+    "docker: tests that need a docker mock beyond the shared compose stack",
+    "http: tests against the http-mock (nginx) service",
     "security: marks security analysis tests",
     "integration: marks integration tests (deselect with '-m \"not integration\"')",
     "modbus: Modbus protocol tests",
