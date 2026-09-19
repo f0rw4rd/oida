@@ -28,8 +28,6 @@ from typing import Any
 
 from .scanner import (
     OCPPScanner,
-    metadata,
-    run,
     dependencies_missing,
 )
 
@@ -196,7 +194,10 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
                 url_port = urlparse(target).port
                 if url_port:
                     args.port = url_port
-                elif not getattr(args, "port", None) or getattr(args, "port", 9000) == 9000:
+                elif not getattr(args, "_port_explicit", False):
+                    # No port in the URL and the user did not pass one via -p
+                    # or a <host>:<port> target -> use the wss default (443)
+                    # rather than the ws default (9000).
                     args.port = DEFAULT_WSS_PORT
         else:
             # Build URL from host/port
@@ -789,8 +790,6 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
 __all__ = [
     # Scanner exports
     "OCPPScanner",
-    "metadata",
-    "run",
     "dependencies_missing",
     # NXC-style class
     "ocpp",

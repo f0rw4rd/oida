@@ -4,7 +4,7 @@
 ADS Scanner (Layer 1) -- Traditional scanner using BaseScanner pattern.
 
 Provides the ADSScanner class for standalone library usage with
-explicit run_scan() calls. Registered via @register_protocol decorator.
+explicit run_scan() calls.
 
 EtherCAT bridge operations are provided by EtherCATOpsMixin
 (see ethercat_ops.py).
@@ -18,14 +18,11 @@ from datetime import datetime
 from typing import Dict, Any
 
 from ...utils import (
-    register_protocol,
-    create_protocol_module,
     NetworkScanner,
     SecurityAnalyzer,
     ProgressTracker,
     safe_int_conversion,
 )
-from ...utils.cli import run as cli_run
 from ...utils.exceptions import DependencyError
 
 # ADS protocol constants (shared with passive listener)
@@ -110,21 +107,6 @@ protocol_options = {
 }
 
 
-@register_protocol(
-    name="Beckhoff ADS Scanner",
-    description="""Beckhoff ADS (Automation Device Specification) protocol scanner
-    for TwinCAT PLC systems. Supports symbol discovery, memory access, and state control.""",
-    default_port=48898,
-    authors=["f0rw4rd"],
-    references=[
-        {"type": "url", "ref": "https://www.beckhoff.com"},
-        {
-            "type": "url",
-            "ref": "https://infosys.beckhoff.com/english.php?content=../content/1033/tc3_ads_intro/116157835.html",
-        },
-    ],
-    protocol_options=protocol_options,
-)
 class ADSScanner(EtherCATOpsMixin, NetworkScanner):
     """Beckhoff ADS Scanner implementing the base scanner interface"""
 
@@ -1208,13 +1190,3 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
             self.report_vulnerability(
                 self.host, "ads_security_issue", description=issue, severity=severity
             )
-
-
-# Create metadata and run function
-metadata, run = create_protocol_module(
-    ADSScanner, dependencies_check_func=lambda: not _pyads.is_available
-)
-
-
-if __name__ == "__main__":
-    cli_run(metadata, run)

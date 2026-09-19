@@ -7,17 +7,74 @@ commonly used in network scanning tools (NXC-style).
 Supports both IPv4 and IPv6 addresses:
 - IPv4: 192.168.1.100, 192.168.1.0/24, 192.168.1.1-254
 - IPv6: 2001:db8::1, 2001:db8::/64, [2001:db8::1]-[2001:db8::ff]
+
+Every form may carry an optional ``:port`` suffix (``192.168.1.100:5020``,
+``192.168.1.0/24:5020``, ``[2001:db8::1]:5020``), which survives expansion and is
+split back off per target by ``cli.scan_target``.
 """
 
 import ipaddress
 import os
 import re
-from typing import List
+from typing import List, Optional, Tuple
 
 from oida.utils.ics_logger import get_module_logger
 
 
 logger = get_module_logger(__name__)
+
+
+def split_host_port(target: str) -> Tuple[str, Optional[int]]:
+    """Split an optional embedded port off a target specification.
+
+    Accepts ``host:port`` and bracketed IPv6 ``[::1]:port`` forms, returning a
+    socket-ready host (brackets stripped) and the parsed port. Bare IPv6
+    (``::1``, ``2001:db8::1``) and malformed ports are left untouched, so this
+    never raises on operator input -- an unparseable suffix simply means "no
+    port", and the caller falls back to the flag or protocol default.
+
+    Returns:
+        tuple[str, int | None]: (host, port) where port is None if absent/invalid.
+    """
+
+    def _valid_port(s: str) -> bool:
+        return s.isdigit() and 1 <= int(s) <= 65535
+
+    if not target:
+        return target, None
+
+    # Bracketed IPv6: [::1] or [::1]:8080
+    if target.startswith("["):
+        close = target.find("]")
+        if close != -1:
+            host = target[1:close]
+            rest = target[close + 1 :]
+            if rest.startswith(":") and _valid_port(rest[1:]):
+                return host, int(rest[1:])
+            return host, None
+        return target.strip("[]"), None
+
+    # Exactly one colon -> host:port (IPv4 or hostname)
+    if target.count(":") == 1:
+        host, port_str = target.rsplit(":", 1)
+        if _valid_port(port_str):
+            return host, int(port_str)
+        return target, None
+
+    # Zero colons, or 2+ colons (bare IPv6) -> host only
+    return target.strip("[]"), None
+
+
+def _attach_port(host: str, port: int) -> str:
+    """Re-attach a port to an expanded target, bracketing IPv6 hosts.
+
+    Bare IPv6 plus a bare ":port" would be indistinguishable from a longer IPv6
+    address (``2001:db8::1:502``), so those get the ``[addr]:port`` form that
+    split_host_port() can unambiguously reverse.
+    """
+    if ":" in host:
+        return f"[{host.strip('[]')}]:{port}"
+    return f"{host}:{port}"
 
 
 def parse_targets(target_spec: str) -> List[str]:
@@ -34,12 +91,15 @@ def parse_targets(target_spec: str) -> List[str]:
     - Hostname: example.com
     - File: /path/to/targets.txt
     - Comma-separated: 192.168.1.1,192.168.1.2
+    - Any of the above with an embedded port: 192.168.1.100:5020,
+      192.168.1.0/24:5020, [2001:db8::1]:5020
 
     Args:
         target_spec: Target specification string
 
     Returns:
-        list: List of target strings (IPs or hostnames)
+        list: List of target strings (IPs or hostnames), each optionally
+        carrying a ``:port`` suffix that ``cli.scan_target`` splits back off.
 
     Examples:
         >>> parse_targets('192.168.1.100')
@@ -70,6 +130,14 @@ def parse_targets(target_spec: str) -> List[str]:
     if "://" in target_spec:
         targets.append(target_spec)
         return targets
+
+    # Strip an embedded ":port" before expansion, then re-attach it to every
+    # expanded target, so "10.0.0.0/30:5020" and "10.0.0.1-5:5020" work like
+    # their portless forms. split_host_port() declines on host:port/path and on
+    # bare IPv6, so those fall through to the branches below untouched.
+    host_spec, embedded_port = split_host_port(target_spec)
+    if embedded_port is not None:
+        return [_attach_port(t, embedded_port) for t in parse_targets(host_spec)]
 
     # Check for host:port/path patterns (e.g., milo.digitalpetri.com:62541/milo)
     # These look like CIDR but are actually URLs without scheme

@@ -293,28 +293,28 @@ class TestResolveTargets:
         import argparse
 
         args = argparse.Namespace(target="10.0.0.1-3", list_maps=False)
-        targets = cli._resolve_targets(args, "modbus", is_serial_protocol=False)
+        targets = cli._resolve_targets(args, "modbus")
         assert targets == ["10.0.0.1", "10.0.0.2", "10.0.0.3"]
 
     def test_serial_passthrough(self):
         import argparse
 
         args = argparse.Namespace(target="/dev/ttyUSB0", list_maps=False)
-        targets = cli._resolve_targets(args, "iec101", is_serial_protocol=True)
+        targets = cli._resolve_targets(args, "iec101")
         assert targets == ["/dev/ttyUSB0"]
 
     def test_file_target_protocol_passthrough(self):
         import argparse
 
         args = argparse.Namespace(target="capture.pcap", list_maps=False)
-        targets = cli._resolve_targets(args, "pcap", is_serial_protocol=False)
+        targets = cli._resolve_targets(args, "pcap")
         assert targets == ["capture.pcap"]
 
     def test_list_maps_without_target(self):
         import argparse
 
         args = argparse.Namespace(target=None, list_maps=True)
-        targets = cli._resolve_targets(args, "knx", is_serial_protocol=False)
+        targets = cli._resolve_targets(args, "knx")
         assert targets == ["list-maps"]
 
     def test_parse_failure_returns_none(self, monkeypatch):
@@ -325,7 +325,7 @@ class TestResolveTargets:
 
         monkeypatch.setattr(cli, "parse_targets", boom)
         args = argparse.Namespace(target="???", list_maps=False)
-        assert cli._resolve_targets(args, "modbus", is_serial_protocol=False) is None
+        assert cli._resolve_targets(args, "modbus") is None
 
 
 # ---------------------------------------------------------------------------

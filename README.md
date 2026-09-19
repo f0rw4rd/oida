@@ -39,10 +39,16 @@ only what you need, like `pip install 'oida-ics[modbus,opcua]'`. A bare
 
 ```bash
 oida modbus 10.0.0.5                  # scan a host
+oida modbus 10.0.0.5:5020             # ...on a non-default port
 oida modbus 10.0.0.0/24 -t 20         # scan a subnet
 oida opcua opc.tcp://10.0.0.5:4840    # OPC UA
 oida discovery eth0                   # find ICS devices on the wire
 ```
+
+Any target may carry a port — `10.0.0.5:5020`, `10.0.0.0/24:5020`,
+`[2001:db8::1]:5020`, or per line in a target file — which saves repeating
+`-p` and is the only way to scan hosts on different ports in one run. A port in
+the target wins over `-p/--port`.
 
 Defaults are read-only. Writes and state changes need an explicit `--confirm`.
 Run `oida <protocol> -h` for a protocol's full flag set.

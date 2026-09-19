@@ -23,10 +23,6 @@ from .base_scanner import (
     NetworkScanner,
     SerialScanner,
 )
-from .protocol_registry import (
-    register_protocol,
-    create_protocol_module,
-)
 from .protocol_helpers import (
     ProtocolParser,
     SecurityAnalyzer,
@@ -46,9 +42,6 @@ __all__ = [
     "BaseScanner",
     "NetworkScanner",
     "SerialScanner",
-    # Protocol registry
-    "register_protocol",
-    "create_protocol_module",
     # Protocol helpers
     "ProtocolParser",
     "SecurityAnalyzer",

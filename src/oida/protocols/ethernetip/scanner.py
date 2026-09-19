@@ -17,8 +17,6 @@ from typing import Dict, Any, List, Optional
 import struct
 
 from ...utils import (
-    register_protocol,
-    create_protocol_module,
     NetworkScanner,
     parse_bool,
 )
@@ -232,14 +230,6 @@ protocol_options = {
 # ---------------------------------------------------------------------------
 
 
-@register_protocol(
-    name="EtherNet/IP Scanner",
-    description="""EtherNet/IP industrial protocol scanner""",
-    default_port=44818,
-    authors=["f0rw4rd"],
-    references=[{"type": "url", "ref": "https://www.odva.org"}],
-    protocol_options=protocol_options,
-)
 class EtherNetIPScanner(
     ControllerInfoMixin,
     EnipCommandsMixin,
@@ -974,9 +964,3 @@ class EtherNetIPScanner(
             pycomm3_logger.setLevel(original_level)
 
         return results
-
-
-# Create metadata and run function using protocol module factory
-metadata, run = create_protocol_module(
-    EtherNetIPScanner, dependencies_check_func=lambda: not _pycomm3.is_available
-)

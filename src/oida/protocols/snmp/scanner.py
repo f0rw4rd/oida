@@ -18,8 +18,6 @@ from typing import Any, Dict
 
 from ...utils import (
     NetworkScanner,
-    register_protocol,
-    create_protocol_module,
 )
 from ...utils.lazy_import import lazy_import
 from ...utils.export_utils import export_table, configure as configure_export
@@ -76,18 +74,6 @@ def _validate_snmp_key(key: str, key_label: str, min_len: int = 8) -> str:
     return key
 
 
-@register_protocol(
-    name="SNMP Scanner",
-    description="SNMP device discovery with vendor identification and table extraction",
-    default_port=161,
-    authors=["f0rw4rd"],
-    references=[
-        {"type": "rfc", "ref": "RFC 1157 (SNMPv1)"},
-        {"type": "rfc", "ref": "RFC 3416 (SNMPv2c)"},
-        {"type": "rfc", "ref": "RFC 3414 (SNMPv3 USM)"},
-    ],
-    protocol_options=protocol_options,
-)
 class SNMPScanner(
     BruteForceMixin,
     VersionDetectionMixin,
@@ -821,9 +807,3 @@ def scan_targets(targets, **kwargs):
 
     _log.log_info(f"SNMP found {len(results)} devices from {len(targets)} targets")
     return results
-
-
-# Module-level exports
-metadata, run = create_protocol_module(
-    SNMPScanner, dependencies_check_func=lambda: not _pysnmp.is_available
-)

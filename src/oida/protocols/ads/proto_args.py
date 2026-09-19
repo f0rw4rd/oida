@@ -44,7 +44,7 @@ def proto_args(parser, parents):
         default_timeout=5,
         timeout_help="TCP connect timeout in seconds (default: 5). ADS operation "
         "timeout is set separately via --ads-timeout.",
-        port_help="ADS TCP port (default: 48898)",
+        port_help="ADS TCP port (default: 48898; a port in the target wins)",
     )
 
     # AMS/ADS Configuration

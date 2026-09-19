@@ -556,31 +556,10 @@ class TestADSIntegration(unittest.TestCase):
     """Test ADS scanner integration with framework"""
 
     def setUp(self):
-        from oida.protocols.ads import ADSScanner, metadata
+        from oida.protocols.ads import ADSScanner
 
         self.ADSScanner = ADSScanner
-        self.metadata = metadata
         self.args = {"host": "192.168.1.100", "port": 48898}
-
-    def test_metadata_structure(self):
-        """Test module metadata structure"""
-        self.assertIn("name", self.metadata)
-        self.assertIn("description", self.metadata)
-        self.assertIn("authors", self.metadata)
-        self.assertIn("references", self.metadata)
-        self.assertIn("options", self.metadata)
-
-        # Check default port
-        self.assertEqual(self.metadata["options"]["rport"]["default"], 48898)
-
-    def test_protocol_options(self):
-        """Test protocol-specific options"""
-        options = self.metadata["options"]
-
-        self.assertIn("ams-netid", options)
-        self.assertIn("local-netid", options)
-        self.assertIn("port-type", options)
-        self.assertIn("max-symbols", options)
 
     def test_check_dependencies(self):
         """Test dependency checking"""

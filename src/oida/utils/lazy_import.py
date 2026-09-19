@@ -18,6 +18,7 @@ Usage:
 """
 
 from typing import Any, Optional, Dict
+import functools
 import importlib
 import threading
 
@@ -25,10 +26,42 @@ import logging
 
 logger = logging.getLogger(__name__)
 
+# The import package is "oida" (and so is the CLI command), but the published
+# distribution is "oida-ics" -- importlib.metadata keys off the latter. Asking
+# for "oida" silently returns nothing, which used to empty out
+# PROTOCOL_DEPENDENCIES and break --bug-report, so every metadata lookup goes
+# through dist_name().
+_DIST_CANDIDATES = ("oida-ics", "oida")
+
+
+@functools.lru_cache(maxsize=1)
+def dist_name() -> str:
+    """Return the installed distribution name for this package.
+
+    Resolved from the import package where possible, so a rename of the
+    distribution does not silently disable dependency discovery again.
+    """
+    from importlib.metadata import PackageNotFoundError, metadata, packages_distributions
+
+    try:
+        for name in packages_distributions().get("oida", ()):
+            return name
+    except Exception as e:  # pragma: no cover - defensive, varies by installer
+        logger.debug("packages_distributions() lookup failed: %s", e)
+
+    for candidate in _DIST_CANDIDATES:
+        try:
+            metadata(candidate)
+            return candidate
+        except PackageNotFoundError:
+            continue
+
+    return _DIST_CANDIDATES[0]
+
 
 def _default_install_hint(protocol: str) -> str:
     """Return the canonical install command for a protocol extra."""
-    return f"pip install oida-ics[{protocol.lower()}]"
+    return f"pip install {dist_name()}[{protocol.lower()}]"
 
 
 class LazyModule:
@@ -242,9 +275,10 @@ def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
     from importlib.metadata import requires, metadata
 
     result: Dict[str, Dict[str, Any]] = {}
+    dist = dist_name()
 
     # Get all declared extras (includes empty-dep protocols like astm, ocpp)
-    all_extras = set(metadata("oida").get_all("Provides-Extra") or [])
+    all_extras = set(metadata(dist).get_all("Provides-Extra") or [])
 
     # Seed every protocol extra with an empty entry
     for extra in sorted(all_extras):
@@ -256,7 +290,7 @@ def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
     #   e.g.  "pyads>=3.4.0 ; extra == \"ads\""
     _extra_re = re.compile(r'extra\s*==\s*"([^"]+)"')
 
-    for line in requires("oida") or []:
+    for line in requires(dist) or []:
         m = _extra_re.search(line)
         if not m:
             continue
@@ -278,7 +312,7 @@ def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
         result[extra_name] = {
             "module": import_name,
             "protocol": extra_name,
-            "install": f"pip install oida-ics[{extra_name}]",
+            "install": f"pip install {dist}[{extra_name}]",
             "pip_name": pip_name,
         }
 

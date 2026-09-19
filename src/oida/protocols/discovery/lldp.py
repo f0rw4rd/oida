@@ -9,7 +9,6 @@ import struct
 import threading
 
 from ...utils import (
-    register_protocol,
     SerialScanner,
     SecurityAnalyzer,
     ProgressTracker,
@@ -139,16 +138,6 @@ protocol_options = {
 }
 
 
-@register_protocol(
-    name="LLDP Scanner",
-    description="""Link Layer Discovery Protocol scanner""",
-    authors=["f0rw4rd"],
-    references=[
-        {"type": "url", "ref": "https://en.wikipedia.org/wiki/Link_Layer_Discovery_Protocol"}
-    ],
-    protocol_options=protocol_options,
-    protocol_type="serial",
-)
 class LLDPScanner(SerialScanner):
     """LLDP Scanner implementing the base scanner interface"""
 

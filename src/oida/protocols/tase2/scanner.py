@@ -10,7 +10,6 @@ from typing import Any, Dict
 
 from ...utils import (
     NetworkScanner,
-    register_protocol,
     parse_bool,
 )
 from ...utils.exceptions import DependencyError
@@ -123,17 +122,6 @@ protocol_options = {
 }
 
 
-@register_protocol(
-    name="TASE.2/ICCP Scanner",
-    description="TASE.2/ICCP protocol scanner for control center security testing",
-    default_port=102,
-    authors=["f0rw4rd"],
-    references=[
-        {"type": "url", "ref": "https://en.wikipedia.org/wiki/IEC_60870-6"},
-        {"type": "url", "ref": "https://github.com/f0rw4rd/pyiec61850-ng"},
-    ],
-    protocol_options=protocol_options,
-)
 class TASE2Scanner(
     DiscoveryMixin,
     EnumerationMixin,

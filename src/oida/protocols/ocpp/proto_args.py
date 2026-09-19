@@ -101,7 +101,7 @@ WebSocket Path Discovery:
         ocpp_parser,
         default_port=9000,
         include_timeout=True,
-        port_help="WebSocket port (default: 9000 for ws://, 443 for wss://)",
+        port_help="WebSocket port (default: 9000 for ws://, 443 for wss://; a port in the target wins)",
     )
 
     network_group.add_argument(

@@ -2545,14 +2545,11 @@ class TestOCPPModuleExports(unittest.TestCase):
 
     def test_package_exports_importable(self):
         from oida.protocols.ocpp import (
-            metadata,
-            run,
+            ocpp,
             dependencies_missing,
         )
 
-        self.assertTrue(callable(run))
-        self.assertIsInstance(metadata, dict)
-        self.assertIn("name", metadata)
+        self.assertIsNotNone(ocpp)
         self.assertIsInstance(dependencies_missing, bool)
 
     def test_protocol_in_loader(self):

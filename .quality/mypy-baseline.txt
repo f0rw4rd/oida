@@ -285,6 +285,4 @@ src/oida/utils/ics_logger.py::return-value::Incompatible return value type (got 
 src/oida/utils/lazy_import.py::return-value::Incompatible return value type (got "None", expected "bool")
 src/oida/utils/login_scanner.py::return-value::Incompatible return value type (got "list[str] | list[tuple[Any, ...]]", expected "list[str]")
 src/oida/utils/payload.py::return-value::Incompatible return value type (got "tuple[None, None]", expected "tuple[bytes, str | None]")
-src/oida/utils/protocol_registry.py::arg-type::Argument "additional_options" to "create_common_metadata" has incompatible type "dict[str, Any] | None"; expected "dict[str, Any]"
-src/oida/utils/protocol_registry.py::arg-type::Argument "additional_options" to "create_serial_metadata" has incompatible type "dict[str, Any] | None"; expected "dict[str, Any]"
 src/oida/utils/security_findings.py::arg-type::Argument 1 to "_normalize_org_name" has incompatible type "str | bytes"; expected "str"

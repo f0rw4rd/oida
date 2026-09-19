@@ -11,7 +11,7 @@ Provides MQTT broker security scanning with:
 - Continuous listen mode
 """
 
-from .scanner import MQTTScanner, metadata, run, dependencies_missing
+from .scanner import MQTTScanner, dependencies_missing
 from .cli_runner import mqtt
 
-__all__ = ["mqtt", "MQTTScanner", "metadata", "run", "dependencies_missing"]
+__all__ = ["mqtt", "MQTTScanner", "dependencies_missing"]

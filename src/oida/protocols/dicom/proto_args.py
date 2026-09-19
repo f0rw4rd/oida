@@ -49,7 +49,7 @@ Examples:
     add_network_options(
         dicom_parser,
         default_port=None,
-        port_help="Target port (default: 11112, or 2762 with --tls)",
+        port_help="Target port (default: 11112, or 2762 with --tls; a port in the target wins)",
         default_timeout=10,
     )
 

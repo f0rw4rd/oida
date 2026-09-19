@@ -35,7 +35,6 @@ from typing import Dict, Any, List, Optional
 from datetime import datetime
 
 from ...utils import (
-    register_protocol,
     NetworkScanner,
     ProgressTracker,
 )
@@ -312,36 +311,6 @@ class _LogHandler:
         return LogHandler(logger, debug)
 
 
-@register_protocol(
-    name="DNP3 Scanner",
-    description="""DNP3 scanner using yadnp3 (opendnp3 C++ library).
-
-Features:
-- High-reliability connection via production opendnp3 stack
-- Integrity polling (Class 0/1/2/3)
-- Specific group/variation reads
-- Device attribute enumeration (Group 0)
-- Point enumeration (discover available data points)
-- Binary output control (SBO and Direct Operate)
-- Analog output control (Group 41 - int16/int32/float/double)
-- File transfer operations (Group 70 - directory, read, info, write)
-- Unsolicited response enable/disable
-- Dead band configuration (Group 34)
-- Time synchronization (LAN/non-LAN)
-- Cold/warm restart commands
-- TLS encrypted channel support
-- Serial and UDP transport
-- Secure Authentication v5 (SA5)
-- Channel retry tuning
-- Security statistics (Group 121)""",
-    default_port=20000,
-    authors=["f0rw4rd"],
-    references=[
-        {"type": "url", "ref": "https://github.com/f0rw4rd/opendnp3"},
-        {"type": "url", "ref": "https://www.dnp.org/"},
-    ],
-    protocol_options=protocol_options,
-)
 class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner):
     """DNP3 Scanner using yadnp3 (opendnp3 C++ library)."""
 

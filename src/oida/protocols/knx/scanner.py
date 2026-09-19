@@ -15,16 +15,12 @@ from typing import Dict, List, Any, TYPE_CHECKING
 # xknx asyncio warning suppression is configured once in this package's __init__.
 
 from ...utils import (
-    create_protocol_module,
-    register_protocol,
     NetworkScanner,
     parse_bool,
 )
 from .helpers import validate_individual_address
 from .bcu import validate_bcu_key, load_keys_from_file, parse_key_range
 from .constants import (
-    protocol_options,
-    DEFAULT_PORT,
     _xknx,
     _xknx_cls,
     _ensure_xknx_classes,
@@ -42,17 +38,6 @@ if TYPE_CHECKING:
     from xknx import XKNX
 
 
-@register_protocol(
-    name="KNX Scanner",
-    description="Scan and interact with KNX/EIB building automation systems",
-    default_port=DEFAULT_PORT,
-    authors=["f0rw4rd"],
-    references=[
-        {"type": "url", "ref": "https://www.knx.org/"},
-        {"type": "url", "ref": "https://xknx.io/"},
-    ],
-    protocol_options=protocol_options,
-)
 class KNXScanner(
     DiscoveryMixin,
     DeviceInfoMixin,
@@ -588,9 +573,3 @@ class KNXScanner(
             return []
 
         return addresses
-
-
-# Create metadata and run function using protocol module factory
-metadata, run = create_protocol_module(
-    KNXScanner, dependencies_check_func=lambda: not _xknx.is_available
-)

@@ -7,8 +7,6 @@ with LwM2M fingerprinting support.
 # Re-export from scanner module
 from .scanner import (
     CoAPScanner,
-    metadata,
-    run,
 )
 
 # Re-export from helpers module
@@ -45,8 +43,6 @@ __all__ = [
     # Scanner
     "CoAPScanner",
     "coap",
-    "metadata",
-    "run",
     "protocol_options",
     # Helpers
     "is_aiocoap_available",

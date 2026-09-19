@@ -12,13 +12,10 @@ import time
 import threading
 
 from ...utils import (
-    register_protocol,
-    create_protocol_module,
     NetworkScanner,
     SecurityAnalyzer,
 )
 from ...utils.protocol_helpers import ConnectionHelper
-from ...utils.cli import run as cli_run
 from ...utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
@@ -28,7 +25,6 @@ from .constants import (
     CapturedASDU,
     ListenStats,
     INFO_ELEMENT_SIZES,
-    protocol_options,
     ASDU_ADDRESS_MAX,
     ASDU_COT_OFFSET,
     ASDU_HEADER_SIZE,
@@ -59,20 +55,6 @@ from .commands import CommandMixin
 from .listen import ListenMixin
 
 
-@register_protocol(
-    name="IEC 104 Scanner",
-    description="""IEC 60870-5-104 protocol scanner for SCADA systems.
-
-Features:
-- Type ID discovery via general interrogation
-- File transfer capability probing (Type IDs 120-127)
-- Custom/extended type ID detection
-- Security analysis""",
-    default_port=2404,
-    authors=["f0rw4rd"],
-    references=[{"type": "url", "ref": "https://en.wikipedia.org/wiki/IEC_60870-5"}],
-    protocol_options=protocol_options,
-)
 class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
     """IEC 60870-5-104 Scanner with enhanced type ID and file transfer discovery"""
 
@@ -1694,14 +1676,3 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
                 f"({type_summary.get('custom_types', 0)} custom), "
                 f"file transfer: {'YES' if file_transfer.get('supported') else 'no'}"
             )
-
-
-# Create metadata and run function using protocol module factory
-metadata, run = create_protocol_module(
-    IEC104Scanner, dependencies_check_func=lambda: not _deps._c104.is_available
-)
-
-
-if __name__ == "__main__":
-    # Standalone mode
-    cli_run(metadata, run)

@@ -115,7 +115,10 @@ def create_protocol_parser(
 
 def add_target_argument(
     parser,
-    help_text: str = "Target IP address, CIDR range, IP range, hostname, or file",
+    help_text: str = (
+        "Target IP address, CIDR range, IP range, hostname, or file "
+        "(any form may carry a port, e.g. 10.0.0.1:5020)"
+    ),
 ):
     """
     Add standard target positional argument.
@@ -166,7 +169,7 @@ def add_network_options(
     network_group = parser.add_argument_group("Network Options")
 
     if port_help is None:
-        port_help = f"Target port (default: {default_port})"
+        port_help = f"Target port (default: {default_port}; a port in the target wins)"
 
     network_group.add_argument("--port", "-p", type=int, default=default_port, help=port_help)
 

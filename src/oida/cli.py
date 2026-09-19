@@ -6,6 +6,7 @@ Main CLI entry point:
 
 Examples:
     oida modbus 192.168.1.100 --unit-id 1 -r 0-100
+    oida modbus 10.0.0.5:5020            # port in the target, no -p needed
     oida opcua opc.tcp://192.168.1.100:4840 --auth Anonymous
     oida s7 192.168.1.10 --rack 0 --slot 2
 """
@@ -34,7 +35,7 @@ except ImportError:
     HAS_YAML = False
 
 from oida.loader import ProtocolLoader
-from oida.targets import parse_targets
+from oida.targets import parse_targets, split_host_port
 from oida.serial_cli import serial_args, handle_serial_command
 from oida.fuzz_cli import fuzz_args, handle_fuzz_command
 from oida.utils.ics_logger import get_logger
@@ -740,12 +741,12 @@ def gen_cli_args(argv=None):
             "target",
             nargs="?",
             default="127.0.0.1",
-            help="Target IP, hostname, CIDR, range, or file",
+            help="Target IP, hostname, CIDR, range, or file (may carry a port, e.g. 10.0.0.1:5020)",
         )
         stub.add_argument(
             "--port",
             type=int,
-            help="Target port (protocol default if not specified)",
+            help="Target port (protocol default if not specified; a port in the target wins)",
         )
 
     # Register each protocol's arguments
@@ -961,7 +962,11 @@ def _format_protocol_sections(parser=None) -> Optional[str]:
 def _show_usage_and_exit(parser=None) -> int:
     """Show grouped, colored usage information when no arguments provided."""
     print_banner()
-    print(f"{_c('Usage:', 'yellow', attrs=['bold'])} oida <protocol> <target> [options]\n")
+    print(f"{_c('Usage:', 'yellow', attrs=['bold'])} oida <protocol> <target> [options]")
+    print(
+        f"       {_c('<target>', 'yellow')} may carry a port, e.g. "
+        f"{_c('oida modbus 10.0.0.5:5020', 'green')} (no -p needed)\n"
+    )
 
     sections = _format_protocol_sections(parser)
     if sections is None:
@@ -999,7 +1004,7 @@ def _list_serial_ports(for_iec101: bool = False) -> int:
         return 1
 
 
-def _resolve_targets(args, protocol_name: str, is_serial_protocol: bool) -> Optional[List[str]]:
+def _resolve_targets(args, protocol_name: str) -> Optional[List[str]]:
     """
     Parse and resolve targets from arguments.
 
@@ -1011,10 +1016,6 @@ def _resolve_targets(args, protocol_name: str, is_serial_protocol: bool) -> Opti
 
     if list_maps and not target_input:
         return ["list-maps"]
-
-    if is_serial_protocol:
-        logger.info(f"Serial port target: {target_input}")
-        return [target_input]
 
     # File-path protocols (e.g. pcap) pass the path through directly
     if protocol_name in FILE_TARGET_PROTOCOLS:
@@ -1028,6 +1029,27 @@ def _resolve_targets(args, protocol_name: str, is_serial_protocol: bool) -> Opti
     except Exception as e:
         logger.error(f"Failed to parse targets '{target_input}': {e}")
         return None
+
+
+def _warn_on_port_conflict(args, targets: List[str], protocol_name: str, out) -> None:
+    """Warn once when "<host>:<port>" targets override an explicit -p/--port.
+
+    The embedded port wins (see scan_target), which is silent enough to be
+    confusing when the operator also passed -p, so say it once per run rather
+    than once per target -- on the NXC-style logger, which prints at default
+    verbosity, unlike the module logger.
+    """
+    if not getattr(args, "_port_explicit", False):
+        return
+    flag_port = getattr(args, "port", None)
+    conflicting = {
+        port
+        for port in (split_host_port(t)[1] for t in targets if _accepts_host_port(protocol_name, t))
+        if port is not None and port != flag_port
+    }
+    if conflicting:
+        ports = ", ".join(str(p) for p in sorted(conflicting))
+        out.warning(f"Port in target ({ports}) overrides --port {flag_port}")
 
 
 def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str) -> tuple:
@@ -1048,7 +1070,19 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
     # protocol's real default via add_network_options(..., default_port=N),
     # so prefer it and only fall back to the (usually absent) class attribute.
     default_port = getattr(args, "port", None) or getattr(protocol_class, "default_port", 0)
-    progress_logger = get_logger(protocol_name.upper(), "*", default_port)
+    # When every target carries the same embedded "<host>:<port>" port, show it
+    # in the banner instead of the flag/default -- otherwise (mixed or no
+    # embedded ports) fall back to the run-global default. Each scan still uses
+    # its own per-target port regardless of what the banner says.
+    embedded_ports = {
+        port
+        for port in (split_host_port(t)[1] for t in targets if _accepts_host_port(protocol_name, t))
+        if port is not None
+    }
+    banner_port = embedded_ports.pop() if len(embedded_ports) == 1 else default_port
+    progress_logger = get_logger(protocol_name.upper(), "*", banner_port)
+
+    _warn_on_port_conflict(args, targets, protocol_name, progress_logger)
 
     with ThreadPoolExecutor(max_workers=args.threads) as executor:
         # Submit all scan tasks
@@ -1088,11 +1122,31 @@ PROTOCOL_ALIASES = {
     "discover": "discovery",  # oida discover -> discovery (verb form)
 }
 
-# Serial protocols (use serial port as target instead of IP)
-SERIAL_PROTOCOLS: set = set()
-
 # Protocols whose target is a file path (bypass IP/CIDR target parsing)
 FILE_TARGET_PROTOCOLS = {"pcap"}
+
+# Protocols whose target is a network interface name (eth0, can0, ...) rather
+# than a host, so a trailing ":<digits>" must not be read as a port.
+# profinet is dual-mode (interface, or an IP with --rpc-only); it stays here
+# because the interface reading is the default one.
+INTERFACE_TARGET_PROTOCOLS = {"can", "goose", "ethercat", "discovery", "profinet"}
+
+
+def _accepts_host_port(protocol_name: Optional[str], target: str) -> bool:
+    """Whether "<host>:<port>" shorthand should be split off this target.
+
+    URL targets keep their own parsing (opcua/ocpp/fhir already read the port
+    out of the endpoint), and pcap file paths and interface names are not
+    hosts at all.
+    """
+    if not target or "://" in target:
+        return False
+    # args.protocol carries the CLI name, so "discover" has to fold into
+    # "discovery" before the exemption sets are consulted.
+    canonical = PROTOCOL_ALIASES.get(protocol_name, protocol_name)
+    if canonical in FILE_TARGET_PROTOCOLS:
+        return False
+    return canonical not in INTERFACE_TARGET_PROTOCOLS
 
 
 def print_bug_report() -> None:
@@ -1134,7 +1188,9 @@ def print_bug_report() -> None:
         try:
             from importlib.metadata import distribution
 
-            dist = distribution("oida")
+            from oida.utils.lazy_import import dist_name
+
+            dist = distribution(dist_name())
             direct_url = dist.read_text("direct_url.json")
             if direct_url and "dir_info" in direct_url:
                 lines.append("Install:      editable (pip install -e)")
@@ -1264,12 +1320,12 @@ def print_bug_report() -> None:
     except ImportError:
         from importlib_metadata import requires as _requires  # type: ignore[no-redef]
 
-    from oida.utils.lazy_import import _IMPORT_OVERRIDES, _SKIP_EXTRAS
+    from oida.utils.lazy_import import _IMPORT_OVERRIDES, _SKIP_EXTRAS, dist_name
 
     _extra_re = re.compile(r'extra\s*==\s*"([^"]+)"')
     _seen_pkgs: set = set()
     dep_packages = []
-    for line in _requires("oida") or []:
+    for line in _requires(dist_name()) or []:
         m = _extra_re.search(line)
         if not m:
             continue
@@ -1449,6 +1505,15 @@ def _main(argv: Optional[List[str]] = None):
     # Parse arguments
     args = parser.parse_args(argv)
 
+    # Record whether -p/--port was actually typed (vs. left at the protocol's
+    # registered default). Only used to decide whether a target's embedded port
+    # is worth warning about; best-effort, so a missing subparser is not fatal.
+    args._port_explicit = False
+    if parser._subparsers_action is not None:
+        subparser = parser._subparsers_action.choices.get(getattr(args, "protocol", None))
+        if subparser is not None and getattr(args, "port", None) is not None:
+            args._port_explicit = args.port != subparser.get_default("port")
+
     # Load config file if specified
     if args.config:
         try:
@@ -1484,11 +1549,6 @@ def _main(argv: Optional[List[str]] = None):
 
     # Resolve protocol alias
     protocol_name = PROTOCOL_ALIASES.get(args.protocol, args.protocol)
-    is_serial_protocol = protocol_name in SERIAL_PROTOCOLS
-
-    # Handle --list-ports for serial protocols
-    if is_serial_protocol and getattr(args, "list_ports", False):
-        return _list_serial_ports(for_iec101=False)
 
     # Reuse the ProtocolLoader from gen_cli_args() (its cache is already warm)
     p_loader = parser._protocol_loader
@@ -1521,10 +1581,7 @@ def _main(argv: Optional[List[str]] = None):
             args.target = "rgoose"
 
     if not target_input and not list_maps:
-        if is_serial_protocol:
-            logger.error("No serial port specified. Usage: oida iec101 /dev/ttyUSB0")
-            logger.error("Use --list-ports to see available serial ports")
-        elif protocol_name == "discovery":
+        if protocol_name == "discovery":
             logger.error("No interface specified. Usage: oida discovery <interface>")
             logger.error("Example: oida discovery eth0")
         else:
@@ -1533,7 +1590,7 @@ def _main(argv: Optional[List[str]] = None):
         return 1
 
     # Resolve targets
-    targets = _resolve_targets(args, protocol_name, is_serial_protocol)
+    targets = _resolve_targets(args, protocol_name)
     if targets is None or not targets:
         if targets is not None:  # Empty list case
             logger.error(f"No valid targets found in: {target_input}")
@@ -1594,12 +1651,24 @@ def scan_target(protocol_class, args, target: str) -> ScanResult:
         # a shallow vars() copy aliased them, making an in-place mutation in
         # one target's scan a data race visible to every other target.
         target_args = copy.deepcopy(args)
-        target_args.host = target
-        target_args.rhost = target
+
+        # "<host>:<port>" shorthand: the embedded port is the most specific spec
+        # (it is the only way to give per-target ports in a file or comma list),
+        # so it wins over -p/--port. Only assign when one is actually present --
+        # dicom/coap/mqtt register --port with default=None and branch on that
+        # "unset" sentinel to pick their plain-vs-TLS default.
+        host = target
+        if _accepts_host_port(getattr(args, "protocol", None), target):
+            host, embedded_port = split_host_port(target)
+            if embedded_port is not None:
+                target_args.port = embedded_port
+
+        target_args.host = host
+        target_args.rhost = host
 
         # Single dispatch model: every protocol is a Layer-2 connection subclass
         # taking (args, db, host) and auto-scanning via proto_flow on construct.
-        scanner = protocol_class(target_args, None, target)
+        scanner = protocol_class(target_args, None, host)
 
         # Get results
         if hasattr(scanner, "get_results"):

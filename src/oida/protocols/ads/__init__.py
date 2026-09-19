@@ -17,7 +17,7 @@ Module structure:
 from .cli_runner import ads
 
 # Re-export the scanner class and metadata
-from .scanner import ADSScanner, metadata, run, protocol_options
+from .scanner import ADSScanner, protocol_options
 
 # Re-export constants used by tests and external code
 from .constants import ADS_STATE_MAP, ADS_PORT_MAP
@@ -28,8 +28,6 @@ from .helpers import _get_memory_areas, _get_pyads, COE_SDO_OFFSET, _pyads
 __all__ = [
     "ads",
     "ADSScanner",
-    "metadata",
-    "run",
     "protocol_options",
     "ADS_STATE_MAP",
     "ADS_PORT_MAP",

@@ -18,9 +18,7 @@ from typing import Any, Dict, List
 
 from ...utils import (
     SecurityAnalyzer,
-    create_protocol_module,
     parse_bool,
-    register_protocol,
     safe_int_conversion,
 )
 from ...utils.base_scanner import SerialScanner
@@ -102,20 +100,6 @@ protocol_options = {
 }
 
 
-@register_protocol(
-    name="GOOSE Scanner",
-    description="""IEC 61850 GOOSE protocol passive scanner and GoCB enumerator""",
-    default_port=0,
-    authors=["f0rw4rd"],
-    references=[
-        {
-            "type": "url",
-            "ref": "https://en.wikipedia.org/wiki/Generic_Object_Oriented_Substation_Event",
-        }
-    ],
-    protocol_options=protocol_options,
-    protocol_type="serial",
-)
 class GOOSEScanner(SerialScanner):
     """IEC 61850 GOOSE Scanner implementing the base scanner interface.
 
@@ -752,9 +736,6 @@ class GOOSEScanner(SerialScanner):
 
 
 # Create metadata and run function using protocol module factory
-metadata, run = create_protocol_module(
-    GOOSEScanner, dependencies_check_func=lambda: not _pyiec61850_goose.is_available
-)
 
 
 # Re-export NXC-style callable class

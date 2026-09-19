@@ -17,7 +17,7 @@ Architecture:
 """
 
 # Core scanner and NXC-style connection
-from .scanner import Snap7Scanner, protocol_options, metadata, run
+from .scanner import Snap7Scanner, protocol_options
 from .cli_runner import s7, snap7
 
 # Data models and constants
@@ -30,8 +30,6 @@ __all__ = [
     # Scanner and protocol
     "Snap7Scanner",
     "protocol_options",
-    "metadata",
-    "run",
     # NXC-style connection
     "s7",
     "snap7",

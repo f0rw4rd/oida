@@ -856,17 +856,6 @@ class TestModuleExports(unittest.TestCase):
 
         self.assertIsInstance(protocol_options, dict)
 
-    def test_metadata_exported(self):
-        from oida.protocols.ethernetip import metadata
-
-        self.assertIn("name", metadata)
-        self.assertIn("options", metadata)
-
-    def test_run_exported(self):
-        from oida.protocols.ethernetip import run
-
-        self.assertTrue(callable(run))
-
     def test_ethernetip_nxc_exported(self):
         from oida.protocols.ethernetip import ethernetip
 
