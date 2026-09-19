@@ -232,12 +232,24 @@ class BaseFuzzer(ABC):
         self._progress_interval = 5  # seconds
 
     def _configure_console_output(self):
-        """Configure console output verbosity"""
+        """Configure console output verbosity
 
-        # Create a filter that blocks boofuzz's internal "fuzzing:" messages
-        # These use logging.debug() on root logger and don't follow ICSLogger format
+        The filters below are deliberately scoped to records emitted by
+        boofuzz's own loggers (``boofuzz.*`` / root-logger ``fuzzing:`` debug
+        spam).  Earlier versions matched purely on message text/level and were
+        attached to *every* root-logger handler without ever being removed —
+        which silently swallowed unrelated records (e.g. pytest's per-test
+        LogCaptureHandler) for the rest of the process lifetime.
+        """
+
+        # Filter that blocks boofuzz's internal "fuzzing:" messages.
+        # These use logging.debug() on root logger and don't follow ICSLogger format.
         class BoofuzzFilter(logging.Filter):
             def filter(self, record):
+                # Only ever drop records that originate from boofuzz itself;
+                # anything from other loggers must pass through untouched.
+                if not (record.name == "root" or record.name.startswith("boofuzz")):
+                    return True
                 msg = record.getMessage()
                 # Block boofuzz's "fuzzing: XXX" messages
                 if msg.startswith("fuzzing:"):
@@ -251,21 +263,28 @@ class BaseFuzzer(ABC):
         root_logger = logging.getLogger()
         self._boofuzz_filter = BoofuzzFilter()
         for handler in root_logger.handlers:
-            handler.addFilter(self._boofuzz_filter)
+            if self._boofuzz_filter not in handler.filters:
+                handler.addFilter(self._boofuzz_filter)
 
         if not self.config.console_output:
-            # Create a filter that only allows WARNING and above
+            # Filter that only allows WARNING and above -- but, like
+            # BoofuzzFilter, only for boofuzz-originated records, so quiet
+            # mode cannot mute other subsystems sharing a handler.
             class QuietFilter(logging.Filter):
                 def filter(self, record):
+                    if not (record.name == "root" or record.name.startswith("boofuzz")):
+                        return True
                     # Only show WARNING, ERROR, and CRITICAL
                     return record.levelno >= logging.WARNING
 
             # Apply filter to all existing handlers
+            quiet = QuietFilter()
             for handler in root_logger.handlers:
-                handler.addFilter(QuietFilter())
+                if quiet not in handler.filters:
+                    handler.addFilter(quiet)
 
             # Also store filter so we can apply it to handlers created later by boofuzz
-            self._quiet_filter = QuietFilter()
+            self._quiet_filter = quiet
         else:
             self._quiet_filter = None
 
@@ -902,10 +921,12 @@ class BaseFuzzer(ABC):
         for handler in root_logger.handlers:
             # Always apply boofuzz filter to block "fuzzing:" messages
             if hasattr(self, "_boofuzz_filter") and self._boofuzz_filter:
-                handler.addFilter(self._boofuzz_filter)
+                if self._boofuzz_filter not in handler.filters:
+                    handler.addFilter(self._boofuzz_filter)
             # Apply quiet filter if console_output is disabled
             if hasattr(self, "_quiet_filter") and self._quiet_filter:
-                handler.addFilter(self._quiet_filter)
+                if self._quiet_filter not in handler.filters:
+                    handler.addFilter(self._quiet_filter)
 
         # Display session information
         self._display_session_info(session)
