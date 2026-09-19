@@ -1663,7 +1663,12 @@ def _main(argv: Optional[List[str]] = None):
         # A fresh ICSLogger, not get_logger(): the cache key collides with the
         # scan's migrated logger whose thread-local extra still seeds host
         # with the raw target (the pcap file path), leaking into the prefix.
-        export_logger = ICSLogger(protocol_name.upper(), "", default_port)
+        # When the run scanned exactly one target, label the export events
+        # with that host so JSON consumers keep per-event host/port context
+        # (the integration suite asserts every event carries them); only a
+        # multi-target run has no single host to attribute file output to.
+        export_host = targets[0] if len(targets) == 1 else ""
+        export_logger = ICSLogger(protocol_name.upper(), export_host, default_port)
         try:
             written_files = export_results(
                 results, output_path, fmt, protocol_name, nxc_logger=export_logger
