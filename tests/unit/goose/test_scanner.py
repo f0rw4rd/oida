@@ -1654,7 +1654,7 @@ class TestGooseProtoArgs(unittest.TestCase):
 
         captured = {}
 
-        def fake_resolve(args, protocol_name, is_serial):
+        def fake_resolve(args, protocol_name):
             captured["target_input"] = getattr(args, "target", None)
             return None  # short-circuit after resolution so no real scan runs
 

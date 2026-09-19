@@ -131,6 +131,10 @@ _READ_WHITELIST = {
     "rhost",
     "rport",
     "lhost",
+    # Set dynamically by cli.py main() after parsing (True when the operator
+    # passed an explicit -p/--port vs the protocol default), then read by
+    # protocols like ocpp to decide default-port fallback.
+    "_port_explicit",
     # base_scanner.py's `self.args.get("d", ...)` legacy-alias fallback --
     # "-d"/"--decode" share dest "decode"; "d" is checked as a belt-and-
     # braces alias, never itself a real dest.
@@ -249,6 +253,9 @@ class _UsedNamesVisitor(ast.NodeVisitor):
             "cli_runner.py",
             "__init__.py",
             "application.py",  # src/oida/fuzz/{core,monitors}/application.py
+            # utils/crash_report.py: every bare `args` there is the args-like
+            # object passed into _opt()/is_suppressed() to read flag values.
+            "crash_report.py",
         } and ("mixins" not in p.parts)
 
     def _is_args_like(self, node) -> bool:
@@ -298,6 +305,18 @@ class _UsedNamesVisitor(ast.NodeVisitor):
                 name_arg = node.args[idx]
                 if isinstance(name_arg, ast.Constant) and isinstance(name_arg.value, str):
                     self._record(name_arg.value, node.lineno)
+        elif (
+            isinstance(func, ast.Name)
+            and func.id == "_opt"
+            and len(node.args) >= 2
+            and self._is_args_like(node.args[0])
+            and isinstance(node.args[1], ast.Constant)
+            and isinstance(node.args[1].value, str)
+        ):
+            # crash_report.py's _opt(args, "name", default) helper reads flag
+            # values off whatever args-like object the caller holds (e.g.
+            # _opt(args, "no_bug_report") in is_suppressed()).
+            self._record(node.args[1].value, node.lineno)
         self.generic_visit(node)
 
 
