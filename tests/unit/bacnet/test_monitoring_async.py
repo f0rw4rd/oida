@@ -61,6 +61,7 @@ def _get_mock_types():
         "Unsigned": Mock(side_effect=lambda v: Mock()),
         "AbortPDU": AbortPDU,
         "ErrorPDU": ErrorPDU,
+        "ErrorRejectAbortNack": type("ErrorRejectAbortNack", (BaseException,), {}),
         "RejectPDU": RejectPDU,
         "Error": Error,
     }

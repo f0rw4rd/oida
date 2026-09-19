@@ -1211,6 +1211,7 @@ def print_bug_report() -> None:
 
             from oida.utils.lazy_import import dist_name
 
+            # Distribution name ("oida-ics"), not the import name.
             dist = distribution(dist_name())
             direct_url = dist.read_text("direct_url.json")
             if direct_url and "dir_info" in direct_url:
@@ -1337,16 +1338,28 @@ def print_bug_report() -> None:
     import re
 
     try:
-        from importlib.metadata import requires as _requires
+        from importlib.metadata import PackageNotFoundError, requires as _requires
     except ImportError:
-        from importlib_metadata import requires as _requires  # type: ignore[no-redef]
+        from importlib_metadata import (  # type: ignore[no-redef]
+            PackageNotFoundError,
+            requires as _requires,
+        )
 
     from oida.utils.lazy_import import _IMPORT_OVERRIDES, _SKIP_EXTRAS, dist_name
 
     _extra_re = re.compile(r'extra\s*==\s*"([^"]+)"')
     _seen_pkgs: set = set()
     dep_packages = []
-    for line in _requires(dist_name()) or []:
+    # Distribution name ("oida-ics"), not the import name -- see dist_name.
+    # A frozen bundle (PyInstaller) ships no .dist-info, so neither the
+    # distribution name nor its declared requirements can be resolved from
+    # metadata; the bug report simply omits the optional-dependency table
+    # rather than crashing on the unhandled PackageNotFoundError.
+    try:
+        _requires_lines = _requires(dist_name()) or []
+    except PackageNotFoundError:
+        _requires_lines = []
+    for line in _requires_lines:
         m = _extra_re.search(line)
         if not m:
             continue

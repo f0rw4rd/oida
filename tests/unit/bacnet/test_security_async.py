@@ -45,6 +45,7 @@ def _error_classes():
     return {
         "AbortPDU": type("AbortPDU", (), {}),
         "ErrorPDU": type("ErrorPDU", (), {}),
+        "ErrorRejectAbortNack": type("ErrorRejectAbortNack", (BaseException,), {}),
         "RejectPDU": type("RejectPDU", (), {}),
         "Error": type("Error", (), {}),
     }

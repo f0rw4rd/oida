@@ -60,21 +60,32 @@ class MisbehavingServer:
         assert mode in (HEALTHY, *ALL_MODES), mode
         self._mode = mode
         if mode == HARD_DOWN:
-            # Stop accepting entirely: close the listen socket.
-            try:
-                self._listen.close()
-            except OSError:
-                pass
+            # Stop accepting entirely: kill the listener. shutdown() BEFORE
+            # close(): the accept-loop thread may be blocked inside accept()
+            # on this socket, and an in-flight accept() keeps the kernel
+            # socket alive after close() — a probe connecting in that window
+            # completes the handshake against a supposedly-down server (seen
+            # as a ~1/30 flake in test_recovery_stall_refused_vs_hung).
+            # shutdown() makes the blocked accept() raise immediately.
+            self._kill_listener()
         # Give the accept loop a beat to observe the new state.
         time.sleep(0.2)
 
     def stop(self) -> None:
         self._stop.set()
+        self._kill_listener()
+        time.sleep(0.2)
+
+    def _kill_listener(self) -> None:
+        """Force the listening socket fully down, accept() included."""
+        try:
+            self._listen.shutdown(socket.SHUT_RDWR)
+        except OSError:
+            pass
         try:
             self._listen.close()
         except OSError:
             pass
-        time.sleep(0.2)
 
     def _run(self) -> None:
         while not self._stop.is_set():

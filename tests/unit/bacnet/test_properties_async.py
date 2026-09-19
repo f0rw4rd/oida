@@ -84,6 +84,7 @@ def _get_mock_types():
         "AnyAtomic": AnyAtomic,
         "AbortPDU": AbortPDU,
         "ErrorPDU": ErrorPDU,
+        "ErrorRejectAbortNack": type("ErrorRejectAbortNack", (BaseException,), {}),
         "RejectPDU": RejectPDU,
         "Error": Error,
     }

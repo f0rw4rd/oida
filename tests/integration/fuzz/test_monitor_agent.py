@@ -21,17 +21,44 @@ from tests.service_gate import require_service
 pytestmark = pytest.mark.integration
 
 
+SRC_FILES = ["fuzzing_agent.c", "config.c", "platform_posix.c", "platform_win.c"]
+
+
 # The C agent lives in its own repo (https://github.com/f0rw4rd/oida-fuzzing-agent).
 # Find its source via $OIDA_FUZZING_AGENT_SRC or a sibling checkout next to oida.
 def _agent_src() -> Path:
     env = os.environ.get("OIDA_FUZZING_AGENT_SRC")
     if env:
         return Path(env)
-    return Path(__file__).resolve().parents[4] / "oida-fuzzing-agent"
+
+    here = Path(__file__).resolve()
+    candidates: list[Path] = []
+
+    # When running from a git worktree the checkout lives at
+    # <repo>/.claude/worktrees/<name>/..., so parents[4] points at the
+    # worktrees dir rather than the repo's parent. Detect that segment and
+    # anchor to the *real* repo root's parent so the sibling checkout is found
+    # from both the main checkout and any worktree.
+    parts = here.parts
+    if ".claude" in parts:
+        idx = parts.index(".claude")
+        if idx >= 1 and parts[idx : idx + 2] == (".claude", "worktrees"):
+            repo_root = Path(*parts[:idx])
+            candidates.append(repo_root.parent / "oida-fuzzing-agent")
+
+    # Sibling next to the current checkout root (main checkout: .../pro/oida ->
+    # .../pro/oida-fuzzing-agent).
+    candidates.append(here.parents[4] / "oida-fuzzing-agent")
+
+    for cand in candidates:
+        if all((cand / f).exists() for f in SRC_FILES):
+            return cand
+    # Nothing found; return the last candidate so the fixture's error message
+    # reports a sensible path.
+    return candidates[-1]
 
 
 AGENT_SRC = _agent_src()
-SRC_FILES = ["fuzzing_agent.c", "config.c", "platform_posix.c", "platform_win.c"]
 
 
 # On a bare checkout the agent source / C compiler are absent and these tests

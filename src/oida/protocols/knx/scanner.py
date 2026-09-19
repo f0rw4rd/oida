@@ -177,11 +177,24 @@ class KNXScanner(
 
             results = asyncio.run(_run_with_handler())
 
-            # Run security analysis
+            # _analyze_security describes inherent properties of the KNX protocol
+            # -- no encryption, no authentication -- which are true of every KNX
+            # target regardless of whether this scan reached one, so run it
+            # unconditionally. Its device-specific concerns (accessible/writable
+            # devices, routing) are already gated on real result data inside.
             results["security_analysis"] = self._analyze_security(results)
 
-            # Report findings
-            self._report_findings(results)
+            # _report_findings, by contrast, asserts the host is UP and records
+            # target-specific vulnerabilities. _async_discover sets a top-level
+            # "error" when the tunnel never came up; reporting a live host we
+            # never spoke to is the connection-1 false positive, so gate only
+            # this on an actual session.
+            if results.get("error"):
+                self.logger.debug(
+                    "Skipping host/vulnerability reporting: no KNX session established"
+                )
+            else:
+                self._report_findings(results)
 
         except Exception as e:
             self.logger.fail(f"Error during discovery: {e}")
@@ -541,6 +554,14 @@ class KNXScanner(
                 )  # Connection cleanup timeout - safe to ignore
             except Exception as e:
                 self.logger.debug(f"Error during connection cleanup: {e}")
+            # Brief cooldown so the KNXnet/IP tunnel slot is released before the
+            # process exits; a single-endpoint gateway (e.g. the Calimero mock)
+            # can otherwise reject the next tunnel open while the prior one is
+            # still torn down server-side.
+            try:
+                await asyncio.sleep(0.5)
+            except Exception:
+                pass
 
         return results
 

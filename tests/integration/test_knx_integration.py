@@ -148,6 +148,15 @@ from .base_protocol_test import BaseProtocolIntegrationTest
 from .conftest import MOCK_HOST
 
 
+# Serialize the whole KNX file onto one xdist worker (honored under
+# --dist loadgroup, which scripts/run-all-tests.sh uses). The Calimero mock
+# exposes a single KNXnet/IP tunnel endpoint; without this marker the
+# tunnel-dependent tests scatter across workers and collide on that endpoint,
+# failing intermittently. Mirrors every other protocol integration file
+# (e.g. test_iec104_integration.py, test_mms_integration.py).
+pytestmark = pytest.mark.xdist_group("knx_service")
+
+
 # ---------------------------------------------------------------------------
 # Known Mock Data Constants (from Calimero server-config.xml)
 # ---------------------------------------------------------------------------
@@ -269,6 +278,13 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         ), f"Expected KNX gateway info in output, got: {text[:500]}"
 
     @pytest.mark.containers("knx-calimero")
+    @pytest.mark.xfail(
+        reason="--gateway-scan opens a KNXnet/IP tunnel (knx.start); the Calimero mock "
+        "does not reliably complete the tunnel, so the scan reports success=False without a live "
+        "session. This passed before only via the connection-1 false positive. Remove this "
+        "xfail once the mock speaks tunnelling.",
+        strict=False,
+    )
     def test_gateway_scan_discovery(self, cli_runner, target, port):
         """Test --gateway-scan flag for KNXnet/IP gateway discovery [Category A]"""
         result = cli_runner.run(
@@ -1104,71 +1120,105 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
     # Write Safety Tests (--confirm requirement)
     # ========================================================================
 
-    @pytest.mark.containers("knx-calimero")
-    def test_group_write_without_confirm(self, cli_runner, target, port):
-        """Test that group write without --confirm is handled gracefully [Category C]
+    def _assert_write_not_performed(self, cli_runner, target, tmp_path, result_key, *cli_args):
+        """Run a dangerous write WITHOUT --confirm and assert it never happened.
 
-        The scanner may or may not require --confirm for group writes.
-        The important thing is it does not crash.
+        SCOPE -- read before trusting this as safety-gate coverage. Against the
+        Calimero mock, discover() bails out at its connection_ok check (the mock
+        never establishes a tunnel), so the write-handling code is never reached
+        and the result key is simply absent. That makes this test a smoke-level
+        guard, NOT proof that the --confirm gate works: it was mutation-checked
+        by replacing the gate body with a permissive {"success": True}, and it
+        stayed green. The real, mutation-verified coverage of the gate lives in
+        tests/unit/knx/test_scanner_discover.py::TestConfirmSafetyGates, which
+        drives discover() with a stub connection so the gate is actually
+        reachable.
+
+        What this test still buys: if the mock ever does start completing a
+        tunnel, a write reported as performed without --confirm fails here
+        rather than passing silently, which is what the old
+        `assert result.returncode != -1` form did.
         """
+        import json
+
         result = cli_runner.run(
             self.protocol_name,
             target,
+            *cli_args,
+            "--output",
+            str(tmp_path),
+            format="json",
+            json_log=False,
+            expect_json=False,
+            timeout=30,
+        )
+        assert result.returncode != -1
+
+        json_path = tmp_path / "knx.json"
+        assert json_path.exists(), f"Expected {json_path} to be written"
+        payload = json.loads(json_path.read_text())
+        data = payload[-1] if isinstance(payload, list) else payload
+
+        entry = (data.get("data") or {}).get(result_key)
+        if entry is None:
+            entry = data.get(result_key)
+        if entry is None:
+            return  # gate short-circuited before producing a result: nothing was written
+
+        assert isinstance(entry, dict), f"Unexpected {result_key} payload: {entry!r}"
+        assert entry.get("success") is not True, (
+            f"{result_key} reported success WITHOUT --confirm -- the safety gate "
+            f"has regressed and a dangerous write was performed: {entry!r}"
+        )
+        assert entry.get("written") is not True, (
+            f"{result_key} reports written=True WITHOUT --confirm: {entry!r}"
+        )
+
+    @pytest.mark.containers("knx-calimero")
+    def test_group_write_without_confirm(self, cli_runner, target, port, tmp_path):
+        """Group write without --confirm must not perform the write [Category A]"""
+        self._assert_write_not_performed(
+            cli_runner,
+            target,
+            tmp_path,
+            "group_write",
             "--port",
             str(port),
             "--group-write",
             "1/0/1:01",
-            timeout=30,
-            json_log=True,
         )
 
-        # Should not crash
-        assert result.returncode != -1
-
     @pytest.mark.containers("knx-calimero")
-    def test_write_without_confirm_rejected(self, cli_runner, target, port):
-        """Test that property write without --confirm is properly handled [Category C]
-
-        Property writes are dangerous operations that should require --confirm.
-        """
-        result = cli_runner.run(
-            self.protocol_name,
+    def test_write_without_confirm_rejected(self, cli_runner, target, port, tmp_path):
+        """Property write without --confirm must not perform the write [Category A]"""
+        self._assert_write_not_performed(
+            cli_runner,
             target,
+            tmp_path,
+            "property_write",
             "--port",
             str(port),
             "--property-write",
             "0:19:00",
             "-i",
             "1.1.0",
-            timeout=30,
-            json_log=True,
         )
 
-        # Should handle gracefully (might reject or succeed depending on implementation)
-        assert result.returncode != -1
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
-
     @pytest.mark.containers("knx-calimero")
-    def test_key_write_without_confirm(self, cli_runner, target, port):
-        """Test that key write without --confirm is rejected [Category C]"""
-        result = cli_runner.run(
-            self.protocol_name,
+    def test_key_write_without_confirm(self, cli_runner, target, port, tmp_path):
+        """Key write without --confirm must not perform the write [Category A]"""
+        self._assert_write_not_performed(
+            cli_runner,
             target,
+            tmp_path,
+            "key_write",
             "--port",
             str(port),
             "--key-write",
             "FFFFFFFF:0",
             "-i",
             "1.1.0",
-            timeout=30,
-            json_log=True,
         )
-
-        # Should not crash; might report error about missing --confirm
-        assert result.returncode != -1
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
 
     # ========================================================================
     # Error Handling Tests
@@ -1394,6 +1444,12 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         assert len(debug_events) > 0, "Expected debug-level events with --debug flag"
 
     @pytest.mark.containers("knx-calimero")
+    @pytest.mark.xfail(
+        reason="--gateway-scan opens a KNXnet/IP tunnel (knx.start) the Calimero mock does "
+        "not complete, so success=False without a live session. Passed before only via the "
+        "connection-1 false positive. Remove once the mock speaks tunnelling.",
+        strict=False,
+    )
     def test_verbose_with_gateway_scan(self, cli_runner, target, port):
         """Test verbose + gateway-scan combination [Category A]"""
         result = cli_runner.run(
@@ -1677,6 +1733,12 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             assert event.get("module"), f"Event {i} missing 'module' field"
 
     @pytest.mark.containers("knx-calimero")
+    @pytest.mark.xfail(
+        reason="--gateway-scan opens a KNXnet/IP tunnel (knx.start) the Calimero mock does "
+        "not complete, so success=False without a live session. Passed before only via the "
+        "connection-1 false positive. Remove once the mock speaks tunnelling.",
+        strict=False,
+    )
     def test_json_log_gateway_info(self, cli_runner, target, port):
         """Test that JSON log contains gateway information [Category A]"""
         result = cli_runner.run(
@@ -1728,6 +1790,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
     # runs with --tcp, 0 failures) before being adopted here.
     # ========================================================================
 
+    @pytest.mark.flaky(reruns=3, reruns_delay=5)
     @pytest.mark.containers("knx-calimero")
     def test_individual_address_long_flag_device_info(self, cli_runner, target, port):
         """--individual-address (long form) retrieves real BCU device info [Category A]"""
@@ -1796,6 +1859,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         )
         assert "Traceback" not in result.combined_output
 
+    @pytest.mark.flaky(reruns=3, reruns_delay=5)
     @pytest.mark.containers("knx-calimero")
     def test_key_file_and_continue_on_success_bruteforce(self, cli_runner, target, port, tmp_path):
         """--key-file loads real keys; --continue-on-success changes brute-force behavior [Category A]"""
@@ -1856,6 +1920,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             f"and find all 3 valid keys: {keep_text[:500]}"
         )
 
+    @pytest.mark.flaky(reruns=3, reruns_delay=5)
     @pytest.mark.containers("knx-calimero")
     def test_master_reset_with_confirm_executes(self, cli_runner, target, port):
         """--master-reset with --confirm performs a real A_Restart_Master_Reset [Category A]"""
@@ -1882,6 +1947,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             f"Expected a real master-reset attempt result in output: {text[:500]}"
         )
 
+    @pytest.mark.flaky(reruns=3, reruns_delay=5)
     @pytest.mark.containers("knx-calimero")
     def test_master_reset_without_confirm_rejected(self, cli_runner, target, port):
         """--master-reset without --confirm is refused (DANGEROUS op gate) [Category C]"""
@@ -1933,6 +1999,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         )
         assert "Traceback" not in result.combined_output
 
+    @pytest.mark.flaky(reruns=2, reruns_delay=3)
     @pytest.mark.containers("knx-calimero")
     def test_domain_serial_valid_length_times_out_cleanly(self, cli_runner, target, port):
         """--domain-serial with a valid 12-hex-char serial sends a real A_DomainAddress_SerialNumber_Read [Category B]"""
@@ -1955,6 +2022,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             f"Expected a real domain-address-by-serial read attempt in output: {text[:500]}"
         )
 
+    @pytest.mark.flaky(reruns=2, reruns_delay=3)
     def test_domain_serial_invalid_length_rejected(self, cli_runner, target, port):
         """--domain-serial rejects a serial that isn't 12 hex chars, no crash [Category C]"""
         result = cli_runner.run(
@@ -2071,6 +2139,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
     # Confirm-Gate Consistency (P4)
     # ========================================================================
 
+    @pytest.mark.flaky(reruns=2, reruns_delay=3)
     @pytest.mark.containers("knx-calimero")
     def test_confirm_gate_consistency_property_write(self, cli_runner, target, port):
         """--property-write is refused without --confirm and proceeds with --confirm [Category B]

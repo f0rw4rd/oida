@@ -44,7 +44,15 @@
 		</groupAddressFilter>
 		<!-- Additional addresses: tunneling client addresses and simulated bus devices.
 		     Addresses 1.1.1-1.1.5 represent devices on the emulated bus.
-		     Addresses 1.1.10-1.1.20 are for tunneling client connections. -->
+		     Addresses 1.1.10-1.1.30 are for tunneling client connections.
+		     The pool is deliberately large: each -i/management scan runs as a
+		     separate short-lived subprocess whose KNXnet/IP DISCONNECT is not
+		     always acked before exit, so Calimero recycles the assigned address
+		     a few seconds late. Under back-to-back serial test runs (e.g. the
+		     full test_knx_integration.py file) a 6-address pool is exhausted by
+		     ~6 consecutive tunnel scans and the next CONNECT is rejected
+		     ("tunnel connection could not be established"). ~21 slots gives
+		     enough headroom to absorb the lagging recycles. -->
 		<additionalAddresses>
 			<!-- Simulated bus devices -->
 			<knxAddress type="individual">1.1.1</knxAddress>
@@ -59,6 +67,21 @@
 			<knxAddress type="individual">1.1.13</knxAddress>
 			<knxAddress type="individual">1.1.14</knxAddress>
 			<knxAddress type="individual">1.1.15</knxAddress>
+			<knxAddress type="individual">1.1.16</knxAddress>
+			<knxAddress type="individual">1.1.17</knxAddress>
+			<knxAddress type="individual">1.1.18</knxAddress>
+			<knxAddress type="individual">1.1.19</knxAddress>
+			<knxAddress type="individual">1.1.20</knxAddress>
+			<knxAddress type="individual">1.1.21</knxAddress>
+			<knxAddress type="individual">1.1.22</knxAddress>
+			<knxAddress type="individual">1.1.23</knxAddress>
+			<knxAddress type="individual">1.1.24</knxAddress>
+			<knxAddress type="individual">1.1.25</knxAddress>
+			<knxAddress type="individual">1.1.26</knxAddress>
+			<knxAddress type="individual">1.1.27</knxAddress>
+			<knxAddress type="individual">1.1.28</knxAddress>
+			<knxAddress type="individual">1.1.29</knxAddress>
+			<knxAddress type="individual">1.1.30</knxAddress>
 		</additionalAddresses>
 	</serviceContainer>
 </knxServer>

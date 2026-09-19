@@ -15,6 +15,12 @@ _profinet = lazy_import("profinet", "PROFINET")
 class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnection):
     """PROFINET IO scanner with DCP discovery and RPC operations."""
 
+    # Class-level default so the connection-1 false-positive gate works on any
+    # construction path, including harnesses that bypass __init__. Defaults to
+    # False so an uninitialized gate fails safe (claims no success) rather than
+    # raising AttributeError.
+    _profinet_response_seen: bool = False
+
     name = "PROFINET"
     protocol_name = "PROFINET"
     default_port = 0  # Layer 2 protocol

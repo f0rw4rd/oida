@@ -298,6 +298,12 @@ class hl7(
 ):
     """HL7 v2 MLLP Scanner (NXC-style)"""
 
+    # Class-level default so the connection-1 false-positive gate works on any
+    # construction path, including harnesses that bypass __init__. Defaults to
+    # False so an uninitialized gate fails safe (claims no success) rather than
+    # raising AttributeError.
+    _hl7_response_seen: bool = False
+
     def __init__(self, args: Any, db: Optional[Any], host: str):
         self.protocol_name = "hl7"
         self.default_port = 2575

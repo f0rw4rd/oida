@@ -33,6 +33,7 @@ def _make_types(real_marker, binary_marker, captured):
     """Build mock types where Real/BinaryPV record their invocations."""
     AbortPDU = type("AbortPDU", (), {})
     ErrorPDU = type("ErrorPDU", (), {})
+    ErrorRejectAbortNack = type("ErrorRejectAbortNack", (BaseException,), {})
     RejectPDU = type("RejectPDU", (), {})
     Error = type("Error", (), {})
 
@@ -60,6 +61,7 @@ def _make_types(real_marker, binary_marker, captured):
         "BinaryPV": binary_ctor,
         "AbortPDU": AbortPDU,
         "ErrorPDU": ErrorPDU,
+        "ErrorRejectAbortNack": ErrorRejectAbortNack,
         "RejectPDU": RejectPDU,
         "Error": Error,
         "AnyAtomic": Mock(return_value=Mock()),

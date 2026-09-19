@@ -353,7 +353,14 @@ def _drain_multicast(seconds: float = 1.0) -> None:
         bus.shutdown()
 
 
-def _isotp_read(bus, req_id: int, resp_id: int, request: list, budget: float = 1.5):
+def _isotp_read(
+    bus,
+    req_id: int,
+    resp_id: int,
+    request: list,
+    budget: float = 1.5,
+    expect_prefix: bytes = b"",
+):
     """Test-level ISO-TP (ISO 15765-2) request/response against the live bus.
 
     Sends ``request`` on ``req_id`` then reassembles the response on ``resp_id``:
@@ -372,9 +379,27 @@ def _isotp_read(bus, req_id: int, resp_id: int, request: list, budget: float = 1
     the test level. Raises on a transient unpack hiccup so the caller's budget
     guard can retry.
 
+    ``expect_prefix``, when non-empty, is the required first bytes of the
+    de-framed payload (e.g. ``b"\\x62\\xf1\\x90"`` for a UDS
+    ReadDataByIdentifier(0xF190) positive response). The shared machine-wide
+    multicast bus carries a continuous background flood plus responses to *other*
+    DIDs from parallel workers; validating the header rejects a stale/other-DID
+    frame instead of stitching it into this test's reassembly.
+
     Returns the de-framed payload bytes, or ``None`` if nothing usable arrived.
     """
     import can
+
+    # Drain any backlog already queued on this bus (the multicast group is shared
+    # and continuously flooded) so we only reassemble frames that arrive *after*
+    # our request goes out.
+    drain_end = time.time() + 0.1
+    while time.time() < drain_end:
+        try:
+            if bus.recv(timeout=0.02) is None:
+                break
+        except Exception:  # noqa: BLE001 - swallow transient unpack while draining
+            continue
 
     bus.send(can.Message(arbitration_id=req_id, data=request, is_extended_id=False))
     end = time.time() + budget
@@ -385,7 +410,20 @@ def _isotp_read(bus, req_id: int, resp_id: int, request: list, budget: float = 1
             continue
         if msg.arbitration_id != resp_id:
             continue
-        first = bytes(msg.data)
+        candidate = bytes(msg.data)
+        frame_type = candidate[0] & 0xF0
+        # Reject frames whose de-framed head doesn't match the expected response
+        # header -- a stale/other-DID frame that happened to land on resp_id.
+        if expect_prefix:
+            if frame_type == 0x00:  # Single Frame
+                head = candidate[1 : 1 + (candidate[0] & 0x0F)]
+            elif frame_type == 0x10:  # First Frame
+                head = candidate[2:]
+            else:
+                continue
+            if not head.startswith(expect_prefix):
+                continue
+        first = candidate
         break
     if not first:
         return None
@@ -725,7 +763,14 @@ class TestContainerUDS:
             bus = _new_bus()
             try:
                 time.sleep(0.2)
-                return _isotp_read(bus, 0x7DF, 0x7E8, [0x02, 0x09, 0x02, 0, 0, 0, 0, 0])
+                # OBD-II Mode 09 PID 02 positive response: SID 0x49, PID 0x02.
+                return _isotp_read(
+                    bus,
+                    0x7DF,
+                    0x7E8,
+                    [0x02, 0x09, 0x02, 0, 0, 0, 0, 0],
+                    expect_prefix=b"\x49\x02",
+                )
             finally:
                 bus.shutdown()
 
@@ -757,7 +802,14 @@ class TestContainerUDS:
             try:
                 time.sleep(0.2)
                 # Tight scope: single DID 0xF190 (VIN) on the known engine ECU.
-                return _isotp_read(bus, 0x7E0, 0x7E8, [0x03, 0x22, 0xF1, 0x90, 0, 0, 0, 0])
+                # UDS RDBI positive response: SID 0x62, DID echo 0xF1 0x90.
+                return _isotp_read(
+                    bus,
+                    0x7E0,
+                    0x7E8,
+                    [0x03, 0x22, 0xF1, 0x90, 0, 0, 0, 0],
+                    expect_prefix=b"\x62\xf1\x90",
+                )
             finally:
                 bus.shutdown()
 

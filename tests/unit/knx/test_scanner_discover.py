@@ -222,3 +222,57 @@ class TestDiscoverActions:
         res = s.discover(conn)
         assert res["master_reset"]["success"] is True
         assert res["master_reset"]["erase_code"] == 0x01
+
+
+class TestConfirmSafetyGates:
+    """The --confirm gate must actually BLOCK dangerous writes.
+
+    These live at unit level on purpose. The Calimero mock never establishes a
+    tunnel connection, so discover() bails out at its "connection_ok" check long
+    before any write-handling code runs -- which means an integration test
+    against that mock can never reach these gates and passes no matter what the
+    gate does (verified by mutation: disabling the gate entirely left the
+    integration test green). Driving discover() with a working stub connection
+    is what makes the gate reachable, and therefore what makes these real.
+    """
+
+    def test_group_write_without_confirm_is_blocked(self, fake_xknx):
+        s = make_scanner({"group-write": "1/0/1:01"})
+        res = s.discover(make_conn())
+        assert res["group_write"]["error"] == "Missing --confirm flag"
+        assert res["group_write"].get("success") is not True
+
+    def test_key_write_without_confirm_is_blocked(self, fake_xknx):
+        s = make_scanner({"key-write": "FFFFFFFF:0", "individual-address": "1.1.5"})
+        res = s.discover(make_conn())
+        assert res["key_write"]["error"] == "Missing --confirm flag"
+        assert res["key_write"].get("success") is not True
+
+    def test_property_write_without_confirm_is_blocked(self, fake_xknx):
+        s = make_scanner({"property-write": "0:19:00", "individual-address": "1.1.5"})
+        res = s.discover(make_conn())
+        assert res["property_write"]["error"] == "Missing --confirm flag"
+        assert res["property_write"].get("success") is not True
+
+    def test_memory_write_without_confirm_is_blocked(self, fake_xknx):
+        """memory-write is gated harder than the rest.
+
+        It refuses outright ("BLOCKED: ... brick device") rather than asking for
+        --confirm, so assert the property that matters -- the write was refused
+        and not performed -- instead of one exact message.
+        """
+        s = make_scanner({"memory-write": "0x0060:01", "individual-address": "1.1.5"})
+        res = s.discover(make_conn())
+        err = res["memory_write"]["error"]
+        assert "BLOCKED" in err or err == "Missing --confirm flag"
+        assert res["memory_write"].get("success") is not True
+
+    def test_group_write_with_confirm_passes_the_gate(self, fake_xknx):
+        """With --confirm the gate must NOT be what stops us.
+
+        Guards against a gate that rejects unconditionally, which would make the
+        blocked-tests above pass for the wrong reason.
+        """
+        s = make_scanner({"group-write": "1/0/1:01", "confirm": True})
+        res = s.discover(make_conn())
+        assert res.get("group_write", {}).get("error") != "Missing --confirm flag"

@@ -30,6 +30,7 @@ def _get_mock_types():
     """Get mock bacpypes3 types."""
     AbortPDU = type("AbortPDU", (), {})
     ErrorPDU = type("ErrorPDU", (), {})
+    ErrorRejectAbortNack = type("ErrorRejectAbortNack", (BaseException,), {})
     RejectPDU = type("RejectPDU", (), {})
     Error = type("Error", (), {})
 
@@ -39,6 +40,7 @@ def _get_mock_types():
         "PropertyIdentifier": Mock(return_value=Mock()),
         "AbortPDU": AbortPDU,
         "ErrorPDU": ErrorPDU,
+        "ErrorRejectAbortNack": ErrorRejectAbortNack,
         "RejectPDU": RejectPDU,
         "Error": Error,
     }

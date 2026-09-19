@@ -17,6 +17,7 @@ def _stub_types():
 
     return {
         "ErrorPDU": type("ErrorPDU", (_Marker,), {}),
+        "ErrorRejectAbortNack": type("ErrorRejectAbortNack", (BaseException,), {}),
         "Error": type("Error", (_Marker,), {}),
         "AbortPDU": type("AbortPDU", (_Marker,), {}),
         "RejectPDU": type("RejectPDU", (_Marker,), {}),

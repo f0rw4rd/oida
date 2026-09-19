@@ -2,9 +2,11 @@
 # -*- coding: utf-8 -*-
 """DNP3 NXC-style callable class."""
 
+import time
 from typing import Dict, Any
 
 from ...connection import NetworkConnection
+from ...utils.exceptions import ICSConnectionError
 from .scanner import DNP3Scanner, _yadnp3
 
 
@@ -88,7 +90,23 @@ class dnp3(NetworkConnection):
         """Create DNP3 connection"""
         port = getattr(self.args, "port", self.default_port)
         self.logger.info(f"Connecting to {self.host}:{port}")
-        self.conn = self.scanner.connect()
+        # Retry the channel open a couple of times on transient connect/handshake
+        # failures. Under heavy parallel load the TCP connect or DNP3 link
+        # handshake can fail spuriously even against a healthy outstation; a
+        # short backoff removes that flakiness without masking a genuine
+        # no-device result (the final failure is still raised as before).
+        max_attempts = 3
+        for attempt in range(1, max_attempts + 1):
+            try:
+                self.conn = self.scanner.connect()
+                break
+            except ICSConnectionError as e:
+                if attempt >= max_attempts:
+                    raise
+                self.logger.debug(
+                    f"DNP3 connect attempt {attempt}/{max_attempts} failed ({e}); retrying"
+                )
+                time.sleep(1.0 * attempt)
         if self.conn:
             self.logger.success(f"Connected to DNP3 outstation at {self.host}:{port}")
         else:

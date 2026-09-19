@@ -268,6 +268,16 @@ _IMPORT_OVERRIDES: Dict[str, str] = {
 _SKIP_EXTRAS = frozenset({"dev", "docs", "all", "fuzz", "serial", "bacnetsc"})
 
 
+def _resolve_dist_name() -> str:
+    """Return the installed distribution name providing the ``oida`` package.
+
+    Alias of :func:`dist_name`, kept because the dist-name contract tests
+    import this name; both were authored independently on two branches that
+    fixed the same oida -> oida-ics metadata rename.
+    """
+    return dist_name()
+
+
 def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
     """Build PROTOCOL_DEPENDENCIES from installed oida package metadata."""
     import re
@@ -322,6 +332,19 @@ def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
 try:
     PROTOCOL_DEPENDENCIES: Dict[str, Any] = _build_protocol_dependencies()
 except Exception as e:
-    # Fallback: package metadata not yet available (e.g. during build)
-    logger.debug("Failed to build PROTOCOL_DEPENDENCIES from package metadata: %s", e)
+    # Fallback: package metadata not available. That is EXPECTED in a frozen
+    # PyInstaller build, which bundles the modules but no .dist-info, so keep
+    # that case quiet. Anywhere else it means dependency hints, install
+    # suggestions and _KNOWN_PROTOCOLS are all silently dead -- which is exactly
+    # how the oida -> oida-ics distribution rename went unnoticed. Say so.
+    import sys
+
+    if getattr(sys, "frozen", False):
+        logger.debug("PROTOCOL_DEPENDENCIES unavailable in frozen build: %s", e)
+    else:
+        logger.warning(
+            "Failed to build PROTOCOL_DEPENDENCIES from package metadata (%s); "
+            "dependency hints and install suggestions are disabled",
+            e,
+        )
     PROTOCOL_DEPENDENCIES = {}

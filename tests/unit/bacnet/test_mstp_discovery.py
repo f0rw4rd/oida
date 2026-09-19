@@ -29,6 +29,7 @@ def _get_mock_types():
     """Get mock bacpypes3 types for MS/TP discovery."""
     AbortPDU = type("AbortPDU", (), {})
     ErrorPDU = type("ErrorPDU", (), {})
+    ErrorRejectAbortNack = type("ErrorRejectAbortNack", (BaseException,), {})
     RejectPDU = type("RejectPDU", (), {})
     Error = type("Error", (), {})
 
@@ -39,6 +40,7 @@ def _get_mock_types():
         "WhoIsRequest": Mock(return_value=Mock()),
         "AbortPDU": AbortPDU,
         "ErrorPDU": ErrorPDU,
+        "ErrorRejectAbortNack": ErrorRejectAbortNack,
         "RejectPDU": RejectPDU,
         "Error": Error,
         "Address": Mock(return_value=Mock()),
