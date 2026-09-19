@@ -186,6 +186,11 @@ class PcapScanner:
         # Print traffic statistics (opt-in via -S/--stats)
         if self.args.get("stats") and self.stats.total_packets > 0:
             self.stats.print_summary(logger=self.logger)
+            # Register the stats tables so they reach file export too, not
+            # just the console render (cli.py exports results["tables"]).
+            if "tables" not in self.results:
+                self.results["tables"] = []
+            self.results["tables"].extend(self.stats.get_tables())
 
         # Build device results (convert to dicts for JSON serialization).
         # Use vars() instead of dataclasses.asdict() because listeners add
@@ -793,17 +798,35 @@ class PcapScanner:
 
         # --- Unified credential table (central) ---
         if all_cred_rows:
+            cred_headers = ["Protocol", "Type", "Username", "Server", "Client", "Secret"]
             cred_title = f"Credentials ({len(all_cred_rows)})"
+            # Console shows only a secret preview (hashcat strings run to 400+
+            # chars); the export table below keeps the full value so CSV/JSON
+            # carry complete crackable material.
+            SECRET_PREVIEW = 48
+            display_rows = [
+                (
+                    row[:5]
+                    + [
+                        (
+                            row[5][:SECRET_PREVIEW] + "…"
+                            if len(row) > 5 and len(row[5] or "") > SECRET_PREVIEW
+                            else (row[5] if len(row) > 5 else "")
+                        )
+                    ]
+                )
+                for row in all_cred_rows
+            ]
             export_data(
-                data=all_cred_rows,
-                headers=["Protocol", "Type", "Username", "Server", "Client"],
+                data=display_rows,
+                headers=cred_headers,
                 output_format="console",
                 title=cred_title,
                 logger=self.logger,
             )
             all_tables.append(
                 {
-                    "headers": ["Protocol", "Type", "Username", "Server", "Client"],
+                    "headers": cred_headers,
                     "rows": all_cred_rows,
                     "title": cred_title,
                 }
@@ -883,6 +906,8 @@ class PcapScanner:
                 self.logger.debug("device merge failed for listener %s: %s", name, e)
                 continue
 
+        self._deduplicate_devices()
+
         # Store tables for per-file export (used by cli.py export_results)
         if all_tables:
             self.results["tables"] = all_tables
@@ -892,6 +917,89 @@ class PcapScanner:
             self._export_hashcat(listeners)
 
         return packet_count
+
+    def _deduplicate_devices(self) -> None:
+        """Fold cross-listener duplicate devices into one entry.
+
+        Each listener keys devices in its own namespace ({proto}:{ip},
+        ssdp:{mac}, netbios:{ip}, ...), so one physical host seen by several
+        listeners (ads + igmp + netbios + ssdp) appears once per key. Group by
+        MAC address (fallback: IP address for MAC-less devices), keep the
+        richest device as the primary, and merge_from() the rest.
+        """
+        from ..discovery.core import normalize_ipv6
+
+        devices = self.discovered_devices
+        original_count = len(devices)
+        if original_count <= 1:
+            return
+
+        # Union-find by MAC (first) and IP (second) so devices sharing either
+        # identifier collapse into the same group.
+        parent: Dict[str, str] = {}
+
+        def find(k: str) -> str:
+            while parent[k] != k:
+                parent[k] = parent[parent[k]]
+                k = parent[k]
+            return k
+
+        def union(a: str, b: str) -> None:
+            ra, rb = find(a), find(b)
+            if ra != rb:
+                parent[rb] = ra
+
+        groups: Dict[str, List[str]] = {}  # identity key -> [device keys]
+        for key, dev in devices.items():
+            parent[key] = key
+            mac = dev.mac_address.lower()
+            if mac:
+                groups.setdefault(f"mac:{mac}", []).append(key)
+            for ip in dev.ip_addresses:
+                norm = normalize_ipv6(ip) if ":" in ip else ip
+                if norm:
+                    groups.setdefault(f"ip:{norm}", []).append(key)
+
+        for members in groups.values():
+            for other in members[1:]:
+                union(members[0], other)
+
+        clusters: Dict[str, List[str]] = {}
+        for key in devices:
+            clusters.setdefault(find(key), []).append(key)
+
+        if len(clusters) == len(devices):
+            return  # no duplicates
+
+        for members in clusters.values():
+            if len(members) == 1:
+                continue
+
+            # Primary = the device with the most non-empty fields (richest
+            # protocol data); deterministically break ties by key order.
+            def richness(k: str) -> tuple:
+                d = devices[k]
+                filled = sum(1 for v in vars(d).values() if v not in (None, "", [], {}, ()))
+                return (filled, -members.index(k))
+
+            primary = max(members, key=richness)
+            for key in members:
+                if key == primary:
+                    continue
+                other = devices[key]
+                # Preserve the folded device's role ("NetBIOS Host", ...) in
+                # discovery_reasons — merge_from only fills device_type when
+                # the primary's is empty.
+                if other.device_type and other.device_type not in (
+                    devices[primary].device_type,
+                    *devices[primary].discovery_reasons,
+                ):
+                    devices[primary].discovery_reasons.append(other.device_type)
+                merged = devices[primary].merge_from(other)
+                self.logger.debug("dedup: folded %s into %s (updated: %s)", key, primary, merged)
+                del devices[key]
+
+        self.logger.debug("dedup: %d devices after merge (was %d)", len(devices), original_count)
 
     def _fill_routing_salts(self, listeners: Dict[str, Any]) -> None:
         """Fill OSPF/RIP/EIGRP credential ``net_salt`` from raw packet bytes.

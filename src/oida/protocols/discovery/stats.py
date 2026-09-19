@@ -138,9 +138,80 @@ SERVICE_PORTS = {
     (27017, "tcp"): "MongoDB",
     # BFD
     (3784, "udp"): "BFD",
+    (3784, "tcp"): "BFD-Control",
     (4784, "udp"): "BFD-Multihop",
+    (4784, "tcp"): "BFD-Multihop-Ctl",
+    # Discovery protocols (multicast/broadcast services)
+    (1900, "udp"): "SSDP",
+    (1900, "tcp"): "UPnP",
+    (3702, "udp"): "WS-Discovery",
+    (5353, "udp"): "mDNS",
+    (5353, "tcp"): "mDNS",
+    (5355, "udp"): "LLMNR",
+    (5355, "tcp"): "LLMNR",
+    (427, "tcp"): "SLP",
+    (427, "udp"): "SLP",
+    (4488, "tcp"): "Niagara Fox-Web",
+    (4488, "udp"): "Niagara Fox-Web",
+    (1911, "tcp"): "Niagara Fox",
+    (1911, "udp"): "Niagara Fox",
+    (24576, "tcp"): "Niagara Fox-Tunnel",
     # TACACS+
     (49, "tcp"): "TACACS+",
+    # Cross-transport fills sourced from nmap-services for ports already
+    # known on the opposite transport (a service listening on the "wrong"
+    # transport was previously invisible to open-port detection).
+    (21, "udp"): "FTP",
+    (22, "udp"): "SSH",
+    (23, "udp"): "Telnet",
+    (25, "udp"): "SMTP",
+    (67, "tcp"): "DHCP-Server",
+    (68, "tcp"): "DHCP-Client",
+    (69, "tcp"): "TFTP",
+    (80, "udp"): "HTTP",
+    (102, "udp"): "S7/ISO-COTP",
+    (110, "udp"): "POP3",
+    (123, "tcp"): "NTP",
+    (135, "udp"): "MSRPC",
+    (137, "tcp"): "NetBIOS-NS",
+    (138, "tcp"): "NetBIOS-DGM",
+    (139, "udp"): "NetBIOS-SSN",
+    (161, "tcp"): "SNMP",
+    (162, "tcp"): "SNMP-Trap",
+    (443, "udp"): "HTTPS",
+    (445, "udp"): "SMB",
+    (500, "udp"): "IKE",
+    (4500, "udp"): "IKE-NAT-T",
+    (502, "udp"): "Modbus/UDP",
+    (5061, "udp"): "SIP/TLS",
+    (546, "udp"): "DHCPv6-Client",
+    (547, "udp"): "DHCPv6-Server",
+    (5900, "udp"): "VNC",
+    (623, "udp"): "IPMI/ASF-RMCP",
+    (636, "udp"): "LDAPS",
+    (749, "udp"): "Kerberos-adm",
+    (802, "tcp"): "Modbus/TLS",
+    (1433, "udp"): "MSSQL",
+    (1434, "udp"): "MSSQL-Browser",
+    (2404, "udp"): "IEC 104",
+    (3306, "udp"): "MySQL",
+    (3389, "udp"): "RDP",
+    (4840, "udp"): "OPC UA",
+    (4843, "udp"): "OPC UA/TLS",
+    (5432, "udp"): "PostgreSQL",
+    (10161, "udp"): "SNMP-DTLS",
+    (10162, "udp"): "SNMP-Trap-DTLS",
+    (11211, "tcp"): "Memcached",
+    (11211, "udp"): "Memcached",
+    (17185, "udp"): "VxWorks-WDB",
+    (20000, "udp"): "DNP3",
+    (20001, "tcp"): "DNP3-Sec",
+    (20001, "udp"): "DNP3-Sec",
+    (34962, "tcp"): "PROFINET RT",
+    (34963, "tcp"): "PROFINET CM",
+    (34964, "tcp"): "PROFINET DCP",
+    (47808, "tcp"): "BACnet",
+    (2222, "tcp"): "EtherNet/IP-Alt",
 }
 
 # Port range constants (RFC 6335)
@@ -973,6 +1044,103 @@ class PassiveStatistics:
                 for op in sorted(self.open_ports.values(), key=lambda x: (x.ip, x.port))
             ],
         }
+
+    def get_tables(self) -> List[Dict[str, Any]]:
+        """Return the stats tables as export-ready dicts (title/headers/rows).
+
+        Mirrors what ``print_summary`` renders to the console, so callers can
+        register these alongside listener harvest tables for file export.
+        """
+        tables: List[Dict[str, Any]] = []
+
+        if self.mac_conversations:
+            sorted_convs = sorted(self.mac_conversations.values(), key=lambda x: -x.packets)
+            tables.append(
+                {
+                    "title": f"MAC Conversations ({len(sorted_convs)})",
+                    "headers": ["Source", "Vendor", "Destination", "Vendor", "Packets", "Bytes"],
+                    "rows": [
+                        [
+                            conv.src,
+                            self._mac_vendor(conv.src),
+                            conv.dst,
+                            self._mac_vendor(conv.dst),
+                            f"{conv.packets:,}",
+                            self._format_bytes(conv.bytes),
+                        ]
+                        for conv in sorted_convs
+                    ],
+                }
+            )
+
+        if self.ip_conversations:
+            sorted_convs = sorted(self.ip_conversations.values(), key=lambda x: -x.packets)
+            rows = []
+            for conv in sorted_convs:
+                src = f"{conv.src}:{conv.src_port}" if conv.src_port else conv.src
+                dst = f"{conv.dst}:{conv.dst_port}" if conv.dst_port else conv.dst
+                src_mac = self._ip_to_mac.get(conv.src, "")
+                dst_mac = self._ip_to_mac.get(conv.dst, "")
+                src_vendor = self._mac_vendor(src_mac) if src_mac else ""
+                dst_vendor = self._mac_vendor(dst_mac) if dst_mac else ""
+                src_hw = (
+                    f"{src_vendor} ({src_mac[-8:]})"
+                    if src_vendor
+                    else src_mac[-8:]
+                    if src_mac
+                    else ""
+                )
+                dst_hw = (
+                    f"{dst_vendor} ({dst_mac[-8:]})"
+                    if dst_vendor
+                    else dst_mac[-8:]
+                    if dst_mac
+                    else ""
+                )
+                rows.append(
+                    [
+                        src,
+                        src_hw,
+                        dst,
+                        dst_hw,
+                        f"{conv.packets:,}",
+                        self._format_bytes(conv.bytes),
+                        conv.protocol or "",
+                    ]
+                )
+            tables.append(
+                {
+                    "title": f"IP Conversations ({len(sorted_convs)})",
+                    "headers": [
+                        "Source",
+                        "MAC/Vendor",
+                        "Destination",
+                        "MAC/Vendor",
+                        "Packets",
+                        "Bytes",
+                        "Service",
+                    ],
+                    "rows": rows,
+                }
+            )
+
+        if self.open_ports:
+            sorted_ports = sorted(self.open_ports.values(), key=lambda x: (x.ip, x.port))
+            rows = []
+            for op in sorted_ports:
+                svc = f"{op.transport}/{op.port}"
+                if op.service and not op.service.startswith(("tcp/", "udp/")):
+                    svc = f"{svc} ({op.service})"
+                rows.append([op.ip, str(op.port), op.transport, svc, op.evidence[:30]])
+            tables.append(
+                {
+                    "title": "Open Ports Detected",
+                    "headers": ["IP", "Port", "Proto", "Service", "Evidence"],
+                    "rows": rows,
+                }
+            )
+
+        return tables
 
     def print_summary(self, logger=None) -> None:
         """Print formatted console summary using NXC-style logger.

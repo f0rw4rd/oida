@@ -2,7 +2,7 @@
 """OIDA service manager — manages mock ICS services for testing and development.
 
 Usage:
-    python services.py up [core|cve|all|<group>|<service>]  # <group> starts core + CVE members; <service> starts one container
+    python services.py up [core|cve|all|<group>|<service>]  # <group> starts core members (add --with-cve for CVE targets)
     python services.py down
     python services.py status [filter] [-v]   # health overview; -v adds per-container detail
     python services.py logs [service...]
@@ -597,7 +597,7 @@ def cmd_up(args: argparse.Namespace) -> int:
 
     else:
         # Treat as protocol group name — delegate to the data-driven group path
-        return _up_proto_impl(stack, quiet_pull=args.quiet_pull)
+        return _up_proto_impl(stack, quiet_pull=args.quiet_pull, with_cve=args.with_cve)
 
 
 def cmd_down(args: argparse.Namespace) -> int:
@@ -1056,10 +1056,7 @@ def cmd_list(args: argparse.Namespace) -> int:
         print()
 
     if filt and not core_rows and not cve_rows:
-        print(
-            f"{YELLOW}[~~]{RST} No services match '{filt}'. "
-            f"Try: python services.py groups"
-        )
+        print(f"{YELLOW}[~~]{RST} No services match '{filt}'. Try: python services.py groups")
     return 0
 
 
@@ -1177,8 +1174,14 @@ def cmd_up_cve(args: argparse.Namespace) -> int:
     return 0
 
 
-def _up_proto_impl(group: str, *, quiet_pull: bool = False) -> int:
-    """Start every service in an oida.group — core AND CVE members.
+def _up_proto_impl(group: str, *, quiet_pull: bool = False, with_cve: bool = False) -> int:
+    """Start every service in an oida.group — core members by default.
+
+    CVE members (services carrying an ``oida.cve`` label) are excluded unless
+    *with_cve* is set: they are vulnerable-by-design targets that must be
+    started deliberately (``up <group> --with-cve`` or ``up-cve <proto>``),
+    and unlike the core mocks many are not published to the registry, so a
+    group up would otherwise trigger a fleet of fragile source builds.
 
     Reads config with the ``vuln-services`` umbrella profile active so CVE
     members of the group resolve (mirrors ``cmd_list``); the actual profiles to
@@ -1189,6 +1192,19 @@ def _up_proto_impl(group: str, *, quiet_pull: bool = False) -> int:
     compose_args = _all_args()
     config = _get_compose_config([*compose_args, "--profile", "vuln-services"])
     services = _resolve_services_by_group(group, compose_args, config=config)
+    if not with_cve:
+        core_only = [
+            s
+            for s in services
+            if not config.get("services", {}).get(s, {}).get("labels", {}).get("oida.cve")
+        ]
+        if core_only != services:
+            skipped = sorted(set(services) - set(core_only))
+            print(
+                f"{YELLOW}[*]{RST} Skipping {len(skipped)} CVE service(s) "
+                f"(opt in with --with-cve or up-cve): {', '.join(skipped)}"
+            )
+        services = core_only
 
     # Fallback: exact compose service name (e.g. `up hl7-mock` to start one
     # container instead of the whole `hl7` group). A group match takes
@@ -1294,7 +1310,7 @@ def _wait_service_healthy(service: str, compose_args: list[str], *, timeout: int
 
 def cmd_up_proto(args: argparse.Namespace) -> int:
     """Start services by oida.group label (alias of `up <group>`)."""
-    return _up_proto_impl(args.group)
+    return _up_proto_impl(args.group, with_cve=getattr(args, "with_cve", False))
 
 
 def cmd_groups(args: argparse.Namespace) -> int:
@@ -1363,6 +1379,12 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="Hide docker pull progress/warnings (default shows normal docker output)",
     )
+    p_up.add_argument(
+        "--with-cve",
+        action="store_true",
+        help="Include CVE/vulnerable services when starting a group "
+        "(they are skipped by default; also available via up-cve)",
+    )
 
     sub.add_parser("down", help="Stop all mock services")
     sub.add_parser("restart", help="Restart mock services")
@@ -1419,6 +1441,11 @@ def build_parser() -> argparse.ArgumentParser:
     # Generic proto command — alias of `up <group>`
     p_proto = sub.add_parser("up-proto", help="Start services by oida.group label")
     p_proto.add_argument("group", help="Protocol group name")
+    p_proto.add_argument(
+        "--with-cve",
+        action="store_true",
+        help="Include CVE/vulnerable services (skipped by default)",
+    )
 
     return parser
 

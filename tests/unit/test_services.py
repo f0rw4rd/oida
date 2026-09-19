@@ -911,8 +911,10 @@ class TestUpCommand:
     """Test the up command with different stack values."""
 
     @staticmethod
-    def _up_args(stack, *, build=False, no_pull=False, quiet_pull=False):
-        return SimpleNamespace(stack=stack, build=build, no_pull=no_pull, quiet_pull=quiet_pull)
+    def _up_args(stack, *, build=False, no_pull=False, quiet_pull=False, with_cve=False):
+        return SimpleNamespace(
+            stack=stack, build=build, no_pull=no_pull, quiet_pull=quiet_pull, with_cve=with_cve
+        )
 
     def test_up_core(self, mock_run):
         with patch.object(dev, "wait_healthy", return_value=True):
@@ -960,7 +962,7 @@ class TestUpCommand:
         with patch.object(dev, "_up_proto_impl", return_value=0) as mock_proto:
             result = dev.cmd_up(self._up_args("hart"))
         assert result == 0
-        mock_proto.assert_called_once_with("hart", quiet_pull=False)
+        mock_proto.assert_called_once_with("hart", quiet_pull=False, with_cve=False)
 
     def test_up_returns_1_on_unhealthy(self, mock_run):
         with patch.object(dev, "wait_healthy", return_value=False):
@@ -1278,12 +1280,14 @@ class TestGroupsCommand:
             rc = dev.cmd_groups(SimpleNamespace())
         assert rc == 1
 
-    def test_up_group_spans_both_compose_files(self, mock_run):
-        """_up_proto_impl must read config with BOTH -f files + vuln-services profile."""
-        seen = {}
+    def test_up_group_spans_both_compose_files(self, mock_run, capsys):
+        """_up_proto_impl must read config with BOTH -f files + vuln-services profile.
+
+        CVE members are excluded from the up unless with_cve=True."""
+        seen = []
 
         def fake_config(compose_args):
-            seen["args"] = compose_args
+            seen.append(compose_args)
             return {
                 "services": {
                     "modbus-mock": {
@@ -1297,6 +1301,7 @@ class TestGroupsCommand:
                     "modbus-cve-x": {
                         "labels": {
                             "oida.group": "modbus",
+                            "oida.cve": "CVE-2024-10918",
                             "oida.ports": "5022",
                             "oida.description": "cve",
                         },
@@ -1310,13 +1315,43 @@ class TestGroupsCommand:
                 rc = dev._up_proto_impl("modbus")
         assert rc == 0
         # config read spans both compose files with the CVE umbrella profile
-        assert dev.COMPOSE_CORE in seen["args"]
-        assert dev.COMPOSE_CVE in seen["args"]
-        assert "--profile" in seen["args"] and "vuln-services" in seen["args"]
-        # the CVE member's vuln-modbus profile was auto-collected for `up`
+        first_args = seen[0]
+        assert dev.COMPOSE_CORE in first_args
+        assert dev.COMPOSE_CVE in first_args
+        assert "--profile" in first_args and "vuln-services" in first_args
         up_call = next(c[0][0] for c in mock_run.call_args_list if "up" in c[0][0])
-        assert "vuln-modbus" in up_call
+        # core member started; CVE member skipped by default
+        assert "modbus-mock" in up_call
+        assert "modbus-cve-x" not in up_call
+        assert "Skipping 1 CVE service" in capsys.readouterr().out
+
+    def test_up_group_with_cve_includes_cve_members(self, mock_run, capsys):
+        """with_cve=True opts back into the CVE members of the group."""
+        config = {
+            "services": {
+                "modbus-mock": {
+                    "labels": {"oida.group": "modbus", "oida.description": "core"},
+                    "profiles": [],
+                },
+                "modbus-cve-x": {
+                    "labels": {
+                        "oida.group": "modbus",
+                        "oida.cve": "CVE-2024-10918",
+                        "oida.description": "cve",
+                    },
+                    "profiles": ["vuln-modbus"],
+                },
+            }
+        }
+        with patch.object(dev, "_get_compose_config", return_value=config):
+            with patch.object(dev, "_wait_service_healthy", return_value=True):
+                rc = dev._up_proto_impl("modbus", with_cve=True)
+        assert rc == 0
+        up_call = next(c[0][0] for c in mock_run.call_args_list if "up" in c[0][0])
         assert "modbus-mock" in up_call and "modbus-cve-x" in up_call
+        # the CVE member's vuln-modbus profile was collected for `up`
+        assert "vuln-modbus" in up_call
+        assert "Skipping" not in capsys.readouterr().out
 
 
 # ---------------------------------------------------------------------------
