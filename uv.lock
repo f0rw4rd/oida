@@ -1839,8 +1839,8 @@ requires-dist = [
     { name = "oida-pyshark", marker = "extra == 'pcap'", specifier = "==0.6.1.post1" },
     { name = "paho-mqtt", marker = "extra == 'mqtt'", specifier = "==2.1.0" },
     { name = "pre-commit", marker = "extra == 'dev'", specifier = ">=4.5.1" },
-    { name = "profinet-py", marker = "extra == 'discovery'", specifier = "==0.6.3" },
-    { name = "profinet-py", marker = "extra == 'profinet'", specifier = "==0.6.3" },
+    { name = "profinet-py", marker = "extra == 'discovery'", specifier = "==0.6.5" },
+    { name = "profinet-py", marker = "extra == 'profinet'", specifier = "==0.6.5" },
     { name = "psutil", marker = "extra == 'discovery'", specifier = "==7.2.2" },
     { name = "pyads", marker = "extra == 'ads'", specifier = "==3.5.2" },
     { name = "pyasn1", marker = "extra == 'fuzz'", specifier = "==0.6.3" },
@@ -1976,14 +1976,14 @@ wheels = [
 
 [[package]]
 name = "profinet-py"
-version = "0.6.3"
+version = "0.6.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "construct" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/f7/a1/574b6b0c388b2d1474a0976bb44d276fb0dec14ffb83116e0e43389bc82a/profinet_py-0.6.3.tar.gz", hash = "sha256:c3085b945c6955e883ecf67e5849c4ff06fca0c0b3d260ff9d16ca0294427f81", size = 235185, upload-time = "2026-08-19T18:56:42.771Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/09/4c/7ee5bc2c85c02f2f1cc2b7b7556d873bea16b8b89f4b7b2fc3cf1dc91c1b/profinet_py-0.6.5.tar.gz", hash = "sha256:009a437a9ecc3ed313e89e6fd5520b1ead5cfdc533e8d05007631e2ac2ce4b37", size = 240064, upload-time = "2026-09-15T12:25:49.874Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/e4/6d/8052fe66956ebd7857818db9a46d6b48b02b39c65559b56cdbb2db87173d/profinet_py-0.6.3-py3-none-any.whl", hash = "sha256:df982012a0c78c7d74d93f117ec817063145388c44ed4ba4d2df35ba17cab403", size = 173563, upload-time = "2026-08-19T18:56:41.1Z" },
+    { url = "https://files.pythonhosted.org/packages/1c/32/86b46acba67845a4d5ec5a25e94d46b939bdcca25996c7f1b11fb6c218c1/profinet_py-0.6.5-py3-none-any.whl", hash = "sha256:6d98dd4037b2de6e1b21252600488fe80bc842a361d0c3b78140e60a331de055", size = 175363, upload-time = "2026-09-15T12:25:48.218Z" },
 ]
 
 [[package]]

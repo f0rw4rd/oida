@@ -64,7 +64,7 @@ can = ["python-can==4.6.1"]
 # Ships sdist-only, so it is compiled at install time (needs a C toolchain).
 coap = ["aiocoap==0.4.17", "cbor2==6.1.2", "DTLSSocket==0.2.3"]
 dicom = ["pynetdicom==3.0.4", "pydicom==3.0.2"]
-discovery = ["zeroconf==0.149.16", "scapy==2.7.0", "psutil==7.2.2", "profinet-py==0.6.3", "defusedxml==0.7.1"]
+discovery = ["zeroconf==0.149.16", "scapy==2.7.0", "psutil==7.2.2", "profinet-py==0.6.5", "defusedxml==0.7.1"]
 dnp3 = ["yadnp3==3.2.1.1"]
 ethercat = ["pysoem==1.1.13; sys_platform != 'win32'"]
 ethernetip = ["pycomm3==1.2.16", "cryptography>=43.0.0"]
@@ -87,7 +87,7 @@ opcua = ["asyncua==1.1.8"]
 # upstream's unreleased tshark-4.6 EK fixes. A direct git+https URL here would
 # make PyPI reject the whole `oida` upload (direct-URL deps are not allowed).
 pcap = ["oida-pyshark==0.6.1.post1"]
-profinet = ["profinet-py==0.6.3"]
+profinet = ["profinet-py==0.6.5"]
 snap7 = ["python-snap7==3.0.0"]
 snmp = ["pysnmp==7.1.27"]
 tase2 = ["pyiec61850-ng==1.6.1.9"]
