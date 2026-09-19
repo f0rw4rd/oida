@@ -13,7 +13,6 @@ tests/integration/
 ├── test_mock_services.py    # Main unittest-based integration tests
 ├── pytest_tests.py          # Pytest-based tests with fixtures
 ├── run_tests.py             # Enhanced test runner with CLI options
-├── requirements.txt         # Test dependencies
 ├── Makefile                 # Convenient test commands
 └── README.md               # This file
 ```
