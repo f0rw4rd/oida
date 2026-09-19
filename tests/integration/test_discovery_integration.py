@@ -670,13 +670,17 @@ class TestDiscoveryCliSudoActiveScans:
                 f"--ics-only did not filter the non-ICS finding:\n{with_filter.combined_output}"
             )
 
+    @pytest.mark.flaky(reruns=2, reruns_delay=3)
     def test_pcap_capture_writes_file(self, cli_runner):
         """[Category A] -w/--pcap + --pcap-max-size + --pcap-filter write a real capture file.
 
         Filter is "ip6" rather than "icmp": the ipv6/dhcpv6 passive
         listeners reliably generate matching loopback traffic during the
         scan window in this environment, whereas an "icmp" filter often
-        sees nothing and would make this test flaky.
+        sees nothing and would make this test flaky. Even with "ip6" the
+        capture occasionally finishes with zero matching packets under
+        parallel-lane load (no "Wrote:" line) -- rerun net for that; the
+        capture itself passes in isolation.
         """
         result = cli_runner.run(
             "discovery",

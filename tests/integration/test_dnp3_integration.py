@@ -1676,8 +1676,12 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
     # Output Format Tests
     # ========================================================================
 
+    @pytest.mark.flaky(reruns=2, reruns_delay=3)
     def test_verbose_output(self, cli_runner, target, port, docker_services):
-        """Test verbose output flag [Category A]"""
+        """Test verbose output flag [Category A], with a rerun net for the known
+        connect flake (same opendnp3 transient channel-open class as
+        test_basic_discovery above: passes in isolation, non-zero exit under
+        parallel-lane socket pressure)."""
         result = cli_runner.run(
             self.protocol_name,
             target,
