@@ -177,3 +177,6 @@ reference/
 
 # Maintainer dev-container (references private infra; not for public tree)
 .devcontainer/
+# Sibling-repo clone of the C fuzzing agent (f0rw4rd/oida-fuzzing-agent), for
+# when the parent dir isn't writable -- tests find it here too.
+/oida-fuzzing-agent/

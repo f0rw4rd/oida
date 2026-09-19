@@ -47,8 +47,16 @@ def _agent_src() -> Path:
             candidates.append(repo_root.parent / "oida-fuzzing-agent")
 
     # Sibling next to the current checkout root (main checkout: .../pro/oida ->
-    # .../pro/oida-fuzzing-agent).
+    # .../pro/oida-fuzzing-agent). If that parent isn't writable, the agent is
+    # commonly cloned INSIDE the oida repo (.../pro/oida/oida-fuzzing-agent)
+    # -- accepted there too (gitignored).
     candidates.append(here.parents[4] / "oida-fuzzing-agent")
+    if ".claude" in parts:
+        idx = parts.index(".claude")
+        if idx >= 1 and parts[idx : idx + 2] == (".claude", "worktrees"):
+            candidates.append(Path(*parts[:idx]) / "oida-fuzzing-agent")
+    else:
+        candidates.append(here.parents[2] / "oida-fuzzing-agent")
 
     for cand in candidates:
         if all((cand / f).exists() for f in SRC_FILES):
