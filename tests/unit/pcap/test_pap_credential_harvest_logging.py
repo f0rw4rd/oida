@@ -7,12 +7,12 @@ is intended (see the memory note ``credential-logging-is-intended``), so these
 tests pin the harvest-display behavior rather than forbid it.
 
 They ALSO document a real testing pitfall that the audit surfaced: oida's module
-loggers set ``propagate=False`` (``ics_logger.py``), so pytest's ``caplog`` --
-which listens on the root logger via propagation -- captures NOTHING from a
-listener. Any future test that needs to inspect what a listener logs (for any
-reason) must attach a handler DIRECTLY to the module logger, as
-``capture_module_log`` does here; a ``caplog``-based assertion would pass without
-testing anything.
+loggers set ``propagate=False`` (``ics_logger.py``), so up to pytest 9.0
+pytest's ``caplog`` -- which hooks the root logger via propagation -- captured
+NOTHING from a listener. pytest 9.1 (#3697) added capture for
+non-propagating loggers, so caplog works again; the direct-attach
+``capture_module_log`` helper below remains the version-independent shape (see
+``test_caplog_cannot_capture_a_module_logger`` for the history).
 """
 
 import logging
@@ -56,9 +56,8 @@ class _ListHandler(logging.Handler):
 def capture_module_log(logger, level=logging.INFO):
     """Capture records emitted by ``logger`` by attaching a handler to it directly.
 
-    Do NOT use pytest ``caplog`` for oida module loggers: they set
-    ``propagate=False``, so their records never reach the root logger caplog
-    hooks -- caplog would capture nothing and the assertion would be vacuous.
+    Version-independent capture for oida module loggers (``propagate=False``):
+    caplog was blind to them up to pytest 9.0 and works again from 9.1 (#3697).
     """
     handler = _ListHandler()
     handler.setLevel(level)
@@ -101,10 +100,22 @@ def test_module_logger_does_not_propagate():
 
 
 def test_caplog_cannot_capture_a_module_logger(caplog):
-    """caplog captures nothing from a listener (propagate=False) -- the pitfall.
+    """caplog DOES capture a propagate=False logger as of pytest 9.1 (#3697).
 
-    Guards future test authors: inspecting listener output requires a
-    direct-attach handler (capture_module_log), never caplog.
+    History / guard for future test authors: oida module loggers set
+    ``propagate=False`` (ics_logger.py), and up to pytest 9.0 caplog -- which
+    hooks the root logger -- captured NOTHING from them, so a caplog-based
+    assertion on listener output silently asserted nothing. pytest 9.1
+    (logging capture for non-propagating loggers) closed that blind spot and
+    inverted this test's premise. Both capture shapes now work:
+
+    * caplog is safe again for listener-log assertions on pytest >= 9.1;
+    * the direct-attach ``capture_module_log`` helper stays valid (and stays
+      the version-independent shape -- it does not depend on caplog internals).
+
+    The propagate=False property itself (and thus the historical pitfall for
+    anything reading the root logger other than caplog) is still pinned by
+    test_module_logger_does_not_propagate above.
     """
     listener = PAPPassiveListener(interface="lo", timeout=1)
     secret = "caplog-blind-pw"
@@ -113,5 +124,5 @@ def test_caplog_cannot_capture_a_module_logger(caplog):
     with caplog.at_level(logging.INFO):
         listener.process_packet(pkt)
 
-    # Emitted (proven via direct attach above) but invisible to caplog.
-    assert secret not in caplog.text
+    # pytest >= 9.1: caplog sees non-propagating logger records too.
+    assert secret in caplog.text
