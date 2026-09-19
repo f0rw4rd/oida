@@ -991,7 +991,9 @@ LISTENER_PCAP_CASES: list[dict] = [
         "id": "tls",
         "module": "tls",
         "cls": "TLSPassiveListener",
-        "filter": "tls.handshake or tls.alert_message",
+        # dtls.* included: the listener accepts the dtls layer too, and the
+        # all-pcaps sweep runs this filter against DTLS-only fixtures.
+        "filter": ("tls.handshake or tls.alert_message or dtls.handshake or dtls.alert_message"),
         "pcap": "tls/zeek_client-certificate.pcap",
     },
     {
@@ -1449,6 +1451,23 @@ _COVERAGE_DECODE_AS: dict[str, dict] = {
     # MQTT on non-standard ports — without decode_as tshark sees only TCP.
     "mqtt/emreekin_mqtt_example.pcap": {"tcp.port==13600": "mqtt"},
     "mqtt/ndpi_coap_mqtt.pcap": {"tcp.port==17501": "mqtt"},
+    # Modbus RTU encapsulated in TCP on the standard port: tshark defaults
+    # port 502 to mbtcp; the payload is an RTU frame (slave addr + PDU), so
+    # force the mbrtu dissector instead.
+    "modbus/oida_modbus_rtu_over_tcp.pcap": {"tcp.port==502": "mbrtu"},
+    # Modbus fuzzer traffic on ephemeral client port 2582 (server side IS on
+    # 502 but tshark only auto-dissects the server-listener direction).
+    "modbus/bro_modbus_fuzz72.pcap": {"tcp.port==2582": "mbtcp"},
+    # DNP3 on a non-standard port (20001, not 20000).
+    "dnp3/zeek_dnp3_read_p20001.pcap": {"tcp.port==20001": "dnp3"},
+    # Redis RESP on a non-standard port (56379, not 6379).
+    "redis/dataflow_redis.pcap": {"tcp.port==56379": "resp"},
+    # IRC with STARTTLS: the TLS handshake inside a plain-IRC capture on 6667.
+    "tls/zeek_irc-starttls.pcap": {"tcp.port==6667": "tls"},
+    # DNS inside an IP packet whose ip.proto field says 255 (reserved) instead
+    # of 17 — a fuzzed/mislabeled header; force the UDP dissector so the dns
+    # payload underneath is actually parsed.
+    "dns/zeek_proto255.pcap": {"ip.proto==255": "udp"},
 }
 
 

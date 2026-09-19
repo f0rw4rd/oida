@@ -310,6 +310,16 @@ class RTSPPassiveListener(PySharkListenerBase):
             if not key or key == "":
                 self._parse_header_lines(val_str, headers)
 
+        # Source 3: EK mode parks non-registered header lines (Server,
+        # User-Agent, Authorization, ...) in a generic "text" field as a list
+        # of raw header lines.  all_field_names skips it because the EK key
+        # has no layer prefix, but direct attribute access works.
+        generic_text = getattr(rtsp_layer, "text", None)
+        if generic_text:
+            entries = generic_text if isinstance(generic_text, list) else [generic_text]
+            for entry in entries:
+                self._parse_header_lines(str(entry), headers)
+
         return headers
 
     @staticmethod

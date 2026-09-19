@@ -122,14 +122,12 @@ class TestRTSPPassiveEK:
         assert len(sessions) >= 1, "No session IDs extracted"
 
     def test_rtsp_server_header(self):
-        """Server header is extracted from RTSP responses (XML mode only).
+        """Server header is extracted from RTSP responses.
 
-        In EK mode, tshark does not expose Server/User-Agent/Authorization
-        as separate fields in the RTSP layer.  These are only available
-        as unnamed fields in XML mode.
+        The listener pulls Server/User-Agent/Authorization from the generic
+        EK "text" field (header lines without registered dissectors) in EK
+        mode, and from unnamed fields in XML mode.
         """
-        from .conftest import _ek_mode_available
-
         listener, devices, result = _run_listener_test(
             "rtsp",
             "RTSPPassiveListener",
@@ -140,10 +138,10 @@ class TestRTSPPassiveEK:
         servers = {
             ix.details.get("server", "") for ix in listener.interactions if ix.details.get("server")
         }
-        if _ek_mode_available:
-            # EK mode cannot extract Server header from RTSP layer
-            pytest.skip("RTSP Server header not available in EK mode")
         assert len(servers) >= 1, "No server headers extracted"
+        assert any("Hikvision" in s for s in servers), (
+            f"Expected Hikvision server header; got: {servers}"
+        )
 
     def test_rtsp_basic_auth_credentials(self):
         """Basic auth credentials are extracted from Authorization header.

@@ -92,8 +92,11 @@ class TLSPassiveListener(PySharkListenerBase):
     """
 
     PROTOCOL_NAME = "tls"
-    DISPLAY_FILTER = "tls.handshake or tls.alert_message"
-    REQUIRED_LAYERS = ("tls",)
+    # DTLS (TLS over UDP — BACnet/SC, CoAPs, QUIC-less handshakes) dissects as
+    # a separate "dtls" layer with a mirroring field tree, so both the capture
+    # filter and the layer gate accept either.
+    DISPLAY_FILTER = "tls.handshake or tls.alert_message or dtls.handshake or dtls.alert_message"
+    REQUIRED_LAYERS = ("tls", "dtls")
     # Ports where the *server* side typically sends the Certificate message.
     # Used to disambiguate server-cert vs client-cert direction.
     _SERVER_PORTS = frozenset(
@@ -187,9 +190,15 @@ class TLSPassiveListener(PySharkListenerBase):
     def process_packet(self, packet) -> None:
         """Process TLS handshake packet using PyShark."""
         if not hasattr(packet, "tls"):
-            return
-
-        tls_layer = packet.tls
+            # DTLS (TLS over UDP — BACnet/SC, CoAPs, S7comm-plus over UDP):
+            # tshark dissects it as a separate "dtls" layer, but the field
+            # tree mirrors tls.* (handshake_type, alert_message_desc, ...)
+            # so the same parsing path applies unchanged.
+            if not hasattr(packet, "dtls"):
+                return
+            tls_layer = packet.dtls
+        else:
+            tls_layer = packet.tls
 
         # Fix multi-record EK layers BEFORE any field access.
         self._normalize_multi_record_layer(tls_layer)
