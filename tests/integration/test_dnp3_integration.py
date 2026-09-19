@@ -119,6 +119,18 @@ FT_MASTER_ADDR = 2
 class TestDnp3Integration(BaseProtocolIntegrationTest):
     """Integration tests for DNP3 scanner"""
 
+    @pytest.mark.flaky(reruns=2, reruns_delay=3)
+    def test_basic_discovery(self, cli_runner, target, port):
+        """Base discovery, with a rerun net for the known connect flake.
+
+        Under parallel-lane socket pressure the opendnp3 channel open can
+        fail transiently (process exits non-zero with empty stderr; passes
+        in isolation and the scanner's connect() already retries once --
+        see scanner.py wait_for_open). Same treatment as the KNX tunnel
+        tests; drop when the flake is root-caused.
+        """
+        super().test_basic_discovery(cli_runner, target, port)
+
     @property
     def protocol_name(self) -> str:
         return "dnp3"
