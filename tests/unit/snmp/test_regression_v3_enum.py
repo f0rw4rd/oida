@@ -89,6 +89,48 @@ class TestV5EnumV3AutoVersion:
         assert called.get("ran"), "enum_v3 branch never ran -- version guard rejected -V auto"
         assert s.version == "3"
 
+
+# ---------------------------------------------------------------------------
+# V6 -- -E <userfile> with one password must NOT skip the --confirm gate
+# ---------------------------------------------------------------------------
+
+
+class TestV6EnumV3UserFileConfirmGate:
+    def _run_with(self, monkeypatch, enum_v3_target, expect_ran):
+        s = _make_scanner(
+            snmp_version="auto",
+            enum_v3="x",
+            confirm_brute=False,
+            snmp_auth_pass="admin123",
+            snmp_auth_protocol="SHA",
+        )
+        s.enum_v3_target_user = enum_v3_target
+        called = {}
+        monkeypatch.setattr(s, "check_dependencies", lambda: True)
+        monkeypatch.setattr(s, "validate_target", lambda h, p: True)
+        monkeypatch.setattr(s, "export_results", lambda: None)
+
+        def fake_enum_v3():
+            called["ran"] = True
+            return {"valid_users": [], "credentials": []}
+
+        monkeypatch.setattr(s, "_enum_v3", fake_enum_v3)
+        s.run_scan()
+        assert bool(called.get("ran")) is expect_ran
+        return s
+
+    def test_user_file_with_single_password_is_gated(self, monkeypatch, tmp_path):
+        """-E users.txt -A onepass: parse_credential_input opens the file as a
+        user LIST, so _enum_v3 runs the active phase-1 sweep over every user.
+        The outer gate must require --confirm (b28e20e closed only bare -E)."""
+        userfile = tmp_path / "users.txt"
+        userfile.write_text("admin\noperator\nbackup\n")
+        self._run_with(monkeypatch, str(userfile), expect_ran=False)
+
+    def test_single_named_user_with_single_password_still_runs(self, monkeypatch):
+        """The legitimate single-credential skip: -E admin -A admin123, no confirm."""
+        self._run_with(monkeypatch, "admin", expect_ran=True)
+
     def test_enum_users_auto_forces_v3_and_runs(self, monkeypatch):
         s = _make_scanner(snmp_version="auto", enum_users=True, confirm_brute=True)
         assert s._version_auto and s.enum_users

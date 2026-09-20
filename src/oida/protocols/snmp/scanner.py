@@ -436,13 +436,20 @@ class SNMPScanner(
                 # target user) means "discover users then brute", which sweeps
                 # the whole SNMP_V3_USERNAMES list with noAuthNoPriv probes -- an
                 # active operation that must stay gated behind --confirm even
-                # with a single password.
+                # with a single password. A user FILE (`-E users.txt`) must be
+                # gated too: parse_credential_input opens any existing path as
+                # a user LIST, and _enum_v3() then runs the active phase-1
+                # sweep over every listed user (and phase 2 tests the password
+                # against each hit) -- not a single-credential test.
                 is_single_credential = False
                 if self.auth_pass and self.enum_v3_target_user:
                     from ...utils.default_credentials import parse_credential_input
 
                     _pw_list, _ = parse_credential_input(self.auth_pass)
-                    is_single_credential = len(_pw_list) == 1
+                    _user_list, _user_is_file = parse_credential_input(self.enum_v3_target_user)
+                    is_single_credential = (
+                        len(_pw_list) == 1 and not _user_is_file and len(_user_list) == 1
+                    )
                 if not is_single_credential and not self.confirm_brute:
                     self.logger.fail("-E/--enum-v3 requires --confirm (active probing)")
                     return results
