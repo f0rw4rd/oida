@@ -15,8 +15,6 @@ Regression guards for:
   the connection constructor instead of degrading to a logged failure.
 """
 
-import pytest
-
 
 class TestGenCliArgsUsesProvidedArgv:
     """gen_cli_args() must build the parser for the argv it will parse."""
@@ -121,7 +119,6 @@ def _main_with_stub_protocol(cli_module, argv):
 
 
 class _NS:
-
     port = 1234
     verbose = 0
     debug = False

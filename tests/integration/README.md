@@ -341,8 +341,8 @@ pipeline {
 ```python
 def test_new_protocol_scanner(self):
     """Test new protocol scanner"""
-    expected = {'key': 'value'}
-    result = self._run_scanner_test('new_protocol', expected)
+    expected = {"key": "value"}
+    result = self._run_scanner_test("new_protocol", expected)
     # Add specific validations
 ```
 

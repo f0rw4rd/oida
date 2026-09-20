@@ -416,7 +416,6 @@ class TestBugM2FieldDelimiterEscaping:
 # ---------------------------------------------------------------------------
 
 
-
 class TestBugM6DeadDiscoveryFlagsRemoved:
     def test_flags_removed_from_parser(self):
         import argparse

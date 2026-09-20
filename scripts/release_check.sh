@@ -104,7 +104,14 @@ fi
 
 step 5 "Package build (sdist + wheel)"
 DIST_DIR=$(mktemp -d)
-if python -m build --outdir "$DIST_DIR" >/dev/null 2>&1; then
+    # Prefer uv build (fast, no extra dependency); fall back to python -m build
+    # for environments where uv isn't installed but the build package is.
+    if command -v uv >/dev/null 2>&1; then
+        BUILD_CMD=(uv build --out-dir "$DIST_DIR")
+    else
+        BUILD_CMD=(python -m build --outdir "$DIST_DIR")
+    fi
+    if "${BUILD_CMD[@]}" >/dev/null 2>&1; then
     WHEEL=$(ls "$DIST_DIR"/*.whl 2>/dev/null | head -1)
     if [[ -n "$WHEEL" ]]; then
         echo -e "${GREEN}OK${RESET} — $(basename "$WHEEL")"
@@ -169,7 +176,10 @@ rm -rf "$DIST_DIR"
 
 step 7 "Integration tests (Docker mocks)"
 if $FULL; then
-    if docker compose -f docker/mocks/compose.yml ps --status running 2>/dev/null | grep -q "mock"; then
+    # Feed the whole listing through grep (no -q): `grep -q` exits at the
+    # first match, docker compose takes SIGPIPE, and under `set -o pipefail`
+    # the pipeline reads as failed even with mocks running.
+    if docker compose -f docker/mocks/compose.yml ps --status running 2>/dev/null | grep "mock" >/dev/null; then
         if python -m pytest tests/integration/ -v; then
             echo -e "${GREEN}OK${RESET}"
             record "Integration tests" "pass"

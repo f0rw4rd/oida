@@ -42,9 +42,7 @@ class TestRangeSizeCap(unittest.TestCase):
         """The IPv6 cap must match the IPv4 semantics (end - start > max is off by one)."""
         start = int.from_bytes(bytes(16), "big")
         with self.assertRaises(ValueError):
-            parse_ipv6_range(
-                f"[{_v6(start)}]-[{_v6(start + MAX + 1)}]"
-            )
+            parse_ipv6_range(f"[{_v6(start)}]-[{_v6(start + MAX + 1)}]")
 
     def test_cidr_cap_is_consistent(self):
         """A /15 (131070 hosts) must stay rejected - anchor for the cap's intent."""
@@ -70,8 +68,9 @@ class TestMixedSpecHandling(unittest.TestCase):
 
     def test_valid_range_still_expands(self):
         res = parse_targets("192.168.1.1-5")
-        self.assertEqual(res, ["192.168.1.1", "192.168.1.2", "192.168.1.3",
-                               "192.168.1.4", "192.168.1.5"])
+        self.assertEqual(
+            res, ["192.168.1.1", "192.168.1.2", "192.168.1.3", "192.168.1.4", "192.168.1.5"]
+        )
 
     def test_reversed_range_still_raises(self):
         """A *well-formed* but reversed range is operator error - keep the error."""

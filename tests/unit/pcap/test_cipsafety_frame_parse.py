@@ -432,9 +432,7 @@ class TestValidatorFrames:
         listener = _make_listener()
         ix = _feed(listener, _Packet(cipsvalidator={"state": "0"}))
         assert ix.details["validator_state"] == "Unallocated"
-        assert not any(
-            a["category"] == "cipsafety_validator_fault" for a in listener._alerts
-        )
+        assert not any(a["category"] == "cipsafety_validator_fault" for a in listener._alerts)
 
     def test_wire_nonexistent_state_four_is_unknown(self):
         """The dissector never emits 4; it renders Unknown(4) and does NOT
@@ -442,9 +440,7 @@ class TestValidatorFrames:
         listener = _make_listener()
         ix = _feed(listener, _Packet(cipsvalidator={"state": "4"}))
         assert ix.details["validator_state"] == "Unknown(4)"
-        assert not any(
-            a["category"] == "cipsafety_validator_fault" for a in listener._alerts
-        )
+        assert not any(a["category"] == "cipsafety_validator_fault" for a in listener._alerts)
 
     def test_connection_failed_state_raises_alert(self):
         listener = _make_listener()

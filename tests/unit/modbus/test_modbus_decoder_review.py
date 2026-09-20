@@ -147,9 +147,12 @@ class TestBoolMapEntryNotScaledToFloat:
         from oida.protocols.modbus.decoder import ModbusDecoder, _decode_map_entry
 
         dec = ModbusDecoder()
-        assert _decode_map_entry({"name": "x", "type": "u16", "address": 1}, [5], dec)[
-            "value"
-        ] == 5.0
-        assert _decode_map_entry(
-            {"name": "y", "type": "u16", "address": 1, "scale": 0.1}, [50], dec
-        )["value"] == 5.0
+        assert (
+            _decode_map_entry({"name": "x", "type": "u16", "address": 1}, [5], dec)["value"] == 5.0
+        )
+        assert (
+            _decode_map_entry({"name": "y", "type": "u16", "address": 1, "scale": 0.1}, [50], dec)[
+                "value"
+            ]
+            == 5.0
+        )

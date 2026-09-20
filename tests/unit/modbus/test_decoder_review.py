@@ -52,18 +52,14 @@ from oida.protocols.modbus.decoder import (
     ],
 )
 def test_alias_type_register_width_matches_canonical(alias, canonical, width):
-    assert _required_registers({"type": alias}) == width == _required_registers(
-        {"type": canonical}
-    )
+    assert _required_registers({"type": alias}) == width == _required_registers({"type": canonical})
 
 
 def test_decode_with_map_s32_reads_two_registers():
     """A negative s32 (shipped in 6 bundled meter/VFD maps) must decode."""
     raw = -123456 & 0xFFFFFFFF
     registers = {100: raw >> 16, 101: raw & 0xFFFF}
-    register_map = {
-        "registers": {"power": {"address": 100, "type": "s32", "scale": 0.1}}
-    }
+    register_map = {"registers": {"power": {"address": 100, "type": "s32", "scale": 0.1}}}
     result = decode_with_map(registers, register_map)
     assert result["power"]["error"] if "error" in result["power"] else True
     assert result["power"]["value"] == pytest.approx(-12345.6)
@@ -111,9 +107,7 @@ def test_decode_with_map_bool_zero():
 
 @pytest.mark.parametrize("alias", ["str7", "str10", "str20", "string8"])
 def test_decode_with_map_strn_types(alias):
-    register_map = {
-        "registers": {"label": {"address": 100, "type": alias, "length": 8}}
-    }
+    register_map = {"registers": {"label": {"address": 100, "type": alias, "length": 8}}}
     result = decode_with_map({100: 0x4865, 101: 0x6C6C, 102: 0x6F00, 103: 0x0000}, register_map)
     assert "error" not in result["label"], result["label"]
     assert result["label"]["value"] == "Hello"
@@ -217,9 +211,12 @@ def test_encode_value_canonical_still_unchanged(resolver_with_alias_entries):
 
 
 def test_map_resolver_registers_needed_alias(resolver_with_alias_entries):
-    assert resolver_with_alias_entries.get_registers_needed(
-        resolver_with_alias_entries.resolve("power_s32")
-    ) == 2
+    assert (
+        resolver_with_alias_entries.get_registers_needed(
+            resolver_with_alias_entries.resolve("power_s32")
+        )
+        == 2
+    )
 
 
 # ---------------------------------------------------------------------------

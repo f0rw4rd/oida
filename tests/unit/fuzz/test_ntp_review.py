@@ -56,8 +56,12 @@ def test_monlist_attack_implementation_and_reqcode_octets(nodes):
     MON_GETLIST_1 (0x2A) at octet 3, per the real req_pkt layout
     (rm_vn_mode, auth_seq, implementation, request)."""
     data = nodes["NTP_Monlist_Attack"].render()
-    assert data[2] == 0x03, f"expected implementation=0x03 (IMPL_XNTPD) at octet 2, got {data[2]:#x}"
-    assert data[3] == 0x2A, f"expected request code=0x2A (MON_GETLIST_1) at octet 3, got {data[3]:#x}"
+    assert data[2] == 0x03, (
+        f"expected implementation=0x03 (IMPL_XNTPD) at octet 2, got {data[2]:#x}"
+    )
+    assert data[3] == 0x2A, (
+        f"expected request code=0x2A (MON_GETLIST_1) at octet 3, got {data[3]:#x}"
+    )
 
 
 def test_private_request_implementation_and_reqcode_octets(nodes):

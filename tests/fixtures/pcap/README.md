@@ -171,13 +171,16 @@ from scapy.all import rdpcap
 
 PCAP_DIR = Path(__file__).parent / "fixtures" / "pcap"
 
+
 def test_modbus_parsing():
     packets = rdpcap(str(PCAP_DIR / "modbus" / "cisagov_modbus_example.pcap"))
     assert len(packets) > 0
 
+
 def test_s7comm_parsing():
     packets = rdpcap(str(PCAP_DIR / "s7comm" / "cisagov_snap7.pcap"))
     assert len(packets) > 0
+
 
 def test_opcua_encrypted():
     packets = rdpcap(str(PCAP_DIR / "opcua" / "wireshark_opcua_encrypted.pcapng"))

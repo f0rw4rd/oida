@@ -261,8 +261,7 @@ class TestFuzzIntegerWidths:
         assert result["restore_failures"] == 0
         assert host.written, "nothing was ever written"
         assert host.written[-1] == 5_000_000_000, (
-            f"restore narrowed the Int64 to {host.written[-1]} "
-            "(data[:4] slice truncated the value)"
+            f"restore narrowed the Int64 to {host.written[-1]} (data[:4] slice truncated the value)"
         )
 
     def test_int32_still_works(self):

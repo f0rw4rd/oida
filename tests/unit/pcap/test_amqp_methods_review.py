@@ -32,7 +32,6 @@ import pytest
 
 from oida.pcap.amqp import (
     AMQP_BASIC_METHODS,
-    AMQP_CHANNEL_METHODS,
     AMQP_CONNECTION_METHODS,
     AMQP_EXCHANGE_METHODS,
     AMQP_METHOD_MAPS,
@@ -157,5 +156,7 @@ def test_secure_is_treated_as_broker_originated():
     import oida.pcap.amqp as amqp_mod
 
     src = inspect.getsource(amqp_mod)
-    block = src[src.index("is_response = method_name in (") : src.index(") or (method_name.endswith")]
+    block = src[
+        src.index("is_response = method_name in (") : src.index(") or (method_name.endswith")
+    ]
     assert '"Secure"' in block, "broker-originated allowlist must list Secure"

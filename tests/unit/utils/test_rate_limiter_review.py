@@ -47,6 +47,7 @@ class TestRateLimiterClockSource(unittest.TestCase):
         self._real = (time.time, time.monotonic, time.sleep)
         time.time = lambda: self.clocks.wall
         time.monotonic = lambda: self.clocks.mono
+
         # Record requested sleeps instead of actually sleeping, and let the
         # monotonic clock advance by the slept amount as it would in reality.
         def fake_sleep(seconds):

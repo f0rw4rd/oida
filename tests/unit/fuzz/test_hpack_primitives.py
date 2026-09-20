@@ -11,7 +11,6 @@ works correctly:
 Note: hpack.Decoder.decode() returns list[tuple[str, str]], not bytes tuples.
 """
 
-
 from tests.service_gate import require_import, require_service
 
 hpack = require_import("hpack", reason="hpack library not installed")

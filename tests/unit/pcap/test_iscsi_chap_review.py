@@ -55,7 +55,7 @@ def _make_listener():
 
 
 def test_chap_extracted_via_pingdata_fallback_when_keyvalue_absent():
-    """"ping_data" never matched (the real field sanitizes to "pingdata");
+    """ "ping_data" never matched (the real field sanitizes to "pingdata");
     with no working fallback, CHAP text carried in a non-keyvalue field was
     silently lost."""
     listener = _make_listener()

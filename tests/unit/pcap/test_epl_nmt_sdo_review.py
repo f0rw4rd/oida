@@ -146,7 +146,12 @@ def test_nmt_state_table_matches_the_registry():
 
 @pytest.mark.parametrize(
     "code,name",
-    [(0x19, "Initialising"), (0x1C, "NotActive"), (0x5D, "PreOperational2"), (0x6D, "ReadyToOperate")],
+    [
+        (0x19, "Initialising"),
+        (0x1C, "NotActive"),
+        (0x5D, "PreOperational2"),
+        (0x6D, "ReadyToOperate"),
+    ],
 )
 def test_reused_codes_now_carry_the_right_name(code, name):
     """These four codes were present but under the wrong state name."""
