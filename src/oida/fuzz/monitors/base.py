@@ -271,6 +271,13 @@ class ProtocolMonitor(BaseMonitor):
         # half-responsive target still trips the crash threshold over time.
         self.consecutive_successes = 0
         self.last_check_time: Optional[float] = None
+        # Per-case failure marker for the rate-limiter path. Set when a probe
+        # round fully failed during the CURRENT case; cleared at the start of
+        # each case. The rate limiter reports this instead of the lingering
+        # consecutive_failures counter (which round-2 deliberately made sticky
+        # across cases to catch intermittent targets, and which would
+        # otherwise poison every later case's verdict).
+        self._failed_this_case: bool = False
 
         # Online timeout adaptation (armed by the calibration phase when enabled).
         # Stay None for the static default behavior.
@@ -435,6 +442,10 @@ class ProtocolMonitor(BaseMonitor):
             )
             self.consecutive_failures = 0
             self.consecutive_successes = 0
+            # The re-probe disproved this case's failure: don't leave the
+            # per-case marker armed, or a rate-limited post_send for the same
+            # case would still report it.
+            self._failed_this_case = False
             self.last_check_time = time.time()
             return False
         self._unresponsive_corroborated = True
@@ -463,15 +474,18 @@ class ProtocolMonitor(BaseMonitor):
             return self._try_recovery(fuzz_data_logger)
 
         # Rate limit: minimum 0.2s between checks. When rate-limited we skip the
-        # probe, but we must NOT unconditionally report "healthy" -- post_send
-        # fires microseconds after pre_send stamps last_check_time, so returning
-        # True here would make the post-send check a no-op that masks a target the
-        # monitor already knows is failing. Return the LAST KNOWN verdict instead:
-        # healthy only if not crashed and no failures have accrued this episode.
-        # (crashed=True short-circuits above via recovery, so in practice this
-        # reflects consecutive_failures, but the crashed guard is kept for safety.)
+        # probe; report this case's verdict only. A fully-failed probe round in
+        # the CURRENT case (_failed_this_case, set below / by pre_send) fails
+        # this check, so the failure is not masked by the post-send probe being
+        # skipped. The lingering consecutive_failures counter is deliberately
+        # NOT consulted: boofuzz treats a False return from post_send as
+        # "crash detected on this case" (log_fail -> failed_test_cases ->
+        # recorded crash + crashing_primitives accrual), and round-2 made that
+        # counter sticky across cases (a clean streak clears it), so reporting
+        # it here would poison every rate-limited post-send after a single
+        # transient blip on a fast target.
         if self.last_check_time and (time.time() - self.last_check_time < 0.2):
-            return not self.crashed and self.consecutive_failures == 0
+            return not self._failed_this_case
 
         self.logger.debug(f"Checking target (test_case={self.test_case_count})")
 
@@ -512,6 +526,7 @@ class ProtocolMonitor(BaseMonitor):
         self.consecutive_successes = 0
         self.consecutive_failures += 1
         self.last_check_time = time.time()
+        self._failed_this_case = True
         self._on_probe_timeout()
 
         if self.consecutive_failures >= self.failure_threshold:
@@ -841,6 +856,10 @@ class ProtocolMonitor(BaseMonitor):
         # negative) check_interval would raise ZeroDivisionError here; treat a
         # non-positive interval as "check every case" (effectively 1).
         interval = self.check_interval if self.check_interval > 0 else 1
+        # New case: any per-case failure marker from the previous case is
+        # stale. Clear it on EVERY pre_send (probing or interval-skipped) so a
+        # rate-limited post_send never reports a previous case's failure.
+        self._failed_this_case = False
         if self.test_case_count % interval != 0:
             return True
 

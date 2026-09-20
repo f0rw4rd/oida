@@ -162,3 +162,156 @@ class TestResilientFastPathStillReconnects:
         assert conn._recv_no_wait(1024, poll_seconds=0.01) == b""
         assert conn.last_recv_was_reset is True
         assert conn.effectiveness["resets"] == 1
+
+
+# ---------------------------------------------------------------------------
+# Bug C: a lingering below-threshold failure streak poisoned case results
+# ---------------------------------------------------------------------------
+
+
+class _SubThresholdMon:
+    crashed = False
+    consecutive_failures = 1
+    crash_info = None
+
+
+class _DeclaredMon:
+    crashed = True
+    consecutive_failures = 3
+    crash_info = {"target": "1.2.3.4", "timestamp": "2026-09-20T00:00:00"}
+
+
+class _NestedMon:
+    crashed = False
+    monitors = [_DeclaredMon()]
+
+
+def _record_one_case(monitors):
+    """Run TestCaseManager's record_callback once against stub monitors."""
+    from unittest.mock import MagicMock
+
+    from src.oida.fuzz.core.database.mock import MockDatabase
+    from src.oida.fuzz.core.session.manager import TestCaseManager
+
+    class _FakeLog:
+        def display(self, *a, **k):
+            pass
+
+        success = warning = debug = fail = display
+
+    class _Cfg:
+        session_filename = "/tmp/x"
+
+    class _Fuzzer:
+        log = _FakeLog()
+        config = _Cfg()
+        _session = None
+
+    mgr = TestCaseManager.__new__(TestCaseManager)
+    mgr.fuzzer = _Fuzzer()
+    mgr._log = _FakeLog()
+    mgr.read_only = False
+    mgr.database = MockDatabase()
+    mgr._effectiveness = {}
+    mgr._eff_base = None
+    mgr._eff_snapshot = None
+    mgr._record_failures = 0
+
+    captured = []
+    mgr.record_test_case = lambda **kw: captured.append(kw)
+
+    fake_session = MagicMock()
+    fake_session.total_mutant_index = 42
+    fake_session.fuzz_node.name = "MQTT_Publish"
+    fake_session.last_send = b"\x30\x05pay"
+    fake_session._fuzz_data_logger = None
+    fake_session.is_paused = False
+    fake_session.crashing_primitives = {}
+    fake_session.monitor_results = {}
+    fake_target = MagicMock()
+    fake_target.monitors = monitors
+    registered = {}
+    fake_session.register_post_test_case_callback = lambda cb: registered.__setitem__("cb", cb)
+    mgr.fuzzer.session = fake_session
+    mgr.register_callbacks()
+    registered["cb"](fake_target, None, fake_session)
+    return captured[0]
+
+
+class TestLingeringFailureStreakDoesNotFakeCrashes:
+    """Round-3 find: record_callback's fallback on consecutive_failures > 0
+    marked every later case as a crash after ONE transient probe failure
+    (8/15 cases in simulation), because round-2 made the counter deliberately
+    sticky below threshold and it is >0 on interval-skipped cases that were
+    never probed at all."""
+
+    def test_sub_threshold_streak_is_not_a_crash(self):
+        row = _record_one_case([_SubThresholdMon()])
+        assert row["result"] == "pass"
+        assert row["crash_info"] is None
+
+    def test_declared_crash_is_still_recorded(self):
+        row = _record_one_case([_DeclaredMon()])
+        assert row["result"] == "crash"
+        assert "1.2.3.4" in row["crash_info"]
+
+    def test_nested_declared_crash_is_still_recorded(self):
+        row = _record_one_case([_NestedMon()])
+        assert row["result"] == "crash"
+
+
+class TestRateLimitedPostSendVerdict:
+    """Round-3 find: the monitor's rate limiter reported the sticky
+    consecutive_failures counter, so on fast protocols (transmit << 0.2s)
+    every post-send after a probing pre-send returned False, which boofuzz
+    converts into log_fail -> a crash record + crashing_primitives accrual."""
+
+    def _mon(self, results):
+        from src.oida.fuzz.monitors.base import ProtocolMonitor
+
+        class _Scripted(ProtocolMonitor):
+            def __init__(self):
+                super().__init__(
+                    "127.0.0.1",
+                    1,
+                    check_interval=1,
+                    retry_count=1,
+                    failure_threshold=3,
+                    max_recovery_attempts=0,
+                )
+                self._script = list(results)
+                self.corroboration_delay = 0.0
+                self.recovery_backoff_base = 0.0
+                self.recovery_backoff_cap = 0.0
+                self.recovery_probe_timeout = 0.0
+
+            def _check_alive_once(self, fuzz_data_logger=None):
+                r = self._script.pop(0) if self._script else self._script_last
+                self._script_last = r
+                self._set_probe_evidence("ok" if r else "timeout")
+                return r
+
+        return _Scripted()
+
+    def test_this_case_failure_propagates_through_rate_limiter(self):
+        mon = self._mon([False])
+        assert mon.pre_send() is False  # probe round fails, _failed_this_case set
+        assert mon.post_send() is False  # rate-limited but not masked
+
+    def test_lingering_counter_alone_does_not_fail_rate_limited_post_send(self):
+        mon = self._mon([False, True])
+        mon.pre_send()  # fails this case
+        assert mon.post_send() is False
+        # Next case: clean probe clears the per-case marker...
+        mon.pre_send()  # succeeds (cf stays 1 until a clean streak)
+        assert mon.consecutive_failures == 1  # history still sticky
+        assert mon.post_send() is True  # ...but no longer reports failure
+
+    def test_sticky_history_does_not_mask_but_does_not_poison_either(self):
+        """After a blip, subsequent cases' rate-limited checks pass."""
+        mon = self._mon([False] + [True] * 5)
+        mon.pre_send()
+        mon.post_send()
+        for _ in range(3):
+            mon.pre_send()
+            assert mon.post_send() is True

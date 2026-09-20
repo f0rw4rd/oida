@@ -77,21 +77,46 @@ def test_post_send_check_interval_zero_does_not_raise():
 
 
 def test_rate_limited_path_returns_last_known_failing_verdict():
-    """When rate-limited and failures are pending, return False -- not True.
+    """When rate-limited and a probe round failed THIS CASE, return False.
 
     A crashed monitor short-circuits to recovery before the limiter, so the
-    reachable degraded state here is consecutive_failures > 0 (a probe already
-    failed this episode). The limiter must not report that as healthy.
+    reachable degraded state is a probe round that fully failed during the
+    current case (pre_send). The limiter must not report that as healthy.
+
+    Round-3 note: the marker is per-case, not the consecutive_failures
+    counter. That counter deliberately lingers below threshold (a clean
+    streak is required to clear it) and is >0 on interval-skipped cases that
+    were never probed -- reporting it here poisoned every later case as a
+    boofuzz log_fail crash.
     """
     import time
 
     mon = _ScriptedMonitor([True], check_interval=1, retry_count=1)
-    # Simulate: a probe already failed this episode, and a check just ran.
-    mon.consecutive_failures = 1
+    # Simulate: this case's probe round failed, and a check just ran.
+    mon._failed_this_case = True
     mon.last_check_time = time.time()  # inside the 0.2s window -> rate-limited
 
     # Before the fix this returned True (masking the pending failure).
     assert mon._check_alive(None) is False
+
+
+def test_rate_limited_lingering_counter_does_not_poison_later_cases():
+    """A sticky below-threshold counter alone must NOT fail rate-limited checks.
+
+    consecutive_failures lingers across cases by design (round 2: intermittent
+    targets must still trip the threshold). The pre-round-3 limiter reported
+    it as False, which boofuzz's _check_for_passively_detected_failures turned
+    into log_fail -> the case recorded as a crash, on every fast-protocol
+    post-send after a single transient blip.
+    """
+    import time
+
+    mon = _ScriptedMonitor([True], check_interval=1, retry_count=1)
+    mon.consecutive_failures = 2  # sticky history, but no failure THIS case
+    mon._failed_this_case = False
+    mon.last_check_time = time.time()
+
+    assert mon._check_alive(None) is True
 
 
 def test_rate_limited_path_returns_true_when_healthy():

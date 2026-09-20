@@ -813,7 +813,15 @@ class TestCaseManager:
                 # Check target monitor results (including nested monitors in CombinedMonitor)
                 if result == "pass" and hasattr(target, "monitors") and target.monitors:
                     for monitor in target.monitors:
-                        # Check for crashed state (ProtocolMonitor pattern)
+                        # Only a monitor's DECLARED crash is a crash. The old
+                        # fallback on consecutive_failures > 0 poisoned every
+                        # later case after a single transient probe failure:
+                        # the counter deliberately lingers below threshold
+                        # (round-2 change: a clean streak is required to clear
+                        # it), and it is >0 on interval-skipped cases that were
+                        # never probed at all. boofuzz's own log_fail /
+                        # monitor_results entries above already catch the cases
+                        # where a monitor genuinely reported a failure.
                         if getattr(monitor, "crashed", False):
                             result = "crash"
                             monitor_crash_info = getattr(monitor, "crash_info", None)
@@ -822,18 +830,9 @@ class TestCaseManager:
                             else:
                                 crash_info = f"Monitor detected crash (consecutive_failures={getattr(monitor, 'consecutive_failures', 0)})"
                             break
-                        # Fallback: check consecutive_failures directly (for legacy monitors)
-                        if (
-                            hasattr(monitor, "consecutive_failures")
-                            and monitor.consecutive_failures > 0
-                        ):
-                            result = "crash"
-                            crash_info = f"Monitor detected {monitor.consecutive_failures} consecutive failures"
-                            break
-                        # Check nested monitors (CombinedMonitor wraps actual monitors)
+                        # Nested monitors (CombinedMonitor wraps actual monitors)
                         if hasattr(monitor, "monitors") and monitor.monitors:
                             for child_monitor in monitor.monitors:
-                                # Check crashed state (ProtocolMonitor pattern)
                                 if getattr(child_monitor, "crashed", False):
                                     result = "crash"
                                     child_crash_info = getattr(child_monitor, "crash_info", None)
@@ -841,14 +840,6 @@ class TestCaseManager:
                                         crash_info = f"Monitor crash: {child_crash_info.get('target', 'unknown')} at {child_crash_info.get('timestamp', 'unknown')}"
                                     else:
                                         crash_info = f"Monitor detected crash (consecutive_failures={getattr(child_monitor, 'consecutive_failures', 0)})"
-                                    break
-                                # Fallback: check consecutive_failures (for legacy monitors)
-                                if (
-                                    hasattr(child_monitor, "consecutive_failures")
-                                    and child_monitor.consecutive_failures > 0
-                                ):
-                                    result = "crash"
-                                    crash_info = f"Monitor detected {child_monitor.consecutive_failures} consecutive failures"
                                     break
                             if result == "crash":
                                 break
