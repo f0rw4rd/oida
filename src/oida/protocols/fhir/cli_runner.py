@@ -78,6 +78,7 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
                 "fhirclient library not available. Install with: pip install oida-ics[fhir]"
             )
             self.results["error"] = "fhirclient not installed"
+            self.results["success"] = False
             return
 
         # Handle --enum-all as alias for all enumeration options
@@ -315,6 +316,10 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             self.logger.fail(f"Connection failed: {e}")
             self.results["data"]["connected"] = False
             self.results["error"] = str(e)
+            # fhirclient does no network I/O at construction, so construction
+            # failures are config errors; without this the base class's
+            # None->True default would report a failed scan as success=True.
+            self.results["success"] = False
             return False
 
     def _check_tls_certificate(self, url: str):
@@ -437,12 +442,14 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
                 self.logger.fail(f"FHIR endpoint not found (404): {self._get_base_url()}")
                 self.results["data"]["server_info"] = {"error": "Endpoint not found (404)"}
                 self.results["error"] = "FHIR endpoint not found"
+                self.results["success"] = False
                 return False
 
             if "Connection refused" in error_str or "NewConnectionError" in error_str:
                 self.logger.fail(f"Connection refused: {self._get_base_url()}")
                 self.results["data"]["server_info"] = {"error": "Connection refused"}
                 self.results["error"] = "Connection refused"
+                self.results["success"] = False
                 return False
 
             self.logger.warning(f"Failed to get CapabilityStatement: {e}")

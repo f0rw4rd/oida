@@ -629,6 +629,7 @@ class TestProtoFlow(unittest.TestCase):
 
         self.assertIn("error", scanner.results)
         self.assertIn("fhirclient", scanner.results["error"])
+        self.assertIs(scanner.results.get("success"), False)
 
     def test_enum_all_sets_search_flags(self):
         """Test --enum-all sets all search flags to True"""
@@ -790,6 +791,9 @@ class TestCreateConnObj(unittest.TestCase):
         self.assertFalse(result)
         self.assertFalse(scanner.results["data"]["connected"])
         self.assertIn("error", scanner.results)
+        # A failed connection must not ride the base class's None->True
+        # default into a reported success.
+        self.assertIs(scanner.results.get("success"), False)
 
     def test_sets_conn_attribute(self):
         """Test successful connection sets self.conn"""
@@ -955,6 +959,8 @@ class TestEnumHostInfo(unittest.TestCase):
         self.assertFalse(result)
         # An unreachable host must never be reported as connected.
         self.assertFalse(scanner.results["data"].get("connected", False))
+        # ... nor as a successful scan (None->True default).
+        self.assertIs(scanner.results.get("success"), False)
         scanner.logger.success.assert_not_called()
 
     def test_connection_refused_returns_false(self):
@@ -967,6 +973,7 @@ class TestEnumHostInfo(unittest.TestCase):
             result = scanner.enum_host_info()
 
         self.assertFalse(result)
+        self.assertIs(scanner.results.get("success"), False)
 
     def test_generic_exception_returns_true(self):
         """Test generic exception returns True (non-fatal)"""
