@@ -276,6 +276,54 @@ class TestOPCUASubscriptionLimitsGate(unittest.TestCase):
         assert_refusal(self, stub, "--test-subscription-limits")
 
 
+class TestOPCUAWriteValueGate(unittest.TestCase):
+    def test_write_value_refuses_without_confirm(self):
+        import asyncio
+
+        from oida.protocols.opcua.mixins.writes import WritesMixin
+
+        stub = _StubScanner(confirm=False, node_id="ns=2;i=1088", write_value="1")
+        asyncio.run(WritesMixin._write_value(stub))
+        assert_refusal(self, stub, "--write-value")
+
+
+class TestEtherCATBootStateGate(unittest.TestCase):
+    def test_boot_state_refusal_does_not_return_live_master(self):
+        # --boot-state without --confirm used to return the live master from
+        # connect(), so create_conn_obj saw a truthy object and logged
+        # "Connected to EtherCAT device" for a refused state transition.
+        from unittest.mock import patch
+
+        from oida.protocols.ethercat import EtherCATScanner
+
+        scanner = EtherCATScanner(
+            {"host": "eth0", "interface": "eth0", "boot_state": True, "confirm": False}
+        )
+        scanner.logger = MagicMock()
+        fake_master = MagicMock()
+        fake_master.config_init.return_value = 1
+        fake_module = MagicMock()
+        # _get_pysoem() calls the module global; make the call return itself.
+        fake_module.return_value = fake_module
+        fake_module.Master.return_value = fake_master
+
+        with (
+            patch("oida.protocols.ethercat._pysoem", fake_module),
+            patch("oida.protocols.ethercat.check_raw_socket_capability", lambda: (True, "")),
+        ):
+            conn = scanner.connect()
+
+        self.assertIsNone(
+            conn,
+            "refused --boot-state must return None from connect(), got a live master",
+        )
+        fake_master.close.assert_called_once()
+        self.assertTrue(
+            any("confirm" in str(c).lower() for c in scanner.logger.fail.call_args_list),
+            "--boot-state must refuse without --confirm",
+        )
+
+
 class TestAstmSendPatientGate(unittest.TestCase):
     def test_send_patient_in_source(self):
         import pathlib

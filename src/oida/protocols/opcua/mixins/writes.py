@@ -22,6 +22,11 @@ class WritesMixin:
 
         if not confirm:
             self.logger.fail("--write-value requires --confirm (dangerous operation)")
+            # A refused write must not ride the connect flow's success=True:
+            # mark the run failed and record the refusal (same contract as
+            # --call-method in methods.py).
+            self.results["success"] = False
+            self.results["data"]["refused"] = "--write-value requires --confirm"
             return
 
         try:

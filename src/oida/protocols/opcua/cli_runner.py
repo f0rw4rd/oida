@@ -583,7 +583,13 @@ class opcua(
             # Dispatch flag-based operations
             await self._dispatch_operations()
 
-            self.results["success"] = True
+            # A refused dangerous operation (--call-method, --write-value,
+            # --test-subscription-limits ...) already set success=False inside
+            # the dispatched handler; setting True here would clobber that
+            # refusal into a reported success. Only assert success for the
+            # connect+enumerate flow when nothing refused.
+            if self.results.get("success") is None:
+                self.results["success"] = True
 
         except TimeoutError as e:
             self.logger.debug(f"async proto flow failed: {e}")

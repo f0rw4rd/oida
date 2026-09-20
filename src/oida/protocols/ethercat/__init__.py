@@ -240,7 +240,12 @@ class EtherCATScanner(
                         "--boot-state requires --confirm (transitions slaves into "
                         "Bootstrap firmware-update state, disrupting operation)"
                     )
-                    return master
+                    # Returning the live master here would hand the caller a
+                    # truthy object and the refusal would be reported as a
+                    # successful connection. Tear down and return None so the
+                    # runner's connect-failure path applies.
+                    master.close()
+                    return None
                 self._transition_to_boot(master, pysoem)
                 return master
 
