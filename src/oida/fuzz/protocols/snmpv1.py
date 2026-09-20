@@ -127,20 +127,50 @@ class SNMPv1Fuzzer(BaseFuzzer):
     # Reply-expectation policy (same pattern as MQTT/CoAP): every SNMPv1 PDU
     # a manager sends gets a GetResponse -- except a v1 Trap PDU (0xA4), which
     # is agent-to-manager and unsolicited: no reply is ever coming, so waiting
-    # the full recv timeout per trap case is pure dead time. The PDU tag sits
-    # at a fixed offset only in unmutated messages, so classify by scanning
-    # for the first context tag (0xA0-0xA5); non-SNMP-looking bytes (empty,
-    # short, no PDU tag found) conservatively wait.
+    # the full recv timeout per trap case is pure dead time. Classify by
+    # WALKING the BER structure (SEQUENCE -> version INTEGER -> community
+    # OCTET STRING -> PDU tag), never by scanning for tag bytes: the community
+    # string is fuzzed, and any 0xA0-0xA5 byte inside it would otherwise
+    # misclassify a GetRequest as a Trap (skipping its reply wait) or mask a
+    # real Trap (burning the full timeout per case). Anything unparseable
+    # (empty, truncated, over-long lengths) conservatively waits.
     @staticmethod
     def _reply_expected_for_payload(data: bytes) -> bool:
         if not data:
             return True
-        for b in data[:64]:
-            if 0xA0 <= b <= 0xA5:
-                return b != 0xA4  # Trap: fire-and-forget
-            if b in (0x30, 0x02, 0x04):  # SEQUENCE / INTEGER / OCTET STRING
-                continue
-        return True  # No PDU tag found: assume it might get an answer
+
+        def _read_tlv(buf, pos):
+            """(tag, value_start, value_end, next_pos) or None if malformed."""
+            if pos + 2 > len(buf):
+                return None
+            tag = buf[pos]
+            length = buf[pos + 1]
+            if length & 0x80:  # long-form length
+                n = length & 0x7F
+                if n == 0 or pos + 2 + n > len(buf):
+                    return None
+                length = int.from_bytes(buf[pos + 2 : pos + 2 + n], "big")
+                value_start = pos + 2 + n
+            else:
+                value_start = pos + 2
+            if length > len(buf) - value_start:  # over-declared
+                return None
+            return tag, value_start, value_start + length, value_start + length
+
+        # SEQUENCE { version INTEGER, community OCTET STRING, PDU }
+        outer = _read_tlv(data, 0)
+        if outer is None or outer[0] != 0x30:
+            return True
+        version = _read_tlv(data, outer[1])
+        if version is None or version[0] != 0x02:
+            return True
+        community = _read_tlv(data, version[3])
+        if community is None or community[0] != 0x04:
+            return True
+        pdu = _read_tlv(data, community[3])
+        if pdu is None:
+            return True
+        return pdu[0] != 0xA4  # Trap: fire-and-forget
 
     reply_policy = _reply_expected_for_payload
 

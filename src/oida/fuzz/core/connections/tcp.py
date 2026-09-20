@@ -720,6 +720,19 @@ class ResilientTCPConnection(TCPSocketConnection):
                     raise boofuzz_exception.BoofuzzTargetConnectionReset().with_traceback(
                         sys.exc_info()[2]
                     )
+                if err_no == errno.ECONNABORTED:
+                    # boofuzz's recv() maps this; raising the raw OSError here
+                    # would slip past the session's handlers unclassified.
+                    self._eff_recv_error(reset=False)
+                    raise boofuzz_exception.BoofuzzTargetConnectionAborted(
+                        socket_errno=err_no, socket_errmsg=e.strerror
+                    ).with_traceback(sys.exc_info()[2])
+                if err_no == errno.EWOULDBLOCK:
+                    # Nothing queued on a non-blocking socket: silence, not an
+                    # error -- same as boofuzz's own EWOULDBLOCK branch.
+                    self._eff_recv(0)
+                    return b""
+                self._eff_recv_error(reset=False)
                 raise
         finally:
             try:

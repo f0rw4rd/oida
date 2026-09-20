@@ -16,6 +16,7 @@ exactly what boofuzz's UDPSocketConnection raises.
 
 import errno
 import socket
+import sys
 
 from boofuzz import UDPSocketConnection
 from boofuzz import exception as boofuzz_exception
@@ -180,9 +181,15 @@ class CountingUDPConnection(UDPSocketConnection):
         """Receive without the full socket-timeout wait (no-reply fast path).
 
         Same contract as ResilientTCPConnection._recv_no_wait, adapted to
-        UDP: one short-timeout recvfrom; timeout means nothing was queued
+        UDP: one short-timeout recv; timeout means nothing was queued
         (silence), which is the expected outcome for a no-reply datagram.
-        Errors propagate unchanged (counted first).
+
+        Errors are translated exactly as boofuzz's UDPSocketConnection.recv()
+        would: this path replaces that method (and with reply_wait_cap set it
+        replaces it on *every* case), so raising a raw OSError here would
+        escape boofuzz's session handlers -- which catch only the mapped
+        BoofuzzTargetConnection* types -- and a target reset would be lost as
+        an unclassified error instead of a recorded connection failure.
         """
         sock = getattr(self, "_sock", None)
         if sock is None:
@@ -203,8 +210,20 @@ class CountingUDPConnection(UDPSocketConnection):
             except socket.error as e:
                 if e.errno in (errno.ECONNRESET, errno.ENETRESET):
                     self._eff_recv_error(reset=True)
-                else:
+                    raise boofuzz_exception.BoofuzzTargetConnectionReset().with_traceback(
+                        sys.exc_info()[2]
+                    )
+                if e.errno == errno.ECONNABORTED:
                     self._eff_recv_error(reset=False)
+                    raise boofuzz_exception.BoofuzzTargetConnectionAborted(
+                        socket_errno=e.errno, socket_errmsg=e.strerror
+                    ).with_traceback(sys.exc_info()[2])
+                if e.errno == errno.EWOULDBLOCK:
+                    # Non-blocking socket with nothing queued: silence, not an
+                    # error -- same as boofuzz's own EWOULDBLOCK branch.
+                    self._eff_recv(0)
+                    return b""
+                self._eff_recv_error(reset=False)
                 raise
         finally:
             try:
