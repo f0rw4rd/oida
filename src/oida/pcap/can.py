@@ -68,6 +68,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
+from ..protocols.can.constants import make_traffic_key, split_traffic_key
 from ..protocols.discovery.core import lookup_mac_vendor
 
 
@@ -347,7 +348,11 @@ class CANPassiveListener(PySharkListenerBase):
         node.total_frames += 1
 
         if can_id is not None:
-            node.can_ids_seen[can_id] = node.can_ids_seen.get(can_id, 0) + 1
+            # Key by traffic key (EFF-flagged for extended frames): a standard
+            # and an extended frame with the same numeric arbitration ID are
+            # different bus traffic and must not be merged into one counter.
+            key = make_traffic_key(can_id, is_extended)
+            node.can_ids_seen[key] = node.can_ids_seen.get(key, 0) + 1
             if is_extended:
                 node.extended_ids.add(can_id)
 
@@ -464,9 +469,15 @@ class CANPassiveListener(PySharkListenerBase):
 
     def _build_device_data(self, node: CANNode) -> Dict[str, Any]:
         """Build can_passive_data dict from node statistics."""
-        # Top CAN IDs by frame count (up to 20)
+        # Top CAN IDs by frame count (up to 20). Keys are traffic keys, so a
+        # standard and an extended frame with the same numeric ID stay separate
+        # rows; extended rows render with the 8-digit (29-bit) format.
         sorted_ids = sorted(node.can_ids_seen.items(), key=lambda x: x[1], reverse=True)
-        top_ids = [[f"0x{cid:03X}", count] for cid, count in sorted_ids[:20]]
+        top_ids = []
+        for key, count in sorted_ids[:20]:
+            arb_id, is_extended = split_traffic_key(key)
+            fmt = f"0x{arb_id:08X}" if is_extended else f"0x{arb_id:03X}"
+            top_ids.append([fmt, count])
 
         return {
             "role": "node",
