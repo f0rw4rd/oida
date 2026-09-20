@@ -14,7 +14,8 @@ from typing import List
 from boofuzz import Delim, Group, RandomData, Request
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import TCPSocketConnection, UDPSocketConnection
+from ..core.connections import TCPSocketConnection
+from ..core.connections import CountingUDPConnection as UDPSocketConnection
 from ..monitors import BaseMonitor
 from ..primitives.dynamic import SmartString
 

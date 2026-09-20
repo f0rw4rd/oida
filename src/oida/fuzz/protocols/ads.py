@@ -35,7 +35,8 @@ from ..primitives.dynamic import DynamicDWord, SmartString, StringContext
 
 from ..core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
 from ..core.config import FuzzerConfig
-from ..core.connections import TCPSocketConnection, UDPSocketConnection
+from ..core.connections import TCPSocketConnection
+from ..core.connections import CountingUDPConnection as UDPSocketConnection
 from ..core.session.state_context import StateContext
 from ..core.session.sequence import SequenceConfig, SequenceDirection
 from ..core.session.state_machine import ProtocolState, StateMachine, StateType

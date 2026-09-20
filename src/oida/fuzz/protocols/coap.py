@@ -20,7 +20,7 @@ CVE Coverage:
 from typing import List, Optional
 
 from boofuzz import Byte, DWord, Group, Request, Static, Word
-from boofuzz.connections import UDPSocketConnection
+from ..core.connections import CountingUDPConnection as UDPSocketConnection
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.config import FuzzerConfig, ProtocolType
@@ -118,6 +118,35 @@ class CoAPFuzzer(BaseFuzzer):
         if config:
             config.protocol_type = ProtocolType.UDP
         super().__init__(config, connection_factory)
+
+    # Reply-expectation policy (same pattern as MQTT): RFC 7252 requires a
+    # server to answer a CON message with ACK (or RST), so CON sends wait for
+    # a reply; NON (fire-and-forget) and our own ACK/RST frames get none.
+    # Nearly every CoAP request here is CON, but the Header_Boundary group
+    # walks all four type values and mutated header bytes can flip the type
+    # -- the policy classifies whatever bytes actually go on the wire.
+    # Non-CoAP-looking bytes (empty/short) conservatively wait.
+    @classmethod
+    def _reply_expected_for_payload(cls, data: bytes) -> bool:
+        if not data:
+            return True
+        first = data[0]
+        version = (first >> 6) & 0x3
+        msg_type = (first >> 4) & 0x3
+        if version != 1:
+            return True  # Unparseable as CoAP: assume it might get an answer
+        return msg_type in (cls.CON,)
+
+    reply_policy = _reply_expected_for_payload
+
+    # Cap on the reply-expected wait. Real ACKs to parseable CONs arrive in
+    # single-digit ms against the docker mock; silence past ~0.15s means the
+    # server dropped the malformed request. Without the cap, each dropped
+    # CON burns the full recv timeout (~2s default, ~0.5s calibrated),
+    # capping the whole run at a few cases/second. Same rationale/value as
+    # MQTT's cap; calibration can still tighten it via the derived-cap path
+    # when it would go lower.
+    reply_wait_cap = 0.15
 
     def _create_socket(self):
         """Create UDP socket for CoAP with proper bind and timeout for receiving responses.
@@ -829,14 +858,16 @@ class CoAPFuzzer(BaseFuzzer):
     def _get_monitors(self) -> List[BaseMonitor]:
         """Return list of monitors for CoAP service"""
         monitors = []
-        from ..monitors import SocketHealthMonitor
+        from ..monitors import CoAPHealthMonitor
 
-        # UDP monitor for CoAP
+        # CoAP runs over UDP; a TCP-connect monitor (SocketHealthMonitor)
+        # always fails against it -- preflight aborted every run. Probe with
+        # a real CoAP CON GET instead (any ACK/RST/datagram = alive).
         if self.config:
-            socket_monitor = SocketHealthMonitor(
+            coap_monitor = CoAPHealthMonitor(
                 host=self.config.target_ip, port=self.config.target_port, retry_count=3
             )
-            monitors.append(socket_monitor)
+            monitors.append(coap_monitor)
 
         return monitors
 

@@ -29,7 +29,7 @@ from typing import List
 from boofuzz import Block, Group, Request, Static
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import UDPSocketConnection
+from ..core.connections import CountingUDPConnection as UDPSocketConnection
 from ..primitives.dynamic import SmartBytes
 
 # ZEP (Zigbee Encapsulation Protocol) UDP port used by Wireshark / sniffers.

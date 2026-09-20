@@ -243,7 +243,7 @@ class BACnetFuzzer(BaseFuzzer):
         The bind tuple (host, port) specifies where to listen for responses.
         Using port 0 lets the OS pick an available ephemeral port.
         """
-        from boofuzz import UDPSocketConnection
+        from ..core.connections import CountingUDPConnection as UDPSocketConnection
 
         return UDPSocketConnection(
             self.config.target_ip,

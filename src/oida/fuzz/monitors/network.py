@@ -3,6 +3,8 @@
 import platform
 import socket
 import ssl
+import struct
+import time
 from typing import Optional
 
 
@@ -159,6 +161,106 @@ def _ber_len(n: int) -> bytes:
 
 def _ber_tlv(tag: int, value: bytes) -> bytes:
     return bytes([tag]) + _ber_len(len(value)) + value
+
+
+class CoAPHealthMonitor(ProtocolMonitor):
+    """CoAP liveness monitor (UDP).
+
+    CoAP servers listen on UDP, so a TCP connect (SocketHealthMonitor) always
+    fails against them -- preflight would abort every real run. This monitor
+    sends a minimal CON GET for / and takes any datagram
+    reply (ACK, RST, or piggybacked response) as proof of life.
+
+    Liveness decision (mirrors SNMPHealthMonitor):
+      * any datagram reply                  -> alive
+      * ConnectionRefused / ICMP port unreachable -> down (crash signal)
+      * silent timeout                      -> failed probe (no evidence of
+        life; crash only after failure_threshold consecutive rounds)
+
+    Args:
+        host: Target hostname or IP
+        port: UDP port (default: 5683)
+        timeout: Probe timeout in seconds (default: 2)
+        retry_count: Retry attempts per round (default: 3)
+        failure_threshold: Consecutive failed rounds before down (default: 2)
+    """
+
+    def __init__(
+        self,
+        host,
+        port=5683,
+        timeout=2,
+        retry_count=3,
+        failure_threshold=2,
+    ):
+        super().__init__(
+            host=host,
+            port=int(port),
+            timeout=float(timeout),
+            check_interval=1,
+            retry_count=retry_count,
+            failure_threshold=failure_threshold,
+        )
+
+    @staticmethod
+    def _build_con_get(message_id: int) -> bytes:
+        """Minimal CON GET / (CoAP RFC 7252).
+
+        Header: ver=1, type=CON(0), TKL=0 | code=GET(0.01) | msg-id.
+        No Uri-Path options -> root resource. Chosen over /.well-known/core
+        because resource discovery is optional and unimplemented on many
+        embedded CoAP stacks (verified: the docker mock ignores discovery
+        but ACKs a root GET with 4.04). A live endpoint must answer a CON
+        with an ACK or RST, making this a reliable liveness probe.
+        """
+        return struct.pack(">BBH", 0x40, 0x01, message_id & 0xFFFF)
+
+    def _check_alive_once(self, fuzz_data_logger=None) -> bool:
+        """Probe the CoAP server over UDP with a CON GET."""
+        sock = None
+        try:
+            sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+            sock.settimeout(self.timeout)
+            # connect() (not sendto) so the kernel surfaces ICMP port-unreachable
+            # as ConnectionRefusedError on the subsequent recv -- an unconnected
+            # socket silently drops it, turning a crashed server into a mere
+            # timeout and defeating crash detection.
+            self.logger.debug(f"Sending CoAP CON GET to {self.host}:{self.port}/udp")
+            sock.connect((self.host, self.port))
+            sock.send(self._build_con_get(int(time.time()) & 0xFFFF))
+            try:
+                response = sock.recv(2048)
+                self._set_probe_evidence("bad-reply" if not response else "ok")
+                if response:
+                    self.logger.debug(f"CoAP server replied ({len(response)} bytes)")
+                    return True
+                return False
+            except TimeoutError:
+                self._set_probe_evidence("timeout")
+                self.logger.warning("CoAP probe timed out - no reply (no evidence of life)")
+                if fuzz_data_logger:
+                    fuzz_data_logger.log_info(
+                        "CoAPHealthMonitor: no reply within timeout - no evidence of life"
+                    )
+                return False
+        except ConnectionRefusedError as e:
+            self._set_probe_evidence("refused")
+            self.logger.warning(f"CoAP UDP port unreachable: {e}")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(f"CoAPHealthMonitor: UDP port unreachable - {e}")
+            return False
+        except OSError as e:
+            self._set_probe_evidence("unknown")
+            self.logger.warning(f"CoAP probe socket error: {e}")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info(f"CoAPHealthMonitor: socket error - {e}")
+            return False
+        finally:
+            if sock:
+                try:
+                    sock.close()
+                except (OSError, AttributeError) as e:
+                    self.logger.debug(f"Socket close error: {e}")
 
 
 class SNMPHealthMonitor(ProtocolMonitor):

@@ -22,6 +22,7 @@ def __getattr__(name):
     _boofuzz_attrs = {"TCPSocketConnection", "SSLSocketConnection", "UDPSocketConnection"}
     _base_attrs = {"BaseConnection", "ConnectionFactory", "MockConnection", "MockConnectionFactory"}
     _tcp_attrs = {"RealConnectionFactory", "IEC104SocketConnection", "ResilientTCPConnection"}
+    _udp_attrs = {"CountingUDPConnection"}
     _raw_attrs = {"RawSocketConnection"}
     _serial_attrs = {"SerialConnection", "parse_serial_target"}
     _scapy_attrs = {"ScapyRawConnection"}
@@ -63,6 +64,12 @@ def __getattr__(name):
             }
         )
         return _cache[name]
+
+    if name in _udp_attrs:
+        from .udp import CountingUDPConnection
+
+        _cache["CountingUDPConnection"] = CountingUDPConnection
+        return CountingUDPConnection
 
     if name in _raw_attrs:
         from .raw_socket import RawSocketConnection
@@ -114,6 +121,8 @@ __all__ = [
     "RealConnectionFactory",
     "IEC104SocketConnection",
     "ResilientTCPConnection",
+    # UDP connections
+    "CountingUDPConnection",
     # Raw socket
     "RawSocketConnection",
     # Serial

@@ -23,7 +23,7 @@ Rolling Buffer Mode (new default):
 import binascii
 import json
 from collections import deque
-from typing import Optional, List, Tuple, TYPE_CHECKING
+from typing import Optional, List, Tuple, Dict, TYPE_CHECKING
 from datetime import datetime
 
 from ...protocols import PROTOCOL_FUZZERS
@@ -207,6 +207,19 @@ class TestCaseManager:
         # (first flagged case). Reset on the next passing case (episode over).
         self._in_crash_episode: bool = False
 
+        # Per-node effectiveness attribution. The data connection keeps flat
+        # cumulative counters (sent/replies/timeouts/...); this snapshot marks
+        # where the current test case's traffic began, so the delta can be
+        # attributed to the node active during the case. Flushed to
+        # session_metadata.effectiveness on save.
+        self._eff_snapshot: Optional[dict] = None
+        # {node_name: {counter: value}} deltas accumulated so far.
+        self._effectiveness: Dict[str, Dict[str, int]] = {}
+        # Effectiveness counters already persisted by EARLIER sessions sharing
+        # this DB (--resume). Read once on first flush; base + current is then
+        # idempotent across this process's periodic flushes.
+        self._eff_base: Optional[Dict[str, Dict[str, int]]] = None
+
         # Store session metadata for replay validation
         self._store_session_metadata()
 
@@ -260,6 +273,84 @@ class TestCaseManager:
             f"Session metadata stored: {effective['protocol_name']} "
             f"v{effective['protocol_version']}"
         )
+
+    def _attribute_effectiveness(self, node_name: str) -> None:
+        """Attribute this test case's traffic delta to ``node_name``.
+
+        The data connection's effectiveness counters are flat and cumulative;
+        the snapshot taken after the previous case marks where this case's
+        traffic began. Called from record_callback once per case, after the
+        case's send/recv completed.
+        """
+        conn = self._data_connection()
+        if conn is None or not hasattr(conn, "effectiveness"):
+            return
+        current = dict(conn.effectiveness)
+        if self._eff_snapshot is None:
+            # First case: everything so far includes calibration/preflight
+            # traffic; attribute it to the first node as-is (negligible) but
+            # don't drop it, so totals stay reconcilable.
+            delta = current
+        else:
+            delta = {k: max(0, current.get(k, 0) - self._eff_snapshot.get(k, 0)) for k in current}
+        self._eff_snapshot = current
+        if not any(delta.values()):
+            return
+        bucket = self._effectiveness.setdefault(node_name, {})
+        for k, v in delta.items():
+            bucket[k] = bucket.get(k, 0) + v
+
+    def _data_connection(self):
+        """The session's live data connection, or None."""
+        session = getattr(self.fuzzer, "_session", None)
+        targets = getattr(session, "targets", None)
+        target = targets[0] if targets else None
+        if target is None:
+            return None
+        return getattr(target, "_target_connection", None) or getattr(target, "connection", None)
+
+    def _flush_effectiveness(self) -> None:
+        """Persist per-node effectiveness counters to session_metadata.
+
+        Merge, never replace: a --resume run shares the session DB but starts
+        with empty in-memory counters, so a blind upsert here would clobber
+        the earlier segment's numbers with this segment's partial ones (the
+        same provenance loss _store_session_metadata guards against).
+
+        The stored value is read exactly ONCE (first flush) into _eff_base and
+        never re-read: ``_effectiveness`` is cumulative for this process, and
+        flushes are periodic, so re-reading on later flushes would re-add this
+        process's own already-persisted deltas and double-count every counter.
+        """
+        if self.read_only or not self._effectiveness:
+            return
+        try:
+            if self._eff_base is None:
+                base = {}
+                stored = self.database.get_metadata("effectiveness")
+                if stored:
+                    try:
+                        parsed = json.loads(stored)
+                        if isinstance(parsed, dict):
+                            base = {
+                                node: {k: v for k, v in counters.items() if isinstance(v, int)}
+                                for node, counters in parsed.items()
+                                if isinstance(counters, dict)
+                            }
+                    except (ValueError, TypeError):
+                        # Unparseable prior value: start from empty rather
+                        # than lose this run's data preserving garbage.
+                        base = {}
+                self._eff_base = base
+            merged = {node: dict(c) for node, c in self._eff_base.items()}
+            for node, counters in self._effectiveness.items():
+                bucket = merged.setdefault(node, {})
+                for k, v in counters.items():
+                    bucket[k] = bucket.get(k, 0) + v
+            self.database.store_metadata("effectiveness", json.dumps(merged, sort_keys=True))
+            self._log.debug(f"Effectiveness counters flushed for {len(self._effectiveness)} nodes")
+        except Exception as e:
+            self._log.debug(f"Effectiveness flush failed: {e}")
 
     def record_test_case(
         self,
@@ -581,6 +672,10 @@ class TestCaseManager:
             # One transaction instead of five — saves four fsyncs per save.
             self.database.store_metadata_bulk(metadata)
 
+            # Per-node effectiveness counters (sent/replies/timeouts/... per
+            # request), attributed from connection-level deltas.
+            self._flush_effectiveness()
+
             # Verification: boofuzz's executed-case counter should match what we recorded.
             # If these ever diverge, recording IS dropping cases (a real bug) rather than
             # boofuzz merely skipping/resuming.
@@ -648,6 +743,10 @@ class TestCaseManager:
                 # Get test case information from session
                 test_case_id = session.total_mutant_index
                 test_case_name = session.fuzz_node.name if session.fuzz_node else "unknown"
+
+                # Attribute this case's connection-level traffic delta to the
+                # active node (sent/replies/timeouts/... per request).
+                self._attribute_effectiveness(test_case_name)
 
                 # Get payload that was sent from session.last_send
                 payload = (

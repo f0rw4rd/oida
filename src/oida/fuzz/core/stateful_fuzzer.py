@@ -709,6 +709,9 @@ class StatefulFuzzer(BaseFuzzer):
         # Access session to trigger lazy initialization (post-calibration).
         _ = self.session
 
+        # Base hook first: attaches reply_policy (if any) to the data socket.
+        super()._pre_fuzz_hook()
+
         # Setup auth callback after session is created
         self._setup_auth_callback()
 

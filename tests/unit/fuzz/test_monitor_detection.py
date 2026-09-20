@@ -40,6 +40,8 @@ class _ScriptedMonitor(ProtocolMonitor):
         super().__init__("127.0.0.1", 9999, **kwargs)
         self._results = list(results)
         self._idx = 0
+        # Keep the corroboration re-probe instant in tests.
+        self.corroboration_delay = 0.0
         # Avoid the 0.1s inter-retry sleep making the suite slow.
 
     def _check_alive_once(self, fuzz_data_logger=None) -> bool:
@@ -139,25 +141,32 @@ def test_alternating_target_eventually_trips_threshold():
 
     With single-retry rounds and pass/fail alternation, the old code reset
     consecutive_failures to 0 on every lucky success, so the threshold was never
-    reached. The streak-based clear lets failures accumulate.
+    reached. The streak-based clear lets failures accumulate. The DEAD/UNRESPONSIVE
+    corroboration stand-down gives such a target a budgeted benefit of the doubt
+    (max_corroboration_standdowns re-probes), but once that budget is spent the
+    target still trips -- intermittency must not mask a broken target forever.
     """
-    # F, T, F, T, ... : each _check_alive call consumes one probe (retry_count=1).
+    # F, T, F, T, ... : each _check_alive call consumes one probe (retry_count=1);
+    # each threshold crossing also consumes one corroboration probe.
     mon = _ScriptedMonitor(
-        [False, True, False, True, False, True],
+        [False, True] * 12,
         check_interval=1,
         retry_count=1,
         failure_threshold=2,
         max_recovery_attempts=0,
     )
+    mon.max_corroboration_standdowns = 2
 
     outcomes = []
     with pytest.raises(BoofuzzFailure):
-        for _ in range(6):
+        for _ in range(24):
             mon.last_check_time = None  # bypass rate limiter for the test
             outcomes.append(mon._check_alive(None))
 
     # It must have tripped (raised) rather than oscillating forever.
     assert mon.consecutive_failures >= mon.failure_threshold
+    # And the stand-down budget was actually used before tripping.
+    assert mon._unresponsive_standdowns == mon.max_corroboration_standdowns
 
 
 def test_single_success_does_not_wipe_failure_history():

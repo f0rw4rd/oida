@@ -1,5 +1,6 @@
 """Industrial Control Systems (ICS) protocol monitors for fuzzing."""
 
+import errno
 import socket
 import struct
 import time
@@ -137,6 +138,8 @@ class ModbusMonitor(ProtocolMonitor):
             sock.settimeout(self.timeout)
             self.logger.debug(f"Connecting to Modbus server {self.host}:{self.port}")
             sock.connect((self.host, self.port))
+            # Connect succeeded: remaining failures are UNRESPONSIVE-class.
+            self._set_probe_evidence("timeout")
 
             # Send Modbus read request
             request = self._create_read_request()
@@ -146,6 +149,8 @@ class ModbusMonitor(ProtocolMonitor):
             # Read response (minimum valid response is 9 bytes)
             response = sock.recv(256)
             self.logger.debug(f"Received response: {response.hex() if response else 'empty'}")
+            if response:
+                self._set_probe_evidence("bad-reply")
 
             # Check if response is valid Modbus format
             if len(response) >= 9:
@@ -164,10 +169,14 @@ class ModbusMonitor(ProtocolMonitor):
                     if not self.baseline_established:
                         self._store_baseline(response, fuzz_data_logger)
                         self.logger.display(f"Modbus baseline established (FC={function_code})")
+                        self._set_probe_evidence("ok")
                         return True
 
                     # Compare against baseline
-                    return self._compare_responses(response, fuzz_data_logger)
+                    ok = self._compare_responses(response, fuzz_data_logger)
+                    if ok:
+                        self._set_probe_evidence("ok")
+                    return ok
                 elif protocol_id == 0 and function_code == (probe_fc | 0x80):
                     # Legal Modbus exception reply — target is alive.
                     self.logger.debug(f"Modbus exception reply (FC={function_code:#04x}) — alive")
@@ -175,6 +184,7 @@ class ModbusMonitor(ProtocolMonitor):
                         fuzz_data_logger.log_info(
                             f"ModbusMonitor: exception reply FC={function_code:#04x} — target alive"
                         )
+                    self._set_probe_evidence("ok")
                     return True
                 else:
                     self.logger.warning(f"Modbus unexpected response: FC={function_code:#04x}")
@@ -182,14 +192,33 @@ class ModbusMonitor(ProtocolMonitor):
             self.logger.warning(f"Invalid Modbus response format ({len(response)} bytes)")
             if fuzz_data_logger:
                 fuzz_data_logger.log_info("ModbusMonitor: Invalid Modbus response format")
-            return False
+            return False  # "bad-reply"
 
+        except ConnectionRefusedError:
+            self._set_probe_evidence("refused")
+            self.logger.warning(
+                f"Modbus connection refused {self.host}:{self.port} (process gone?)"
+            )
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info("ModbusMonitor: Connection refused")
+            return False
+        except ConnectionResetError:
+            self._set_probe_evidence("reset")
+            self.logger.warning("Modbus connection reset during probe (crash in progress?)")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info("ModbusMonitor: Connection reset")
+            return False
         except socket.timeout:
+            self._set_probe_evidence("timeout")
             self.logger.warning(f"Modbus connection timeout ({self.timeout}s)")
             if fuzz_data_logger:
                 fuzz_data_logger.log_info("ModbusMonitor: Connection timeout")
             return False
         except Exception as e:
+            if isinstance(e, OSError) and e.errno in (errno.ECONNREFUSED, errno.ECONNRESET):
+                self._set_probe_evidence("refused" if e.errno == errno.ECONNREFUSED else "reset")
+            else:
+                self._set_probe_evidence("unknown")
             self.logger.warning(f"Modbus error: {e}")
             if fuzz_data_logger:
                 fuzz_data_logger.log_info(f"ModbusMonitor: Error - {str(e)}")
@@ -659,6 +688,9 @@ class MQTTMonitor(ProtocolMonitor):
             sock.settimeout(self.timeout)
             self.logger.debug(f"Connecting to MQTT broker {self.host}:{self.port}")
             sock.connect((self.host, self.port))
+            # Connect succeeded: any failure from here on is UNRESPONSIVE-class
+            # (reachable but not answering), not DEAD.
+            self._set_probe_evidence("timeout")
 
             # Send CONNECT with unique client ID
             client_id = f"mon-{int(time.time())}"
@@ -669,6 +701,8 @@ class MQTTMonitor(ProtocolMonitor):
             # Wait for CONNACK (4 bytes: type, length, flags, reason_code)
             response = sock.recv(4)
             self.logger.debug(f"Received: {response.hex() if response else 'empty'}")
+            if response:
+                self._set_probe_evidence("bad-reply")
 
             if len(response) < 4:
                 self.logger.warning(f"MQTT short response ({len(response)} bytes, expected 4)")
@@ -688,7 +722,7 @@ class MQTTMonitor(ProtocolMonitor):
                     fuzz_data_logger.log_info(
                         f"MQTTMonitor: Expected CONNACK (0x20), got {packet_type:#04x}"
                     )
-                return False
+                return False  # evidence stays "bad-reply"
 
             # Store baseline on first success
             if not self.baseline_established:
@@ -706,6 +740,7 @@ class MQTTMonitor(ProtocolMonitor):
                     fuzz_data_logger.log_info(
                         f"MQTTMonitor: Baseline established (reason_code={reason_code})"
                     )
+                self._set_probe_evidence("ok")
                 return True
 
             # Compare with baseline (reason code should match)
@@ -721,17 +756,37 @@ class MQTTMonitor(ProtocolMonitor):
                         f"MQTTMonitor: Response changed: reason_code "
                         f"{baseline_reason} -> {response[3]}"
                     )
-                return False
+                return False  # "bad-reply"
 
             self.logger.debug(f"CONNACK received successfully (reason_code={reason_code})")
+            self._set_probe_evidence("ok")
             return True
 
+        except ConnectionRefusedError:
+            self._set_probe_evidence("refused")
+            self.logger.warning(f"MQTT connection refused {self.host}:{self.port} (process gone?)")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info("MQTTMonitor: Connection refused")
+            return False
+        except ConnectionResetError:
+            self._set_probe_evidence("reset")
+            self.logger.warning("MQTT connection reset during probe (crash in progress?)")
+            if fuzz_data_logger:
+                fuzz_data_logger.log_info("MQTTMonitor: Connection reset")
+            return False
         except socket.timeout:
+            self._set_probe_evidence("timeout")
             self.logger.warning(f"MQTT timeout waiting for CONNACK ({self.timeout}s)")
             if fuzz_data_logger:
                 fuzz_data_logger.log_info("MQTTMonitor: Timeout waiting for CONNACK")
             return False
         except Exception as e:
+            # Connect-stage errors that indicate a closed port map to DEAD;
+            # everything else stays UNRESPONSIVE-class.
+            if isinstance(e, OSError) and e.errno in (errno.ECONNREFUSED, errno.ECONNRESET):
+                self._set_probe_evidence("refused" if e.errno == errno.ECONNREFUSED else "reset")
+            else:
+                self._set_probe_evidence("unknown")
             self.logger.warning(f"MQTT error: {e}")
             if fuzz_data_logger:
                 fuzz_data_logger.log_info(f"MQTTMonitor: Error - {str(e)}")

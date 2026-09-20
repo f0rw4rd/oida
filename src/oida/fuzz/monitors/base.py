@@ -191,9 +191,19 @@ class ProtocolMonitor(BaseMonitor):
     - Detailed crash info logging (timestamp, test case, target)
     - Recovery attempt tracking with max_recovery_attempts limit
     - Rate-limited health checks
+    - DEAD/UNRESPONSIVE verdict split: probes that observe ECONNREFUSED or an
+      RST classify the target DEAD (process gone); probes where the connection
+      succeeds but no protocol answer arrives classify it UNRESPONSIVE (hang,
+      busy queue, connection-table limit). An UNRESPONSIVE threshold crossing
+      is corroborated by a deferred re-probe before any crash is declared, and
+      only a DEAD verdict may trigger the stop-after-N-recovery abort -- an
+      UNRESPONSIVE target instead gets a doubled recovery budget.
 
     Subclasses must implement:
     - _check_alive_once(fuzz_data_logger) -> bool: Single protocol-specific health check
+      Subclasses are encouraged (not required) to set self._set_probe_evidence(...)
+      with the failure mode they observed; unknown evidence is treated as
+      UNRESPONSIVE (the conservative path: no hard abort on ambiguity).
 
     Args:
         host: Target hostname or IP
@@ -272,6 +282,30 @@ class ProtocolMonitor(BaseMonitor):
         self.crash_info: Optional[Dict[str, Any]] = None
         self.recovery_attempts = 0
 
+        # Probe evidence for the DEAD/UNRESPONSIVE split. _check_alive_once
+        # implementations report the failure mode they observed via
+        # _set_probe_evidence(); the base class maps it to a verdict when the
+        # failure threshold is crossed. Defaults keep the legacy behavior for
+        # monitors that never report evidence (see _probe_verdict).
+        self._probe_evidence: str = "unknown"
+        # Set when an UNRESPONSIVE verdict was corroborated by a later probe
+        # that still failed (crash declaration is then allowed to proceed).
+        self._unresponsive_corroborated: bool = False
+        # Deferred re-probe delay for corroborating UNRESPONSIVE (seconds).
+        self.corroboration_delay: float = 1.0
+        # Benefit-of-the-doubt budget: an unresponsive crossing that the
+        # deferred re-probe answers stands down instead of declaring a crash.
+        # A persistently intermittent target burns one per crossing; once the
+        # budget is empty, further crossings are corroborated by definition
+        # (the target is effectively broken for fuzzing even if it still
+        # answers occasionally). Cleared when a clean streak re-establishes
+        # health or the target recovers.
+        self.max_corroboration_standdowns: int = 3
+        self._unresponsive_standdowns: int = 0
+        # Verdict snapshot taken when a crash episode is declared (the live
+        # _probe_evidence keeps moving as later probes run).
+        self._episode_verdict: Optional[str] = None
+
         # Baseline tracking using standardized ProtocolBaseline
         self.baseline_established = False
         self.baseline: Optional[ProtocolBaseline] = None
@@ -322,6 +356,90 @@ class ProtocolMonitor(BaseMonitor):
             True if target responds correctly, False otherwise
         """
         pass
+
+    # ==================== DEAD / UNRESPONSIVE VERDICT SPLIT ====================
+
+    # Evidence values map to verdicts below. "refused"/"reset" are strong
+    # evidence the process is gone (OS refuses or RSTs the connection);
+    # "timeout"/"bad-reply"/"unknown" mean the endpoint is reachable but not
+    # answering correctly -- ambiguous between a hang, a busy target, and a
+    # single-client target that only serves the fuzzer's own connection.
+    _DEAD_EVIDENCE = frozenset({"refused", "reset"})
+    _UNRESPONSIVE_EVIDENCE = frozenset({"timeout", "bad-reply", "unknown"})
+
+    def _set_probe_evidence(self, evidence: str) -> None:
+        """Report what the last probe actually observed (subclass API).
+
+        Call from _check_alive_once with one of:
+        - "ok": a valid protocol answer arrived
+        - "refused": connect() got ECONNREFUSED (port closed -> process gone)
+        - "reset": connect or read got an RST mid-conversation
+        - "timeout": connection established, no answer within the timeout
+        - "bad-reply": an answer arrived but did not parse / match baseline
+
+        Unknown values fall back to "unknown" (treated as UNRESPONSIVE).
+        """
+        if evidence in ("ok", "refused", "reset", "timeout", "bad-reply"):
+            self._probe_evidence = evidence
+        else:
+            self._probe_evidence = "unknown"
+
+    @property
+    def _probe_verdict(self) -> str:
+        """Classify the last probe: "alive", "dead", or "unresponsive"."""
+        if self._probe_evidence == "ok":
+            return "alive"
+        if self._probe_evidence in self._DEAD_EVIDENCE:
+            return "dead"
+        return "unresponsive"
+
+    def _is_dead_episode(self) -> bool:
+        """Whether the current crash episode was declared on DEAD evidence."""
+        return self._episode_verdict == "dead"
+
+    def _effective_recovery_limit(self) -> int:
+        """Recovery-attempt budget for the current episode.
+
+        DEAD episodes (ECONNREFUSED/RST at declaration time) keep the hard
+        limit: the process is observably gone and further probing is cheap.
+        UNRESPONSIVE episodes (reachable but silent) get a doubled budget:
+        halting a long campaign on that weaker evidence risks false aborts
+        on busy or single-client targets.
+        """
+        if self._is_dead_episode():
+            return self.max_recovery_attempts
+        return self.max_recovery_attempts * 2
+
+    def _corroborate_unresponsive(self, fuzz_data_logger=None) -> bool:
+        """Deferred re-probe an UNRESPONSIVE threshold crossing.
+
+        Connect-succeeds-but-silent is weak crash evidence: a busy queue, a
+        reboot in progress, or a single-client server that only serves the
+        fuzzer's own data connection all look identical to a hang from the
+        probe socket's point of view. Before declaring a crash (and arming
+        the recovery abort) on that evidence alone, wait corroboration_delay
+        and probe once more. A success here clears the failure streak (the
+        target was merely transiently silent); a failure of any kind
+        confirms the episode.
+
+        Returns:
+            True when the episode is corroborated (declare crash),
+            False when the re-probe succeeded (transient -- stand down).
+        """
+        if self.corroboration_delay > 0:
+            time.sleep(self.corroboration_delay)
+        verdict_ok = self._check_alive_once(fuzz_data_logger)
+        if verdict_ok:
+            self.logger.display(
+                "Unresponsive episode not corroborated (target answered re-probe); standing down"
+            )
+            self.consecutive_failures = 0
+            self.consecutive_successes = 0
+            self.last_check_time = time.time()
+            return False
+        self._unresponsive_corroborated = True
+        self.logger.warning("Unresponsive episode corroborated by deferred re-probe")
+        return True
 
     def _check_alive(self, fuzz_data_logger=None) -> bool:
         """Check if target is responsive with retry logic and crash detection.
@@ -376,6 +494,11 @@ class ProtocolMonitor(BaseMonitor):
                 self.consecutive_successes += 1
                 if self.consecutive_successes >= self.failure_threshold:
                     self.consecutive_failures = 0
+                    # Health re-established by a clean streak: refund one
+                    # stand-down (a rare blip on an otherwise healthy target
+                    # stays free; chronic intermittency still exhausts).
+                    if self._unresponsive_standdowns > 0:
+                        self._unresponsive_standdowns -= 1
                 self.last_check_time = time.time()
                 self._record_rtt(time.perf_counter() - probe_start)
                 return True
@@ -392,10 +515,32 @@ class ProtocolMonitor(BaseMonitor):
         self._on_probe_timeout()
 
         if self.consecutive_failures >= self.failure_threshold:
+            # DEAD/UNRESPONSIVE split: an uncorroborated UNRESPONSIVE crossing
+            # (connect OK, no answer) gets one deferred corroborating probe
+            # before a crash is declared; a DEAD crossing (ECONNREFUSED/RST)
+            # or an already-corroborated episode proceeds immediately. The
+            # stand-down is budgeted: a target that only intermittently
+            # answers must still trip eventually (Bug 4 semantics).
+            if (
+                self._probe_verdict == "unresponsive"
+                and not self._unresponsive_corroborated
+                and self._unresponsive_standdowns < self.max_corroboration_standdowns
+            ):
+                if not self._corroborate_unresponsive(fuzz_data_logger):
+                    # Transient silence: episode stood down, target answered.
+                    self._unresponsive_standdowns += 1
+                    self.logger.display(
+                        f"Unresponsive stand-downs used: "
+                        f"{self._unresponsive_standdowns}/{self.max_corroboration_standdowns}"
+                    )
+                    return True
             self._on_crash_detected(fuzz_data_logger)
             # Immediately try all recovery attempts - don't wait for next check
-            # This loop will either recover (return True) or raise BoofuzzFailure
-            for _ in range(self.max_recovery_attempts + 1):
+            # This loop will either recover (return True) or raise BoofuzzFailure.
+            # Bound the burst by the verdict-aware effective limit so an
+            # UNRESPONSIVE episode actually receives its doubled budget and
+            # aborts with the verdict message (not the generic one).
+            for _ in range(self._effective_recovery_limit() + 1):
                 result = self._try_recovery(fuzz_data_logger)
                 if result:
                     return True
@@ -445,11 +590,17 @@ class ProtocolMonitor(BaseMonitor):
             fuzz_data_logger: Optional boofuzz logger for detailed logging
         """
         self.crashed = True
+        # Snapshot the verdict this episode was declared on: it decides the
+        # recovery abort policy (see _try_recovery) and survives later probes.
+        self._episode_verdict = (
+            self._probe_verdict if self._probe_verdict != "alive" else "unresponsive"
+        )
         self.crash_info = {
             "timestamp": time.strftime("%Y-%m-%d %H:%M:%S"),
             "test_case": self.test_case_count,
             "test_case_name": self.test_case_name or "unknown",
             "target": f"{self.host}:{self.port}",
+            "verdict": self._episode_verdict.upper(),
             "consecutive_failures": self.consecutive_failures,
         }
 
@@ -470,6 +621,7 @@ class ProtocolMonitor(BaseMonitor):
             f"  Test case:     {self.crash_info['test_case']} ({self.crash_info['test_case_name']})"
         )
         self.logger.fail(f"  Target:        {self.crash_info['target']}")
+        self.logger.fail(f"  Verdict:       {self.crash_info['verdict']}")
         self.logger.fail(f"  Failures:      {self.crash_info['consecutive_failures']} consecutive")
         self.logger.fail(f"  Retry count:   {self.retry_count}")
         self.logger.fail(f"  Threshold:     {self.failure_threshold}")
@@ -538,11 +690,20 @@ class ProtocolMonitor(BaseMonitor):
         """
         # Check limit BEFORE incrementing to prevent "6/5" scenario
         # This also handles re-entry after BoofuzzFailure was already raised
-        if self.recovery_attempts >= self.max_recovery_attempts:
+        # DEAD/UNRESPONSIVE split: the hard stop is reserved for DEAD verdicts
+        # (ECONNREFUSED/RST -- the process is observably gone). An UNRESPONSIVE
+        # episode (reachable, silent) is weaker evidence: halting a long
+        # campaign over it risks a false abort on a busy or single-client
+        # target, so it gets a doubled budget and a clearer message instead.
+        effective_limit = self._effective_recovery_limit()
+        if self.recovery_attempts >= effective_limit:
             # Already at/past limit - re-raise without logging (was already logged)
             tc = f"{self.crash_info['test_case']:,}" if self.crash_info else "?"
+            verdict = (
+                "DEAD (connection refused/reset)" if self._is_dead_episode() else "UNRESPONSIVE"
+            )
             raise BoofuzzFailure(
-                f"Target {self.host}:{self.port} unresponsive after {self.max_recovery_attempts} "
+                f"Target {self.host}:{self.port} {verdict} after {self.recovery_attempts} "
                 f"recovery attempts (crashed at test case {tc})"
             )
 
@@ -550,7 +711,7 @@ class ProtocolMonitor(BaseMonitor):
 
         tc = f"{self.crash_info['test_case']:,}" if self.crash_info else "?"
         self.logger.display(
-            f"Recovery attempt {self.recovery_attempts}/{self.max_recovery_attempts} "
+            f"Recovery attempt {self.recovery_attempts}/{effective_limit} "
             f"(crashed at test case {tc})"
         )
 
@@ -610,12 +771,21 @@ class ProtocolMonitor(BaseMonitor):
             self.consecutive_failures = 0
             self.consecutive_successes = 0
             self.recovery_attempts = 0
+            self._unresponsive_corroborated = False
+            self._episode_verdict = None
+            # A recovered target gets a fresh stand-down budget: the episode
+            # that just ended is over, and chronically refusing to ever stand
+            # down again would re-introduce false aborts after one blip.
+            self._unresponsive_standdowns = 0
             return True
 
-        # Check if we've now hit the limit
-        if self.recovery_attempts >= self.max_recovery_attempts:
+        # Check if we've now hit the limit (verdict-aware, same policy as the
+        # entry check: UNRESPONSIVE episodes get a doubled budget).
+        effective_limit = self._effective_recovery_limit()
+        if self.recovery_attempts >= effective_limit:
             self.logger.fail(
-                f"Max recovery attempts ({self.max_recovery_attempts}) reached - STOPPING FUZZER"
+                f"Max recovery attempts ({self.recovery_attempts}/{effective_limit} "
+                f"for {self._episode_verdict or 'unknown'} episode) reached - STOPPING FUZZER"
             )
             if fuzz_data_logger:
                 fuzz_data_logger.log_fail(
@@ -644,8 +814,11 @@ class ProtocolMonitor(BaseMonitor):
                 except Exception as e:
                     self.logger.warning(f"Failed to persist crash data to session DB: {e}")
             tc = f"{self.crash_info['test_case']:,}" if self.crash_info else "?"
+            verdict = (
+                "DEAD (connection refused/reset)" if self._is_dead_episode() else "UNRESPONSIVE"
+            )
             raise BoofuzzFailure(
-                f"Target {self.host}:{self.port} unresponsive after {self.max_recovery_attempts} "
+                f"Target {self.host}:{self.port} {verdict} after {self.recovery_attempts} "
                 f"recovery attempts (crashed at test case {tc})"
             )
 

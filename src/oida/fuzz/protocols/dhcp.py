@@ -24,7 +24,7 @@ from typing import List
 from boofuzz import Block, Byte, DWord, Group, QWord, Request, Static, Word
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import UDPSocketConnection
+from ..core.connections import CountingUDPConnection as UDPSocketConnection
 from ..primitives.dynamic import SmartString
 from ..primitives.smart_string import StringContext
 

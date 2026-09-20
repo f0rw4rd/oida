@@ -3,7 +3,7 @@
 from enum import IntEnum
 
 from boofuzz import BitField, Block, DWord, Group, Request, Size, Static, Word
-from boofuzz.connections import UDPSocketConnection
+from ..core.connections import CountingUDPConnection as UDPSocketConnection
 
 from typing import List
 

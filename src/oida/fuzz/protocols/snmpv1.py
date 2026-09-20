@@ -6,7 +6,7 @@ from typing import List
 
 from ..core.base_fuzzer import BaseFuzzer, RequestInfo
 from ..core.config import FuzzerConfig, ProtocolType
-from ..monitors import SocketHealthMonitor
+from ..monitors import SNMPHealthMonitor
 from ..primitives.asn1_blocks import BERSize
 from ..primitives.dynamic import SmartBytes, SmartString
 from ..primitives.smart_string import StringContext
@@ -124,10 +124,40 @@ class SNMPv1Fuzzer(BaseFuzzer):
         config.protocol_type = ProtocolType.UDP
         super().__init__(config, connection_factory)
 
+    # Reply-expectation policy (same pattern as MQTT/CoAP): every SNMPv1 PDU
+    # a manager sends gets a GetResponse -- except a v1 Trap PDU (0xA4), which
+    # is agent-to-manager and unsolicited: no reply is ever coming, so waiting
+    # the full recv timeout per trap case is pure dead time. The PDU tag sits
+    # at a fixed offset only in unmutated messages, so classify by scanning
+    # for the first context tag (0xA0-0xA5); non-SNMP-looking bytes (empty,
+    # short, no PDU tag found) conservatively wait.
+    @staticmethod
+    def _reply_expected_for_payload(data: bytes) -> bool:
+        if not data:
+            return True
+        for b in data[:64]:
+            if 0xA0 <= b <= 0xA5:
+                return b != 0xA4  # Trap: fire-and-forget
+            if b in (0x30, 0x02, 0x04):  # SEQUENCE / INTEGER / OCTET STRING
+                continue
+        return True  # No PDU tag found: assume it might get an answer
+
+    reply_policy = _reply_expected_for_payload
+
+    # Cap on the reply-expected wait: real GetResponses arrive in
+    # single-digit ms; silence past ~0.15s means the mock dropped the
+    # malformed request. Without the cap each dropped request burns the full
+    # recv timeout (~2s default, ~0.5s calibrated), capping throughput at a
+    # few cases/second (measured 2/s against the docker mock).
+    reply_wait_cap = 0.15
+
     def setup_custom_monitors(self):
         """Setup SNMP-specific monitors"""
+        # SNMP runs over UDP; a TCP-connect monitor (SocketHealthMonitor)
+        # always fails against it. snmpv2c/v3 already use SNMPHealthMonitor;
+        # v1 was left behind doing TCP connects to a UDP port.
         return [
-            SocketHealthMonitor(
+            SNMPHealthMonitor(
                 self.config.target_ip, self.config.target_port or 161, retry_count=3, timeout=2
             )
         ]

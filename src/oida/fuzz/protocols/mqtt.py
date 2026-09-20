@@ -147,6 +147,44 @@ class MQTTFuzzer(StatefulFuzzer):
     # Use MQTT-specific monitor for protocol-aware health checks
     DEFAULT_MONITORS = "mqtt"
 
+    # Packet types (high nibble of byte 0) that a broker answers on success:
+    # CONNECT->CONNACK, PUBREL->PUBCOMP, SUBSCRIBE->SUBACK,
+    # UNSUBSCRIBE->UNSUBACK, PINGREQ->PINGRESP, AUTH(0xF)->AUTH.
+    # PUBLISH depends on the QoS flags (low nibble): QoS1/2 are acked,
+    # QoS0 is fire-and-forget. Everything else (PUBLISH QoS0, PUBACK, PUBREC,
+    # PUBCOMP, DISCONNECT 0xE, and the client-only half of any handshake) gets
+    # no reply, so waiting the full recv timeout per case was pure dead time.
+    # Mutated bytes may of course still elicit a reply (e.g. a corrupted QoS0
+    # PUBLISH parsed as a SUBSCRIBE); the fast path still polls briefly for
+    # queued data and surfaces RSTs, so a reply or crash signal is never
+    # lost — just not waited for.
+    _REPLY_TYPES = {0x1, 0x6, 0x8, 0xA, 0xC, 0xF}
+
+    @classmethod
+    def _reply_expected_for_payload(cls, data: bytes) -> bool:
+        """Reply-expectation policy: MQTT packet type byte -> wait or skip.
+
+        Non-MQTT-looking bytes (empty) conservatively wait.
+        """
+        if not data:
+            return True
+        first = data[0]
+        packet_type = first >> 4
+        if packet_type == 0x3:  # PUBLISH: acked only at QoS 1/2
+            qos = (first >> 1) & 0x3
+            return qos in (1, 2)
+        return packet_type in cls._REPLY_TYPES
+
+    reply_policy = _reply_expected_for_payload
+
+    # Brokers answer a parseable CONNECT/SUBSCRIBE/PINGREQ in ~1ms (p99 2.9ms
+    # measured in calibration against the docker mock); malformed ones are
+    # silently dropped, so waiting the full calibrated recv timeout (~0.5s)
+    # per mutated case was dead time. 0.15s bounds the wait for
+    # reply-expected-but-mutated-into-silence packets while leaving two
+    # orders of magnitude of headroom for real answers.
+    reply_wait_cap = 0.15
+
     PROTOCOL_OPTIONS = {
         "mqtt_username": {
             "type": str,

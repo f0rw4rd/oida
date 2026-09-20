@@ -378,11 +378,13 @@ class TestSNMPMonitorSetup:
         assert len(monitors) > 0
 
     def test_monitor_uses_correct_port(self, snmpv1_fuzzer):
-        """Monitor uses port 161 (SNMP)."""
-        from src.oida.fuzz.monitors import SocketHealthMonitor
+        """Monitor uses port 161 (SNMP) over UDP (SNMP agents speak UDP,
+        so a TCP-connect monitor can never succeed)."""
+        from src.oida.fuzz.monitors import SNMPHealthMonitor
 
         monitors = snmpv1_fuzzer.setup_custom_monitors()
-        assert isinstance(monitors[0], SocketHealthMonitor)
+        assert isinstance(monitors[0], SNMPHealthMonitor)
+        assert monitors[0].port == 161
 
 
 # =============================================================================

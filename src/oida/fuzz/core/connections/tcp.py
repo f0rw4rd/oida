@@ -87,10 +87,72 @@ class ResilientTCPConnection(TCPSocketConnection):
         #   session loop to attribute a failure to the case that caused the RST.
         self.reset_count = 0
         self.last_recv_was_reset = False
+        # Reply-expectation policy: callable(bytes_sent) -> bool. When set and
+        # it returns False for the payload we just sent, the next recv() skips
+        # the socket-timeout wait entirely (poll once for already-queued data)
+        # and returns immediately. This is the no-reply fast path for packets
+        # that legitimately never get an answer (e.g. MQTT PUBLISH QoS 0);
+        # without it every such case burns the full recv timeout.
+        self.reply_expected = None
+        self._skip_next_recv_wait = False
+        # Optional cap (seconds) on the recv wait even when a reply IS
+        # expected. A real reply to a parseable packet typically arrives in
+        # single-digit milliseconds (see timeout calibration); silence beyond
+        # the cap means the server dropped the malformed request. Capping the
+        # wait trades a little late-reply tolerance for order-of-magnitude
+        # throughput on protocols whose servers drop (rather than answer)
+        # malformed requests. None keeps the full recv_timeout wait.
+        self.reply_wait_cap = None
+        # Cumulative effectiveness counters (flat: the session attributes the
+        # per-test-case delta to the current boofuzz node in its post-case
+        # callback, since boofuzz -- not the connection -- knows the node
+        # name). Flushed by TestCaseManager to session_metadata.effectiveness.
+        # Keys: sent, replies, timeouts, resets, protocol_errors, bytes_sent,
+        # bytes_recv, wait_expected (reply-expected sends).
+        self.effectiveness = {
+            "sent": 0,
+            "replies": 0,
+            "timeouts": 0,
+            "resets": 0,
+            "protocol_errors": 0,
+            "bytes_sent": 0,
+            "bytes_recv": 0,
+            "wait_expected": 0,
+        }
+        # Whether the last send expected a reply (from the policy evaluation):
+        # silence after a reply-expected send is a timeout *failure*, silence
+        # after a no-reply send is the expected outcome and must not be scored
+        # as one.
+        self._last_send_expected_reply = True
 
     def _errno_name(self, err_no):
         """Get human-readable name for errno value."""
         return self._ERRNO_NAMES.get(err_no, f"errno={err_no}")
+
+    def _eff_send(self, data_len: int, reply_expected: bool) -> None:
+        c = self.effectiveness
+        c["sent"] += 1
+        c["bytes_sent"] += data_len
+        if reply_expected:
+            c["wait_expected"] += 1
+
+    def _eff_recv(self, data_len: int) -> None:
+        """A recv completed; classify the outcome."""
+        c = self.effectiveness
+        if data_len:
+            c["replies"] += 1
+            c["bytes_recv"] += data_len
+        elif self._last_send_expected_reply:
+            # Silence where the protocol promised an answer: a scored timeout.
+            c["timeouts"] += 1
+        # else: no-reply send got silence, as designed -- not a failure.
+
+    def _eff_recv_error(self, reset: bool) -> None:
+        c = self.effectiveness
+        if reset:
+            c["resets"] += 1
+        else:
+            c["protocol_errors"] += 1
 
     def set_resilient(self, value):
         """Enable or disable resilient mode with logging."""
@@ -275,6 +337,7 @@ class ResilientTCPConnection(TCPSocketConnection):
                 data = super().recv(max_bytes)
                 if data:
                     self._total_bytes_recv += len(data)
+                self._eff_recv(len(data))
                 return data
             except BlockingIOError:
                 if eagain_type == "builtin":
@@ -283,6 +346,8 @@ class ResilientTCPConnection(TCPSocketConnection):
             except socket.error as e2:
                 if eagain_type == "socket" and e2.errno in [errno.EAGAIN, errno.EWOULDBLOCK]:
                     continue
+                if e2.errno in [errno.ECONNRESET, errno.ENETRESET]:
+                    self._eff_recv_error(reset=True)
                 fail_msg = (
                     f"Recv failed after EAGAIN retry: {self._errno_name(e2.errno)}"
                     if eagain_type == "socket"
@@ -297,6 +362,7 @@ class ResilientTCPConnection(TCPSocketConnection):
         self._log.warning(f"EAGAIN persisted after {max_eagain_retries} retries, reconnecting")
         if self._reconnect(trigger_errno=errno.EAGAIN, operation="recv"):
             self._log.debug("Recv returning empty after EAGAIN reconnect")
+            self._eff_recv(0)  # scored as silence (timeout-class)
             return b""
         self._log.fail("Recv failed: EAGAIN persisted and reconnect failed")
         raise BlockingIOError("EAGAIN persisted after retries and reconnect")
@@ -355,6 +421,7 @@ class ResilientTCPConnection(TCPSocketConnection):
         # distinguishable from a clean silent response.
         self.reset_count += 1
         self.last_recv_was_reset = True
+        self._eff_recv_error(reset=True)
         self._log.warning(
             f"{description} during recv (RST #{self.reset_count}) -- reconnecting; "
             "reset surfaced via reset_count/last_recv_was_reset"
@@ -392,6 +459,21 @@ class ResilientTCPConnection(TCPSocketConnection):
         data_len = len(data) if data else 0
         if data_len == 0:
             return 0
+
+        # Evaluate the reply-expectation policy on the payload we are about to
+        # transmit, so the immediately-following recv() knows whether to wait.
+        # Exceptions in the policy itself must never break the send: default
+        # to waiting (the safe, pre-existing behavior).
+        if self.reply_expected is not None:
+            try:
+                self._skip_next_recv_wait = not self.reply_expected(data)
+            except Exception as e:
+                self._log.debug(f"reply_expected policy error (defaulting to wait): {e}")
+                self._skip_next_recv_wait = False
+        else:
+            self._skip_next_recv_wait = False
+        self._last_send_expected_reply = not self._skip_next_recv_wait
+        self._eff_send(data_len, not self._skip_next_recv_wait)
 
         total_sent = 0
         # Guard against an infinite loop if super().send() keeps returning 0
@@ -507,6 +589,16 @@ class ResilientTCPConnection(TCPSocketConnection):
         EAGAIN handling is ALWAYS active (safe retry with 0.1s delay).
         Reconnection on connection reset only happens when resilient=True.
 
+        When the last send was flagged no-reply by the reply_expected policy,
+        the full socket-timeout wait is skipped: we poll briefly for data the
+        server already queued (a crash-induced RST still surfaces here) and
+        return, instead of blocking for recv_timeout seconds on silence.
+
+        When reply_wait_cap is set, even reply-expected cases get a bounded
+        wait instead of the full recv_timeout: a single recv with the cap as
+        its timeout. Real answers to parseable requests arrive far under the
+        cap; silence past it means the server dropped the malformed request.
+
         Args:
             max_bytes: Maximum bytes to receive
 
@@ -516,10 +608,22 @@ class ResilientTCPConnection(TCPSocketConnection):
         # Clear the per-recv reset flag; it is re-set only if this recv hits a
         # peer RST that resilient mode swallows into an empty read (Bug 4).
         self.last_recv_was_reset = False
+        if self._skip_next_recv_wait:
+            self._skip_next_recv_wait = False
+            return self._recv_no_wait(max_bytes)
+        cap = self.reply_wait_cap
+        if cap is not None:
+            # Bounded wait: one recv with the cap as its timeout. Falls back
+            # to the normal path (including EAGAIN retry / reset handling) on
+            # any error so capped cases keep the same crash semantics.
+            sock = getattr(self, "_sock", None)
+            if sock is not None:
+                return self._recv_no_wait(max_bytes, poll_seconds=cap)
         try:
             data = super().recv(max_bytes)
             if data:
                 self._total_bytes_recv += len(data)
+            self._eff_recv(len(data))
             return data
 
         except BlockingIOError:
@@ -541,6 +645,7 @@ class ResilientTCPConnection(TCPSocketConnection):
             self._log.debug(f"Socket error during recv: {self._errno_name(err_no)}")
 
             if err_no in [errno.ECONNRESET, errno.ENETRESET]:
+                self._eff_recv_error(reset=True)
                 if not self.resilient:
                     raise boofuzz_exception.BoofuzzTargetConnectionReset().with_traceback(
                         sys.exc_info()[2]
@@ -560,6 +665,101 @@ class ResilientTCPConnection(TCPSocketConnection):
                     sys.exc_info()[2]
                 )
             raise
+
+    def _recv_no_wait(self, max_bytes, poll_seconds: float = 0.05) -> bytes:
+        """Receive without the full socket-timeout wait (no-reply fast path).
+
+        Temporarily switches the socket to a short timeout, drains anything
+        already queued, and restores the original timeout. A peer RST during
+        the poll is treated exactly like the normal path: non-resilient mode
+        raises BoofuzzTargetConnectionReset; resilient mode reconnects and
+        returns empty (with last_recv_was_reset set), preserving the strongest
+        crash signal even for no-reply packets.
+
+        Args:
+            max_bytes: Maximum bytes to receive
+            poll_seconds: How long to poll for already-queued data
+
+        Returns:
+            bytes: Received data (b"" if nothing was queued)
+        """
+        sock = getattr(self, "_sock", None)
+        if sock is None:
+            return b""
+        try:
+            original_timeout = sock.gettimeout()
+        except Exception:
+            original_timeout = None
+        try:
+            sock.settimeout(poll_seconds)
+            try:
+                data = sock.recv(max_bytes)
+                if data:
+                    self._total_bytes_recv += len(data)
+                self._eff_recv(len(data))
+                return data
+            except socket.timeout:
+                self._eff_recv(0)
+                return b""
+            except socket.error as e:
+                err_no = e.errno
+                if err_no in [errno.ECONNRESET, errno.ENETRESET]:
+                    self._eff_recv_error(reset=True)
+                    if not self.resilient:
+                        raise boofuzz_exception.BoofuzzTargetConnectionReset().with_traceback(
+                            sys.exc_info()[2]
+                        )
+                    self.reset_count += 1
+                    self.last_recv_was_reset = True
+                    self._log.warning(
+                        f"Connection reset during no-wait recv (RST #{self.reset_count}) "
+                        "-- reconnecting"
+                    )
+                    if self._reconnect(trigger_errno=err_no, operation="recv"):
+                        return b""
+                    raise boofuzz_exception.BoofuzzTargetConnectionReset().with_traceback(
+                        sys.exc_info()[2]
+                    )
+                raise
+        finally:
+            try:
+                sock.settimeout(original_timeout)
+            except Exception as e:
+                self._log.debug(f"Failed to restore socket timeout: {e}")
+
+    def resync_timeouts(self) -> None:
+        """Re-apply the constructor timeouts to the live socket.
+
+        The constructor's timeouts are baked into the socket at open() time
+        (SO_RCVTIMEO/SO_SNDTIMEO), but a session built before timeout
+        calibration ran keeps the pre-calibration defaults (boofuzz's 5.0s)
+        for the whole campaign. Recomputing the sockopts here lets the
+        calibration results reach connections that already exist.
+
+        Safe on an unopened connection (nothing to do) and idempotent.
+        """
+        sock = getattr(self, "_sock", None)
+        if sock is None:
+            return
+        try:
+            from boofuzz.connections.base_socket_connection import _seconds_to_sockopt_format
+
+            sock.setsockopt(
+                socket.SOL_SOCKET,
+                socket.SO_SNDTIMEO,
+                _seconds_to_sockopt_format(self._send_timeout),
+            )
+            sock.setsockopt(
+                socket.SOL_SOCKET,
+                socket.SO_RCVTIMEO,
+                _seconds_to_sockopt_format(self._recv_timeout),
+            )
+            self._log.debug(
+                f"Timeouts re-synced onto live socket: "
+                f"send={self._send_timeout}s recv={self._recv_timeout}s"
+            )
+        except Exception as e:
+            self._log.debug(f"resync_timeouts failed: {e}")
 
 
 def _create_permissive_ssl_context() -> ssl.SSLContext:
@@ -645,8 +845,12 @@ class RealConnectionFactory(ConnectionFactory):
                 )
             elif config.protocol_type == ProtocolType.UDP:
                 # For UDP, we need to bind to a local port to receive responses
-                # Using bind=('0.0.0.0', 0) lets the OS assign an ephemeral port
-                return UDPSocketConnection(
+                # Using bind=('0.0.0.0', 0) lets the OS assign an ephemeral port.
+                # CountingUDPConnection = boofuzz's UDP + effectiveness counters
+                # + reply-expectation hooks (same rationale as the TCP default).
+                from .udp import CountingUDPConnection
+
+                return CountingUDPConnection(
                     config.target_ip, config.target_port, bind=("0.0.0.0", 0), **sock_kw
                 )
             elif config.protocol_type == ProtocolType.RAW:
@@ -713,14 +917,17 @@ class RealConnectionFactory(ConnectionFactory):
                 if getattr(config, "reuse_target_connection", False):
                     conn.set_resilient(True)
                 return conn
-        # Default to TCP
-        # Use resilient connection when reuse_target_connection is enabled (-R flag)
-        # This fixes the bug where server RST doesn't trigger reconnection
+        # Default to TCP.
+        # Always use ResilientTCPConnection: non-resilient mode raises exactly
+        # what boofuzz's own TCPSocketConnection raises (ECONNRESET ->
+        # BoofuzzTargetConnectionReset etc.), so behavior is unchanged, while
+        # the wrapper carries the reply_expected policy hooks (no-reply recv
+        # fast path) and the reset counters for every session. Resilient
+        # auto-reconnect itself stays opt-in via reuse_target_connection (-R).
+        conn = ResilientTCPConnection(config.target_ip, config.target_port, **resilient_kw)
         if getattr(config, "reuse_target_connection", False):
-            conn = ResilientTCPConnection(config.target_ip, config.target_port, **resilient_kw)
             conn.set_resilient(True)
-            return conn
-        return TCPSocketConnection(config.target_ip, config.target_port, **sock_kw)
+        return conn
 
 
 class IEC104SocketConnection(ResilientTCPConnection):

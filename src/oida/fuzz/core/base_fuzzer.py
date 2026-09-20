@@ -109,6 +109,11 @@ class RequestInfo:
     category: str = "general"
     slow: bool = False  # Mark slow/expensive requests
     requires_state: Optional[Union[str, CommonState, List[Union[str, CommonState]]]] = None
+    # Whether mutated sends on this request normally produce a server reply.
+    # False enables the no-reply fast path: the post-send recv skips the full
+    # timeout wait (polls briefly instead). Only mark requests whose packets
+    # are answered only on success — the fast path still surfaces RSTs.
+    expects_response: bool = True
 
 
 class BaseFuzzer(ABC):
@@ -1224,9 +1229,93 @@ class BaseFuzzer(ABC):
     def _pre_fuzz_hook(self) -> None:
         """Called after timeout calibration, immediately before the fuzz loop.
 
-        Base implementation is a no-op. Subclasses may override to build/touch
-        self.session here so its data socket picks up the calibrated timeouts.
+        Base implementation pushes the calibrated timeouts onto an
+        already-built data connection (a session opened during preflight --
+        e.g. by a protocol baseline -- froze boofuzz's 5.0s defaults into the
+        socket, defeating the lazy post-calibration build) and attaches the
+        reply-expectation policy (if the subclass defines one). Subclasses
+        may extend (calling super()).
         """
+        self._resync_connection_timeouts()
+        self._attach_reply_policy()
+
+    def _data_connection(self):
+        """The session's first target connection, or None.
+
+        Uses the lazy ``session`` property (not the raw ``_session``
+        attribute): callers run at points where nothing may have built the
+        session yet (e.g. _pre_fuzz_hook on a plain non-stateful fuzzer),
+        and reading the raw attribute would silently no-op policy attach /
+        timeout resync -- the session built by the subsequent fuzz() would
+        then run without either.
+        """
+        targets = getattr(self.session, "targets", None)
+        target = targets[0] if targets else None
+        if target is None:
+            return None
+        # boofuzz's Target stores the connection as _target_connection in
+        # current versions; older versions exposed it as .connection.
+        return getattr(target, "_target_connection", None) or getattr(target, "connection", None)
+
+    def _resync_connection_timeouts(self) -> None:
+        """Push calibrated config timeouts into the live data connection.
+
+        Only applies when the config carries explicit values (calibration
+        result or --recv-timeout override): the factory already used them
+        when building connections post-calibration, so this is a no-op for
+        those; the target is the pre-calibration-built connection whose
+        sockopts still carry boofuzz's 5.0s defaults.
+        """
+        conn = self._data_connection()
+        if conn is None:
+            return
+        recv = getattr(self.config, "recv_timeout", None)
+        send = getattr(self.config, "send_timeout", None)
+        if recv is not None and hasattr(conn, "_recv_timeout"):
+            conn._recv_timeout = recv
+        if send is not None and hasattr(conn, "_send_timeout"):
+            conn._send_timeout = send
+        if hasattr(conn, "resync_timeouts"):
+            conn.resync_timeouts()
+
+    # Callable(bytes) -> bool: does a request with these bytes normally get a
+    # reply? None (default) keeps the classic always-wait behavior. Set by
+    # protocol fuzzers whose request types are decodable from the payload
+    # (e.g. MQTT packet type in byte 0).
+    reply_policy = None
+
+    # Optional cap (seconds) on the post-send recv wait even when a reply IS
+    # expected. Servers that drop (rather than answer) malformed requests make
+    # the full recv_timeout pure dead time; the cap bounds it. None keeps the
+    # full wait. Only meaningful together with reply_policy.
+    reply_wait_cap = None
+
+    def _attach_reply_policy(self) -> None:
+        """Wire self.reply_policy onto the session's data connection."""
+        policy = self.reply_policy
+        if policy is None:
+            return
+        sock = self._data_connection()
+        if sock is None:
+            self.log.debug("No target to attach reply policy to")
+            return
+        if sock is not None and hasattr(sock, "reply_expected"):
+            sock.reply_expected = policy
+            if self.reply_wait_cap is not None:
+                sock.reply_wait_cap = self.reply_wait_cap
+            self.log.debug(
+                "Reply-expectation policy attached to data connection"
+                + (
+                    f" (recv wait capped at {self.reply_wait_cap:.3f}s)"
+                    if self.reply_wait_cap
+                    else ""
+                )
+            )
+        else:
+            self.log.warning(
+                f"reply_policy set but data connection is {type(sock).__name__} "
+                "(no reply_expected hook); no-reply fast path inactive"
+            )
 
     def _calibrate_timeouts(self, fuzz_log) -> None:
         """Measure latency via the monitor probe and set recv/monitor timeouts from it.
@@ -1274,6 +1363,23 @@ class BaseFuzzer(ABC):
             fuzz_log.display(
                 f"  recv_timeout: kept user value {self.config.recv_timeout:.2f}s "
                 "(hard-set, calibration skipped)"
+            )
+
+        # Reply-wait cap (the answer-everything baseline for post-send waits
+        # on protocols whose servers drop malformed requests instead of
+        # answering them): a generous multiple of the measured p99. A real
+        # reply to a parseable request lands far under this; silence beyond
+        # it is a dropped request, not a slow one. A protocol that sets its
+        # own reply_wait_cap (e.g. MQTT's 0.15s) keeps it; users can disable
+        # with --no-calibrate or override by subclassing. The cap only takes
+        # effect when a reply-expectation policy is also attached (it bounds
+        # reply-EXPECTED waits), so plain always-wait protocols are unchanged
+        # unless they opt in via reply_policy.
+        if self.reply_wait_cap is None and self.reply_policy is not None:
+            derived = min(max(s.p99 * 20.0, 0.05), 2.0)
+            self.reply_wait_cap = derived
+            fuzz_log.display(
+                f"  reply_wait_cap: set to {derived:.2f}s (p99 x20, clamped [0.05, 2])"
             )
 
         # Monitor channel (the crash oracle): no CLI hard-set exists, so always applied.
