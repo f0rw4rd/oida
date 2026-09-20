@@ -114,6 +114,24 @@ class TestCoapPing:
             result = helpers.coap_ping("127.0.0.1", 5683, timeout=0.2)
         assert result is False
 
+    def test_ping_verbatim_echo_reply_is_false(self):
+        # A UDP echo/reflector service returns our CON ping byte-for-byte:
+        # version and MID checks pass, but Type is still CON(0). A real CoAP
+        # endpoint answers a CON with ACK(2) or RST(3), never a same-MID CON.
+        fake_sock = MagicMock()
+        fake_sock.recvfrom.return_value = (b"\x40\x00\x00\x01", ("127.0.0.1", 5683))
+        with patch("oida.protocols.coap.helpers.socket.socket", return_value=fake_sock):
+            result = helpers.coap_ping("127.0.0.1", 5683, timeout=0.2)
+        assert result is False
+
+    def test_ping_rst_reply_is_true(self):
+        # Proper RST echo of our MID: 0x70 = Ver1/Type3(RST)/TKL0.
+        fake_sock = MagicMock()
+        fake_sock.recvfrom.return_value = (b"\x70\x00\x00\x01", ("127.0.0.1", 5683))
+        with patch("oida.protocols.coap.helpers.socket.socket", return_value=fake_sock):
+            result = helpers.coap_ping("127.0.0.1", 5683, timeout=0.2)
+        assert result is True
+
 
 # ===========================================================================
 # coap_get

@@ -100,13 +100,16 @@ def coap_ping(host: str, port: int, timeout: float = DEFAULT_TIMEOUT) -> bool:
         if len(data) < 4:
             return False
         # Validate this is actually a CoAP reply to OUR ping, not arbitrary
-        # UDP noise: version must be 1 (top 2 bits of byte 0) and the
-        # message ID must echo the one we sent (bytes 2-3). A garbage or
-        # wrong-protocol UDP responder that merely echoes bytes back must
-        # not be mistaken for "CoAP server responding".
+        # UDP noise: version must be 1 (top 2 bits of byte 0), the message
+        # ID must echo the one we sent (bytes 2-3), and the Type must be a
+        # reply type — ACK(2) or RST(3). A verbatim-echo UDP responder (or
+        # any reflector) returns our CON unchanged, passing version+MID
+        # checks while still being Type=CON(0); a real CoAP endpoint never
+        # answers a CON with a CON echoing the same MID.
         version_ok = (data[0] >> 6) == 1
+        type_ok = (data[0] >> 4) & 3 in (2, 3)
         mid_ok = data[2:4] == ping_msg[2:4]
-        return version_ok and mid_ok
+        return version_ok and type_ok and mid_ok
     except OSError as e:
         logger.debug(f"CoAP ping socket send/recv failed: {e}")
         return False
