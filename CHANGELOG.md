@@ -136,6 +136,37 @@ First stable release.
 
 ### Fixed
 
+- **Twelve correctness bugs from the repo-wide bug-hunt** (each with a
+  fail-before/pass-after regression test):
+  - SMTP: CRAM-MD5 credentials were never harvested (client base64 line
+    carried no tshark tags, so the regex never saw it — now recovered from
+    the raw payload).
+  - X11: MIT-MAGIC-COOKIE-1 stored as U+FFFD mojibake (pyshark decodes
+    binary with `errors=replace`) — true bytes now carved from the payload.
+  - Telnet: failed-login credential dropped when the failure banner and
+    next prompt coalesce into one TCP segment (common for real telnetd).
+  - C12.22: passwords travel on SECURITY (0x51) but capture was gated to
+    LOGON (0x50), so they were never recorded.
+  - Redis: AUTH passwords containing commas were corrupted by `split(",")`
+    over the bytes-list repr.
+  - MySQL: `mysql_clear_password` values are plaintext but were labeled
+    `hash` and never decoded.
+  - MSRPC: NTLMv1 hashcat format was never built (condition required
+    `ntproofstr`, which NTLMv1 never has).
+  - MQTT: anonymous client_id-only CONNECTs fabricated `username_only`
+    credential rows.
+  - Fuzz ASN.1: OID builder crashed on `-O oid_prefix=2.999.1` (first
+    combined arc > 255), aborting the whole campaign.
+  - Export: any XML-1.0-illegal char (sysDescr/banners) silently dropped
+    the entire XML deliverable; ragged rows rejected the whole table.
+  - DICOM: one non-UTF-8 byte in an AET wordlist aborted the brute (same
+    class as the two earlier wordlist fixes).
+  - KNX: a truncated DIB raised into the catch-all and silently dropped a
+    real device; bounds-checked now.
+- **`check-secrets` hook: password pattern bridged newlines** — a comment
+  mentioning `("password:")` matched an unrelated quoted string lines later,
+  false-positiving on committed code. Match stays on one line now; the
+  `SCREAMING_CASE = "snake_case"` enum idiom is exempt.
 - **Runtime metadata lookups use the real distribution name.** The import
   package and the `oida` command are unchanged, but the published distribution
   is `oida-ics`, so `importlib.metadata` calls asking for `oida` silently
