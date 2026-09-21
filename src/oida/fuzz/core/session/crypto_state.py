@@ -56,6 +56,9 @@ class TokenState:
         expires_at: When token expires (None = no expiry)
         refresh_callback: Callback to refresh token when expired
         metadata: Additional token metadata
+        lifetime: How long a refreshed value stays valid. Used to re-arm
+            ``expires_at`` after a refresh; ``None`` means the refreshed value
+            is treated as non-expiring.
     """
 
     name: str
@@ -63,6 +66,7 @@ class TokenState:
     expires_at: Optional[datetime] = None
     refresh_callback: Optional[Callable[[], Any]] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
+    lifetime: Optional[timedelta] = None
 
     def is_expired(self) -> bool:
         """Check if token has expired."""
@@ -268,9 +272,29 @@ class CryptoStateManager:
             # Try to refresh
             try:
                 new_value = token.refresh_callback()
-                token.value = new_value
+                if isinstance(new_value, TokenState):
+                    # Callback produced a whole replacement token: adopt its
+                    # expiry and metadata, not just the value.
+                    token.value = new_value.value
+                    token.expires_at = new_value.expires_at
+                    if new_value.metadata:
+                        token.metadata.update(new_value.metadata)
+                    if new_value.lifetime is not None:
+                        token.lifetime = new_value.lifetime
+                else:
+                    token.value = new_value
+                    # Re-arm the expiry. Without this the token stays expired
+                    # forever, so every later get_token() call refreshes again
+                    # -- an extra round trip (often a full re-auth) per message
+                    # for the rest of the session -- and is_expired() keeps
+                    # reporting True even though the value is fresh.
+                    token.expires_at = (
+                        datetime.now() + token.lifetime if token.lifetime is not None else None
+                    )
             except Exception as e:
-                _log.debug("Token refresh failed for '%s': %s", name, e)
+                # The stale value is returned below; say so loudly, because the
+                # caller cannot distinguish it from a freshly refreshed one.
+                _log.warning("Token refresh failed for '%s', using stale value: %s", name, e)
         return token
 
     def get_token_value(self, name: str) -> Optional[Any]:
