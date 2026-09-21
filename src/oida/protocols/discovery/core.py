@@ -121,12 +121,25 @@ def validate_interface(interface: str) -> str:
 
 
 def lookup_mac_vendor(mac_address: str) -> str:
-    """Look up MAC address vendor - wrapper around utils.mac_lookup."""
+    """Look up MAC address vendor - wrapper around utils.mac_lookup.
+
+    Never raises: the string comes straight off the wire (scapy link-layer
+    fields on hostile frames, BOOTP chaddr, xknx DIBs) and manuf2 raises
+    ValueError on unparseable input. A corrupt MAC must degrade to
+    "Unknown", not abort discovery -- LLDPScanner._generate_statistics
+    calls this once per device inside the top-level discover() try, so one
+    malformed frame used to lose the whole report (statistics AND
+    _report_findings) even though every device had already been found.
+    """
     if not mac_address:
         return "Unknown"
     from ...utils.ics_logger import mac_lookup
 
-    return mac_lookup(mac_address) or "Unknown"
+    try:
+        return mac_lookup(mac_address) or "Unknown"
+    except (ValueError, TypeError) as e:
+        logger.debug(f"MAC vendor lookup failed for {mac_address!r}: {e}")
+        return "Unknown"
 
 
 def is_valid_discovered_ip(ip_addr: str, interface: Optional[str] = None) -> bool:
