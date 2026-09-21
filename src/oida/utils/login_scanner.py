@@ -50,11 +50,22 @@ def format_wordlist_source(path: Optional[str], default_label: str = "built-in d
 
 
 def _load_file_lines(filepath: str) -> List[str]:
-    """Load non-empty, non-comment lines from a file."""
+    """Load non-empty, non-comment lines from a file.
+
+    Reads bytes and decodes per line (latin-1 fallback round-trips every
+    byte): a text-mode read raises UnicodeDecodeError on the first non-UTF-8
+    byte, and although the handler below catches it, iteration stops there --
+    silently truncating the wordlist so every password after the bad line
+    goes untested.
+    """
     lines = []
     try:
-        with open(filepath, "r") as f:
-            for line in f:
+        with open(filepath, "rb") as f:
+            for raw in f:
+                try:
+                    line = raw.decode("utf-8")
+                except UnicodeDecodeError:
+                    line = raw.decode("latin-1")
                 line = line.strip()
                 if line and not line.startswith("#"):
                     lines.append(line)
