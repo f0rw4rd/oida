@@ -77,7 +77,7 @@ def _attach_port(host: str, port: int) -> str:
     return f"{host}:{port}"
 
 
-def parse_targets(target_spec: str) -> List[str]:
+def parse_targets(target_spec: str, _visited_files: Optional[set] = None) -> List[str]:
     """
     Parse target specification into list of individual targets
 
@@ -96,6 +96,10 @@ def parse_targets(target_spec: str) -> List[str]:
 
     Args:
         target_spec: Target specification string
+        _visited_files: Internal set of already-expanded target files, carried
+            through the recursive calls so a file that references itself (even
+            indirectly, e.g. via a comma-separated line) is detected instead of
+            recursing until the interpreter's stack limit.
 
     Returns:
         list: List of target strings (IPs or hostnames), each optionally
@@ -119,11 +123,23 @@ def parse_targets(target_spec: str) -> List[str]:
     """
     targets = []
 
+    # An empty or whitespace-only spec expands to nothing, not to one empty
+    # target: socket connects to "" land on 127.0.0.1, so a stray comma or a
+    # host-less ":502" would silently scan the operator's own machine instead
+    # of the host they meant. The CLI reports an empty expansion as
+    # "No valid targets found".
+    if target_spec is None or not target_spec.strip():
+        return targets
+
+    # Comma-separated members are stripped below; do the same for the spec
+    # itself so `-t " 10.0.0.1 "` is not handed to the resolver with spaces.
+    target_spec = target_spec.strip()
+
     # Handle comma-separated targets (be careful with IPv6)
     # IPv6 doesn't contain commas, so this is safe
     if "," in target_spec and not is_ipv6_range(target_spec):
         for target in target_spec.split(","):
-            targets.extend(parse_targets(target.strip()))
+            targets.extend(parse_targets(target.strip(), _visited_files))
         return targets
 
     # Check for protocol URLs (opc.tcp://, http://, etc.) - treat as single target
@@ -131,13 +147,27 @@ def parse_targets(target_spec: str) -> List[str]:
         targets.append(target_spec)
         return targets
 
+    # Bracketed IPv6 range with a port, "[2001:db8::1]-[2001:db8::ff]:5020".
+    # The port sits after the range's *closing* bracket, which split_host_port
+    # cannot see (its bracket handling is single-host), so the spec used to fall
+    # through every branch and end up as one mangled target with the leading "["
+    # stripped off. The module contract is that every form may carry a port.
+    range_with_port = re.match(r"^(\[[^\]]+\]-\[[^\]]+\]):(\d+)$", target_spec)
+    if range_with_port and is_ipv6_range(range_with_port.group(1)):
+        port = int(range_with_port.group(2))
+        if 1 <= port <= 65535:
+            return [
+                _attach_port(t, port)
+                for t in parse_targets(range_with_port.group(1), _visited_files)
+            ]
+
     # Strip an embedded ":port" before expansion, then re-attach it to every
     # expanded target, so "10.0.0.0/30:5020" and "10.0.0.1-5:5020" work like
     # their portless forms. split_host_port() declines on host:port/path and on
     # bare IPv6, so those fall through to the branches below untouched.
     host_spec, embedded_port = split_host_port(target_spec)
     if embedded_port is not None:
-        return [_attach_port(t, embedded_port) for t in parse_targets(host_spec)]
+        return [_attach_port(t, embedded_port) for t in parse_targets(host_spec, _visited_files)]
 
     # Check for host:port/path patterns (e.g., milo.digitalpetri.com:62541/milo)
     # These look like CIDR but are actually URLs without scheme
@@ -153,7 +183,7 @@ def parse_targets(target_spec: str) -> List[str]:
 
     # Check if it's a file
     if os.path.isfile(target_spec):
-        targets.extend(parse_target_file(target_spec))
+        targets.extend(parse_target_file(target_spec, _visited_files))
     # Check if it's a CIDR network (IPv4 or IPv6)
     elif "/" in target_spec:
         if _is_cidr_like(target_spec):
@@ -181,7 +211,9 @@ def parse_targets(target_spec: str) -> List[str]:
     # Single target (IP or hostname) - strip brackets for IPv6
     else:
         target = target_spec.strip("[]")
-        targets.append(target)
+        # "[]" and friends strip down to nothing -- see the empty-spec note above.
+        if target.strip():
+            targets.append(target)
 
     logger.debug(f"Parsed {len(targets)} targets from '{target_spec}'")
     return targets
@@ -425,7 +457,12 @@ def parse_target_file(filepath: str, _visited_files: set = None) -> List[str]:
                 if os.path.isfile(line):
                     line_targets = parse_target_file(line, _visited_files)
                 else:
-                    line_targets = parse_targets(line)
+                    # Hand the visited set down: a comma-separated line whose
+                    # members are file paths reaches parse_target_file through
+                    # parse_targets, and without it the cycle guard below never
+                    # sees the repeat (it recursed until RecursionError, after
+                    # queueing hundreds of duplicate scans of the same host).
+                    line_targets = parse_targets(line, _visited_files)
                 targets.extend(line_targets)
             except Exception as e:
                 logger.warning(f"Error parsing line {line_num} in {filepath}: {line!r} - {e}")
