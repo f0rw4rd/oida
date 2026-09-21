@@ -597,6 +597,23 @@ class TelnetPassiveListener(PySharkListenerBase):
         session = self._get_session(client_ip, server_ip)
         session.data_buffer += data
 
+        # A password was pending when this segment arrived - finalize and record
+        # it before evaluating what the segment means for the next state. This
+        # must run before the login/password prompt branches below: servers
+        # commonly coalesce a failure banner ("Login incorrect") and the next
+        # login prompt into a single TCP segment, and if the prompt branch reset
+        # the buffers first, the just-typed password would be silently dropped.
+        if session.state == TelnetState.WAIT_FOR_PASSWORD and len(data) > 0:
+            # Server sent something after password - likely logged in or failed
+            # At this point we have username and password
+            if session.username_buffer:
+                session.username = session.username_buffer.strip()
+            if session.password_buffer:
+                session.password = session.password_buffer.strip()
+
+            if session.username and session.password:
+                self._record_credential(session)
+
         # Check for login prompt
         if self.LOGIN_PROMPT_REGEX.search(data):
             session.state = TelnetState.WAIT_FOR_USERNAME
@@ -613,18 +630,10 @@ class TelnetPassiveListener(PySharkListenerBase):
             session.password_buffer = ""
             self.logger.debug(f"Telnet: Server {server_ip} sent password prompt")
 
-        # Check for successful login (server sends data after password)
-        elif session.state == TelnetState.WAIT_FOR_PASSWORD and len(data) > 0:
-            # Server sent something after password - likely logged in or failed
-            # At this point we have username and password
-            if session.username_buffer:
-                session.username = session.username_buffer.strip()
-            if session.password_buffer:
-                session.password = session.password_buffer.strip()
-
-            if session.username and session.password:
-                self._record_credential(session)
-                session.state = TelnetState.COMPLETE
+        # Successful login (or any other server output after the password) -
+        # mark the session complete now that the credential above is recorded.
+        elif session.state == TelnetState.WAIT_FOR_PASSWORD:
+            session.state = TelnetState.COMPLETE
 
     def _process_client_packet(self, client_ip: str, server_ip: str, data: str) -> None:
         """Process Telnet client input (username/password)."""

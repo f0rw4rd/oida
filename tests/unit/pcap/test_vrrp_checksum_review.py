@@ -12,8 +12,6 @@ advertisements: bad checksum -> listener stored status 0, good -> 1; the
 warning log never fired for the bad one.
 """
 
-import pytest
-
 from oida.pcap.vrrp import CHECKSUM_STATUS_BAD
 
 # Authoritative: tshark -G values | grep vrrp.checksum.status

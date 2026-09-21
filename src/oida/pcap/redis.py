@@ -26,6 +26,7 @@ RESP command format: Array of bulk strings
 The first bulk string is always the command name.
 """
 
+import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -74,6 +75,13 @@ WRITE_COMMANDS = {
     "PERSIST",
     "RENAME",
 }
+
+
+# Matches a complete b'...'/b"..." bytes-repr literal (escapes included), used
+# to split get_field's comma-joined bytes-list representation without
+# breaking on a comma that appears *inside* a literal's own payload (e.g. a
+# password containing a comma).
+BYTES_LITERAL_REGEX = re.compile(r'''b'(?:[^'\\]|\\.)*'|b"(?:[^"\\]|\\.)*"''')
 
 
 def _decode_resp_hex(hex_str: str) -> str:
@@ -468,12 +476,18 @@ class RedisPassiveListener(PySharkListenerBase):
             return [raw.decode("utf-8", errors="replace")]
         raw_str = str(raw)
         # Handle get_field comma-joined representation of bytes list
-        # e.g. "b'AUTH',b'secretpassword123'"
+        # e.g. "b'AUTH',b'secretpassword123'". A naive split(",") breaks a
+        # value that itself contains a comma (e.g. "b'AUTH',b'pass,word'"),
+        # so match complete b'...'/b"..." literals instead of splitting on
+        # every comma.
         if raw_str.startswith("b'") or raw_str.startswith('b"'):
+            literals = BYTES_LITERAL_REGEX.findall(raw_str)
+            if literals:
+                return [literal[2:-1] for literal in literals]
+            # Fallback for a malformed/unmatched literal -- best effort.
             parts = []
             for part in raw_str.split(","):
                 part = part.strip()
-                # Strip b'...' wrapping
                 if (part.startswith("b'") and part.endswith("'")) or (
                     part.startswith('b"') and part.endswith('"')
                 ):

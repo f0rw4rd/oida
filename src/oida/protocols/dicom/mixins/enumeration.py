@@ -66,18 +66,17 @@ class EnumerationMixin(_ScannerBase):
             self.logger.display(f"Using {len(aet_list)} common vendor AE Titles")
         elif wordlist_file:
             # Custom wordlist file from --ae-wordlist or --aet-brute FILE
-            from ....utils.login_scanner import format_wordlist_source
+            from ....utils.login_scanner import _load_file_lines, format_wordlist_source
 
             self.logger.display(
                 f"Loading AET wordlist from: {format_wordlist_source(wordlist_file)}"
             )
             try:
-                with open(wordlist_file, "r") as f:
-                    aet_list = [
-                        line.strip()
-                        for line in f
-                        if line.strip() and not line.strip().startswith("#")
-                    ]
+                # _load_file_lines reads bytes and decodes per line (latin-1
+                # fallback round-trips every byte) so a single non-UTF-8 byte
+                # doesn't abort iteration and silently truncate the wordlist --
+                # see oida.utils.login_scanner._load_file_lines.
+                aet_list = _load_file_lines(wordlist_file)
             except Exception as e:
                 self.logger.debug("aet brute force failed: %s", e)
                 self.logger.fail(f"Failed to load wordlist: {e}")
@@ -88,12 +87,9 @@ class EnumerationMixin(_ScannerBase):
             wordlist_path = _pkg_root() / "data" / "dicom" / "aet_wordlist.txt"
             if wordlist_path.exists():
                 try:
-                    with open(wordlist_path, "r") as f:
-                        aet_list = [
-                            line.strip()
-                            for line in f
-                            if line.strip() and not line.strip().startswith("#")
-                        ]
+                    from ....utils.login_scanner import _load_file_lines
+
+                    aet_list = _load_file_lines(str(wordlist_path))
                     self.logger.display(f"Loaded {len(aet_list)} AE Titles from wordlist")
                 except Exception as e:
                     self.logger.debug(f"Failed to load wordlist from {wordlist_path}: {e}")

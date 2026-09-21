@@ -128,16 +128,28 @@ class KNXScanner:
                 # Parse device info
                 # Medium (1), Status (1), Individual Address (2), Project ID (2)
                 # Serial (6), Multicast (4), MAC (6), Name (30)
+                #
+                # dib_len is the value CLAIMED by the response; it is not proof
+                # that the datagram actually carries that many bytes (a
+                # truncated/short SearchResponse still passes the >= 54 check
+                # above). Every deeper field read below is bounds-checked
+                # against the real buffer so a truncated DIB still yields a
+                # device record with whatever fields fit, instead of raising
+                # IndexError/struct.error into the catch-all and silently
+                # dropping the device.
 
-                medium = data[offset + 2]
-                status = data[offset + 3]
-                individual_addr = struct.unpack(">H", data[offset + 4 : offset + 6])[0]
+                medium = data[offset + 2] if offset + 2 < len(data) else 0
+                status = data[offset + 3] if offset + 3 < len(data) else 0
 
-                # Extract individual address parts
-                area = (individual_addr >> 12) & 0x0F
-                line = (individual_addr >> 8) & 0x0F
-                device = individual_addr & 0xFF
-                knx_addr = f"{area}.{line}.{device}"
+                if offset + 6 <= len(data):
+                    individual_addr = struct.unpack(">H", data[offset + 4 : offset + 6])[0]
+                    # Extract individual address parts
+                    area = (individual_addr >> 12) & 0x0F
+                    line = (individual_addr >> 8) & 0x0F
+                    device_num = individual_addr & 0xFF
+                    knx_addr = f"{area}.{line}.{device_num}"
+                else:
+                    knx_addr = ""
 
                 # MAC address (offset + 24)
                 mac_offset = offset + 24

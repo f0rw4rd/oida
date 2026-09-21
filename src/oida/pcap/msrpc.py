@@ -961,6 +961,10 @@ class MSRPCPassiveListener(PySharkListenerBase):
             if username and challenge_hex and ntproofstr_hex and len(nt_response_hex) > 32:
                 blob = nt_response_hex[32:]
                 hashcat_str = f"{username}::{domain}:{challenge_hex}:{ntproofstr_hex}:{blob}"
+            elif username and challenge_hex and not ntproofstr_hex and nt_response_hex:
+                # NTLMv1: no NTPROOFSTR field exists at all -- the 24-byte NT
+                # response IS the hashcat mode-5500 response field.
+                hashcat_str = f"{username}::{domain}:{challenge_hex}:{nt_response_hex}"
 
             auth_entry = {
                 "server": server_ip,

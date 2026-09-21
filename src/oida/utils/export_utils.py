@@ -15,6 +15,7 @@ Configure once at startup:
 import csv
 import json
 import os
+import re
 import shutil
 import sys
 import threading
@@ -299,6 +300,23 @@ def _write_json(path: Path, headers: List[str], rows: List[List[Any]]) -> bool:
         return False
 
 
+# Illegal in XML 1.0 content: C0 controls other than tab/LF/CR, UTF-16
+# surrogates, and the U+FFFE/U+FFFF noncharacters. ET.tostring() does NOT
+# validate/escape these (it only escapes ``< > &``), so a raw control byte
+# from device-supplied text (SNMP sysDescr, HTTP banner, echoed ICMP
+# payload, ...) sails through tostring() and then blows up
+# minidom.parseString() with "not well-formed (invalid token)", silently
+# dropping the whole table from the XML deliverable. Policy: strip (don't
+# substitute) illegal chars so the output stays clean.
+_XML_ILLEGAL_CHARS_RE = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff￾￿]")
+
+
+def _sanitize_xml_text(value: Any) -> str:
+    """Coerce *value* to a string safe to use as XML element text (see policy above)."""
+    text = str(value) if value is not None else ""
+    return _XML_ILLEGAL_CHARS_RE.sub("", text)
+
+
 def _write_xml(path: Path, headers: List[str], rows: List[List[Any]], root_name: str) -> bool:
     """Write XML file."""
     try:
@@ -310,7 +328,7 @@ def _write_xml(path: Path, headers: List[str], rows: List[List[Any]], root_name:
                 tag_name = _sanitize_xml_tag(header)
                 field = ET.SubElement(record, tag_name)
                 value = row[i] if i < len(row) else ""
-                field.text = str(value) if value is not None else ""
+                field.text = _sanitize_xml_text(value)
 
         xml_str = ET.tostring(root, encoding="unicode")
         # Parsing XML we just generated ourselves via ET.tostring — no external
@@ -377,10 +395,32 @@ def export_data(
         _log_message(logger, "No data to export", level="warning")
         return False
 
-    # Verify data structure
-    if not all(len(row) == len(headers) for row in data):
-        _log_message(logger, "Data rows must have same length as headers", level="error")
-        return False
+    # Normalize ragged rows instead of dropping the whole table over one bad
+    # row -- export_table() already tolerates this (e.g. one device missing
+    # an optional field), and callers of export_data() commonly ignore its
+    # return value (see pcap/scanner.py), so a hard reject here meant the
+    # operator silently got nothing in console AND every file format. Short
+    # rows are padded with "" to the header width; long rows are truncated
+    # to it. Applied uniformly across console/csv/json/xml for consistency.
+    normalized_data = []
+    warned_ragged = False
+    for idx, row in enumerate(data):
+        if len(row) != len(headers):
+            if not warned_ragged:
+                _log_message(
+                    logger,
+                    f"Row {idx} has {len(row)} cells, expected {len(headers)} "
+                    "(padding/truncating ragged rows)",
+                    level="warning",
+                )
+                warned_ragged = True
+            row = list(row)
+            if len(row) < len(headers):
+                row = row + [""] * (len(headers) - len(row))
+            else:
+                row = row[: len(headers)]
+        normalized_data.append(row)
+    data = normalized_data
 
     # Parse the output format option
     formats = parse_output_format(output_format)
@@ -695,9 +735,10 @@ def _export_xml(
                 # Sanitize header name for XML tag (replace spaces, ensure valid)
                 tag_name = _sanitize_xml_tag(header)
                 field = ET.SubElement(record, tag_name)
-                # Handle None and convert to string
+                # Handle None and convert to string, stripping chars illegal
+                # in XML 1.0 content (see _sanitize_xml_text policy note).
                 value = row[i] if i < len(row) else ""
-                field.text = str(value) if value is not None else ""
+                field.text = _sanitize_xml_text(value)
 
         # Pretty print with minidom
         xml_str = ET.tostring(root, encoding="unicode")

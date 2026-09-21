@@ -192,6 +192,9 @@ class C1222Session:
     # not on every EPSEM data PDU.  Once observed, later data PDUs of the same
     # association are authenticated even though they carry no per-PDU auth value.
     authenticated: bool = False
+    # Password from a SECURITY (0x51) request, stashed until the matching LOGON
+    # (0x50) request is seen (or used to backfill one already recorded).
+    pending_password: str = ""
     first_seen: str = ""
     last_seen: str = ""
 
@@ -440,6 +443,8 @@ class C1222PassiveListener(PySharkListenerBase):
         if auth_value or password:
             self.sessions[session_key].authenticated = True
 
+        session = self.sessions[session_key]
+
         # Generate security alerts
         self._check_security(
             cmd_code,
@@ -455,14 +460,40 @@ class C1222PassiveListener(PySharkListenerBase):
             self.sessions[session_key].authenticated,
         )
 
+        # The LOGON password travels on a different PDU than the username:
+        # LOGON (0x50) carries c1222.logon.id/.user, the password lives under
+        # SECURITY (0x51) as c1222.security.password. Stash SECURITY passwords
+        # on the session so the LOGON credential can pick them up in either
+        # arrival order.
+        if cmd_code == 0x51 and not is_response and password:
+            session.pending_password = password
+            # If a LOGON credential was already recorded with an empty password,
+            # update it in place rather than appending a duplicate.
+            for cred in self.credentials:
+                if (
+                    cred.source_ip == client_ip
+                    and cred.dest_ip == server_ip
+                    and not cred.password_value
+                ):
+                    cred.password_value = password
+                    # Refresh the dedup key so a re-sent LOGON with the real
+                    # password is not recorded a second time.
+                    self._seen_creds.discard((client_ip, server_ip, cred.username, ""))
+                    self._seen_creds.add((client_ip, server_ip, cred.username, password))
+                    break
+
         # Surface LOGON credentials to the scanner credential table.
         # Only requests carry credentials; dedup per (client, server, user, pw).
         if cmd_code == 0x50 and not is_response and (username or user_id is not None or password):
+            # Merge in a password stashed from an earlier SECURITY PDU when the
+            # LOGON PDU itself carries none.
+            effective_password = password or session.pending_password
+
             cred_key = (
                 client_ip,
                 server_ip,
                 username or (f"uid={user_id}" if user_id is not None else "?"),
-                password,
+                effective_password,
             )
             if cred_key not in self._seen_creds:
                 self._seen_creds.add(cred_key)
@@ -472,7 +503,7 @@ class C1222PassiveListener(PySharkListenerBase):
                         dest_ip=server_ip,
                         user=username,
                         user_id_value=user_id,
-                        password_value=password,
+                        password_value=effective_password,
                     )
                 )
                 if not username and user_id is None and password:

@@ -346,11 +346,25 @@ class MQTTPassiveListener(PySharkListenerBase):
             stream_id=stream_id,
         )
 
-        # Credential extraction
-        if username or client_id:
-            cred_key = (username, password, client_id, src_ip, dst_ip)
-            if cred_key not in self._seen_creds:
-                self._seen_creds.add(cred_key)
+        # Device/interaction tracking happens for every CONNECT, credential
+        # or not -- a client_id-only CONNECT is still useful telemetry.
+        cred_key = (username, password, client_id, src_ip, dst_ip)
+        if cred_key not in self._seen_creds:
+            self._seen_creds.add(cred_key)
+            self._update_devices(
+                src_ip,
+                dst_ip,
+                client_id,
+                ver_display=ver_display,
+                protoname=protoname,
+                kalive=kalive,
+            )
+
+            # Credential extraction: only record when actual credential
+            # material (username or password) is present. client_id alone
+            # is near-universal and is not a secret -- recording it as a
+            # "username_only" credential pollutes the credential table.
+            if username or password:
                 cred = MQTTCredential(
                     username=username,
                     password=password,
@@ -362,14 +376,6 @@ class MQTTPassiveListener(PySharkListenerBase):
                     timestamp=now,
                 )
                 self.credentials.append(cred)
-                self._update_devices(
-                    src_ip,
-                    dst_ip,
-                    client_id,
-                    ver_display=ver_display,
-                    protoname=protoname,
-                    kalive=kalive,
-                )
 
                 if password:
                     self.logger.info(

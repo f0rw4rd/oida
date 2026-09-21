@@ -215,6 +215,7 @@ class X11PassiveListener(PySharkListenerBase):
                 x11,
                 flow_id,
                 stream_id,
+                packet,
             )
         elif success is not None:
             # Server connection reply
@@ -262,6 +263,53 @@ class X11PassiveListener(PySharkListenerBase):
                     stream_id,
                 )
 
+    def _recover_auth_data_from_payload(
+        self, packet: Any, auth_name: str, auth_data_len: Any
+    ) -> str:
+        """Recover the raw MIT-MAGIC-COOKIE-1 bytes from the TCP payload.
+
+        pyshark/tshark decodes the X11 auth-data field as text with
+        ``errors=replace``, so any cookie byte outside printable ASCII is
+        lossily mangled into U+FFFD replacement characters -- the cookie is
+        binary and almost never round-trips through that decode. The exact
+        bytes are still available in the raw TCP payload: the connection
+        request is laid out as a fixed 12-byte header, followed by the auth
+        protocol NAME (padded to a 4-byte boundary), followed by the auth
+        DATA (the cookie) of ``auth_data_len`` bytes.
+        """
+        try:
+            if not hasattr(packet, "tcp"):
+                return ""
+            payload_raw = self.get_field(packet.tcp, "payload", None)
+            if not payload_raw:
+                return ""
+            payload_hex = str(payload_raw).replace(":", "")
+            payload = bytes.fromhex(payload_hex)
+
+            name_bytes = auth_name.encode("latin-1")
+            idx = payload.find(name_bytes)
+            if idx < 0:
+                return ""
+
+            name_len = len(name_bytes)
+            padding = (-name_len) % 4
+            data_start = idx + name_len + padding
+
+            try:
+                data_len = int(str(auth_data_len))
+            except (TypeError, ValueError):
+                return ""
+            if data_len <= 0:
+                return ""
+
+            cookie = payload[data_start : data_start + data_len]
+            if len(cookie) != data_len:
+                return ""
+            return cookie.hex()
+        except (ValueError, AttributeError, TypeError) as e:
+            self.logger.debug(f"X11: cookie recovery from TCP payload failed: {e}")
+            return ""
+
     def _process_connection_request(
         self,
         now: str,
@@ -274,6 +322,7 @@ class X11PassiveListener(PySharkListenerBase):
         x11: Any,
         flow_id: str,
         stream_id: str,
+        packet: Any = None,
     ) -> None:
         """Process X11 initial connection request."""
         client_ip, client_port = src_ip, src_port
@@ -302,7 +351,16 @@ class X11PassiveListener(PySharkListenerBase):
                 try:
                     auth_data_hex = raw_str.encode("latin-1").hex()
                 except (UnicodeEncodeError, AttributeError):
-                    auth_data_hex = raw_str
+                    # pyshark decoded the binary cookie with errors=replace;
+                    # the string can never round-trip through latin-1. Recover
+                    # the true cookie bytes from the raw TCP payload instead
+                    # of storing the corrupted mojibake as the credential.
+                    recovered = ""
+                    if packet is not None and auth_name:
+                        recovered = self._recover_auth_data_from_payload(
+                            packet, auth_name, auth_data_len
+                        )
+                    auth_data_hex = recovered or raw_str
 
         # Detect unauthenticated access
         is_noauth = not auth_name or str(auth_name_len) in ("0", "")

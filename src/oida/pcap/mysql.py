@@ -1284,19 +1284,34 @@ class MySQLPassiveListener(PySharkListenerBase):
                     cred.success = success
                 return
 
+        # Effective auth plugin decides how the stored password bytes must be
+        # interpreted: with mysql_clear_password the client sends the literal
+        # password, not a hash.
+        effective_plugin = session.client_auth_plugin or session.auth_plugin
+        is_cleartext = effective_plugin in WEAK_AUTH_PLUGINS
+
+        if is_cleartext:
+            try:
+                password_value = bytes.fromhex(session.password_hash_hex).decode(
+                    "utf-8", errors="replace"
+                )
+            except ValueError:
+                password_value = session.password_hash_hex
+        else:
+            password_value = session.password_hash_hex
+
         cred = MySQLCredential(
             username=session.username,
-            password_hash=session.password_hash_hex,
+            password_hash=password_value,
             salt=session.salt_hex,
             salt2=session.salt2_hex,
-            auth_plugin=session.client_auth_plugin
-            or session.auth_plugin
-            or "mysql_native_password",
+            auth_plugin=effective_plugin or "mysql_native_password",
             server_version=session.server_version,
             server_ip=session.server_ip,
             client_ip=session.client_ip,
             success=success,
             timestamp=datetime.now().isoformat(),
+            credential_type="plaintext" if is_cleartext else "hash",
         )
         self.credentials.append(cred)
 
@@ -1563,7 +1578,7 @@ class MySQLPassiveListener(PySharkListenerBase):
         return [
             {
                 "protocol": "MySQL",
-                "credential_type": "hash",
+                "credential_type": cred.credential_type,
                 "auth_method": cred.auth_plugin or "mysql_native_password",
                 "username": cred.username,
                 "password": cred.password_hash,

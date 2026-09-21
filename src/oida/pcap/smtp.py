@@ -572,6 +572,29 @@ class SMTPPassiveListener(PySharkListenerBase):
                 if len(session.data_buffer) > self.MAX_BUFFER:
                     session.data_buffer = session.data_buffer[-self.MAX_BUFFER :]
                 self._try_cram_md5(session, session.data_buffer)
+        elif "CRAM-MD5" in session.data_buffer and src_ip == client_ip and hasattr(packet, "tcp"):
+            # The client's Base64 CRAM-MD5 response line dissects with an
+            # `smtp` layer but no smtp.req.command / smtp.response.code
+            # fields (tshark treats it as a bare data line), so it never
+            # reaches the accumulation above and SMTP_CRAM_MD5_REGEX can
+            # never see the full AUTH CRAM-MD5 / 334 / <hash> / 235
+            # sequence. Recover the raw line from tcp.payload instead
+            # (mirrors smartinstall.py's payload decode).
+            tcp_payload = self.get_field(packet.tcp, "payload", None)
+            if tcp_payload:
+                try:
+                    raw_line = bytes.fromhex(str(tcp_payload).replace(":", "")).decode(
+                        "utf-8", errors="ignore"
+                    )
+                except ValueError:
+                    raw_line = ""
+                if raw_line:
+                    if not raw_line.endswith("\r\n"):
+                        raw_line = raw_line.rstrip("\r\n") + "\r\n"
+                    session.data_buffer += raw_line
+                    if len(session.data_buffer) > self.MAX_BUFFER:
+                        session.data_buffer = session.data_buffer[-self.MAX_BUFFER :]
+                    self._try_cram_md5(session, session.data_buffer)
 
         # --- Catch-all: record interaction for any packet not yet accounted ---
         # This covers Category 3 (email body lines between DATA and ".") and

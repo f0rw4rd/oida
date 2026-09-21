@@ -294,24 +294,30 @@ class ASN1Builder:
         if len(components) < 2:
             raise ValueError("OID must have at least 2 components")
 
-        # First two components encoded as single byte
-        first_byte = 40 * components[0] + components[1]
-        octets = [first_byte]
+        def _base128(value: int) -> List[int]:
+            """Encode a single arc value as base-128 octets (X.690 8.19.2)."""
+            if value == 0:
+                return [0]
+            comp_octets = []
+            n = value
+            while n > 0:
+                comp_octets.insert(0, n & 0x7F)
+                n >>= 7
+            # Set continuation bits on every octet but the last.
+            for i in range(len(comp_octets) - 1):
+                comp_octets[i] |= 0x80
+            return comp_octets
+
+        # First two components are combined into a single value (X.690
+        # 8.19.4): 40 * arc1 + arc2. That combined value is itself just
+        # another arc and must be base-128 encoded like the rest -- a raw
+        # single byte overflows (e.g. arc1=2, arc2=999 -> 1079) whenever the
+        # combined value exceeds 255.
+        octets = _base128(40 * components[0] + components[1])
 
         # Remaining components in base-128
         for comp in components[2:]:
-            if comp == 0:
-                octets.append(0)
-            else:
-                comp_octets = []
-                n = comp
-                while n > 0:
-                    comp_octets.insert(0, n & 0x7F)
-                    n >>= 7
-                # Set continuation bits
-                for i in range(len(comp_octets) - 1):
-                    comp_octets[i] |= 0x80
-                octets.extend(comp_octets)
+            octets.extend(_base128(comp))
 
         return self.build_tlv(ASN1Tag.OBJECT_IDENTIFIER, bytes(octets))
 
