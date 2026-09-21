@@ -443,17 +443,29 @@ def parse_credential_input(value: Optional[str]) -> Tuple[List[str], bool]:
     if not value:
         return [], False
 
-    # Try to open as file
+    # Try to open as file. Read bytes rather than text: real password lists are
+    # frequently not valid UTF-8, and a text-mode read raises UnicodeDecodeError
+    # (a ValueError, not an OSError) part-way through the file. That escaped this
+    # handler and either aborted the scan or -- where a caller wrapped it -- made
+    # the whole wordlist silently turn into a single literal credential.
     try:
-        with open(value, "r") as f:
+        with open(value, "rb") as f:
             values = []
-            for line in f:
+            for raw_line in f:
+                try:
+                    line = raw_line.decode("utf-8")
+                except UnicodeDecodeError:
+                    # latin-1 round-trips every byte, so no entry is dropped.
+                    line = raw_line.decode("latin-1")
                 line = line.strip()
                 if line and not line.startswith("#"):
                     values.append(line)
             return values, True
     except (IOError, OSError) as e:
         _logger.debug(f"Failed to open credential file: {e}")
+    except ValueError as e:
+        # e.g. a credential containing a NUL byte: open() rejects the path.
+        _logger.debug(f"Not usable as a credential file path: {e}")
 
     return [value], False
 
