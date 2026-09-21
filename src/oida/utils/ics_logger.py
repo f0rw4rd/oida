@@ -793,7 +793,7 @@ _mac_parser = None
 _mac_parser_lock = threading.Lock()
 
 
-def mac_lookup(mac: str, full: bool = False) -> str:
+def mac_lookup(mac: str, full: bool = False) -> Optional[str]:
     """
     Lookup MAC address vendor using manuf2.
 
@@ -802,7 +802,13 @@ def mac_lookup(mac: str, full: bool = False) -> str:
         full: If True, return long vendor name; if False, return short name
 
     Returns:
-        Vendor name string, or None if not found
+        Vendor name string, or None if not found or the string is not a
+        parseable MAC. Never raises: callers feed wire-derived strings
+        (scapy link-layer fields, xknx DIBs, BOOTP chaddr) and manuf2
+        raises ValueError on unparseable input -- see the discovery
+        lookup_mac_vendor() wrapper for the fixed behavior there; this
+        keeps the remaining direct caller (knx gateway discovery) safe
+        too instead of losing the whole gateway list over one bad DIB.
     """
     global _mac_parser
     if _mac_parser is None:
@@ -811,13 +817,19 @@ def mac_lookup(mac: str, full: bool = False) -> str:
                 import manuf2  # Lazy import for faster CLI startup
 
                 _mac_parser = manuf2.MacParser()
-    mac_clean = mac.replace("-", ":")
-    if full:
-        result = _mac_parser.get_all(mac_clean)
-        if result:
-            return result.manuf_long or result.manuf
+    if not mac:
         return None
-    return _mac_parser.get_manuf(mac_clean)
+    mac_clean = mac.replace("-", ":")
+    try:
+        if full:
+            result = _mac_parser.get_all(mac_clean)
+            if result:
+                return result.manuf_long or result.manuf
+            return None
+        return _mac_parser.get_manuf(mac_clean)
+    except (ValueError, TypeError) as e:
+        logger.debug(f"MAC lookup failed for {mac!r}: {e}")
+        return None
 
 
 # Backward-compatible alias matching the old module.py API
