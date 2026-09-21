@@ -40,23 +40,30 @@ FILE_SIGNATURES = {
     "PNG": {
         "extension": ".png",
         "headers": [bytes.fromhex("89504E470D0A1A0A")],
-        "footers": [
-            bytes.fromhex("49454E44AE426082"),  # IEND chunk
-            bytes.fromhex("504E47") + bytes.fromhex("FFFCFDFE"),  # Alternate
-        ],
+        # Only the IEND chunk terminates a PNG. A second "alternate" footer
+        # (b"PNG\xff\xfc\xfd\xfe") used to be listed here; it is not a PNG
+        # marker at all, so it could only ever truncate an image at a random
+        # byte run that happened to match.
+        "footers": [bytes.fromhex("49454E44AE426082")],
         "max_size": 50 * 1024 * 1024,
     },
     "GIF87a": {
         "extension": ".gif",
         "headers": [bytes.fromhex("474946383761")],
-        "footers": [bytes.fromhex("003B")],  # GIF trailer
+        # Block terminator 0x00 + trailer 0x3B, so a bare 0x3B inside pixel or
+        # color-table data does not truncate the image.
+        "footers": [bytes.fromhex("003B")],
         "max_size": 20 * 1024 * 1024,
+        "min_size": 800,
     },
     "GIF89a": {
         "extension": ".gif",
         "headers": [bytes.fromhex("474946383961")],
-        "footers": [bytes.fromhex("00003B")],  # GIF trailer (with 00)
+        # Was "00003B", which demands a second zero byte that a conformant GIF
+        # does not have -- no GIF89a was ever carved on this path.
+        "footers": [bytes.fromhex("003B")],
         "max_size": 20 * 1024 * 1024,
+        "min_size": 800,
     },
     "PDF": {
         "extension": ".pdf",
