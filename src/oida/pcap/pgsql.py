@@ -1460,13 +1460,14 @@ class PostgreSQLPassiveListener(PySharkListenerBase):
         return [
             {
                 "protocol": "PostgreSQL",
-                "credential_type": (
-                    "hash"
-                    if cred.auth_type == "md5"
-                    else "plaintext"
-                    if cred.auth_type == "cleartext"
-                    else "plaintext"
-                ),
+                # Single source of truth: PostgreSQLCredential.credential_type.
+                # The inlined copy this replaced fell through to "plaintext" for
+                # every auth_type it did not name -- so a SASL/SCRAM exchange and
+                # a passwordless "trust" login were both reported as recovered
+                # plaintext credentials (scanner.py prints "plaintext" creds as
+                # user:password), and disagreed with the property the scanner
+                # loop itself reads.
+                "credential_type": cred.credential_type,
                 "auth_method": f"PostgreSQL/{cred.auth_type}",
                 "username": cred.username,
                 "password": cred.password_or_hash,
