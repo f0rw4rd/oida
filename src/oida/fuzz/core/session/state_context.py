@@ -288,6 +288,13 @@ class StateContext:
             SequenceManager instance (creates empty one if not exists)
         """
         if name not in self._sequence_managers:
+            # A child context shares its parent's sequence managers. Creating a
+            # fresh one here would restart the counter at zero halfway through a
+            # live connection, so a nested state would re-send sequence numbers
+            # the peer has already seen.
+            if self._parent is not None:
+                return self._parent.get_sequence_manager(name)
+
             # Lazy import to avoid circular dependency
             from .sequence import SequenceManager
 
@@ -312,7 +319,9 @@ class StateContext:
         Returns:
             True if manager exists
         """
-        return name in self._sequence_managers
+        if name in self._sequence_managers:
+            return True
+        return self._parent is not None and self._parent.has_sequence_manager(name)
 
     # ==================== Crypto State ====================
 
@@ -324,6 +333,12 @@ class StateContext:
             CryptoStateManager instance
         """
         if self._crypto_state is None:
+            # A child context shares its parent's crypto state. Minting a fresh
+            # manager here would hand a nested state empty nonces, keys and
+            # session tokens while the connection those belong to is still open.
+            if self._parent is not None:
+                return self._parent.crypto
+
             # Lazy import to avoid circular dependency
             from .crypto_state import CryptoStateManager
 
@@ -344,7 +359,9 @@ class StateContext:
         Returns:
             True if crypto state exists
         """
-        return self._crypto_state is not None
+        if self._crypto_state is not None:
+            return True
+        return self._parent is not None and self._parent.has_crypto_state()
 
     # ==================== Callbacks ====================
 
