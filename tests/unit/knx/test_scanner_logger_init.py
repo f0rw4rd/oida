@@ -2,9 +2,8 @@
 
 KNXScanner.__init__ used to unconditionally overwrite the logger that
 BaseScanner.__init__ established via _init_logger() with the ``logger``
-parameter, which defaults to None. The factory run() path produced by
-create_protocol_module(KNXScanner, ...) instantiates the scanner as
-``scanner_class(args)`` WITHOUT a logger, so self.logger became None and
+parameter, which defaults to None. The factory run() path instantiates the
+scanner as ``scanner_class(args)`` WITHOUT a logger, so self.logger became None and
 the first ``self.logger.debug(...)`` in connect() raised AttributeError.
 """
 
@@ -12,7 +11,7 @@ from oida.protocols.knx.scanner import KNXScanner
 
 
 def test_factory_run_path_keeps_base_logger():
-    """No-logger instantiation (the create_protocol_module path) must not
+    """No-logger instantiation (the factory run() path) must not
     clobber the base-class logger with None."""
     scanner = KNXScanner({"host": "10.0.0.5", "port": 3671})
 

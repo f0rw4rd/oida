@@ -21,13 +21,7 @@ from zipfile import ZipFile
 
 import pytest
 
-# We need to mock the scanner module registration before importing the knx package
-# The scanner.py tries to register during import which fails if decorators not set up
-
-# First, let's set up a mock for the protocol registry
-sys.modules.setdefault("oida.utils.protocol_registry", MagicMock())
-
-# Mock the scanner module to avoid registration issues during import
+# Mock the scanner module to avoid pulling the full knx package in during import
 _mock_scanner_module = MagicMock()
 _mock_scanner_module.KNXScanner = MagicMock()
 _mock_scanner_module.metadata = {}
