@@ -59,7 +59,7 @@ def knx_constants():
 
     constants.py now has relative imports (_xknx_cls etc.), so it cannot be loaded
     in isolation via importlib. We also cannot use package imports because test_ets.py
-    may poison sys.modules with mocked protocol_registry. Use known values directly.
+    may poison sys.modules with a mocked knx scanner module. Use known values directly.
     """
     from types import SimpleNamespace
 
