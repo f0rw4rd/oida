@@ -21,7 +21,7 @@ class TestCommandRunnerInterface:
 
     def test_cannot_instantiate_directly(self):
         """CommandRunner cannot be instantiated directly."""
-        from src.oida.fuzz.core.session.commands import CommandRunner
+        from oida.fuzz.core.session.commands import CommandRunner
 
         with pytest.raises(TypeError):
             CommandRunner()
@@ -37,7 +37,7 @@ class TestRealCommandRunner:
 
     def test_runs_subprocess(self):
         """RealCommandRunner delegates to subprocess.run."""
-        from src.oida.fuzz.core.session.commands import RealCommandRunner
+        from oida.fuzz.core.session.commands import RealCommandRunner
 
         runner = RealCommandRunner()
 
@@ -58,7 +58,7 @@ class TestMockCommandRunner:
 
     def test_default_response(self):
         """MockCommandRunner returns success by default."""
-        from src.oida.fuzz.core.session.commands import MockCommandRunner
+        from oida.fuzz.core.session.commands import MockCommandRunner
 
         runner = MockCommandRunner()
         result = runner.run(["test"])
@@ -68,7 +68,7 @@ class TestMockCommandRunner:
 
     def test_tracks_calls(self):
         """MockCommandRunner tracks all calls."""
-        from src.oida.fuzz.core.session.commands import MockCommandRunner
+        from oida.fuzz.core.session.commands import MockCommandRunner
 
         runner = MockCommandRunner()
         runner.run(["cmd1", "arg1"])
@@ -79,7 +79,7 @@ class TestMockCommandRunner:
 
     def test_set_responses(self):
         """Configure multiple responses."""
-        from src.oida.fuzz.core.session.commands import MockCommandRunner
+        from oida.fuzz.core.session.commands import MockCommandRunner
 
         runner = MockCommandRunner()
         runner.set_responses(
@@ -99,7 +99,7 @@ class TestMockCommandRunner:
 
     def test_get_last_call(self):
         """get_last_call returns most recent call."""
-        from src.oida.fuzz.core.session.commands import MockCommandRunner
+        from oida.fuzz.core.session.commands import MockCommandRunner
 
         runner = MockCommandRunner()
         runner.run(["first"])
@@ -109,14 +109,14 @@ class TestMockCommandRunner:
 
     def test_get_last_call_empty(self):
         """get_last_call returns None when no calls made."""
-        from src.oida.fuzz.core.session.commands import MockCommandRunner
+        from oida.fuzz.core.session.commands import MockCommandRunner
 
         runner = MockCommandRunner()
         assert runner.get_last_call() is None
 
     def test_get_all_calls(self):
         """get_all_calls returns copy of all calls."""
-        from src.oida.fuzz.core.session.commands import MockCommandRunner
+        from oida.fuzz.core.session.commands import MockCommandRunner
 
         runner = MockCommandRunner()
         runner.run(["cmd1"])
@@ -129,7 +129,7 @@ class TestMockCommandRunner:
 
     def test_tracks_kwargs(self):
         """MockCommandRunner tracks kwargs."""
-        from src.oida.fuzz.core.session.commands import MockCommandRunner
+        from oida.fuzz.core.session.commands import MockCommandRunner
 
         runner = MockCommandRunner()
         runner.run(["cmd"], capture_output=True, timeout=5)
@@ -139,7 +139,7 @@ class TestMockCommandRunner:
 
     def test_exhausted_return_codes_defaults_to_zero(self):
         """When return codes exhausted, defaults to 0."""
-        from src.oida.fuzz.core.session.commands import MockCommandRunner
+        from oida.fuzz.core.session.commands import MockCommandRunner
 
         runner = MockCommandRunner()
         runner.set_responses(return_codes=[1])  # Only one code

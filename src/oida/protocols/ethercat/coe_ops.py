@@ -6,9 +6,9 @@ import struct
 from typing import Any, Dict, TYPE_CHECKING
 from binascii import hexlify
 
-from ...utils import ProgressTracker
-from ...utils.export_utils import print_table
-from .coe import (
+from oida.utils import ProgressTracker
+from oida.utils.export_utils import print_table
+from oida.protocols.ethercat.coe import (
     COMMON_SDO_OBJECTS,
     COE_SCAN_RANGES,
     get_coe_object_name as _coe_get_object_name,

@@ -37,14 +37,14 @@ class TestBaseTransformerInterface:
 
     def test_cannot_instantiate_base_transformer(self):
         """BaseTransformer cannot be instantiated directly."""
-        from src.oida.fuzz.primitives.transformers.base import BaseTransformer
+        from oida.fuzz.primitives.transformers.base import BaseTransformer
 
         with pytest.raises(TypeError):
             BaseTransformer()
 
     def test_base_transformer_requires_encode(self):
         """Subclass must implement encode."""
-        from src.oida.fuzz.primitives.transformers.base import BaseTransformer
+        from oida.fuzz.primitives.transformers.base import BaseTransformer
 
         class IncompleteTransformer(BaseTransformer):
             def decode(self, data):
@@ -59,7 +59,7 @@ class TestBaseTransformerInterface:
 
     def test_base_transformer_requires_decode(self):
         """Subclass must implement decode."""
-        from src.oida.fuzz.primitives.transformers.base import BaseTransformer
+        from oida.fuzz.primitives.transformers.base import BaseTransformer
 
         class IncompleteTransformer(BaseTransformer):
             def encode(self, data):
@@ -74,7 +74,7 @@ class TestBaseTransformerInterface:
 
     def test_base_transformer_requires_name(self):
         """Subclass must implement name property."""
-        from src.oida.fuzz.primitives.transformers.base import BaseTransformer
+        from oida.fuzz.primitives.transformers.base import BaseTransformer
 
         class IncompleteTransformer(BaseTransformer):
             def encode(self, data):
@@ -92,7 +92,7 @@ class TestBaseTransformerEncoderFunc:
 
     def test_to_encoder_func_returns_callable(self):
         """to_encoder_func() returns a callable."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer()
         encoder_func = transformer.to_encoder_func()
@@ -100,7 +100,7 @@ class TestBaseTransformerEncoderFunc:
 
     def test_encoder_func_encodes_bytes(self):
         """Encoder function handles bytes input."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer()
         encoder_func = transformer.to_encoder_func()
@@ -110,7 +110,7 @@ class TestBaseTransformerEncoderFunc:
 
     def test_encoder_func_encodes_str(self):
         """Encoder function converts str to bytes."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer()
         encoder_func = transformer.to_encoder_func()
@@ -120,7 +120,7 @@ class TestBaseTransformerEncoderFunc:
 
     def test_encoder_func_handles_bytearray(self):
         """Encoder function handles bytearray input."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer()
         encoder_func = transformer.to_encoder_func()
@@ -130,7 +130,7 @@ class TestBaseTransformerEncoderFunc:
 
     def test_encoder_func_returns_original_on_error(self):
         """Encoder function returns original data on encoding error."""
-        from src.oida.fuzz.primitives.transformers.base import BaseTransformer
+        from oida.fuzz.primitives.transformers.base import BaseTransformer
 
         class FailingTransformer(BaseTransformer):
             def encode(self, data):
@@ -155,7 +155,7 @@ class TestBaseTransformerRepr:
 
     def test_repr_includes_class_name(self):
         """__repr__ includes class name."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer()
         repr_str = repr(transformer)
@@ -174,8 +174,8 @@ class TestTransformerChainCreation:
 
     def test_basic_creation(self):
         """TransformerChain can be created with transformers."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         chain = TransformerChain(Base64Transformer())
         assert chain is not None
@@ -183,22 +183,22 @@ class TestTransformerChainCreation:
 
     def test_creation_with_multiple_transformers(self):
         """TransformerChain accepts multiple transformers."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer, HexTransformer
+        from oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer, HexTransformer
 
         chain = TransformerChain(HexTransformer(), Base64Transformer())
         assert len(chain.transformers) == 2
 
     def test_creation_empty_raises(self):
         """TransformerChain raises if no transformers provided."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.base import TransformerChain
 
         with pytest.raises(ValueError, match="requires at least one"):
             TransformerChain()
 
     def test_creation_with_invalid_transformer_raises(self):
         """TransformerChain raises for non-transformer objects."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.base import TransformerChain
 
         with pytest.raises(ValueError, match="Expected BaseTransformer"):
             TransformerChain("not a transformer")
@@ -209,9 +209,9 @@ class TestTransformerChainEncode:
 
     def test_encode_applies_transformers_in_order(self):
         """Transformers are applied in order during encode."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         # Gzip then Base64
         chain = TransformerChain(GzipTransformer(), Base64Transformer())
@@ -226,8 +226,8 @@ class TestTransformerChainEncode:
 
     def test_encode_single_transformer(self):
         """Single transformer chain works correctly."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         chain = TransformerChain(HexTransformer())
         result = chain.encode(b"AB")
@@ -240,9 +240,9 @@ class TestTransformerChainDecode:
 
     def test_decode_applies_transformers_in_reverse_order(self):
         """Transformers are applied in reverse order during decode."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         # Gzip then Base64 during encode
         chain = TransformerChain(GzipTransformer(), Base64Transformer())
@@ -255,8 +255,8 @@ class TestTransformerChainDecode:
 
     def test_round_trip(self):
         """encode() followed by decode() returns original data."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
-        from src.oida.fuzz.primitives.transformers.encoding import (
+        from oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.encoding import (
             Base64Transformer,
             URLEncodeTransformer,
         )
@@ -272,9 +272,9 @@ class TestTransformerChainProperties:
 
     def test_name_combines_transformer_names(self):
         """name property combines all transformer names."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         chain = TransformerChain(GzipTransformer(level=6), Base64Transformer())
 
@@ -284,8 +284,8 @@ class TestTransformerChainProperties:
 
     def test_repr_lists_transformers(self):
         """__repr__ lists all transformers."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         chain = TransformerChain(HexTransformer())
         repr_str = repr(chain)
@@ -295,8 +295,8 @@ class TestTransformerChainProperties:
 
     def test_to_encoder_func(self):
         """to_encoder_func() returns working encoder."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         chain = TransformerChain(Base64Transformer())
         encoder = chain.to_encoder_func()
@@ -315,7 +315,7 @@ class TestBase64TransformerCreation:
 
     def test_default_creation(self):
         """Default Base64Transformer can be created."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer()
         assert transformer.urlsafe is False
@@ -323,21 +323,21 @@ class TestBase64TransformerCreation:
 
     def test_urlsafe_creation(self):
         """URL-safe Base64Transformer can be created."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer(urlsafe=True)
         assert transformer.urlsafe is True
 
     def test_strip_padding_creation(self):
         """Strip-padding Base64Transformer can be created."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer(strip_padding=True)
         assert transformer.strip_padding is True
 
     def test_prefix_suffix_creation(self):
         """Base64Transformer with prefix/suffix can be created."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer(prefix=b"Basic ", suffix=b"\r\n")
         assert transformer.prefix == b"Basic "
@@ -349,7 +349,7 @@ class TestBase64TransformerEncode:
 
     def test_encode_standard(self):
         """Standard Base64 encoding works."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer()
         result = transformer.encode(b"admin:password123")
@@ -358,7 +358,7 @@ class TestBase64TransformerEncode:
 
     def test_encode_urlsafe(self):
         """URL-safe Base64 uses - and _ instead of + and /."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer(urlsafe=True)
         # Data that produces + and / in standard Base64
@@ -371,7 +371,7 @@ class TestBase64TransformerEncode:
 
     def test_encode_strip_padding(self):
         """Strip padding removes trailing = characters."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer(strip_padding=True)
         result = transformer.encode(b"a")  # "YQ==" with padding
@@ -381,7 +381,7 @@ class TestBase64TransformerEncode:
 
     def test_encode_with_prefix(self):
         """Prefix is prepended to encoded data."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer(prefix=b"Basic ")
         result = transformer.encode(b"user:pass")
@@ -390,7 +390,7 @@ class TestBase64TransformerEncode:
 
     def test_encode_empty(self):
         """Empty data encodes to empty string."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer()
         result = transformer.encode(b"")
@@ -403,7 +403,7 @@ class TestBase64TransformerDecode:
 
     def test_decode_standard(self):
         """Standard Base64 decoding works."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer()
         result = transformer.decode(b"YWRtaW46cGFzc3dvcmQxMjM=")
@@ -412,7 +412,7 @@ class TestBase64TransformerDecode:
 
     def test_decode_urlsafe(self):
         """URL-safe Base64 decoding works."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer(urlsafe=True)
         # URL-safe encoded data
@@ -423,7 +423,7 @@ class TestBase64TransformerDecode:
 
     def test_decode_strip_padding_adds_padding_back(self):
         """Decoding with strip_padding adds padding back."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer(strip_padding=True)
         result = transformer.decode(b"YQ")  # "YQ==" without padding
@@ -432,7 +432,7 @@ class TestBase64TransformerDecode:
 
     def test_decode_removes_prefix_suffix(self):
         """Decoding removes prefix and suffix."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer(prefix=b"Basic ", suffix=b"\r\n")
         result = transformer.decode(b"Basic dXNlcjpwYXNz\r\n")
@@ -441,7 +441,7 @@ class TestBase64TransformerDecode:
 
     def test_decode_invalid_raises(self):
         """Invalid Base64 raises ValueError."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer()
 
@@ -467,7 +467,7 @@ class TestBase64TransformerRoundTrip:
     )
     def test_round_trip_standard(self, data):
         """Standard Base64 round-trip works for various inputs."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer()
         assert transformer.decode(transformer.encode(data)) == data
@@ -482,7 +482,7 @@ class TestBase64TransformerRoundTrip:
     )
     def test_round_trip_urlsafe(self, data):
         """URL-safe Base64 round-trip works."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer(urlsafe=True, strip_padding=True)
         assert transformer.decode(transformer.encode(data)) == data
@@ -493,21 +493,21 @@ class TestBase64TransformerName:
 
     def test_name_standard(self):
         """Standard variant has simple name."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer()
         assert transformer.name == "Base64"
 
     def test_name_urlsafe(self):
         """URL-safe variant includes urlsafe in name."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer(urlsafe=True)
         assert "urlsafe" in transformer.name
 
     def test_name_nopad(self):
         """Strip padding variant includes nopad in name."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         transformer = Base64Transformer(strip_padding=True)
         assert "nopad" in transformer.name
@@ -523,7 +523,7 @@ class TestURLEncodeTransformerCreation:
 
     def test_default_creation(self):
         """Default URLEncodeTransformer can be created."""
-        from src.oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
+        from oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
 
         transformer = URLEncodeTransformer()
         assert transformer.plus_encoding is False
@@ -531,14 +531,14 @@ class TestURLEncodeTransformerCreation:
 
     def test_plus_encoding_creation(self):
         """Plus-encoding URLEncodeTransformer can be created."""
-        from src.oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
+        from oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
 
         transformer = URLEncodeTransformer(plus_encoding=True)
         assert transformer.plus_encoding is True
 
     def test_safe_chars_creation(self):
         """URLEncodeTransformer with safe chars can be created."""
-        from src.oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
+        from oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
 
         transformer = URLEncodeTransformer(safe="/")
         assert transformer.safe == "/"
@@ -549,7 +549,7 @@ class TestURLEncodeTransformerEncode:
 
     def test_encode_spaces_as_percent(self):
         """Standard encoding uses %20 for spaces."""
-        from src.oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
+        from oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
 
         transformer = URLEncodeTransformer()
         result = transformer.encode(b"Hello World")
@@ -558,7 +558,7 @@ class TestURLEncodeTransformerEncode:
 
     def test_encode_spaces_as_plus(self):
         """Plus encoding uses + for spaces."""
-        from src.oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
+        from oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
 
         transformer = URLEncodeTransformer(plus_encoding=True)
         result = transformer.encode(b"Hello World")
@@ -567,7 +567,7 @@ class TestURLEncodeTransformerEncode:
 
     def test_encode_special_chars(self):
         """Special characters are encoded."""
-        from src.oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
+        from oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
 
         transformer = URLEncodeTransformer()
         result = transformer.encode(b"key=value&other=123")
@@ -577,7 +577,7 @@ class TestURLEncodeTransformerEncode:
 
     def test_encode_safe_chars_not_encoded(self):
         """Safe characters are not encoded."""
-        from src.oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
+        from oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
 
         transformer = URLEncodeTransformer(safe="/")
         result = transformer.encode(b"path/to/resource")
@@ -591,7 +591,7 @@ class TestURLEncodeTransformerDecode:
 
     def test_decode_percent_encoded(self):
         """Percent-encoded data is decoded."""
-        from src.oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
+        from oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
 
         transformer = URLEncodeTransformer()
         result = transformer.decode(b"Hello%20World%21")
@@ -600,7 +600,7 @@ class TestURLEncodeTransformerDecode:
 
     def test_decode_plus_encoded(self):
         """Plus-encoded data is decoded."""
-        from src.oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
+        from oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
 
         transformer = URLEncodeTransformer(plus_encoding=True)
         result = transformer.decode(b"Hello+World")
@@ -623,7 +623,7 @@ class TestURLEncodeTransformerRoundTrip:
     )
     def test_round_trip(self, data):
         """Round-trip encoding/decoding preserves data."""
-        from src.oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
+        from oida.fuzz.primitives.transformers.encoding import URLEncodeTransformer
 
         transformer = URLEncodeTransformer()
         assert transformer.decode(transformer.encode(data)) == data
@@ -639,28 +639,28 @@ class TestHexTransformerCreation:
 
     def test_default_creation(self):
         """Default HexTransformer uses lowercase."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer()
         assert transformer.uppercase is False
 
     def test_uppercase_creation(self):
         """Uppercase HexTransformer can be created."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer(uppercase=True)
         assert transformer.uppercase is True
 
     def test_prefix_creation(self):
         """HexTransformer with prefix can be created."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer(prefix=b"0x")
         assert transformer.prefix == b"0x"
 
     def test_delimiter_creation(self):
         """HexTransformer with delimiter can be created."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer(delimiter=b":")
         assert transformer.delimiter == b":"
@@ -671,7 +671,7 @@ class TestHexTransformerEncode:
 
     def test_encode_lowercase(self):
         """Default encoding produces lowercase hex."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer()
         result = transformer.encode(b"\xab\xcd\xef")
@@ -680,7 +680,7 @@ class TestHexTransformerEncode:
 
     def test_encode_uppercase(self):
         """Uppercase encoding produces uppercase hex."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer(uppercase=True)
         result = transformer.encode(b"\xab\xcd\xef")
@@ -689,7 +689,7 @@ class TestHexTransformerEncode:
 
     def test_encode_with_prefix(self):
         """Prefix is prepended to hex string."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer(prefix=b"0x")
         result = transformer.encode(b"\x01\x02")
@@ -698,7 +698,7 @@ class TestHexTransformerEncode:
 
     def test_encode_with_delimiter(self):
         """Delimiter separates byte pairs."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer(delimiter=b":")
         result = transformer.encode(b"\x01\x02\x03")
@@ -707,7 +707,7 @@ class TestHexTransformerEncode:
 
     def test_encode_mac_address_style(self):
         """MAC address style encoding works."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer(uppercase=True, delimiter=b":")
         result = transformer.encode(b"\xaa\xbb\xcc\xdd\xee\xff")
@@ -720,7 +720,7 @@ class TestHexTransformerDecode:
 
     def test_decode_lowercase(self):
         """Lowercase hex is decoded."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer()
         result = transformer.decode(b"48656c6c6f")
@@ -729,7 +729,7 @@ class TestHexTransformerDecode:
 
     def test_decode_uppercase(self):
         """Uppercase hex is decoded."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer(uppercase=True)
         result = transformer.decode(b"48656C6C6F")
@@ -738,7 +738,7 @@ class TestHexTransformerDecode:
 
     def test_decode_removes_prefix(self):
         """Prefix is removed during decode."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer(prefix=b"0x")
         result = transformer.decode(b"0x4142")
@@ -747,7 +747,7 @@ class TestHexTransformerDecode:
 
     def test_decode_removes_delimiter(self):
         """Delimiter is removed during decode."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer(delimiter=b":")
         result = transformer.decode(b"41:42:43")
@@ -756,7 +756,7 @@ class TestHexTransformerDecode:
 
     def test_decode_invalid_raises(self):
         """Invalid hex raises ValueError."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer()
 
@@ -780,7 +780,7 @@ class TestHexTransformerRoundTrip:
     )
     def test_round_trip(self, data):
         """Round-trip encoding/decoding preserves data."""
-        from src.oida.fuzz.primitives.transformers.encoding import HexTransformer
+        from oida.fuzz.primitives.transformers.encoding import HexTransformer
 
         transformer = HexTransformer()
         assert transformer.decode(transformer.encode(data)) == data
@@ -796,7 +796,7 @@ class TestHTMLEntityTransformerEncode:
 
     def test_encode_angle_brackets(self):
         """Angle brackets are escaped."""
-        from src.oida.fuzz.primitives.transformers.encoding import HTMLEntityTransformer
+        from oida.fuzz.primitives.transformers.encoding import HTMLEntityTransformer
 
         transformer = HTMLEntityTransformer()
         result = transformer.encode(b"<script>alert(1)</script>")
@@ -807,7 +807,7 @@ class TestHTMLEntityTransformerEncode:
 
     def test_encode_ampersand(self):
         """Ampersand is escaped."""
-        from src.oida.fuzz.primitives.transformers.encoding import HTMLEntityTransformer
+        from oida.fuzz.primitives.transformers.encoding import HTMLEntityTransformer
 
         transformer = HTMLEntityTransformer()
         result = transformer.encode(b"foo & bar")
@@ -816,7 +816,7 @@ class TestHTMLEntityTransformerEncode:
 
     def test_encode_quotes(self):
         """Quotes are escaped by default."""
-        from src.oida.fuzz.primitives.transformers.encoding import HTMLEntityTransformer
+        from oida.fuzz.primitives.transformers.encoding import HTMLEntityTransformer
 
         transformer = HTMLEntityTransformer(quote_style=True)
         result = transformer.encode(b'Say "hello"')
@@ -825,7 +825,7 @@ class TestHTMLEntityTransformerEncode:
 
     def test_encode_no_quote_escaping(self):
         """Quotes are not escaped when quote_style=False."""
-        from src.oida.fuzz.primitives.transformers.encoding import HTMLEntityTransformer
+        from oida.fuzz.primitives.transformers.encoding import HTMLEntityTransformer
 
         transformer = HTMLEntityTransformer(quote_style=False)
         result = transformer.encode(b'Say "hello"')
@@ -839,7 +839,7 @@ class TestHTMLEntityTransformerDecode:
 
     def test_decode_entities(self):
         """HTML entities are decoded."""
-        from src.oida.fuzz.primitives.transformers.encoding import HTMLEntityTransformer
+        from oida.fuzz.primitives.transformers.encoding import HTMLEntityTransformer
 
         transformer = HTMLEntityTransformer()
         result = transformer.decode(b"&lt;script&gt;alert(1)&lt;/script&gt;")
@@ -852,7 +852,7 @@ class TestHTMLEntityTransformerRoundTrip:
 
     def test_round_trip(self):
         """Round-trip preserves data."""
-        from src.oida.fuzz.primitives.transformers.encoding import HTMLEntityTransformer
+        from oida.fuzz.primitives.transformers.encoding import HTMLEntityTransformer
 
         transformer = HTMLEntityTransformer()
         data = b'<div class="test">Hello & World</div>'
@@ -870,7 +870,7 @@ class TestJSONEscapeTransformerEncode:
 
     def test_encode_quotes(self):
         """Quotes are escaped."""
-        from src.oida.fuzz.primitives.transformers.encoding import JSONEscapeTransformer
+        from oida.fuzz.primitives.transformers.encoding import JSONEscapeTransformer
 
         transformer = JSONEscapeTransformer()
         result = transformer.encode(b'He said "hello"')
@@ -879,7 +879,7 @@ class TestJSONEscapeTransformerEncode:
 
     def test_encode_backslash(self):
         """Backslashes are escaped."""
-        from src.oida.fuzz.primitives.transformers.encoding import JSONEscapeTransformer
+        from oida.fuzz.primitives.transformers.encoding import JSONEscapeTransformer
 
         transformer = JSONEscapeTransformer()
         result = transformer.encode(b"path\\to\\file")
@@ -888,7 +888,7 @@ class TestJSONEscapeTransformerEncode:
 
     def test_encode_newline(self):
         """Newlines are escaped."""
-        from src.oida.fuzz.primitives.transformers.encoding import JSONEscapeTransformer
+        from oida.fuzz.primitives.transformers.encoding import JSONEscapeTransformer
 
         transformer = JSONEscapeTransformer()
         result = transformer.encode(b"line1\nline2")
@@ -901,7 +901,7 @@ class TestJSONEscapeTransformerDecode:
 
     def test_decode_escaped(self):
         """Escaped sequences are decoded."""
-        from src.oida.fuzz.primitives.transformers.encoding import JSONEscapeTransformer
+        from oida.fuzz.primitives.transformers.encoding import JSONEscapeTransformer
 
         transformer = JSONEscapeTransformer()
         result = transformer.decode(b'He said \\"hello\\"')
@@ -914,7 +914,7 @@ class TestJSONEscapeTransformerRoundTrip:
 
     def test_round_trip(self):
         """Round-trip preserves data."""
-        from src.oida.fuzz.primitives.transformers.encoding import JSONEscapeTransformer
+        from oida.fuzz.primitives.transformers.encoding import JSONEscapeTransformer
 
         transformer = JSONEscapeTransformer()
         data = b'{"key": "value with "quotes" and \\backslash"}'
@@ -932,7 +932,7 @@ class TestXMLEscapeTransformerEncode:
 
     def test_encode_all_special_chars(self):
         """All XML special characters are escaped."""
-        from src.oida.fuzz.primitives.transformers.encoding import XMLEscapeTransformer
+        from oida.fuzz.primitives.transformers.encoding import XMLEscapeTransformer
 
         transformer = XMLEscapeTransformer()
         result = transformer.encode(b'<tag attr="val\'ue">data & more</tag>')
@@ -949,7 +949,7 @@ class TestXMLEscapeTransformerDecode:
 
     def test_decode_entities(self):
         """XML entities are decoded."""
-        from src.oida.fuzz.primitives.transformers.encoding import XMLEscapeTransformer
+        from oida.fuzz.primitives.transformers.encoding import XMLEscapeTransformer
 
         transformer = XMLEscapeTransformer()
         result = transformer.decode(b"&lt;tag&gt;data &amp; more&lt;/tag&gt;")
@@ -962,7 +962,7 @@ class TestXMLEscapeTransformerRoundTrip:
 
     def test_round_trip(self):
         """Round-trip preserves data."""
-        from src.oida.fuzz.primitives.transformers.encoding import XMLEscapeTransformer
+        from oida.fuzz.primitives.transformers.encoding import XMLEscapeTransformer
 
         transformer = XMLEscapeTransformer()
         data = b"<root attr='value'>Text & \"quotes\"</root>"
@@ -980,28 +980,28 @@ class TestGzipTransformerCreation:
 
     def test_default_creation(self):
         """Default GzipTransformer uses level 9."""
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
 
         transformer = GzipTransformer()
         assert transformer.level == 9
 
     def test_custom_level(self):
         """Custom compression level can be set."""
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
 
         transformer = GzipTransformer(level=6)
         assert transformer.level == 6
 
     def test_invalid_level_raises(self):
         """Invalid compression level raises ValueError."""
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
 
         with pytest.raises(ValueError, match="level must be"):
             GzipTransformer(level=10)
 
     def test_level_minus_one_valid(self):
         """Level -1 (default) is valid."""
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
 
         transformer = GzipTransformer(level=-1)
         assert transformer.level == -1
@@ -1012,7 +1012,7 @@ class TestGzipTransformerEncode:
 
     def test_encode_produces_gzip_data(self):
         """Encoded data is valid gzip."""
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
 
         transformer = GzipTransformer()
         data = b"Hello World!"
@@ -1023,7 +1023,7 @@ class TestGzipTransformerEncode:
 
     def test_encode_compresses_data(self):
         """Repetitive data is compressed smaller."""
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
 
         transformer = GzipTransformer(level=9)
         data = b"A" * 10000
@@ -1037,7 +1037,7 @@ class TestGzipTransformerDecode:
 
     def test_decode_gzip_data(self):
         """Gzip data is decompressed."""
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
 
         transformer = GzipTransformer()
         data = b"Test decompression"
@@ -1048,7 +1048,7 @@ class TestGzipTransformerDecode:
 
     def test_decode_invalid_raises(self):
         """Invalid gzip data raises ValueError."""
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
 
         transformer = GzipTransformer()
 
@@ -1071,7 +1071,7 @@ class TestGzipTransformerRoundTrip:
     )
     def test_round_trip(self, data):
         """Round-trip preserves data."""
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
 
         transformer = GzipTransformer()
         assert transformer.decode(transformer.encode(data)) == data
@@ -1082,7 +1082,7 @@ class TestGzipTransformerName:
 
     def test_name_includes_level(self):
         """Name includes compression level."""
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
 
         transformer = GzipTransformer(level=6)
         assert transformer.name == "Gzip-6"
@@ -1098,7 +1098,7 @@ class TestDeflateTransformerCreation:
 
     def test_default_creation(self):
         """Default DeflateTransformer uses raw deflate."""
-        from src.oida.fuzz.primitives.transformers.compression import DeflateTransformer
+        from oida.fuzz.primitives.transformers.compression import DeflateTransformer
 
         transformer = DeflateTransformer()
         assert transformer.level == 9
@@ -1106,21 +1106,21 @@ class TestDeflateTransformerCreation:
 
     def test_zlib_wrapper(self):
         """DeflateTransformer can use zlib wrapper."""
-        from src.oida.fuzz.primitives.transformers.compression import DeflateTransformer
+        from oida.fuzz.primitives.transformers.compression import DeflateTransformer
 
         transformer = DeflateTransformer(wbits=15)
         assert transformer.wbits == 15
 
     def test_invalid_level_raises(self):
         """Invalid compression level raises ValueError."""
-        from src.oida.fuzz.primitives.transformers.compression import DeflateTransformer
+        from oida.fuzz.primitives.transformers.compression import DeflateTransformer
 
         with pytest.raises(ValueError, match="level must be"):
             DeflateTransformer(level=10)
 
     def test_invalid_wbits_raises(self):
         """Invalid wbits raises ValueError."""
-        from src.oida.fuzz.primitives.transformers.compression import DeflateTransformer
+        from oida.fuzz.primitives.transformers.compression import DeflateTransformer
 
         # Valid ranges are -15 to 15 or 24 to 31
         # 16-23 are invalid
@@ -1133,7 +1133,7 @@ class TestDeflateTransformerEncode:
 
     def test_encode_raw_deflate(self):
         """Raw deflate encoding works."""
-        from src.oida.fuzz.primitives.transformers.compression import DeflateTransformer
+        from oida.fuzz.primitives.transformers.compression import DeflateTransformer
 
         transformer = DeflateTransformer(wbits=-15)
         data = b"Test data for deflate"
@@ -1146,7 +1146,7 @@ class TestDeflateTransformerEncode:
 
     def test_encode_zlib_wrapper(self):
         """Zlib-wrapped deflate encoding works."""
-        from src.oida.fuzz.primitives.transformers.compression import DeflateTransformer
+        from oida.fuzz.primitives.transformers.compression import DeflateTransformer
 
         transformer = DeflateTransformer(wbits=15)
         data = b"Test data for zlib"
@@ -1161,7 +1161,7 @@ class TestDeflateTransformerDecode:
 
     def test_decode_raw_deflate(self):
         """Raw deflate data is decompressed."""
-        from src.oida.fuzz.primitives.transformers.compression import DeflateTransformer
+        from oida.fuzz.primitives.transformers.compression import DeflateTransformer
 
         transformer = DeflateTransformer(wbits=-15)
         data = b"Decompress this"
@@ -1175,7 +1175,7 @@ class TestDeflateTransformerDecode:
 
     def test_decode_invalid_raises(self):
         """Invalid deflate data raises ValueError."""
-        from src.oida.fuzz.primitives.transformers.compression import DeflateTransformer
+        from oida.fuzz.primitives.transformers.compression import DeflateTransformer
 
         transformer = DeflateTransformer()
 
@@ -1189,7 +1189,7 @@ class TestDeflateTransformerRoundTrip:
     @pytest.mark.parametrize("wbits", [-15, 15])
     def test_round_trip(self, wbits):
         """Round-trip works for both raw and zlib formats."""
-        from src.oida.fuzz.primitives.transformers.compression import DeflateTransformer
+        from oida.fuzz.primitives.transformers.compression import DeflateTransformer
 
         transformer = DeflateTransformer(wbits=wbits)
         data = b"Round-trip test data"
@@ -1202,14 +1202,14 @@ class TestDeflateTransformerName:
 
     def test_name_raw(self):
         """Name indicates raw deflate."""
-        from src.oida.fuzz.primitives.transformers.compression import DeflateTransformer
+        from oida.fuzz.primitives.transformers.compression import DeflateTransformer
 
         transformer = DeflateTransformer(wbits=-15)
         assert "raw" in transformer.name
 
     def test_name_zlib(self):
         """Name indicates zlib wrapper."""
-        from src.oida.fuzz.primitives.transformers.compression import DeflateTransformer
+        from oida.fuzz.primitives.transformers.compression import DeflateTransformer
 
         transformer = DeflateTransformer(wbits=15)
         assert "zlib" in transformer.name
@@ -1232,7 +1232,7 @@ class TestBrotliTransformerCreation:
         being unavailable by making its import fail, without mocking
         BrotliTransformer itself.
         """
-        from src.oida.fuzz.primitives.transformers.compression import BrotliTransformer
+        from oida.fuzz.primitives.transformers.compression import BrotliTransformer
 
         with unittest.mock.patch.dict(sys.modules, {"brotli": None}):
             with pytest.raises(ImportError, match="brotli"):
@@ -1250,21 +1250,21 @@ class TestBrotliTransformerCreation:
 
     def test_default_creation(self, brotli_available):
         """Default BrotliTransformer uses quality 11."""
-        from src.oida.fuzz.primitives.transformers.compression import BrotliTransformer
+        from oida.fuzz.primitives.transformers.compression import BrotliTransformer
 
         transformer = BrotliTransformer()
         assert transformer.quality == 11
 
     def test_invalid_quality_raises(self, brotli_available):
         """Invalid quality raises ValueError."""
-        from src.oida.fuzz.primitives.transformers.compression import BrotliTransformer
+        from oida.fuzz.primitives.transformers.compression import BrotliTransformer
 
         with pytest.raises(ValueError, match="quality must be"):
             BrotliTransformer(quality=12)
 
     def test_invalid_lgwin_raises(self, brotli_available):
         """Invalid lgwin raises ValueError."""
-        from src.oida.fuzz.primitives.transformers.compression import BrotliTransformer
+        from oida.fuzz.primitives.transformers.compression import BrotliTransformer
 
         with pytest.raises(ValueError, match="lgwin must be"):
             BrotliTransformer(lgwin=5)
@@ -1285,7 +1285,7 @@ class TestBrotliTransformerRoundTrip:
 
     def test_round_trip(self, brotli_available):
         """Round-trip preserves data."""
-        from src.oida.fuzz.primitives.transformers.compression import BrotliTransformer
+        from oida.fuzz.primitives.transformers.compression import BrotliTransformer
 
         transformer = BrotliTransformer()
         data = b"Test data for brotli compression"
@@ -1303,7 +1303,7 @@ class TestIdentityTransformer:
 
     def test_encode_returns_same_data(self):
         """encode() returns data unchanged."""
-        from src.oida.fuzz.primitives.transformers.compression import IdentityTransformer
+        from oida.fuzz.primitives.transformers.compression import IdentityTransformer
 
         transformer = IdentityTransformer()
         data = b"unchanged data"
@@ -1312,7 +1312,7 @@ class TestIdentityTransformer:
 
     def test_decode_returns_same_data(self):
         """decode() returns data unchanged."""
-        from src.oida.fuzz.primitives.transformers.compression import IdentityTransformer
+        from oida.fuzz.primitives.transformers.compression import IdentityTransformer
 
         transformer = IdentityTransformer()
         data = b"unchanged data"
@@ -1321,7 +1321,7 @@ class TestIdentityTransformer:
 
     def test_name(self):
         """name is 'Identity'."""
-        from src.oida.fuzz.primitives.transformers.compression import IdentityTransformer
+        from oida.fuzz.primitives.transformers.compression import IdentityTransformer
 
         transformer = IdentityTransformer()
         assert transformer.name == "Identity"
@@ -1337,9 +1337,9 @@ class TestComplexTransformerChains:
 
     def test_gzip_then_base64(self):
         """Common pattern: compress then base64 encode."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer
+        from oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
         chain = TransformerChain(GzipTransformer(), Base64Transformer())
         data = b"This is a test of compression and encoding"
@@ -1353,8 +1353,8 @@ class TestComplexTransformerChains:
 
     def test_url_encode_then_base64(self):
         """URL encode then base64 for double encoding."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
-        from src.oida.fuzz.primitives.transformers.encoding import (
+        from oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.encoding import (
             URLEncodeTransformer,
             Base64Transformer,
         )
@@ -1366,9 +1366,9 @@ class TestComplexTransformerChains:
 
     def test_three_transformer_chain(self):
         """Chain of three transformers."""
-        from src.oida.fuzz.primitives.transformers.base import TransformerChain
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer, HexTransformer
+        from oida.fuzz.primitives.transformers.base import TransformerChain
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer, HexTransformer
 
         # Gzip -> Base64 -> Hex
         chain = TransformerChain(GzipTransformer(level=6), Base64Transformer(), HexTransformer())
@@ -1387,7 +1387,7 @@ class TestTransformerEdgeCases:
 
     def test_empty_data_handling(self):
         """All transformers handle empty data."""
-        from src.oida.fuzz.primitives.transformers.encoding import (
+        from oida.fuzz.primitives.transformers.encoding import (
             Base64Transformer,
             URLEncodeTransformer,
             HexTransformer,
@@ -1395,7 +1395,7 @@ class TestTransformerEdgeCases:
             JSONEscapeTransformer,
             XMLEscapeTransformer,
         )
-        from src.oida.fuzz.primitives.transformers.compression import (
+        from oida.fuzz.primitives.transformers.compression import (
             GzipTransformer,
             DeflateTransformer,
             IdentityTransformer,
@@ -1423,7 +1423,7 @@ class TestTransformerEdgeCases:
 
     def test_large_data_handling(self):
         """Transformers handle large data."""
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
 
         transformer = GzipTransformer()
         large_data = b"X" * 1000000  # 1MB
@@ -1435,8 +1435,8 @@ class TestTransformerEdgeCases:
 
     def test_binary_data_handling(self):
         """Transformers handle arbitrary binary data."""
-        from src.oida.fuzz.primitives.transformers.encoding import Base64Transformer, HexTransformer
-        from src.oida.fuzz.primitives.transformers.compression import GzipTransformer
+        from oida.fuzz.primitives.transformers.encoding import Base64Transformer, HexTransformer
+        from oida.fuzz.primitives.transformers.compression import GzipTransformer
 
         binary_data = bytes(range(256))  # All possible byte values
 

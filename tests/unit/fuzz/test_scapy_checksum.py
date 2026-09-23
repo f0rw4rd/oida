@@ -20,7 +20,7 @@ from tests.service_gate import require_import
 
 scapy_all = require_import("scapy.all")
 
-from src.oida.fuzz.core.connections.scapy import ScapyRawConnection  # noqa: E402
+from oida.fuzz.core.connections.scapy import ScapyRawConnection  # noqa: E402
 
 
 def _tcp_header(chksum: int) -> bytes:

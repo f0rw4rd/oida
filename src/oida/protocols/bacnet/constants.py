@@ -9,7 +9,7 @@ import logging
 import os
 from typing import Any, Dict
 
-from ...utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
 # Suppress BAC0/bacpypes3 verbose logging BEFORE import
 os.environ["BAC0_VERBOSE"] = "0"

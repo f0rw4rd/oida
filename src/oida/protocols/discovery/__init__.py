@@ -109,7 +109,7 @@ _LAZY_IMPORTS = {
 }
 
 # Core utilities - loaded eagerly as they're lightweight and commonly used
-from .core import (
+from oida.protocols.discovery.core import (
     DiscoveredDevice,
     InterfaceCapabilities,
     check_interface_capabilities,
@@ -120,7 +120,6 @@ from .core import (
     lookup_mac_vendor,
     mac_to_eui64,
     normalize_ipv6,
-    # Constants
     IPV6_ALL_NODES,
     IPV6_ALL_ROUTERS,
     MDNS_SERVICE_TYPES,

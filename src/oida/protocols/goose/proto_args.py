@@ -6,9 +6,7 @@ This module registers GOOSE-specific command-line arguments.
 
 import argparse
 
-from ...utils.proto_args_factory import (
-    create_protocol_parser,
-)
+from oida.utils.proto_args_factory import create_protocol_parser
 
 
 def proto_args(parser, parents):

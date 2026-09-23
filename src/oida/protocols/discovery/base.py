@@ -11,12 +11,12 @@ import time
 from typing import Any, Dict, Iterator, Optional, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from .core import DiscoveredDevice
+    from oida.protocols.discovery.core import DiscoveredDevice
 
 from logging import DEBUG as _DEBUG
 
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
 _scapy_all = lazy_import("scapy.all", "discovery")
 
@@ -75,7 +75,7 @@ class PassiveListenerBase(ABC):
             timeout: Capture timeout in seconds
             nxc_logger: Optional NXC-style logger for user-visible output
         """
-        from .core import validate_interface, validate_timeout
+        from oida.protocols.discovery.core import validate_interface, validate_timeout
 
         self.interface = validate_interface(interface)
         self.timeout = validate_timeout(timeout)
@@ -137,7 +137,7 @@ class PassiveListenerBase(ABC):
 
         Override in subclasses for protocol-specific dump format.
         """
-        from .core import hex_dump
+        from oida.protocols.discovery.core import hex_dump
 
         try:
             from scapy.all import IP, IPv6

@@ -26,8 +26,8 @@ __license__ = "AGPL-3.0-or-later"
 __url__ = "https://github.com/f0rw4rd/oida"
 
 # Export main classes and functions (base utilities - lightweight)
-from .utils.base_scanner import BaseScanner, NetworkScanner, SerialScanner
-from .utils.protocol_helpers import (
+from oida.utils.base_scanner import BaseScanner, NetworkScanner, SerialScanner
+from oida.utils.protocol_helpers import (
     ConnectionHelper,
     ProtocolParser,
     DataFormatter,

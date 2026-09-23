@@ -212,7 +212,7 @@ class FileCarvingMixin:
 
     def _update_devices(self, extracted: ExtractedFile) -> None:
         """Update device entries with file transfer information."""
-        from ..protocols.discovery.core import DiscoveredDevice, is_valid_discovered_ip
+        from oida.protocols.discovery.core import DiscoveredDevice, is_valid_discovered_ip
 
         file_info = {
             "file_type": extracted.file_type,

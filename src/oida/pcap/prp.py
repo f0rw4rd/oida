@@ -48,9 +48,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from ._hsr_prp_common import extract_supervision_fields, update_supervision_node
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import lookup_mac_vendor
+from oida.pcap._hsr_prp_common import extract_supervision_fields, update_supervision_node
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import lookup_mac_vendor
 
 # PRP LAN identifiers
 PRP_LANS = {

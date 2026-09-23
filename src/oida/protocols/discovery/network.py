@@ -15,7 +15,7 @@ import time
 from datetime import datetime
 from typing import Dict, List, Optional, Set
 
-from .core import (
+from oida.protocols.discovery.core import (
     DiscoveredDevice,
     bind_socket_to_interface,
     create_udp_socket,
@@ -26,9 +26,9 @@ from .core import (
     validate_subnet,
     validate_timeout,
 )
-from ...utils.rate_limiter import sendto
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.utils.rate_limiter import sendto
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
 _scapy_all = lazy_import("scapy.all", "discovery")
 _scapy_netbios = lazy_import("scapy.layers.netbios", "discovery")

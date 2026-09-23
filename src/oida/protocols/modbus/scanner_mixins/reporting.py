@@ -21,8 +21,8 @@ class ScannerReportingMixin(_ScannerBase):
 
     def _report_findings(self, results: Dict[str, Any]):
         """Report scan findings"""
-        from ..decoder import ModbusDecoder
-        from ....utils.export_utils import export_table, configure as configure_export
+        from oida.protocols.modbus.decoder import ModbusDecoder
+        from oida.utils.export_utils import export_table, configure as configure_export
 
         server_info = results.get("server_info", {})
         registers = results.get("registers", {})
@@ -172,7 +172,7 @@ class ScannerReportingMixin(_ScannerBase):
         Returns:
             Tuple of (headers, rows) for export_table
         """
-        from ..decoder import ModbusDecoder, REGISTERS_PER_TYPE, parse_endian
+        from oida.protocols.modbus.decoder import ModbusDecoder, REGISTERS_PER_TYPE, parse_endian
 
         decode_type = self.decode_type.lower()
         default_regs = REGISTERS_PER_TYPE.get(decode_type, 1) or 1

@@ -20,7 +20,7 @@ class TestMonitorSpec:
 
     def test_basic_creation(self):
         """MonitorSpec with name only."""
-        from src.oida.fuzz.core.config import MonitorSpec
+        from oida.fuzz.core.config import MonitorSpec
 
         spec = MonitorSpec(name="ping")
         assert spec.name == "ping"
@@ -28,7 +28,7 @@ class TestMonitorSpec:
 
     def test_with_interval(self):
         """MonitorSpec with custom interval."""
-        from src.oida.fuzz.core.config import MonitorSpec
+        from oida.fuzz.core.config import MonitorSpec
 
         spec = MonitorSpec(name="modbus", interval=10)
         assert spec.name == "modbus"
@@ -45,7 +45,7 @@ class TestMonitorConfigParse:
 
     def test_parse_simple(self):
         """Parse simple monitor list."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("ping,socket")
         assert len(mc.monitors) == 2
@@ -55,7 +55,7 @@ class TestMonitorConfigParse:
 
     def test_parse_with_intervals(self):
         """Parse monitors with intervals."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("ping:50,modbus:10")
         assert mc.monitors[0].name == "ping"
@@ -65,7 +65,7 @@ class TestMonitorConfigParse:
 
     def test_parse_mixed(self):
         """Parse mix of monitors with and without intervals."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("ping:50,socket,modbus:10")
         assert len(mc.monitors) == 3
@@ -75,7 +75,7 @@ class TestMonitorConfigParse:
 
     def test_parse_none_disables(self):
         """Parse 'none' disables all monitors."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("none")
         assert len(mc.monitors) == 0
@@ -83,21 +83,21 @@ class TestMonitorConfigParse:
 
     def test_parse_or_logic(self):
         """Parse with OR logic."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("ping,socket", "or")
         assert mc.logic == "or"
 
     def test_parse_invalid_logic_defaults_to_and(self):
         """Invalid logic defaults to 'and'."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("ping", "invalid")
         assert mc.logic == "and"
 
     def test_parse_invalid_interval(self):
         """Invalid interval treated as None."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("ping:abc")
         assert mc.monitors[0].name == "ping"
@@ -105,14 +105,14 @@ class TestMonitorConfigParse:
 
     def test_parse_empty_parts_ignored(self):
         """Empty parts in comma-separated string are ignored."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("ping,,socket,")
         assert len(mc.monitors) == 2
 
     def test_names_lowercased(self):
         """Monitor names are lowercased."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("Ping,SOCKET")
         assert mc.monitors[0].name == "ping"
@@ -124,21 +124,21 @@ class TestMonitorConfigMethods:
 
     def test_is_empty_true(self):
         """is_empty returns True when no monitors."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("none")
         assert mc.is_empty() is True
 
     def test_is_empty_false(self):
         """is_empty returns False with monitors."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("ping")
         assert mc.is_empty() is False
 
     def test_get_monitor_names(self):
         """get_monitor_names returns list of names."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("ping:50,modbus:10,socket")
         names = [spec.name for spec in mc.monitors]
@@ -146,7 +146,7 @@ class TestMonitorConfigMethods:
 
     def test_format_display_with_monitors(self):
         """format_display with monitors."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("ping:50,socket")
         display = mc.format_display()
@@ -156,7 +156,7 @@ class TestMonitorConfigMethods:
 
     def test_format_display_empty(self):
         """format_display with no monitors."""
-        from src.oida.fuzz.core.config import MonitorConfig
+        from oida.fuzz.core.config import MonitorConfig
 
         mc = MonitorConfig.parse("none")
         assert mc.format_display() == "none"
@@ -172,7 +172,7 @@ class TestProtocolType:
 
     def test_all_types_exist(self):
         """All expected protocol types defined."""
-        from src.oida.fuzz.core.config import ProtocolType
+        from oida.fuzz.core.config import ProtocolType
 
         assert ProtocolType.TCP.value == "tcp"
         assert ProtocolType.SSL.value == "ssl"
@@ -194,7 +194,7 @@ class TestFuzzerConfig:
 
     def test_minimal_creation(self):
         """FuzzerConfig with minimal args."""
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(target_ip="192.168.1.100", target_port=502)
         assert config.target_ip == "192.168.1.100"
@@ -204,7 +204,7 @@ class TestFuzzerConfig:
 
     def test_defaults(self):
         """FuzzerConfig has expected defaults."""
-        from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+        from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 
         config = FuzzerConfig(target_ip="10.0.0.1", target_port=80)
         assert config.session_filename == "fuzzer_session"
@@ -222,7 +222,7 @@ class TestFuzzerConfig:
 
     def test_post_init_creates_protocol_options(self):
         """__post_init__ initializes protocol_options if None."""
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(target_ip="10.0.0.1", target_port=80)
         assert config.protocol_options is not None
@@ -230,7 +230,7 @@ class TestFuzzerConfig:
 
     def test_get_option_existing(self):
         """get_option returns existing option value."""
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(
             target_ip="10.0.0.1", target_port=80, protocol_options={"timeout": 30}
@@ -239,7 +239,7 @@ class TestFuzzerConfig:
 
     def test_get_option_missing_returns_default(self):
         """get_option returns default for missing key."""
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(target_ip="10.0.0.1", target_port=80)
         assert config.get_option("missing") is None
@@ -247,7 +247,7 @@ class TestFuzzerConfig:
 
     def test_set_option(self):
         """protocol_options stores a protocol option."""
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(
             target_ip="10.0.0.1", target_port=80, protocol_options={"timeout": 30}
@@ -256,7 +256,7 @@ class TestFuzzerConfig:
 
     def test_set_option_writes_to_postinit_dict(self):
         """__post_init__ guarantees a dict; mutating it stores options."""
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(target_ip="10.0.0.1", target_port=80)
         assert config.protocol_options == {}
@@ -265,7 +265,7 @@ class TestFuzzerConfig:
 
     def test_distributed_fuzzing_config(self):
         """Distributed fuzzing config fields."""
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(
             target_ip="10.0.0.1", target_port=502, distribution_total=4, distribution_id=2
@@ -275,7 +275,7 @@ class TestFuzzerConfig:
 
     def test_request_filtering_config(self):
         """Request filtering config fields."""
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.config import FuzzerConfig
 
         config = FuzzerConfig(
             target_ip="10.0.0.1",
@@ -297,14 +297,14 @@ class TestHexdump:
 
     def test_empty_data(self):
         """Hexdump of empty data."""
-        from src.oida.fuzz.core.config import hexdump
+        from oida.fuzz.core.config import hexdump
 
         result = hexdump(b"")
         assert result == ""
 
     def test_short_data(self):
         """Hexdump of short data."""
-        from src.oida.fuzz.core.config import hexdump
+        from oida.fuzz.core.config import hexdump
 
         result = hexdump(b"\x00\x01\x02\x03")
         assert "00000000" in result
@@ -312,21 +312,21 @@ class TestHexdump:
 
     def test_printable_ascii(self):
         """Hexdump shows printable ASCII."""
-        from src.oida.fuzz.core.config import hexdump
+        from oida.fuzz.core.config import hexdump
 
         result = hexdump(b"Hello")
         assert "Hello" in result
 
     def test_non_printable_replaced_with_dot(self):
         """Non-printable characters shown as dots."""
-        from src.oida.fuzz.core.config import hexdump
+        from oida.fuzz.core.config import hexdump
 
         result = hexdump(b"\x00\x01\x02")
         assert "..." in result
 
     def test_multi_line(self):
         """Data longer than bytes_per_line creates multiple lines."""
-        from src.oida.fuzz.core.config import hexdump
+        from oida.fuzz.core.config import hexdump
 
         data = bytes(range(32))
         result = hexdump(data, bytes_per_line=16)

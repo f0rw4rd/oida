@@ -31,12 +31,8 @@ import pytest
 
 from tests.service_gate import require_import, require_service
 
-from .conftest import create_fuzzer_config, run_fuzz_capture
-from .mock_servers import (
-    iec104_server,
-    mms_server,
-    modbus_server,
-)
+from tests.integration.fuzz.conftest import create_fuzzer_config, run_fuzz_capture
+from tests.integration.fuzz.mock_servers import iec104_server, mms_server, modbus_server
 
 pytestmark = pytest.mark.integration_fuzzers
 

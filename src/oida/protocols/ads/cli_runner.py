@@ -14,21 +14,17 @@ import os
 import struct
 import tempfile
 
-from ...connection import NetworkConnection
-from ...utils import ProgressTracker
-from ...utils.export_utils import export_data
+from oida.connection import NetworkConnection
+from oida.utils import ProgressTracker
+from oida.utils.export_utils import export_data
 
 # Shared CoE definitions
-from ..ethercat.coe import (
-    get_al_state_name,
-    encode_sdo_offset,
-    get_coe_object_name,
-)
-from ..ethercat.constants import lookup_vendor
-from ..ethercat.soe import SOE_STANDARD_IDNS
+from oida.protocols.ethercat.coe import get_al_state_name, encode_sdo_offset, get_coe_object_name
+from oida.protocols.ethercat.constants import lookup_vendor
+from oida.protocols.ethercat.soe import SOE_STANDARD_IDNS
 
 # ADS protocol constants
-from .constants import (
+from oida.protocols.ads.constants import (
     ADS_FUZZ_SYMBOL_DELAY,
     ADS_IDX_GRP,
     ADS_PORT_MAP,
@@ -38,7 +34,7 @@ from .constants import (
 )
 
 # Shared helpers
-from .helpers import (
+from oida.protocols.ads.helpers import (
     _pyads,
     _get_pyads,
     _get_memory_areas,
@@ -50,7 +46,7 @@ from .helpers import (
 )
 
 # Scanner class (Layer 1) -- used to create scanner instances in proto_flow
-from .scanner import ADSScanner
+from oida.protocols.ads.scanner import ADSScanner
 
 import logging
 
@@ -69,7 +65,7 @@ class ads(NetworkConnection):
         """Main ADS scanning workflow"""
 
         # Refuse dangerous ops without --confirm (state-change, writes, fuzz).
-        from .proto_args import validate_args
+        from oida.protocols.ads.proto_args import validate_args
 
         validate_args(self.args)
 
@@ -2352,7 +2348,7 @@ class ads(NetworkConnection):
     def _fuzz_symbol(self, symbol_name: str, iterations: int):
         """Fuzz a single symbol"""
         import time
-        from ...utils.fuzzer import fuzz
+        from oida.utils.fuzzer import fuzz
 
         target_id = f"symbol:{symbol_name}"
 

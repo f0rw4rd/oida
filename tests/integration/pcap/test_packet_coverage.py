@@ -13,7 +13,7 @@ import os
 
 import pytest
 
-from .conftest import (
+from tests.integration.pcap.conftest import (
     COVERAGE_ALL_PCAPS,
     _count_tshark_packets,
     _load_packets,

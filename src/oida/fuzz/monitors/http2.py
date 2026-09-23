@@ -22,7 +22,7 @@ import h2.connection
 import h2.events
 import h2.exceptions
 
-from .base import ProtocolBaseline, ProtocolMonitor, CrashTracker
+from oida.fuzz.monitors.base import ProtocolBaseline, ProtocolMonitor, CrashTracker
 
 
 class HTTP2Monitor(ProtocolMonitor):

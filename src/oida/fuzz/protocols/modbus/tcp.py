@@ -4,12 +4,12 @@ from typing import Any, Dict, List, Optional
 
 from boofuzz import Block, Byte, DWord, Group, Request, Size, Static, Word
 
-from ...core.base_fuzzer import BaseFuzzer, RequestInfo
-from ...core.config import ProtocolType
-from ...core.session.logging import get_logger
-from ...monitors import BaseMonitor, ModbusMonitor
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import ProtocolType
+from oida.fuzz.core.session.logging import get_logger
+from oida.fuzz.monitors import BaseMonitor, ModbusMonitor
 
-from .constants import (
+from oida.fuzz.protocols.modbus.constants import (
     ADDRESS_BOUNDARIES,
     BROADCAST_WRITE_FUNCTION_CODES,
     INVALID_FUNCTION_CODES,
@@ -19,7 +19,7 @@ from .constants import (
     RESERVED_UNIT_IDS,
     UNIT_ID_BOUNDARIES,
 )
-from .pdu import (
+from oida.fuzz.protocols.modbus.pdu import (
     create_address_boundary_pdu,
     create_baseline_read_pdu,
     create_byte_count_boundary_pdu,
@@ -64,7 +64,7 @@ from .pdu import (
 )
 
 # Scanner FC detection (uses pymodbus for proper protocol handling)
-from ....protocols.modbus.scanner import (
+from oida.protocols.modbus.scanner import (
     execute_pdu,
     GenericPDU,
     FUNCTION_CODES,

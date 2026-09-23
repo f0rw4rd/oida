@@ -15,8 +15,8 @@ def _load_combined_monitor():
     # Import everything that CombinedMonitor needs
     from boofuzz.exception import BoofuzzFailure
     from boofuzz.monitors import BaseMonitor
-    from .base import CrashTracker
-    from .network import PingMonitor, SocketHealthMonitor
+    from oida.fuzz.monitors.base import CrashTracker
+    from oida.fuzz.monitors.network import PingMonitor, SocketHealthMonitor
 
     class CombinedMonitor(BaseMonitor):
         """Combined monitor that runs multiple monitors in sequence.
@@ -142,7 +142,7 @@ def _load_combined_monitor():
             monitor_name = type(monitor).__name__
             active_count = len(self.monitors) - len(self._disabled_monitors)
 
-            from ...utils.ics_logger import get_logger
+            from oida.utils.ics_logger import get_logger
 
             log = get_logger("MONITOR", self.host, self.port or 0)
 
@@ -281,7 +281,7 @@ def _load_combined_monitor():
             self.last_verdict = None
             self.no_signal_checks += 1
             if self.no_signal_checks == 1:
-                from ...utils.ics_logger import get_logger
+                from oida.utils.ics_logger import get_logger
 
                 get_logger("MONITOR", self.host, self.port or 0).warning(
                     f"No active monitors for {self.host} - target health is UNKNOWN "
@@ -348,7 +348,12 @@ def __getattr__(name):
     _boofuzz_attrs = {"BaseMonitor", "BoofuzzFailure"}
 
     if name in _base_attrs:
-        from .base import CrashEvent, CrashTracker, ProtocolBaseline, ProtocolMonitor
+        from oida.fuzz.monitors.base import (
+            CrashEvent,
+            CrashTracker,
+            ProtocolBaseline,
+            ProtocolMonitor,
+        )
 
         _cache.update(
             {
@@ -361,7 +366,7 @@ def __getattr__(name):
         return _cache[name]
 
     if name in _network_attrs:
-        from .network import (
+        from oida.fuzz.monitors.network import (
             PingMonitor,
             SocketHealthMonitor,
             SNMPHealthMonitor,
@@ -385,19 +390,19 @@ def __getattr__(name):
         return _cache[name]
 
     if name in _script_attrs:
-        from .script import ScriptMonitor
+        from oida.fuzz.monitors.script import ScriptMonitor
 
         _cache["ScriptMonitor"] = ScriptMonitor
         return ScriptMonitor
 
     if name in _agent_attrs:
-        from .agent import AgentMonitor
+        from oida.fuzz.monitors.agent import AgentMonitor
 
         _cache["AgentMonitor"] = AgentMonitor
         return AgentMonitor
 
     if name in _industrial_attrs:
-        from .industrial import (
+        from oida.fuzz.monitors.industrial import (
             IEC104States,
             ModbusMonitor,
             ModbusRTUMonitor,
@@ -423,7 +428,7 @@ def __getattr__(name):
         return _cache[name]
 
     if name in _application_attrs:
-        from .application import (
+        from oida.fuzz.monitors.application import (
             HTTPGetMonitor,
             FTPCommandMonitor,
             SMTPCommandMonitor,
@@ -441,7 +446,7 @@ def __getattr__(name):
         return _cache[name]
 
     if name in _infrastructure_attrs:
-        from .infrastructure import DHCPDiscoverMonitor, TFTPReadMonitor
+        from oida.fuzz.monitors.infrastructure import DHCPDiscoverMonitor, TFTPReadMonitor
 
         _cache.update(
             {"DHCPDiscoverMonitor": DHCPDiscoverMonitor, "TFTPReadMonitor": TFTPReadMonitor}
@@ -449,19 +454,19 @@ def __getattr__(name):
         return _cache[name]
 
     if name in _medical_attrs:
-        from .medical import HL7Monitor
+        from oida.fuzz.monitors.medical import HL7Monitor
 
         _cache.update({"HL7Monitor": HL7Monitor})
         return _cache[name]
 
     if name in _http2_attrs:
-        from .http2 import HTTP2Monitor
+        from oida.fuzz.monitors.http2 import HTTP2Monitor
 
         _cache["HTTP2Monitor"] = HTTP2Monitor
         return HTTP2Monitor
 
     if name in _registry_attrs:
-        from .registry import (
+        from oida.fuzz.monitors.registry import (
             MonitorInfo,
             MONITOR_REGISTRY,
             register_monitor,

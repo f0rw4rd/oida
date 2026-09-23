@@ -9,9 +9,9 @@ OCPP connection class.
 import time
 from typing import Any, Dict, List, Optional
 
-from ....utils.lazy_import import lazy_import
-from ....utils.platform_compat import _pkg_root
-from ..constants import (
+from oida.utils.lazy_import import lazy_import
+from oida.utils.platform_compat import _pkg_root
+from oida.protocols.ocpp.constants import (
     MessageType,
     SUBPROTOCOL_TO_VERSION,
     ALL_ACTIONS_V16,

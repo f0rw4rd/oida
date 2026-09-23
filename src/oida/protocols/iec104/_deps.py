@@ -4,7 +4,7 @@ IEC 104 Dependency Management
 Thread-safe lazy loading for c104 and pyserial dependencies.
 """
 
-from ...utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
 # Lazy import for c104 - only loads when actually used
 _c104 = lazy_import("c104", "IEC 104")

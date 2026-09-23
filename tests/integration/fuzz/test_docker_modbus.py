@@ -24,14 +24,14 @@ import pytest
 
 from tests.service_gate import require_import, require_service
 
-from .conftest import (
+from tests.integration.fuzz.conftest import (
     FuzzTimeout,
     create_fuzzer_config,
     require_docker_mock,
     run_fuzz_cli,
     run_fuzz_with_timeout,
 )
-from ..conftest import MOCK_HOST
+from tests.integration.conftest import MOCK_HOST
 
 # These tests each fuzz a live target on MOCK_HOST:502; running them concurrently
 # under `-n --dist loadgroup` lets parallel fuzz sessions contend for the same port

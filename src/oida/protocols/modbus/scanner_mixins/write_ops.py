@@ -240,7 +240,7 @@ class ScannerWriteOpsMixin(_ScannerBase):
         Returns:
             dict: {writable: [...], read_only: [...], errors: [...]}
         """
-        from ..register_io import read_registers_batched
+        from oida.protocols.modbus.register_io import read_registers_batched
 
         results = {
             "writable": [],

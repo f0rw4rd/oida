@@ -9,12 +9,10 @@ import warnings
 warnings.filterwarnings("ignore", message=".*Future exception was never retrieved.*")
 
 # Re-export from scanner module
-from .scanner import (
-    KNXScanner,
-)
+from oida.protocols.knx.scanner import KNXScanner
 
 # Re-export from helpers module
-from .helpers import (
+from oida.protocols.knx.helpers import (
     is_xknx_available,
     is_xknxproject_available,
     is_pyzipper_available,
@@ -24,20 +22,13 @@ from .helpers import (
 )
 
 # Re-export from constants module
-from .constants import (
-    DEFAULT_PORT,
-    DEFAULT_MULTICAST,
-    protocol_options,
-)
+from oida.protocols.knx.constants import DEFAULT_PORT, DEFAULT_MULTICAST, protocol_options
 
 # Re-export from bcu module
-from .bcu import (
-    load_keys_from_file,
-    parse_key_range,
-)
+from oida.protocols.knx.bcu import load_keys_from_file, parse_key_range
 
 # Re-export from ets module
-from .ets import (
+from oida.protocols.knx.ets import (
     get_knxproj_info,
     parse_knxproj,
     crack_knxproj,
@@ -45,16 +36,13 @@ from .ets import (
 )
 
 # Re-export from cemi_handler module
-from .cemi_handler import CustomCEMIHandler
+from oida.protocols.knx.cemi_handler import CustomCEMIHandler
 
 # Re-export from data module
-from .data import (
-    COMMON_BCU_KEYS,
-    get_vendor_name,
-)
+from oida.protocols.knx.data import COMMON_BCU_KEYS, get_vendor_name
 
 # NXC-style callable class
-from .cli_runner import knx  # noqa: E402, F401
+from oida.protocols.knx.cli_runner import knx  # noqa: E402, F401
 
 __all__ = [
     # Scanner

@@ -13,10 +13,8 @@ import pytest
 
 from tests.service_gate import require_import, require_service
 
-from .conftest import create_fuzzer_config
-from .mock_servers import (
-    mms_server,
-)
+from tests.integration.fuzz.conftest import create_fuzzer_config
+from tests.integration.fuzz.mock_servers import mms_server
 
 pytestmark = pytest.mark.integration_fuzzers
 

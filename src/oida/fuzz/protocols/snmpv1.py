@@ -4,13 +4,13 @@ from boofuzz import Block, Byte, DWord, Request, Size, Static
 
 from typing import List
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..monitors import SNMPHealthMonitor
-from ..primitives.asn1_blocks import BERSize
-from ..primitives.dynamic import SmartBytes, SmartString
-from ..primitives.smart_string import StringContext
-from .snmp_common import (
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.monitors import SNMPHealthMonitor
+from oida.fuzz.primitives.asn1_blocks import BERSize
+from oida.fuzz.primitives.dynamic import SmartBytes, SmartString
+from oida.fuzz.primitives.smart_string import StringContext
+from oida.fuzz.protocols.snmp_common import (
     build_ber_length_of_length,
     build_ber_structured,
     build_ber_truncated_length,

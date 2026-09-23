@@ -24,7 +24,7 @@ CLI examples:
 """
 
 # Re-export NXC-style class and constants from cli_runner
-from .cli_runner import (
+from oida.protocols.dicom.cli_runner import (
     dicom,
     PYNETDICOM_AVAILABLE,
     PHI_TAGS,

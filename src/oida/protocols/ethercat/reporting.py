@@ -5,8 +5,8 @@ from __future__ import annotations
 from typing import Any, Dict, TYPE_CHECKING
 from datetime import datetime
 
-from ...utils import SecurityAnalyzer
-from ...utils.export_utils import print_table, export_json
+from oida.utils import SecurityAnalyzer
+from oida.utils.export_utils import print_table, export_json
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

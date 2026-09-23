@@ -38,7 +38,7 @@ class ScannerFileOpsMixin(_ScannerBase):
         Returns:
             dict: File record data or None
         """
-        from ..scanner import _get_file_record_classes
+        from oida.protocols.modbus.scanner import _get_file_record_classes
 
         try:
             # Use pymodbus built-in read_file_record method
@@ -87,7 +87,7 @@ class ScannerFileOpsMixin(_ScannerBase):
         Returns:
             dict: Write result with success status
         """
-        from ..scanner import _get_file_record_classes
+        from oida.protocols.modbus.scanner import _get_file_record_classes
 
         write_result = {
             "success": False,
@@ -244,7 +244,7 @@ class ScannerFileOpsMixin(_ScannerBase):
         Returns:
             dict: FIFO queue data or None
         """
-        from ..scanner import GenericPDU, execute_pdu
+        from oida.protocols.modbus.scanner import GenericPDU, execute_pdu
 
         try:
             pdu = GenericPDU(function_code=24)

@@ -9,7 +9,7 @@ from typing import Any, Callable, Dict, Optional
 from datetime import datetime, timedelta
 from enum import Enum, auto
 
-from ....utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger
 
 _log = get_logger("FUZZ", "crypto_state", 0)
 

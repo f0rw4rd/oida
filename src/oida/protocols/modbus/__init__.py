@@ -20,20 +20,13 @@ Easy CLI examples:
 """
 
 # Import from decoder module
-from .decoder import (
-    ModbusDecoder,
-    DataType,
-    TYPE_ALIASES,
-    REGISTERS_PER_TYPE,
-)
+from oida.protocols.modbus.decoder import ModbusDecoder, DataType, TYPE_ALIASES, REGISTERS_PER_TYPE
 
 # Import from scanner module
-from .scanner import (
-    ModbusScanner,
-)
+from oida.protocols.modbus.scanner import ModbusScanner
 
 # Import constants (previously re-exported via scanner)
-from .constants import (
+from oida.protocols.modbus.constants import (
     PROTOCOL_OPTIONS as protocol_options,
     ModbusFunctionCode,
     ModbusExceptionCode,
@@ -50,7 +43,7 @@ from .constants import (
 )
 
 # Import NXC-style class
-from .cli_runner import modbus
+from oida.protocols.modbus.cli_runner import modbus
 
 __all__ = [
     # Decoder exports

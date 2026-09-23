@@ -13,11 +13,11 @@ Mixins:
     - SecurityMixin: BCU auth, access testing, security analysis
 """
 
-from .discovery import DiscoveryMixin
-from .device_info import DeviceInfoMixin
-from .properties import PropertiesMixin
-from .memory import MemoryMixin
-from .security import SecurityMixin
+from oida.protocols.knx.mixins.discovery import DiscoveryMixin
+from oida.protocols.knx.mixins.device_info import DeviceInfoMixin
+from oida.protocols.knx.mixins.properties import PropertiesMixin
+from oida.protocols.knx.mixins.memory import MemoryMixin
+from oida.protocols.knx.mixins.security import SecurityMixin
 
 __all__ = [
     "DiscoveryMixin",

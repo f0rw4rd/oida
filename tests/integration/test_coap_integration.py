@@ -48,8 +48,8 @@ import json
 import pytest
 from typing import Optional
 
-from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST, check_udp_port_open
+from tests.integration.base_protocol_test import BaseProtocolIntegrationTest
+from tests.integration.conftest import MOCK_HOST, check_udp_port_open
 from tests.service_gate import require_service
 
 

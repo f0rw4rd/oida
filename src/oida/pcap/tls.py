@@ -14,14 +14,10 @@ Extracts:
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import (
-    is_valid_discovered_ip,
-    lookup_mac_vendor,
-    normalize_mac,
-)
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor, normalize_mac
 
-from ..utils.ics_logger import get_module_logger
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 

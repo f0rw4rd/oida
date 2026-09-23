@@ -30,9 +30,9 @@ from typing import List
 
 from boofuzz import Block, Byte, Group, Request, Static, Word
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import CountingUDPConnection as UDPSocketConnection
-from ..primitives.dynamic import SmartBytes
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.connections import CountingUDPConnection as UDPSocketConnection
+from oida.fuzz.primitives.dynamic import SmartBytes
 
 
 class HARTIPFuzzer(BaseFuzzer):

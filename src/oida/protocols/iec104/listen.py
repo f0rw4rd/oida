@@ -10,7 +10,7 @@ import struct
 import json
 import time
 
-from .constants import (
+from oida.protocols.iec104.constants import (
     IEC104_TYPE_IDS,
     IEC104_COT,
     CapturedASDU,
@@ -189,7 +189,7 @@ class ListenMixin:
 
     def _create_monitor_callback(self):
         """Create callback optimized for monitor/listen mode"""
-        from . import _deps
+        from oida.protocols.iec104 import _deps
 
         c104 = _deps._get_c104()
         scanner = self
@@ -287,7 +287,7 @@ class ListenMixin:
         # c104 introspects the callback's annotations and rejects anything but
         # exactly (connection: c104.Connection, data: bytes) -> None, so the
         # composed wrapper must carry the real c104.Connection annotation.
-        from . import _deps
+        from oida.protocols.iec104 import _deps
 
         c104 = _deps._get_c104()
 

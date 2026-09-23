@@ -13,9 +13,9 @@ These transformers enable testing of compressed content handling, including:
 
 import gzip
 import zlib
-from .base import BaseTransformer
+from oida.fuzz.primitives.transformers.base import BaseTransformer
 
-from ....utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger
 
 _log = get_logger("COMPRESS", "transform", 0)
 

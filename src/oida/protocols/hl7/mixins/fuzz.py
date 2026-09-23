@@ -12,7 +12,7 @@ class FuzzMixin:
 
     def _fuzz_messages(self):
         """Fuzz HL7 messages with malformed data"""
-        from ....utils.fuzzer import fuzz
+        from oida.utils.fuzzer import fuzz
 
         if not self.require_confirm("--confirm", detail="Fuzzing requires --confirm flag"):
             return

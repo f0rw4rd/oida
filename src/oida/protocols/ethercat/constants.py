@@ -9,10 +9,10 @@ License: AGPL-3.0-or-later
 """
 
 from typing import Dict
-from ...utils.vendor_maps import ethercat_vendor_ids as vendor_ids
+from oida.utils.vendor_maps import ethercat_vendor_ids as vendor_ids
 
 # Canonical CoE definitions live in coe.py — re-export for backward compat
-from .coe import get_al_state_name as get_slave_state_name  # noqa: F401
+from oida.protocols.ethercat.coe import get_al_state_name as get_slave_state_name  # noqa: F401
 
 # AL Status Codes (ETG.1000.6)
 AL_STATUS_CODES: Dict[int, str] = {

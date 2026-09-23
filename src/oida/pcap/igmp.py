@@ -40,9 +40,9 @@ PyShark IGMP field reference (packet.igmp.*):
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import is_valid_discovered_ip
-from ..shared.igmp_constants import (
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip
+from oida.shared.igmp_constants import (
     ICS_MULTICAST_GROUPS,
     IGMP_MEMBERSHIP_QUERY,
     IGMP_V1_MEMBERSHIP_REPORT,

@@ -52,7 +52,7 @@ class _RaisingSock:
 
 
 def _udp_conn():
-    from src.oida.fuzz.core.connections.udp import CountingUDPConnection
+    from oida.fuzz.core.connections.udp import CountingUDPConnection
 
     conn = CountingUDPConnection("127.0.0.1", 1)
     conn._log = _FakeLog()
@@ -60,7 +60,7 @@ def _udp_conn():
 
 
 def _tcp_conn():
-    from src.oida.fuzz.core.connections.tcp import ResilientTCPConnection
+    from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
     conn = ResilientTCPConnection("127.0.0.1", 1)
     conn._log = _FakeLog()
@@ -190,8 +190,8 @@ def _record_one_case(monitors):
     """Run TestCaseManager's record_callback once against stub monitors."""
     from unittest.mock import MagicMock
 
-    from src.oida.fuzz.core.database.mock import MockDatabase
-    from src.oida.fuzz.core.session.manager import TestCaseManager
+    from oida.fuzz.core.database.mock import MockDatabase
+    from oida.fuzz.core.session.manager import TestCaseManager
 
     class _FakeLog:
         def display(self, *a, **k):
@@ -267,7 +267,7 @@ class TestRateLimitedPostSendVerdict:
     converts into log_fail -> a crash record + crashing_primitives accrual."""
 
     def _mon(self, results):
-        from src.oida.fuzz.monitors.base import ProtocolMonitor
+        from oida.fuzz.monitors.base import ProtocolMonitor
 
         class _Scripted(ProtocolMonitor):
             def __init__(self):

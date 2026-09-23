@@ -16,8 +16,12 @@ from sqlalchemy.dialects.sqlite import insert as sqlite_insert
 from sqlalchemy.orm import Session, sessionmaker
 from sqlalchemy.engine import Engine
 
-from .interface import DatabaseInterface, TestCase as TestCaseDTO, Crash as CrashDTO
-from .models import (
+from oida.fuzz.core.database.interface import (
+    DatabaseInterface,
+    TestCase as TestCaseDTO,
+    Crash as CrashDTO,
+)
+from oida.fuzz.core.database.models import (
     TestCase,
     Crash,
     Payload,
@@ -27,7 +31,7 @@ from .models import (
     create_database_engine,
     create_all_tables,
 )
-from ....utils import ics_logger
+from oida.utils import ics_logger
 
 
 class SQLAlchemyDatabase(DatabaseInterface):

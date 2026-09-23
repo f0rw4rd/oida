@@ -26,14 +26,14 @@ import time
 from datetime import datetime
 from typing import Dict, Optional, Set
 
-from .base import PassiveListenerBase
-from .core import (
+from oida.protocols.discovery.base import PassiveListenerBase
+from oida.protocols.discovery.core import (
     DiscoveredDevice,
     is_valid_discovered_ip,
     validate_interface,
     validate_timeout,
 )
-from ...shared.igmp_constants import (
+from oida.shared.igmp_constants import (
     ICS_MULTICAST_GROUPS,
     IGMP_MEMBERSHIP_QUERY,
     IGMP_PROTOCOL,
@@ -43,9 +43,9 @@ from ...shared.igmp_constants import (
     IGMP_V3_MEMBERSHIP_REPORT,
     MULTICAST_GROUPS,
 )
-from ...utils.rate_limiter import scapy_sendp
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.utils.rate_limiter import scapy_sendp
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
 _scapy_all = lazy_import("scapy.all", "discovery")
 

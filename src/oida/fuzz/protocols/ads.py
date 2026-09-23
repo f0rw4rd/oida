@@ -31,15 +31,15 @@ from typing import List
 
 from boofuzz import Block, DWord, Group, Request, Size, Static, Word
 
-from ..primitives.dynamic import DynamicDWord, SmartString, StringContext
+from oida.fuzz.primitives.dynamic import DynamicDWord, SmartString, StringContext
 
-from ..core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
-from ..core.config import FuzzerConfig
-from ..core.connections import TCPSocketConnection
-from ..core.connections import CountingUDPConnection as UDPSocketConnection
-from ..core.session.state_context import StateContext
-from ..core.session.sequence import SequenceConfig, SequenceDirection
-from ..core.session.state_machine import ProtocolState, StateMachine, StateType
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig
+from oida.fuzz.core.connections import TCPSocketConnection
+from oida.fuzz.core.connections import CountingUDPConnection as UDPSocketConnection
+from oida.fuzz.core.session.state_context import StateContext
+from oida.fuzz.core.session.sequence import SequenceConfig, SequenceDirection
+from oida.fuzz.core.session.state_machine import ProtocolState, StateMachine, StateType
 
 import logging
 
@@ -157,7 +157,7 @@ class ADSMonitor:
         failure_threshold: int = 2,
     ):
         # Lazy-build the real class so boofuzz/monitor deps stay deferred.
-        from ..monitors import ProtocolMonitor
+        from oida.fuzz.monitors import ProtocolMonitor
 
         class _ADSMonitor(ProtocolMonitor):
             def __init__(
@@ -589,7 +589,7 @@ class ADSFuzzer(BaseFuzzer):
         crash events. Catches crashes that leave TCP alive but kill the ADS
         runtime. Audit S6.
         """
-        from ..monitors import SocketHealthMonitor
+        from oida.fuzz.monitors import SocketHealthMonitor
 
         port = self.config.target_port or 48898
         target_netid = _netid_to_bytes(self.config.get_option("target_ams_netid", "127.0.0.1.1.1"))

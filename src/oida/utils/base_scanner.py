@@ -9,14 +9,14 @@ from abc import ABC, abstractmethod
 from typing import Dict, Tuple, Any
 from datetime import datetime
 
-from . import crash_report
-from . import ics_logger as _log
-from .args_dict import ArgsDict
-from .confirm_gate import ConfirmGateMixin
-from .ics_logger import get_module_logger
+from oida.utils import crash_report
+from oida.utils import ics_logger as _log
+from oida.utils.args_dict import ArgsDict
+from oida.utils.confirm_gate import ConfirmGateMixin
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
-from .common_types import parse_bool
+from oida.utils.common_types import parse_bool
 
 
 def _normalize_args(args: Any) -> Any:
@@ -105,7 +105,7 @@ class BaseScanner(ConfirmGateMixin, ABC):
     """
 
     def __init__(self, args: Any):
-        from .ics_logger import print_startup_banner
+        from oida.utils.ics_logger import print_startup_banner
 
         print_startup_banner()
 
@@ -167,7 +167,7 @@ class BaseScanner(ConfirmGateMixin, ABC):
 
     def _init_logger(self):
         """Initialize ICS logger for NXC-style output"""
-        from .ics_logger import get_logger
+        from oida.utils.ics_logger import get_logger
 
         host, port = self.get_target_info()
         self.logger = get_logger(
@@ -412,7 +412,7 @@ class SerialScanner(BaseScanner):
 
     def validate_target(self, interface: str, port: int) -> bool:
         """Override for serial protocols - validate network interface"""
-        from .platform_compat import check_interface_exists
+        from oida.utils.platform_compat import check_interface_exists
 
         # Check if interface name looks reasonable first
         if not interface or len(interface) < 2:

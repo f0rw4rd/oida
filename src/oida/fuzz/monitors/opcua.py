@@ -7,7 +7,7 @@ import socket
 import struct
 from typing import Optional
 
-from .base import ProtocolBaseline, ProtocolMonitor
+from oida.fuzz.monitors.base import ProtocolBaseline, ProtocolMonitor
 
 
 class OPCUAMonitor(ProtocolMonitor):

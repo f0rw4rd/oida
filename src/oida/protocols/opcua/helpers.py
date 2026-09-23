@@ -7,7 +7,7 @@ This module provides utility functions for OPC UA URL handling,
 lazy imports, and helper classes.
 """
 
-from ...utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
 # Lazy import for asyncua - only loads when actually used
 _asyncua = lazy_import("asyncua", "OPC UA")

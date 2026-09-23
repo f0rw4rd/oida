@@ -19,20 +19,15 @@ The class uses mixins for feature-specific handler methods:
 
 from typing import Any
 
-from ...connection import NetworkConnection
-from ...utils.exceptions import DependencyError
-from ...utils.lazy_import import lazy_import
+from oida.connection import NetworkConnection
+from oida.utils.exceptions import DependencyError
+from oida.utils.lazy_import import lazy_import
 
 _pymodbus = lazy_import("pymodbus", "Modbus")
 
-from .constants import (
-    EXCEPTION_CODES,
-)
-from .decoder import (
-    ModbusDecoder,
-    REGISTERS_PER_TYPE,
-)
-from .mixins import (
+from oida.protocols.modbus.constants import EXCEPTION_CODES
+from oida.protocols.modbus.decoder import ModbusDecoder, REGISTERS_PER_TYPE
+from oida.protocols.modbus.mixins import (
     IdentificationMixin,
     DiagnosticsMixin,
     EventsMixin,
@@ -99,8 +94,8 @@ class modbus(
 
     def _handle_list_maps(self):
         """List available register maps and exit"""
-        from .decoder import list_register_maps
-        from ...utils.export_utils import print_table
+        from oida.protocols.modbus.decoder import list_register_maps
+        from oida.utils.export_utils import print_table
 
         maps = list_register_maps()
 
@@ -140,7 +135,7 @@ class modbus(
         - Write operations
         """
         # Import scanner here to avoid circular imports
-        from .scanner import ModbusScanner
+        from oida.protocols.modbus.scanner import ModbusScanner
 
         # Setup logging
         self.logger.debug(
@@ -447,7 +442,7 @@ class modbus(
 
     def _read_registers_from_map(self, map_name: str):
         """Read and display all registers defined in a register map."""
-        from .decoder import load_register_map
+        from oida.protocols.modbus.decoder import load_register_map
 
         # Load the register map
         reg_map = load_register_map(map_name)
@@ -571,7 +566,7 @@ class modbus(
         # TODO: batch when register_io supports variable-width reads
         # (each register may need 1-N words depending on dtype: u16=1, u32=2, string=N)
         """
-        from ...utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         decoder = ModbusDecoder(byte_order=byte_order, word_order=word_order)
         verbose = getattr(self.args, "verbose", 0) or 0
@@ -776,8 +771,8 @@ class modbus(
             default_access: Default access mode when not specified in the map.
             title: Optional table title.
         """
-        from ...utils.export_utils import print_table
-        from .register_io import read_registers_batched
+        from oida.utils.export_utils import print_table
+        from oida.protocols.modbus.register_io import read_registers_batched
 
         sorted_items = sorted(bits_def.items(), key=lambda x: x[1].get("address", 0))
         verbose = getattr(self.args, "verbose", 0) or 0

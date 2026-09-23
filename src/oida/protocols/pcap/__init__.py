@@ -17,6 +17,6 @@ Usage:
     oida pcap capture.pcap --protocols ics    # ICS protocols only
 """
 
-from .scanner import PcapScanner, pcap
+from oida.protocols.pcap.scanner import PcapScanner, pcap
 
 __all__ = ["PcapScanner", "pcap"]

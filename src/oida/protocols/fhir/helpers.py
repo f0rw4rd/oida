@@ -6,7 +6,7 @@ Constants, lazy imports, and utility functions shared by the FHIR module.
 
 import os
 
-from ...utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
 # =========================================================================
 # FHIR Server Vendor/Product Identification

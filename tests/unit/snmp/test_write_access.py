@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import asyncio
 
-from .conftest import FakeVarBind, make_get, make_get_sequence, patch_pysnmp
+from tests.unit.snmp.conftest import FakeVarBind, make_get, make_get_sequence, patch_pysnmp
 
 
 def run(coro):
@@ -23,7 +23,7 @@ def run(coro):
 
 class TestVacmCheck:
     def test_no_entries_inconclusive(self, scanner):
-        from .conftest import make_walk_error
+        from tests.unit.snmp.conftest import make_walk_error
 
         scanner.version = "3"
         # walk returns nothing (timeout immediately) for both view walks
@@ -39,7 +39,7 @@ class TestVacmCheck:
         read_oid = VACM_OIDS["vacmAccessReadViewName"].lstrip(".")
 
         def walk(*args, **kwargs):
-            from .conftest import _base_oid_from_args
+            from tests.unit.snmp.conftest import _base_oid_from_args
 
             base = _base_oid_from_args(args).lstrip(".")
 
@@ -63,7 +63,7 @@ class TestVacmCheck:
         write_oid = VACM_OIDS["vacmAccessWriteViewName"].lstrip(".")
 
         def walk(*args, **kwargs):
-            from .conftest import _base_oid_from_args
+            from tests.unit.snmp.conftest import _base_oid_from_args
 
             base = _base_oid_from_args(args).lstrip(".")
 

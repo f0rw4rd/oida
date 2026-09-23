@@ -8,7 +8,7 @@ BACnet/SC, write testing, writable enumeration, and OOS checks.
 import asyncio
 from typing import List, Optional
 
-from ..constants import (
+from oida.protocols.bacnet.constants import (
     _load_bacpypes3,
     CONTROL_POINT_TYPES,
     BACNET_PRIORITY_LEVELS,

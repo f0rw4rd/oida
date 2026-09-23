@@ -13,7 +13,12 @@ Tests cover:
 
 import pytest
 
-from .conftest import _run_listener_test, _skip_unless_pyshark, _pcap_path, _load_packets
+from tests.integration.pcap.conftest import (
+    _run_listener_test,
+    _skip_unless_pyshark,
+    _pcap_path,
+    _load_packets,
+)
 
 pytestmark = [pytest.mark.integration]
 

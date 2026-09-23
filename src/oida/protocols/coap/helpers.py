@@ -13,9 +13,9 @@ import socket
 import threading
 from typing import Any, Dict, List, Optional, Tuple
 
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
-from .constants import BLOCK_SIZES, DEFAULT_TIMEOUT
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
+from oida.protocols.coap.constants import BLOCK_SIZES, DEFAULT_TIMEOUT
 
 logger = get_module_logger(__name__)
 

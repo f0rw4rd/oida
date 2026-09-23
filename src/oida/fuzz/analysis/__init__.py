@@ -8,17 +8,12 @@ off-path-injection primitive and is the highest-severity purely-observational
 finding class.
 """
 
-from .predictability import (
+from oida.fuzz.analysis.predictability import (
     PredictabilityPattern,
     SequenceVerdict,
     classify_sequence,
 )
-from .sampler import (
-    DNSTxidResult,
-    DNSTxidSampler,
-    ISNSampleResult,
-    ISNSampler,
-)
+from oida.fuzz.analysis.sampler import DNSTxidResult, DNSTxidSampler, ISNSampleResult, ISNSampler
 
 __all__ = [
     "PredictabilityPattern",

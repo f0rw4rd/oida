@@ -139,8 +139,8 @@ import threading
 import pytest
 from typing import Optional
 
-from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import DOCKER_COMPOSE_PATH, MOCK_HOST
+from tests.integration.base_protocol_test import BaseProtocolIntegrationTest
+from tests.integration.conftest import DOCKER_COMPOSE_PATH, MOCK_HOST
 
 # Shared test certificates
 MODBUS_TLS_CERTS = DOCKER_COMPOSE_PATH.parent / "certs"

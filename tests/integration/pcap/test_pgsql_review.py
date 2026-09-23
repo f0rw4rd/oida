@@ -46,7 +46,7 @@ import pytest
 from tests.service_gate import require_service
 from scapy.all import IP, TCP, Raw, wrpcap
 
-from .conftest import _ek_mode_available, _skip_unless_pyshark
+from tests.integration.pcap.conftest import _ek_mode_available, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
 

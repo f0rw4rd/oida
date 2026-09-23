@@ -33,7 +33,7 @@ class HostEnumerationMixin(_ScannerBase):
         """Orchestrate host enumeration based on --enum categories."""
         from pysnmp.hlapi.asyncio import SnmpEngine, UdpTransportTarget
 
-        from ..constants import ENUM_CATEGORIES
+        from oida.protocols.snmp.constants import ENUM_CATEGORIES
 
         _, auth_data, _, context = connection
 
@@ -375,8 +375,8 @@ class HostEnumerationMixin(_ScannerBase):
         self, vendor: str, engine, auth_data, transport, context
     ) -> Dict[str, str]:
         """Query vendor-specific OIDs for extra device information."""
-        from ..constants import VENDOR_SPECIFIC_OIDS
-        from .._oid_fetch import fetch_oid_values
+        from oida.protocols.snmp.constants import VENDOR_SPECIFIC_OIDS
+        from oida.protocols.snmp._oid_fetch import fetch_oid_values
 
         if vendor not in VENDOR_SPECIFIC_OIDS:
             return {}
@@ -399,8 +399,8 @@ class HostEnumerationMixin(_ScannerBase):
 
     async def _enum_interfaces(self, engine, auth_data, transport, context) -> Dict:
         """Enumerate network interfaces (ifTable)."""
-        from ..constants import NETWORK_ENUM_OIDS, IF_OPER_STATUS
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import NETWORK_ENUM_OIDS, IF_OPER_STATUS
+        from oida.utils.export_utils import export_table
 
         columns = {
             "descr": NETWORK_ENUM_OIDS["ifDescr"],
@@ -530,8 +530,8 @@ class HostEnumerationMixin(_ScannerBase):
         """Enumerate TCP connections (tcpConnTable)."""
         from pysnmp.hlapi.asyncio import ObjectIdentity, ObjectType, walk_cmd
 
-        from ..constants import NETWORK_ENUM_OIDS, TCP_STATES
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import NETWORK_ENUM_OIDS, TCP_STATES
+        from oida.utils.export_utils import export_table
 
         base_oid = NETWORK_ENUM_OIDS["tcpConnState"]
         base_norm = base_oid.lstrip(".")
@@ -618,8 +618,8 @@ class HostEnumerationMixin(_ScannerBase):
         """Enumerate UDP listeners (udpTable)."""
         from pysnmp.hlapi.asyncio import ObjectIdentity, ObjectType, walk_cmd
 
-        from ..constants import NETWORK_ENUM_OIDS
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import NETWORK_ENUM_OIDS
+        from oida.utils.export_utils import export_table
 
         base_oid = NETWORK_ENUM_OIDS["udpLocalAddress"]
         base_norm = base_oid.lstrip(".")
@@ -682,8 +682,8 @@ class HostEnumerationMixin(_ScannerBase):
 
     async def _enum_routes(self, engine, auth_data, transport, context) -> Dict:
         """Enumerate IP routing table (ipRouteTable)."""
-        from ..constants import NETWORK_ENUM_OIDS, IP_ROUTE_TYPES
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import NETWORK_ENUM_OIDS, IP_ROUTE_TYPES
+        from oida.utils.export_utils import export_table
 
         columns = {
             "dest": NETWORK_ENUM_OIDS["ipRouteDest"],
@@ -727,7 +727,7 @@ class HostEnumerationMixin(_ScannerBase):
 
     async def _enum_arp(self, engine, auth_data, transport, context) -> Dict:
         """Enumerate ARP table (ipNetToMediaTable) with full table display."""
-        from ....utils.export_utils import export_table
+        from oida.utils.export_utils import export_table
 
         entries = await self._get_arp_table(engine, auth_data, transport, context)
         self.logger.info(f"  {len(entries)} ARP entries")
@@ -743,7 +743,7 @@ class HostEnumerationMixin(_ScannerBase):
 
     async def _enum_cam(self, engine, auth_data, transport, context) -> Dict:
         """Enumerate CAM/MAC forwarding table with full table display."""
-        from ....utils.export_utils import export_table
+        from oida.utils.export_utils import export_table
 
         entries = await self._get_mac_table(engine, auth_data, transport, context)
         self.logger.info(f"  {len(entries)} CAM entries")
@@ -762,8 +762,12 @@ class HostEnumerationMixin(_ScannerBase):
 
     async def _enum_processes(self, engine, auth_data, transport, context) -> Dict:
         """Enumerate running processes (hrSWRunTable)."""
-        from ..constants import HOST_RESOURCE_OIDS, HR_SW_RUN_TYPE, HR_SW_RUN_STATUS
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import (
+            HOST_RESOURCE_OIDS,
+            HR_SW_RUN_TYPE,
+            HR_SW_RUN_STATUS,
+        )
+        from oida.utils.export_utils import export_table
 
         columns = {
             "name": HOST_RESOURCE_OIDS["hrSWRunName"],
@@ -818,8 +822,8 @@ class HostEnumerationMixin(_ScannerBase):
 
     async def _enum_software(self, engine, auth_data, transport, context) -> Dict:
         """Enumerate installed software (hrSWInstalledTable)."""
-        from ..constants import HOST_RESOURCE_OIDS, HR_SW_RUN_TYPE
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import HOST_RESOURCE_OIDS, HR_SW_RUN_TYPE
+        from oida.utils.export_utils import export_table
 
         columns = {
             "name": HOST_RESOURCE_OIDS["hrSWInstalledName"],
@@ -861,8 +865,8 @@ class HostEnumerationMixin(_ScannerBase):
 
     async def _enum_storage(self, engine, auth_data, transport, context) -> Dict:
         """Enumerate storage (hrStorageTable)."""
-        from ..constants import HOST_RESOURCE_OIDS, HR_STORAGE_TYPES
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import HOST_RESOURCE_OIDS, HR_STORAGE_TYPES
+        from oida.utils.export_utils import export_table
 
         columns = {
             "descr": HOST_RESOURCE_OIDS["hrStorageDescr"],
@@ -947,8 +951,8 @@ class HostEnumerationMixin(_ScannerBase):
         """Enumerate Windows user accounts (LanManager svUserTable)."""
         from pysnmp.hlapi.asyncio import ObjectIdentity, ObjectType, walk_cmd
 
-        from ..constants import WINDOWS_OIDS
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import WINDOWS_OIDS
+        from oida.utils.export_utils import export_table
 
         base_oid = WINDOWS_OIDS["svUserName"]
         users: List[str] = []
@@ -993,8 +997,8 @@ class HostEnumerationMixin(_ScannerBase):
 
     async def _enum_windows_shares(self, engine, auth_data, transport, context) -> Dict:
         """Enumerate Windows shares (LanManager svShareTable)."""
-        from ..constants import WINDOWS_OIDS
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import WINDOWS_OIDS
+        from oida.utils.export_utils import export_table
 
         columns = {
             "name": WINDOWS_OIDS["svShareName"],
@@ -1030,8 +1034,8 @@ class HostEnumerationMixin(_ScannerBase):
 
     async def _enum_trap_config(self, engine, auth_data, transport, context) -> Dict:
         """Enumerate trap destinations and community strings."""
-        from ..constants import TRAP_CONFIG_OIDS
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import TRAP_CONFIG_OIDS
+        from oida.utils.export_utils import export_table
 
         columns = {
             "addr": TRAP_CONFIG_OIDS["snmpTargetAddrTAddress"],
@@ -1091,13 +1095,13 @@ class HostEnumerationMixin(_ScannerBase):
         """Walk credential-related OID trees for credential hunting."""
         from pysnmp.hlapi.asyncio import ObjectIdentity, ObjectType, walk_cmd
 
-        from ..constants import (
+        from oida.protocols.snmp.constants import (
             CREDENTIAL_OIDS,
             HOST_RESOURCE_OIDS,
             CRED_PATTERNS,
             CRED_PATTERNS_CONTEXT,
         )
-        from ....utils.export_utils import export_table
+        from oida.utils.export_utils import export_table
 
         findings = {}
         limit = self.enum_limit if self.enum_limit > 0 else 500
@@ -1322,8 +1326,8 @@ class HostEnumerationMixin(_ScannerBase):
         """GET extended system scalars."""
         from pysnmp.hlapi.asyncio import ObjectIdentity, ObjectType, get_cmd
 
-        from ..constants import SNMP_OIDS, WINDOWS_OIDS
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import SNMP_OIDS, WINDOWS_OIDS
+        from oida.utils.export_utils import export_table
 
         scalar_oids = {
             "hrSystemDate": SNMP_OIDS["hrSystemDate"],
@@ -1405,8 +1409,8 @@ class HostEnumerationMixin(_ScannerBase):
 
     async def _enum_windows_services(self, engine, auth_data, transport, context) -> Dict:
         """Enumerate Windows services (LanManager svSvcTable)."""
-        from ..constants import WINDOWS_SERVICE_OIDS
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import WINDOWS_SERVICE_OIDS
+        from oida.utils.export_utils import export_table
 
         svc_installed_states = {
             1: "uninstalled",
@@ -1468,8 +1472,8 @@ class HostEnumerationMixin(_ScannerBase):
 
     async def _enum_filesystems(self, engine, auth_data, transport, context) -> Dict:
         """Enumerate mounted filesystems (hrFSTable)."""
-        from ..constants import FILESYSTEM_OIDS
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import FILESYSTEM_OIDS
+        from oida.utils.export_utils import export_table
 
         fs_access_map = {1: "readWrite", 2: "readOnly"}
 
@@ -1524,8 +1528,8 @@ class HostEnumerationMixin(_ScannerBase):
         from ipaddress import IPv6Address
         from pysnmp.hlapi.asyncio import ObjectIdentity, ObjectType, walk_cmd
 
-        from ..constants import IPV6_ENUM_OIDS
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import IPV6_ENUM_OIDS
+        from oida.utils.export_utils import export_table
 
         base_oid = IPV6_ENUM_OIDS["ipAddressIfIndex"]
         base_norm = base_oid.lstrip(".")
@@ -1605,8 +1609,8 @@ class HostEnumerationMixin(_ScannerBase):
 
     async def _enum_extend(self, engine, auth_data, transport, context) -> Dict:
         """Detect NET-SNMP extend scripts (nsExtendObjects)."""
-        from ..constants import NETSNMP_EXTEND_OIDS
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import NETSNMP_EXTEND_OIDS
+        from oida.utils.export_utils import export_table
 
         config_columns = {
             "command": NETSNMP_EXTEND_OIDS["nsExtendCommand"],
@@ -1687,7 +1691,7 @@ class HostEnumerationMixin(_ScannerBase):
 
     def _analyze_enum_security(self, enum_results: Dict) -> None:
         """Analyze enumeration results for ICS-relevant security findings."""
-        from ..constants import ICS_PORTS
+        from oida.protocols.snmp.constants import ICS_PORTS
 
         tcp_data = enum_results.get("tcp", {})
         if isinstance(tcp_data, dict):

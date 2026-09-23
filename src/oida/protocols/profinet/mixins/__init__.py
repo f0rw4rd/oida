@@ -12,10 +12,10 @@ Mixins:
     - CyclicMixin: Cyclic IO test (IOCR establishment, frame exchange)
 """
 
-from .cyclic import CyclicMixin
-from .enumeration import EnumerationMixin
-from .fuzz import FuzzMixin
-from .rpc import RPCMixin
+from oida.protocols.profinet.mixins.cyclic import CyclicMixin
+from oida.protocols.profinet.mixins.enumeration import EnumerationMixin
+from oida.protocols.profinet.mixins.fuzz import FuzzMixin
+from oida.protocols.profinet.mixins.rpc import RPCMixin
 
 __all__ = [
     "RPCMixin",

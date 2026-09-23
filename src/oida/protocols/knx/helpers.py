@@ -9,9 +9,9 @@ import re
 from functools import lru_cache
 from typing import TYPE_CHECKING, Optional, Any, Generator, Dict, Tuple
 
-from ...utils.lazy_import import lazy_import
-from ...utils import ics_logger as module
-from ...utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
+from oida.utils import ics_logger as module
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -213,7 +213,7 @@ def _get_pyzipper():
 # ============================================================================
 
 # Safety limit imported from constants (MAX_KEY_RANGE used only in bcu.py)
-from .constants import MAX_BUS_ADDRESSES  # noqa: E402
+from oida.protocols.knx.constants import MAX_BUS_ADDRESSES  # noqa: E402
 
 
 def parse_bus_ranges(bus_ranges: str) -> Generator["IndividualAddress", None, None]:
@@ -300,7 +300,7 @@ def resolve_local_ip(value: Optional[str]) -> Optional[str]:
         return str(ip)
 
     # Otherwise treat as an interface name.
-    from ...utils import iface_info
+    from oida.utils import iface_info
 
     if value not in iface_info.interfaces():
         raise ValueError(f"Unknown network interface '{value}'")

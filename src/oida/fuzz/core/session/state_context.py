@@ -31,7 +31,7 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, Optional, List, Callable, TYPE_CHECKING
 from datetime import datetime
 
-from ....utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger
 
 _log = get_logger("FUZZ", "state_context", 0)
 
@@ -296,7 +296,7 @@ class StateContext:
                 return self._parent.get_sequence_manager(name)
 
             # Lazy import to avoid circular dependency
-            from .sequence import SequenceManager
+            from oida.fuzz.core.session.sequence import SequenceManager
 
             self._sequence_managers[name] = SequenceManager(name)
         return self._sequence_managers[name]
@@ -340,7 +340,7 @@ class StateContext:
                 return self._parent.crypto
 
             # Lazy import to avoid circular dependency
-            from .crypto_state import CryptoStateManager
+            from oida.fuzz.core.session.crypto_state import CryptoStateManager
 
             self._crypto_state = CryptoStateManager()
         return self._crypto_state

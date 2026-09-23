@@ -14,10 +14,10 @@ from unittest.mock import MagicMock
 
 import pytest
 
-from src.oida.fuzz.core.base_fuzzer import CommonState, RequestInfo
-from src.oida.fuzz.core.stateful_fuzzer import StatefulFuzzer, AuthenticationFailedError
-from src.oida.fuzz.core.session.state_machine import ProtocolState, StateMachine
-from src.oida.fuzz.core.session.state_context import StateContext
+from oida.fuzz.core.base_fuzzer import CommonState, RequestInfo
+from oida.fuzz.core.stateful_fuzzer import StatefulFuzzer, AuthenticationFailedError
+from oida.fuzz.core.session.state_machine import ProtocolState, StateMachine
+from oida.fuzz.core.session.state_context import StateContext
 
 
 class _CountingAuthenticator:

@@ -11,17 +11,17 @@ import asyncio
 import ipaddress
 from typing import Dict, List, Tuple, Any, TYPE_CHECKING
 
-from ...utils import (
+from oida.utils import (
     NetworkScanner,
     SecurityAnalyzer,
     ProgressTracker,
     parse_bool,
     safe_int_conversion,
 )
-from ...utils.protocol_helpers import ConnectionHelper
-from ...utils.default_credentials import load_credentials
+from oida.utils.protocol_helpers import ConnectionHelper
+from oida.utils.default_credentials import load_credentials
 
-from .helpers import (
+from oida.protocols.opcua.helpers import (
     _asyncua,
     _get_client_class,
     _get_bad_user_access_denied,
@@ -188,7 +188,7 @@ class OPCUAScanner(NetworkScanner):
             #   - opc.tcp://host:4840/path  (parts[1] = '4840/path')
             #   - opc.tcp://[::1]:4840      (extra colons inside IPv6)
             # Delegate to helpers._parse_opcua_url which handles both.
-            from .helpers import _parse_opcua_url
+            from oida.protocols.opcua.helpers import _parse_opcua_url
 
             _, port, _ = _parse_opcua_url(host)
             return host, port
@@ -203,7 +203,7 @@ class OPCUAScanner(NetworkScanner):
             # Extract actual host from URL for validation. Delegate to the
             # IPv6-aware parser so bracketed endpoints like opc.tcp://[::1]:4840
             # are not mis-split into '[' the way the old naive splitter did.
-            from .helpers import _parse_opcua_url
+            from oida.protocols.opcua.helpers import _parse_opcua_url
 
             actual_host, _, _ = _parse_opcua_url(host)
             try:

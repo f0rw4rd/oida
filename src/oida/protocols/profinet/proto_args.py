@@ -9,10 +9,7 @@ boilerplate.
 
 import argparse
 
-from ...utils.proto_args_factory import (
-    create_protocol_parser,
-    add_target_argument,
-)
+from oida.utils.proto_args_factory import create_protocol_parser, add_target_argument
 
 
 def proto_args(parser, parents):

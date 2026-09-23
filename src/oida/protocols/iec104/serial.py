@@ -10,7 +10,7 @@ from datetime import datetime
 import json
 import time
 
-from .constants import (
+from oida.protocols.iec104.constants import (
     FT12_START_FIXED,
     FT12_START_VARIABLE,
     FT12_END,
@@ -270,7 +270,7 @@ class IEC101Mixin:
 
     def _connect_serial(self) -> Any:
         """Establish IEC 101 serial connection"""
-        from ...utils.lazy_import import lazy_import
+        from oida.utils.lazy_import import lazy_import
 
         _serial = lazy_import("serial", "IEC 101", install_hint="pip install oida-ics[serial]")
         serial = _serial()  # load pyserial module

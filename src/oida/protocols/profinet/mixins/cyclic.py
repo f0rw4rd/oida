@@ -12,8 +12,8 @@ from __future__ import annotations
 
 from typing import Optional, TYPE_CHECKING
 
-from ....utils.lazy_import import lazy_import
-from ..models import ProfinetDevice
+from oida.utils.lazy_import import lazy_import
+from oida.protocols.profinet.models import ProfinetDevice
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

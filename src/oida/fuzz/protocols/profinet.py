@@ -45,11 +45,11 @@ from typing import List, Optional
 
 from boofuzz import Byte, DWord, Group, Request, Static, Word
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..monitors import BaseMonitor
-from ..primitives.dynamic import SmartString
-from ..primitives.smart_string import StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.monitors import BaseMonitor
+from oida.fuzz.primitives.dynamic import SmartString
+from oida.fuzz.primitives.smart_string import StringContext
 
 
 class ProfinetDCPFuzzer(BaseFuzzer):

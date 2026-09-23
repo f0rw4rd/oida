@@ -8,7 +8,7 @@ import asyncio
 import os
 
 
-from ....utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
 _asyncua_cert_gen = lazy_import(
     "asyncua.crypto.cert_gen", "OPC UA", install_hint="pip install oida-ics[opcua]"
@@ -351,7 +351,7 @@ class SecurityMixin:
         import tempfile
         import socket
         from pathlib import Path
-        from ..helpers import _get_client_class
+        from oida.protocols.opcua.helpers import _get_client_class
 
         result = {
             "accepts_untrusted_client_cert": False,
@@ -543,7 +543,7 @@ class SecurityMixin:
         import tempfile
         import socket
         from pathlib import Path
-        from ..helpers import _get_client_class, ua
+        from oida.protocols.opcua.helpers import _get_client_class, ua
 
         result = {
             "applicable": False,

@@ -8,9 +8,9 @@ import ssl
 from abc import ABC, abstractmethod
 from typing import List, Optional, Tuple
 
-from .tcp import ResilientTCPConnection
+from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
-from ....utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger
 
 import logging
 

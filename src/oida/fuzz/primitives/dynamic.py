@@ -25,11 +25,8 @@ from typing import Callable, Optional
 
 from boofuzz import Bytes as BoofuzzBytes, DWord, Static, Word
 
-from ..core.mutation.config import (
-    is_radamsa_enabled,
-    get_radamsa_mutation_count,
-)
-from .smart_string import StringContext
+from oida.fuzz.core.mutation.config import is_radamsa_enabled, get_radamsa_mutation_count
+from oida.fuzz.primitives.smart_string import StringContext
 
 
 class DynamicWord(Word):
@@ -135,7 +132,7 @@ def SmartString(
         radamsa_count = radamsa_mutation_count
 
     # Import here to avoid circular imports
-    from .smart_string import SmartStringPrimitive
+    from oida.fuzz.primitives.smart_string import SmartStringPrimitive
 
     return SmartStringPrimitive(
         name=name,
@@ -190,7 +187,7 @@ def SmartBytes(
     # to the boofuzz-backed primitive rather than silently dropping it.
     if is_radamsa_enabled() and size is None:
         # Use radamsa-style mutations (native implementation)
-        from .radamsa_primitives import RadamsaBytes
+        from oida.fuzz.primitives.radamsa_primitives import RadamsaBytes
 
         mutation_count = (
             radamsa_mutation_count

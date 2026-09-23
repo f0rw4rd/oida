@@ -12,9 +12,9 @@ CLI examples:
     oida snmp 192.168.1.1 --snmp-version 3 --snmp-user admin
 """
 
-from .scanner import SNMPScanner, protocol_options, scan_targets
-from .cli_runner import snmp
-from .constants import (
+from oida.protocols.snmp.scanner import SNMPScanner, protocol_options, scan_targets
+from oida.protocols.snmp.cli_runner import snmp
+from oida.protocols.snmp.constants import (
     SNMP_OIDS,
     VENDOR_OIDS,
     VENDOR_SPECIFIC_OIDS,

@@ -17,7 +17,7 @@ from __future__ import annotations
 import re
 from typing import Any, Dict, List, TYPE_CHECKING
 
-from ..attacks import DANGEROUS_TAG_PATTERNS
+from oida.protocols.ethernetip.attacks import DANGEROUS_TAG_PATTERNS
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -291,7 +291,7 @@ class ControllerInfoMixin(_ScannerBase):
         Returns:
             Dict with export summary
         """
-        from ....utils.export_utils import export_data
+        from oida.utils.export_utils import export_data
 
         result = {
             "exported": False,

@@ -8,19 +8,15 @@ This module provides session management:
 - Command execution
 """
 
-from .logging import (
+from oida.fuzz.core.session.logging import (
     get_logger,
     setup_logging,
     set_level,
     CleanFormatter,
     StandardFormatter,
 )
-from .commands import (
-    CommandRunner,
-    RealCommandRunner,
-    MockCommandRunner,
-)
-from .state_machine import (
+from oida.fuzz.core.session.commands import CommandRunner, RealCommandRunner, MockCommandRunner
+from oida.fuzz.core.session.state_machine import (
     StateMachine,
     ProtocolState,
     TransitionRule,
@@ -28,16 +24,9 @@ from .state_machine import (
     StateTransitionError,
     create_auth_state_machine,
 )
-from .state_context import (
-    StateContext,
-    ResponseData,
-)
-from .sequence import (
-    SequenceManager,
-    SequenceConfig,
-    SequenceDirection,
-)
-from .crypto_state import (
+from oida.fuzz.core.session.state_context import StateContext, ResponseData
+from oida.fuzz.core.session.sequence import SequenceManager, SequenceConfig, SequenceDirection
+from oida.fuzz.core.session.crypto_state import (
     CryptoStateManager,
     NonceState,
     TokenState,
@@ -50,7 +39,7 @@ from .crypto_state import (
 def __getattr__(name):
     """Lazy load manager module to avoid circular imports."""
     if name in ("TestCaseManager", "RollingBuffer", "create_fuzzer"):
-        from .manager import TestCaseManager, RollingBuffer, create_fuzzer
+        from oida.fuzz.core.session.manager import TestCaseManager, RollingBuffer, create_fuzzer
 
         if name == "TestCaseManager":
             return TestCaseManager

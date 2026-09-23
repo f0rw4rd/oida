@@ -28,8 +28,8 @@ class SecurityMixin(_ScannerBase):
             Lock state: 0=Unlocked, 1=Locked, 2=Permanently Locked,
                        -1=Unknown, -2=Not Supported
         """
-        from ..scanner import LockState
-        from ..hartip import HARTResponseCode, HARTIPTimeoutError
+        from oida.protocols.hart.scanner import LockState
+        from oida.protocols.hart.hartip import HARTResponseCode, HARTIPTimeoutError
 
         client = self.client
         if not client:
@@ -62,7 +62,7 @@ class SecurityMixin(_ScannerBase):
         Returns:
             True if unlock successful
         """
-        from ..hartip import HARTCommand, pack_ascii
+        from oida.protocols.hart.hartip import HARTCommand, pack_ascii
 
         client = self.client
         if not client:
@@ -93,7 +93,7 @@ class SecurityMixin(_ScannerBase):
         Returns:
             True if lock successful
         """
-        from ..hartip import HARTCommand, pack_ascii
+        from oida.protocols.hart.hartip import HARTCommand, pack_ascii
 
         client = self.client
         if not client:
@@ -121,8 +121,8 @@ class SecurityMixin(_ScannerBase):
         delay: float = 0.1,
     ) -> Dict[str, Any]:
         """Attempt to unlock device using codes from file."""
-        from ....utils.login_scanner import make_password_scanner
-        from ..scanner import LockState
+        from oida.utils.login_scanner import make_password_scanner
+        from oida.protocols.hart.scanner import LockState
 
         if not self.client:
             return {"success": False, "error": "Not connected", "tested": 0}
@@ -172,7 +172,7 @@ class SecurityMixin(_ScannerBase):
                 only puts its own commands on the wire -- e.g. --probe-write
                 must not transmit Cmd 42 Master Reset.
         """
-        from ..hartip import HARTResponseCode
+        from oida.protocols.hart.hartip import HARTResponseCode
 
         findings = []
 

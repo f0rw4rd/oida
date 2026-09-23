@@ -17,7 +17,7 @@ import base64
 import struct
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
-from ....utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
 _cryptography = lazy_import(
     "cryptography", "EtherNet/IP", install_hint="pip install oida-ics[ethernetip]"

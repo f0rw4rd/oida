@@ -18,7 +18,7 @@ Usage:
 """
 
 # Constants and data types
-from .constants import (
+from oida.protocols.iec104.constants import (
     FT12_START_FIXED,
     FT12_START_VARIABLE,
     FT12_END,
@@ -43,13 +43,13 @@ from .constants import (
 )
 
 # Dependency helpers
-from ._deps import _c104, _serial, _get_c104, c104, PYSERIAL_AVAILABLE
+from oida.protocols.iec104._deps import _c104, _serial, _get_c104, c104, PYSERIAL_AVAILABLE
 
 # Scanner
-from .scanner import IEC104Scanner
+from oida.protocols.iec104.scanner import IEC104Scanner
 
 # NXC-style class
-from .cli_runner import iec104
+from oida.protocols.iec104.cli_runner import iec104
 
 __all__ = [
     # Constants

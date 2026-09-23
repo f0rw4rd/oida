@@ -31,15 +31,13 @@ from typing import Any, Dict, List
 
 from boofuzz import Block, Bytes, Group, Request, Static
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import TCPSocketConnection
-from ..primitives.dynamic import SmartString
-from ..primitives.smart_string import StringContext
-from ...protocols.hl7 import MLLP_START, MLLP_END
-from ...protocols.hl7.segments import HL7SegmentBuilder
-from ...protocols.hl7.utils import (
-    probe_server_capabilities,
-)
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.connections import TCPSocketConnection
+from oida.fuzz.primitives.dynamic import SmartString
+from oida.fuzz.primitives.smart_string import StringContext
+from oida.protocols.hl7 import MLLP_START, MLLP_END
+from oida.protocols.hl7.segments import HL7SegmentBuilder
+from oida.protocols.hl7.utils import probe_server_capabilities
 
 
 class HL7Fuzzer(BaseFuzzer):
@@ -157,7 +155,7 @@ class HL7Fuzzer(BaseFuzzer):
         Returns:
             Dictionary with detected capabilities
         """
-        from ...utils.ics_logger import get_logger
+        from oida.utils.ics_logger import get_logger
 
         port = config.target_port or 2575
         get_logger("HL7", config.target_ip, port)
@@ -309,7 +307,7 @@ class HL7Fuzzer(BaseFuzzer):
 
     def setup_custom_monitors(self) -> list:
         """Setup HL7-specific monitoring"""
-        from ..monitors import HL7Monitor
+        from oida.fuzz.monitors import HL7Monitor
 
         hl7_monitor = HL7Monitor(
             host=self.config.target_ip,

@@ -21,19 +21,19 @@ Mixins:
     - ContinuationMixin: Continuation/fragmentation handling
 """
 
-from .message import MessageMixin
-from .query import QueryMixin
-from .pharmacy import PharmacyMixin
-from .response import ResponseMixin
-from .enum import EnumMixin
-from .probe import ProbeMixin
-from .master_file import MasterFileMixin
-from .special_query import SpecialQueryMixin
-from .financial import FinancialMixin
-from .device import DeviceMixin
-from .fuzz import FuzzMixin
-from .security import SecurityMixin
-from .continuation import ContinuationMixin
+from oida.protocols.hl7.mixins.message import MessageMixin
+from oida.protocols.hl7.mixins.query import QueryMixin
+from oida.protocols.hl7.mixins.pharmacy import PharmacyMixin
+from oida.protocols.hl7.mixins.response import ResponseMixin
+from oida.protocols.hl7.mixins.enum import EnumMixin
+from oida.protocols.hl7.mixins.probe import ProbeMixin
+from oida.protocols.hl7.mixins.master_file import MasterFileMixin
+from oida.protocols.hl7.mixins.special_query import SpecialQueryMixin
+from oida.protocols.hl7.mixins.financial import FinancialMixin
+from oida.protocols.hl7.mixins.device import DeviceMixin
+from oida.protocols.hl7.mixins.fuzz import FuzzMixin
+from oida.protocols.hl7.mixins.security import SecurityMixin
+from oida.protocols.hl7.mixins.continuation import ContinuationMixin
 
 __all__ = [
     "MessageMixin",

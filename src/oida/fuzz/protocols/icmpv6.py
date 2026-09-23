@@ -23,10 +23,10 @@ from typing import List, Optional
 
 from boofuzz import Block, Byte, Checksum, DWord, Group, QWord, Request, Static, Word
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..monitors import BaseMonitor
-from ..primitives.dynamic import SmartBytes, SmartString
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.monitors import BaseMonitor
+from oida.fuzz.primitives.dynamic import SmartBytes, SmartString
 
 
 class ICMPv6Fuzzer(BaseFuzzer):
@@ -1790,7 +1790,7 @@ class ICMPv6Fuzzer(BaseFuzzer):
     def setup_custom_monitors(self) -> Optional[List[BaseMonitor]]:
         """Setup ICMPv6-specific monitors"""
         monitors = []
-        from ..monitors import PingMonitor
+        from oida.fuzz.monitors import PingMonitor
 
         # ICMPv6 ping monitor
         if self.config and hasattr(self.config, "target_ip"):

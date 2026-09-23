@@ -6,7 +6,7 @@ Handles BAC0 and bacpypes3 connection lifecycle.
 
 import asyncio
 
-from ..constants import _get_bac0
+from oida.protocols.bacnet.constants import _get_bac0
 
 
 class ConnectionMixin:

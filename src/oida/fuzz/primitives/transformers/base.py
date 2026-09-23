@@ -29,7 +29,7 @@ Example:
 from abc import ABC, abstractmethod
 from typing import Callable
 
-from ....utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger
 
 _log = get_logger("TRANSFORM", "base", 0)
 

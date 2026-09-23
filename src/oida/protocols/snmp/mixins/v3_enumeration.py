@@ -55,8 +55,8 @@ class V3EnumerationMixin(_ScannerBase):
             get_cmd,
         )
 
-        from ..constants import SNMP_OIDS
-        from ..scanner import _validate_snmp_key
+        from oida.protocols.snmp.constants import SNMP_OIDS
+        from oida.protocols.snmp.scanner import _validate_snmp_key
 
         auth_protocols, priv_protocols = self._get_usm_protocol_maps()
         auth_proto = auth_protocols.get(auth_proto_name, auth_protocols["SHA"])
@@ -257,13 +257,13 @@ class V3EnumerationMixin(_ScannerBase):
 
         Returns dict with valid_users and credentials lists.
         """
-        from ....utils.default_credentials import (
+        from oida.utils.default_credentials import (
             GENERIC_ICS_DEFAULTS,
             SNMP_COMMUNITY_DEFAULTS,
             SNMP_V3_USERNAMES,
             parse_credential_input,
         )
-        from ....utils.export_utils import export_table
+        from oida.utils.export_utils import export_table
 
         # Load username list -- -u accepts string or file path
         if self.username:

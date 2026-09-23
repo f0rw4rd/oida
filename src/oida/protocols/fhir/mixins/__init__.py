@@ -4,9 +4,9 @@ FHIR Protocol Mixins
 Modular functionality groups for the FHIR NXC-style connection class.
 """
 
-from .search import SearchMixin
-from .security import SecurityMixin
-from .crud import CRUDMixin
+from oida.protocols.fhir.mixins.search import SearchMixin
+from oida.protocols.fhir.mixins.security import SecurityMixin
+from oida.protocols.fhir.mixins.crud import CRUDMixin
 
 __all__ = [
     "SearchMixin",

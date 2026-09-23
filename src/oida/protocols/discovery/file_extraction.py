@@ -10,8 +10,8 @@ import subprocess
 import tempfile
 from typing import Any, Dict, List, Optional
 
-from ...utils.common_types import safe_output_path
-from ...utils.ics_logger import get_module_logger
+from oida.utils.common_types import safe_output_path
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 

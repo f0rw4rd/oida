@@ -13,11 +13,11 @@ from typing import List
 
 from boofuzz import Block, Byte, Bytes, Checksum, Group, Request, Word
 
-from ...core.base_fuzzer import BaseFuzzer, RequestInfo
-from ...core.config import ProtocolType
-from ...monitors import BaseMonitor, ModbusRTUMonitor
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import ProtocolType
+from oida.fuzz.monitors import BaseMonitor, ModbusRTUMonitor
 
-from .constants import (
+from oida.fuzz.protocols.modbus.constants import (
     ADDRESS_BOUNDARIES,
     COIL_VALUE_BOUNDARIES,
     DEVICE_ID_READ_CODES,
@@ -31,7 +31,7 @@ from .constants import (
     UNIT_ID_BOUNDARIES,
     WRITE_SINGLE_FUNCTION_CODES,
 )
-from .pdu import (
+from oida.fuzz.protocols.modbus.pdu import (
     create_byte_count_mismatch_values,
     create_oversized_quantity_values,
     create_truncated_pdu_values,

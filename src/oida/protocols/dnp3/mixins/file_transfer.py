@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, TYPE_CHECKING
 
-from ....utils.payload import resolve_file_payload
+from oida.utils.payload import resolve_file_payload
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

@@ -35,11 +35,8 @@ PyShark Memcached field reference (EK mode short names):
 
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import (
-    is_valid_discovered_ip,
-    lookup_mac_vendor,
-)
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 
 # Standard Memcached port
@@ -403,7 +400,7 @@ class MemcachedPassiveListener(PySharkListenerBase):
                 server_ip, server_port = src_ip, src_port
                 client_ip, client_port = dst_ip, dst_port
 
-                details: Dict[str, Any] = {
+                details = {
                     "response_type": "version",
                     "version": str(version_raw),
                 }

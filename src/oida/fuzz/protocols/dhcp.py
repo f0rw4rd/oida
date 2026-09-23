@@ -23,10 +23,10 @@ from typing import List
 
 from boofuzz import Block, Byte, DWord, Group, QWord, Request, Static, Word
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import CountingUDPConnection as UDPSocketConnection
-from ..primitives.dynamic import SmartString
-from ..primitives.smart_string import StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.connections import CountingUDPConnection as UDPSocketConnection
+from oida.fuzz.primitives.dynamic import SmartString
+from oida.fuzz.primitives.smart_string import StringContext
 
 
 class DHCPFuzzer(BaseFuzzer):
@@ -125,7 +125,7 @@ class DHCPFuzzer(BaseFuzzer):
 
     def setup_custom_monitors(self) -> list:
         """Setup DHCP-specific monitoring with DISCOVER/OFFER validation"""
-        from ..monitors import DHCPDiscoverMonitor
+        from oida.fuzz.monitors import DHCPDiscoverMonitor
 
         dhcp_monitor = DHCPDiscoverMonitor(
             host=self.config.target_ip,
@@ -1279,7 +1279,7 @@ class DHCPv6Fuzzer(BaseFuzzer):
 
     def setup_custom_monitors(self) -> list:
         """Setup DHCPv6-specific monitoring with SOLICIT validation"""
-        from ..monitors import DHCPDiscoverMonitor
+        from oida.fuzz.monitors import DHCPDiscoverMonitor
 
         # Reuse DHCP discover monitor -- DHCPv6 servers often coexist with DHCPv4
         dhcp_monitor = DHCPDiscoverMonitor(

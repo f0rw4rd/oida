@@ -37,7 +37,7 @@ class MapReadWriteMixin(_ScannerBase):
             self.logger.fail("--register-map is required for name-based operations")
             return None
 
-        from ..decoder import MapNameResolver
+        from oida.protocols.modbus.decoder import MapNameResolver
 
         try:
             self._map_resolver = MapNameResolver(map_name)
@@ -53,7 +53,7 @@ class MapReadWriteMixin(_ScannerBase):
         Shows a table of all registers with name, address, type, access, unit,
         and description. Triggered by --list-names --register-map <map>.
         """
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         resolver = self._get_resolver()
         if not resolver:
@@ -106,7 +106,7 @@ class MapReadWriteMixin(_ScannerBase):
 
         Triggered by --search-name <query> --register-map <map>.
         """
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         query = getattr(self.args, "search_name", None)
         if not query:
@@ -211,7 +211,7 @@ class MapReadWriteMixin(_ScannerBase):
             if result.isError():
                 exc_code = getattr(result, "exception_code", None)
                 if exc_code is not None:
-                    from ..constants import EXCEPTION_CODES
+                    from oida.protocols.modbus.constants import EXCEPTION_CODES
 
                     exc_name = EXCEPTION_CODES.get(exc_code, f"Unknown ({exc_code})")
                     self.logger.fail(f"  Read error: {exc_name} (exception code {exc_code})")
@@ -429,7 +429,7 @@ class MapReadWriteMixin(_ScannerBase):
             if result.isError():
                 exc_code = getattr(result, "exception_code", None)
                 if exc_code is not None:
-                    from ..constants import EXCEPTION_CODES
+                    from oida.protocols.modbus.constants import EXCEPTION_CODES
 
                     exc_name = EXCEPTION_CODES.get(exc_code, f"Unknown ({exc_code})")
                     self.logger.fail(f"  Write failed: {exc_name} (exception code {exc_code})")

@@ -15,15 +15,15 @@ import ipaddress
 from datetime import datetime
 from typing import Dict, Optional
 
-from .core import (
+from oida.protocols.discovery.core import (
     DiscoveredDevice,
     get_interface_network,
     validate_interface,
     validate_timeout,
 )
-from ...utils.rate_limiter import scapy_srp
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.utils.rate_limiter import scapy_srp
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
 _scapy_all = lazy_import("scapy.all", "discovery")
 

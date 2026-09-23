@@ -25,7 +25,7 @@ import pytest
 
 from tests.service_gate import require_service
 
-from .conftest import _pcap_path, _skip_unless_pyshark
+from tests.integration.pcap.conftest import _pcap_path, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
 

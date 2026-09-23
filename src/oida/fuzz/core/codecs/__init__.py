@@ -6,17 +6,9 @@ This module provides protocol codecs for:
 - OPC UA binary encoding
 """
 
-from .asn1 import (
-    ASN1Tag,
-    ASN1Builder,
-)
-from .mms import MMSCodec
-from .opcua import (
-    NodeIdType,
-    VariantType,
-    NodeId,
-    OPCUACodec,
-)
+from oida.fuzz.core.codecs.asn1 import ASN1Tag, ASN1Builder
+from oida.fuzz.core.codecs.mms import MMSCodec
+from oida.fuzz.core.codecs.opcua import NodeIdType, VariantType, NodeId, OPCUACodec
 
 __all__ = [
     # ASN.1

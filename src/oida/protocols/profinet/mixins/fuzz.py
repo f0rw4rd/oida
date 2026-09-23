@@ -105,8 +105,8 @@ class FuzzMixin(_ScannerBase):
         """Fuzz writable indices with type-aware payloads."""
         import time
 
-        from ....utils.fuzzer import _get_type_boundaries, fuzz
-        from ..helpers import get_indices_module
+        from oida.utils.fuzzer import _get_type_boundaries, fuzz
+        from oida.protocols.profinet.helpers import get_indices_module
 
         idx_module = get_indices_module()
 

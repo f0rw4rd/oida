@@ -6,7 +6,7 @@ Provides method discovery, invocation, and argument parsing functionality.
 
 from typing import Dict, List
 
-from ..helpers import _get_asyncua
+from oida.protocols.opcua.helpers import _get_asyncua
 
 # OPC UA namespace-0 built-in DataType NodeId identifiers -> type names.
 BUILTIN_TYPE_NAMES = {

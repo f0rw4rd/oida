@@ -6,7 +6,7 @@ Handles file enumeration and AtomicReadFile operations.
 
 import asyncio
 
-from ..constants import _load_bacpypes3
+from oida.protocols.bacnet.constants import _load_bacpypes3
 
 
 # Hard ceiling on bytes accumulated by a single AtomicReadFile run. The

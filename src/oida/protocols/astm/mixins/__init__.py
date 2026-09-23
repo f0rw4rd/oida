@@ -12,10 +12,10 @@ Mixins:
     - SecurityMixin: Protocol fuzzing and security analysis
 """
 
-from .framing import FramingMixin
-from .records import RecordsMixin
-from .enumeration import EnumerationMixin
-from .security import SecurityMixin
+from oida.protocols.astm.mixins.framing import FramingMixin
+from oida.protocols.astm.mixins.records import RecordsMixin
+from oida.protocols.astm.mixins.enumeration import EnumerationMixin
+from oida.protocols.astm.mixins.security import SecurityMixin
 
 __all__ = [
     "FramingMixin",

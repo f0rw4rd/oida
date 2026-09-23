@@ -23,17 +23,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ._iec_common import (
-    CONTROL_TYPE_IDS,
-    COT_NAMES,
-    TYPE_IDS,
-    IecAsduValueMixin,
-)
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import (
-    is_valid_discovered_ip,
-    lookup_mac_vendor,
-)
+from oida.pcap._iec_common import CONTROL_TYPE_IDS, COT_NAMES, TYPE_IDS, IecAsduValueMixin
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 import logging
 

@@ -16,7 +16,7 @@ cannot pass by accident.
 
 import pytest
 
-from ..conftest import MOCK_HOST, MOCK_PORTS
+from tests.integration.conftest import MOCK_HOST, MOCK_PORTS
 
 pytestmark = pytest.mark.integration
 

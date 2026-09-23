@@ -41,7 +41,12 @@ def __getattr__(name):
         return _cache[name]
 
     if name in _base_attrs:
-        from .base import BaseConnection, ConnectionFactory, MockConnection, MockConnectionFactory
+        from oida.fuzz.core.connections.base import (
+            BaseConnection,
+            ConnectionFactory,
+            MockConnection,
+            MockConnectionFactory,
+        )
 
         _cache.update(
             {
@@ -54,7 +59,11 @@ def __getattr__(name):
         return _cache[name]
 
     if name in _tcp_attrs:
-        from .tcp import RealConnectionFactory, IEC104SocketConnection, ResilientTCPConnection
+        from oida.fuzz.core.connections.tcp import (
+            RealConnectionFactory,
+            IEC104SocketConnection,
+            ResilientTCPConnection,
+        )
 
         _cache.update(
             {
@@ -66,19 +75,19 @@ def __getattr__(name):
         return _cache[name]
 
     if name in _udp_attrs:
-        from .udp import CountingUDPConnection
+        from oida.fuzz.core.connections.udp import CountingUDPConnection
 
         _cache["CountingUDPConnection"] = CountingUDPConnection
         return CountingUDPConnection
 
     if name in _raw_attrs:
-        from .raw_socket import RawSocketConnection
+        from oida.fuzz.core.connections.raw_socket import RawSocketConnection
 
         _cache.update({"RawSocketConnection": RawSocketConnection})
         return _cache[name]
 
     if name in _serial_attrs:
-        from .serial import SerialConnection, parse_serial_target
+        from oida.fuzz.core.connections.serial import SerialConnection, parse_serial_target
 
         _cache.update(
             {"SerialConnection": SerialConnection, "parse_serial_target": parse_serial_target}
@@ -86,13 +95,18 @@ def __getattr__(name):
         return _cache[name]
 
     if name in _scapy_attrs:
-        from .scapy import ScapyRawConnection
+        from oida.fuzz.core.connections.scapy import ScapyRawConnection
 
         _cache["ScapyRawConnection"] = ScapyRawConnection
         return ScapyRawConnection
 
     if name in _stateful_attrs:
-        from .stateful import StatefulConnection, TLSHandler, TLSUpgradeMixin, BannerConnection
+        from oida.fuzz.core.connections.stateful import (
+            StatefulConnection,
+            TLSHandler,
+            TLSUpgradeMixin,
+            BannerConnection,
+        )
 
         _cache.update(
             {

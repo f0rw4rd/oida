@@ -15,7 +15,7 @@ live agent.
 import asyncio
 from unittest.mock import MagicMock, patch
 
-from .test_snmp_enhancements import FakeVarBind, scanner  # noqa: F401  (reuse fixture)
+from tests.unit.snmp.test_snmp_enhancements import FakeVarBind, scanner  # noqa: F401  (reuse fixture)
 
 
 def _make_scanner(**overrides):

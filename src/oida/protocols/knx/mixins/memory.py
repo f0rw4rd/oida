@@ -10,8 +10,8 @@ from typing import Any, Dict, TYPE_CHECKING
 if TYPE_CHECKING:
     from xknx import XKNX
 
-from ..constants import _xknx_cls  # noqa: E402
-from ....utils.protocol_helpers import DataFormatter
+from oida.protocols.knx.constants import _xknx_cls  # noqa: E402
+from oida.utils.protocol_helpers import DataFormatter
 
 
 class MemoryMixin:

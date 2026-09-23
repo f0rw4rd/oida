@@ -13,7 +13,7 @@ from typing import Optional
 
 from hl7apy.core import Message, Segment
 
-from ._helpers import ack_accepted, build_qrd, build_rcp, populate_msh
+from oida.protocols.hl7.mixins._helpers import ack_accepted, build_qrd, build_rcp, populate_msh
 
 
 class QueryMixin:

@@ -12,7 +12,7 @@ License: AGPL-3.0-or-later
 import struct
 from typing import Any, Dict, List
 
-from .constants import (
+from oida.protocols.ethercat.constants import (
     FMMU_TYPES,
     SM_TYPES,
     COE_DATA_TYPES,

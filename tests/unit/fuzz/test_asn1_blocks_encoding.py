@@ -12,7 +12,7 @@ driving the byte-construction branches that those files leave uncovered:
 All assertions are on concrete byte output / mutation structure.
 """
 
-from src.oida.fuzz.primitives.asn1_blocks import (
+from oida.fuzz.primitives.asn1_blocks import (
     ASN1BitString,
     ASN1Boolean,
     ASN1Integer,

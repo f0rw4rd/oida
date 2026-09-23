@@ -19,7 +19,7 @@ import re
 import struct
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
-from ....utils.vendor_maps import ethernetip_wellknown_class_types as wellknown_class_types
+from oida.utils.vendor_maps import ethernetip_wellknown_class_types as wellknown_class_types
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

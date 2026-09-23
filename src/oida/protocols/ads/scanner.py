@@ -17,16 +17,11 @@ import threading
 from datetime import datetime
 from typing import Dict, Any
 
-from ...utils import (
-    NetworkScanner,
-    SecurityAnalyzer,
-    ProgressTracker,
-    safe_int_conversion,
-)
-from ...utils.exceptions import DependencyError
+from oida.utils import NetworkScanner, SecurityAnalyzer, ProgressTracker, safe_int_conversion
+from oida.utils.exceptions import DependencyError
 
 # ADS protocol constants (shared with passive listener)
-from .constants import (
+from oida.protocols.ads.constants import (
     ADS_IDX_GRP,
     ADS_PORT_MAP,
     ADS_STATE_MAP,
@@ -40,7 +35,7 @@ from .constants import (
 )
 
 # Shared helpers
-from .helpers import (
+from oida.protocols.ads.helpers import (
     _pyads,
     _get_pyads,
     _validate_ams_netid,
@@ -51,7 +46,7 @@ from .helpers import (
 )
 
 # EtherCAT operations mixin
-from .ethercat_ops import EtherCATOpsMixin
+from oida.protocols.ads.ethercat_ops import EtherCATOpsMixin
 
 # Upper bound for the device-reported I/O device count. The value is read
 # straight from the target response and drives a ctypes buffer allocation of
@@ -139,7 +134,7 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
         # Validate AMS Net ID format (must be exactly 6 dot-separated integers, e.g. 192.168.1.1.1.1)
         _validate_ams_netid(self.ams_netid)
         if not self.local_netid:
-            from ...utils.socket_helpers import get_local_ip
+            from oida.utils.socket_helpers import get_local_ip
 
             local_ip, err = get_local_ip(self.host, fallback="127.0.0.1")
             if err is not None:
@@ -628,7 +623,7 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
 
         try:
             # Try TLS connection to port 8016
-            from ...utils.socket_helpers import build_tls_context
+            from oida.utils.socket_helpers import build_tls_context
 
             context = build_tls_context({}, logger=self.logger)
 
@@ -643,7 +638,7 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
                 # Get certificate for analysis using central display function
                 cert_der = tls_sock.getpeercert(binary_form=True)
                 if cert_der:
-                    from ...utils.security_findings import display_cert_info
+                    from oida.utils.security_findings import display_cert_info
 
                     info = display_cert_info(
                         logger=self.logger,

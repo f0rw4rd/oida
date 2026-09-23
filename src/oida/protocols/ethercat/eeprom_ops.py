@@ -6,10 +6,10 @@ import struct
 from typing import Any, Dict, List, TYPE_CHECKING
 from binascii import hexlify
 
-from ...utils import ProgressTracker
-from ...utils.export_utils import print_table
-from .constants import ESI_CATEGORY_TYPES
-from .eeprom import (
+from oida.utils import ProgressTracker
+from oida.utils.export_utils import print_table
+from oida.protocols.ethercat.constants import ESI_CATEGORY_TYPES
+from oida.protocols.ethercat.eeprom import (
     calculate_sii_crc,
     parse_sii_header,
     parse_strings_category,

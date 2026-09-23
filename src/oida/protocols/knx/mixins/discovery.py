@@ -16,9 +16,9 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from xknx import XKNX
 
-from ..constants import _xknx_cls  # noqa: E402
-from ..cemi_handler import CustomCEMIHandler
-from ....utils import ics_logger as module, ProgressTracker
+from oida.protocols.knx.constants import _xknx_cls  # noqa: E402
+from oida.protocols.knx.cemi_handler import CustomCEMIHandler
+from oida.utils import ics_logger as module, ProgressTracker
 
 
 class DiscoveryMixin:
@@ -363,7 +363,7 @@ class DiscoveryMixin:
         devices = []
 
         # Use parse_bus_ranges which handles comma-separated ranges correctly
-        from ..helpers import parse_bus_ranges
+        from oida.protocols.knx.helpers import parse_bus_ranges
 
         device_addresses = [str(a) for a in parse_bus_ranges(scan_range)]
 

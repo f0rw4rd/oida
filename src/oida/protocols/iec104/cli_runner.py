@@ -2,9 +2,9 @@
 # -*- coding: utf-8 -*-
 """IEC 104 NXC-style callable class."""
 
-from ...connection import NetworkConnection
+from oida.connection import NetworkConnection
 
-from . import IEC104Scanner, _c104
+from oida.protocols.iec104 import IEC104Scanner, _c104
 
 
 class iec104(NetworkConnection):

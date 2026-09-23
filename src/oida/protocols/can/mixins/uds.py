@@ -16,7 +16,7 @@ Handles UDS (ISO 14229) service discovery and enumeration:
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..constants import (
+from oida.protocols.can.constants import (
     COMMON_UDS_PAIRS,
     UDS_DID_SCAN_DEFAULT_END,
     UDS_DID_SCAN_DEFAULT_START,
@@ -33,7 +33,7 @@ from ..constants import (
 
 def _get_python_can() -> Any:
     """Resolve _python_can from scanner module (avoids circular import)."""
-    from ..scanner import _python_can
+    from oida.protocols.can.scanner import _python_can
 
     return _python_can
 

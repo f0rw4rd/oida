@@ -9,7 +9,7 @@ import base64
 import time
 
 
-from ..constants import (
+from oida.protocols.ocpp.constants import (
     SECURITY_CONFIG_KEYS,
     SENSITIVE_CONFIG_KEYS,
     HARMLESS_CONFIG_KEY,
@@ -57,7 +57,7 @@ class SecurityMixin:
         try:
             from urllib.parse import urlparse
 
-            from ....utils.socket_helpers import check_tls_certificate
+            from oida.utils.socket_helpers import check_tls_certificate
 
             # self.ip is the resolved connection host, but for wss:// targets
             # it can end up holding the raw target URL when resolution fails

@@ -76,8 +76,8 @@ import pytest
 
 from tests.service_gate import require_port
 
-from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST, check_port_open
+from tests.integration.base_protocol_test import BaseProtocolIntegrationTest
+from tests.integration.conftest import MOCK_HOST, check_port_open
 
 
 # ---------------------------------------------------------------------------

@@ -32,15 +32,15 @@ from typing import List, Optional
 
 from boofuzz import Block, Delim, Group, Request, Static
 
-from ..core.base_fuzzer import CommonState, RequestInfo
-from ..core.config import FuzzerConfig
-from ..core.connections.stateful import StatefulConnection, TLSHandler
-from ..core.session.state_machine import create_auth_state_machine
-from ..core.session import StateContext
-from ..core.stateful_fuzzer import StatefulFuzzer
-from ..core.auth import UsernamePasswordAuth, ProtocolAuthenticator
-from ..primitives.dynamic import SmartString
-from ..primitives.smart_string import StringContext
+from oida.fuzz.core.base_fuzzer import CommonState, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig
+from oida.fuzz.core.connections.stateful import StatefulConnection, TLSHandler
+from oida.fuzz.core.session.state_machine import create_auth_state_machine
+from oida.fuzz.core.session import StateContext
+from oida.fuzz.core.stateful_fuzzer import StatefulFuzzer
+from oida.fuzz.core.auth import UsernamePasswordAuth, ProtocolAuthenticator
+from oida.fuzz.primitives.dynamic import SmartString
+from oida.fuzz.primitives.smart_string import StringContext
 
 
 # =============================================================================
@@ -1805,7 +1805,7 @@ class FTPFuzzer(StatefulFuzzer):
         Returns:
             List of monitor instances for FTP service health checking
         """
-        from ..monitors import FTPCommandMonitor
+        from oida.fuzz.monitors import FTPCommandMonitor
 
         # Create FTP PWD monitor
         ftp_monitor = FTPCommandMonitor(
@@ -1868,7 +1868,7 @@ class FTPFuzzer(StatefulFuzzer):
         This creates a detailed state machine that tracks the complete FTPS
         upgrade process including AUTH TLS, SSL handshake, PBSZ, and PROT.
         """
-        from ..core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             StateType,
@@ -1961,7 +1961,7 @@ class FTPFuzzer(StatefulFuzzer):
         )
 
         # Execute FTPS upgrade sequence (deferred when using mock connections)
-        from ..core.connections.base import MockConnectionFactory
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         if isinstance(self.connection_factory, MockConnectionFactory):
             self.log.display("FTPS state machine created (execution deferred - mock connection)")
@@ -2294,7 +2294,7 @@ class FTPFuzzer(StatefulFuzzer):
 
             self.session._callback_monitor.on_pre_send.append(ftps_auth_pre_send)
             # Skip StatefulFuzzer's auth setup since we're using state machine
-            from ..core.base_fuzzer import BaseFuzzer
+            from oida.fuzz.core.base_fuzzer import BaseFuzzer
 
             BaseFuzzer.fuzz_all(self)
         else:

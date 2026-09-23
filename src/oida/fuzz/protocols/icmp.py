@@ -15,9 +15,9 @@ from typing import List
 
 from boofuzz import Block, Byte, Bytes, Checksum, DWord, Group, Request, Static, Word
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..primitives.dynamic import SmartBytes, SmartString
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.primitives.dynamic import SmartBytes, SmartString
 
 
 class ICMPFuzzer(BaseFuzzer):

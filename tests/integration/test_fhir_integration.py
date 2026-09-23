@@ -52,8 +52,8 @@ import threading
 import pytest
 from typing import Optional
 
-from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST, check_port_open
+from tests.integration.base_protocol_test import BaseProtocolIntegrationTest
+from tests.integration.conftest import MOCK_HOST, check_port_open
 
 pytestmark = [pytest.mark.fhir, pytest.mark.xdist_group("fhir_service")]
 

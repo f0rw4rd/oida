@@ -18,6 +18,6 @@ CLI examples:
 """
 
 # Re-export the NXC-style connection class (mixin-based)
-from .cli_runner import astm
+from oida.protocols.astm.cli_runner import astm
 
 __all__ = ["astm"]

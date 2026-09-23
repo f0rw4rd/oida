@@ -144,8 +144,8 @@ Hostile-input / bug-hunt tests (P1-P6, not tied to a single flag):
 import pytest
 from typing import Optional
 
-from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST
+from tests.integration.base_protocol_test import BaseProtocolIntegrationTest
+from tests.integration.conftest import MOCK_HOST
 
 
 # Serialize the whole KNX file onto one xdist worker (honored under

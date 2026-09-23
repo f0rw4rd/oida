@@ -11,13 +11,13 @@ from typing import List
 
 from boofuzz import Block, Delim, Group, Request, Static
 
-from ..core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
-from ..core.config import FuzzerConfig
-from ..core.session.state_machine import ProtocolState, StateMachine, StateType
-from ..core.session import StateContext
-from ..monitors import SocketHealthMonitor
-from ..primitives.dynamic import SmartBytes, SmartString
-from ..primitives.smart_string import StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig
+from oida.fuzz.core.session.state_machine import ProtocolState, StateMachine, StateType
+from oida.fuzz.core.session import StateContext
+from oida.fuzz.monitors import SocketHealthMonitor
+from oida.fuzz.primitives.dynamic import SmartBytes, SmartString
+from oida.fuzz.primitives.smart_string import StringContext
 
 
 class VNCSecurityTypes:

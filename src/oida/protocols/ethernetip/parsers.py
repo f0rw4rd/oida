@@ -10,9 +10,9 @@ broadcast_discovery() helper and the DiscoveryMixin broadcast loop.
 import struct
 from typing import Any, Dict, Optional
 
-from .constants import ENIP_CMD_LIST_IDENTITY
-from ...utils.vendor_maps import ethernetip_vendor_ids as VENDOR_IDS
-from ...utils.vendor_maps import ethernetip_device_types as DEVICE_TYPE_IDS
+from oida.protocols.ethernetip.constants import ENIP_CMD_LIST_IDENTITY
+from oida.utils.vendor_maps import ethernetip_vendor_ids as VENDOR_IDS
+from oida.utils.vendor_maps import ethernetip_device_types as DEVICE_TYPE_IDS
 
 
 def parse_list_identity(data: bytes) -> Optional[Dict[str, Any]]:

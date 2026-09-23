@@ -6,11 +6,8 @@ Handles object and service enumeration.
 
 import asyncio
 import struct
-from ..constants import (
-    _load_bacpypes3,
-    OBJECT_TYPES,
-)
-from ..service_catalog import SERVICE_NAMES, by_name
+from oida.protocols.bacnet.constants import _load_bacpypes3, OBJECT_TYPES
+from oida.protocols.bacnet.service_catalog import SERVICE_NAMES, by_name
 
 
 def _is_callable(service_name: str) -> bool:

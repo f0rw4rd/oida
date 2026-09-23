@@ -7,11 +7,7 @@ Handles device discovery via Who-Is, direct reads, and device identification.
 import asyncio
 from typing import Any, Dict, List, NamedTuple, Optional
 
-from ..constants import (
-    _load_bacpypes3,
-    VENDORS,
-    CONTROL_POINT_TYPES,
-)
+from oida.protocols.bacnet.constants import _load_bacpypes3, VENDORS, CONTROL_POINT_TYPES
 
 
 class Bacpypes3CommonTypes(NamedTuple):

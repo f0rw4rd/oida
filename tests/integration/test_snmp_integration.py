@@ -17,7 +17,7 @@ import pytest
 
 from tests.service_gate import require_service
 
-from .conftest import MOCK_HOST, MOCK_PORTS
+from tests.integration.conftest import MOCK_HOST, MOCK_PORTS
 
 
 # SNMP runs over UDP, which drops packets under heavy concurrent load — many

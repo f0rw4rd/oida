@@ -21,11 +21,11 @@ import time
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from ...connection import NetworkConnection
-from ...utils.protocol_helpers import ConnectionHelper
-from ...utils.lazy_import import lazy_import
-from .segments import HL7SegmentBuilder, HL7SegmentParser
-from .utils import MLLP_END, MLLP_START, extract_ack_code, strip_mllp, wrap_mllp  # noqa: F401 (MLLP_START re-exported)
+from oida.connection import NetworkConnection
+from oida.utils.protocol_helpers import ConnectionHelper
+from oida.utils.lazy_import import lazy_import
+from oida.protocols.hl7.segments import HL7SegmentBuilder, HL7SegmentParser
+from oida.protocols.hl7.utils import MLLP_END, MLLP_START, extract_ack_code, strip_mllp, wrap_mllp  # noqa: F401 (MLLP_START re-exported)
 
 _hl7apy = lazy_import("hl7apy", "HL7", install_hint="pip install oida-ics[hl7]")
 
@@ -241,7 +241,7 @@ HL7APY_AVAILABLE = _hl7apy.is_available
 
 # Import all mixins (these also require hl7apy)
 if HL7APY_AVAILABLE:
-    from .mixins import (
+    from oida.protocols.hl7.mixins import (
         MessageMixin,
         QueryMixin,
         PharmacyMixin,
@@ -838,7 +838,7 @@ class hl7(
             result_label: Human-readable label for the result type (e.g., "patient(s)")
             security_finding: Optional security finding dict to add if items found
         """
-        from ...utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not items:
             self.logger.display(f"  No {result_label} found in response")
@@ -967,7 +967,7 @@ class hl7(
 
     def _export_results(self):
         """Export collected data using central export_data() utility"""
-        from ...utils.export_utils import export_data
+        from oida.utils.export_utils import export_data
 
         output_dir = getattr(self.args, "output", None)
         if not output_dir:

@@ -4,10 +4,10 @@
 
 from typing import Any, Optional
 
-from ...connection import NetworkConnection
-from ...utils.lazy_import import lazy_import
+from oida.connection import NetworkConnection
+from oida.utils.lazy_import import lazy_import
 
-from .scanner import TASE2Scanner
+from oida.protocols.tase2.scanner import TASE2Scanner
 
 _pyiec61850_tase2 = lazy_import(
     "pyiec61850.tase2", "TASE.2", install_hint="pip install oida-ics[tase2]"

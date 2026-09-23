@@ -13,14 +13,10 @@ Based on BruteShark's FileExtractingModule approach.
 
 from typing import Any, Dict, List, Optional, Tuple
 
-from .base import PassiveListenerBase
-from ...shared.file_carving_common import (
-    ExtractedFile,
-    FileCarvingMixin,
-    StreamBuffer,
-)
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.protocols.discovery.base import PassiveListenerBase
+from oida.shared.file_carving_common import ExtractedFile, FileCarvingMixin, StreamBuffer
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
 _scapy_all = lazy_import("scapy.all", "discovery")
 

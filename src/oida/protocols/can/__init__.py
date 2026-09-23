@@ -10,10 +10,10 @@ Dependency: python-can >= 4.0.0
 """
 
 # Re-export the NXC-style connection class
-from .cli_runner import can
+from oida.protocols.can.cli_runner import can
 
 # Re-export constants and data structures used by tests and external code
-from .constants import (
+from oida.protocols.can.constants import (
     CAN_BAUDRATES,
     CANOPEN_DEVICE_PROFILES,
     CANOPEN_NMT_STATES,
@@ -30,7 +30,7 @@ from .constants import (
 )
 
 # Re-export the Layer 1 scanner
-from .scanner import CANScanner
+from oida.protocols.can.scanner import CANScanner
 
 __all__ = [
     "CAN_BAUDRATES",

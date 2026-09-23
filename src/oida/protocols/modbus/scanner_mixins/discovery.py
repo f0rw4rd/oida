@@ -32,7 +32,7 @@ class ScannerDiscoveryMixin(_ScannerBase):
         Returns:
             dict: Map of active unit IDs to their info, or gateway detection result
         """
-        from ....utils import ProtocolParser, ProgressTracker
+        from oida.utils import ProtocolParser, ProgressTracker
 
         units = {}
         unit_range = ProtocolParser.parse_address_range(self.unit_range)
@@ -132,9 +132,9 @@ class ScannerDiscoveryMixin(_ScannerBase):
 
     def _test_function_codes(self, client: Any) -> Dict[str, Any]:
         """Test supported Modbus function codes"""
-        from ..scanner import GenericPDU, execute_pdu
-        from ..constants import FUNCTION_CODES
-        from ....utils import ProtocolParser, ProgressTracker
+        from oida.protocols.modbus.scanner import GenericPDU, execute_pdu
+        from oida.protocols.modbus.constants import FUNCTION_CODES
+        from oida.utils import ProtocolParser, ProgressTracker
 
         supported = {}
 

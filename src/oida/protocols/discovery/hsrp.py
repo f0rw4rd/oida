@@ -30,13 +30,9 @@ import struct
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from .base import PassiveListenerBase
-from .core import (
-    DiscoveredDevice,
-    is_valid_discovered_ip,
-    normalize_mac,
-)
-from ...shared.hsrp_constants import (  # noqa: F401 - re-exported
+from oida.protocols.discovery.base import PassiveListenerBase
+from oida.protocols.discovery.core import DiscoveredDevice, is_valid_discovered_ip, normalize_mac
+from oida.shared.hsrp_constants import (  # noqa: F401 - re-exported
     HSRP_OPCODES,
     HSRP_PORT,
     HSRP_V1_MULTICAST,
@@ -49,7 +45,7 @@ from ...shared.hsrp_constants import (  # noqa: F401 - re-exported
     HSRP_V2_TLV_NAMES,
     HSRP_V2_TLV_TEXT_AUTH,
 )
-from ...utils.ics_logger import get_module_logger
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 

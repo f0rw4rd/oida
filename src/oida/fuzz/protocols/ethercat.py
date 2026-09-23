@@ -42,10 +42,10 @@ from typing import List, Optional
 
 from boofuzz import Byte, Group, Request, Static, Word
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..monitors import BaseMonitor
-from ..primitives.dynamic import SmartBytes
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.monitors import BaseMonitor
+from oida.fuzz.primitives.dynamic import SmartBytes
 
 
 class EtherCATFuzzer(BaseFuzzer):

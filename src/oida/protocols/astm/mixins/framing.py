@@ -13,7 +13,7 @@ operation (e.g. the tail of an application-ack reply) are not discarded and
 cannot be misread as the reply to a later, unrelated handshake byte.
 """
 
-from ..records import ACK, CR, ENQ, EOT, ETB, ETX, LF, NAK, STX
+from oida.protocols.astm.records import ACK, CR, ENQ, EOT, ETB, ETX, LF, NAK, STX
 
 
 class FramingMixin:

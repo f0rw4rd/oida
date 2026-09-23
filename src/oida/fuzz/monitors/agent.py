@@ -21,7 +21,7 @@ drives recovery; the agent's own auto-restart then brings the target back.
 import socket
 from typing import Dict, Optional
 
-from .base import ProtocolMonitor
+from oida.fuzz.monitors.base import ProtocolMonitor
 
 AGENT_PROTOCOL_VERSION = 1
 

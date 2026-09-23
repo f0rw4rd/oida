@@ -4,7 +4,7 @@ import socket
 import time
 from typing import Optional
 
-from .base import ProtocolMonitor
+from oida.fuzz.monitors.base import ProtocolMonitor
 
 
 class HL7Monitor(ProtocolMonitor):

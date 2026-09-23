@@ -47,17 +47,14 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ._iec_common import (
+from oida.pcap._iec_common import (
     LINK_FUNC_PRI_TO_SEC,
     LINK_FUNC_SEC_TO_PRI,
     IecAsduValueMixin,
     parse_asdu_field,
 )
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import (
-    is_valid_discovered_ip,
-    lookup_mac_vendor,
-)
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 # IEC 103 ASDU Type IDs -- Monitor Direction
 ASDU_TYPE_MON = {

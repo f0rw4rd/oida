@@ -28,8 +28,13 @@ from typing import Any
 
 import pytest
 
-from .conftest import container_target, ensure_protocol_dep, flatten_surface, make_args
-from .surface import expected_for
+from tests.coverage.scanner.conftest import (
+    container_target,
+    ensure_protocol_dep,
+    flatten_surface,
+    make_args,
+)
+from tests.coverage.scanner.surface import expected_for
 
 REF_ROOT = pathlib.Path(__file__).resolve().parents[2].parent / "ref"
 

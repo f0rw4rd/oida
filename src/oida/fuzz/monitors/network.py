@@ -8,10 +8,10 @@ import time
 from typing import Optional
 
 
-from .base import ProtocolBaseline, ProtocolMonitor
-from ...utils.ics_logger import get_logger
-from ..core.session.commands import CommandRunner, RealCommandRunner
-from ..core.config import FuzzerConfig
+from oida.fuzz.monitors.base import ProtocolBaseline, ProtocolMonitor
+from oida.utils.ics_logger import get_logger
+from oida.fuzz.core.session.commands import CommandRunner, RealCommandRunner
+from oida.fuzz.core.config import FuzzerConfig
 
 
 class PingMonitor(ProtocolMonitor):

@@ -29,7 +29,7 @@ class TestConnectionCounters:
         b.close()
 
     def _conn(self, pair):
-        from src.oida.fuzz.core.connections.tcp import ResilientTCPConnection
+        from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
         conn = ResilientTCPConnection("127.0.0.1", 1, recv_timeout=0.3)
         conn._sock = pair[0]
@@ -94,8 +94,8 @@ class TestSessionAttribution:
     """TestCaseManager delta attribution + flush."""
 
     def _manager(self, tmp_path, conn):
-        from src.oida.fuzz.core.session.manager import TestCaseManager
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.session.manager import TestCaseManager
+        from oida.fuzz.core.config import FuzzerConfig
 
         class _F:
             pass
@@ -114,7 +114,7 @@ class TestSessionAttribution:
             conn.effectiveness[k] += v
 
     def test_delta_attribution_and_flush(self, tmp_path):
-        from src.oida.fuzz.core.connections.tcp import ResilientTCPConnection
+        from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
         conn = ResilientTCPConnection("127.0.0.1", 1)
         conn._log = _FakeLog()
@@ -143,7 +143,7 @@ class TestSessionAttribution:
         assert data["NodeB"]["timeouts"] == 3
 
     def test_flush_skipped_without_data(self, tmp_path):
-        from src.oida.fuzz.core.connections.tcp import ResilientTCPConnection
+        from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
         conn = ResilientTCPConnection("127.0.0.1", 1)
         conn._log = _FakeLog()
@@ -152,8 +152,8 @@ class TestSessionAttribution:
         assert "effectiveness" not in mgr.database.get_all_metadata()
 
     def test_read_only_never_flushes(self, tmp_path):
-        from src.oida.fuzz.core.session.manager import TestCaseManager
-        from src.oida.fuzz.core.config import FuzzerConfig
+        from oida.fuzz.core.session.manager import TestCaseManager
+        from oida.fuzz.core.config import FuzzerConfig
 
         class _F:
             pass

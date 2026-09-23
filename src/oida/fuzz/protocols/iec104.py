@@ -43,23 +43,18 @@ from typing import List, Optional
 
 from boofuzz import Block, Byte, Bytes, DWord, Group, Request, Size, Static, Word
 
-from ..core.base_fuzzer import CommonState, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..core.stateful_fuzzer import StatefulFuzzer
-from ..core.auth import ProtocolAuthenticator
-from ..core.session import (
-    StateContext,
-    ResponseData,
-    SequenceConfig,
-    SequenceDirection,
-)
-from ..core.session.state_machine import (
+from oida.fuzz.core.base_fuzzer import CommonState, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.core.stateful_fuzzer import StatefulFuzzer
+from oida.fuzz.core.auth import ProtocolAuthenticator
+from oida.fuzz.core.session import StateContext, ResponseData, SequenceConfig, SequenceDirection
+from oida.fuzz.core.session.state_machine import (
     ProtocolState,
     StateMachine,
     StateType,
     TransitionRule,
 )
-from ..primitives.dynamic import SmartBytes, SmartString, StringContext
+from oida.fuzz.primitives.dynamic import SmartBytes, SmartString, StringContext
 
 
 class APCI_Types(IntEnum):
@@ -1152,7 +1147,7 @@ class IEC104Fuzzer(StatefulFuzzer):
         Returns:
             List of monitor instances for IEC 104 service health checking
         """
-        from ..monitors import IEC104Monitor
+        from oida.fuzz.monitors import IEC104Monitor
 
         # Create IEC 104 TESTFR monitor
         # Lower failure_threshold to detect crashes faster

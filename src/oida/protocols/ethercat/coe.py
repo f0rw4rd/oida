@@ -11,7 +11,7 @@ License: AGPL-3.0-or-later
 
 from typing import Dict, List, Tuple
 
-from ..can.constants import CANOPEN_PDO_ENTRIES
+from oida.protocols.can.constants import CANOPEN_PDO_ENTRIES
 
 # ---------------------------------------------------------------------------
 # AL (Application Layer) States  — ETG.1000

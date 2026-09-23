@@ -12,7 +12,7 @@ from collections import Counter
 from datetime import datetime as dt
 from typing import TYPE_CHECKING
 
-from ..cli_runner import (
+from oida.protocols.dicom.cli_runner import (
     DEFAULT_AET_WORDLIST,
     _build_dicom_tls_args,
     _get_ae,
@@ -20,7 +20,7 @@ from ..cli_runner import (
     _new_dataset,
     _sop,
 )
-from ....utils.platform_compat import _pkg_root
+from oida.utils.platform_compat import _pkg_root
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -67,7 +67,7 @@ class EnumerationMixin(_ScannerBase):
             self.logger.display(f"Using {len(aet_list)} common vendor AE Titles")
         elif wordlist_file:
             # Custom wordlist file from --ae-wordlist or --aet-brute FILE
-            from ....utils.login_scanner import _load_file_lines, format_wordlist_source
+            from oida.utils.login_scanner import _load_file_lines, format_wordlist_source
 
             self.logger.display(
                 f"Loading AET wordlist from: {format_wordlist_source(wordlist_file)}"
@@ -88,7 +88,7 @@ class EnumerationMixin(_ScannerBase):
             wordlist_path = _pkg_root() / "data" / "dicom" / "aet_wordlist.txt"
             if wordlist_path.exists():
                 try:
-                    from ....utils.login_scanner import _load_file_lines
+                    from oida.utils.login_scanner import _load_file_lines
 
                     aet_list = _load_file_lines(str(wordlist_path))
                     self.logger.display(f"Loaded {len(aet_list)} AE Titles from wordlist")

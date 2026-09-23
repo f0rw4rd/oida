@@ -7,7 +7,7 @@ Provides credential testing, RBAC analysis, and brute force functionality.
 import asyncio
 from typing import Any, Dict
 
-from ..helpers import _get_client_class, ua
+from oida.protocols.opcua.helpers import _get_client_class, ua
 
 
 class CredentialsMixin:
@@ -326,7 +326,7 @@ class CredentialsMixin:
                         )
 
         # Export RBAC results
-        from ....utils.export_utils import export_data
+        from oida.utils.export_utils import export_data
 
         output_dir = getattr(self.args, "output", None)
         fmt = getattr(self.args, "format", "console") if output_dir else "console"

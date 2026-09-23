@@ -8,11 +8,11 @@ import time
 from boofuzz import TCPSocketConnection, SSLSocketConnection, UDPSocketConnection
 from boofuzz import exception as boofuzz_exception
 
-from .base import ConnectionFactory
-from ....utils.ics_logger import get_logger
-from .raw_socket import RawSocketConnection
-from .serial import SerialConnection, parse_serial_target
-from ..config import ProtocolType
+from oida.fuzz.core.connections.base import ConnectionFactory
+from oida.utils.ics_logger import get_logger
+from oida.fuzz.core.connections.raw_socket import RawSocketConnection
+from oida.fuzz.core.connections.serial import SerialConnection, parse_serial_target
+from oida.fuzz.core.config import ProtocolType
 
 import logging
 
@@ -861,7 +861,7 @@ class RealConnectionFactory(ConnectionFactory):
                 # Using bind=('0.0.0.0', 0) lets the OS assign an ephemeral port.
                 # CountingUDPConnection = boofuzz's UDP + effectiveness counters
                 # + reply-expectation hooks (same rationale as the TCP default).
-                from .udp import CountingUDPConnection
+                from oida.fuzz.core.connections.udp import CountingUDPConnection
 
                 return CountingUDPConnection(
                     config.target_ip, config.target_port, bind=("0.0.0.0", 0), **sock_kw

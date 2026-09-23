@@ -190,7 +190,7 @@ import socket
 
 import pytest
 
-from .conftest import MOCK_HOST
+from tests.integration.conftest import MOCK_HOST
 
 pytestmark = [pytest.mark.tase2, pytest.mark.xdist_group("tase2_service")]
 

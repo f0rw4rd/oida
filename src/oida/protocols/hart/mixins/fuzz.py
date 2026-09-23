@@ -28,7 +28,7 @@ class FuzzMixin(_ScannerBase):
 
     def fuzz_commands(self, iterations: int = 20, command_list: List[int] = None) -> Dict[str, Any]:
         """Fuzz HART commands with malformed data."""
-        from ..hartip import HARTResponseCode, HARTIPTimeoutError
+        from oida.protocols.hart.hartip import HARTResponseCode, HARTIPTimeoutError
 
         if not self.client:
             return {"error": "Not connected"}
@@ -39,7 +39,7 @@ class FuzzMixin(_ScannerBase):
         # Prefer the type-aware mutation engine; if it is unavailable fall back
         # to the deterministic boundary payloads in _basic_fuzz.
         try:
-            from ....utils.fuzzer import fuzz
+            from oida.utils.fuzzer import fuzz
         except Exception:
             return self._basic_fuzz(iterations, command_list)
 
@@ -120,7 +120,7 @@ class FuzzMixin(_ScannerBase):
         available. ``iterations`` selects how many of the fixed payloads to
         send per command.
         """
-        from ..hartip import HARTIPTimeoutError
+        from oida.protocols.hart.hartip import HARTIPTimeoutError
 
         results: Dict[str, Any] = {
             "tested": 0,
@@ -240,7 +240,7 @@ class FuzzMixin(_ScannerBase):
 
     def reset_config_flag(self) -> bool:
         """Reset configuration changed flag (Command 38)."""
-        from ..hartip import HARTCommand
+        from oida.protocols.hart.hartip import HARTCommand
 
         if not self.client:
             return False
@@ -254,7 +254,7 @@ class FuzzMixin(_ScannerBase):
 
     def perform_master_reset(self) -> bool:
         """Perform master reset (Command 42). WARNING: Resets to factory defaults."""
-        from ..hartip import HARTCommand
+        from oida.protocols.hart.hartip import HARTCommand
 
         if not self.client:
             return False
@@ -275,7 +275,7 @@ class FuzzMixin(_ScannerBase):
 
     def send_raw_command(self, command: int, data: bytes = b"") -> Dict[str, Any]:
         """Send raw HART command with optional data payload."""
-        from ..hartip import HARTResponseCode
+        from oida.protocols.hart.hartip import HARTResponseCode
 
         if not self.client:
             return {"success": False, "error": "Not connected"}

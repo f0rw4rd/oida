@@ -9,12 +9,8 @@ from typing import Any, Dict, TYPE_CHECKING
 if TYPE_CHECKING:
     from xknx import XKNX
 
-from ..constants import _xknx_cls  # noqa: E402
-from ..data import (
-    get_vendor_name,
-    normalize_descriptor,
-    parse_bcu_type,
-)
+from oida.protocols.knx.constants import _xknx_cls  # noqa: E402
+from oida.protocols.knx.data import get_vendor_name, normalize_descriptor, parse_bcu_type
 
 
 class DeviceInfoMixin:

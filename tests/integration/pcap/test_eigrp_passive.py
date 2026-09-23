@@ -6,7 +6,12 @@ in EK mode from real-world pcap fixtures.  Organized by T1 gap field.
 
 import pytest
 
-from .conftest import _load_packets, _pcap_path, _run_listener_test, _skip_unless_pyshark
+from tests.integration.pcap.conftest import (
+    _load_packets,
+    _pcap_path,
+    _run_listener_test,
+    _skip_unless_pyshark,
+)
 
 pytestmark = [pytest.mark.integration]
 

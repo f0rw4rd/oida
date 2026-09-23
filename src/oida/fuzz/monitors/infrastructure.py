@@ -4,7 +4,7 @@ import socket
 import struct
 from typing import Optional
 
-from .base import ProtocolMonitor
+from oida.fuzz.monitors.base import ProtocolMonitor
 
 # Module-level stdlib logger removed in §−1 cosmetic sweep; helpers
 # now use self.logger (the NXC-style ICSLogger provided by ProtocolMonitor).

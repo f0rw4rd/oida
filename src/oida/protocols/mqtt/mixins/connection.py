@@ -8,8 +8,8 @@ connection attempts, and protocol version enumeration.
 import time
 from typing import Any, Dict, Tuple
 
-from .. import scanner as _scanner_mod
-from ....utils.socket_helpers import build_tls_context, check_tls_certificate
+from oida.protocols.mqtt import scanner as _scanner_mod
+from oida.utils.socket_helpers import build_tls_context, check_tls_certificate
 
 import logging
 
@@ -21,7 +21,7 @@ class ConnectionMixin:
 
     def _check_tls_certificate(self, client: Any) -> None:
         """Check TLS certificate for security issues after handshake completes."""
-        from ....utils.security_findings import display_cert_info
+        from oida.utils.security_findings import display_cert_info
 
         cert_der = None
         try:

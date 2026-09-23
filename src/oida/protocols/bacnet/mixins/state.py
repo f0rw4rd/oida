@@ -9,7 +9,7 @@ import json
 import yaml
 from datetime import datetime
 from pathlib import Path
-from ..constants import CONTROL_POINT_TYPES
+from oida.protocols.bacnet.constants import CONTROL_POINT_TYPES
 
 
 class StateMixin:
@@ -221,7 +221,7 @@ class StateMixin:
         standard ``print_table`` exporter (terminal-width aware, same look as
         every other protocol's tabular output).
         """
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         headers = ["Name", "Type", "Instance", "Present Value", "Description", "Status"]
 

@@ -20,7 +20,7 @@ class TestSeedLoaderFromDirectory:
 
     def test_load_from_directory(self):
         """Seeds are loaded from directory."""
-        from src.oida.fuzz.core.mutation.radamsa import SeedLoader
+        from oida.fuzz.core.mutation.radamsa import SeedLoader
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create seed files
@@ -33,7 +33,7 @@ class TestSeedLoaderFromDirectory:
 
     def test_load_from_directory_skips_empty(self):
         """Empty files are skipped."""
-        from src.oida.fuzz.core.mutation.radamsa import SeedLoader
+        from oida.fuzz.core.mutation.radamsa import SeedLoader
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create one non-empty and one empty file
@@ -47,14 +47,14 @@ class TestSeedLoaderFromDirectory:
 
     def test_load_from_directory_raises_not_found(self):
         """FileNotFoundError raised for missing directory."""
-        from src.oida.fuzz.core.mutation.radamsa import SeedLoader
+        from oida.fuzz.core.mutation.radamsa import SeedLoader
 
         with pytest.raises(FileNotFoundError):
             SeedLoader.from_directory("/nonexistent/path")
 
     def test_load_from_directory_raises_not_dir(self):
         """NotADirectoryError raised for file path."""
-        from src.oida.fuzz.core.mutation.radamsa import SeedLoader
+        from oida.fuzz.core.mutation.radamsa import SeedLoader
 
         with tempfile.NamedTemporaryFile() as tmpfile:
             with pytest.raises(NotADirectoryError):
@@ -66,7 +66,7 @@ class TestSeedLoaderFromFiles:
 
     def test_load_from_file_patterns(self):
         """Seeds are loaded from file patterns."""
-        from src.oida.fuzz.core.mutation.radamsa import SeedLoader
+        from oida.fuzz.core.mutation.radamsa import SeedLoader
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create seed files
@@ -80,7 +80,7 @@ class TestSeedLoaderFromFiles:
 
     def test_load_from_multiple_patterns(self):
         """Seeds are loaded from multiple patterns."""
-        from src.oida.fuzz.core.mutation.radamsa import SeedLoader
+        from oida.fuzz.core.mutation.radamsa import SeedLoader
 
         with tempfile.TemporaryDirectory() as tmpdir:
             # Create .bin and .txt files
@@ -98,7 +98,7 @@ class TestSeedLoaderFromFiles:
 
     def test_load_from_files_handles_no_match(self):
         """No error for patterns with no matches."""
-        from src.oida.fuzz.core.mutation.radamsa import SeedLoader
+        from oida.fuzz.core.mutation.radamsa import SeedLoader
 
         seeds = SeedLoader.from_files(["/nonexistent/*.xyz"])
         assert seeds == []
@@ -109,7 +109,7 @@ class TestSeedLoaderFromStrings:
 
     def test_convert_strings_to_bytes(self):
         """Strings are converted to bytes."""
-        from src.oida.fuzz.core.mutation.radamsa import SeedLoader
+        from oida.fuzz.core.mutation.radamsa import SeedLoader
 
         strings = ["hello", "world", "test"]
         seeds = SeedLoader.from_strings(strings)
@@ -117,7 +117,7 @@ class TestSeedLoaderFromStrings:
 
     def test_preserve_bytes(self):
         """Bytes are preserved unchanged."""
-        from src.oida.fuzz.core.mutation.radamsa import SeedLoader
+        from oida.fuzz.core.mutation.radamsa import SeedLoader
 
         mixed = ["string", b"bytes"]
         seeds = SeedLoader.from_strings(mixed)

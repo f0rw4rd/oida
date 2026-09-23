@@ -61,8 +61,8 @@ class EnumerationMixin(_ScannerBase):
 
     def detect_wirelesshart(self, device_info=None, client=None) -> Dict[str, Any]:
         """Detect WirelessHART capabilities and network information."""
-        from ..scanner import PhysicalSignaling
-        from ..hartip import HARTCommand, unpack_ascii
+        from oida.protocols.hart.scanner import PhysicalSignaling
+        from oida.protocols.hart.hartip import HARTCommand, unpack_ascii
 
         client = client or self.client
         if not client:
@@ -162,7 +162,7 @@ class EnumerationMixin(_ScannerBase):
 
     def list_sub_devices(self, client=None) -> List[Dict[str, Any]]:
         """List all sub-devices connected to a WirelessHART gateway."""
-        from ..hartip import (
+        from oida.protocols.hart.hartip import (
             HARTCommand,
             HARTIPTimeoutError,
             get_vendor_name,
@@ -249,8 +249,8 @@ class EnumerationMixin(_ScannerBase):
         self, start: int = 0, end: int = 15, threads: int = 5, timeout: float = 2.0
     ) -> List[Dict[str, Any]]:
         """Scan for devices on multi-drop network."""
-        from ..hartip import HARTIPClient, get_vendor_name, get_device_type_name
-        from ....utils.protocol_helpers import ProgressTracker
+        from oida.protocols.hart.hartip import HARTIPClient, get_vendor_name, get_device_type_name
+        from oida.utils.protocol_helpers import ProgressTracker
 
         results = []
         addresses = list(range(max(0, start), min(16, end + 1)))
@@ -326,8 +326,8 @@ class EnumerationMixin(_ScannerBase):
         skipped unless --confirm is set, so a plain ``--enumerate-commands`` /
         ``--full`` run cannot alter or factory-reset live instrumentation.
         """
-        from ..hartip import HARTResponseCode, HARTIPTimeoutError
-        from ....utils.protocol_helpers import ProgressTracker
+        from oida.protocols.hart.hartip import HARTResponseCode, HARTIPTimeoutError
+        from oida.utils.protocol_helpers import ProgressTracker
 
         client = self.client
         if not client:

@@ -17,10 +17,10 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Dict, Optional
 
-from .core import DiscoveredDevice
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
-from ...utils.rate_limiter import rate_limit
+from oida.protocols.discovery.core import DiscoveredDevice
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
+from oida.utils.rate_limiter import rate_limit
 
 _scapy_all = lazy_import("scapy.all", "discovery")
 
@@ -88,7 +88,7 @@ class PingEnrichScanner:
 
     def _ping_host(self, ip: str) -> Optional[float]:
         """Ping a single host, return latency in ms or None if failed."""
-        from ...utils.platform_compat import build_ping_command
+        from oida.utils.platform_compat import build_ping_command
 
         try:
             is_ipv6 = ":" in ip

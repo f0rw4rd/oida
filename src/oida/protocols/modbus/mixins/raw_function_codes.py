@@ -174,6 +174,6 @@ class RawFCMixin(_ScannerBase):
 
     def _parse_fc_range(self, range_str: str) -> list:
         """Parse function code range string (central parser)."""
-        from ....utils import ProtocolParser
+        from oida.utils import ProtocolParser
 
         return ProtocolParser.parse_address_range(range_str)

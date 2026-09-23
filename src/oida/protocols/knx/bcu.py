@@ -6,9 +6,9 @@ including validation, file loading, and range generation.
 
 from typing import List
 
-from ...utils import ics_logger as module
-from .helpers import validate_bcu_key
-from .constants import MAX_KEY_RANGE
+from oida.utils import ics_logger as module
+from oida.protocols.knx.helpers import validate_bcu_key
+from oida.protocols.knx.constants import MAX_KEY_RANGE
 
 
 def load_keys_from_file(filepath: str) -> List[str]:

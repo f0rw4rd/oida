@@ -4,7 +4,7 @@ Argument parser definition for CoAP protocol
 This module registers CoAP-specific command-line arguments.
 """
 
-from ...utils.proto_args_factory import (
+from oida.utils.proto_args_factory import (
     create_protocol_parser,
     add_target_argument,
     add_network_options,

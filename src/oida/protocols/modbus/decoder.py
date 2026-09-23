@@ -26,9 +26,9 @@ import json
 import os
 import re
 
-from ...utils.common_types import parse_bool
-from ...utils.lazy_import import lazy_import
-from ...utils.ics_logger import get_module_logger
+from oida.utils.common_types import parse_bool
+from oida.utils.lazy_import import lazy_import
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -905,7 +905,7 @@ def load_register_map(map_name: str) -> Optional[Dict[str, Any]]:
             return json.load(f)
 
     # Look in standard locations (platform-aware)
-    from ...utils.platform_compat import get_config_search_paths
+    from oida.utils.platform_compat import get_config_search_paths
 
     search_paths = [
         Path(__file__).parent / "register_maps",

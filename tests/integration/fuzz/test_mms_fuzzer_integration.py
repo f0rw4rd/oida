@@ -19,7 +19,7 @@ from unittest.mock import patch, MagicMock
 
 from tests.service_gate import require_import
 
-from .conftest import require_docker_mock
+from tests.integration.fuzz.conftest import require_docker_mock
 
 # Mark all tests in this module. Shares the capped libiec61850 MMS server
 # (port 102) with test_mms_integration.py; same xdist_group so all access to

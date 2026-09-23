@@ -26,8 +26,8 @@ Supports:
 - Security statistics (Group 121)
 """
 
-from .scanner import DNP3Scanner, protocol_options
-from .constants import KNOWN_ATTRIBUTES
-from .cli_runner import dnp3
+from oida.protocols.dnp3.scanner import DNP3Scanner, protocol_options
+from oida.protocols.dnp3.constants import KNOWN_ATTRIBUTES
+from oida.protocols.dnp3.cli_runner import dnp3
 
 __all__ = ["dnp3", "DNP3Scanner", "KNOWN_ATTRIBUTES", "protocol_options"]

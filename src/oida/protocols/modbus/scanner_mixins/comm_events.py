@@ -30,7 +30,7 @@ class ScannerCommEventsMixin(_ScannerBase):
         Returns:
             dict: Event counter and log information
         """
-        from ..scanner import GenericPDU, execute_pdu
+        from oida.protocols.modbus.scanner import GenericPDU, execute_pdu
 
         events = {"counter": None, "log": None}
 

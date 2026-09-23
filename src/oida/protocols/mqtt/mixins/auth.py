@@ -9,7 +9,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict
 
-from ..scanner import DEFAULT_CREDENTIALS, DEFAULT_WORDLIST_PATHS
+from oida.protocols.mqtt.scanner import DEFAULT_CREDENTIALS, DEFAULT_WORDLIST_PATHS
 
 
 class AuthMixin:

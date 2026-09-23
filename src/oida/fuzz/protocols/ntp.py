@@ -24,10 +24,10 @@ from boofuzz import Block, Byte, DWord, Group, QWord, Request, Size, Word
 
 from typing import List
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..monitors import PingMonitor
-from ..primitives.dynamic import SmartString
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.monitors import PingMonitor
+from oida.fuzz.primitives.dynamic import SmartString
 
 
 class NTPFuzzer(BaseFuzzer):

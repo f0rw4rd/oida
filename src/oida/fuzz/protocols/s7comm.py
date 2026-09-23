@@ -39,10 +39,10 @@ from typing import List
 
 from boofuzz import Group, Request, Static
 
-from ..core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..monitors import SocketHealthMonitor
-from ..primitives.dynamic import SmartBytes
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.monitors import SocketHealthMonitor
+from oida.fuzz.primitives.dynamic import SmartBytes
 
 # A well-formed S7 ReadVar/WriteVar request item (ANY-pointer, 12 bytes):
 # 0x12 spec-type, 0x0a length, 0x10 syntax-id (S7ANY), 0x02 transport-size (byte),

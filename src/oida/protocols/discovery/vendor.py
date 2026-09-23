@@ -14,7 +14,7 @@ import time
 from datetime import datetime
 from typing import Any, Dict, Optional, Set
 
-from .core import (
+from oida.protocols.discovery.core import (
     DiscoveredDevice,
     create_udp_socket,
     get_all_broadcast_addresses,
@@ -22,8 +22,8 @@ from .core import (
     validate_timeout,
     validate_subnet,
 )
-from ...utils.rate_limiter import sendto
-from ...utils.ics_logger import get_module_logger
+from oida.utils.rate_limiter import sendto
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 

@@ -23,9 +23,9 @@ from typing import List, Optional, Tuple
 
 from boofuzz import Block, Byte, DWord, Group, QWord, Request, Size, Static, Word
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..monitors import BaseMonitor
-from ..primitives.dynamic import SmartString
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.monitors import BaseMonitor
+from oida.fuzz.primitives.dynamic import SmartString
 
 import hpack
 
@@ -1814,11 +1814,11 @@ class HTTP2Fuzzer(BaseFuzzer):
             return monitors
 
         if self.use_ssl:
-            from ..monitors import CustomSSLSocketMonitor
+            from oida.fuzz.monitors import CustomSSLSocketMonitor
 
             monitors.append(CustomSSLSocketMonitor(self.config))
         else:
-            from ..monitors import H2CSocketMonitor
+            from oida.fuzz.monitors import H2CSocketMonitor
 
             monitors.append(H2CSocketMonitor(self.config.target_ip, self.config.target_port))
 

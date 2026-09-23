@@ -99,7 +99,7 @@ class SCMixin:
 
     def _sc_proto_flow(self):
         """BACnet/SC scanning workflow (SC transport, inherited actions)."""
-        from ..constants import _load_bacpypes3
+        from oida.protocols.bacnet.constants import _load_bacpypes3
 
         _load_bacpypes3()
         self._apply_shortcuts()
@@ -135,9 +135,9 @@ class SCMixin:
 
     async def _async_sc_scan(self):
         """Build the SC app, run automatic TLS checks, dispatch inherited actions."""
-        from ..constants import _load_bacpypes3
-        from ..sc_link import SCConnection
-        from .. import sc_tls
+        from oida.protocols.bacnet.constants import _load_bacpypes3
+        from oida.protocols.bacnet.sc_link import SCConnection
+        from oida.protocols.bacnet import sc_tls
 
         timeout = getattr(self.args, "timeout", 10.0) or 10.0
         device_id = getattr(self.args, "device_id", None)
@@ -259,7 +259,7 @@ class SCMixin:
 
         from websockets.exceptions import InvalidHandshake
 
-        from ..sc_link import SCConnection
+        from oida.protocols.bacnet.sc_link import SCConnection
 
         last_exc = None
         for attempt in range(3):
@@ -293,7 +293,7 @@ class SCMixin:
     async def _probe_mutual_auth(self, uri, use_hub):
         """A device/hub that accepts a missing or rogue client cert is broken."""
 
-        from .. import sc_tls
+        from oida.protocols.bacnet import sc_tls
 
         timeout = getattr(self.args, "timeout", 6.0) or 6.0
 
@@ -335,7 +335,7 @@ class SCMixin:
         """A device that completes a TLS 1.2 handshake violates the SC mandate."""
         import ssl as _ssl
 
-        from .. import sc_tls
+        from oida.protocols.bacnet import sc_tls
 
         timeout = getattr(self.args, "timeout", 6.0) or 6.0
         ctx12 = sc_tls.build_client_context(

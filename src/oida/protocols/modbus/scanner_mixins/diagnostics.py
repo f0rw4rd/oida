@@ -204,7 +204,7 @@ class ScannerDiagnosticsMixin(_ScannerBase):
 
     def _diagnostic_read_counters(self, client: Any) -> Dict[int, Dict[str, Any]]:
         """Read all diagnostic counters (subfunctions 0x0B-0x12)"""
-        from ..constants import DIAGNOSTIC_SUBFUNCTIONS
+        from oida.protocols.modbus.constants import DIAGNOSTIC_SUBFUNCTIONS
 
         counters = {}
         # Map subfunctions to pymodbus client methods

@@ -25,9 +25,9 @@ from datetime import datetime
 from typing import Any, Dict, Iterator, List, Optional, Set, Tuple, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from ..protocols.discovery.core import DiscoveredDevice
+    from oida.protocols.discovery.core import DiscoveredDevice
 
-from ..utils.ics_logger import get_module_logger
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -130,7 +130,7 @@ class PySharkListenerBase(ABC):
         timeout: int = 30,
         nxc_logger: Optional[Any] = None,
     ):
-        from ..protocols.discovery.core import validate_interface, validate_timeout
+        from oida.protocols.discovery.core import validate_interface, validate_timeout
 
         self.interface = validate_interface(interface)
         self.timeout = validate_timeout(timeout)
@@ -504,7 +504,7 @@ class PySharkListenerBase(ABC):
         """
         try:
             if hasattr(packet, "eth"):
-                from ..protocols.discovery.core import normalize_mac
+                from oida.protocols.discovery.core import normalize_mac
 
                 raw_src = str(self._resolve_value(packet.eth.src, ""))
                 raw_dst = str(self._resolve_value(packet.eth.dst, ""))
@@ -1095,7 +1095,7 @@ class PySharkListenerBase(ABC):
             Tuple of (device, is_new). On existing devices, last_seen is
             updated automatically.
         """
-        from ..protocols.discovery.core import DiscoveredDevice
+        from oida.protocols.discovery.core import DiscoveredDevice
 
         with self._lock:
             if key in self.discovered_devices:
@@ -1143,7 +1143,7 @@ class PySharkListenerBase(ABC):
         Returns ``(None, False)`` when the IP is invalid (broadcast, loopback,
         multicast, etc.).
         """
-        from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
+        from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
         if not is_valid_discovered_ip(ip):
             return None, False
@@ -1186,7 +1186,7 @@ class PySharkListenerBase(ABC):
         if not getattr(self, "_x509", False):
             return None
         try:
-            from ..utils.security_findings import display_cert_info
+            from oida.utils.security_findings import display_cert_info
 
             return display_cert_info(
                 logger=self.logger,

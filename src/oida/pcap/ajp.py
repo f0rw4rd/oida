@@ -40,8 +40,8 @@ tshark fields used (requires decode_as tcp.port==8009,ajp13):
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 # AJP13 packet type codes (ajp13.code)
 AJP_FORWARD_REQUEST = "2"

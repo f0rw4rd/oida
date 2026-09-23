@@ -7,7 +7,7 @@ Provides resource search and display functionality for all FHIR resource types.
 import os
 from typing import Any, Dict, List
 
-from ..helpers import (
+from oida.protocols.fhir.helpers import (
     allergyintolerance,
     condition,
     device,
@@ -24,7 +24,7 @@ from ..helpers import (
     procedure,
     servicerequest,
 )
-from ..resources import FHIRResourceParser
+from oida.protocols.fhir.resources import FHIRResourceParser
 
 # Above this many patient records returned for an *unauthenticated* request we
 # flag likely unrestricted access. Only meaningful when no credentials/token
@@ -183,7 +183,7 @@ class SearchMixin:
 
     def _display_patient_results(self, patients: List[Dict]):
         """Display patient search results in table format"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not patients:
             self.logger.display("  No patients found")
@@ -259,7 +259,7 @@ class SearchMixin:
 
     def _display_observation_results(self, observations: List[Dict]):
         """Display observation search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not observations:
             return
@@ -314,7 +314,7 @@ class SearchMixin:
 
     def _display_medication_results(self, medications: List[Dict]):
         """Display medication search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not medications:
             return
@@ -368,7 +368,7 @@ class SearchMixin:
 
     def _display_condition_results(self, conditions: List[Dict]):
         """Display condition search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not conditions:
             return
@@ -422,7 +422,7 @@ class SearchMixin:
 
     def _display_encounter_results(self, encounters: List[Dict]):
         """Display encounter search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not encounters:
             return
@@ -476,7 +476,7 @@ class SearchMixin:
 
     def _display_procedure_results(self, procedures: List[Dict]):
         """Display procedure search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not procedures:
             return
@@ -529,7 +529,7 @@ class SearchMixin:
 
     def _display_allergy_results(self, allergies: List[Dict]):
         """Display allergy search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not allergies:
             return
@@ -582,7 +582,7 @@ class SearchMixin:
 
     def _display_immunization_results(self, immunizations: List[Dict]):
         """Display immunization search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not immunizations:
             return
@@ -635,7 +635,7 @@ class SearchMixin:
 
     def _display_diagnostic_results(self, reports: List[Dict]):
         """Display diagnostic report search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not reports:
             return
@@ -689,7 +689,7 @@ class SearchMixin:
 
     def _display_document_results(self, documents: List[Dict]):
         """Display document search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not documents:
             return
@@ -793,7 +793,7 @@ class SearchMixin:
 
     def _display_practitioner_results(self, practitioners: List[Dict]):
         """Display practitioner search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not practitioners:
             return
@@ -854,7 +854,7 @@ class SearchMixin:
 
     def _display_organization_results(self, organizations: List[Dict]):
         """Display organization search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not organizations:
             return
@@ -906,7 +906,7 @@ class SearchMixin:
 
     def _display_location_results(self, locations: List[Dict]):
         """Display location search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not locations:
             return
@@ -959,7 +959,7 @@ class SearchMixin:
 
     def _display_device_results(self, devices: List[Dict]):
         """Display device search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not devices:
             return
@@ -1013,7 +1013,7 @@ class SearchMixin:
 
     def _display_order_results(self, orders: List[Dict]):
         """Display order search results"""
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         if not orders:
             return

@@ -18,7 +18,7 @@ Reference vector: OID 2.999.1 -> combined = 40*2+999 = 1079 = 0x88 0x37
 body bytes 88 37 01 -> TLV 06 03 88 37 01.
 """
 
-from src.oida.fuzz.core.codecs.asn1 import ASN1Builder
+from oida.fuzz.core.codecs.asn1 import ASN1Builder
 
 
 class TestObjectIdentifierFirstArcOverflow:

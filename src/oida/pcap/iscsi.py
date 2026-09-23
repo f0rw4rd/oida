@@ -35,9 +35,9 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ._iscsi_msrpc_common import RecordInteractionMixin
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
+from oida.pcap._iscsi_msrpc_common import RecordInteractionMixin
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 # iSCSI opcode mapping.
 # Values are the 6-bit opcode (BHS byte 0 masked with 0x3f), which is exactly

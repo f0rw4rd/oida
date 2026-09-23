@@ -7,7 +7,7 @@ Handles property read/write operations and present value reading.
 import asyncio
 from typing import Any, Dict, Optional
 
-from ..constants import (
+from oida.protocols.bacnet.constants import (
     _load_bacpypes3,
     CONTROL_POINT_TYPES,
     OBJECT_TYPE_NAMES,
@@ -15,7 +15,7 @@ from ..constants import (
     resolve_object_type,
     resolve_property_name,
 )
-from .discovery import _unpack_bacpypes3_common_types
+from oida.protocols.bacnet.mixins.discovery import _unpack_bacpypes3_common_types
 
 
 class PropertiesMixin:

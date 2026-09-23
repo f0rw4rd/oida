@@ -11,7 +11,7 @@ Tests cover:
 
 import pytest
 
-from .conftest import _run_listener_test
+from tests.integration.pcap.conftest import _run_listener_test
 
 pytestmark = [pytest.mark.integration]
 

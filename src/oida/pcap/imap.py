@@ -52,17 +52,15 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ._imap_smtp_common import (
+from oida.pcap._imap_smtp_common import (
     build_credential_entry,
     credentials_summary,
     hashcat_hashes,
     is_new_credential,
     is_new_hash,
 )
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import (
-    is_valid_discovered_ip,
-)
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip
 
 
 @dataclass

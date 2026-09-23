@@ -21,10 +21,10 @@ from typing import List
 from boofuzz import Block, Byte, Bytes, Checksum, DWord, Group, Request, Static, Word
 from crc import Calculator, Crc16
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import TCPSocketConnection
-from ..monitors import SocketHealthMonitor
-from ..primitives.dynamic import SmartString, StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.connections import TCPSocketConnection
+from oida.fuzz.monitors import SocketHealthMonitor
+from oida.fuzz.primitives.dynamic import SmartString, StringContext
 
 
 class DNP3FunctionCodes:

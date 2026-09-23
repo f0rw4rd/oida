@@ -20,7 +20,7 @@ def _udp_pair_conn(port):
     UDP has no socketpair; use a bound loopback receiver socket instead and
     point the connection at it.
     """
-    from src.oida.fuzz.core.connections.udp import CountingUDPConnection
+    from oida.fuzz.core.connections.udp import CountingUDPConnection
 
     rx = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     rx.bind(("127.0.0.1", 0))
@@ -141,7 +141,7 @@ class TestUDPCounters:
             rx.close()
 
     def test_resync_without_socket_is_noop(self):
-        from src.oida.fuzz.core.connections.udp import CountingUDPConnection
+        from oida.fuzz.core.connections.udp import CountingUDPConnection
 
         conn = CountingUDPConnection("127.0.0.1", 1)
         # Never opened: _sock is absent/None, so resync_timeouts() must take
@@ -176,9 +176,9 @@ class TestUDPWiring:
     def test_udp_modules_use_counting_connection(self, module_name):
         import importlib
 
-        from src.oida.fuzz.core.connections.udp import CountingUDPConnection
+        from oida.fuzz.core.connections.udp import CountingUDPConnection
 
-        mod = importlib.import_module(f"src.oida.fuzz.protocols.{module_name}")
+        mod = importlib.import_module(f"oida.fuzz.protocols.{module_name}")
         # Module-level alias or function-local import; either way the name
         # resolves to the counting wrapper where it is used.
         cls = getattr(mod, "UDPSocketConnection", None)
@@ -191,34 +191,34 @@ class TestUDPWiring:
 
 class TestCoAPReplyPolicy:
     def test_con_get_expects_reply(self):
-        from src.oida.fuzz.protocols.coap import CoAPFuzzer
+        from oida.fuzz.protocols.coap import CoAPFuzzer
 
         assert CoAPFuzzer._reply_expected_for_payload(b"\x40\x01\x12\x34") is True
 
     def test_non_fires_and_forgets(self):
-        from src.oida.fuzz.protocols.coap import CoAPFuzzer
+        from oida.fuzz.protocols.coap import CoAPFuzzer
 
         assert CoAPFuzzer._reply_expected_for_payload(b"\x50\x01\x12\x34") is False
 
     def test_ack_and_rst_get_no_reply(self):
-        from src.oida.fuzz.protocols.coap import CoAPFuzzer
+        from oida.fuzz.protocols.coap import CoAPFuzzer
 
         assert CoAPFuzzer._reply_expected_for_payload(b"\x60\x40\x12\x34") is False
         assert CoAPFuzzer._reply_expected_for_payload(b"\x70\x00\x12\x34") is False
 
     def test_bad_version_conservatively_waits(self):
-        from src.oida.fuzz.protocols.coap import CoAPFuzzer
+        from oida.fuzz.protocols.coap import CoAPFuzzer
 
         assert CoAPFuzzer._reply_expected_for_payload(b"\x00\x01\x12\x34") is True
         assert CoAPFuzzer._reply_expected_for_payload(b"\xc0\x01\x12\x34") is True
 
     def test_empty_payload_waits(self):
-        from src.oida.fuzz.protocols.coap import CoAPFuzzer
+        from oida.fuzz.protocols.coap import CoAPFuzzer
 
         assert CoAPFuzzer._reply_expected_for_payload(b"") is True
 
     def test_coap_sets_policy_and_cap(self):
-        from src.oida.fuzz.protocols.coap import CoAPFuzzer
+        from oida.fuzz.protocols.coap import CoAPFuzzer
 
         assert CoAPFuzzer.reply_policy is not None
         assert CoAPFuzzer.reply_wait_cap == pytest.approx(0.15)
@@ -236,30 +236,30 @@ class TestSNMPReplyPolicy:
         return b"\x30" + bytes([len(msg_content)]) + msg_content
 
     def test_get_request_expects_reply(self):
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert SNMPv1Fuzzer._reply_expected_for_payload(self._pdu(0xA0)) is True
 
     def test_getnext_and_set_expect_reply(self):
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert SNMPv1Fuzzer._reply_expected_for_payload(self._pdu(0xA1)) is True
         assert SNMPv1Fuzzer._reply_expected_for_payload(self._pdu(0xA3)) is True
 
     def test_trap_fires_and_forgets(self):
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert SNMPv1Fuzzer._reply_expected_for_payload(self._pdu(0xA4)) is False
 
     def test_no_pdu_tag_conservatively_waits(self):
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert SNMPv1Fuzzer._reply_expected_for_payload(b"\x30\x0b") is True
         assert SNMPv1Fuzzer._reply_expected_for_payload(b"") is True
         assert SNMPv1Fuzzer._reply_expected_for_payload(b"\xff\xff\xff") is True
 
     def test_snmp_sets_policy_and_cap(self):
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert SNMPv1Fuzzer.reply_policy is not None
         assert SNMPv1Fuzzer.reply_wait_cap == pytest.approx(0.15)
@@ -270,26 +270,26 @@ class TestSNMPReplyPolicy:
 
     def test_pdu_tag_byte_inside_community_is_not_the_pdu(self):
         """A 0xA4 byte in a fuzzed community must not read as a Trap."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert SNMPv1Fuzzer._reply_expected_for_payload(self._pdu(0xA0, b"\xa4evil")) is True
         assert SNMPv1Fuzzer._reply_expected_for_payload(self._pdu(0xA1, b"\xa4\xa4")) is True
 
     def test_trap_with_long_community_still_fires_and_forgets(self):
         """A community longer than any fixed scan window keeps Trap a Trap."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert SNMPv1Fuzzer._reply_expected_for_payload(self._pdu(0xA4, b"A" * 70)) is False
 
     def test_request_tag_byte_inside_community_does_not_unmask_trap(self):
         """The converse: a 0xA0 byte in the community of a real Trap."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert SNMPv1Fuzzer._reply_expected_for_payload(self._pdu(0xA4, b"\xa0x")) is False
 
     def test_long_form_outer_length_is_parsed(self):
         """BER long-form length on the outer SEQUENCE is walked, not rejected."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         inner = self._pdu(0xA4)[2:]  # drop short-form 0x30 <len>
         data = b"\x30\x81" + bytes([len(inner)]) + inner
@@ -297,7 +297,7 @@ class TestSNMPReplyPolicy:
 
     def test_over_declared_length_conservatively_waits(self):
         """A length claiming more bytes than exist is malformed -> wait."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
 
         assert SNMPv1Fuzzer._reply_expected_for_payload(b"\x30\x40\x02\x01\x00") is True
         assert SNMPv1Fuzzer._reply_expected_for_payload(b"\x30\x82\x00") is True

@@ -4,7 +4,7 @@ OPC UA Files Mixin
 Provides file transfer operations (read/write/dump) for OPC UA FileType nodes.
 """
 
-from ..helpers import ua
+from oida.protocols.opcua.helpers import ua
 
 # Default ceiling on the total bytes pulled from a server-advertised FileType
 # node, to bound memory growth when the server reports/streams an arbitrarily

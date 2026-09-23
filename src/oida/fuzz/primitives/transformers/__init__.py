@@ -56,10 +56,10 @@ __version__ = "1.0.0"
 __author__ = "f0rw4rd"
 
 # Base classes
-from .base import BaseTransformer, TransformerChain
+from oida.fuzz.primitives.transformers.base import BaseTransformer, TransformerChain
 
 # Encoding transformers
-from .encoding import (
+from oida.fuzz.primitives.transformers.encoding import (
     Base64Transformer,
     URLEncodeTransformer,
     HexTransformer,
@@ -69,7 +69,7 @@ from .encoding import (
 )
 
 # Authentication transformers
-from .authentication import (
+from oida.fuzz.primitives.transformers.authentication import (
     BasicAuthTransformer,
     BearerTokenTransformer,
     JWTTransformer,
@@ -77,7 +77,7 @@ from .authentication import (
 )
 
 # Compression transformers
-from .compression import (
+from oida.fuzz.primitives.transformers.compression import (
     GzipTransformer,
     DeflateTransformer,
     BrotliTransformer,

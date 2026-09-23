@@ -164,7 +164,7 @@ class ConnectionHelper:
         sock = ConnectionHelper.create_tcp_socket(host, port, timeout=timeout)
         try:
             if use_tls:
-                from .socket_helpers import build_tls_context
+                from oida.utils.socket_helpers import build_tls_context
 
                 ssl_context = build_tls_context(
                     {
@@ -184,7 +184,7 @@ class ConnectionHelper:
                 try:
                     cert_der = sock.getpeercert(binary_form=True)
                     if cert_der:
-                        from .security_findings import display_cert_info
+                        from oida.utils.security_findings import display_cert_info
 
                         display_cert_info(
                             logger=log,

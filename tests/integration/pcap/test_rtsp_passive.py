@@ -18,7 +18,7 @@ Tests cover:
 
 import pytest
 
-from .conftest import _run_listener_test
+from tests.integration.pcap.conftest import _run_listener_test
 
 pytestmark = [pytest.mark.integration]
 
@@ -149,7 +149,7 @@ class TestRTSPPassiveEK:
         Requires XML mode; EK mode does not expose Authorization as a
         named RTSP field.
         """
-        from .conftest import _ek_mode_available
+        from tests.integration.pcap.conftest import _ek_mode_available
 
         listener, devices, result = _run_listener_test(
             "rtsp",
@@ -172,7 +172,7 @@ class TestRTSPPassiveEK:
         Requires XML mode; EK mode does not expose Authorization as a
         named RTSP field.
         """
-        from .conftest import _ek_mode_available
+        from tests.integration.pcap.conftest import _ek_mode_available
 
         listener, devices, result = _run_listener_test(
             "rtsp",

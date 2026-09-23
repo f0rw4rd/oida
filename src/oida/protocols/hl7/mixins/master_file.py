@@ -12,8 +12,8 @@ from typing import Optional
 
 from hl7apy.core import Message
 
-from ..segments import HL7SegmentParser
-from ._helpers import ack_accepted, build_qrd, populate_msh
+from oida.protocols.hl7.segments import HL7SegmentParser
+from oida.protocols.hl7.mixins._helpers import ack_accepted, build_qrd, populate_msh
 
 
 class MasterFileMixin:

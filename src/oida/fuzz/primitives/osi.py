@@ -311,7 +311,7 @@ class PresentationContextDefinition:
             SEQUENCE { INTEGER context-id, OID abstract-syntax,
             SEQUENCE OF { OID transfer-syntax } }
         """
-        from .asn1 import (
+        from oida.fuzz.primitives.asn1 import (
             encode_ber_integer,
             encode_ber_object_identifier,
             encode_ber_sequence,
@@ -364,7 +364,7 @@ class PresentationCPType:
         Returns:
             Encoded CP-type PDU
         """
-        from .asn1 import (
+        from oida.fuzz.primitives.asn1 import (
             encode_ber_context_tag,
             encode_ber_sequence,
             encode_ber_set,
@@ -441,7 +441,7 @@ class ACSEAssociateRequest:
         Returns:
             Encoded AARQ APDU (APPLICATION 0 CONSTRUCTED)
         """
-        from .asn1 import (
+        from oida.fuzz.primitives.asn1 import (
             encode_ber_object_identifier,
             encode_ber_context_tag,
             encode_ber_integer,
@@ -539,7 +539,7 @@ class MMSStackBuilder:
         Returns:
             Complete packet: TPKT + COTP + Session GT+DT + Presentation + MMS
         """
-        from .asn1 import (
+        from oida.fuzz.primitives.asn1 import (
             encode_ber_integer,
             encode_ber_context_tag,
             encode_ber_sequence,

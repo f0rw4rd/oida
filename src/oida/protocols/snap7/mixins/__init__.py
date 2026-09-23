@@ -13,11 +13,11 @@ Mixins:
     - BlockOperationsMixin: Block ops, SZL, CPU control, datetime, audit, monitor
 """
 
-from .slot_scan import SlotScanMixin
-from .device_info import DeviceInfoMixin
-from .security import SecurityMixin
-from .memory import MemoryMixin
-from .block_operations import BlockOperationsMixin
+from oida.protocols.snap7.mixins.slot_scan import SlotScanMixin
+from oida.protocols.snap7.mixins.device_info import DeviceInfoMixin
+from oida.protocols.snap7.mixins.security import SecurityMixin
+from oida.protocols.snap7.mixins.memory import MemoryMixin
+from oida.protocols.snap7.mixins.block_operations import BlockOperationsMixin
 
 __all__ = [
     "SlotScanMixin",

@@ -145,7 +145,7 @@ _HTTP2_AVAILABLE = "http2" in PROTOCOL_FUZZERS
 # Protocol categories for discovery and filtering.
 # Categories live in _metadata.py so `oida fuzz list` can read them without
 # importing every fuzzer class.
-from ._metadata import (  # noqa: E402
+from oida.fuzz.protocols._metadata import (
     PROTOCOL_CATEGORIES as PROTOCOL_CATEGORIES,
     PROTOCOL_TO_CATEGORY as PROTOCOL_TO_CATEGORY,
 )

@@ -23,7 +23,7 @@ from pathlib import Path
 from typing import List, Any, Optional, Dict, Union
 from xml.etree import ElementTree as ET
 from xml.dom import minidom
-from .ics_logger import log, log_error as error
+from oida.utils.ics_logger import log, log_error as error
 
 
 # =============================================================================
@@ -228,7 +228,7 @@ def _safe_path(name: str, ext: str) -> Path:
     ``../`` (path traversal). All current callers pass static literals, so this
     is defence-in-depth at the framework file-output chokepoint.
     """
-    from .common_types import safe_output_path
+    from oida.utils.common_types import safe_output_path
 
     return Path(safe_output_path(f"{name}.{ext}", str(_config["output_dir"])))
 

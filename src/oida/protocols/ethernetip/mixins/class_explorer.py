@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, TYPE_CHECKING
 
-from ....utils.vendor_maps import ethernetip_wellknown_class_types as wellknown_class_types
+from oida.utils.vendor_maps import ethernetip_wellknown_class_types as wellknown_class_types
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -228,7 +228,7 @@ class ClassExplorerMixin(_ScannerBase):
         Returns: (result_dict, rows_list, instances_found)
             rows_list contains tuples: (class_id, inst, attr, data, desc, dtype, perm)
         """
-        from ..cip_definitions import parse_attribute, get_object_name
+        from oida.protocols.ethernetip.cip_definitions import parse_attribute, get_object_name
 
         class_name = get_object_name(class_id)
         result: Dict[str, Any] = {
@@ -336,7 +336,7 @@ class ClassExplorerMixin(_ScannerBase):
         Args:
             rows: List of 7-tuples (class_id, inst, attr, data, desc, dtype, perm)
         """
-        from ..cip_definitions import parse_attribute
+        from oida.protocols.ethernetip.cip_definitions import parse_attribute
 
         # Pre-process rows to get parsed values and calculate column widths
         processed = []

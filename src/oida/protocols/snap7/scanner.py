@@ -8,16 +8,13 @@ Scanner implementation for Siemens S7 PLCs using the Snap7 library.
 """
 
 from typing import Dict, List, Optional, Any
-from ...utils import (
-    NetworkScanner,
-    safe_int_conversion,
-)
-from ...utils.protocol_helpers import ConnectionHelper
-from ...utils.lazy_import import lazy_import
+from oida.utils import NetworkScanner, safe_int_conversion
+from oida.utils.protocol_helpers import ConnectionHelper
+from oida.utils.lazy_import import lazy_import
 
-from ...utils.ics_logger import get_module_logger
+from oida.utils.ics_logger import get_module_logger
 
-from .mixins import (
+from oida.protocols.snap7.mixins import (
     SlotScanMixin,
     DeviceInfoMixin,
     SecurityMixin,
@@ -234,7 +231,7 @@ class Snap7Scanner(
     """Siemens S7 Protocol Scanner using Snap7"""
 
     def __init__(self, args: Dict[str, Any]):
-        from ...utils import parse_bool
+        from oida.utils import parse_bool
 
         super().__init__(args)
         self.rack = safe_int_conversion(args.get("rack"), 0)

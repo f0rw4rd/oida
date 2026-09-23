@@ -37,14 +37,9 @@ References:
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import is_valid_discovered_ip
-from ..shared.hsrp_constants import (
-    HSRP_OPCODES,
-    HSRP_PORT,
-    HSRP_V1_STATES,
-    HSRP_V2_STATES,
-)
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip
+from oida.shared.hsrp_constants import HSRP_OPCODES, HSRP_PORT, HSRP_V1_STATES, HSRP_V2_STATES
 
 import logging
 

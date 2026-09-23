@@ -330,7 +330,7 @@ def ws_url(ocpp_server):
 @pytest.fixture
 def cli_runner():
     """CLI runner fixture for OCPP tests."""
-    from .cli_runner import CLIRunner
+    from tests.integration.cli_runner import CLIRunner
 
     return CLIRunner(timeout=20)
 

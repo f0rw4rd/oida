@@ -5,9 +5,9 @@
 import time
 from typing import Dict, Any
 
-from ...connection import NetworkConnection
-from ...utils.exceptions import ICSConnectionError
-from .scanner import DNP3Scanner, _yadnp3
+from oida.connection import NetworkConnection
+from oida.utils.exceptions import ICSConnectionError
+from oida.protocols.dnp3.scanner import DNP3Scanner, _yadnp3
 
 
 class dnp3(NetworkConnection):
@@ -26,7 +26,7 @@ class dnp3(NetworkConnection):
         """Main DNP3 scanning workflow"""
 
         # Validate arguments (control ops require explicit outstation-addr)
-        from .proto_args import validate_args
+        from oida.protocols.dnp3.proto_args import validate_args
 
         validate_args(self.args)
 

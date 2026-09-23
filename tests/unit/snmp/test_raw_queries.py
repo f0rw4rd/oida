@@ -10,7 +10,7 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import MagicMock, patch
 
-from .conftest import FakeVarBind, make_get, make_walk, make_walk_error, patch_pysnmp
+from tests.unit.snmp.conftest import FakeVarBind, make_get, make_walk, make_walk_error, patch_pysnmp
 
 
 def run(coro):

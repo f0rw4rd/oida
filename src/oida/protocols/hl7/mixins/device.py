@@ -13,8 +13,8 @@ from typing import Optional
 
 from hl7apy.core import Message, Segment
 
-from .. import MDC_CODES, PCD_DEVICE_TYPES, PCD_ALARM_TYPES
-from ._helpers import ack_accepted, populate_msh
+from oida.protocols.hl7 import MDC_CODES, PCD_DEVICE_TYPES, PCD_ALARM_TYPES
+from oida.protocols.hl7.mixins._helpers import ack_accepted, populate_msh
 
 
 class DeviceMixin:

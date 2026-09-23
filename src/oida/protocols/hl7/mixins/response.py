@@ -13,7 +13,7 @@ from datetime import datetime
 
 from hl7apy.parser import parse_message
 
-from ..segments import HL7SegmentParser
+from oida.protocols.hl7.segments import HL7SegmentParser
 
 
 class ResponseMixin:

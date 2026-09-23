@@ -5,10 +5,7 @@ Registers SNMP-specific command-line arguments for standalone
 ``oida snmp`` usage.
 """
 
-from ...utils.proto_args_factory import (
-    create_protocol_parser,
-    add_network_options,
-)
+from oida.utils.proto_args_factory import create_protocol_parser, add_network_options
 
 
 def proto_args(parser, parents):

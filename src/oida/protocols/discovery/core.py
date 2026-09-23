@@ -14,8 +14,8 @@ from dataclasses import dataclass, field, fields
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from ...utils import iface_info as _iface_info
-from ...utils.ics_logger import get_module_logger
+from oida.utils import iface_info as _iface_info
+from oida.utils.ics_logger import get_module_logger
 
 
 class _IfaceInfoAdapter:
@@ -133,7 +133,7 @@ def lookup_mac_vendor(mac_address: str) -> str:
     """
     if not mac_address:
         return "Unknown"
-    from ...utils.ics_logger import mac_lookup
+    from oida.utils.ics_logger import mac_lookup
 
     try:
         return mac_lookup(mac_address) or "Unknown"
@@ -348,7 +348,7 @@ def is_interface_up(interface: str) -> bool:
     Uses cross-platform detection via platform_compat.
     """
     try:
-        from ...utils.platform_compat import get_interface_state
+        from oida.utils.platform_compat import get_interface_state
 
         state = get_interface_state(interface)
         if state is not None:

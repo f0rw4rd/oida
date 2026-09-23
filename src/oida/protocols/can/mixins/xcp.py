@@ -15,9 +15,8 @@ import struct
 import time
 from typing import Any, List, Optional, Tuple
 
-from ..constants import (
+from oida.protocols.can.constants import (
     CAN_STD_ID_MAX,
-    # CCP constants
     CCP_CONNECT_CMD,
     CCP_CRC,
     CCP_DEFAULT_CRO_ID,
@@ -34,7 +33,6 @@ from ..constants import (
     XCP_GET_ID_CMD,
     XCP_GET_STATUS_CMD,
     XCP_ID_TYPE_ASCII,
-    # XCP constants
     XCP_RES_PID,
     XCP_SHORT_UPLOAD_CMD,
     CCPScanResult,
@@ -51,7 +49,7 @@ XCP_RESP_ID_OFFSET = 1
 
 def _get_python_can():
     """Resolve _python_can from scanner module (avoids circular import)."""
-    from ..scanner import _python_can
+    from oida.protocols.can.scanner import _python_can
 
     return _python_can
 

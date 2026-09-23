@@ -18,14 +18,14 @@ import time
 
 import pytest
 
-from src.oida.fuzz.core.session.state_machine import (
+from oida.fuzz.core.session.state_machine import (
     ProtocolState,
     StateMachine,
     StateTransitionError,
     TransitionRule,
     _call_with_optional_context,
 )
-from src.oida.fuzz.core.stateful_fuzzer import _connection_uid
+from oida.fuzz.core.stateful_fuzzer import _connection_uid
 
 
 # --------------------------------------------------------------------------

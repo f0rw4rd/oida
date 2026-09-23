@@ -42,7 +42,7 @@ class CommandMixin:
 
     def _write_value(self, client: Any, conn: Any) -> Dict[str, Any]:
         """Write a value to an IOA using IEC 104 control commands"""
-        from ._deps import _get_c104
+        from oida.protocols.iec104._deps import _get_c104
 
         c104 = _get_c104()
 
@@ -297,7 +297,7 @@ class CommandMixin:
             ca = self._best_common_address()
 
             # c104 exposes no raw-send interface, so use its point-based API.
-            from ._deps import _get_c104
+            from oida.protocols.iec104._deps import _get_c104
 
             c104 = _get_c104()
             station = conn.get_station(ca)
@@ -431,7 +431,7 @@ class CommandMixin:
                 return result
 
             # c104 exposes no raw-send interface, so use its point-based API.
-            from ._deps import _get_c104
+            from oida.protocols.iec104._deps import _get_c104
 
             c104 = _get_c104()
             try:
@@ -497,7 +497,7 @@ class CommandMixin:
         An accepted command means an unauthenticated client can drive controls —
         a real security finding. Confirm-gated: it transmits live commands.
         """
-        from ._deps import _get_c104
+        from oida.protocols.iec104._deps import _get_c104
 
         c104 = _get_c104()
 

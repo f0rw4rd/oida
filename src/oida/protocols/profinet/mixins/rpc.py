@@ -16,8 +16,8 @@ from __future__ import annotations
 
 from typing import Optional, TYPE_CHECKING
 
-from ....utils.vendor_maps import profinet_vendor_map
-from ..models import ProfinetDevice
+from oida.utils.vendor_maps import profinet_vendor_map
+from oida.protocols.profinet.models import ProfinetDevice
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -342,7 +342,7 @@ class RPCMixin(_ScannerBase):
         try:
             result = con.read(api=0, slot=0, subslot=0, idx=0x800C)
             if result and len(result.payload) >= 28:
-                from ..helpers import get_alarms_module
+                from oida.protocols.profinet.helpers import get_alarms_module
 
                 alarms_mod = get_alarms_module()
                 if alarms_mod is not None:
@@ -507,7 +507,7 @@ class RPCMixin(_ScannerBase):
             self.logger.fail(f"  Invalid index format: {index_str}")
             return
 
-        from ..helpers import get_indices_module
+        from oida.protocols.profinet.helpers import get_indices_module
 
         idx_module = get_indices_module()
         name = idx_module.get_index_name(idx)
@@ -583,7 +583,7 @@ class RPCMixin(_ScannerBase):
             self.logger.fail(f"  Invalid write format: {e}")
             return
 
-        from ..helpers import get_indices_module
+        from oida.protocols.profinet.helpers import get_indices_module
 
         idx_module = get_indices_module()
         name = idx_module.get_index_name(idx)
@@ -734,7 +734,7 @@ class RPCMixin(_ScannerBase):
         # Port subslots - show link state and peer
         if 0x8001 <= subslot <= 0x800F:
             try:
-                from ..helpers import get_blocks_module, get_indices_module
+                from oida.protocols.profinet.helpers import get_blocks_module, get_indices_module
 
                 pn_indices = get_indices_module()
                 result = con.read(

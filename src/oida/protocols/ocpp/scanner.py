@@ -20,14 +20,11 @@ import ssl
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
-from ...utils import (
-    NetworkScanner,
-    parse_bool,
-)
-from ...utils.socket_helpers import build_tls_context
-from ...utils.lazy_import import lazy_import
+from oida.utils import NetworkScanner, parse_bool
+from oida.utils.socket_helpers import build_tls_context
+from oida.utils.lazy_import import lazy_import
 
-from .constants import (
+from oida.protocols.ocpp.constants import (
     OCPP_SUBPROTOCOLS,
     SUBPROTOCOL_TO_VERSION,
     DEFAULT_WS_PORT,

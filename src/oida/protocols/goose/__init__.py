@@ -16,13 +16,9 @@ from collections import defaultdict
 from datetime import datetime
 from typing import Any, Dict, List
 
-from ...utils import (
-    SecurityAnalyzer,
-    parse_bool,
-    safe_int_conversion,
-)
-from ...utils.base_scanner import SerialScanner
-from ...utils.lazy_import import lazy_import
+from oida.utils import SecurityAnalyzer, parse_bool, safe_int_conversion
+from oida.utils.base_scanner import SerialScanner
+from oida.utils.lazy_import import lazy_import
 
 
 # Lazy imports for pyiec61850-ng (only loaded when actually used)
@@ -205,7 +201,7 @@ class GOOSEScanner(SerialScanner):
     def _connect_mms(self, host: str, port: int) -> Any:
         """Create an MMS connection using the high-level MMSClient."""
         try:
-            from ..mms import build_mms_tls_config
+            from oida.protocols.mms import build_mms_tls_config
 
             tls_config = build_mms_tls_config(
                 tls=self.tls,
@@ -739,4 +735,4 @@ class GOOSEScanner(SerialScanner):
 
 
 # Re-export NXC-style callable class
-from .cli_runner import goose as goose  # noqa: E402
+from oida.protocols.goose.cli_runner import goose as goose  # noqa: E402

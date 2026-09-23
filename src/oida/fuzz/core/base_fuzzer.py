@@ -1,19 +1,19 @@
-from .config import FuzzerConfig, MonitorConfig
+from oida.fuzz.core.config import FuzzerConfig, MonitorConfig
 from abc import ABC, abstractmethod
 from typing import Optional, List, Dict, Any, Set, Union, TYPE_CHECKING
 from dataclasses import dataclass
 from enum import Enum
-from ..monitors import BaseMonitor, CombinedMonitor
-from ..monitors.registry import create_monitor
-from .connections import ConnectionFactory, RealConnectionFactory
-from .mutation import (
+from oida.fuzz.monitors import BaseMonitor, CombinedMonitor
+from oida.fuzz.monitors.registry import create_monitor
+from oida.fuzz.core.connections import ConnectionFactory, RealConnectionFactory
+from oida.fuzz.core.mutation import (
     MutationStrategy,
     enable_radamsa,
     disable_radamsa,
     set_mutation_seed,
 )
-from .session.state_machine import StateMachine, StateTransitionError
-from ...utils.ics_logger import get_logger, ICSLogger, set_progress_active
+from oida.fuzz.core.session.state_machine import StateMachine, StateTransitionError
+from oida.utils.ics_logger import get_logger, ICSLogger, set_progress_active
 import logging
 
 logger = logging.getLogger(__name__)
@@ -67,8 +67,8 @@ class CommonState(Enum):
 
 
 if TYPE_CHECKING:
-    from .database import DatabaseInterface
-    from .session.manager import TestCaseManager
+    from oida.fuzz.core.database import DatabaseInterface
+    from oida.fuzz.core.session.manager import TestCaseManager
 
 
 @dataclass
@@ -353,8 +353,8 @@ class BaseFuzzer(ABC):
         """Initialize TestCaseManager for recording test results with target tracking"""
         # Import here to avoid circular imports
         # (session_manager -> protocols -> fuzzers -> base_fuzzer)
-        from .database.orm import SQLAlchemyDatabase
-        from .session.manager import TestCaseManager
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.session.manager import TestCaseManager
 
         try:
             # Create database
@@ -490,7 +490,7 @@ class BaseFuzzer(ABC):
         extra: List[BaseMonitor] = []
 
         if self.config.script_monitor_command:
-            from ..monitors.script import ScriptMonitor
+            from oida.fuzz.monitors.script import ScriptMonitor
 
             extra.append(
                 ScriptMonitor(
@@ -503,7 +503,7 @@ class BaseFuzzer(ABC):
             self.log.display(f"Script monitor: {' '.join(self.config.script_monitor_command)}")
 
         if self.config.valid_case_probe:
-            from ..monitors.network import ValidCaseMonitor
+            from oida.fuzz.monitors.network import ValidCaseMonitor
 
             extra.append(
                 ValidCaseMonitor(
@@ -517,7 +517,7 @@ class BaseFuzzer(ABC):
             self.log.display(f"Valid-case probe: {len(self.config.valid_case_probe)} bytes")
 
         if self.config.agent_monitor_host:
-            from ..monitors.agent import AgentMonitor
+            from oida.fuzz.monitors.agent import AgentMonitor
 
             extra.append(
                 AgentMonitor(
@@ -546,7 +546,7 @@ class BaseFuzzer(ABC):
                 m.restart_command = list(self.config.restart_command)
                 m.restart_delay = self.config.restart_delay
                 if getattr(m, "command_runner", None) is None:
-                    from ..core.session.commands import RealCommandRunner
+                    from oida.fuzz.core.session.commands import RealCommandRunner
 
                     m.command_runner = RealCommandRunner()
         self.log.display(
@@ -955,7 +955,7 @@ class BaseFuzzer(ABC):
 
                     # Try to get test case count from database
                     try:
-                        from .database.orm import SQLAlchemyDatabase
+                        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
                         db = SQLAlchemyDatabase(db_file)
                         db.init_schema()
@@ -1333,7 +1333,7 @@ class BaseFuzzer(ABC):
             self.log.debug("No probe-capable monitor; skipping calibration")
             return
 
-        from .calibration import DriftDetector, RtoEstimator, TimeoutCalibrator
+        from oida.fuzz.core.calibration import DriftDetector, RtoEstimator, TimeoutCalibrator
 
         stateful = bool(getattr(self, "STATEFUL", False))
         probe_name = type(probe).__name__

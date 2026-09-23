@@ -6,15 +6,10 @@ NXC-style callable class that composes mixins for ASTM scanning.
 
 from typing import Any, Dict, Optional
 
-from ...connection import NetworkConnection
-from ...utils.protocol_helpers import ConnectionHelper
-from .records import (
-    ASTMRecordBuilder,
-    ENQ,
-    ACK,
-    identify_vendor_from_name,
-)
-from .mixins import FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin
+from oida.connection import NetworkConnection
+from oida.utils.protocol_helpers import ConnectionHelper
+from oida.protocols.astm.records import ASTMRecordBuilder, ENQ, ACK, identify_vendor_from_name
+from oida.protocols.astm.mixins import FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin
 
 
 class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkConnection):

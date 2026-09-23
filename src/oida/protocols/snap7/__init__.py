@@ -17,14 +17,14 @@ Architecture:
 """
 
 # Core scanner and NXC-style connection
-from .scanner import Snap7Scanner, protocol_options
-from .cli_runner import s7, snap7
+from oida.protocols.snap7.scanner import Snap7Scanner, protocol_options
+from oida.protocols.snap7.cli_runner import s7, snap7
 
 # Data models and constants
-from .constants import S7MemoryArea
-from .models import S7CPUInfo, S7FirmwareVersion
-from .device_lookup import SIEMENS_DEVICES, lookup_device_name
-from .szl_parser import SZLParser
+from oida.protocols.snap7.constants import S7MemoryArea
+from oida.protocols.snap7.models import S7CPUInfo, S7FirmwareVersion
+from oida.protocols.snap7.device_lookup import SIEMENS_DEVICES, lookup_device_name
+from oida.protocols.snap7.szl_parser import SZLParser
 
 __all__ = [
     # Scanner and protocol

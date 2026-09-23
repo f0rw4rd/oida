@@ -28,9 +28,9 @@ from typing import List
 
 from boofuzz import Block, Group, Request, Static
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import CountingUDPConnection as UDPSocketConnection
-from ..primitives.dynamic import SmartBytes
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.connections import CountingUDPConnection as UDPSocketConnection
+from oida.fuzz.primitives.dynamic import SmartBytes
 
 # ZEP (Zigbee Encapsulation Protocol) UDP port used by Wireshark / sniffers.
 ZEP_PORT = 17754

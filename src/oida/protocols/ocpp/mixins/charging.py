@@ -11,7 +11,7 @@ to avoid unintended side effects on real infrastructure.
 
 import datetime
 
-from ..constants import (
+from oida.protocols.ocpp.constants import (
     MessageType,
     FAKE_ID_TAG,
     SAFE_TRANSACTION_ID,

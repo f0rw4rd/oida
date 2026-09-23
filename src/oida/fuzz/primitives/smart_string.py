@@ -27,9 +27,9 @@ Mutation counts:
 from enum import Flag, auto
 from typing import Optional, List, Dict
 
-from .reduced_string import ReducedString
-from ..core.mutation import NativeRadamsaMutator, get_mutation_seed
-from ...utils.ics_logger import get_logger
+from oida.fuzz.primitives.reduced_string import ReducedString
+from oida.fuzz.core.mutation import NativeRadamsaMutator, get_mutation_seed
+from oida.utils.ics_logger import get_logger
 
 _log = get_logger("STRING", "smart", 0)
 

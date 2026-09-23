@@ -22,7 +22,7 @@ import time
 
 import pytest
 
-from .conftest import DOCKER_COMPOSE_PATH, MOCK_HOST, MOCK_PORTS, check_port_open
+from tests.integration.conftest import DOCKER_COMPOSE_PATH, MOCK_HOST, MOCK_PORTS, check_port_open
 from tests.service_gate import require_port, require_service
 
 pytestmark = pytest.mark.xdist_group("iec104_service")

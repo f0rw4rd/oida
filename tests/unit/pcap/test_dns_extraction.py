@@ -10,7 +10,7 @@ import pytest
 
 from oida.protocols.pcap.scanner import PcapScanner
 
-from .conftest import FIXTURES_ROOT, requires_pyshark
+from tests.unit.pcap.conftest import FIXTURES_ROOT, requires_pyshark
 
 
 DNS_DIR = FIXTURES_ROOT / "dns"

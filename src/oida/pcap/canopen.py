@@ -71,7 +71,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
 
 # CANopen function codes (bits 7-10 of COB-ID)
 CANOPEN_FUNCTION_CODES = {

@@ -9,8 +9,8 @@ from datetime import datetime
 from pathlib import Path
 from typing import Tuple
 
-from ..constants import OBJECT_TYPE_NAMES
-from ....utils.export_utils import export_table, configure_from_args, parse_output_format
+from oida.protocols.bacnet.constants import OBJECT_TYPE_NAMES
+from oida.utils.export_utils import export_table, configure_from_args, parse_output_format
 
 
 class ExportMixin:

@@ -12,10 +12,10 @@ Mixins:
     - FuzzMixin: Command fuzzing, write operations, raw commands
 """
 
-from .device_info import DeviceInfoMixin
-from .security import SecurityMixin
-from .enumeration import EnumerationMixin
-from .fuzz import FuzzMixin
+from oida.protocols.hart.mixins.device_info import DeviceInfoMixin
+from oida.protocols.hart.mixins.security import SecurityMixin
+from oida.protocols.hart.mixins.enumeration import EnumerationMixin
+from oida.protocols.hart.mixins.fuzz import FuzzMixin
 
 __all__ = [
     "DeviceInfoMixin",

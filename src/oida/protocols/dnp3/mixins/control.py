@@ -359,7 +359,7 @@ class ControlMixin(_ScannerBase):
         Uses the Write(TimeAndInterval, index) method to schedule a freeze.
         """
         dnp3 = self._dnp3
-        from ..proto_args import _parse_freeze_time
+        from oida.protocols.dnp3.proto_args import _parse_freeze_time
 
         try:
             freeze_time_ms = _parse_freeze_time(self.freeze_at_time)

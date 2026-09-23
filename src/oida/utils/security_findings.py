@@ -558,7 +558,7 @@ def display_cert_info(
     from cryptography.hazmat.primitives.serialization import Encoding
 
     if not save_dir:
-        from .platform_compat import get_cert_save_dir
+        from oida.utils.platform_compat import get_cert_save_dir
 
         save_dir = get_cert_save_dir()
 

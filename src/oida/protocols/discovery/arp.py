@@ -14,7 +14,7 @@ import time
 from datetime import datetime
 from typing import Callable, Dict, Optional
 
-from .core import (
+from oida.protocols.discovery.core import (
     DiscoveredDevice,
     get_interface_network,
     is_interface_up,
@@ -23,9 +23,9 @@ from .core import (
     normalize_ipv6,
     normalize_mac,
 )
-from ...utils.rate_limiter import scapy_srp
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.utils.rate_limiter import scapy_srp
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
 _scapy_all = lazy_import("scapy.all", "discovery")
 
@@ -260,7 +260,7 @@ class ARPPassiveListener:
         timeout: int = 30,
         nxc_logger=None,
     ):
-        from .core import validate_interface, validate_timeout
+        from oida.protocols.discovery.core import validate_interface, validate_timeout
 
         _scapy_all()  # Ensure scapy is available
         self.interface = validate_interface(interface)
@@ -387,7 +387,7 @@ class EthernetPassiveListener:
         timeout: int = 30,
         nxc_logger=None,
     ):
-        from .core import validate_interface, validate_timeout
+        from oida.protocols.discovery.core import validate_interface, validate_timeout
 
         _scapy_all()  # Ensure scapy is available
         self.interface = validate_interface(interface)

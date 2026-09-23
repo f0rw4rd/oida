@@ -8,13 +8,13 @@ for the yadnp3 (opendnp3) backend.
 import re
 from datetime import datetime, timezone
 
-from ...utils.proto_args_factory import (
+from oida.utils.proto_args_factory import (
     create_protocol_parser,
     add_target_argument,
     add_network_options,
     add_dangerous_options,
 )
-from ...utils.exceptions import ConfigurationError
+from oida.utils.exceptions import ConfigurationError
 
 
 def proto_args(parser, parents):

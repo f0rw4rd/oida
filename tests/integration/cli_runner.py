@@ -170,7 +170,7 @@ class CLIRunner:
                 execution_time = time.time() - start_time
                 if json_log_path and os.path.exists(json_log_path):
                     try:
-                        from .json_log_reader import ScanLog
+                        from tests.integration.json_log_reader import ScanLog
 
                         scan_log = ScanLog(json_log_path)
                     except Exception:
@@ -195,7 +195,7 @@ class CLIRunner:
             # Parse structured JSON log if captured
             if json_log_path and os.path.exists(json_log_path):
                 try:
-                    from .json_log_reader import ScanLog
+                    from tests.integration.json_log_reader import ScanLog
 
                     scan_log = ScanLog(json_log_path)
                 except Exception:
@@ -215,7 +215,7 @@ class CLIRunner:
             # Fallback — should not reach here with Popen-based flow above
             if json_log_path and os.path.exists(json_log_path):
                 try:
-                    from .json_log_reader import ScanLog
+                    from tests.integration.json_log_reader import ScanLog
 
                     scan_log = ScanLog(json_log_path)
                 except Exception:

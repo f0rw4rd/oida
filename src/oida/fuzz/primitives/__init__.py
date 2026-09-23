@@ -4,13 +4,9 @@ Custom OIDA fuzzer primitives
 Provides Radamsa-powered alternatives to boofuzz's standard primitives.
 """
 
-from .radamsa_primitives import (
-    RadamsaString,
-    RadamsaBytes,
-    RadamsaBlock,
-)
+from oida.fuzz.primitives.radamsa_primitives import RadamsaString, RadamsaBytes, RadamsaBlock
 
-from .dynamic import (
+from oida.fuzz.primitives.dynamic import (
     DynamicDWord,
     DynamicBytes,
     SmartString,
@@ -19,22 +15,13 @@ from .dynamic import (
     s_smart_bytes,
 )
 
-from .reduced_string import (
-    ReducedString,
-    get_reduction_stats,
-)
+from oida.fuzz.primitives.reduced_string import ReducedString, get_reduction_stats
 
-from .smart_string import (
-    SmartStringPrimitive,
-    StringContext,
-    smart_string,
-)
+from oida.fuzz.primitives.smart_string import SmartStringPrimitive, StringContext, smart_string
 
-from .tcp_data_offset import (
-    TCPDataOffsetByte,
-)
+from oida.fuzz.primitives.tcp_data_offset import TCPDataOffsetByte
 
-from .asn1_blocks import (
+from oida.fuzz.primitives.asn1_blocks import (
     ASN1Tag,
     ASN1Primitive,
     ASN1Integer,

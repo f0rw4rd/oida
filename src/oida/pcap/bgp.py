@@ -42,8 +42,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import lookup_mac_vendor
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import lookup_mac_vendor
 
 # BGP NOTIFICATION major error code names (RFC 4271 Section 4.5)
 _NOTIFY_MAJOR = {

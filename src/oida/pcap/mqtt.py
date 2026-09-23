@@ -34,7 +34,7 @@ References:
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
 
 # MQTT message type codes
 MQTT_MSG_TYPES: Dict[str, str] = {

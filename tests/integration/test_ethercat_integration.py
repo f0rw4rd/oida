@@ -121,7 +121,7 @@ import json
 
 import pytest
 
-from .conftest import (
+from tests.integration.conftest import (
     check_raw_socket_capability,
     check_sudo_available,
     skip_unless_l2_docker,

@@ -7,7 +7,7 @@ from typing import Optional
 import requests
 import urllib3
 
-from .base import ProtocolMonitor
+from oida.fuzz.monitors.base import ProtocolMonitor
 
 # Disable SSL warnings for fuzzing contexts
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)

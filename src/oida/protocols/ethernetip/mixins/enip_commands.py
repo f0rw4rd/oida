@@ -13,8 +13,8 @@ from __future__ import annotations
 import struct
 from typing import Any, Dict, Optional, TYPE_CHECKING
 
-from ....utils.protocol_helpers import ConnectionHelper
-from ..constants import ENIP_CMD_REGISTER_SESSION
+from oida.utils.protocol_helpers import ConnectionHelper
+from oida.protocols.ethernetip.constants import ENIP_CMD_REGISTER_SESSION
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

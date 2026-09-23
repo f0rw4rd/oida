@@ -5,11 +5,11 @@
 import time as _time
 from typing import Any
 
-from ...connection import NetworkConnection
-from ...utils.payload import resolve_file_payload
+from oida.connection import NetworkConnection
+from oida.utils.payload import resolve_file_payload
 
-from .scanner import CoAPScanner
-from .helpers import (
+from oida.protocols.coap.scanner import CoAPScanner
+from oida.protocols.coap.helpers import (
     parse_payload,
     coap_request,
     try_dtls_psk,
@@ -17,13 +17,9 @@ from .helpers import (
     try_dtls_rpk,
     run_async,
 )
-from .constants import (
-    CONTENT_FORMATS,
-    CONTENT_FORMAT_ALIASES,
-    DEFAULT_DTLS_PORT,
-)
+from oida.protocols.coap.constants import CONTENT_FORMATS, CONTENT_FORMAT_ALIASES, DEFAULT_DTLS_PORT
 
-from ...utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
 _aiocoap = lazy_import("aiocoap", "CoAP")
 # DTLSSocket is deliberately NOT a declared dependency of the `coap` extra
@@ -505,7 +501,7 @@ class coap(NetworkConnection):
 
     def _bruteforce_dtls_psk(self, psk_arg, psk_id_arg):
         """Attempt DTLS-PSK connection, supporting wordlist bruteforce."""
-        from ...utils.default_credentials import parse_credential_input
+        from oida.utils.default_credentials import parse_credential_input
 
         # Parse inputs -- auto-detect files
         keys, k_is_file = parse_credential_input(psk_arg) if psk_arg else ([], False)
@@ -583,8 +579,8 @@ class coap(NetworkConnection):
 
     def _probe_paths_wordlist(self, wordlist_path):
         """Probe paths loaded from a wordlist file."""
-        from ...utils.default_credentials import parse_credential_input
-        from ...utils.login_scanner import format_wordlist_source
+        from oida.utils.default_credentials import parse_credential_input
+        from oida.utils.login_scanner import format_wordlist_source
 
         paths, is_file = parse_credential_input(wordlist_path)
         # Use the basename for log output so an engagement-sensitive path

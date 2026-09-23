@@ -140,7 +140,7 @@ class WriteTestMixin(_ScannerBase):
         Returns:
             Permission string: "R", "W", "RW", "R?", "R*", or "?"
         """
-        from ..cip_definitions import interpret_write_error
+        from oida.protocols.ethernetip.cip_definitions import interpret_write_error
 
         # Write-test with error interpretation. Requires --write AND --confirm
         # AND a non-empty value to write back. The write-test issues a LIVE CIP

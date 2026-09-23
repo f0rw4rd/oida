@@ -47,7 +47,7 @@ def _timing_out_udp_socket():
 
 def test_snmp_udp_timeout_is_not_reported_alive():
     """A silent SNMP agent (no datagram, no ICMP) is NOT evidence of life."""
-    from src.oida.fuzz.monitors.network import SNMPHealthMonitor
+    from oida.fuzz.monitors.network import SNMPHealthMonitor
 
     with patch("socket.socket", return_value=_timing_out_udp_socket()):
         monitor = SNMPHealthMonitor("192.168.1.1", timeout=0.01)
@@ -56,7 +56,7 @@ def test_snmp_udp_timeout_is_not_reported_alive():
 
 def test_snmp_single_timeout_does_not_flip_crashed():
     """One timed-out round counts as a failure but must not declare a crash."""
-    from src.oida.fuzz.monitors.network import SNMPHealthMonitor
+    from oida.fuzz.monitors.network import SNMPHealthMonitor
 
     with patch("socket.socket", return_value=_timing_out_udp_socket()):
         monitor = SNMPHealthMonitor("192.168.1.1", timeout=0.01, retry_count=1, failure_threshold=2)
@@ -69,7 +69,7 @@ def test_snmp_single_timeout_does_not_flip_crashed():
 
 def test_snmp_datagram_reply_still_alive():
     """A real datagram reply is still reported alive (no over-correction)."""
-    from src.oida.fuzz.monitors.network import SNMPHealthMonitor
+    from oida.fuzz.monitors.network import SNMPHealthMonitor
 
     sock = MagicMock()
     sock.recv.return_value = b"\x30\x26\x02\x01\x01"
@@ -80,7 +80,7 @@ def test_snmp_datagram_reply_still_alive():
 
 def test_bacnet_udp_timeout_is_not_reported_alive():
     """A Who-Is with no I-Am and no ICMP error is NOT evidence of life."""
-    from src.oida.fuzz.monitors.industrial import BACnetMonitor
+    from oida.fuzz.monitors.industrial import BACnetMonitor
 
     with patch("socket.socket", return_value=_timing_out_udp_socket()):
         monitor = BACnetMonitor("192.168.1.1", timeout=0.01)
@@ -89,7 +89,7 @@ def test_bacnet_udp_timeout_is_not_reported_alive():
 
 
 def test_bacnet_timeout_does_not_flip_crashed():
-    from src.oida.fuzz.monitors.industrial import BACnetMonitor
+    from oida.fuzz.monitors.industrial import BACnetMonitor
 
     with patch("socket.socket", return_value=_timing_out_udp_socket()):
         monitor = BACnetMonitor("192.168.1.1", timeout=0.01, retry_count=1, failure_threshold=2)
@@ -102,7 +102,7 @@ def test_bacnet_timeout_does_not_flip_crashed():
 
 def test_bacnet_bvlc_reply_still_alive():
     """A BVLC I-Am reply is still alive and still establishes the baseline."""
-    from src.oida.fuzz.monitors.industrial import BACnetMonitor
+    from oida.fuzz.monitors.industrial import BACnetMonitor
 
     sock = MagicMock()
     sock.recv.return_value = bytes([0x81, 0x0B, 0x00, 0x0C, 0x01, 0x20, 0x10, 0x00])
@@ -133,7 +133,7 @@ class _StubMonitor:
 
 def test_combined_monitor_with_no_monitors_reports_unknown():
     """Zero monitors == zero checks: must not claim the target is healthy."""
-    from src.oida.fuzz.monitors import CombinedMonitor
+    from oida.fuzz.monitors import CombinedMonitor
 
     monitor = CombinedMonitor(host="127.0.0.1", port=80, monitors=[])
 
@@ -146,7 +146,7 @@ def test_combined_monitor_with_no_monitors_reports_unknown():
 
 def test_combined_monitor_all_disabled_reports_unknown():
     """All sub-monitors disabled by graceful degradation -> no-signal, not healthy."""
-    from src.oida.fuzz.monitors import CombinedMonitor
+    from oida.fuzz.monitors import CombinedMonitor
 
     stub = _StubMonitor(result=True)
     monitor = CombinedMonitor(host="127.0.0.1", port=80, monitors=[stub], graceful_degradation=True)
@@ -161,7 +161,7 @@ def test_combined_monitor_all_disabled_reports_unknown():
 
 def test_combined_monitor_no_signal_does_not_clear_failure_history():
     """A no-signal round must not reset the aggregator's failure streak."""
-    from src.oida.fuzz.monitors import CombinedMonitor
+    from oida.fuzz.monitors import CombinedMonitor
 
     monitor = CombinedMonitor(host="127.0.0.1", port=80, monitors=[])
     monitor.consecutive_failures = 3
@@ -174,7 +174,7 @@ def test_combined_monitor_no_signal_does_not_clear_failure_history():
 
 def test_combined_monitor_with_active_monitor_still_reports_healthy():
     """A real passing check is still a confident healthy verdict."""
-    from src.oida.fuzz.monitors import CombinedMonitor
+    from oida.fuzz.monitors import CombinedMonitor
 
     monitor = CombinedMonitor(host="127.0.0.1", port=80, monitors=[_StubMonitor(True)])
 
@@ -185,7 +185,7 @@ def test_combined_monitor_with_active_monitor_still_reports_healthy():
 
 
 def test_combined_monitor_failing_monitor_reports_failed():
-    from src.oida.fuzz.monitors import CombinedMonitor
+    from oida.fuzz.monitors import CombinedMonitor
 
     monitor = CombinedMonitor(host="127.0.0.1", port=80, monitors=[_StubMonitor(False)])
 
@@ -204,7 +204,7 @@ def _rtu_frame(pdu: bytes, monitor) -> bytes:
 
 
 def test_rtu_response_with_bad_crc_is_rejected():
-    from src.oida.fuzz.monitors.industrial import ModbusRTUMonitor
+    from oida.fuzz.monitors.industrial import ModbusRTUMonitor
 
     monitor = ModbusRTUMonitor("127.0.0.1", transport="tcp")
     pdu = b"\x01\x03\x02\x00\x2a"
@@ -216,7 +216,7 @@ def test_rtu_response_with_bad_crc_is_rejected():
 
 
 def test_rtu_bad_crc_is_not_evidence_of_life_and_never_baselined():
-    from src.oida.fuzz.monitors.industrial import ModbusRTUMonitor
+    from oida.fuzz.monitors.industrial import ModbusRTUMonitor
 
     monitor = ModbusRTUMonitor("127.0.0.1", transport="tcp")
     pdu = b"\x01\x03\x02\x00\x2a"
@@ -228,7 +228,7 @@ def test_rtu_bad_crc_is_not_evidence_of_life_and_never_baselined():
 
 
 def test_rtu_good_crc_still_establishes_baseline():
-    from src.oida.fuzz.monitors.industrial import ModbusRTUMonitor
+    from oida.fuzz.monitors.industrial import ModbusRTUMonitor
 
     monitor = ModbusRTUMonitor("127.0.0.1", transport="tcp")
     good = _rtu_frame(b"\x01\x03\x02\x00\x2a", monitor)
@@ -247,7 +247,7 @@ def test_rtu_exception_response_is_alive_not_a_crash():
     frame is a valid frame), and _process_response scores the exception as alive
     without drift-comparing it.
     """
-    from src.oida.fuzz.monitors.industrial import ModbusRTUMonitor
+    from oida.fuzz.monitors.industrial import ModbusRTUMonitor
 
     monitor = ModbusRTUMonitor("127.0.0.1", transport="tcp")
     frame = _rtu_frame(b"\x01\x83\x02", monitor)
@@ -265,7 +265,7 @@ def test_rtu_exception_response_is_alive_not_a_crash():
 
 def test_ftp_empty_reply_does_not_poison_baseline():
     """recv() == b"" (peer closed) is a failed probe, not a baseline."""
-    from src.oida.fuzz.monitors.application import FTPCommandMonitor
+    from oida.fuzz.monitors.application import FTPCommandMonitor
 
     monitor = FTPCommandMonitor("127.0.0.1")
     with patch.object(monitor, "_send_command", return_value=b""):
@@ -277,7 +277,7 @@ def test_ftp_empty_reply_does_not_poison_baseline():
 
 def test_ftp_non_status_reply_does_not_poison_baseline():
     """A reply with no 3-digit status code is not a usable baseline."""
-    from src.oida.fuzz.monitors.application import FTPCommandMonitor
+    from oida.fuzz.monitors.application import FTPCommandMonitor
 
     monitor = FTPCommandMonitor("127.0.0.1")
     with patch.object(monitor, "_send_command", return_value=b"\x00\x01garbage"):
@@ -288,7 +288,7 @@ def test_ftp_non_status_reply_does_not_poison_baseline():
 
 
 def test_ftp_valid_reply_still_baselines():
-    from src.oida.fuzz.monitors.application import FTPCommandMonitor
+    from oida.fuzz.monitors.application import FTPCommandMonitor
 
     monitor = FTPCommandMonitor("127.0.0.1")
     with patch.object(monitor, "_send_command", return_value=b'257 "/" is cwd\r\n'):
@@ -299,7 +299,7 @@ def test_ftp_valid_reply_still_baselines():
 
 
 def test_smtp_empty_reply_does_not_poison_baseline():
-    from src.oida.fuzz.monitors.application import SMTPCommandMonitor
+    from oida.fuzz.monitors.application import SMTPCommandMonitor
 
     monitor = SMTPCommandMonitor("127.0.0.1")
     with patch.object(monitor, "_send_command", return_value=b""):
@@ -310,7 +310,7 @@ def test_smtp_empty_reply_does_not_poison_baseline():
 
 def test_http_server_error_is_not_baselined():
     """A 5xx first probe is a failed probe -- do not freeze it as the reference."""
-    from src.oida.fuzz.monitors.application import HTTPGetMonitor
+    from oida.fuzz.monitors.application import HTTPGetMonitor
 
     monitor = HTTPGetMonitor("127.0.0.1")
     bad = Mock()
@@ -326,7 +326,7 @@ def test_http_server_error_is_not_baselined():
 
 
 def test_http_ok_first_probe_still_baselines():
-    from src.oida.fuzz.monitors.application import HTTPGetMonitor
+    from oida.fuzz.monitors.application import HTTPGetMonitor
 
     monitor = HTTPGetMonitor("127.0.0.1")
     ok = Mock()
@@ -351,7 +351,7 @@ def test_http_later_server_error_is_alive_but_logged():
     as down. (A 5xx as the *first* probe is still refused as a baseline -- see
     test_http_server_error_is_not_baselined.)
     """
-    from src.oida.fuzz.monitors.application import HTTPGetMonitor
+    from oida.fuzz.monitors.application import HTTPGetMonitor
 
     monitor = HTTPGetMonitor("127.0.0.1")
     ok = Mock()

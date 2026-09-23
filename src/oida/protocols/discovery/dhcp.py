@@ -12,7 +12,7 @@ import time
 from datetime import datetime
 from typing import Dict, Set
 
-from .core import (
+from oida.protocols.discovery.core import (
     DiscoveredDevice,
     compute_network_cidr,
     get_interface_networks,
@@ -23,7 +23,7 @@ from .core import (
     validate_interface,
     validate_timeout,
 )
-from ...utils.ics_logger import get_module_logger
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -430,7 +430,7 @@ class DHCPServerScanner:
             conf,
             get_if_hwaddr,
         )
-        from ...utils.rate_limiter import scapy_sendp
+        from oida.utils.rate_limiter import scapy_sendp
 
         conf.verb = 0
 

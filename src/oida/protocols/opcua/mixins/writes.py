@@ -4,7 +4,7 @@ OPC UA Writes Mixin
 Provides write operations and write access testing functionality.
 """
 
-from ..helpers import ua
+from oida.protocols.opcua.helpers import ua
 
 
 class WritesMixin:

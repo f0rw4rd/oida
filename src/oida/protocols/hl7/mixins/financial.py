@@ -13,8 +13,8 @@ from typing import Optional
 
 from hl7apy.core import Message, Segment
 
-from ..segments import HL7SegmentParser
-from ._helpers import ack_accepted, populate_msh
+from oida.protocols.hl7.segments import HL7SegmentParser
+from oida.protocols.hl7.mixins._helpers import ack_accepted, populate_msh
 
 
 class FinancialMixin:

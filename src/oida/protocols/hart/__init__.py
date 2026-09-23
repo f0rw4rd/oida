@@ -6,14 +6,14 @@ HART Protocol Scanner
 NXC-style callable class for HART (Highway Addressable Remote Transducer) protocol scanning.
 """
 
-from .scanner import HARTScanner, PhysicalSignaling  # noqa: F401
-from .hartip import (
+from oida.protocols.hart.scanner import HARTScanner, PhysicalSignaling  # noqa: F401
+from oida.protocols.hart.hartip import (  # noqa: F401 - re-exported
     HARTIPClient,
     HARTCommand,
     HARTResponseCode,
-    get_device_type_name,  # noqa: F401
+    get_device_type_name,
 )
-from .cli_runner import hart
+from oida.protocols.hart.cli_runner import hart
 
 __all__ = [
     "hart",

@@ -27,8 +27,8 @@ Reference: SAE AS6802; packet-tte.c / packet-tte-pcf.c (Wireshark).
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import lookup_mac_vendor, normalize_mac
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import lookup_mac_vendor, normalize_mac
 
 # PCF type codes (SAE AS6802).
 TTE_PCF_TYPE = {

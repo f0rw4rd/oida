@@ -1,7 +1,7 @@
 """Base connection classes and abstract factory for protocol fuzzing."""
 
 from abc import ABC, abstractmethod
-from ..config import FuzzerConfig
+from oida.fuzz.core.config import FuzzerConfig
 
 
 class BaseConnection(ABC):

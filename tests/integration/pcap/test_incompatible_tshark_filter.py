@@ -27,7 +27,7 @@ from tests.service_gate import require_service
 
 from oida.protocols.pcap.scanner import PcapScanner
 
-from .conftest import _pcap_path, _skip_unless_pyshark
+from tests.integration.pcap.conftest import _pcap_path, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
 

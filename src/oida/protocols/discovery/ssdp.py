@@ -22,8 +22,8 @@ except ImportError as _ssdp_xml_err:  # pragma: no cover — release-checked dep
         "pip install oida-ics[discovery]"
     ) from _ssdp_xml_err
 
-from .base import PassiveListenerBase
-from .core import (
+from oida.protocols.discovery.base import PassiveListenerBase
+from oida.protocols.discovery.core import (
     DiscoveredDevice,
     SSDP_MULTICAST_ADDR,
     SSDP_PORT,
@@ -33,8 +33,8 @@ from .core import (
     validate_interface,
     validate_timeout,
 )
-from ...utils.rate_limiter import sendto
-from ...utils.ics_logger import get_module_logger
+from oida.utils.rate_limiter import sendto
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 

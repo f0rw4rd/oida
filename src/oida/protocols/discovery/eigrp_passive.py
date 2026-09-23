@@ -17,9 +17,9 @@ import struct
 from datetime import datetime
 from typing import Dict, List
 
-from .base import PassiveListenerBase
-from .core import DiscoveredDevice
-from ...utils.ics_logger import get_module_logger
+from oida.protocols.discovery.base import PassiveListenerBase
+from oida.protocols.discovery.core import DiscoveredDevice
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 

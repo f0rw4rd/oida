@@ -109,7 +109,7 @@ class SecurityMixin(_ScannerBase):
         Returns:
             Dict with: enabled (bool), method (str), details (str)
         """
-        from ..scanner import _get_snap7_client, _suppress_snap7_logging
+        from oida.protocols.snap7.scanner import _get_snap7_client, _suppress_snap7_logging
 
         self.logger.debug("Detecting PUT/GET access for series=%s...", series)
         result = {
@@ -193,9 +193,9 @@ class SecurityMixin(_ScannerBase):
         """
         import time
 
-        from ....utils.login_scanner import format_wordlist_source, load_passwords
-        from ....utils import ProgressTracker
-        from ..scanner import _suppress_snap7_logging
+        from oida.utils.login_scanner import format_wordlist_source, load_passwords
+        from oida.utils import ProgressTracker
+        from oida.protocols.snap7.scanner import _suppress_snap7_logging
 
         results: Dict[str, Any] = {
             "success": False,
@@ -301,7 +301,7 @@ class SecurityMixin(_ScannerBase):
 
     def _analyze_security(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze security configuration"""
-        from ....utils import SecurityAnalyzer
+        from oida.utils import SecurityAnalyzer
 
         self.logger.debug("Analyzing security configuration")
         protection_data = results.get("protection_level")
@@ -363,7 +363,7 @@ class SecurityMixin(_ScannerBase):
 
     def _test_write_access(self, conn: Any) -> Dict[str, Any]:
         """Test write access by reading a value and writing it back unchanged."""
-        from ..constants import S7MemoryArea
+        from oida.protocols.snap7.constants import S7MemoryArea
 
         result = {"writable_areas": [], "read_only": True}
         # Test markers area (safest to test)

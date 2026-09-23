@@ -22,7 +22,7 @@ partial payload or ``None`` on missing / out-of-order CFs.
 import time
 from typing import Any, List, Optional, Tuple
 
-from ..constants import (
+from oida.protocols.can.constants import (
     ISOTP_CONSECUTIVE_FRAME,
     ISOTP_FC_CONTINUE,
     ISOTP_FIRST_FRAME,
@@ -35,7 +35,7 @@ from ..constants import (
 
 def _get_python_can() -> Any:
     """Resolve _python_can from scanner module (avoids circular import)."""
-    from ..scanner import _python_can
+    from oida.protocols.can.scanner import _python_can
 
     return _python_can
 

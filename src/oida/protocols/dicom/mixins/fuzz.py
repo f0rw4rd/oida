@@ -9,7 +9,7 @@ from __future__ import annotations
 import time
 from typing import TYPE_CHECKING
 
-from ..cli_runner import _new_dataset, _sop
+from oida.protocols.dicom.cli_runner import _new_dataset, _sop
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -37,7 +37,7 @@ class FuzzMixin(_ScannerBase):
 
     def _fuzz_cfind_queries(self, iterations: int):
         """Fuzz C-FIND query parameters"""
-        from ....utils.fuzzer import fuzz
+        from oida.utils.fuzzer import fuzz
 
         fuzz_results = {
             "tested": 0,
