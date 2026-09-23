@@ -183,6 +183,10 @@ class BaseFuzzer(ABC):
         if config.enumerate:
             self.capabilities = self._enumerate_capabilities() or {}
 
+        # Populated by _setup_monitor() with the CLI-requested extras
+        # (--script-monitor / --valid-case / --agent-monitor) so they can be
+        # re-applied below if a subclass replaces the monitor set.
+        self._extra_monitors = []
         self.monitor = self._setup_monitor()
         # Only use protocol-specific custom monitors if user didn't explicitly specify monitors
         # (config.monitor_config is set when user provides -M/--monitors)
@@ -194,6 +198,16 @@ class BaseFuzzer(ABC):
             # crash detection for every fuzzer that doesn't override the hook.
             custom_monitors = self.setup_custom_monitors()
             if custom_monitors:
+                # Merge rather than replace. set_monitors() overwrites the list,
+                # so a protocol supplying its own monitors would otherwise evict
+                # the extras _setup_monitor() just built -- leaving
+                # --agent-monitor to print its banner while the agent is never
+                # queried, and crash detection silently downgraded to the
+                # socket-level signal.
+                seen = {id(m) for m in custom_monitors}
+                custom_monitors = custom_monitors + [
+                    m for m in self._extra_monitors if id(m) not in seen
+                ]
                 self.monitor.set_monitors(custom_monitors)
 
         # Log monitor configuration
@@ -416,6 +430,7 @@ class BaseFuzzer(ABC):
         # monitors and auto-restart if the user asked for them).
         if monitor_config.is_empty():
             extra = self._create_extra_monitors()
+            self._extra_monitors = list(extra)
             self._apply_restart_config(extra)
             return CombinedMonitor(
                 host=self.config.target_ip,
@@ -433,7 +448,9 @@ class BaseFuzzer(ABC):
 
         # Append the platform-feature monitors (script / valid-case) when configured,
         # and arm auto-restart on every monitor.
-        monitors.extend(self._create_extra_monitors())
+        extra = self._create_extra_monitors()
+        self._extra_monitors = list(extra)
+        monitors.extend(extra)
         self._apply_restart_config(monitors)
 
         # Determine check_interval: use the maximum from monitor specs if specified,
