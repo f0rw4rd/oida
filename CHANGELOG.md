@@ -4,7 +4,7 @@ All notable changes to OIDA are documented here. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
-## 1.0.0 — unreleased
+## 1.0.0 — 2026-09-23
 
 First stable release.
 
@@ -136,6 +136,14 @@ First stable release.
 
 ### Fixed
 
+- **CI unit lane no longer dies on a missing `tshark`.**
+  `tests/unit/fuzz/test_tshark_validation.py` runs fuzzer baseline payloads
+  through real Wireshark dissectors, but it lived outside the `tests/unit/pcap`
+  path the workflows excluded — and `tests/service_gate.py` turns a missing
+  dependency into a hard failure, so the whole lane failed at collection on a
+  runner without tshark. It is now excluded from `ci.yml` → `test` and
+  `pr.yml` → `unit`, and runs in `ci.yml` → `pcap` alongside the other
+  dissector tests, where tshark is installed and pinned.
 - **Twelve correctness bugs from the repo-wide bug-hunt** (each with a
   fail-before/pass-after regression test):
   - SMTP: CRAM-MD5 credentials were never harvested (client base64 line

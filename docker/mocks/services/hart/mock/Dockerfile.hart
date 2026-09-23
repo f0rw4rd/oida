@@ -1,6 +1,6 @@
 FROM python:3.11-slim
 
-LABEL maintainer="OIDA Team"
+LABEL maintainer="f0rw4rd"
 LABEL description="HART-IP Mock Server for testing"
 
 WORKDIR /app
