@@ -14,9 +14,16 @@ so 1.0.0 is the first real publish.
       `release.yml` verifies the tag matches this string and hard-fails on drift.
 - [x] **[done]** `CHANGELOG.md` heading → `## 1.0.0 — 2026-09-23`.
 - [x] **[done]** Changelog entry for the CI tshark-lane fix.
-- [ ] Final read-through of the 1.0.0 Added/Changed/Fixed/Removed sections
-      against `git log` since the last tag — anything landed after today needs
-      an entry, and the heading date needs to match the actual tag day.
+- [x] **[done]** Final read-through of the 1.0.0 Added/Changed/Fixed/Removed
+      sections against `git log` since the last tag. Heading date
+      (`2026-09-23`) already matched today. Diffed every commit since the last
+      commit that touched `CHANGELOG.md` and found two undocumented: the
+      pylint duplicate-code cleanup (internal refactor, no behavior change —
+      added under Changed) and `0bab5a3` "stop protocol custom monitors from
+      evicting CLI monitor extras" (real bug: `--script-monitor`/
+      `--valid-case`/`--agent-monitor` were silently dropped whenever a
+      protocol's `setup_custom_monitors()` replaced rather than merged the
+      monitor list — added under Fixed). Both now documented.
 - [ ] Decide whether the **Known limitations** block is acceptable to ship:
       mypy ungated with thousands of errors, 28 of 109 pcap listeners without
       a dedicated test file.

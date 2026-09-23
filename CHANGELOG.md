@@ -78,6 +78,15 @@ First stable release.
 
 ### Changed
 
+- **Large pylint `duplicate-code` blocks eliminated across the fuzz, pcap, and
+  protocol-mixin layers** (no behavior change): the SNMP v1/v2c fuzzer request
+  trees now share parametrized builders in `snmp_common.py`; `ASN1Tag`/
+  `encode_length` live only in `codecs/asn1.py`; the IEC 101/103/104 pcap
+  listeners share an `IecAsduValueMixin` plus common constants in
+  `_iec_common.py` instead of iec101 importing from iec104 and three
+  near-duplicate ASDU-header decoders; and ~10 smaller pcap/protocol pairs
+  (goose/rgoose, imap/smtp, hsr/prp, mongodb/redis, iscsi/msrpc, bacnet,
+  dicom, ethernetip, snmp scanner) each got a small shared helper or mixin.
 - **`oida fuzz` port precedence now matches the scanner.** A port embedded in
   the target (`oida fuzz modbus 10.0.0.5:5020`) previously lost to `--port`; it
   now wins, and the run banner says when `--port` is being ignored.
@@ -136,6 +145,17 @@ First stable release.
 
 ### Fixed
 
+- **Fuzzer: protocol custom monitors silently evicted CLI monitor extras.**
+  `BaseFuzzer.__init__` built the monitor set in two steps — `_setup_monitor()`
+  assembled the protocol defaults plus the CLI-requested extras
+  (`--script-monitor`, `--valid-case`, `--agent-monitor`), then, when the user
+  hadn't passed `-M`/`--monitors`, a protocol's `setup_custom_monitors()` hook
+  replaced the whole list via `set_monitors()` instead of merging. For
+  `--agent-monitor` the banner still printed but the agent was never queried;
+  crash detection silently fell back to the socket-level signal and every
+  crash was recorded with `test=-1`, losing the test-case correlation the
+  agent exists to provide. `--script-monitor`/`--valid-case` were dropped the
+  same way. Now merged (de-duplicated by identity) instead of replaced.
 - **CI unit lane no longer dies on a missing `tshark`.**
   `tests/unit/fuzz/test_tshark_validation.py` runs fuzzer baseline payloads
   through real Wireshark dissectors, but it lived outside the `tests/unit/pcap`
