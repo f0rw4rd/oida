@@ -73,6 +73,12 @@ _LAZY_IMPORTS = {
     "SNMPCredential": (".snmp", "SNMPCredential"),
     # ICS listeners
     "ModbusPassiveListener": (".modbus", "ModbusPassiveListener"),
+    "MQTTSNPassiveListener": (".mqttsn", "MQTTSNPassiveListener"),
+    "EGDPassiveListener": (".egd", "EGDPassiveListener"),
+    "SELFMPassiveListener": (".selfm", "SELFMPassiveListener"),
+    "TTEPassiveListener": (".tte", "TTEPassiveListener"),
+    "RTPSPassiveListener": (".rtps", "RTPSPassiveListener"),
+    "IEEE1722PassiveListener": (".ieee1722", "IEEE1722PassiveListener"),
     "IEC104PassiveListener": (".iec104", "IEC104PassiveListener"),
     "IEC101PassiveListener": (".iec101", "IEC101PassiveListener"),
     "IEC103PassiveListener": (".iec103", "IEC103PassiveListener"),

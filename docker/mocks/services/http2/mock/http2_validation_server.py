@@ -32,6 +32,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 import h2.config
 import h2.connection
+import h2.errors
 import h2.events
 import h2.exceptions
 import h2.settings
@@ -369,7 +370,7 @@ class HTTP2ValidationServer:
                         exception=e,
                     )
                     # Send GOAWAY
-                    conn.close_connection(error_code=h2.exceptions.ProtocolError)
+                    conn.close_connection(error_code=h2.errors.ErrorCodes.PROTOCOL_ERROR)
                     writer.write(conn.data_to_send())
                     await writer.drain()
                     break
@@ -694,16 +695,27 @@ class HTTP2ValidationServer:
 
         conn.send_headers(stream_id, response_headers)
 
-        # Chunk body to fit within max frame size (16384 bytes default)
+        # Chunk body to fit within max frame size AND the stream's current flow
+        # control window (a fixed 16384-byte chunk size can overrun the window,
+        # since 65535 is not a multiple of 16384 - e.g. after 3 full chunks only
+        # 16383 bytes of window remain, one short of a 4th full chunk).
         max_chunk_size = 16384
         offset = 0
+        stall_deadline = asyncio.get_event_loop().time() + 5.0
         while offset < len(body_bytes):
-            chunk = body_bytes[offset : offset + max_chunk_size]
-            end_stream = offset + len(chunk) >= len(body_bytes)
+            window = conn.local_flow_control_window(stream_id)
+            if window <= 0:
+                if asyncio.get_event_loop().time() > stall_deadline:
+                    break
+                await asyncio.sleep(0.05)
+                continue
+            chunk_size = min(max_chunk_size, window, len(body_bytes) - offset)
+            chunk = body_bytes[offset : offset + chunk_size]
+            end_stream = offset + chunk_size >= len(body_bytes)
             conn.send_data(stream_id, chunk, end_stream=end_stream)
             writer.write(conn.data_to_send())
             await writer.drain()
-            offset += len(chunk)
+            offset += chunk_size
 
     async def _send_response(
         self,

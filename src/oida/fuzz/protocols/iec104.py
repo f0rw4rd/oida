@@ -418,19 +418,6 @@ class IEC104StateMachine:
         seq_mgr = self._context.get_sequence_manager("iec104")
         return seq_mgr.get("send_seq")
 
-    def get_and_increment_send_sequence(self) -> int:
-        """Get send sequence and increment for next use.
-
-        This is the standard pattern for sending I-format frames:
-        1. Get current sequence for the frame being sent
-        2. Increment for the next frame
-
-        Returns:
-            Send sequence value to use in the current frame
-        """
-        seq_mgr = self._context.get_sequence_manager("iec104")
-        return seq_mgr.get_and_increment("send_seq")
-
     def get_recv_sequence(self) -> int:
         """Get current receive sequence number.
 
@@ -439,35 +426,6 @@ class IEC104StateMachine:
         """
         seq_mgr = self._context.get_sequence_manager("iec104")
         return seq_mgr.get("recv_seq")
-
-    def update_recv_sequence(self, value: int) -> None:
-        """Update receive sequence from received frame.
-
-        Called when an I-format frame is received to track the peer's
-        send sequence.
-
-        Args:
-            value: Sequence number from received frame
-        """
-        seq_mgr = self._context.get_sequence_manager("iec104")
-        seq_mgr.set("recv_seq", value)
-
-    def store_response(self, operation: str, raw: bytes, parsed: dict = None) -> None:
-        """Store a response for later reference.
-
-        Args:
-            operation: Operation name (e.g., "STARTDT", "TESTFR", "INTERROGATION")
-            raw: Raw response bytes
-            parsed: Optional parsed response data
-        """
-        self._context.set_response(
-            operation,
-            ResponseData(
-                raw=raw,
-                parsed=parsed or {},
-                # Timestamp defaults to datetime.now() in ResponseData
-            ),
-        )
 
     def get_response(self, operation: str) -> Optional[ResponseData]:
         """Get a stored response.
@@ -479,14 +437,6 @@ class IEC104StateMachine:
             ResponseData or None if not found
         """
         return self._context.get_response(operation)
-
-    def reset_sequences(self) -> None:
-        """Reset sequence numbers to initial values.
-
-        Called when connection is re-established.
-        """
-        seq_mgr = self._context.get_sequence_manager("iec104")
-        seq_mgr.reset()
 
     def to_dict(self) -> dict:
         """Serialize state machine state for debugging.

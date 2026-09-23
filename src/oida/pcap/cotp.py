@@ -117,6 +117,8 @@ class COTPConnection:
     dst_ip: str
     src_ref: int
     dst_ref: int
+    # cr_seen is state-completeness tracking only: the harvest() DR-probe
+    # alert keys on "no CC" (see _handle_dr comment), never on cr_seen.
     cr_seen: bool = False
     cc_seen: bool = False
     dr_seen: bool = False

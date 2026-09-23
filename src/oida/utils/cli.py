@@ -112,12 +112,6 @@ class MockCLI:
         for line in lines[1:]:
             self.logger.info(f"    {line}")
 
-    def ret(self, result):
-        """Mock return function"""
-        # Only print meaningful results, not boolean True/False
-        if result and not isinstance(result, bool):
-            print(result)
-
     def parse(self, meta):
         """Parse arguments according to metadata."""
         if self.use_enhanced_parser:
