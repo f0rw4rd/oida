@@ -48,6 +48,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
+from ._hsr_prp_common import extract_supervision_fields, update_supervision_node
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import lookup_mac_vendor
 
@@ -242,29 +243,15 @@ class PRPPassiveListener(PySharkListenerBase):
         """Process a PRP supervision frame."""
         sup_layer = packet.hsr_prp_supervision
 
-        sup_src_mac_a = str(self.get_field(sup_layer, "source_mac_address_A") or "")
-        sup_src_mac_b = str(self.get_field(sup_layer, "source_mac_address_B") or "")
-        redbox_mac = str(self.get_field(sup_layer, "red_box_mac_address") or "")
-        vdan_mac = str(self.get_field(sup_layer, "vdan_mac_address") or "")
+        sup_src_mac_a, sup_src_mac_b, redbox_mac, vdan_mac = extract_supervision_fields(
+            self.get_field, sup_layer
+        )
 
         node_mac = src_mac
         node_type = self._classify_node_type(redbox_mac, vdan_mac)
 
         node = self._ensure_node(node_mac, now)
-        node.supervision_count += 1
-        node.total_frames += 1
-        if node_type:
-            node.node_type = node_type
-        if redbox_mac:
-            node.redbox_mac = redbox_mac
-        if vdan_mac:
-            node.vdan_macs.add(vdan_mac)
-
-        self._known_macs.add(node_mac)
-        if redbox_mac:
-            self._known_macs.add(redbox_mac)
-        if vdan_mac:
-            self._known_macs.add(vdan_mac)
+        update_supervision_node(node, self._known_macs, node_mac, node_type, redbox_mac, vdan_mac)
 
         self._supervision_times.setdefault(node_mac, []).append(now)
 

@@ -35,6 +35,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from ._iscsi_msrpc_common import RecordInteractionMixin
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
@@ -233,7 +234,7 @@ class ISCSICredential:
         return str(val).strip().lower().removeprefix("0x").replace(":", "")
 
 
-class ISCSIPassiveListener(PySharkListenerBase):
+class ISCSIPassiveListener(RecordInteractionMixin, PySharkListenerBase):
     """Passive iSCSI traffic listener for storage area network discovery.
 
     Captures iSCSI traffic to extract:
@@ -394,27 +395,22 @@ class ISCSIPassiveListener(PySharkListenerBase):
             summary += f" status={login_status_name}"
 
         now = datetime.now().isoformat()
-        self._record_interaction(
-            now,
-            src_ip,
-            dst_ip,
-            direction,
-            operation,
-            details,
-            summary,
+        server_ip, client_ip, server_mac, client_mac = self._record_and_resolve_endpoints(
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_mac=src_mac,
+            dst_mac=dst_mac,
+            direction=direction,
+            operation=operation,
+            details=details,
+            summary=summary,
             flow_id=flow_id,
             src_port=src_port,
             dst_port=dst_port,
             stream_id=stream_id,
+            is_response=is_response,
+            now=now,
         )
-
-        # Determine server/client
-        if is_response:
-            server_ip, client_ip = src_ip, dst_ip
-            server_mac, client_mac = src_mac, dst_mac
-        else:
-            server_ip, client_ip = dst_ip, src_ip
-            server_mac, client_mac = dst_mac, src_mac
 
         # Track target names per server
         if target_name:

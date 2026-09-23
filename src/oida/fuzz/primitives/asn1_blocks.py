@@ -28,60 +28,9 @@ from boofuzz import Fuzzable, Size
 
 import logging
 
+from ..core.codecs.asn1 import ASN1Tag, encode_length
+
 logger = logging.getLogger(__name__)
-
-
-class ASN1Tag:
-    """ASN.1 tag constants."""
-
-    # Tag classes
-    UNIVERSAL = 0x00
-    APPLICATION = 0x40
-    CONTEXT = 0x80
-    PRIVATE = 0xC0
-
-    # Primitive/Constructed
-    PRIMITIVE = 0x00
-    CONSTRUCTED = 0x20
-
-    # Universal tags
-    BOOLEAN = 0x01
-    INTEGER = 0x02
-    BIT_STRING = 0x03
-    OCTET_STRING = 0x04
-    NULL = 0x05
-    OID = 0x06
-    ENUMERATED = 0x0A
-    UTF8_STRING = 0x0C
-    SEQUENCE = 0x30
-    SET = 0x31
-    PRINTABLE_STRING = 0x13
-    IA5_STRING = 0x16
-    UTC_TIME = 0x17
-    GENERALIZED_TIME = 0x18
-    VISIBLE_STRING = 0x1A
-
-
-def encode_length(length: int) -> bytes:
-    """Encode ASN.1 BER length."""
-    if length < 0x80:
-        return bytes([length])
-    elif length <= 0xFF:
-        return bytes([0x81, length])
-    elif length <= 0xFFFF:
-        return bytes([0x82, (length >> 8) & 0xFF, length & 0xFF])
-    elif length <= 0xFFFFFF:
-        return bytes([0x83, (length >> 16) & 0xFF, (length >> 8) & 0xFF, length & 0xFF])
-    else:
-        return bytes(
-            [
-                0x84,
-                (length >> 24) & 0xFF,
-                (length >> 16) & 0xFF,
-                (length >> 8) & 0xFF,
-                length & 0xFF,
-            ]
-        )
 
 
 class BERSize(Size):

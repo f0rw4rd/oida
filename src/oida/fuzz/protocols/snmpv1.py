@@ -1,6 +1,6 @@
 """SNMP v1 Protocol Fuzzer"""
 
-from boofuzz import Block, Byte, DWord, Group, Request, Size, Static
+from boofuzz import Block, Byte, DWord, Request, Size, Static
 
 from typing import List
 
@@ -11,11 +11,15 @@ from ..primitives.asn1_blocks import BERSize
 from ..primitives.dynamic import SmartBytes, SmartString
 from ..primitives.smart_string import StringContext
 from .snmp_common import (
-    ber_length_group_values,
+    build_ber_length_of_length,
+    build_ber_structured,
+    build_ber_truncated_length,
+    build_boundary_values,
+    build_get_next_request,
+    build_get_request,
+    build_set_request,
     encode_oid,
     ip_to_bytes,
-    oid_content,
-    structured_ber_varbind_values,
 )
 
 
@@ -213,344 +217,19 @@ class SNMPv1Fuzzer(BaseFuzzer):
         oid_prefix = self.config.get_option("oid_prefix", "1.3.6.1.2.1")
 
         # SNMP GetRequest
-        get_request = Request(
-            "SNMP_GetRequest",
-            children=(
-                Block(
-                    "SNMP_Message",
-                    children=(
-                        # SEQUENCE tag
-                        Static("Sequence_Tag", b"\x30"),
-                        # Length (will be calculated)
-                        BERSize(
-                            "Message_Length",
-                            "SNMP_Content",
-                            fuzzable=False,
-                        ),
-                        Block(
-                            "SNMP_Content",
-                            children=(
-                                # Version (INTEGER 0 for v1)
-                                Static("Version_Tag", b"\x02\x01\x00"),
-                                # Community String (OCTET STRING)
-                                Static("Community_Tag", b"\x04"),
-                                Size(
-                                    "Community_Length",
-                                    "Community_String",
-                                    endian=">",
-                                    output_format="binary",
-                                    length=1,
-                                    fuzzable=False,
-                                ),
-                                SmartString(
-                                    "Community_String",
-                                    community,
-                                    fuzzable=True,
-                                    context=StringContext.CREDENTIAL,
-                                ),
-                                # PDU (GetRequest = 0xA0)
-                                Static("PDU_Tag", b"\xa0"),
-                                Size(
-                                    "PDU_Length",
-                                    "PDU_Content",
-                                    endian=">",
-                                    output_format="binary",
-                                    length=1,
-                                    fuzzable=False,
-                                ),
-                                Block(
-                                    "PDU_Content",
-                                    children=(
-                                        # Request ID (INTEGER)
-                                        Static("RequestID_Tag", b"\x02"),
-                                        Byte("RequestID_Length", 0x04, fuzzable=False),
-                                        DWord("RequestID", request_id, endian=">", fuzzable=True),
-                                        # Error Status (INTEGER 0)
-                                        Static("ErrorStatus", b"\x02\x01\x00"),
-                                        # Error Index (INTEGER 0)
-                                        Static("ErrorIndex", b"\x02\x01\x00"),
-                                        # Variable Bindings (SEQUENCE)
-                                        Static("VarBindings_Tag", b"\x30"),
-                                        Size(
-                                            "VarBindings_Length",
-                                            "VarBindings_Content",
-                                            endian=">",
-                                            output_format="binary",
-                                            length=1,
-                                            fuzzable=False,
-                                        ),
-                                        Block(
-                                            "VarBindings_Content",
-                                            children=(
-                                                # Variable Binding 1
-                                                Static("VarBind1_Tag", b"\x30"),
-                                                Size(
-                                                    "VarBind1_Length",
-                                                    "VarBind1_Content",
-                                                    endian=">",
-                                                    output_format="binary",
-                                                    length=1,
-                                                    fuzzable=False,
-                                                ),
-                                                Block(
-                                                    "VarBind1_Content",
-                                                    children=(
-                                                        # OID
-                                                        Static("OID1_Tag", b"\x06"),
-                                                        Size(
-                                                            "OID1_Length",
-                                                            "OID1_Value",
-                                                            endian=">",
-                                                            output_format="binary",
-                                                            length=1,
-                                                            fuzzable=False,
-                                                        ),
-                                                        SmartBytes(
-                                                            "OID1_Value",
-                                                            self._encode_oid(f"{oid_prefix}.1.1.0"),
-                                                            fuzzable=True,
-                                                        ),
-                                                        # Value (NULL for GetRequest)
-                                                        Static("Value1", b"\x05\x00"),
-                                                    ),
-                                                ),
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                ),
-            ),
+        get_request = build_get_request(
+            "SNMP_GetRequest", b"\x02\x01\x00", request_id, community, oid_prefix
         )
 
         # SNMP GetNextRequest
-        get_next_request = Request(
-            "SNMP_GetNextRequest",
-            children=(
-                Block(
-                    "SNMP_Message",
-                    children=(
-                        Static("Sequence_Tag", b"\x30"),
-                        BERSize(
-                            "Message_Length",
-                            "SNMP_Content",
-                            fuzzable=False,
-                        ),
-                        Block(
-                            "SNMP_Content",
-                            children=(
-                                Static("Version_Tag", b"\x02\x01\x00"),
-                                Static("Community_Tag", b"\x04"),
-                                Size(
-                                    "Community_Length",
-                                    "Community_String",
-                                    endian=">",
-                                    output_format="binary",
-                                    length=1,
-                                    fuzzable=False,
-                                ),
-                                SmartString(
-                                    "Community_String",
-                                    community,
-                                    fuzzable=True,
-                                    context=StringContext.CREDENTIAL,
-                                ),
-                                # PDU (GetNextRequest = 0xA1)
-                                Static("PDU_Tag", b"\xa1"),
-                                Size(
-                                    "PDU_Length",
-                                    "PDU_Content",
-                                    endian=">",
-                                    output_format="binary",
-                                    length=1,
-                                    fuzzable=False,
-                                ),
-                                Block(
-                                    "PDU_Content",
-                                    children=(
-                                        Static("RequestID_Tag", b"\x02"),
-                                        Byte("RequestID_Length", 0x04, fuzzable=False),
-                                        DWord(
-                                            "RequestID", request_id + 1, endian=">", fuzzable=True
-                                        ),
-                                        Static("ErrorStatus", b"\x02\x01\x00"),
-                                        Static("ErrorIndex", b"\x02\x01\x00"),
-                                        Static("VarBindings_Tag", b"\x30"),
-                                        Size(
-                                            "VarBindings_Length",
-                                            "VarBindings_Content",
-                                            endian=">",
-                                            output_format="binary",
-                                            length=1,
-                                            fuzzable=False,
-                                        ),
-                                        Block(
-                                            "VarBindings_Content",
-                                            children=(
-                                                Static("VarBind1_Tag", b"\x30"),
-                                                Size(
-                                                    "VarBind1_Length",
-                                                    "VarBind1_Content",
-                                                    endian=">",
-                                                    output_format="binary",
-                                                    length=1,
-                                                    fuzzable=False,
-                                                ),
-                                                Block(
-                                                    "VarBind1_Content",
-                                                    children=(
-                                                        Static("OID1_Tag", b"\x06"),
-                                                        Size(
-                                                            "OID1_Length",
-                                                            "OID1_Value",
-                                                            endian=">",
-                                                            output_format="binary",
-                                                            length=1,
-                                                            fuzzable=False,
-                                                        ),
-                                                        SmartBytes(
-                                                            "OID1_Value",
-                                                            self._encode_oid(f"{oid_prefix}.1.0"),
-                                                            fuzzable=True,
-                                                        ),
-                                                        Static("Value1", b"\x05\x00"),
-                                                    ),
-                                                ),
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                ),
-            ),
+        get_next_request = build_get_next_request(
+            "SNMP_GetNextRequest", b"\x02\x01\x00", request_id + 1, community, oid_prefix
         )
 
         # SNMP SetRequest (if enabled)
         if enable_set:
-            set_request = Request(
-                "SNMP_SetRequest",
-                children=(
-                    Block(
-                        "SNMP_Message",
-                        children=(
-                            Static("Sequence_Tag", b"\x30"),
-                            BERSize(
-                                "Message_Length",
-                                "SNMP_Content",
-                                fuzzable=False,
-                            ),
-                            Block(
-                                "SNMP_Content",
-                                children=(
-                                    Static("Version_Tag", b"\x02\x01\x00"),
-                                    Static("Community_Tag", b"\x04"),
-                                    Size(
-                                        "Community_Length",
-                                        "Community_String",
-                                        endian=">",
-                                        output_format="binary",
-                                        length=1,
-                                        fuzzable=False,
-                                    ),
-                                    SmartString(
-                                        "Community_String",
-                                        community,
-                                        fuzzable=True,
-                                        context=StringContext.CREDENTIAL,
-                                    ),
-                                    # PDU (SetRequest = 0xA3)
-                                    Static("PDU_Tag", b"\xa3"),
-                                    Size(
-                                        "PDU_Length",
-                                        "PDU_Content",
-                                        endian=">",
-                                        output_format="binary",
-                                        length=1,
-                                        fuzzable=False,
-                                    ),
-                                    Block(
-                                        "PDU_Content",
-                                        children=(
-                                            Static("RequestID_Tag", b"\x02"),
-                                            Byte("RequestID_Length", 0x04, fuzzable=False),
-                                            DWord(
-                                                "RequestID",
-                                                request_id + 2,
-                                                endian=">",
-                                                fuzzable=True,
-                                            ),
-                                            Static("ErrorStatus", b"\x02\x01\x00"),
-                                            Static("ErrorIndex", b"\x02\x01\x00"),
-                                            Static("VarBindings_Tag", b"\x30"),
-                                            Size(
-                                                "VarBindings_Length",
-                                                "VarBindings_Content",
-                                                endian=">",
-                                                output_format="binary",
-                                                length=1,
-                                                fuzzable=False,
-                                            ),
-                                            Block(
-                                                "VarBindings_Content",
-                                                children=(
-                                                    Static("VarBind1_Tag", b"\x30"),
-                                                    Size(
-                                                        "VarBind1_Length",
-                                                        "VarBind1_Content",
-                                                        endian=">",
-                                                        output_format="binary",
-                                                        length=1,
-                                                        fuzzable=False,
-                                                    ),
-                                                    Block(
-                                                        "VarBind1_Content",
-                                                        children=(
-                                                            Static("OID1_Tag", b"\x06"),
-                                                            Size(
-                                                                "OID1_Length",
-                                                                "OID1_Value",
-                                                                endian=">",
-                                                                output_format="binary",
-                                                                length=1,
-                                                                fuzzable=False,
-                                                            ),
-                                                            SmartBytes(
-                                                                "OID1_Value",
-                                                                self._encode_oid(
-                                                                    f"{oid_prefix}.1.3.0"
-                                                                ),
-                                                                fuzzable=True,
-                                                            ),
-                                                            # Value (OCTET STRING)
-                                                            Static("Value_Tag", b"\x04"),
-                                                            Size(
-                                                                "Value_Length",
-                                                                "Value_String",
-                                                                endian=">",
-                                                                output_format="binary",
-                                                                length=1,
-                                                                fuzzable=False,
-                                                            ),
-                                                            SmartString(
-                                                                "Value_String",
-                                                                "TestValue",
-                                                                fuzzable=True,
-                                                            ),
-                                                        ),
-                                                    ),
-                                                ),
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                ),
+            set_request = build_set_request(
+                "SNMP_SetRequest", b"\x02\x01\x00", request_id + 2, community, oid_prefix
             )
 
         # GetResponse with noError (0)
@@ -1315,63 +994,7 @@ class SNMPv1Fuzzer(BaseFuzzer):
         )
 
         # BOUNDARY: Integer boundary value testing (request-id, error-status, error-index)
-        boundary_values = Request(
-            "SNMP_Boundary_Values",
-            children=(
-                Block(
-                    "SNMP_Message",
-                    children=(
-                        Static("Sequence_Tag", b"\x30"),
-                        BERSize(
-                            "Message_Length",
-                            "SNMP_Content",
-                            fuzzable=False,
-                        ),
-                        Block(
-                            "SNMP_Content",
-                            children=(
-                                Static("Version_Tag", b"\x02\x01\x00"),
-                                Static("Community_Tag", b"\x04"),
-                                Size(
-                                    "Community_Length",
-                                    "Community_Boundary",
-                                    endian=">",
-                                    output_format="binary",
-                                    length=1,
-                                    fuzzable=False,
-                                ),
-                                SmartString("Community_Boundary", community, fuzzable=False),
-                                Static("PDU_Tag", b"\xa0"),
-                                Size(
-                                    "PDU_Length",
-                                    "PDU_Content",
-                                    endian=">",
-                                    output_format="binary",
-                                    length=1,
-                                    fuzzable=False,
-                                ),
-                                Block(
-                                    "PDU_Content",
-                                    children=(
-                                        # Fuzz request-id with boundary values
-                                        Static("RequestID_Tag", b"\x02"),
-                                        Byte("RequestID_Length", 0x04, fuzzable=False),
-                                        DWord("RequestID", 0xFFFFFFFF, endian=">", fuzzable=True),
-                                        # Fuzz error-status with boundary values
-                                        Static("ErrorStatus_Tag", b"\x02\x01"),
-                                        Byte("ErrorStatus", 0xFF, fuzzable=True),
-                                        # Fuzz error-index with boundary values
-                                        Static("ErrorIndex_Tag", b"\x02\x01"),
-                                        Byte("ErrorIndex", 0xFF, fuzzable=True),
-                                        Static("VarBindings", b"\x30\x00"),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                ),
-            ),
-        )
+        boundary_values = build_boundary_values("SNMP_Boundary_Values", b"\x02\x01\x00", community)
 
         # BER length-of-length mutation: emit malformed long-form / indefinite
         # length octets at the inner community, OID and varbind-value TLVs. The
@@ -1381,207 +1004,16 @@ class SNMPv1Fuzzer(BaseFuzzer):
         # CVE-2015-5621 (net-snmp) and CVE-2022-24805 (kernel BER decoder). The
         # outer SEQUENCE / PDU / varbindings lengths stay valid (auto-computed),
         # so the agent parses a well-formed frame before choking on the inner length.
-        ber_length_of_length = Request(
-            "SNMP_BER_LengthOfLength",
-            children=(
-                Block(
-                    "SNMP_Message",
-                    children=(
-                        Static("Sequence_Tag", b"\x30"),
-                        BERSize("Message_Length", "SNMP_Content", fuzzable=False),
-                        Block(
-                            "SNMP_Content",
-                            children=(
-                                Static("Version_Tag", b"\x02\x01\x00"),
-                                # Community OCTET STRING with malformed length-of-length
-                                Static("Community_Tag", b"\x04"),
-                                Group(
-                                    "Community_LoL",
-                                    values=ber_length_group_values(len(community)),
-                                ),
-                                SmartString(
-                                    "Community_String",
-                                    community,
-                                    fuzzable=True,
-                                    context=StringContext.CREDENTIAL,
-                                ),
-                                Static("PDU_Tag", b"\xa0"),
-                                Size(
-                                    "PDU_Length",
-                                    "PDU_Content",
-                                    endian=">",
-                                    output_format="binary",
-                                    length=1,
-                                    fuzzable=False,
-                                ),
-                                Block(
-                                    "PDU_Content",
-                                    children=(
-                                        Static("RequestID_Tag", b"\x02"),
-                                        Byte("RequestID_Length", 0x04, fuzzable=False),
-                                        DWord(
-                                            "RequestID", request_id + 200, endian=">", fuzzable=True
-                                        ),
-                                        Static("ErrorStatus", b"\x02\x01\x00"),
-                                        Static("ErrorIndex", b"\x02\x01\x00"),
-                                        Static("VarBindings_Tag", b"\x30"),
-                                        Size(
-                                            "VarBindings_Length",
-                                            "VarBindings_Content",
-                                            endian=">",
-                                            output_format="binary",
-                                            length=1,
-                                            fuzzable=False,
-                                        ),
-                                        Block(
-                                            "VarBindings_Content",
-                                            children=(
-                                                Static("VarBind1_Tag", b"\x30"),
-                                                Size(
-                                                    "VarBind1_Length",
-                                                    "VarBind1_Content",
-                                                    endian=">",
-                                                    output_format="binary",
-                                                    length=1,
-                                                    fuzzable=False,
-                                                ),
-                                                Block(
-                                                    "VarBind1_Content",
-                                                    children=(
-                                                        # OID with malformed length-of-length
-                                                        Static("OID1_Tag", b"\x06"),
-                                                        Group(
-                                                            "OID1_LoL",
-                                                            values=ber_length_group_values(
-                                                                len(
-                                                                    oid_content(
-                                                                        f"{oid_prefix}.1.1.0"
-                                                                    )
-                                                                )
-                                                            ),
-                                                        ),
-                                                        SmartBytes(
-                                                            "OID1_Value",
-                                                            oid_content(f"{oid_prefix}.1.1.0"),
-                                                            fuzzable=True,
-                                                        ),
-                                                        # Varbind value OCTET STRING with
-                                                        # malformed length-of-length
-                                                        Static("Value_Tag", b"\x04"),
-                                                        Group(
-                                                            "Value_LoL",
-                                                            values=ber_length_group_values(
-                                                                len(b"oida-ber")
-                                                            ),
-                                                        ),
-                                                        SmartBytes(
-                                                            "Value_String",
-                                                            b"oida-ber",
-                                                            fuzzable=True,
-                                                        ),
-                                                    ),
-                                                ),
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                ),
-            ),
+        ber_length_of_length = build_ber_length_of_length(
+            "SNMP_BER_LengthOfLength", b"\x02\x01\x00", request_id + 200, community, oid_prefix
         )
 
         # BER truncated length: inner definite-form lengths declared shorter than
         # the content that actually follows (declared < actual) at the community,
         # OID and varbind-value TLVs. Parsers that trust the declared length under-
         # read the field and then desynchronise on the trailing bytes.
-        ber_truncated_length = Request(
-            "SNMP_BER_Truncated_Length",
-            children=(
-                Block(
-                    "SNMP_Message",
-                    children=(
-                        Static("Sequence_Tag", b"\x30"),
-                        BERSize("Message_Length", "SNMP_Content", fuzzable=False),
-                        Block(
-                            "SNMP_Content",
-                            children=(
-                                Static("Version_Tag", b"\x02\x01\x00"),
-                                # Community declares 2 bytes but carries more
-                                Static("Community_Tag", b"\x04"),
-                                Static("Community_TruncLen", b"\x02"),
-                                SmartBytes("Community_String", b"public-overflow", fuzzable=True),
-                                Static("PDU_Tag", b"\xa0"),
-                                Size(
-                                    "PDU_Length",
-                                    "PDU_Content",
-                                    endian=">",
-                                    output_format="binary",
-                                    length=1,
-                                    fuzzable=False,
-                                ),
-                                Block(
-                                    "PDU_Content",
-                                    children=(
-                                        Static("RequestID_Tag", b"\x02"),
-                                        Byte("RequestID_Length", 0x04, fuzzable=False),
-                                        DWord(
-                                            "RequestID", request_id + 201, endian=">", fuzzable=True
-                                        ),
-                                        Static("ErrorStatus", b"\x02\x01\x00"),
-                                        Static("ErrorIndex", b"\x02\x01\x00"),
-                                        Static("VarBindings_Tag", b"\x30"),
-                                        Size(
-                                            "VarBindings_Length",
-                                            "VarBindings_Content",
-                                            endian=">",
-                                            output_format="binary",
-                                            length=1,
-                                            fuzzable=False,
-                                        ),
-                                        Block(
-                                            "VarBindings_Content",
-                                            children=(
-                                                Static("VarBind1_Tag", b"\x30"),
-                                                Size(
-                                                    "VarBind1_Length",
-                                                    "VarBind1_Content",
-                                                    endian=">",
-                                                    output_format="binary",
-                                                    length=1,
-                                                    fuzzable=False,
-                                                ),
-                                                Block(
-                                                    "VarBind1_Content",
-                                                    children=(
-                                                        # OID declares 2 bytes but carries full body
-                                                        Static("OID1_Tag", b"\x06"),
-                                                        Static("OID1_TruncLen", b"\x02"),
-                                                        SmartBytes(
-                                                            "OID1_Value",
-                                                            oid_content(f"{oid_prefix}.1.1.0"),
-                                                            fuzzable=True,
-                                                        ),
-                                                        # Value declares 1 byte but carries more
-                                                        Static("Value_Tag", b"\x04"),
-                                                        Static("Value_TruncLen", b"\x01"),
-                                                        SmartBytes(
-                                                            "Value_String",
-                                                            b"oida-truncated",
-                                                            fuzzable=True,
-                                                        ),
-                                                    ),
-                                                ),
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                ),
-            ),
+        ber_truncated_length = build_ber_truncated_length(
+            "SNMP_BER_Truncated_Length", b"\x02\x01\x00", request_id + 201, oid_prefix
         )
 
         # Structured BER codec attacks on a single varbind. The previously
@@ -1590,67 +1022,8 @@ class SNMPv1Fuzzer(BaseFuzzer):
         # TLV goes; every enclosing length (message / PDU / varbindings) is an
         # auto-computed BERSize so the outer framing stays valid and the agent
         # reaches varbind BER decoding before choking on the malformed TLV.
-        ber_structured = Request(
-            "SNMP_BER_Structured",
-            children=(
-                Block(
-                    "SNMP_Message",
-                    children=(
-                        Static("Sequence_Tag", b"\x30"),
-                        BERSize("Message_Length", "SNMP_Content", fuzzable=False),
-                        Block(
-                            "SNMP_Content",
-                            children=(
-                                Static("Version_Tag", b"\x02\x01\x00"),
-                                Static("Community_Tag", b"\x04"),
-                                Size(
-                                    "Community_Length",
-                                    "Community_String",
-                                    endian=">",
-                                    output_format="binary",
-                                    length=1,
-                                    fuzzable=False,
-                                ),
-                                SmartString("Community_String", community, fuzzable=False),
-                                Static("PDU_Tag", b"\xa0"),
-                                BERSize("PDU_Length", "PDU_Content", fuzzable=False),
-                                Block(
-                                    "PDU_Content",
-                                    children=(
-                                        Static("RequestID_Tag", b"\x02"),
-                                        Byte("RequestID_Length", 0x04, fuzzable=False),
-                                        DWord(
-                                            "RequestID",
-                                            request_id + 300,
-                                            endian=">",
-                                            fuzzable=False,
-                                        ),
-                                        Static("ErrorStatus", b"\x02\x01\x00"),
-                                        Static("ErrorIndex", b"\x02\x01\x00"),
-                                        Static("VarBindings_Tag", b"\x30"),
-                                        BERSize(
-                                            "VarBindings_Length",
-                                            "VarBindings_Content",
-                                            fuzzable=False,
-                                        ),
-                                        Block(
-                                            "VarBindings_Content",
-                                            children=(
-                                                Group(
-                                                    "Structured_VarBind",
-                                                    values=structured_ber_varbind_values(
-                                                        f"{oid_prefix}.1.1.0"
-                                                    ),
-                                                ),
-                                            ),
-                                        ),
-                                    ),
-                                ),
-                            ),
-                        ),
-                    ),
-                ),
-            ),
+        ber_structured = build_ber_structured(
+            "SNMP_BER_Structured", b"\x02\x01\x00", request_id + 300, community, oid_prefix
         )
 
         # Connect requests to session

@@ -697,31 +697,18 @@ class SNMPScanner(
 
     async def _async_discover(self, engine, auth_data, transport, context) -> Dict:
         """Async implementation of single-target SNMP discovery."""
-        from pysnmp.hlapi.asyncio import (
-            ObjectIdentity,
-            ObjectType,
-            get_cmd,
-        )
+        from ._oid_fetch import fetch_oid_values
 
         # Get basic system info
-        sys_info = {}
-        for name, oid in SNMP_OIDS.items():
-            try:
-                error_indication, error_status, _, var_binds = await get_cmd(
-                    engine,
-                    auth_data,
-                    transport,
-                    context,
-                    ObjectType(ObjectIdentity(oid)),
-                )
-                if error_indication or error_status:
-                    continue
-                for var_bind in var_binds:
-                    value = var_bind[1].prettyPrint()
-                    if value and value != "No Such Object currently exists at this OID":
-                        sys_info[name] = value
-            except Exception as e:
-                self.logger.debug(f"SNMP: failed to get {name}: {e}")
+        sys_info = await fetch_oid_values(
+            engine,
+            auth_data,
+            transport,
+            context,
+            SNMP_OIDS,
+            self.logger,
+            "SNMP: failed to get {name}: {e}",
+        )
 
         if not sys_info:
             return {}

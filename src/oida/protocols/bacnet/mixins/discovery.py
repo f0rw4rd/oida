@@ -5,13 +5,48 @@ Handles device discovery via Who-Is, direct reads, and device identification.
 """
 
 import asyncio
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, NamedTuple, Optional
 
 from ..constants import (
     _load_bacpypes3,
     VENDORS,
     CONTROL_POINT_TYPES,
 )
+
+
+class Bacpypes3CommonTypes(NamedTuple):
+    """The bacpypes3 types shared by the vendor scan and present-value read paths."""
+
+    ReadPropertyRequest: Any
+    ObjectIdentifier: Any
+    PropertyIdentifier: Any
+    CharacterString: Any
+    Unsigned: Any
+    Real: Any
+    AbortPDU: Any
+    ErrorPDU: Any
+    RejectPDU: Any
+    Error: Any
+    ErrorRejectAbortNack: Any
+
+
+def _unpack_bacpypes3_common_types(types: Dict[str, Any]) -> Bacpypes3CommonTypes:
+    """Unpack the ``_load_bacpypes3()`` types shared by the vendor-scan and
+    present-value-read paths (ReadPropertyRequest/ObjectIdentifier/PropertyIdentifier
+    plus the standard abort/error/reject exception types)."""
+    return Bacpypes3CommonTypes(
+        ReadPropertyRequest=types["ReadPropertyRequest"],
+        ObjectIdentifier=types["ObjectIdentifier"],
+        PropertyIdentifier=types["PropertyIdentifier"],
+        CharacterString=types["CharacterString"],
+        Unsigned=types["Unsigned"],
+        Real=types["Real"],
+        AbortPDU=types["AbortPDU"],
+        ErrorPDU=types["ErrorPDU"],
+        RejectPDU=types["RejectPDU"],
+        Error=types["Error"],
+        ErrorRejectAbortNack=types["ErrorRejectAbortNack"],
+    )
 
 
 class DiscoveryMixin:
@@ -331,17 +366,19 @@ class DiscoveryMixin:
         debug interfaces, passwords, or configuration backdoors.
         """
         types = _load_bacpypes3()
-        ReadPropertyRequest = types["ReadPropertyRequest"]
-        ObjectIdentifier = types["ObjectIdentifier"]
-        PropertyIdentifier = types["PropertyIdentifier"]
-        CharacterString = types["CharacterString"]
-        Unsigned = types["Unsigned"]
-        Real = types["Real"]
-        AbortPDU = types["AbortPDU"]
-        ErrorPDU = types["ErrorPDU"]
-        RejectPDU = types["RejectPDU"]
-        Error = types["Error"]
-        ErrorRejectAbortNack = types["ErrorRejectAbortNack"]
+        (
+            ReadPropertyRequest,
+            ObjectIdentifier,
+            PropertyIdentifier,
+            CharacterString,
+            Unsigned,
+            Real,
+            AbortPDU,
+            ErrorPDU,
+            RejectPDU,
+            Error,
+            ErrorRejectAbortNack,
+        ) = _unpack_bacpypes3_common_types(types)
 
         self.logger.display("\n[Vendor-Specific / Proprietary Scan]")
 

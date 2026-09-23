@@ -375,31 +375,21 @@ class HostEnumerationMixin(_ScannerBase):
         self, vendor: str, engine, auth_data, transport, context
     ) -> Dict[str, str]:
         """Query vendor-specific OIDs for extra device information."""
-        from pysnmp.hlapi.asyncio import ObjectIdentity, ObjectType, get_cmd
-
         from ..constants import VENDOR_SPECIFIC_OIDS
+        from .._oid_fetch import fetch_oid_values
 
         if vendor not in VENDOR_SPECIFIC_OIDS:
             return {}
 
-        results = {}
-        for name, oid in VENDOR_SPECIFIC_OIDS[vendor].items():
-            try:
-                error_indication, error_status, _, var_binds = await get_cmd(
-                    engine,
-                    auth_data,
-                    transport,
-                    context,
-                    ObjectType(ObjectIdentity(oid)),
-                )
-                if error_indication or error_status:
-                    continue
-                for var_bind in var_binds:
-                    value = var_bind[1].prettyPrint()
-                    if value and value != "No Such Object currently exists at this OID":
-                        results[name] = value
-            except Exception as e:
-                self.logger.debug(f"SNMP: vendor OID {name} query failed: {e}")
+        results = await fetch_oid_values(
+            engine,
+            auth_data,
+            transport,
+            context,
+            VENDOR_SPECIFIC_OIDS[vendor],
+            self.logger,
+            "SNMP: vendor OID {name} query failed: {e}",
+        )
 
         if results:
             self.logger.debug(f"SNMP vendor-specific ({vendor}): {results}")

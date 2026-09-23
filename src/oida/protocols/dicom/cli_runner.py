@@ -138,6 +138,32 @@ def _new_dataset():
     return Dataset()
 
 
+def _build_dicom_tls_args(args: Any, ip: str, logger: Any):
+    """Build the pynetdicom ``tls_args`` tuple ``(ssl_context, server_hostname)``
+    for a TLS association, shared by the main C-ECHO/association path and the
+    AE Title brute-force path.
+
+    A supplied CA without ``--tls-insecure`` means the operator wants real
+    server-certificate verification, so hostname checking is enabled.
+    """
+    from oida.utils.socket_helpers import build_tls_context
+
+    tls_ca = getattr(args, "tls_ca", None)
+    tls_insecure = getattr(args, "tls_insecure", False)
+    ssl_cx = build_tls_context(
+        {
+            "tls-cert": getattr(args, "tls_cert", None),
+            "tls-key": getattr(args, "tls_key", None),
+            "tls-ca": tls_ca,
+            "tls-insecure": tls_insecure,
+        },
+        logger=logger,
+    )
+    if tls_ca and not tls_insecure:
+        ssl_cx.check_hostname = True
+    return (ssl_cx, ip)
+
+
 # Default AE Titles to test
 # PHI-containing DICOM tags (for --phi-only filtering)
 PHI_TAGS = [
@@ -677,24 +703,9 @@ class dicom(
             # Set up TLS context if requested
             tls_args = None
             if use_tls:
-                from ...utils.socket_helpers import build_tls_context, check_tls_certificate
+                from ...utils.socket_helpers import check_tls_certificate
 
-                tls_ca = getattr(self.args, "tls_ca", None)
-                tls_insecure = getattr(self.args, "tls_insecure", False)
-                ssl_cx = build_tls_context(
-                    {
-                        "tls-cert": getattr(self.args, "tls_cert", None),
-                        "tls-key": getattr(self.args, "tls_key", None),
-                        "tls-ca": tls_ca,
-                        "tls-insecure": tls_insecure,
-                    },
-                    logger=self.logger,
-                )
-                # A supplied CA without --tls-insecure means the operator wants
-                # real server-certificate verification, so enable hostname checking.
-                if tls_ca and not tls_insecure:
-                    ssl_cx.check_hostname = True
-                tls_args = (ssl_cx, self.ip)  # (ssl_context, server_hostname)
+                tls_args = _build_dicom_tls_args(self.args, self.ip, self.logger)
                 self.logger.display("Using DICOM TLS (Upper Layer Security)")
 
                 # Probe cert before association (pynetdicom may not expose the socket)

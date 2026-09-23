@@ -31,6 +31,13 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from ._imap_smtp_common import (
+    build_credential_entry,
+    credentials_summary,
+    hashcat_hashes,
+    is_new_credential,
+    is_new_hash,
+)
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import (
     is_valid_discovered_ip,
@@ -667,29 +674,13 @@ class SMTPPassiveListener(PySharkListenerBase):
         self, session: SMTPSession, method: str, username: str, password: str
     ) -> bool:
         """Check if this is a new credential."""
-        for cred in self.credentials:
-            if (
-                cred.server_ip == session.server_ip
-                and cred.auth_method == method
-                and cred.username == username
-                and cred.password == password
-            ):
-                return False
-        return True
+        return is_new_credential(self.credentials, session.server_ip, method, username, password)
 
     def _is_new_hash(
         self, session: SMTPSession, method: str, username: str, hash_value: str
     ) -> bool:
         """Check if this is a new hash."""
-        for cred in self.credentials:
-            if (
-                cred.server_ip == session.server_ip
-                and cred.auth_method == method
-                and cred.username == username
-                and cred.hash_value == hash_value
-            ):
-                return False
-        return True
+        return is_new_hash(self.credentials, session.server_ip, method, username, hash_value)
 
     def _record_credential(self, session: SMTPSession, cred: SMTPCredential) -> None:
         """Record extracted credential."""
@@ -717,17 +708,7 @@ class SMTPPassiveListener(PySharkListenerBase):
         server_key = f"smtp-server:{session.server_ip}"
         client_key = f"smtp-client:{session.client_ip}"
 
-        cred_entry = {
-            "auth_method": cred.auth_method,
-            "credential_type": cred.credential_type,
-            "username": cred.username,
-            "timestamp": cred.timestamp,
-        }
-        if cred.credential_type == "plaintext":
-            cred_entry["password"] = cred.password
-        else:
-            cred_entry["hash"] = cred.hash_value
-            cred_entry["challenge"] = cred.challenge
+        cred_entry = build_credential_entry(cred)
 
         # Server device
         banner = self.server_banners.get(session.server_ip, "")
@@ -776,24 +757,7 @@ class SMTPPassiveListener(PySharkListenerBase):
 
     def get_credentials_summary(self) -> List[Dict[str, Any]]:
         """Get summary of all extracted credentials."""
-        result = []
-        for cred in self.credentials:
-            entry = {
-                "protocol": "SMTP",
-                "auth_method": cred.auth_method,
-                "credential_type": cred.credential_type,
-                "username": cred.username,
-                "server_ip": cred.server_ip,
-                "client_ip": cred.client_ip,
-                "timestamp": cred.timestamp,
-            }
-            if cred.credential_type == "plaintext":
-                entry["password"] = cred.password
-            else:
-                entry["hash"] = cred.hash_value
-                entry["challenge"] = cred.challenge
-            result.append(entry)
-        return result
+        return credentials_summary(self.credentials, "SMTP")
 
     def get_hashcat_hashes(self) -> List[str]:
         """CRAM-MD5 credentials in hashcat mode-10200 format.
@@ -801,7 +765,7 @@ class SMTPPassiveListener(PySharkListenerBase):
         Delegates to the per-credential property; plaintext credentials yield ""
         and are skipped.
         """
-        return [c.hashcat_format for c in self.credentials if c.hashcat_format]
+        return hashcat_hashes(self.credentials)
 
 
 def _parse_banner(rsp_param: str) -> str:

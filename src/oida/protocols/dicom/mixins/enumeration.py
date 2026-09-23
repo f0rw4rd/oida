@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 
 from ..cli_runner import (
     DEFAULT_AET_WORDLIST,
+    _build_dicom_tls_args,
     _get_ae,
     _get_sop_classes,
     _new_dataset,
@@ -102,22 +103,7 @@ class EnumerationMixin(_ScannerBase):
         # possibly-open server. Build the TLS args once and reuse across the loop.
         tls_args = None
         if use_tls:
-            from ....utils.socket_helpers import build_tls_context
-
-            tls_ca = getattr(self.args, "tls_ca", None)
-            tls_insecure = getattr(self.args, "tls_insecure", False)
-            ssl_cx = build_tls_context(
-                {
-                    "tls-cert": getattr(self.args, "tls_cert", None),
-                    "tls-key": getattr(self.args, "tls_key", None),
-                    "tls-ca": tls_ca,
-                    "tls-insecure": tls_insecure,
-                },
-                logger=self.logger,
-            )
-            if tls_ca and not tls_insecure:
-                ssl_cx.check_hostname = True
-            tls_args = (ssl_cx, self.ip)
+            tls_args = _build_dicom_tls_args(self.args, self.ip, self.logger)
             self.logger.display("Using DICOM TLS for AE Title brute-force")
 
         valid_aets = []

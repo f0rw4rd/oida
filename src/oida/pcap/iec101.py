@@ -42,48 +42,14 @@ from ..protocols.discovery.core import (
     lookup_mac_vendor,
 )
 
-from ._iec_common import classify_rw, parse_asdu_field
-
-# Reuse the comprehensive ASDU type ID definitions from IEC 104
-from .iec104 import (
-    TYPE_IDS,
+from ._iec_common import (
     CONTROL_TYPE_IDS,
     COT_NAMES,
-    _WRITE_TYPE_IDS,
-    _READ_COMMAND_TYPE_IDS,
-    _SYSTEM_TYPE_IDS,
-    _FILE_TYPE_IDS,
-    _ERROR_COTS,
-    _TYPE_CATEGORIES,
-    _DPI_VALUES,
-    _DCO_VALUES,
-    _RCO_VALUES,
+    LINK_FUNC_PRI_TO_SEC,
+    LINK_FUNC_SEC_TO_PRI,
+    TYPE_IDS,
+    IecAsduValueMixin,
 )
-
-# IEC 101 link layer function codes (primary station -> secondary station)
-# FT1.2 framing per IEC 60870-5-1 / IEC 60870-5-2
-LINK_FUNC_PRI_TO_SEC = {
-    0: "Reset Remote Link",
-    1: "Reset User Process",
-    2: "Test Function for Link",
-    3: "User Data (Confirmed)",
-    4: "User Data (No Reply)",
-    8: "Expected Response Specifies Access Demand",
-    9: "Request Status of Link",
-    10: "Request User Data Class 1",
-    11: "Request User Data Class 2",
-}
-
-# IEC 101 link layer function codes (secondary station -> primary station)
-LINK_FUNC_SEC_TO_PRI = {
-    0: "ACK (positive)",
-    1: "NACK (link busy)",
-    8: "User Data",
-    9: "No Data Available (NACK)",
-    11: "Status of Link / Access Demand",
-    14: "Link Not Functioning",
-    15: "Link Not Implemented",
-}
 
 
 @dataclass
@@ -102,7 +68,7 @@ class IEC101Session:
     last_seen: str = ""
 
 
-class IEC101PassiveListener(PySharkListenerBase):
+class IEC101PassiveListener(IecAsduValueMixin, PySharkListenerBase):
     """Passive IEC 60870-5-101 traffic listener (PyShark-based).
 
     Monitors IEC 101 telecontrol traffic (serial protocol, commonly tunneled
@@ -241,14 +207,11 @@ class IEC101PassiveListener(PySharkListenerBase):
         flow_id: str,
         link_addr: int,
         is_primary: bool,
-        func_pri_raw: Any,
-        func_sec_raw: Any,
+        func_pri_raw,
+        func_sec_raw,
         header_val: int,
     ) -> None:
         """Process link-layer only frame (no ASDU)."""
-        now = datetime.now().isoformat()
-        _sp, _dp = self.get_port_info(packet)
-
         if is_primary and func_pri_raw is not None:
             func_code = self._parse_int(func_pri_raw, -1)
             func_name = LINK_FUNC_PRI_TO_SEC.get(func_code, f"PRI Func {func_code}")
@@ -262,37 +225,19 @@ class IEC101PassiveListener(PySharkListenerBase):
             func_name = "Unknown Link Func"
             direction = "request" if is_primary else "response"
 
-        # Fixed-length frames (0x10) vs single-char frames (0xE5)
-        if header_val == 0xE5:
-            operation = "Single Char ACK (E5h)"
-        elif header_val == 0x10:
-            operation = f"Link: {func_name}"
-        else:
-            operation = f"Link: {func_name}"
+        operation = "Single Char ACK (E5h)" if header_val == 0xE5 else f"Link: {func_name}"
 
-        details: Dict[str, Any] = {
-            "link_addr": link_addr,
-            "frame_type": "link",
-            "is_primary": is_primary,
-        }
-        if func_code >= 0:
-            details["link_func_code"] = func_code
-            details["link_func_name"] = func_name
-
-        summary = f"Link {func_name} addr={link_addr}"
-
-        self._record_interaction(
-            now,
+        self._record_link_frame(
+            packet,
             src_ip,
             dst_ip,
+            flow_id,
+            link_addr,
+            is_primary,
+            func_code,
+            func_name,
             direction,
             operation,
-            details,
-            summary,
-            flow_id=flow_id,
-            src_port=_sp,
-            dst_port=_dp,
-            stream_id=self.get_stream_id(packet),
         )
 
     def _process_asdu(
@@ -327,12 +272,8 @@ class IEC101PassiveListener(PySharkListenerBase):
             )
             return
 
-        try:
-            type_id = int(type_id_raw)
-        except (ValueError, TypeError):
-            # Unparseable or multi-value EK typeid (e.g. "1,3"): record a
-            # malformed interaction and log, rather than silently dropping the
-            # frame (mirrors the empty-typeid branch above and the iec104 path).
+        parsed = self._parse_asdu_core(session, asdu_layer)
+        if parsed is None:
             self.logger.debug(
                 "IEC101 unparseable ASDU typeid %r link_addr=%s", type_id_raw, link_addr
             )
@@ -353,57 +294,20 @@ class IEC101PassiveListener(PySharkListenerBase):
             )
             return
 
-        # Parse common address
-        common_addr_raw = self.get_field(asdu_layer, "addr", None)
-        common_addr = 0
-        if common_addr_raw:
-            try:
-                common_addr = int(common_addr_raw)
-            except (ValueError, TypeError):
-                pass
-        session.common_addresses.add(common_addr)
+        type_id = parsed["type_id"]
+        type_name = parsed["type_name"]
+        common_addr = parsed["common_address"]
+        cause_tx = parsed["cause_of_transmission"]
+        cot_name = parsed["cot_name"]
+        rw = parsed["rw"]
+        is_negative = parsed["negative"]
+        is_control = parsed["is_control"]
+        is_error_cot = parsed["is_error_cot"]
+        ioa_list = parsed["ioa_list"]
+        values = parsed["values"]
+        quality_list = parsed["quality"]
 
-        # Parse IOAs
-        ioa_list = self._get_multi_field_ints(asdu_layer, "ioa")
-        for ioa in ioa_list:
-            session.ioa_seen.add(ioa)
-
-        # Parse cause of transmission
-        cause_tx = parse_asdu_field(self.get_field(asdu_layer, "causetx", None), 0)
-
-        # Parse negative (P/N) bit
-        is_negative = False
-        nega_raw = self.get_field(asdu_layer, "nega", None)
-        if nega_raw is not None:
-            is_negative = str(nega_raw) in ("True", "1", "true")
-
-        session.type_ids.add(type_id)
-        is_control = type_id in CONTROL_TYPE_IDS
-        if is_control:
-            session.control_count += 1
-        else:
-            session.monitor_count += 1
-
-        type_name = TYPE_IDS.get(type_id, f"Type{type_id}")
         direction = "request" if is_control else "response"
-
-        cot_name = COT_NAMES.get(cause_tx, str(cause_tx))
-        if is_negative:
-            cot_name = f"neg_{cot_name}"
-        is_error_cot = cause_tx in _ERROR_COTS or is_negative
-
-        values = self._extract_values(asdu_layer, type_id)
-        quality_list = self._extract_quality(asdu_layer, type_id)
-
-        # Classify rw
-        rw = classify_rw(
-            type_id,
-            is_error_cot,
-            write_ids=_WRITE_TYPE_IDS,
-            read_ids=_READ_COMMAND_TYPE_IDS,
-            system_ids=_SYSTEM_TYPE_IDS,
-            file_ids=_FILE_TYPE_IDS,
-        )
 
         details: Dict[str, Any] = {
             "type_id": type_id,
@@ -427,11 +331,11 @@ class IEC101PassiveListener(PySharkListenerBase):
             type_name,
             ioa_list,
             common_addr,
-            link_addr,
             is_control,
             values,
             cot_name=cot_name,
             is_error=is_error_cot,
+            link_addr=link_addr,
         )
 
         now = datetime.now().isoformat()
@@ -449,398 +353,6 @@ class IEC101PassiveListener(PySharkListenerBase):
             dst_port=_dp,
             stream_id=self.get_stream_id(packet),
         )
-
-    # ------------------------------------------------------------------
-    # Multi-field helpers (same pattern as IEC 104)
-    # ------------------------------------------------------------------
-
-    def _get_multi_field_ints(self, layer, field_name: str) -> List[int]:
-        """Get all instances of an integer field from a PyShark layer."""
-        result: List[int] = []
-        raw = self.get_field(layer, field_name, None)
-        if raw is None:
-            return result
-        try:
-            for f in getattr(layer, field_name).all_fields:
-                result.append(int(f.show))
-        except Exception:
-            for part in str(raw).split(","):
-                try:
-                    result.append(int(part.strip()))
-                except (ValueError, TypeError):
-                    pass
-        return result
-
-    def _get_multi_field_strs(self, layer, field_name: str) -> List[str]:
-        """Get all instances of a field as strings from a PyShark layer."""
-        result: List[str] = []
-        raw = self.get_field(layer, field_name, None)
-        if raw is None:
-            return result
-        try:
-            for f in getattr(layer, field_name).all_fields:
-                result.append(str(f.show))
-        except Exception:
-            result.append(str(raw))
-        return result
-
-    # ------------------------------------------------------------------
-    # Value extraction (reuse IEC 104 ASDU type categories)
-    # ------------------------------------------------------------------
-
-    def _extract_values(self, asdu_layer, type_id: int) -> List[str]:
-        """Extract per-IOA values from the ASDU layer based on type ID."""
-        cat = _TYPE_CATEGORIES.get(type_id)
-        if cat is None:
-            return []
-
-        value_kind = cat[0]
-
-        if value_kind == "spi":
-            return self._extract_spi_values(asdu_layer)
-        elif value_kind == "dpi":
-            return self._extract_dpi_values(asdu_layer)
-        elif value_kind == "vti":
-            return self._extract_vti_values(asdu_layer)
-        elif value_kind == "bitstring":
-            return self._get_multi_field_strs(asdu_layer, "bitstring")
-        elif value_kind == "normval":
-            return self._get_multi_field_strs(asdu_layer, "normval")
-        elif value_kind == "scalval":
-            return self._get_multi_field_strs(asdu_layer, "scalval")
-        elif value_kind == "float":
-            return self._extract_float_values(asdu_layer)
-        elif value_kind == "bcr":
-            return self._extract_bcr_values(asdu_layer)
-        elif value_kind == "sco":
-            return self._extract_sco_values(asdu_layer)
-        elif value_kind == "dco":
-            return self._extract_dco_values(asdu_layer)
-        elif value_kind == "rco":
-            return self._extract_rco_values(asdu_layer)
-        elif value_kind == "qoi":
-            return self._extract_simple_field(asdu_layer, "qoi", "QOI=")
-        elif value_kind == "qcc":
-            return self._extract_simple_field(asdu_layer, "qcc", "QCC=")
-        elif value_kind == "coi":
-            return self._extract_coi_values(asdu_layer)
-        elif value_kind == "cp56time":
-            return self._get_multi_field_strs(asdu_layer, "cp56time")
-        return []
-
-    def _extract_spi_values(self, asdu_layer) -> List[str]:
-        """Extract single-point SPI values (ON/OFF)."""
-        result: List[str] = []
-        raw = self.get_field(asdu_layer, "siq_spi", None)
-        if raw is None:
-            return result
-        try:
-            for f in getattr(asdu_layer, "siq_spi").all_fields:
-                val = str(f.show)
-                result.append("ON" if val in ("True", "On", "1") else "OFF")
-        except Exception:
-            val = str(raw)
-            result.append("ON" if val in ("True", "On", "1") else "OFF")
-        return result
-
-    def _extract_dpi_values(self, asdu_layer) -> List[str]:
-        """Extract double-point DPI values."""
-        result: List[str] = []
-        raw = self.get_field(asdu_layer, "diq_dpi", None)
-        if raw is None:
-            return result
-        try:
-            for f in getattr(asdu_layer, "diq_dpi").all_fields:
-                val = int(f.show)
-                result.append(_DPI_VALUES.get(val, str(val)))
-        except Exception:
-            try:
-                val = int(raw)
-                result.append(_DPI_VALUES.get(val, str(val)))
-            except (ValueError, TypeError):
-                result.append(str(raw))
-        return result
-
-    def _extract_vti_values(self, asdu_layer) -> List[str]:
-        """Extract step position VTI values."""
-        result: List[str] = []
-        vals = self._get_multi_field_strs(asdu_layer, "vti_v")
-        transients = self._get_multi_field_strs(asdu_layer, "vti_t")
-        for i, v in enumerate(vals):
-            t = transients[i] if i < len(transients) else ""
-            if t and t in ("True", "Transient", "1"):
-                result.append(f"{v}(T)")
-            else:
-                result.append(v)
-        if not result:
-            raw_vals = self._get_multi_field_strs(asdu_layer, "vti")
-            result.extend(raw_vals)
-        return result
-
-    def _extract_float_values(self, asdu_layer) -> List[str]:
-        """Extract short floating point values."""
-        result: List[str] = []
-        raw = self.get_field(asdu_layer, "float", None)
-        if raw is None:
-            return result
-        try:
-            for f in getattr(asdu_layer, "float").all_fields:
-                result.append(self._format_float(f.show))
-        except Exception:
-            result.append(self._format_float(str(raw)))
-        return result
-
-    def _extract_bcr_values(self, asdu_layer) -> List[str]:
-        """Extract binary counter reading values."""
-        result: List[str] = []
-        raw = self.get_field(asdu_layer, "bcr_count", None)
-        if raw is not None:
-            try:
-                for f in getattr(asdu_layer, "bcr_count").all_fields:
-                    result.append(str(f.show))
-            except Exception:
-                result.append(str(raw))
-        if not result:
-            raw = self.get_field(asdu_layer, "bcr", None)
-            if raw is not None:
-                result.append(str(raw))
-        return result
-
-    def _extract_sco_values(self, asdu_layer) -> List[str]:
-        """Extract single command values (ON/OFF with select/execute)."""
-        result: List[str] = []
-        on_raw = self.get_field(asdu_layer, "sco_on", None)
-        se_raw = self.get_field(asdu_layer, "sco_se", None)
-        if on_raw is None:
-            return result
-        try:
-            on_fields = list(getattr(asdu_layer, "sco_on").all_fields)
-            se_fields: list = []
-            if se_raw is not None:
-                try:
-                    se_fields = list(getattr(asdu_layer, "sco_se").all_fields)
-                except Exception:
-                    pass
-            for i, f in enumerate(on_fields):
-                val = "ON" if str(f.show) == "True" else "OFF"
-                if i < len(se_fields) and str(se_fields[i].show) == "True":
-                    val += "(S)"
-                result.append(val)
-        except Exception:
-            val = "ON" if str(on_raw) == "True" else "OFF"
-            if se_raw is not None and str(se_raw) == "True":
-                val += "(S)"
-            result.append(val)
-        return result
-
-    def _extract_dco_values(self, asdu_layer) -> List[str]:
-        """Extract double command values."""
-        result: List[str] = []
-        on_raw = self.get_field(asdu_layer, "dco_on", None)
-        se_raw = self.get_field(asdu_layer, "dco_se", None)
-        if on_raw is None:
-            return result
-        try:
-            on_fields = list(getattr(asdu_layer, "dco_on").all_fields)
-            se_fields: list = []
-            if se_raw is not None:
-                try:
-                    se_fields = list(getattr(asdu_layer, "dco_se").all_fields)
-                except Exception:
-                    pass
-            for i, f in enumerate(on_fields):
-                val = _DCO_VALUES.get(int(f.show), str(f.show))
-                if i < len(se_fields) and str(se_fields[i].show) == "True":
-                    val += "(S)"
-                result.append(val)
-        except Exception:
-            try:
-                val = _DCO_VALUES.get(int(on_raw), str(on_raw))
-            except (ValueError, TypeError):
-                val = str(on_raw)
-            if se_raw is not None and str(se_raw) == "True":
-                val += "(S)"
-            result.append(val)
-        return result
-
-    def _extract_rco_values(self, asdu_layer) -> List[str]:
-        """Extract regulating step command values."""
-        result: List[str] = []
-        up_raw = self.get_field(asdu_layer, "rco_up", None)
-        se_raw = self.get_field(asdu_layer, "rco_se", None)
-        if up_raw is None:
-            return result
-        try:
-            up_fields = list(getattr(asdu_layer, "rco_up").all_fields)
-            se_fields: list = []
-            if se_raw is not None:
-                try:
-                    se_fields = list(getattr(asdu_layer, "rco_se").all_fields)
-                except Exception:
-                    pass
-            for i, f in enumerate(up_fields):
-                val = _RCO_VALUES.get(int(f.show), str(f.show))
-                if i < len(se_fields) and str(se_fields[i].show) == "True":
-                    val += "(S)"
-                result.append(val)
-        except Exception:
-            try:
-                val = _RCO_VALUES.get(int(up_raw), str(up_raw))
-            except (ValueError, TypeError):
-                val = str(up_raw)
-            if se_raw is not None and str(se_raw) == "True":
-                val += "(S)"
-            result.append(val)
-        return result
-
-    def _extract_coi_values(self, asdu_layer) -> List[str]:
-        """Extract cause of initialization values."""
-        raw = self.get_field(asdu_layer, "coi_r", None)
-        if raw is None:
-            return []
-        coi_reasons = {0: "local_power", 1: "local_reset", 2: "remote_reset"}
-        try:
-            reason = coi_reasons.get(int(raw), str(raw))
-        except (ValueError, TypeError):
-            reason = str(raw)
-        return [f"COI={reason}"]
-
-    def _extract_simple_field(self, asdu_layer, field_name: str, prefix: str = "") -> List[str]:
-        """Extract a simple single-valued field."""
-        raw = self.get_field(asdu_layer, field_name, None)
-        if raw is None:
-            return []
-        return [f"{prefix}{raw}"]
-
-    # ------------------------------------------------------------------
-    # Quality extraction (same as IEC 104)
-    # ------------------------------------------------------------------
-
-    def _extract_quality(self, asdu_layer, type_id: int) -> List[str]:
-        """Extract quality flags per IOA."""
-        cat = _TYPE_CATEGORIES.get(type_id)
-        if cat is None:
-            return []
-
-        quality_source = cat[1]
-        if quality_source is None:
-            return []
-
-        if quality_source == "qds":
-            return self._extract_qds_flags(asdu_layer)
-        elif quality_source == "siq":
-            return self._extract_siq_flags(asdu_layer)
-        elif quality_source == "diq":
-            return self._extract_diq_flags(asdu_layer)
-        return []
-
-    def _extract_qds_flags(self, asdu_layer) -> List[str]:
-        """Extract QDS quality descriptor set flags per IOA."""
-        flag_fields = [
-            ("qds_iv", "IV"),
-            ("qds_nt", "NT"),
-            ("qds_sb", "SB"),
-            ("qds_bl", "BL"),
-            ("qds_ov", "OV"),
-        ]
-        return self._collect_quality_flags(asdu_layer, flag_fields)
-
-    def _extract_siq_flags(self, asdu_layer) -> List[str]:
-        """Extract SIQ quality flags per IOA."""
-        flag_fields = [
-            ("siq_iv", "IV"),
-            ("siq_nt", "NT"),
-            ("siq_sb", "SB"),
-            ("siq_bl", "BL"),
-        ]
-        return self._collect_quality_flags(asdu_layer, flag_fields)
-
-    def _extract_diq_flags(self, asdu_layer) -> List[str]:
-        """Extract DIQ quality flags per IOA."""
-        flag_fields = [
-            ("diq_iv", "IV"),
-            ("diq_nt", "NT"),
-            ("diq_sb", "SB"),
-            ("diq_bl", "BL"),
-        ]
-        return self._collect_quality_flags(asdu_layer, flag_fields)
-
-    def _collect_quality_flags(self, asdu_layer, flag_fields: List[Tuple[str, str]]) -> List[str]:
-        """Collect quality flags across multiple IOAs."""
-        n_ioas = 0
-        flag_arrays: List[List[bool]] = []
-
-        for attr_name, _abbrev in flag_fields:
-            raw = self.get_field(asdu_layer, attr_name, None)
-            if raw is None:
-                flag_arrays.append([])
-                continue
-
-            bools: List[bool] = []
-            try:
-                for f in getattr(asdu_layer, attr_name).all_fields:
-                    bools.append(str(f.show) == "True")
-            except Exception:
-                bools.append(str(raw) == "True")
-
-            flag_arrays.append(bools)
-            if len(bools) > n_ioas:
-                n_ioas = len(bools)
-
-        if n_ioas == 0:
-            return []
-
-        result: List[str] = []
-        for i in range(n_ioas):
-            active: List[str] = []
-            for j, (_attr, abbrev) in enumerate(flag_fields):
-                arr = flag_arrays[j]
-                if i < len(arr) and arr[i]:
-                    active.append(abbrev)
-            result.append("|".join(active))
-        return result
-
-    # ------------------------------------------------------------------
-    # Summary and formatting
-    # ------------------------------------------------------------------
-
-    @staticmethod
-    def _build_asdu_summary(
-        type_id: int,
-        type_name: str,
-        ioa_list: List[int],
-        common_addr: int,
-        link_addr: int,
-        is_control: bool,
-        values: Optional[List[str]] = None,
-        cot_name: str = "",
-        is_error: bool = False,
-    ) -> str:
-        """Build summary for ASDU interaction."""
-        if is_error:
-            prefix = "ERR"
-        elif is_control:
-            prefix = "CMD"
-        else:
-            prefix = "MON"
-
-        ioa_str = ""
-        if ioa_list:
-            if len(ioa_list) == 1:
-                ioa_str = f" IOA={ioa_list[0]}"
-            else:
-                ioa_str = f" IOA={ioa_list[0]}-{ioa_list[-1]}"
-
-        ca_str = f" CA={common_addr}" if common_addr else ""
-        la_str = f" LA={link_addr}" if link_addr else ""
-        cot_str = f" COT={cot_name}" if cot_name else ""
-        val_str = ""
-        if values:
-            if len(values) == 1:
-                val_str = f" val={values[0]}"
-            else:
-                val_str = f" val=[{','.join(values)}]"
-        return f"{prefix} {type_name}{la_str}{ioa_str}{ca_str}{cot_str}{val_str}"
 
     def _format_protocol_columns(self, ix: ProtocolInteraction) -> List[Any]:
         d = ix.details

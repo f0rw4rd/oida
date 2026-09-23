@@ -47,7 +47,12 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ._iec_common import parse_asdu_field
+from ._iec_common import (
+    LINK_FUNC_PRI_TO_SEC,
+    LINK_FUNC_SEC_TO_PRI,
+    IecAsduValueMixin,
+    parse_asdu_field,
+)
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import (
     is_valid_discovered_ip,
@@ -145,30 +150,6 @@ COT_CTRL = {
 # Security-relevant ASDU type IDs (control direction commands)
 _CONTROL_TYPE_IDS = {6, 7, 10, 20, 21, 24, 25}
 
-# IEC 103 link layer function codes (primary -> secondary)
-LINK_FUNC_PRI_TO_SEC = {
-    0: "Reset Remote Link",
-    1: "Reset User Process",
-    2: "Test Function for Link",
-    3: "User Data (Confirmed)",
-    4: "User Data (No Reply)",
-    8: "Expected Response Specifies Access Demand",
-    9: "Request Status of Link",
-    10: "Request User Data Class 1",
-    11: "Request User Data Class 2",
-}
-
-# IEC 103 link layer function codes (secondary -> primary)
-LINK_FUNC_SEC_TO_PRI = {
-    0: "ACK (positive)",
-    1: "NACK (link busy)",
-    8: "User Data",
-    9: "No Data Available (NACK)",
-    11: "Status of Link / Access Demand",
-    14: "Link Not Functioning",
-    15: "Link Not Implemented",
-}
-
 # Double point information values
 _DPI_VALUES = {0: "INTERMEDIATE", 1: "OFF", 2: "ON", 3: "INDETERMINATE"}
 
@@ -207,7 +188,7 @@ class IEC103Session:
     last_seen: str = ""
 
 
-class IEC103PassiveListener(PySharkListenerBase):
+class IEC103PassiveListener(IecAsduValueMixin, PySharkListenerBase):
     """Passive IEC 60870-5-103 traffic listener (PyShark-based).
 
     Monitors IEC 103 protection equipment companion standard traffic
@@ -621,9 +602,6 @@ class IEC103PassiveListener(PySharkListenerBase):
         is_primary: bool,
     ) -> None:
         """Process link-layer only frame (no ASDU type IDs found)."""
-        now = datetime.now().isoformat()
-        _sp, _dp = self.get_port_info(packet)
-
         iec103_layer = packet.iec60870_5_103
 
         if is_primary:
@@ -638,31 +616,18 @@ class IEC103PassiveListener(PySharkListenerBase):
             direction = "response"
 
         operation = f"Link: {func_name}"
-
-        details: Dict[str, Any] = {
-            "link_addr": link_addr,
-            "frame_type": "link",
-            "is_primary": is_primary,
-            "rw": "",
-        }
-        if func_code >= 0:
-            details["link_func_code"] = func_code
-            details["link_func_name"] = func_name
-
-        summary = f"Link {func_name} addr={link_addr}"
-
-        self._record_interaction(
-            now,
+        self._record_link_frame(
+            packet,
             src_ip,
             dst_ip,
+            flow_id,
+            link_addr,
+            is_primary,
+            func_code,
+            func_name,
             direction,
             operation,
-            details,
-            summary,
-            flow_id=flow_id,
-            src_port=_sp,
-            dst_port=_dp,
-            stream_id=self.get_stream_id(packet),
+            rw="",
         )
 
     # ------------------------------------------------------------------

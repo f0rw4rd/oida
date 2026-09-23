@@ -23,7 +23,6 @@ For broadcast discovery (used by discovery module):
 
 import socket
 import struct
-import time
 import ipaddress
 from typing import Dict, List, Any, Optional
 
@@ -37,6 +36,9 @@ from .scanner import (
     dependencies_missing,
     protocol_options,
 )
+
+# Shared broadcast-response collection loop
+from .broadcast_common import collect_list_identity_responses
 
 # Import from attacks module
 from .attacks import (
@@ -133,30 +135,12 @@ def broadcast_discovery(
         # Send broadcast
         sock.sendto(packet, (broadcast_addr, port))
 
-        # Collect responses
-        start_time = time.time()
-        seen_ips = set()
-
-        while time.time() - start_time < timeout:
-            try:
-                data, addr = sock.recvfrom(4096)
-                ip_addr = addr[0]
-
-                if ip_addr in seen_ips:
-                    continue
-                seen_ips.add(ip_addr)
-
-                # Parse ListIdentity response
-                device = parse_list_identity(data)
-                if device:
-                    device["ip_address"] = ip_addr
-                    devices.append(device)
-
-            except TimeoutError:
-                continue
-            except Exception as e:
-                _logger.debug(f"Error parsing broadcast response: {e}")
-                continue
+        # Collect responses via the shared ListIdentity receive loop
+        devices = collect_list_identity_responses(
+            sock,
+            timeout,
+            on_error=lambda e: _logger.debug(f"Error parsing broadcast response: {e}"),
+        )
 
     except Exception as e:
         _logger.debug(f"Broadcast discovery error: {e}")

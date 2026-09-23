@@ -12,17 +12,16 @@ from __future__ import annotations
 
 import socket
 import struct
-import time
 from typing import Any, Dict, List, TYPE_CHECKING
 
 from ....utils.vendor_maps import ethernetip_vendor_ids as vendor_ids
 from ....utils.vendor_maps import ethernetip_device_types as device_types
+from ..broadcast_common import collect_list_identity_responses
 from ..constants import (
     ENIP_CMD_LIST_IDENTITY,
     ENIP_CMD_LIST_SERVICES,
     ENIP_CMD_LIST_INTERFACES,
 )
-from ..parsers import parse_list_identity
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -377,35 +376,19 @@ class DiscoveryMixin(_ScannerBase):
             # Send broadcast
             sock.sendto(packet, ("255.255.255.255", port))
 
-            # Collect responses
-            start_time = time.time()
-            seen_ips = set()
+            # Collect responses via the shared ListIdentity receive loop
+            def _on_device(ip_addr: str, device: Dict[str, Any]) -> None:
+                self.logger.display(
+                    f"  Found: {ip_addr} - {device.get('vendor_name', 'Unknown')} "
+                    f"{device.get('product_name', '')}"
+                )
 
-            while time.time() - start_time < timeout:
-                try:
-                    data, addr = sock.recvfrom(4096)
-                    ip_addr = addr[0]
-
-                    if ip_addr in seen_ips:
-                        continue
-                    seen_ips.add(ip_addr)
-
-                    # Parse the response as ListIdentity via the shared parser
-                    # (_list_identity expects a host, so parse the raw bytes here)
-                    device = parse_list_identity(data)
-                    if device:
-                        device["ip_address"] = ip_addr
-                        devices.append(device)
-
-                        self.logger.display(
-                            f"  Found: {ip_addr} - {device.get('vendor_name', 'Unknown')} {device.get('product_name', '')}"
-                        )
-
-                except TimeoutError:
-                    # Normal: poll window elapsed with no more responses.
-                    continue
-                except Exception as e:
-                    self.logger.debug(f"Error receiving broadcast response: {e}")
+            devices = collect_list_identity_responses(
+                sock,
+                timeout,
+                on_device=_on_device,
+                on_error=lambda e: self.logger.debug(f"Error receiving broadcast response: {e}"),
+            )
 
         except Exception as e:
             self.logger.debug(f"broadcast discovery failed: {e}")

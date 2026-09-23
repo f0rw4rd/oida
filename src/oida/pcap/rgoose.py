@@ -71,6 +71,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
+from ._goose_common import collect_field_values, format_bool_display
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip
 
@@ -432,40 +433,12 @@ class RGOOSEPassiveListener(PySharkListenerBase):
         formatter=None,
     ) -> None:
         """Collect all instances of a field from a PyShark layer into values list."""
-        raw_attr = getattr(layer, field_name, None)
-        if raw_attr is None:
-            return
-
-        # EK mode: multi-value fields are Python lists
-        if isinstance(raw_attr, list):
-            for item in raw_attr:
-                val = str(item)
-                if formatter:
-                    val = formatter(val)
-                values.append(val)
-            return
-
-        # XML mode: try .all_fields iterator
-        try:
-            for fld in raw_attr.all_fields:
-                val = str(fld.show)
-                if formatter:
-                    val = formatter(val)
-                values.append(val)
-        except Exception:
-            val = str(raw_attr)
-            if formatter:
-                val = formatter(val)
-            values.append(val)
+        collect_field_values(layer, field_name, values, formatter)
 
     @staticmethod
     def _format_bool_val(val: str) -> str:
         """Format a boolean value for display."""
-        if val in ("True", "1"):
-            return "T"
-        if val in ("False", "0"):
-            return "F"
-        return val
+        return format_bool_display(val)
 
     # ------------------------------------------------------------------
     # Interaction formatting

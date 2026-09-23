@@ -30,6 +30,7 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
+from ._mongodb_redis_common import WriteOpsHarvestMixin
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import (
     is_valid_discovered_ip,
@@ -96,7 +97,7 @@ def _decode_resp_hex(hex_str: str) -> str:
         return str(hex_str)
 
 
-class RedisPassiveListener(PySharkListenerBase):
+class RedisPassiveListener(WriteOpsHarvestMixin, PySharkListenerBase):
     """Passive Redis traffic listener for credential and command extraction.
 
     Captures Redis RESP protocol traffic to extract:
@@ -720,31 +721,5 @@ class RedisPassiveListener(PySharkListenerBase):
     # Harvest / credential summaries
     # -------------------------------------------------------------------------
 
-    def get_credentials_summary(self) -> List[Dict[str, Any]]:
-        """Get summary of all extracted credentials."""
-        return list(self.credentials)
-
-    def get_write_operations(self) -> List[Dict[str, Any]]:
-        """Get aggregated write operations."""
-        if not self._write_ops:
-            return []
-        pairs: Dict[Tuple[str, str], Dict[str, Any]] = {}
-        for op in self._write_ops:
-            key = (op["client"], op["server"])
-            if key not in pairs:
-                pairs[key] = {"client": op["client"], "server": op["server"], "write_count": 0}
-            pairs[key]["write_count"] += 1
-        return list(pairs.values())
-
-    def harvest(self) -> Dict[str, Any]:
-        """Return structured harvest data."""
-        result = super().harvest()
-        if self._alerts:
-            if not result:
-                result = {"tables": [], "alerts": []}
-            alerts = result.get("alerts", [])
-            for alert in self._alerts:
-                if alert not in alerts:
-                    alerts.append(alert)
-            result["alerts"] = alerts
-        return result
+    # get_credentials_summary / get_write_operations / harvest are provided
+    # by WriteOpsHarvestMixin (shared with the MongoDB listener).

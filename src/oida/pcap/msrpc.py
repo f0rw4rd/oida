@@ -40,9 +40,9 @@ tshark fields used (packet.dcerpc.*):
 """
 
 from collections import Counter
-from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
+from ._iscsi_msrpc_common import RecordInteractionMixin
 from .pyshark_base import ProtocolInteraction, PySharkListenerBase
 from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
@@ -492,7 +492,7 @@ _AUTORUN_KEY_PATTERNS = (
 )
 
 
-class MSRPCPassiveListener(PySharkListenerBase):
+class MSRPCPassiveListener(RecordInteractionMixin, PySharkListenerBase):
     """Passive MSRPC/DCERPC traffic listener for Windows RPC interface enumeration.
 
     Captures DCERPC traffic to extract:
@@ -1259,29 +1259,23 @@ class MSRPCPassiveListener(PySharkListenerBase):
             else:
                 summary += f" opnum={opnum_str}"
 
-        now = datetime.now().isoformat()
-        self._record_interaction(
-            now,
-            src_ip,
-            dst_ip,
-            direction,
-            operation,
-            details,
-            summary,
+        server_ip, client_ip, server_mac, client_mac = self._record_and_resolve_endpoints(
+            src_ip=src_ip,
+            dst_ip=dst_ip,
+            src_mac=src_mac,
+            dst_mac=dst_mac,
+            direction=direction,
+            operation=operation,
+            details=details,
+            summary=summary,
             flow_id=flow_id,
             src_port=src_port,
             dst_port=dst_port,
             stream_id=stream_id,
+            is_response=is_response,
         )
 
         # Track interfaces per server
-        if is_response:
-            server_ip, client_ip = src_ip, dst_ip
-            server_mac, client_mac = src_mac, dst_mac
-        else:
-            server_ip, client_ip = dst_ip, src_ip
-            server_mac, client_mac = dst_mac, src_mac
-
         if interface_name:
             if server_ip not in self.interfaces_seen:
                 self.interfaces_seen[server_ip] = set()

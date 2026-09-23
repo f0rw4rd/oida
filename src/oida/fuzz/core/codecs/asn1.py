@@ -41,6 +41,14 @@ class ASN1Tag:
     CLASS_CONTEXT = 0x80
     CLASS_PRIVATE = 0xC0
 
+    # Short aliases (kept for compatibility with callers that spell the tag
+    # classes without the CLASS_ prefix, e.g. asn1_blocks.py's boofuzz
+    # primitives).
+    UNIVERSAL = CLASS_UNIVERSAL
+    APPLICATION = CLASS_APPLICATION
+    CONTEXT = CLASS_CONTEXT
+    PRIVATE = CLASS_PRIVATE
+
     # Primitive/Constructed (bit 5)
     PRIMITIVE = 0x00
     CONSTRUCTED = 0x20
@@ -52,6 +60,7 @@ class ASN1Tag:
     OCTET_STRING = 0x04
     NULL = 0x05
     OBJECT_IDENTIFIER = 0x06
+    OID = OBJECT_IDENTIFIER  # alias used by asn1_blocks.py's boofuzz primitives
     OBJECT_DESCRIPTOR = 0x07
     EXTERNAL = 0x08
     REAL = 0x09
@@ -74,6 +83,44 @@ class ASN1Tag:
     UNIVERSAL_STRING = 0x1C
     CHARACTER_STRING = 0x1D
     BMP_STRING = 0x1E
+
+
+def encode_length(length: int) -> bytes:
+    """
+    Encode a length value using BER length encoding.
+
+    Args:
+        length: The length value to encode
+
+    Returns:
+        BER-encoded length bytes
+    """
+    if length < 0:
+        raise ValueError("Length cannot be negative")
+
+    if length < 0x80:
+        # Short form: single byte
+        return bytes([length])
+    elif length <= 0xFF:
+        # Long form: 1 byte
+        return bytes([0x81, length])
+    elif length <= 0xFFFF:
+        # Long form: 2 bytes
+        return bytes([0x82, (length >> 8) & 0xFF, length & 0xFF])
+    elif length <= 0xFFFFFF:
+        # Long form: 3 bytes
+        return bytes([0x83, (length >> 16) & 0xFF, (length >> 8) & 0xFF, length & 0xFF])
+    else:
+        # Long form: 4 bytes
+        return bytes(
+            [
+                0x84,
+                (length >> 24) & 0xFF,
+                (length >> 16) & 0xFF,
+                (length >> 8) & 0xFF,
+                length & 0xFF,
+            ]
+        )
 
 
 class ASN1Builder:
@@ -102,32 +149,7 @@ class ASN1Builder:
         Returns:
             BER-encoded length bytes
         """
-        if length < 0:
-            raise ValueError("Length cannot be negative")
-
-        if length < 0x80:
-            # Short form: single byte
-            return bytes([length])
-        elif length <= 0xFF:
-            # Long form: 1 byte
-            return bytes([0x81, length])
-        elif length <= 0xFFFF:
-            # Long form: 2 bytes
-            return bytes([0x82, (length >> 8) & 0xFF, length & 0xFF])
-        elif length <= 0xFFFFFF:
-            # Long form: 3 bytes
-            return bytes([0x83, (length >> 16) & 0xFF, (length >> 8) & 0xFF, length & 0xFF])
-        else:
-            # Long form: 4 bytes
-            return bytes(
-                [
-                    0x84,
-                    (length >> 24) & 0xFF,
-                    (length >> 16) & 0xFF,
-                    (length >> 8) & 0xFF,
-                    length & 0xFF,
-                ]
-            )
+        return encode_length(length)
 
     def encode_tag(self, tag_class: int, constructed: bool, tag_number: int) -> bytes:
         """

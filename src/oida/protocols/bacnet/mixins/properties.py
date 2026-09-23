@@ -15,6 +15,7 @@ from ..constants import (
     resolve_object_type,
     resolve_property_name,
 )
+from .discovery import _unpack_bacpypes3_common_types
 
 
 class PropertiesMixin:
@@ -249,17 +250,19 @@ class PropertiesMixin:
     ):
         """Read present values of enumerated objects using bacpypes3"""
         types = _load_bacpypes3()
-        ReadPropertyRequest = types["ReadPropertyRequest"]
-        ObjectIdentifier = types["ObjectIdentifier"]
-        PropertyIdentifier = types["PropertyIdentifier"]
-        CharacterString = types["CharacterString"]
-        Unsigned = types["Unsigned"]
-        Real = types["Real"]
-        AbortPDU = types["AbortPDU"]
-        ErrorPDU = types["ErrorPDU"]
-        RejectPDU = types["RejectPDU"]
-        Error = types["Error"]
-        ErrorRejectAbortNack = types["ErrorRejectAbortNack"]
+        (
+            ReadPropertyRequest,
+            ObjectIdentifier,
+            PropertyIdentifier,
+            CharacterString,
+            Unsigned,
+            Real,
+            AbortPDU,
+            ErrorPDU,
+            RejectPDU,
+            Error,
+            ErrorRejectAbortNack,
+        ) = _unpack_bacpypes3_common_types(types)
 
         if device_id not in self.objects:
             self.logger.warning("No objects enumerated. Run with --enumerate-objects first.")
