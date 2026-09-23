@@ -106,15 +106,21 @@ jobs:
         run: uv sync --all-extras --frozen
 
       - name: Unit tests
-        # tests/unit/pcap/ shell out to the real tshark binary and assert on
-        # its dissector output, so they are integration-grade and sensitive to
-        # the runner's tshark version (CI ships 4.2.x, dev boxes run 4.6.x).
-        # They are excluded from the fast/deterministic unit lane; run them in
-        # an integration job with a pinned tshark instead.
+        # tests/unit/pcap/ and tests/unit/fuzz/test_tshark_validation.py shell
+        # out to the real tshark binary and assert on its dissector output, so
+        # they are integration-grade and sensitive to the runner's tshark
+        # version (CI ships 4.2.x, dev boxes run 4.6.x). They are excluded from
+        # the fast/deterministic unit lane — which has no tshark at all, and
+        # tests/service_gate.py turns a missing dependency into a hard failure
+        # rather than a skip — and run in the `pcap` job with a pinned tshark.
         # tests/contracts/ are fast static repo-invariant guards (confirm-gate,
         # credential-leak, dead-import resolution, …) — run them here so they
         # actually gate PRs.
-        run: uv run pytest tests/unit/ tests/contracts/ --ignore=tests/unit/pcap -x -q --timeout=15
+        run: >-
+          uv run pytest tests/unit/ tests/contracts/
+          --ignore=tests/unit/pcap
+          --ignore=tests/unit/fuzz/test_tshark_validation.py
+          -x -q --timeout=15
 
   pcap:
     name: Dissector tests (pinned tshark)
@@ -135,8 +141,9 @@ jobs:
         run: uv sync --all-extras --frozen
 
       # The job the `test` step's comment has been promising: tests/unit/pcap
-      # asserts on real tshark dissector output, so it needs a tshark whose
-      # version is known rather than whatever the runner image happens to ship.
+      # and the fuzzer's baseline-payload dissector check assert on real tshark
+      # dissector output, so they need a tshark whose version is known rather
+      # than whatever the runner image happens to ship.
       - name: Install tshark
         run: |
           sudo DEBIAN_FRONTEND=noninteractive apt-get update
@@ -144,7 +151,9 @@ jobs:
           tshark --version | head -1
 
       - name: Dissector tests
-        run: uv run pytest tests/unit/pcap -q --timeout=60
+        run: >-
+          uv run pytest tests/unit/pcap tests/unit/fuzz/test_tshark_validation.py
+          -q --timeout=60
 
   integration:
     name: Integration (docker mocks)

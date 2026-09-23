@@ -21,7 +21,8 @@
 #      (Settings → Environments → New environment → pypi → add reviewers).
 #      This is what blocks auto-publish: a tag push pauses the publish job
 #      for manual approval.
-#   2. Configure the PyPI trusted publisher for project `oida`:
+#   2. Configure the PyPI trusted publisher for project `oida-ics`
+#      (the PyPI distribution name — the GitHub repo is `oida`):
 #        - Owner:       f0rw4rd
 #        - Repository:  oida
 #        - Workflow:    release.yml
@@ -30,7 +31,7 @@
 #   3. No API token needed — OIDC trusted publishing only.
 #
 # To cut a release: bump __version__ in src/oida/__init__.py, commit, then
-#   git tag v0.9.9 && git push origin v0.9.9
+#   git tag v1.0.0 && git push origin v1.0.0
 # ============================================================================
 
 name: Release to PyPI
