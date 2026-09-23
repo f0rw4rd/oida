@@ -13,7 +13,7 @@ description = "OIDA - OT/ICS Discovery & Assessment"
 readme = "README.md"
 license = {text = "AGPL-3.0-or-later"}
 authors = [
-    {name = "OIDA Team"}
+    {name = "f0rw4rd"}
 ]
 maintainers = [
     {name = "f0rw4rd"}
