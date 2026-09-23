@@ -1120,7 +1120,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
     # Write Safety Tests (--confirm requirement)
     # ========================================================================
 
-    def _assert_write_not_performed(self, cli_runner, target, tmp_path, result_key, *cli_args):
+    def assert_write_not_performed(self, cli_runner, target, tmp_path, result_key, *cli_args):
         """Run a dangerous write WITHOUT --confirm and assert it never happened.
 
         SCOPE -- read before trusting this as safety-gate coverage. Against the
@@ -1177,7 +1177,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
     @pytest.mark.containers("knx-calimero")
     def test_group_write_without_confirm(self, cli_runner, target, port, tmp_path):
         """Group write without --confirm must not perform the write [Category A]"""
-        self._assert_write_not_performed(
+        self.assert_write_not_performed(
             cli_runner,
             target,
             tmp_path,
@@ -1191,7 +1191,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
     @pytest.mark.containers("knx-calimero")
     def test_write_without_confirm_rejected(self, cli_runner, target, port, tmp_path):
         """Property write without --confirm must not perform the write [Category A]"""
-        self._assert_write_not_performed(
+        self.assert_write_not_performed(
             cli_runner,
             target,
             tmp_path,
@@ -1207,7 +1207,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
     @pytest.mark.containers("knx-calimero")
     def test_key_write_without_confirm(self, cli_runner, target, port, tmp_path):
         """Key write without --confirm must not perform the write [Category A]"""
-        self._assert_write_not_performed(
+        self.assert_write_not_performed(
             cli_runner,
             target,
             tmp_path,

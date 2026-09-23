@@ -44,12 +44,12 @@ def mock_client():
     mei_response.next_object_id = 0
     client.read_device_information.return_value = mei_response
 
-    # Mock report_slave_id response (FC 17)
+    # Mock report_device_id response (FC 17)
     server_id_response = MagicMock()
     server_id_response.isError.return_value = False
     server_id_response.status = True
     server_id_response.identifier = b"Test Server ID"
-    client.report_slave_id.return_value = server_id_response
+    client.report_device_id.return_value = server_id_response
 
     return client
 
@@ -97,16 +97,17 @@ class TestMEIDeviceIdentification:
 
     def test_mei_basic_read(self, mock_client, scanner_args):
         """Test basic MEI read (read_code=1)."""
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.read_device_information(
-            read_code=MEIReadDeviceIdCode.BASIC,
-            object_id=0x00,
-            device_id=1,
-        )
+        result = scanner._read_device_identification(mock_client, mei_object="basic")
 
-        assert not result.isError()
-        assert 0x00 in result.information
+        assert result is not None
+        assert result["VendorName"] == "Test Vendor"
+        assert mock_client.read_device_information.call_args.kwargs == {
+            "read_code": MEIReadDeviceIdCode.BASIC,
+            "object_id": 0x00,
+            "device_id": scanner.unit_id,
+        }
 
     def test_mei_regular_read(self, mock_client, scanner_args):
         """Test regular MEI read (read_code=2)."""
@@ -149,16 +150,15 @@ class TestMEIDeviceIdentification:
         mei_response.more_follows = False
         mock_client.read_device_information.return_value = mei_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.read_device_information(
-            read_code=MEIReadDeviceIdCode.EXTENDED,
-            object_id=0x00,
-            device_id=1,
+        result = scanner._read_device_identification(mock_client, mei_object="extended")
+
+        assert result is not None
+        assert result["UserApplicationName"] == "User Application"
+        assert mock_client.read_device_information.call_args.kwargs["read_code"] == (
+            MEIReadDeviceIdCode.EXTENDED
         )
-
-        assert not result.isError()
-        assert 0x06 in result.information
 
     def test_mei_specific_object_read(self, mock_client, scanner_args):
         """Test specific object read (read_code=4)."""
@@ -170,17 +170,14 @@ class TestMEIDeviceIdentification:
         mei_response.more_follows = False
         mock_client.read_device_information.return_value = mei_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.read_device_information(
-            read_code=MEIReadDeviceIdCode.SPECIFIC,
-            object_id=0x02,
-            device_id=1,
+        result = scanner._read_device_identification(
+            mock_client, mei_object="specific", mei_object_id=0x02
         )
 
-        assert not result.isError()
-        assert 0x02 in result.information
-        assert result.information[0x02] == b"1.2.3"
+        assert result == {"MajorMinorRevision": "1.2.3"}
+        assert mock_client.read_device_information.call_args.kwargs["object_id"] == 0x02
 
     def test_mei_not_supported(self, mock_client, scanner_args):
         """Test handling when MEI is not supported."""
@@ -189,16 +186,11 @@ class TestMEIDeviceIdentification:
         error_response.exception_code = ModbusExceptionCode.ILLEGAL_FUNCTION
         mock_client.read_device_information.return_value = error_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.read_device_information(
-            read_code=MEIReadDeviceIdCode.BASIC,
-            object_id=0x00,
-            device_id=1,
-        )
+        result = scanner._read_device_identification(mock_client, mei_object="basic")
 
-        assert result.isError()
-        assert result.exception_code == 1
+        assert result is None
 
 
 class TestMEIResponseParsing:
@@ -293,11 +285,10 @@ class TestMEIResponseParsing:
         }
         mock_client.read_device_information.return_value = mei_response
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_device_information(read_code=1, object_id=0x00, device_id=1)
+        scanner = create_mock_scanner(scanner_args)
+        result = scanner._parse_mei_response(mei_response)
 
-        value = result.information[0x00].decode("utf-8").strip("\x00")
-        assert value == "Test Vendor"
+        assert result["VendorName"] == "Test Vendor"
 
 
 class TestMEIPagination:
@@ -324,16 +315,12 @@ class TestMEIPagination:
             second_response,
         ]
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        # First call
-        result1 = mock_client.read_device_information(read_code=1, object_id=0x00, device_id=1)
-        assert result1.more_follows is True
-        assert result1.next_object_id == 0x01
+        result = scanner._read_device_identification(mock_client, mei_object="basic")
 
-        # Second call
-        result2 = mock_client.read_device_information(read_code=1, object_id=0x01, device_id=1)
-        assert result2.more_follows is False
+        assert result == {"VendorName": "Vendor", "ProductCode": "Product"}
+        assert mock_client.read_device_information.call_count == 2
 
     def test_mei_empty_response(self, mock_client, scanner_args):
         """Test handling empty MEI response."""
@@ -365,28 +352,27 @@ class TestServerID:
         server_id_response.isError.return_value = False
         server_id_response.status = True
         server_id_response.identifier = b"Test Device ID"
-        mock_client.report_slave_id.return_value = server_id_response
+        mock_client.report_device_id.return_value = server_id_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.report_slave_id(device_id=1)
+        result = scanner.read_server_id(mock_client)
 
-        assert not result.isError()
-        assert result.status is True
-        assert result.identifier == b"Test Device ID"
+        assert result["identifier"] == "Test Device ID"
+        assert result["run_status"] == "Running"
 
     def test_read_server_id_not_supported(self, mock_client, scanner_args):
         """Test Server ID when FC 17 not supported."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = 1  # Illegal function
-        mock_client.report_slave_id.return_value = error_response
+        mock_client.report_device_id.return_value = error_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.report_slave_id(device_id=1)
+        result = scanner.read_server_id(mock_client)
 
-        assert result.isError()
+        assert result is None
 
     def test_parse_server_id_response(self, mock_client, scanner_args):
         """Test parsing Server ID response format."""
@@ -395,15 +381,13 @@ class TestServerID:
         server_id_response.isError.return_value = False
         server_id_response.status = True  # Running
         server_id_response.identifier = b"Schneider_M340_01.00"
-        mock_client.report_slave_id.return_value = server_id_response
+        mock_client.report_device_id.return_value = server_id_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.report_slave_id(device_id=1)
+        result = scanner.read_server_id(mock_client)
 
-        assert result.status is True
-        identifier = result.identifier.decode("utf-8", errors="replace")
-        assert "Schneider" in identifier
+        assert "Schneider" in result["identifier"]
 
     def test_server_id_status_stopped(self, mock_client, scanner_args):
         """Test Server ID with device in stopped state."""
@@ -411,13 +395,13 @@ class TestServerID:
         server_id_response.isError.return_value = False
         server_id_response.status = False  # Stopped
         server_id_response.identifier = b"Device ID"
-        mock_client.report_slave_id.return_value = server_id_response
+        mock_client.report_device_id.return_value = server_id_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.report_slave_id(device_id=1)
+        result = scanner.read_server_id(mock_client)
 
-        assert result.status is False
+        assert result["run_status"] == "Stopped"
 
 
 # =============================================================================
@@ -448,14 +432,15 @@ class TestUnitIDDiscovery:
 
         scanner = create_mock_scanner(scanner_args)
         scanner.discover_units = True
+        # Small range so gateway sampling doesn't trigger and the scan is fast.
+        scanner.unit_range = "1-3"
 
-        # Test unit 1
-        result = mock_client.read_holding_registers(0, 1, device_id=1)
-        assert not result.isError()
+        result = scanner._discover_units(mock_client)
 
-        # Test unit 2
-        result = mock_client.read_holding_registers(0, 1, device_id=2)
-        assert result.isError()
+        assert result.get("gateway_mode") is not True
+        assert 1 in result and result[1]["active"] is True
+        assert 2 not in result
+        assert 3 not in result
 
     def test_discover_multiple_units(self, mock_client, scanner_args):
         """Test discovering multiple active units."""
@@ -526,32 +511,41 @@ class TestGatewayDetection:
     """Tests for Modbus gateway detection."""
 
     def test_gateway_path_unavailable(self, mock_client, scanner_args):
-        """Test detecting gateway with unavailable path."""
+        """Every sampled unit ID gets GATEWAY_PATH_UNAVAILABLE (10) -> the real
+        _discover_units() aggregation must recognize this as gateway/bridge
+        behavior rather than as per-unit discovery results."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = 10  # Gateway path unavailable
         mock_client.read_holding_registers.return_value = error_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.read_holding_registers(0, 1, device_id=100)
+        result = scanner._discover_units(mock_client)
 
-        assert result.isError()
-        assert result.exception_code == 10
+        assert result["gateway_mode"] is True
+        assert result["error_code"] == 10
+        assert result["note"] == "Device returns identical error for all unit IDs"
+        # real code queried multiple sample unit IDs before concluding gateway mode
+        assert mock_client.read_holding_registers.call_count >= 3
 
     def test_gateway_target_failed(self, mock_client, scanner_args):
-        """Test detecting gateway with failed target device."""
+        """Every sampled unit ID gets GATEWAY_TARGET_DEVICE_FAILED (11) -> same
+        gateway-mode aggregation, but the reported error_code must reflect the
+        actual exception code the mock responses carried."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = 11  # Gateway target device failed
         mock_client.read_holding_registers.return_value = error_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.read_holding_registers(0, 1, device_id=200)
+        result = scanner._discover_units(mock_client)
 
-        assert result.isError()
-        assert result.exception_code == 11
+        assert result["gateway_mode"] is True
+        assert result["error_code"] == 11
+        assert result["note"] == "Device returns identical error for all unit IDs"
+        assert mock_client.read_holding_registers.call_count >= 3
 
     def test_gateway_multiple_units_different_devices(self, mock_client, scanner_args):
         """Test gateway with multiple devices on different unit IDs."""
@@ -599,31 +593,34 @@ class TestExceptionStatus:
     """Tests for Exception Status (FC 7)."""
 
     def test_read_exception_status(self, mock_client, scanner_args):
-        """Test reading exception status."""
+        """The real read_exception_status() must unwrap the response and return
+        the raw status byte, and it must query the scanner's own unit_id."""
         exc_response = MagicMock()
         exc_response.isError.return_value = False
         exc_response.status = 0b00001111  # First 4 bits set
         mock_client.read_exception_status.return_value = exc_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.read_exception_status(device_id=1)
+        result = scanner.read_exception_status(mock_client)
 
-        assert not result.isError()
-        assert result.status == 0b00001111
+        assert result == 0b00001111
+        mock_client.read_exception_status.assert_called_once_with(device_id=scanner.unit_id)
 
     def test_exception_status_not_supported(self, mock_client, scanner_args):
-        """Test handling when FC 7 not supported."""
+        """FC 7 not supported (ILLEGAL_FUNCTION) must make the real code return
+        None rather than propagating the raw error response."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = 1
         mock_client.read_exception_status.return_value = error_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.read_exception_status(device_id=1)
+        result = scanner.read_exception_status(mock_client)
 
-        assert result.isError()
+        assert result is None
+        mock_client.read_exception_status.assert_called_once_with(device_id=scanner.unit_id)
 
 
 # =============================================================================

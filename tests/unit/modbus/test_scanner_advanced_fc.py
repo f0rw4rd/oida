@@ -137,31 +137,47 @@ class TestReadFileRecord:
         assert len(result.records) == 2
 
     def test_read_file_record_not_supported(self, mock_client, scanner_args):
-        """Test file record read when not supported."""
+        """Test file record read when not supported translates into a None result."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = ModbusExceptionCode.ILLEGAL_FUNCTION
         mock_client.read_file_record.return_value = error_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.read_file_record([(0x0001, 0x0000, 5)], device_id=1)
+        # record_length is a byte count to pymodbus's FileRecord and must be even;
+        # it stores record_length // 2 (register count) after construction.
+        result = scanner._read_file_record(
+            mock_client, file_number=1, record_number=0, record_length=4
+        )
 
-        assert result.isError()
+        assert result is None
+        call_kwargs = mock_client.read_file_record.call_args.kwargs
+        assert call_kwargs["device_id"] == scanner.unit_id
+        records = call_kwargs["records"]
+        assert len(records) == 1
+        assert records[0].file_number == 1
+        assert records[0].record_number == 0
+        assert records[0].record_length == 2
 
     def test_read_file_record_invalid_file(self, mock_client, scanner_args):
-        """Test file record read with invalid file number."""
+        """Test file record read with invalid file number builds the request from that file."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = ModbusExceptionCode.ILLEGAL_DATA_ADDRESS
         mock_client.read_file_record.return_value = error_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.read_file_record([(0xFFFF, 0x0000, 5)], device_id=1)
+        result = scanner._read_file_record(
+            mock_client, file_number=0xFFFF, record_number=0, record_length=4
+        )
 
-        assert result.isError()
-        assert result.exception_code == 2
+        assert result is None
+        records = mock_client.read_file_record.call_args.kwargs["records"]
+        assert records[0].file_number == 0xFFFF
+        # isError() path returns None without hitting the exception-logging branch
+        scanner.logger.debug.assert_not_called()
 
 
 # =============================================================================
@@ -173,62 +189,73 @@ class TestWriteFileRecord:
     """Tests for write file record (FC 21)."""
 
     def test_write_file_record_success(self, mock_client, scanner_args):
-        """Test successful file record write."""
-        create_mock_scanner(scanner_args)
+        """Test successful file record write reports byte/register counts and the real PDU args."""
+        scanner = create_mock_scanner(scanner_args)
 
-        # Write to file 1, record 0
-        result = mock_client.write_file_record(
-            [(0x0001, 0x0000, [100, 200, 300])],
-            device_id=1,
-        )
+        data = bytes([0, 100, 0, 200, 1, 44])  # 3 registers worth of bytes
+        result = scanner._write_file_record(mock_client, file_number=1, record_number=0, data=data)
 
-        assert not result.isError()
+        assert result["success"] is True
+        assert result["bytes_written"] == len(data)
+        assert result["registers_written"] == 3
+
+        call_kwargs = mock_client.write_file_record.call_args.kwargs
+        assert call_kwargs["device_id"] == scanner.unit_id
+        records = call_kwargs["records"]
+        assert len(records) == 1
+        assert records[0].file_number == 1
+        assert records[0].record_number == 0
+        assert records[0].record_data == data
 
     def test_write_file_record_multiple(self, mock_client, scanner_args):
-        """Test writing multiple file records."""
-        create_mock_scanner(scanner_args)
+        """Odd-length payloads are padded to an even length before being sent on the wire."""
+        scanner = create_mock_scanner(scanner_args)
 
-        result = mock_client.write_file_record(
-            [
-                (0x0001, 0x0000, [100, 200]),
-                (0x0001, 0x0001, [300, 400]),
-            ],
-            device_id=1,
-        )
+        data = b"\x00\x64\x00\xc8\x01"  # 5 bytes -> padded to 6
+        result = scanner._write_file_record(mock_client, file_number=2, record_number=3, data=data)
 
-        assert not result.isError()
+        assert result["success"] is True
+        assert result["bytes_written"] == 6
+        assert result["registers_written"] == 3
+
+        records = mock_client.write_file_record.call_args.kwargs["records"]
+        assert records[0].record_data == data + b"\x00"
 
     def test_write_file_record_not_supported(self, mock_client, scanner_args):
-        """Test file record write when not supported."""
+        """Test file record write when not supported returns a failed result with no byte count."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = ModbusExceptionCode.ILLEGAL_FUNCTION
         mock_client.write_file_record.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.write_file_record(
-            [(0x0001, 0x0000, [100])],
-            device_id=1,
+        scanner = create_mock_scanner(scanner_args)
+        result = scanner._write_file_record(
+            mock_client, file_number=1, record_number=0, data=b"\x00\x64"
         )
 
-        assert result.isError()
+        assert result["success"] is False
+        assert result["bytes_written"] == 0
+        assert "registers_written" not in result
+        assert "Modbus error" in result["error"]
 
     def test_write_file_record_read_only(self, mock_client, scanner_args):
-        """Test file record write to read-only file."""
+        """Test file record write to read-only file still reports the requested file/record."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = ModbusExceptionCode.ILLEGAL_DATA_ADDRESS
         mock_client.write_file_record.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.write_file_record(
-            [(0x0001, 0x0000, [100])],
-            device_id=1,
+        scanner = create_mock_scanner(scanner_args)
+        result = scanner._write_file_record(
+            mock_client, file_number=9, record_number=1, data=b"\x00\x64"
         )
 
-        assert result.isError()
+        assert result["success"] is False
+        assert result["file_number"] == 9
+        assert result["record_number"] == 1
+        records = mock_client.write_file_record.call_args.kwargs["records"]
+        assert records[0].file_number == 9
+        assert records[0].record_number == 1
 
 
 # =============================================================================
@@ -240,96 +267,96 @@ class TestMaskWriteRegister:
     """Tests for mask write register (FC 22)."""
 
     def test_mask_write_success(self, mock_client, scanner_args):
-        """Test successful mask write."""
-        create_mock_scanner(scanner_args)
+        """Test successful mask write reads back the new value for verification."""
+        mock_client.read_holding_registers.return_value = MagicMock(
+            isError=MagicMock(return_value=False), registers=[0x00FF]
+        )
+        scanner = create_mock_scanner(scanner_args)
 
         # Mask write: Result = (Current AND And_Mask) OR (Or_Mask AND NOT And_Mask)
-        result = mock_client.mask_write_register(
-            address=0,
-            and_mask=0xFF00,  # Clear low byte
-            or_mask=0x00FF,  # Set low byte to 0xFF
-            device_id=1,
+        result = scanner._mask_write_register(
+            mock_client, address=0, and_mask=0xFF00, or_mask=0x00FF
         )
 
-        assert not result.isError()
-        assert result.and_mask == 0xFF00
-        assert result.or_mask == 0x00FF
+        assert result["success"] is True
+        assert result["new_value"] == 0x00FF
+        mock_client.mask_write_register.assert_called_once_with(
+            address=0, and_mask=0xFF00, or_mask=0x00FF, device_id=scanner.unit_id
+        )
+        mock_client.read_holding_registers.assert_called_once_with(
+            address=0, count=1, device_id=scanner.unit_id
+        )
 
     def test_mask_write_set_bits(self, mock_client, scanner_args):
-        """Test mask write to set specific bits."""
+        """Test mask write to set specific bits passes the exact masks to the wire call."""
         # To set bit 3: and_mask=0xFFFF, or_mask=0x0008
-        mask_response = MagicMock()
-        mask_response.isError.return_value = False
-        mask_response.and_mask = 0xFFFF
-        mask_response.or_mask = 0x0008
-        mock_client.mask_write_register.return_value = mask_response
+        mock_client.read_holding_registers.return_value = MagicMock(
+            isError=MagicMock(return_value=False), registers=[0x0008]
+        )
+        scanner = create_mock_scanner(scanner_args)
 
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.mask_write_register(
-            address=0,
-            and_mask=0xFFFF,  # Keep all bits
-            or_mask=0x0008,  # Set bit 3
-            device_id=1,
+        result = scanner._mask_write_register(
+            mock_client, address=4, and_mask=0xFFFF, or_mask=0x0008
         )
 
-        assert not result.isError()
+        assert result["success"] is True
+        assert result["new_value"] == 0x0008
+        mock_client.mask_write_register.assert_called_once_with(
+            address=4, and_mask=0xFFFF, or_mask=0x0008, device_id=scanner.unit_id
+        )
 
     def test_mask_write_clear_bits(self, mock_client, scanner_args):
-        """Test mask write to clear specific bits."""
+        """Test mask write to clear specific bits passes the exact masks to the wire call."""
         # To clear bit 3: and_mask=0xFFF7, or_mask=0x0000
-        mask_response = MagicMock()
-        mask_response.isError.return_value = False
-        mask_response.and_mask = 0xFFF7
-        mask_response.or_mask = 0x0000
-        mock_client.mask_write_register.return_value = mask_response
+        mock_client.read_holding_registers.return_value = MagicMock(
+            isError=MagicMock(return_value=False), registers=[0x0000]
+        )
+        scanner = create_mock_scanner(scanner_args)
 
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.mask_write_register(
-            address=0,
-            and_mask=0xFFF7,  # Clear bit 3
-            or_mask=0x0000,  # No bits to set
-            device_id=1,
+        result = scanner._mask_write_register(
+            mock_client, address=4, and_mask=0xFFF7, or_mask=0x0000
         )
 
-        assert not result.isError()
+        assert result["success"] is True
+        assert result["new_value"] == 0x0000
+        mock_client.mask_write_register.assert_called_once_with(
+            address=4, and_mask=0xFFF7, or_mask=0x0000, device_id=scanner.unit_id
+        )
 
     def test_mask_write_not_supported(self, mock_client, scanner_args):
-        """Test mask write when not supported."""
+        """Test mask write when not supported does not attempt a verification readback."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = ModbusExceptionCode.ILLEGAL_FUNCTION
         mock_client.mask_write_register.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.mask_write_register(
-            address=0,
-            and_mask=0xFFFF,
-            or_mask=0x0000,
-            device_id=1,
+        scanner = create_mock_scanner(scanner_args)
+        result = scanner._mask_write_register(
+            mock_client, address=0, and_mask=0xFFFF, or_mask=0x0000
         )
 
-        assert result.isError()
+        assert result["success"] is False
+        assert "new_value" not in result
+        assert "Modbus error" in result["error"]
+        mock_client.read_holding_registers.assert_not_called()
 
     def test_mask_write_invalid_address(self, mock_client, scanner_args):
-        """Test mask write with invalid address."""
+        """Test mask write with invalid address passes that address through to the wire call."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = ModbusExceptionCode.ILLEGAL_DATA_ADDRESS
         mock_client.mask_write_register.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.mask_write_register(
-            address=99999,
-            and_mask=0xFFFF,
-            or_mask=0x0000,
-            device_id=1,
+        scanner = create_mock_scanner(scanner_args)
+        result = scanner._mask_write_register(
+            mock_client, address=99999, and_mask=0xFFFF, or_mask=0x0000
         )
 
-        assert result.isError()
+        assert result["success"] is False
+        assert result["address"] == 99999
+        mock_client.mask_write_register.assert_called_once_with(
+            address=99999, and_mask=0xFFFF, or_mask=0x0000, device_id=scanner.unit_id
+        )
 
 
 # =============================================================================
@@ -357,19 +384,24 @@ class TestAtomicReadWrite:
         assert result.registers == [1000, 2000, 3000]
 
     def test_atomic_read_only(self, mock_client, scanner_args):
-        """Test atomic operation with read only (empty write)."""
-        create_mock_scanner(scanner_args)
+        """Test atomic operation with read only (empty write) still issues a real PDU."""
+        mock_client.readwrite_registers.return_value = MagicMock(
+            isError=MagicMock(return_value=False), registers=[10, 20, 30, 40, 50]
+        )
+        scanner = create_mock_scanner(scanner_args)
 
         # Some implementations allow read-only by passing empty write
-        mock_client.readwrite_registers(
-            read_address=0,
-            read_count=5,
-            write_address=0,
-            write_registers=[],
-            device_id=1,
+        result = scanner._atomic_read_write(
+            mock_client, read_addr=0, read_count=5, write_addr=0, write_data=[]
         )
 
-        # Result depends on implementation
+        assert result["success"] is True
+        assert result["read_values"] == [10, 20, 30, 40, 50]
+        assert result["write_count"] == 0
+        assert result["values_written"] == []
+        mock_client.readwrite_registers.assert_called_once_with(
+            read_address=0, read_count=5, write_address=0, values=[], device_id=scanner.unit_id
+        )
 
     def test_atomic_read_write_not_supported(self, mock_client, scanner_args):
         """Test atomic read/write when not supported."""
@@ -378,37 +410,39 @@ class TestAtomicReadWrite:
         error_response.exception_code = ModbusExceptionCode.ILLEGAL_FUNCTION
         mock_client.readwrite_registers.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.readwrite_registers(
-            read_address=0,
-            read_count=3,
-            write_address=10,
-            write_registers=[100],
-            device_id=1,
+        scanner = create_mock_scanner(scanner_args)
+        result = scanner._atomic_read_write(
+            mock_client, read_addr=0, read_count=3, write_addr=10, write_data=[100]
         )
 
-        assert result.isError()
+        assert result["success"] is False
+        assert result["read_values"] == []
+        assert "Modbus error" in result["error"]
 
     def test_atomic_read_write_max_count(self, mock_client, scanner_args):
         """Test atomic read/write with maximum counts."""
         # FC 23 limits: read up to 125, write up to 121 registers
-        rw_response = MagicMock()
-        rw_response.isError.return_value = False
-        rw_response.registers = list(range(125))
-        mock_client.readwrite_registers.return_value = rw_response
+        mock_client.readwrite_registers.return_value = MagicMock(
+            isError=MagicMock(return_value=False), registers=list(range(125))
+        )
+        scanner = create_mock_scanner(scanner_args)
+        write_data = list(range(121))
 
-        create_mock_scanner(scanner_args)
+        result = scanner._atomic_read_write(
+            mock_client, read_addr=0, read_count=125, write_addr=0, write_data=write_data
+        )
 
-        result = mock_client.readwrite_registers(
+        assert result["success"] is True
+        assert len(result["read_values"]) == 125
+        assert result["read_values"] == list(range(125))
+        assert result["write_count"] == 121
+        mock_client.readwrite_registers.assert_called_once_with(
             read_address=0,
             read_count=125,
             write_address=0,
-            write_registers=list(range(121)),
-            device_id=1,
+            values=write_data,
+            device_id=scanner.unit_id,
         )
-
-        assert not result.isError()
 
 
 # =============================================================================
@@ -461,30 +495,40 @@ class TestReadFIFOQueue:
         assert len(result.values) == 31
 
     def test_read_fifo_queue_not_supported(self, mock_client, scanner_args):
-        """Test FIFO queue read when not supported."""
+        """Test FIFO queue read when not supported returns None without raising.
+
+        _read_fifo_queue (FC 24) goes through the generic execute_pdu() path, not a
+        dedicated pymodbus client method, so the mock must be wired on client.execute.
+        """
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = ModbusExceptionCode.ILLEGAL_FUNCTION
-        mock_client.read_fifo_queue.return_value = error_response
+        mock_client.execute.return_value = error_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
+        result = scanner._read_fifo_queue(mock_client, pointer_address=0)
 
-        result = mock_client.read_fifo_queue(address=0, device_id=1)
-
-        assert result.isError()
+        assert result is None
+        call_args = mock_client.execute.call_args.args
+        assert call_args[0] is False  # no_response_expected
+        pdu = call_args[1]
+        assert pdu.dev_id == scanner.unit_id
+        assert pdu.function_code == 24
 
     def test_read_fifo_queue_invalid_address(self, mock_client, scanner_args):
-        """Test FIFO queue read with invalid pointer address."""
+        """Test FIFO queue read with an edge-case pointer address still builds a real PDU."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = ModbusExceptionCode.ILLEGAL_DATA_ADDRESS
-        mock_client.read_fifo_queue.return_value = error_response
+        mock_client.execute.return_value = error_response
 
-        create_mock_scanner(scanner_args)
+        scanner = create_mock_scanner(scanner_args)
+        result = scanner._read_fifo_queue(mock_client, pointer_address=0xFFFF)
 
-        result = mock_client.read_fifo_queue(address=99999, device_id=1)
-
-        assert result.isError()
+        assert result is None
+        pdu = mock_client.execute.call_args.args[1]
+        assert pdu.dev_id == scanner.unit_id
+        assert pdu.encode() == b"\xff\xff"
 
 
 # =============================================================================

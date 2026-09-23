@@ -20,7 +20,7 @@ test_sunspec.py.
 
 import sys
 from types import SimpleNamespace
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 import pytest
 
@@ -143,16 +143,26 @@ class TestMapRegisterDecode:
         # nothing asserts the rendered value text here -- exercised structurally;
         # but the dynamic-SF test below asserts the actual numeric result.
 
-    def test_enum_label_rendered(self):
+    def test_enum_label_rendered(self, monkeypatch):
+        import oida.utils.export_utils as eu
+
+        captured = {}
+        monkeypatch.setattr(
+            eu, "print_table", lambda rows, *a, **k: captured.setdefault("rows", rows)
+        )
+
         conn = MagicMock()
         conn.read_holding_registers.return_value = _reg_resp([2])
         inst = make_modbus(conn=conn)
         regs = {"state": {"address": 0, "type": "u16", "enum": {"2": "RUNNING"}}}
 
-        inst._read_and_display_map_registers(regs, "holding", 1, "big", "big")
-        # display is stubbed via print_table, but the summary path isn't called
-        # here; assert ok via stats instead
-        # (enum branch executed; value 2 -> "2 (RUNNING)")
+        stats = inst._read_and_display_map_registers(regs, "holding", 1, "big", "big")
+
+        assert stats == {"ok": 1, "errors": 0}
+        # enum branch executed by the real decode/label lookup: raw value 2 ->
+        # "2 (RUNNING)", not just the raw decoded number.
+        value_str = captured["rows"][0][4]
+        assert value_str == "2 (RUNNING)"
 
     def test_dynamic_scale_factor_register_following(self):
         """SF register at a HIGHER address than its value register must still
@@ -418,8 +428,9 @@ class TestReadRegistersFromMap:
         conn.read_holding_registers.return_value = _reg_resp([1])
         inst = make_modbus(conn=conn)
         inst._read_registers_from_map("ab")
-        # only the good register is read (bad address skipped before grouping)
-        assert conn.read_holding_registers.call_count == 1
+        # only the good register (address 0) is read; the bad one (address
+        # None) is filtered out before grouping, so the wire never sees it.
+        assert conn.read_holding_registers.call_args_list == [call(0, count=1, device_id=1)]
 
 
 # ---------------------------------------------------------------------------

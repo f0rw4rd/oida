@@ -487,7 +487,8 @@ class TestGOOSEScannerDisconnect(unittest.TestCase):
         """Test disconnect with None connection does nothing."""
         scanner = _make_scanner()
         scanner.disconnect(None)
-        # Should not raise
+        # Early return: not even the disconnect debug line is logged
+        scanner.logger.debug.assert_not_called()
 
     def test_disconnect_goose_receiver(self):
         """Test disconnect stops GooseSubscriber."""
@@ -508,7 +509,10 @@ class TestGOOSEScannerDisconnect(unittest.TestCase):
 
         connection = {"type": "goose_receiver"}
         scanner.disconnect(connection)
-        # Should not raise
+        # No subscriber to stop, but the disconnect is still logged and the
+        # attribute is cleared (idempotent second disconnect is a no-op).
+        scanner.logger.debug.assert_called()
+        self.assertIsNone(scanner._goose_subscriber)
 
     def test_disconnect_goose_receiver_stop_exception(self):
         """Test disconnect handles subscriber stop exception gracefully."""
@@ -538,7 +542,8 @@ class TestGOOSEScannerDisconnect(unittest.TestCase):
         scanner = _make_scanner()
         connection = {"type": "mms_connection"}
         scanner.disconnect(connection)
-        # Should not raise
+        # Handled: the missing client is skipped without raising
+        scanner.logger.debug.assert_called_with("Disconnecting mms_connection")
 
     def test_disconnect_mms_exception(self):
         """Test disconnect handles MMS disconnect exception gracefully."""
@@ -554,9 +559,15 @@ class TestGOOSEScannerDisconnect(unittest.TestCase):
     def test_disconnect_unknown_type(self):
         """Test disconnect with unknown connection type does nothing harmful."""
         scanner = _make_scanner()
+        mock_subscriber = MagicMock()
+        scanner._goose_subscriber = mock_subscriber
+
         connection = {"type": "unknown"}
         scanner.disconnect(connection)
-        # Should not raise
+
+        # Unknown type: subscriber is NOT stopped or cleared
+        mock_subscriber.stop.assert_not_called()
+        self.assertIs(scanner._goose_subscriber, mock_subscriber)
 
 
 # ===========================================================================

@@ -233,11 +233,15 @@ class TestSecurityConfirmGating:
         client = FakeClient(default=responder)
         scanner = make_scanner(confirm=True, client=client)
         findings = scanner.security_analysis()
-        next(f for f in findings if f["issue"] == "Write protect disabled")
+        disabled = next(f for f in findings if f["issue"] == "Write protect disabled")
+        assert "not have write protection" in disabled["description"]
+        issues = [f["issue"] for f in findings]
+        assert "Write protect enabled" not in issues
 
     def test_not_connected_returns_error(self):
         scanner = make_scanner(confirm=True, client=None)
-        scanner.security_analysis()
+        findings = scanner.security_analysis()
+        assert findings == [{"issue": "Not connected"}]
 
 
 class TestSecurityVersionAndStatusFindings:

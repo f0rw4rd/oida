@@ -225,7 +225,10 @@ class TestProgressTrackerZeroTotal:
 
         tracker = ProgressTracker(total=0, show=True)
         tracker.update(pos=1)  # pre-fix: ZeroDivisionError in the fallback path
+        assert tracker.count == 1  # pos= overrides the counter, even with total=0
         tracker.add_success()
+        assert tracker.success == 1
+        assert tracker.count == 2  # add_success() bumps count in lockstep
         tracker.finish()  # must not raise either
 
     def test_add_failed_with_zero_total_does_not_raise(self):
@@ -233,3 +236,6 @@ class TestProgressTrackerZeroTotal:
 
         tracker = ProgressTracker(total=0, show=True)
         tracker.add_failed()
+        assert tracker.failed == 1
+        assert tracker.count == 1
+        assert tracker.success == 0  # failure must not also credit a success

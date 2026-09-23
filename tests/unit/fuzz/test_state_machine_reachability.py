@@ -254,7 +254,7 @@ class TestRequiresStateValidity:
         ids=[p[0] for p in STATEFUL_PROTOCOLS],
     )
     def test_requires_state_references_valid_states(
-        self, protocol_name, protocol_options, tmp_path
+        self, protocol_name, protocol_options, tmp_path, recwarn
     ):
         """Non-CommonState requires_state values must exist in the state machine."""
         from oida.fuzz.core.base_fuzzer import CommonState
@@ -307,6 +307,24 @@ class TestRequiresStateValidity:
                 f"current state machine variant: {details}. "
                 f"Valid states: {valid_states}",
                 stacklevel=1,
+            )
+
+        # The reporting must actually reflect what was computed: a non-empty
+        # `invalid` list must surface as a warning naming the offending
+        # requires_state values, and a clean protocol must raise none. This
+        # would catch the reporting logic silently going missing (e.g. the
+        # `warnings.warn` call being deleted or gated on the wrong branch).
+        state_warnings = [w for w in recwarn.list if "reference states not in" in str(w.message)]
+        if invalid:
+            assert state_warnings, (
+                f"{protocol_name}: {len(invalid)} invalid requires_state reference(s) "
+                f"were computed but no warning was raised: {invalid}"
+            )
+            assert all(state in str(state_warnings[0].message) for _, state in invalid)
+        else:
+            assert not state_warnings, (
+                f"{protocol_name}: no invalid requires_state references were computed, "
+                f"but a warning was raised anyway: {[str(w.message) for w in state_warnings]}"
             )
 
 
@@ -934,7 +952,7 @@ class TestRequestStateMapping:
         STATEFUL_PROTOCOLS,
         ids=[p[0] for p in STATEFUL_PROTOCOLS],
     )
-    def test_orphan_states_reported(self, protocol_name, protocol_options, tmp_path):
+    def test_orphan_states_reported(self, protocol_name, protocol_options, tmp_path, recwarn):
         """States with no requests referencing them should be documented (warning, not fail)."""
         from oida.fuzz.core.base_fuzzer import CommonState
 
@@ -974,6 +992,27 @@ class TestRequestStateMapping:
                 f"{protocol_name}: states not referenced by any request: {orphan_states}. "
                 f"Consider adding requests that target these states.",
                 stacklevel=1,
+            )
+
+        # Verify the report actually corresponds to the computed set: a
+        # non-empty `orphan_states` must produce a warning naming every
+        # orphan, and a fully-referenced state machine must produce none.
+        # This would catch the orphan computation and the warning call
+        # silently drifting apart (e.g. warning deleted, or fired
+        # unconditionally).
+        orphan_warnings = [
+            w for w in recwarn.list if "states not referenced by any request" in str(w.message)
+        ]
+        if orphan_states:
+            assert orphan_warnings, (
+                f"{protocol_name}: orphan states {orphan_states} were computed but no "
+                f"warning was raised"
+            )
+            assert all(state in str(orphan_warnings[0].message) for state in orphan_states)
+        else:
+            assert not orphan_warnings, (
+                f"{protocol_name}: no orphan states were computed, but a warning was "
+                f"raised anyway: {[str(w.message) for w in orphan_warnings]}"
             )
 
 

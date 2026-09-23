@@ -92,6 +92,18 @@ def create_mock_scanner(args):
         return scanner
 
 
+def assert_flow_control_flag_applied(serial_obj, *, rtscts=None, dsrdtr=None):
+    """Assert the real connect() code flipped the requested flag on the
+    underlying pyserial object it constructed (`client.socket`), which is
+    real state mutated by scanner.py's flow-control handling -- not a value
+    the test itself pre-configured on a mock.
+    """
+    if rtscts is not None:
+        assert serial_obj.rtscts is rtscts
+    if dsrdtr is not None:
+        assert serial_obj.dsrdtr is dsrdtr
+
+
 # =============================================================================
 # Test TCP Connection
 # =============================================================================
@@ -194,8 +206,9 @@ class TestDisconnect:
     def test_disconnect_with_none(self, scanner_args):
         """Test disconnect with None connection."""
         scanner = create_mock_scanner(scanner_args)
-        # Should not raise exception
-        scanner.disconnect(None)
+        # Should not raise and should be a real no-op (no close() to call on None)
+        result = scanner.disconnect(None)
+        assert result is None
 
 
 # =============================================================================
@@ -357,9 +370,16 @@ class TestSerialConnection:
         scanner = create_mock_scanner(scanner_args)
         scanner.connect()
 
-        # Verify baudrate was passed
-        call_kwargs = MockSerialClient.call_args[1]
-        assert call_kwargs["baudrate"] == 19200
+        # Verify the real connect() translated scanner args into the exact
+        # serial-client constructor kwargs, not just that baudrate flowed through.
+        MockSerialClient.assert_called_once_with(
+            port="/dev/ttyUSB0",
+            baudrate=19200,
+            timeout=scanner_args["timeout"],
+            parity="N",
+            stopbits=1,
+            bytesize=8,
+        )
 
     @patch("oida.protocols.modbus.scanner._get_modbus_tcp_client")
     @patch("oida.protocols.modbus.scanner._get_modbus_serial_client")
@@ -387,8 +407,16 @@ class TestSerialConnection:
         scanner = create_mock_scanner(scanner_args)
         scanner.connect()
 
-        call_kwargs = MockSerialClient.call_args[1]
-        assert call_kwargs["parity"] == "E"
+        # Verify the real connect() forwarded the parity setting alongside the
+        # rest of the serial-client kwargs it derives from scanner state.
+        MockSerialClient.assert_called_once_with(
+            port="/dev/ttyUSB0",
+            baudrate=scanner_args["baudrate"],
+            timeout=scanner_args["timeout"],
+            parity="E",
+            stopbits=1,
+            bytesize=8,
+        )
 
     @patch("oida.protocols.modbus.scanner._get_modbus_tcp_client")
     @patch("oida.protocols.modbus.scanner._get_modbus_serial_client")
@@ -420,8 +448,17 @@ class TestSerialConnection:
         scanner = create_mock_scanner(scanner_args)
         scanner.connect()
 
-        call_kwargs = MockSerialClient.call_args[1]
-        assert "framer" in call_kwargs
+        # Verify the real connect() selected the ASCII framer object (from
+        # FramerType.ASCII) and still forwarded the standard serial kwargs.
+        MockSerialClient.assert_called_once_with(
+            port="/dev/ttyUSB0",
+            baudrate=scanner_args["baudrate"],
+            timeout=scanner_args["timeout"],
+            parity="N",
+            stopbits=1,
+            bytesize=8,
+            framer="ascii_framer",
+        )
 
     @patch("oida.protocols.modbus.scanner._get_modbus_tcp_client")
     @patch("oida.protocols.modbus.scanner._get_modbus_serial_client")
@@ -548,9 +585,15 @@ class TestRTUOverTCPConnection:
         scanner = create_mock_scanner(scanner_args)
         scanner.connect()
 
-        # Verify RTU framer was used
-        call_kwargs = MockTcpClient.call_args[1]
-        assert call_kwargs.get("framer") == "rtu_framer"
+        # Verify the real connect() built the TCP client with the RTU framer
+        # plus the standard host/port/timeout/retries translation.
+        MockTcpClient.assert_called_once_with(
+            host=scanner_args["rhost"],
+            port=scanner_args["rport"],
+            timeout=scanner_args["timeout"],
+            retries=0,
+            framer="rtu_framer",
+        )
 
     @patch("oida.protocols.modbus.scanner._get_modbus_tcp_client")
     @patch("oida.protocols.modbus.scanner._get_modbus_serial_client")
@@ -579,9 +622,15 @@ class TestRTUOverTCPConnection:
         scanner = create_mock_scanner(scanner_args)
         scanner.connect()
 
-        # Verify "rtu" string was used
-        call_kwargs = MockTcpClient.call_args[1]
-        assert call_kwargs.get("framer") == "rtu"
+        # Verify the real connect() fell back to the legacy "rtu" framer
+        # string when no FramerType enum is available.
+        MockTcpClient.assert_called_once_with(
+            host=scanner_args["rhost"],
+            port=scanner_args["rport"],
+            timeout=scanner_args["timeout"],
+            retries=0,
+            framer="rtu",
+        )
 
 
 # =============================================================================
@@ -624,8 +673,15 @@ class TestASCIIOverTCPConnection:
         scanner = create_mock_scanner(scanner_args)
         scanner.connect()
 
-        call_kwargs = MockTcpClient.call_args[1]
-        assert call_kwargs.get("framer") == "ascii_framer"
+        # Verify the real connect() built the TCP client with the ASCII framer
+        # plus the standard host/port/timeout/retries translation.
+        MockTcpClient.assert_called_once_with(
+            host=scanner_args["rhost"],
+            port=scanner_args["rport"],
+            timeout=scanner_args["timeout"],
+            retries=0,
+            framer="ascii_framer",
+        )
 
 
 # =============================================================================
@@ -694,12 +750,21 @@ class TestFlowControlOptions:
         scanner = create_mock_scanner(scanner_args)
         scanner.connect()
 
-        call_kwargs = MockSerialClient.call_args[1]
         # pymodbus 3.x ModbusSerialClient has no rtscts constructor kwarg
-        # (passing it raised TypeError and broke serial entirely). Flow control
-        # is applied to the underlying pyserial object instead.
-        assert "rtscts" not in call_kwargs
-        assert mock_serial_client.socket.rtscts is True
+        # (passing it raised TypeError and broke serial entirely). Verify the
+        # real connect() left the constructor kwargs untouched...
+        MockSerialClient.assert_called_once_with(
+            port="/dev/ttyUSB0",
+            baudrate=scanner_args["baudrate"],
+            timeout=scanner_args["timeout"],
+            parity="N",
+            stopbits=1,
+            bytesize=8,
+        )
+        # ...and instead flipped rtscts on the underlying pyserial object that
+        # the client exposes via `.socket`, proving connect() actually reached
+        # into the constructed client rather than just echoing a canned mock.
+        assert_flow_control_flag_applied(mock_serial_client.socket, rtscts=True)
 
     @patch("oida.protocols.modbus.scanner._get_modbus_tcp_client")
     @patch("oida.protocols.modbus.scanner._get_modbus_serial_client")
@@ -727,11 +792,20 @@ class TestFlowControlOptions:
         scanner = create_mock_scanner(scanner_args)
         scanner.connect()
 
-        call_kwargs = MockSerialClient.call_args[1]
         # pymodbus 3.x ModbusSerialClient has no dsrdtr constructor kwarg;
-        # flow control is applied to the underlying pyserial object instead.
-        assert "dsrdtr" not in call_kwargs
-        assert mock_serial_client.socket.dsrdtr is True
+        # verify the real connect() left the constructor kwargs untouched...
+        MockSerialClient.assert_called_once_with(
+            port="/dev/ttyUSB0",
+            baudrate=scanner_args["baudrate"],
+            timeout=scanner_args["timeout"],
+            parity="N",
+            stopbits=1,
+            bytesize=8,
+        )
+        # ...and instead flipped dsrdtr on the underlying pyserial object that
+        # the client exposes via `.socket`, proving connect() actually reached
+        # into the constructed client rather than just echoing a canned mock.
+        assert_flow_control_flag_applied(mock_serial_client.socket, dsrdtr=True)
 
 
 if __name__ == "__main__":

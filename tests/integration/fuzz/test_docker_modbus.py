@@ -106,6 +106,7 @@ class TestModbusDockerDefinitions:
             index_end=5,
             enabled_requests=[request_name],
         )
+        fuzzer = None
         try:
             fuzzer = fuzzer_class(config=config)
             run_fuzz_with_timeout(fuzzer.fuzz_all, timeout_seconds=15)
@@ -115,6 +116,14 @@ class TestModbusDockerDefinitions:
             pass  # Connection issues are acceptable
         except ImportError as e:
             require_service(f"Missing dependency: {e}")
+
+        if fuzzer is None:
+            pytest.skip(f"Could not construct Modbus fuzzer for '{request_name}'")
+
+        assert fuzzer.session.total_mutant_index > 0, (
+            f"Modbus request definition '{request_name}' never sent a single "
+            "mutated test case to the Docker mock"
+        )
 
 
 # =============================================================================
@@ -185,6 +194,7 @@ class TestModbusDockerMonitor:
             reuse_target_connection=False,
         )
 
+        fuzzer = None
         try:
             fuzzer = fuzzer_class(config=config)
             run_fuzz_with_timeout(fuzzer.fuzz_all, timeout_seconds=30)
@@ -192,6 +202,14 @@ class TestModbusDockerMonitor:
             pass  # Timeout is acceptable
         except (ConnectionError, OSError):
             pass  # Connection issues are acceptable
+
+        if fuzzer is None:
+            pytest.skip("Could not construct Modbus fuzzer with reuse_target_connection=False")
+
+        assert fuzzer.session.total_mutant_index > 0, (
+            "Fuzzing with reuse_target_connection=False never sent a single "
+            "mutated test case to the Docker mock"
+        )
 
 
 # =============================================================================

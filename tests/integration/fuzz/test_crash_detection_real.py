@@ -41,8 +41,8 @@ from .mock_servers import (
 pytestmark = pytest.mark.integration_fuzzers
 
 
-def _assert_crash_detected(fuzzer, result, server, protocol_name):
-    """Assert that a crash was detected by some layer of the stack.
+def _diagnose_crash(fuzzer, result, server, protocol_name):
+    """Determine whether a crash was detected by some layer of the stack.
 
     Valid crash indicators (any one is sufficient):
     1. CombinedMonitor.total_failures >= 1
@@ -50,6 +50,11 @@ def _assert_crash_detected(fuzzer, result, server, protocol_name):
     3. CrashTracker recorded a crash
     4. Fuzzer thread raised an exception
     5. Fuzzer thread is still alive (stuck in recovery/retry)
+
+    Returns a ``(crash_detected, diagnostic_message)`` tuple. The caller is
+    responsible for asserting on ``crash_detected`` -- this keeps the actual
+    ``assert`` statement (and its meaningful condition) visible in the test
+    function itself rather than buried in a helper.
     """
     exc = result.get("exception")
     monitor = getattr(fuzzer, "monitor", None)
@@ -70,31 +75,30 @@ def _assert_crash_detected(fuzzer, result, server, protocol_name):
         monitor_failures or child_crashed or crash_tracked or had_exception or thread_stuck
     )
 
-    if not crash_detected:
-        diag_parts = [f"Protocol: {protocol_name}"]
-        if monitor:
-            diag_parts.append(f"total_failures={getattr(monitor, 'total_failures', 'N/A')}")
-            diag_parts.append(f"test_case_count={getattr(monitor, 'test_case_count', 'N/A')}")
-            diag_parts.append(f"actual_check_count={getattr(monitor, 'actual_check_count', 'N/A')}")
-            if hasattr(monitor, "monitors"):
-                for i, m in enumerate(monitor.monitors):
-                    m_name = type(m).__name__
-                    m_crashed = getattr(m, "crashed", "N/A")
-                    m_failures = getattr(m, "consecutive_failures", "N/A")
-                    m_recovery = getattr(m, "recovery_attempts", "N/A")
-                    diag_parts.append(
-                        f"child[{i}] {m_name}: crashed={m_crashed}, "
-                        f"failures={m_failures}, recovery={m_recovery}"
-                    )
-            if hasattr(monitor, "crash_tracker"):
-                diag_parts.append(f"crash_tracker.count={monitor.crash_tracker.crash_count}")
-        diag_parts.append(f"exception={type(exc).__name__ if exc else 'None'}")
-        diag_parts.append(f"thread_alive={result['thread'].is_alive()}")
-        diag_parts.append(f"completed={result.get('completed', 'N/A')}")
-        diag_parts.append(f"server_alive={server.is_alive()}")
-        diag_parts.append(f"server_requests={server.request_count}")
+    diag_parts = [f"Protocol: {protocol_name}"]
+    if monitor:
+        diag_parts.append(f"total_failures={getattr(monitor, 'total_failures', 'N/A')}")
+        diag_parts.append(f"test_case_count={getattr(monitor, 'test_case_count', 'N/A')}")
+        diag_parts.append(f"actual_check_count={getattr(monitor, 'actual_check_count', 'N/A')}")
+        if hasattr(monitor, "monitors"):
+            for i, m in enumerate(monitor.monitors):
+                m_name = type(m).__name__
+                m_crashed = getattr(m, "crashed", "N/A")
+                m_failures = getattr(m, "consecutive_failures", "N/A")
+                m_recovery = getattr(m, "recovery_attempts", "N/A")
+                diag_parts.append(
+                    f"child[{i}] {m_name}: crashed={m_crashed}, "
+                    f"failures={m_failures}, recovery={m_recovery}"
+                )
+        if hasattr(monitor, "crash_tracker"):
+            diag_parts.append(f"crash_tracker.count={monitor.crash_tracker.crash_count}")
+    diag_parts.append(f"exception={type(exc).__name__ if exc else 'None'}")
+    diag_parts.append(f"thread_alive={result['thread'].is_alive()}")
+    diag_parts.append(f"completed={result.get('completed', 'N/A')}")
+    diag_parts.append(f"server_alive={server.is_alive()}")
+    diag_parts.append(f"server_requests={server.request_count}")
 
-        raise AssertionError("Crash should be detected: " + ", ".join(diag_parts))
+    return crash_detected, "Crash should be detected: " + ", ".join(diag_parts)
 
 
 # ============================================================================
@@ -144,7 +148,8 @@ class TestModbusCrashDetection:
 
             result = run_fuzz_capture(fuzzer, timeout_seconds=60)
 
-            _assert_crash_detected(fuzzer, result, server, "modbus")
+            crash_detected, diag = _diagnose_crash(fuzzer, result, server, "modbus")
+            assert crash_detected, diag
 
 
 # ============================================================================
@@ -190,7 +195,8 @@ class TestIEC104CrashDetection:
 
             result = run_fuzz_capture(fuzzer, timeout_seconds=60)
 
-            _assert_crash_detected(fuzzer, result, server, "iec104")
+            crash_detected, diag = _diagnose_crash(fuzzer, result, server, "iec104")
+            assert crash_detected, diag
 
 
 # ============================================================================
@@ -236,7 +242,8 @@ class TestMMSCrashDetection:
 
             result = run_fuzz_capture(fuzzer, timeout_seconds=60)
 
-            _assert_crash_detected(fuzzer, result, server, "mms")
+            crash_detected, diag = _diagnose_crash(fuzzer, result, server, "mms")
+            assert crash_detected, diag
 
 
 if __name__ == "__main__":

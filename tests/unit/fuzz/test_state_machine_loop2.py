@@ -217,7 +217,16 @@ class _FakeConn:
 class TestConnectionIdentity:
     def test_uid_is_stable_across_calls(self):
         conn = _FakeConn()
-        assert _connection_uid(conn) == _connection_uid(conn)
+        first = _connection_uid(conn)
+        second = _connection_uid(conn)
+        assert first == second
+        assert first is not None  # stamped identity, never None for a live conn
+        # Verify independently of the memoized return value: the uid must
+        # actually be stamped onto the object as an attribute (not just
+        # recomputed identically by chance), so reading it directly off the
+        # object matches what both calls returned.
+        assert getattr(conn, "_oida_conn_uid") == first
+        assert getattr(conn, "_oida_conn_uid") == second
 
     def test_distinct_live_connections_never_collide(self):
         conns = [_FakeConn() for _ in range(200)]

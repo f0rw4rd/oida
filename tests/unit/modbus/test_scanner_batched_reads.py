@@ -322,8 +322,11 @@ class TestBatchedCoilReads:
 
         scanner._scan_register_type(client, "coils", list(range(n)))
 
-        # All 500 coils in a single request (2000 max for coils)
+        # All 500 coils in a single request (2000 max for coils) -- if the
+        # scanner fell back to the 125-register Modbus wire limit instead of
+        # honouring the 2000 coil batch limit, this would be a 4-call batch.
         assert client.read_coils.call_count == 1
+        assert client.read_coils.call_args == call(0, count=n, device_id=1)
 
 
 class TestBatchedDiscreteInputReads:

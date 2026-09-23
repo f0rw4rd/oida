@@ -260,8 +260,14 @@ def test_function_level_import_symbol_resolves(path, lineno, target, symbol):
     defined names) and only fail if the import also lacks the symbol. If the
     target needs an optional dep that isn't installed, the case is skipped.
     """
+    src_file = pathlib.Path(path)
+    assert src_file.exists(), f"{path}: source file used to collect this import case is gone"
+
     exports = _module_defined_names(target)
     if exports is not None and symbol in exports:
+        # Statically confirmed: `symbol` is a real module-level name (or, for
+        # a package __init__, a real submodule) of `target`.
+        assert isinstance(exports, set) and symbol in exports
         return
 
     # AST couldn't confirm it — import the target and check for real.
@@ -271,9 +277,14 @@ def test_function_level_import_symbol_resolves(path, lineno, target, symbol):
         require_service(f"{target}: cannot import to confirm symbol ({type(exc).__name__}: {exc})")
 
     if hasattr(mod, symbol):
+        # Resolve the attribute itself (may be lazily re-exported via a
+        # module-level __getattr__, so it won't necessarily appear in dir()).
+        resolved = getattr(mod, symbol)
+        assert resolved is not None, f"{target}.{symbol} resolved to None"
         return
     try:  # a submodule import (e.g. `from .pkg import submodule`)
-        importlib.import_module(f"{target}.{symbol}")
+        submod = importlib.import_module(f"{target}.{symbol}")
+        assert submod.__name__ == f"{target}.{symbol}"
         return
     except Exception:  # noqa: BLE001
         pass

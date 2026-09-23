@@ -1169,15 +1169,16 @@ class TestOPCUAConnectionManagement(unittest.TestCase):
         mock_client = Mock()
         mock_client.disconnect = AsyncMock()
 
-        # Should not raise exception
         scanner.disconnect(mock_client)
+        mock_client.disconnect.assert_awaited_once()
 
     def test_disconnect_none_client(self):
         """Test disconnect with None client"""
         scanner = OPCUAScanner({"rhost": "192.168.1.100", "rport": 4840})
 
-        # Should handle None gracefully
+        # None is handled without raising and without touching asyncio
         scanner.disconnect(None)
+        self.assertIsNone(scanner.disconnect(None))
 
 
 import pytest
@@ -1513,16 +1514,18 @@ class TestOPCUAResourceCleanup(unittest.TestCase):
         mock_client.disconnect = AsyncMock()
 
         self.scanner.disconnect(mock_client)
+        mock_client.disconnect.assert_awaited_once()
 
     def test_multiple_disconnect_calls_safe(self):
         """Test that multiple disconnect calls don't raise errors."""
         mock_client = Mock()
         mock_client.disconnect = AsyncMock()
 
-        # Multiple disconnects should be safe
+        # Multiple disconnects are safe; each one awaited the close again
         self.scanner.disconnect(mock_client)
         self.scanner.disconnect(mock_client)
         self.scanner.disconnect(mock_client)
+        self.assertEqual(mock_client.disconnect.await_count, 3)
 
 
 class TestOPCUABrowseErrors(unittest.TestCase):

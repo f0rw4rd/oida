@@ -8,7 +8,7 @@ and input registers (FC 4).
 """
 
 import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock, call, patch
 
 # Check for pymodbus availability
 from tests.service_gate import require_import
@@ -124,16 +124,29 @@ class TestReadCoils:
         assert len(result.bits) >= 5
 
     def test_read_coils_error_response(self, mock_client, scanner_args):
-        """Test handling error response from read_coils."""
+        """Scanner records no readable coils when the transport reports an error.
+
+        The mock is the transport stub; the assertion is on what the *scanner*
+        produced (and on the exact args it passed the transport), not on the
+        mock's own preconfigured return value.
+        """
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = 2  # Illegal data address
         mock_client.read_coils.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_coils(0, 1, device_id=1)
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "coils", [0, 1, 2])
 
-        assert result.isError()
+        assert results == {}
+        # Batch read (count=3) followed by per-address fallback after the error.
+        assert mock_client.read_coils.call_args_list == [
+            call(0, count=3, device_id=1),
+            call(0, count=1, device_id=1),
+            call(1, count=1, device_id=1),
+            call(2, count=1, device_id=1),
+        ]
 
     def test_read_coils_exception(self, mock_client, scanner_args):
         """Test handling exception from read_coils."""
@@ -173,15 +186,22 @@ class TestReadDiscreteInputs:
         assert len(result.bits) >= 5
 
     def test_read_discrete_inputs_error(self, mock_client, scanner_args):
-        """Test handling error from read_discrete_inputs."""
+        """Scanner records no readable discrete inputs when the transport errors."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         mock_client.read_discrete_inputs.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_discrete_inputs(0, 1, device_id=1)
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "discrete_inputs", [0, 1, 2])
 
-        assert result.isError()
+        assert results == {}
+        assert mock_client.read_discrete_inputs.call_args_list == [
+            call(0, count=3, device_id=1),
+            call(0, count=1, device_id=1),
+            call(1, count=1, device_id=1),
+            call(2, count=1, device_id=1),
+        ]
 
 
 # =============================================================================
@@ -213,16 +233,23 @@ class TestReadHoldingRegisters:
         assert result.registers == [100, 200, 300, 400, 500]
 
     def test_read_holding_registers_error(self, mock_client, scanner_args):
-        """Test handling error from read_holding_registers."""
+        """Scanner records no readable holding registers when the transport errors."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = 2
         mock_client.read_holding_registers.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, device_id=1)
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "holding_registers", [0, 1, 2])
 
-        assert result.isError()
+        assert results == {}
+        assert mock_client.read_holding_registers.call_args_list == [
+            call(0, count=3, device_id=1),
+            call(0, count=1, device_id=1),
+            call(1, count=1, device_id=1),
+            call(2, count=1, device_id=1),
+        ]
 
     def test_read_holding_registers_max_count(self, mock_client, scanner_args):
         """Test reading maximum register count (125)."""
@@ -268,15 +295,22 @@ class TestReadInputRegisters:
         assert result.registers == [1000, 2000, 3000, 4000, 5000]
 
     def test_read_input_registers_error(self, mock_client, scanner_args):
-        """Test handling error from read_input_registers."""
+        """Scanner records no readable input registers when the transport errors."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         mock_client.read_input_registers.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_input_registers(0, 1, device_id=1)
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "input_registers", [0, 1, 2])
 
-        assert result.isError()
+        assert results == {}
+        assert mock_client.read_input_registers.call_args_list == [
+            call(0, count=3, device_id=1),
+            call(0, count=1, device_id=1),
+            call(1, count=1, device_id=1),
+            call(2, count=1, device_id=1),
+        ]
 
 
 # =============================================================================
@@ -372,56 +406,78 @@ class TestResponseErrorHandling:
     """Tests for response error handling."""
 
     def test_illegal_function_exception(self, mock_client, scanner_args):
-        """Test handling Illegal Function exception (code 1)."""
+        """Scanner records no readable registers for an Illegal Function (code 1) reply."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = 1
         mock_client.read_holding_registers.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, device_id=1)
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "holding_registers", [0, 1, 2])
 
-        assert result.isError()
-        assert result.exception_code == 1
+        assert results == {}
+        assert mock_client.read_holding_registers.call_args_list == [
+            call(0, count=3, device_id=1),
+            call(0, count=1, device_id=1),
+            call(1, count=1, device_id=1),
+            call(2, count=1, device_id=1),
+        ]
 
     def test_illegal_data_address_exception(self, mock_client, scanner_args):
-        """Test handling Illegal Data Address exception (code 2)."""
+        """Scanner records no readable registers for an Illegal Data Address (code 2) reply."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = 2
         mock_client.read_holding_registers.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(65535, 1, device_id=1)
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "holding_registers", [65535])
 
-        assert result.isError()
-        assert result.exception_code == 2
+        assert results == {}
+        assert mock_client.read_holding_registers.call_args_list == [
+            call(65535, count=1, device_id=1),
+            call(65535, count=1, device_id=1),
+        ]
 
     def test_illegal_data_value_exception(self, mock_client, scanner_args):
-        """Test handling Illegal Data Value exception (code 3)."""
+        """Scanner records no readable registers for an Illegal Data Value (code 3) reply."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = 3
         mock_client.read_holding_registers.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 200, device_id=1)
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "holding_registers", [0, 1, 2])
 
-        assert result.isError()
-        assert result.exception_code == 3
+        assert results == {}
+        assert mock_client.read_holding_registers.call_args_list == [
+            call(0, count=3, device_id=1),
+            call(0, count=1, device_id=1),
+            call(1, count=1, device_id=1),
+            call(2, count=1, device_id=1),
+        ]
 
     def test_server_device_failure_exception(self, mock_client, scanner_args):
-        """Test handling Server Device Failure exception (code 4)."""
+        """Scanner records no readable registers for a Server Device Failure (code 4) reply."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = 4
         mock_client.read_holding_registers.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, device_id=1)
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "holding_registers", [0, 1, 2])
 
-        assert result.isError()
-        assert result.exception_code == 4
+        assert results == {}
+        assert mock_client.read_holding_registers.call_args_list == [
+            call(0, count=3, device_id=1),
+            call(0, count=1, device_id=1),
+            call(1, count=1, device_id=1),
+            call(2, count=1, device_id=1),
+        ]
 
     def test_gateway_path_unavailable_exception(self, mock_client, scanner_args):
         """Scanner records no readable registers when the gateway returns code 10.
@@ -443,17 +499,24 @@ class TestResponseErrorHandling:
         assert results == {}
 
     def test_gateway_target_device_failed_exception(self, mock_client, scanner_args):
-        """Test handling Gateway Target Device Failed exception (code 11)."""
+        """Scanner records no readable registers for a Gateway Target Device Failed
+        (code 11) reply."""
         error_response = MagicMock()
         error_response.isError.return_value = True
         error_response.exception_code = 11
         mock_client.read_holding_registers.return_value = error_response
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, device_id=200)
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "holding_registers", [0, 1, 2])
 
-        assert result.isError()
-        assert result.exception_code == 11
+        assert results == {}
+        assert mock_client.read_holding_registers.call_args_list == [
+            call(0, count=3, device_id=1),
+            call(0, count=1, device_id=1),
+            call(1, count=1, device_id=1),
+            call(2, count=1, device_id=1),
+        ]
 
 
 # =============================================================================
@@ -575,24 +638,37 @@ class TestRegisterAddressBoundaries:
     """Tests for register address boundary handling."""
 
     def test_address_zero(self, mock_client, scanner_args):
-        """Test reading at address 0."""
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, device_id=1)
-        assert not result.isError()
+        """Scanner reads and records address 0 using the real batching path."""
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "holding_registers", [0])
+
+        mock_client.read_holding_registers.assert_called_once_with(0, count=1, device_id=1)
+        assert results[0]["readable"] is True
+        # Value is the first (and only) element mapped back from the response.
+        assert results[0]["value"] == 100
 
     def test_address_max(self, mock_client, scanner_args):
-        """Test reading at maximum address."""
-        create_mock_scanner(scanner_args)
-        # Max Modbus address is 65535
-        mock_client.read_holding_registers(65535, 1, device_id=1)
-        # This may succeed or fail depending on device
-        # The test verifies no crash occurs
+        """Scanner reads and records the maximum Modbus address (65535)."""
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "holding_registers", [65535])
+
+        # The high address must be preserved as the dict key, not clamped or dropped.
+        mock_client.read_holding_registers.assert_called_once_with(65535, count=1, device_id=1)
+        assert set(results.keys()) == {65535}
+        assert results[65535]["readable"] is True
+        assert results[65535]["value"] == 100
 
     def test_count_one(self, mock_client, scanner_args):
-        """Test reading count of 1."""
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, device_id=1)
-        assert not result.isError()
+        """Scanner issues a count=1 request and records exactly one register."""
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "holding_registers", [0])
+
+        mock_client.read_holding_registers.assert_called_once_with(0, count=1, device_id=1)
+        assert len(results) == 1
+        assert results[0]["value"] == 100
 
     def test_count_max_holding(self, mock_client, scanner_args):
         """Test max count for holding registers (125)."""
@@ -631,13 +707,24 @@ class TestTimeoutHandling:
     """Tests for timeout handling in register reads."""
 
     def test_read_timeout(self, mock_client, scanner_args):
-        """Test handling of read timeout."""
+        """A None response (timeout) must not be recorded as a readable register.
+
+        The real code checks ``result is not None`` before calling
+        ``isError()``; asserting only that the mock returns ``None`` would
+        pass even if that guard were deleted.
+        """
         mock_client.read_holding_registers.return_value = None
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.read_holding_registers(0, 1, device_id=1)
+        scanner = create_mock_scanner(scanner_args)
+        scanner.read_only = True
+        results = scanner._scan_register_type(mock_client, "holding_registers", [0])
 
-        assert result is None
+        assert results == {}
+        # Batch attempt, then per-address fallback -- both see the same None.
+        assert mock_client.read_holding_registers.call_args_list == [
+            call(0, count=1, device_id=1),
+            call(0, count=1, device_id=1),
+        ]
 
     def test_timeout_setting(self, scanner_args):
         """Test timeout setting from args."""

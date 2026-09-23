@@ -1511,9 +1511,13 @@ class TestMQTTDisconnectAndCleanup(unittest.TestCase):
 
         args = {"rhost": "127.0.0.1", "rport": 1883}
         scanner = MQTTScanner(args)
+        scanner.logger = MagicMock()
 
-        # Should not raise exception
-        scanner.disconnect(None)
+        # Should not raise exception, and since there's no connection object
+        # the loop_stop/disconnect/debug-log branch must never execute.
+        result = scanner.disconnect(None)
+        self.assertIsNone(result)
+        scanner.logger.debug.assert_not_called()
 
 
 class TestMQTTEdgeCases(unittest.TestCase):

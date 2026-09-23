@@ -91,8 +91,8 @@ MOCK_PORTS: Dict[str, int] = {
     "dnp3_enhanced": 20010,
     "dnp3_filetransfer": 20020,
     # HTTP/2
-    "http2_nghttp2_h2c": 8280,
-    "http2_nghttp2_tls": 8281,
+    "http2_nghttp2_h2c": 8281,
+    "http2_nghttp2_tls": 8280,
     "http2_python_h2c": 9080,
     "http2_python_tls": 9443,
     # BACnet

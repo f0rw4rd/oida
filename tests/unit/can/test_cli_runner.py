@@ -954,7 +954,10 @@ class TestCleanupAndDeps:
     def test_cleanup_no_conn(self):
         inst = _make_conn()
         inst.conn = None
+        inst.logger = MagicMock()
         inst.cleanup()  # no-op, no raise
+        assert inst.conn is None
+        inst.logger.debug.assert_not_called()
 
     def test_check_dependencies_reflects_availability(self):
         # check_dependencies just reflects the lazy_import availability flag

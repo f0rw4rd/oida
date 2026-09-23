@@ -293,17 +293,24 @@ def test_main_debug_is_store_true(main_parser):
 
 
 def test_main_output_present(main_parser):
-    """-o/--output must exist on the main parser."""
+    """-o/--output must exist on the main parser and take a directory value."""
     for action in main_parser._actions:
         if "--output" in action.option_strings:
+            assert "-o" in action.option_strings, (
+                f"--output should keep its -o short flag, got {action.option_strings}"
+            )
+            assert action.metavar == "DIR"
+            assert action.type is str
             return
     pytest.fail("Main parser missing --output")
 
 
 def test_main_format_present(main_parser):
-    """--format must exist on the main parser."""
+    """--format must exist on the main parser with the documented choices/default."""
     for action in main_parser._actions:
         if "--format" in action.option_strings:
+            assert action.choices == ["json", "csv", "xml", "console", "all"]
+            assert action.default == "console"
             return
     pytest.fail("Main parser missing --format")
 

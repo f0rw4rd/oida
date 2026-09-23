@@ -59,7 +59,10 @@ class TestTypeMap:
             assert isinstance(getattr(handler, bucket), list)
 
     def test_type_map_is_cached(self):
-        assert _get_type_map() is _get_type_map()
+        first = _get_type_map()
+        second = _get_type_map()
+        assert first is second  # module-level cache: same object, no rebuild
+        assert first != {}  # a real, populated map (not a fresh literal)
 
 
 # ---------------------------------------------------------------------------
@@ -133,9 +136,11 @@ class TestScanHandler:
 
     def test_begin_end_fragment_are_noops(self):
         handler = _ScanHandler.create()
-        # Must not raise.
-        handler.BeginFragment(None)
-        handler.EndFragment(None)
+        before = dict(vars(handler))
+        # Genuinely no-op hooks: return None and leave all collected state untouched.
+        assert handler.BeginFragment(None) is None
+        assert handler.EndFragment(None) is None
+        assert vars(handler) == before
 
 
 # ---------------------------------------------------------------------------

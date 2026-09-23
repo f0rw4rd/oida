@@ -21,7 +21,7 @@ class TestDTPPassiveEK:
 
     def test_dtp_basic_smoke(self):
         """Listener produces devices and interactions from real DTP traffic."""
-        _run_listener_test(
+        listener, devices, _ = _run_listener_test(
             "dtp",
             "DTPPassiveListener",
             "dtp",
@@ -29,6 +29,12 @@ class TestDTPPassiveEK:
             min_devices=1,
             min_interactions=1,
         )
+        # Confirm the parsed device is the actual Cisco switch that sent the
+        # real DTP frames in this pcap, not just "some device dict".
+        mac = "e0:2f:6d:3a:a5:1a"
+        macs_seen = {d.mac_address for d in devices.values()}
+        assert mac in macs_seen, f"Expected switch {mac} among discovered devices: {macs_seen}"
+        assert listener.interactions[0].details["sender_id"] == mac
 
     def test_dtp_sender_id_extracted(self):
         """Verify sender_id (switch MAC) is parsed."""
@@ -122,6 +128,10 @@ class TestDTPPassiveEK:
             "dtp",
             self.PCAP,
             expect_operations=["DTP Trunk Active"],
+        )
+        ops = {ix.operation for ix in listener.interactions if ix.operation}
+        assert any("DTP Trunk Active" in op for op in ops), (
+            f"Expected a 'DTP Trunk Active' operation string, saw: {sorted(ops)}"
         )
 
     def test_dtp_switch_tracked(self):

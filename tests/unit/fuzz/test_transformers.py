@@ -16,6 +16,9 @@ Tests cover:
 - IdentityTransformer: Pass-through transformer
 """
 
+import sys
+import unittest.mock
+
 import pytest
 
 from tests.service_gate import require_service
@@ -1221,14 +1224,19 @@ class TestBrotliTransformerCreation:
     """Tests for BrotliTransformer instantiation."""
 
     def test_creation_without_brotli_raises(self):
-        """BrotliTransformer raises ImportError if brotli not installed."""
-        # We can't easily test this without uninstalling brotli
-        # Just verify the class exists and can be imported
-        try:
-            from src.oida.fuzz.primitives.transformers.compression import BrotliTransformer
-            # If we get here, brotli is installed
-        except ImportError:
-            require_service("Brotli not installed")
+        """BrotliTransformer.__init__ raises ImportError if brotli is not installed.
+
+        BrotliTransformer.__init__ does ``import brotli`` internally and re-raises
+        as ``ImportError`` with an install hint if that import fails (see
+        src/oida/fuzz/primitives/transformers/compression.py). Simulate brotli
+        being unavailable by making its import fail, without mocking
+        BrotliTransformer itself.
+        """
+        from src.oida.fuzz.primitives.transformers.compression import BrotliTransformer
+
+        with unittest.mock.patch.dict(sys.modules, {"brotli": None}):
+            with pytest.raises(ImportError, match="brotli"):
+                BrotliTransformer(quality=11)
 
     @pytest.fixture
     def brotli_available(self):
@@ -1406,9 +1414,12 @@ class TestTransformerEdgeCases:
         ]
 
         for transformer in transformers:
-            # Should not raise
             encoded = transformer.encode(b"")
-            transformer.decode(encoded)
+            decoded = transformer.decode(encoded)
+            assert decoded == b"", (
+                f"{type(transformer).__name__}: round-tripping empty data must "
+                f"yield empty data, got {decoded!r} (encoded: {encoded!r})"
+            )
 
     def test_large_data_handling(self):
         """Transformers handle large data."""

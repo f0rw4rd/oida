@@ -253,6 +253,16 @@ class TestCipDefinitions:
         # parse_attribute must catch and degrade rather than raise.
         for cid in (0xF6, 0x01, 0x04, 0xF5):
             for aid in range(1, 12):
-                # Should never raise regardless of class/attr/data shape.
-                cip_definitions.parse_attribute(cid, 1, aid, b"\x01")
-                cip_definitions.parse_attribute(cid, 1, aid, b"")
+                # Should never raise regardless of class/attr/data shape, and
+                # must always honor the documented (name, cip_type, value)
+                # contract rather than e.g. returning the exception itself.
+                for data in (b"\x01", b""):
+                    result = cip_definitions.parse_attribute(cid, 1, aid, data)
+                    # Documented contract: always a 3-tuple (name, cip_type, value).
+                    assert isinstance(result, tuple) and len(result) == 3
+                    name, cip_type, value = result
+                    assert isinstance(name, str)
+                    assert isinstance(cip_type, str)
+                    # A crashed parser degrades to the raw hex of the input
+                    # (empty string for empty input) rather than propagating.
+                    assert value is not None

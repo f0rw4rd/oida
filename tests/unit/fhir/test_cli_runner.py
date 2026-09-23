@@ -535,11 +535,14 @@ class TestExportResults(unittest.TestCase):
     def setUp(self):
         self.scanner = _create_scanner()
 
-    def test_no_output_dir_skips_export(self):
+    @patch("oida.utils.export_utils.export_json")
+    def test_no_output_dir_skips_export(self, mock_export_json):
         """Test no output dir means no file export"""
         self.scanner.args.output = None
         self.scanner._export_results()
-        # No error should occur
+        # With no output dir, the method returns right after the
+        # save-response-if-requested call, before ever touching export_json.
+        mock_export_json.assert_not_called()
 
     @patch("oida.utils.export_utils.export_json")
     def test_json_export(self, mock_export):

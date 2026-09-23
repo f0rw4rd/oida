@@ -173,7 +173,11 @@ class TestTimeoutResync:
         # The lazy build now happens inside _data_connection; stub it so the
         # "no targets" path is what's exercised (empty targets -> None).
         f._create_session = lambda: type("S", (), {"targets": []})()
-        BaseFuzzer._resync_connection_timeouts(f)  # must not raise
+        result = BaseFuzzer._resync_connection_timeouts(f)  # must not raise
+        assert result is None
+        # No target connection exists, so the resync must have taken the
+        # early-return branch instead of touching a (nonexistent) socket.
+        assert BaseFuzzer._data_connection(f) is None
 
 
 class TestLazySessionAttach:
@@ -372,7 +376,12 @@ class TestResyncTimeoutsSocket:
 
         conn = ResilientTCPConnection("127.0.0.1", 1)
         conn._log = _FakeLog()
-        conn.resync_timeouts()  # must not raise
+        # Never opened: _sock is absent/None, so resync_timeouts() must take
+        # its early-return branch (no socket to touch, no sockopt calls).
+        assert getattr(conn, "_sock", None) is None
+        result = conn.resync_timeouts()  # must not raise
+        assert result is None
+        assert getattr(conn, "_sock", None) is None
 
 
 class TestMQTTReplyPolicyTable:

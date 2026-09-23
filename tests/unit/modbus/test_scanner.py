@@ -1122,8 +1122,10 @@ class TestModbusDisconnect(unittest.TestCase):
 
     def test_disconnect_none_connection(self):
         """Test disconnecting with None connection"""
-        # Should not raise exception
-        self.scanner.disconnect(None)
+        # Should not raise exception, and the falsy branch performs no
+        # action, so the real disconnect() implicitly returns None.
+        result = self.scanner.disconnect(None)
+        self.assertIsNone(result)
 
 
 class TestModbusEnumValues(unittest.TestCase):

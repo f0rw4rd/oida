@@ -586,8 +586,13 @@ class TestMMSServerInteraction:
             # Should not raise - just logs warning and continues
             fuzzer._define_state_machine()
 
-            # State flags should remain False on connection failure
-            # (unless the fuzzer continues anyway for testing)
+            # On a connect() failure, _define_state_machine's except Exception
+            # handler swallows the error, leaving both association flags False
+            # and the state machine parked at its initial CONNECTED state
+            # (see src/oida/fuzz/protocols/mms.py::MMSFuzzer._define_state_machine).
+            assert fuzzer.cotp_connection_established is False
+            assert fuzzer.association_established is False
+            assert fuzzer.state_machine.current_state.name == "CONNECTED"
 
     def test_fuzzer_handles_timeout(self, mms_fuzzer_config, mock_connection_factory):
         """Graceful handling of connection timeouts."""
@@ -605,6 +610,13 @@ class TestMMSServerInteraction:
 
             # Should not raise - just logs warning and continues
             fuzzer._define_state_machine()
+
+            # TimeoutError (socket.timeout) is caught explicitly, leaving both
+            # association flags False and the state machine parked at CONNECTED
+            # (see src/oida/fuzz/protocols/mms.py::MMSFuzzer._define_state_machine).
+            assert fuzzer.cotp_connection_established is False
+            assert fuzzer.association_established is False
+            assert fuzzer.state_machine.current_state.name == "CONNECTED"
 
 
 # =============================================================================

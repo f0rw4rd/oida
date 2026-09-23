@@ -168,6 +168,15 @@ def test_enum_devices_study_fallback_is_capped():
     # Completes (bounded) instead of collecting study UIDs forever.
     EnumerationMixin._enum_devices(scanner)
 
+    # The endless STUDY stream never yields Modality/StationName/etc, so no
+    # device info is ever collected — real code takes the early-return
+    # "nothing found" branch and never populates results["data"]["devices"].
+    assert "devices" not in scanner.results["data"]
+    # The study-fallback cap (max_study_uids=500) must have kicked in, which
+    # is the only way this call returns before the tripwire fires.
+    warnings = [str(c.args[0]) for c in scanner.logger.warning.call_args_list]
+    assert any("study limit" in w.lower() for w in warnings), warnings
+
 
 def test_dicom_bounded_streams_unchanged_for_well_formed_scp(tmp_path):
     """Control: a normal, finite SCP still yields every response it sends."""

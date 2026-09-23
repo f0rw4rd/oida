@@ -3,7 +3,7 @@ Unit tests for oida.protocols.modbus.register_io -- shared batched register util
 """
 
 import pytest
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, call
 
 from tests.service_gate import require_import
 
@@ -185,8 +185,13 @@ class TestReadRegisteredBatched:
         client.read_holding_registers.side_effect = side_effect
 
         read_registers_batched(client, "holding", list(range(10)), max_batch=4)
-        # 10 / 4 = 3 batches (4 + 4 + 2)
-        assert client.read_holding_registers.call_count == 3
+        # 10 / 4 = 3 batches (4 + 4 + 2), each a contiguous run starting where
+        # the previous one left off.
+        assert client.read_holding_registers.call_args_list == [
+            call(0, count=4, device_id=1),
+            call(4, count=4, device_id=1),
+            call(8, count=2, device_id=1),
+        ]
 
     def test_non_contiguous_multiple_batches(self):
         client = MagicMock()
@@ -262,5 +267,6 @@ class TestReadRegisteredBatched:
         client.read_coils.return_value = _bits_response([True] * n)
 
         read_registers_batched(client, "coils", list(range(n)))
-        # All 500 in one call (default 2000)
-        assert client.read_coils.call_count == 1
+        # All 500 in one call (default 2000) -- a 125-register fallback would
+        # instead split this into 4 calls.
+        assert client.read_coils.call_args_list == [call(0, count=n, device_id=1)]

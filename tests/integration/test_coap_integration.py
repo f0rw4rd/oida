@@ -1984,6 +1984,14 @@ class TestCoAPDTLSInterop:
         if reason:
             pytest.fail(reason)
 
+        # A plain (non-DTLS) CoAP probe against the DTLS-only port must NOT get
+        # a plaintext CoAP reply back -- the server is up (container healthy)
+        # but it should only speak DTLS on this port, never plain UDP CoAP.
+        assert check_udp_port_open(MOCK_HOST, DTLS_PORT, timeout=2) is False, (
+            f"port {DTLS_PORT} answered a plaintext CoAP probe -- "
+            "the DTLS server should not respond to unencrypted datagrams"
+        )
+
     def test_plain_coap_rejected_on_dtls_port(self, cli_runner):
         """Plain CoAP scan against DTLS port fails gracefully [Category C]"""
         reason = _dtls_blocker()

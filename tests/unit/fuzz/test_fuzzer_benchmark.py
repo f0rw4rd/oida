@@ -617,3 +617,15 @@ def test_benchmark_summary_report(capsys):
         )
         print(f"\nProtocols benchmarked: {len(rows)}")
         print("=" * 95)
+
+    # The report is only meaningful if it actually benchmarked protocols and
+    # the aggregated totals reflect the per-row data (i.e. the summary isn't
+    # silently dropping rows or miscomputing the totals it prints).
+    assert rows, "expected at least one protocol to be benchmarked"
+    by_name = {row[0]: row for row in rows}
+    assert "modbus" in by_name, "modbus must be part of the benchmark summary"
+    modbus_row = by_name["modbus"]
+    assert modbus_row[2] > 0, "modbus request_count must be > 0"
+    assert modbus_row[6] > 0, "modbus total_mutations must be > 0"
+    assert totals[0] == sum(row[2] for row in rows), "total request_count mismatched rows"
+    assert totals[3] == sum(row[6] for row in rows), "total mutations mismatched rows"

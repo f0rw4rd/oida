@@ -826,6 +826,15 @@ class TestCheckTlsCertificate:
         # socket() raising is caught (lines 31-32), then standalone probe runs.
         host._check_tls_certificate(_Client())
 
+        # The socket() exception is logged at debug, and since no cert_der was
+        # extracted, the code falls through to the standalone probe branch
+        # instead of calling display_cert_info.
+        debug_msgs = [m for level, m in host.logger.messages if level == "debug"]
+        assert any("Could not extract cert from client socket" in m for m in debug_msgs)
+        # ...and then the standalone probe actually ran and failed to connect
+        # to the closed port, logging its own debug message too.
+        assert any("TLS certificate probe failed" in m for m in debug_msgs)
+
     def test_no_socket_falls_back_to_standalone_probe(self, monkeypatch):
         host = MqttHost(use_tls=True)
         host.host = "127.0.0.1"
@@ -837,6 +846,13 @@ class TestCheckTlsCertificate:
 
         # Must not raise even though the fallback probe cannot connect.
         host._check_tls_certificate(_Client())
+
+        # socket() returned None -> no exception, no cert_der, so display_cert_info
+        # was never reached; only the standalone-probe path could have logged,
+        # and it fails to connect to the closed port.
+        debug_msgs = [m for level, m in host.logger.messages if level == "debug"]
+        assert not any("Could not extract cert" in m for m in debug_msgs)
+        assert any("TLS certificate probe failed" in m for m in debug_msgs)
 
 
 if __name__ == "__main__":

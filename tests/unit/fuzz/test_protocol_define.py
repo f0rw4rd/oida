@@ -67,11 +67,19 @@ def test_define_protocol_completes(protocol_name, mock_config, mock_factory, tmp
 
     # Access the session property which triggers _define_protocol() internally
     try:
-        _ = fuzzer.session
+        session = fuzzer.session
     except ImportError as e:
         require_service(f"Missing dependency for {protocol_name}: {e}")
     except Exception as e:
         pytest.fail(f"_define_protocol() failed for {protocol_name}: {type(e).__name__}: {e}")
+        return
+
+    # _define_protocol() is expected to register at least one boofuzz request
+    # node into the session graph (via s_initialize/register_request). If it
+    # silently did nothing, the fuzzer would have no mutations to send.
+    assert len(session.nodes) >= 1, (
+        f"_define_protocol() for {protocol_name} registered no nodes in the session graph"
+    )
 
 
 @pytest.mark.parametrize(

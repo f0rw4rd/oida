@@ -273,6 +273,10 @@ def test_network_protocol_registered(protocol_name):
             f"{protocol_name} not available in PROTOCOL_FUZZERS (missing optional dep?)"
         )
 
+    fuzzer_class = PROTOCOL_FUZZERS[protocol_name]
+    requests = fuzzer_class.get_request_definitions()
+    assert requests, f"{protocol_name}: registered fuzzer returns no request definitions"
+
 
 # --------------------------------------------------------------------------- #
 # Transport & network-layer protocol tests (audit 2026-02-14)
@@ -356,6 +360,10 @@ def test_ics_protocol_registered(protocol_name):
         require_service(
             f"{protocol_name} not available in PROTOCOL_FUZZERS (missing optional dep?)"
         )
+
+    fuzzer_class = PROTOCOL_FUZZERS[protocol_name]
+    requests = fuzzer_class.get_request_definitions()
+    assert requests, f"{protocol_name}: registered fuzzer returns no request definitions"
 
 
 @pytest.mark.parametrize(

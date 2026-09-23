@@ -1,10 +1,11 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Unit tests for Modbus diagnostics operations.
+Unit tests for Modbus scanner diagnostics (FC 8/11/12).
 
-Tests FC 8 diagnostics subfunctions, communication events (FC 11/12),
-and exception status (FC 7).
+Drives the real ScannerDiagnosticsMixin / comm-events mixin methods against a
+mocked pymodbus client and asserts on their returned values, so the scanner's
+normalization and error handling logic is what's under test.
 """
 
 import pytest
@@ -27,32 +28,35 @@ from oida.protocols.modbus.scanner import (
 # =============================================================================
 
 
+def _ok_response(**attrs):
+    """A pymodbus response object that reports success."""
+    resp = MagicMock()
+    resp.isError.return_value = False
+    for k, v in attrs.items():
+        setattr(resp, k, v)
+    return resp
+
+
+def _err_response(exception_code):
+    """A pymodbus response object reporting an exception."""
+    resp = MagicMock()
+    resp.isError.return_value = True
+    resp.exception_code = exception_code
+    return resp
+
+
 @pytest.fixture
 def mock_client():
     """Create a mock Modbus client with diagnostic responses."""
     client = MagicMock()
-
-    # Mock diagnostic (FC 8) response
-    diag_response = MagicMock()
-    diag_response.isError.return_value = False
-    diag_response.message = [0x1234, 0x5678]
-    client.diag_read_diagnostic_register.return_value = diag_response
-
-    # Mock get_com_event_counter (FC 11) response
-    event_counter_response = MagicMock()
-    event_counter_response.isError.return_value = False
-    event_counter_response.status = True
-    event_counter_response.count = 100
-    client.get_com_event_counter.return_value = event_counter_response
-
-    # Mock get_com_event_log (FC 12) response
-    event_log_response = MagicMock()
-    event_log_response.isError.return_value = False
-    event_log_response.status = True
-    event_log_response.message_count = 50
-    event_log_response.events = [0x01, 0x02, 0x03, 0x04]
-    client.get_com_event_log.return_value = event_log_response
-
+    client.diag_read_diagnostic_register.return_value = _ok_response(message=[0x1234, 0x5678])
+    client.diag_query_data.return_value = _ok_response(message=[0x1234])
+    client.diag_restart_communication.return_value = _ok_response()
+    client.diag_clear_counters.return_value = _ok_response()
+    client.get_com_event_counter.return_value = _ok_response(status=True, count=100)
+    client.get_com_event_log.return_value = _ok_response(
+        status=True, message_count=50, events=[0x01, 0x02, 0x03, 0x04]
+    )
     return client
 
 
@@ -68,17 +72,18 @@ def scanner_args():
     }
 
 
-def create_mock_scanner(args):
-    """Create a mock ModbusScanner instance."""
+@pytest.fixture
+def scanner(scanner_args):
+    """A real ModbusScanner instance with __init__ bypassed (no I/O)."""
     from oida.protocols.modbus.scanner import ModbusScanner
 
     with patch.object(ModbusScanner, "__init__", lambda self, *a, **kw: None):
         scanner = ModbusScanner.__new__(ModbusScanner)
-        scanner.args = args
-        scanner.host = args.get("rhost", "127.0.0.1")
-        scanner.port = args.get("rport", 502)
-        scanner.timeout = args.get("timeout", 5)
-        scanner.unit_id = args.get("unit-id", 1)
+        scanner.args = scanner_args
+        scanner.host = scanner_args.get("rhost", "127.0.0.1")
+        scanner.port = scanner_args.get("rport", 502)
+        scanner.timeout = scanner_args.get("timeout", 5)
+        scanner.unit_id = scanner_args.get("unit-id", 1)
         scanner.logger = MagicMock()
         scanner.security = MagicMock()
         return scanner
@@ -90,49 +95,51 @@ def create_mock_scanner(args):
 
 
 class TestDiagnosticEchoTest:
-    """Tests for diagnostic echo test (subfunction 0x00)."""
+    """_diagnostic_echo_test normalization and matching."""
 
-    def test_echo_test_success(self, mock_client, scanner_args):
-        """Test successful echo test."""
-        echo_response = MagicMock()
-        echo_response.isError.return_value = False
-        echo_response.message = [0x1234]  # Echo back the same data
-        mock_client.diag_query_data.return_value = echo_response
+    def test_echo_test_success(self, scanner, mock_client):
+        """A matching echo reports match=True with sent/received values."""
+        mock_client.diag_query_data.return_value = _ok_response(message=[0x1234])
 
-        create_mock_scanner(scanner_args)
+        result = scanner._diagnostic_echo_test(mock_client, 0x1234)
 
-        # Send echo request with test data 0x1234
-        result = mock_client.diag_query_data(0x1234, device_id=1)
+        assert result is not None
+        assert result["match"] is True
+        assert result["sent"] == 0x1234
+        assert result["rtt_ms"] >= 0
 
-        assert not result.isError()
-        assert result.message[0] == 0x1234
+    def test_echo_test_mismatch(self, scanner, mock_client):
+        """A non-matching echo reports match=False, not an error."""
+        mock_client.diag_query_data.return_value = _ok_response(message=[0x5678])
 
-    def test_echo_test_mismatch(self, mock_client, scanner_args):
-        """Test echo test with data mismatch."""
-        echo_response = MagicMock()
-        echo_response.isError.return_value = False
-        echo_response.message = [0x5678]  # Different from sent data
-        mock_client.diag_query_data.return_value = echo_response
+        result = scanner._diagnostic_echo_test(mock_client, 0x1234)
 
-        create_mock_scanner(scanner_args)
+        assert result is not None
+        assert result["match"] is False
+        assert result["received"] == [0x5678]
 
-        sent_data = 0x1234
-        result = mock_client.diag_query_data(sent_data, device_id=1)
+    def test_echo_test_not_supported(self, scanner, mock_client):
+        """FC 8 unsupported (exception) yields None, not a raise."""
+        mock_client.diag_query_data.return_value = _err_response(
+            ModbusExceptionCode.ILLEGAL_FUNCTION
+        )
 
-        assert result.message[0] != sent_data
+        assert scanner._diagnostic_echo_test(mock_client, 0x1234) is None
 
-    def test_echo_test_not_supported(self, mock_client, scanner_args):
-        """Test echo test when FC 8 not supported."""
-        error_response = MagicMock()
-        error_response.isError.return_value = True
-        error_response.exception_code = ModbusExceptionCode.ILLEGAL_FUNCTION
-        mock_client.diag_query_data.return_value = error_response
+    def test_echo_test_bytes_normalized(self, scanner, mock_client):
+        """pymodbus 3.x echo bytes are normalized to int for the compare."""
+        mock_client.diag_query_data.return_value = _ok_response(message=b"\x12\x34")
 
-        create_mock_scanner(scanner_args)
+        result = scanner._diagnostic_echo_test(mock_client, 0x1234)
 
-        result = mock_client.diag_query_data(0x1234, device_id=1)
+        assert result is not None
+        assert result["match"] is True
 
-        assert result.isError()
+    def test_echo_test_transport_error_returns_none(self, scanner, mock_client):
+        """A transport exception is caught and reported as None."""
+        mock_client.diag_query_data.side_effect = OSError("refused")
+
+        assert scanner._diagnostic_echo_test(mock_client, 0x1234) is None
 
 
 # =============================================================================
@@ -141,32 +148,27 @@ class TestDiagnosticEchoTest:
 
 
 class TestDiagnosticRestartComm:
-    """Tests for restart communications option (subfunction 0x01)."""
+    """_diagnostic_restart."""
 
-    def test_restart_comm_success(self, mock_client, scanner_args):
-        """Test successful restart communications."""
-        restart_response = MagicMock()
-        restart_response.isError.return_value = False
-        mock_client.diag_restart_communication.return_value = restart_response
+    def test_restart_comm_success(self, scanner, mock_client):
+        """A successful restart returns True."""
+        mock_client.diag_restart_communication.return_value = _ok_response()
 
-        create_mock_scanner(scanner_args)
+        assert scanner._diagnostic_restart(mock_client) is True
 
-        result = mock_client.diag_restart_communication(device_id=1)
+    def test_restart_comm_error_returns_false(self, scanner, mock_client):
+        """An erroring restart returns False, not a raise."""
+        mock_client.diag_restart_communication.return_value = _err_response(1)
 
-        assert not result.isError()
+        assert scanner._diagnostic_restart(mock_client) is False
 
-    def test_restart_comm_toggle_mode(self, mock_client, scanner_args):
-        """Test restart with toggle mode (0xFF00 = continue after clear)."""
-        restart_response = MagicMock()
-        restart_response.isError.return_value = False
-        mock_client.diag_restart_communication.return_value = restart_response
+    def test_restart_comm_uses_toggle_false(self, scanner, mock_client):
+        """The mixin keeps the comms event log intact (toggle=False)."""
+        mock_client.diag_restart_communication.return_value = _ok_response()
 
-        create_mock_scanner(scanner_args)
+        scanner._diagnostic_restart(mock_client)
 
-        # 0xFF00 = Clear log and continue in Listen Only Mode
-        result = mock_client.diag_restart_communication(0xFF00, device_id=1)
-
-        assert not result.isError()
+        mock_client.diag_restart_communication.assert_called_once_with(False, device_id=1)
 
 
 # =============================================================================
@@ -175,42 +177,41 @@ class TestDiagnosticRestartComm:
 
 
 class TestDiagnosticRegister:
-    """Tests for read diagnostic register (subfunction 0x02)."""
+    """_diagnostic_read_register + _normalize_diag_word."""
 
-    def test_read_diagnostic_register(self, mock_client, scanner_args):
-        """Test reading diagnostic register."""
-        diag_response = MagicMock()
-        diag_response.isError.return_value = False
-        diag_response.message = [0x0000]  # All bits clear
-        mock_client.diag_read_diagnostic_register.return_value = diag_response
+    def test_read_diagnostic_register(self, scanner, mock_client):
+        """A 1-element word list is normalized to a single int."""
+        mock_client.diag_read_diagnostic_register.return_value = _ok_response(message=[0x0000])
 
-        create_mock_scanner(scanner_args)
+        assert scanner._diagnostic_read_register(mock_client) == 0
 
-        result = mock_client.diag_read_diagnostic_register(device_id=1)
+    def test_diagnostic_register_with_flags(self, scanner, mock_client):
+        """Bit 0/1 set reads back as 3."""
+        mock_client.diag_read_diagnostic_register.return_value = _ok_response(message=[0x0003])
 
-        assert not result.isError()
-        assert result.message[0] == 0x0000
+        reg = scanner._diagnostic_read_register(mock_client)
+        assert reg & 0x0001
+        assert reg & 0x0002
+        assert not reg & 0x0004
 
-    def test_diagnostic_register_with_flags(self, mock_client, scanner_args):
-        """Test diagnostic register with flags set."""
-        diag_response = MagicMock()
-        diag_response.isError.return_value = False
-        diag_response.message = [0x0003]  # Bits 0 and 1 set
-        mock_client.diag_read_diagnostic_register.return_value = diag_response
+    def test_register_zero_is_not_discarded(self, scanner, mock_client):
+        """A legitimate 0 register value survives normalization."""
+        mock_client.diag_read_diagnostic_register.return_value = _ok_response(message=[0x0000])
 
-        create_mock_scanner(scanner_args)
+        assert scanner._diagnostic_read_register(mock_client) == 0
 
-        result = mock_client.diag_read_diagnostic_register(device_id=1)
+    def test_register_error_returns_none(self, scanner, mock_client):
+        mock_client.diag_read_diagnostic_register.return_value = _err_response(1)
 
-        reg_value = result.message[0]
-        # Check individual bits
-        bit0 = bool(reg_value & 0x0001)
-        bit1 = bool(reg_value & 0x0002)
-        bit2 = bool(reg_value & 0x0004)
+        assert scanner._diagnostic_read_register(mock_client) is None
 
-        assert bit0 is True
-        assert bit1 is True
-        assert bit2 is False
+    def test_normalize_diag_word_bytes(self):
+        """Byte payloads are big-endian normalized."""
+        from oida.protocols.modbus.scanner import ModbusScanner
+
+        assert ModbusScanner._normalize_diag_word(b"\x12\x34") == 0x1234
+        assert ModbusScanner._normalize_diag_word((5,)) == 5
+        assert ModbusScanner._normalize_diag_word(None) is None
 
 
 # =============================================================================
@@ -219,119 +220,51 @@ class TestDiagnosticRegister:
 
 
 class TestDiagnosticCounters:
-    """Tests for diagnostic counters."""
+    """_diagnostic_read_counters."""
 
-    def test_read_bus_message_count(self, mock_client, scanner_args):
-        """Test reading bus message count (subfunction 0x0B)."""
-        counter_response = MagicMock()
-        counter_response.isError.return_value = False
-        counter_response.message = [1234]
-        mock_client.diag_get_bus_message_count.return_value = counter_response
+    def _set_all_counters(self, mock_client, value):
+        for method in (
+            "diag_read_bus_message_count",
+            "diag_read_bus_comm_error_count",
+            "diag_read_bus_exception_error_count",
+            "diag_read_device_message_count",
+            "diag_read_device_no_response_count",
+            "diag_read_device_nak_count",
+            "diag_read_device_busy_count",
+            "diag_read_bus_char_overrun_count",
+        ):
+            getattr(mock_client, method).return_value = _ok_response(message=[value])
 
-        create_mock_scanner(scanner_args)
+    def test_all_counters_collected(self, scanner, mock_client):
+        """All 8 subfunctions (0x0B-0x12) land in the result dict."""
+        self._set_all_counters(mock_client, 1234)
 
-        result = mock_client.diag_get_bus_message_count(device_id=1)
+        counters = scanner._diagnostic_read_counters(mock_client)
 
-        assert not result.isError()
-        assert result.message[0] == 1234
+        assert set(counters.keys()) == {0x0B, 0x0C, 0x0D, 0x0E, 0x0F, 0x10, 0x11, 0x12}
+        # .message is the raw pymodbus payload list; the mixin stores it as-is.
+        assert counters[0x0B]["value"] == [1234]
+        assert counters[0x0C]["name"] == "bus_comm_error_count"
 
-    def test_read_bus_comm_error_count(self, mock_client, scanner_args):
-        """Test reading bus communication error count (subfunction 0x0C)."""
-        counter_response = MagicMock()
-        counter_response.isError.return_value = False
-        counter_response.message = [5]
-        mock_client.diag_get_bus_com_error_count.return_value = counter_response
+    def test_errored_counter_skipped(self, scanner, mock_client):
+        """A counter that errors is omitted, others still collected."""
+        self._set_all_counters(mock_client, 7)
+        mock_client.diag_read_bus_message_count.return_value = _err_response(1)
 
-        create_mock_scanner(scanner_args)
+        counters = scanner._diagnostic_read_counters(mock_client)
 
-        result = mock_client.diag_get_bus_com_error_count(device_id=1)
+        assert 0x0B not in counters
+        assert 0x0C in counters
 
-        assert not result.isError()
-        assert result.message[0] == 5
+    def test_counter_exception_skipped(self, scanner, mock_client):
+        """A raising counter method doesn't abort the loop."""
+        self._set_all_counters(mock_client, 7)
+        mock_client.diag_read_device_nak_count.side_effect = OSError("boom")
 
-    def test_read_bus_exception_error_count(self, mock_client, scanner_args):
-        """Test reading bus exception error count (subfunction 0x0D)."""
-        counter_response = MagicMock()
-        counter_response.isError.return_value = False
-        counter_response.message = [10]
-        mock_client.diag_get_bus_exception_error_count.return_value = counter_response
+        counters = scanner._diagnostic_read_counters(mock_client)
 
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.diag_get_bus_exception_error_count(device_id=1)
-
-        assert not result.isError()
-        assert result.message[0] == 10
-
-    def test_read_server_message_count(self, mock_client, scanner_args):
-        """Test reading server message count (subfunction 0x0E)."""
-        counter_response = MagicMock()
-        counter_response.isError.return_value = False
-        counter_response.message = [500]
-        mock_client.diag_get_slave_message_count.return_value = counter_response
-
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.diag_get_slave_message_count(device_id=1)
-
-        assert not result.isError()
-        assert result.message[0] == 500
-
-    def test_read_server_no_response_count(self, mock_client, scanner_args):
-        """Test reading server no response count (subfunction 0x0F)."""
-        counter_response = MagicMock()
-        counter_response.isError.return_value = False
-        counter_response.message = [3]
-        mock_client.diag_get_slave_no_response_count.return_value = counter_response
-
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.diag_get_slave_no_response_count(device_id=1)
-
-        assert not result.isError()
-        assert result.message[0] == 3
-
-    def test_read_server_nak_count(self, mock_client, scanner_args):
-        """Test reading server NAK count (subfunction 0x10)."""
-        counter_response = MagicMock()
-        counter_response.isError.return_value = False
-        counter_response.message = [0]
-        mock_client.diag_get_slave_nak_count.return_value = counter_response
-
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.diag_get_slave_nak_count(device_id=1)
-
-        assert not result.isError()
-        assert result.message[0] == 0
-
-    def test_read_server_busy_count(self, mock_client, scanner_args):
-        """Test reading server busy count (subfunction 0x11)."""
-        counter_response = MagicMock()
-        counter_response.isError.return_value = False
-        counter_response.message = [2]
-        mock_client.diag_get_slave_busy_count.return_value = counter_response
-
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.diag_get_slave_busy_count(device_id=1)
-
-        assert not result.isError()
-        assert result.message[0] == 2
-
-    def test_read_bus_character_overrun_count(self, mock_client, scanner_args):
-        """Test reading bus character overrun count (subfunction 0x12)."""
-        counter_response = MagicMock()
-        counter_response.isError.return_value = False
-        counter_response.message = [1]
-        mock_client.diag_get_bus_char_overrun_count.return_value = counter_response
-
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.diag_get_bus_char_overrun_count(device_id=1)
-
-        assert not result.isError()
-        assert result.message[0] == 1
+        assert 0x10 not in counters
+        assert len(counters) == 7
 
 
 # =============================================================================
@@ -340,156 +273,97 @@ class TestDiagnosticCounters:
 
 
 class TestDiagnosticClearCounters:
-    """Tests for clear counters and diagnostic register (subfunction 0x0A)."""
+    """_diagnostic_clear_counters."""
 
-    def test_clear_counters(self, mock_client, scanner_args):
-        """Test clearing counters."""
-        clear_response = MagicMock()
-        clear_response.isError.return_value = False
-        mock_client.diag_clear_counters.return_value = clear_response
+    def test_clear_counters(self, scanner, mock_client):
+        mock_client.diag_clear_counters.return_value = _ok_response()
 
-        create_mock_scanner(scanner_args)
+        assert scanner._diagnostic_clear_counters(mock_client) is True
 
-        result = mock_client.diag_clear_counters(device_id=1)
+    def test_clear_counters_error_returns_false(self, scanner, mock_client):
+        mock_client.diag_clear_counters.return_value = _err_response(1)
 
-        assert not result.isError()
-
-    def test_clear_overrun_counter(self, mock_client, scanner_args):
-        """Test clearing overrun counter (subfunction 0x14)."""
-        clear_response = MagicMock()
-        clear_response.isError.return_value = False
-        mock_client.diag_clear_overrun_counter.return_value = clear_response
-
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.diag_clear_overrun_counter(device_id=1)
-
-        assert not result.isError()
+        assert scanner._diagnostic_clear_counters(mock_client) is False
 
 
 # =============================================================================
-# Test Communication Events (FC 11)
+# Test Communication Events (FC 11 / 12)
 # =============================================================================
 
 
-class TestCommunicationEventCounter:
-    """Tests for get communication event counter (FC 11)."""
+class TestCommunicationEvents:
+    """_read_comm_events via the comm-events mixin."""
 
-    def test_get_event_counter_success(self, mock_client, scanner_args):
-        """Test successful event counter read."""
-        create_mock_scanner(scanner_args)
+    def _client(self):
+        """Client whose execute() serves FC 11 and FC 12 responses (the mixin
+        sends raw PDUs via client.execute, not named pymodbus methods)."""
+        client = MagicMock()
 
-        result = mock_client.get_com_event_counter(device_id=1)
+        def execute(_no_resp, pdu):
+            if pdu.function_code == 11:
+                return _ok_response(status=True, count=100)
+            if pdu.function_code == 12:
+                return _ok_response(status=True, message_count=50, events=[0x01, 0x02, 0x03, 0x04])
+            raise AssertionError(f"unexpected FC {pdu.function_code}")
 
-        assert not result.isError()
-        assert result.status is True
-        assert result.count == 100
+        client.execute.side_effect = execute
+        return client
 
-    def test_get_event_counter_busy(self, mock_client, scanner_args):
-        """Test event counter when device is busy."""
-        event_response = MagicMock()
-        event_response.isError.return_value = False
-        event_response.status = False  # Busy
-        event_response.count = 0
-        mock_client.get_com_event_counter.return_value = event_response
+    def test_counter_and_log_collected(self, scanner):
+        """FC 11 counter and FC 12 log both land in the result."""
+        events = scanner._read_comm_events(self._client())
 
-        create_mock_scanner(scanner_args)
+        assert events["counter"] == {"status": True, "count": 100}
+        assert events["log"]["message_count"] == 50
+        assert len(events["log"]["events"]) == 4
 
-        result = mock_client.get_com_event_counter(device_id=1)
+    def test_count_only_skips_log(self, scanner):
+        """count_only=True skips the FC 12 read entirely."""
+        client = self._client()
 
-        assert result.status is False
+        events = scanner._read_comm_events(client, count_only=True)
 
-    def test_get_event_counter_not_supported(self, mock_client, scanner_args):
-        """Test event counter when FC 11 not supported."""
-        error_response = MagicMock()
-        error_response.isError.return_value = True
-        error_response.exception_code = 1
-        mock_client.get_com_event_counter.return_value = error_response
+        assert events["counter"] is not None
+        assert events["log"] is None
+        sent_fcs = [c.args[1].function_code for c in client.execute.call_args_list]
+        assert sent_fcs == [11]
 
-        create_mock_scanner(scanner_args)
+    def test_event_log_parse_bits(self, scanner):
+        """Event bytes keep their per-bit meaning through the copy."""
+        client = self._client()
 
-        result = mock_client.get_com_event_counter(device_id=1)
+        def execute(_no_resp, pdu):
+            if pdu.function_code == 12:
+                return _ok_response(status=True, events=[0x01, 0x02, 0x04, 0x08])
+            return _ok_response(status=True, count=0)
 
-        assert result.isError()
+        client.execute.side_effect = execute
 
+        events = scanner._read_comm_events(client)
 
-# =============================================================================
-# Test Communication Events (FC 12)
-# =============================================================================
+        for event in events["log"]["events"]:
+            flags = {
+                "comm_event": bool(event & 0x01),
+                "exception": bool(event & 0x02),
+                "listen_only": bool(event & 0x04),
+                "server_msg": bool(event & 0x08),
+            }
+            assert any(flags.values())
 
+    def test_fc11_error_leaves_counter_none(self, scanner):
+        """An erroring FC 11 leaves counter=None rather than raising."""
+        client = self._client()
 
-class TestCommunicationEventLog:
-    """Tests for get communication event log (FC 12)."""
+        def execute(_no_resp, pdu):
+            if pdu.function_code == 11:
+                return _err_response(1)
+            return _ok_response(status=True, count=0)
 
-    def test_get_event_log_success(self, mock_client, scanner_args):
-        """Test successful event log read."""
-        create_mock_scanner(scanner_args)
+        client.execute.side_effect = execute
 
-        result = mock_client.get_com_event_log(device_id=1)
+        events = scanner._read_comm_events(client)
 
-        assert not result.isError()
-        assert result.status is True
-        assert result.message_count == 50
-        assert len(result.events) == 4
-
-    def test_get_event_log_empty(self, mock_client, scanner_args):
-        """Test event log when empty."""
-        event_response = MagicMock()
-        event_response.isError.return_value = False
-        event_response.status = True
-        event_response.message_count = 0
-        event_response.events = []
-        mock_client.get_com_event_log.return_value = event_response
-
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.get_com_event_log(device_id=1)
-
-        assert result.message_count == 0
-        assert len(result.events) == 0
-
-    def test_get_event_log_not_supported(self, mock_client, scanner_args):
-        """Test event log when FC 12 not supported."""
-        error_response = MagicMock()
-        error_response.isError.return_value = True
-        error_response.exception_code = 1
-        mock_client.get_com_event_log.return_value = error_response
-
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.get_com_event_log(device_id=1)
-
-        assert result.isError()
-
-    def test_parse_event_types(self, mock_client, scanner_args):
-        """Test parsing event type bytes."""
-        # Event byte bit meanings (per Modbus spec):
-        # Bit 0: Communication event
-        # Bit 1: Exception sent
-        # Bit 2: Listen only mode
-        # Bit 3: Server message processed
-        event_response = MagicMock()
-        event_response.isError.return_value = False
-        event_response.events = [
-            0x01,  # Communication event
-            0x02,  # Exception sent
-            0x04,  # Listen only mode
-            0x08,  # Server message
-        ]
-        mock_client.get_com_event_log.return_value = event_response
-
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.get_com_event_log(device_id=1)
-
-        # Parse events
-        for event in result.events:
-            is_comm_event = bool(event & 0x01)
-            is_exception = bool(event & 0x02)
-            is_listen_only = bool(event & 0x04)
-            is_server_msg = bool(event & 0x08)
-            # At least one flag should be set
-            assert is_comm_event or is_exception or is_listen_only or is_server_msg
+        assert events["counter"] is None
 
 
 # =============================================================================
@@ -579,34 +453,29 @@ class TestDiagnosticSubfunctionNames:
 class TestDiagnosticArguments:
     """Tests for diagnostic argument parsing."""
 
-    def test_diag_all(self, scanner_args):
+    def test_diag_all(self, scanner, scanner_args):
         """Test --diag all option."""
         scanner_args["diag"] = "all"
-        scanner = create_mock_scanner(scanner_args)
         assert scanner.args.get("diag") == "all"
 
-    def test_diag_echo(self, scanner_args):
+    def test_diag_echo(self, scanner, scanner_args):
         """Test --diag echo option."""
         scanner_args["diag"] = "echo"
-        scanner = create_mock_scanner(scanner_args)
         assert scanner.args.get("diag") == "echo"
 
-    def test_diag_counters(self, scanner_args):
+    def test_diag_counters(self, scanner, scanner_args):
         """Test --diag counters option."""
         scanner_args["diag"] = "counters"
-        scanner = create_mock_scanner(scanner_args)
         assert scanner.args.get("diag") == "counters"
 
-    def test_diag_clear(self, scanner_args):
+    def test_diag_clear(self, scanner, scanner_args):
         """Test --diag clear option."""
         scanner_args["diag"] = "clear"
-        scanner = create_mock_scanner(scanner_args)
         assert scanner.args.get("diag") == "clear"
 
-    def test_diag_data_argument(self, scanner_args):
+    def test_diag_data_argument(self, scanner, scanner_args):
         """Test --diag-data argument."""
         scanner_args["diag-data"] = "0x1234"
-        scanner = create_mock_scanner(scanner_args)
         assert scanner.args.get("diag-data") == "0x1234"
 
 

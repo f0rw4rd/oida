@@ -259,7 +259,12 @@ class TestDisconnect:
     def test_disconnect_no_conn(self):
         scanner = _instantiate_scanner(_make_args())
         scanner.conn = None
-        scanner._disconnect()  # Should not raise
+        scanner.logger = MagicMock()
+
+        scanner._disconnect()
+
+        assert scanner.conn is None
+        scanner.logger.debug.assert_not_called()  # Should not raise
 
 
 # ---------------------------------------------------------------------------
@@ -415,11 +420,15 @@ class TestSendFrame:
         scanner = _instantiate_scanner(_make_args(), mock_sock)
         scanner.frame_number = 8
 
-        scanner._send_frame("data")
+        result = scanner._send_frame("data")
 
         sent_data = mock_sock.sendall.call_args[0][0]
         # Frame number 8 % 8 = 0
         assert sent_data[1:2] == b"0"
+        assert result is True
+        # _send_frame advances frame_number by one fragment sent (real
+        # counter state, not the wrapped on-wire digit checked above).
+        assert scanner.frame_number == 9
 
 
 # ---------------------------------------------------------------------------
@@ -534,7 +543,11 @@ class TestReceiveServerResponse:
         scanner.conn = mock_sock
 
         scanner._receive_server_response()
-        # Should exit cleanly
+
+        # No frame was ever parsed, so nothing gets ACKed/NAKed and no
+        # analyzer info is recorded.
+        mock_sock.sendall.assert_not_called()
+        assert "analyzer_info" not in scanner.results["data"]
 
     def test_receive_frame_then_eot(self):
         scanner = _instantiate_scanner(_make_args())
@@ -557,7 +570,11 @@ class TestReceiveServerResponse:
         mock_sock.recv.side_effect = socket.timeout()
         scanner.conn = mock_sock
 
-        scanner._receive_server_response()  # Should not raise
+        scanner._receive_server_response()
+
+        # Timed out before any frame arrived: no ACK/NAK, no analyzer info.
+        mock_sock.sendall.assert_not_called()
+        assert "analyzer_info" not in scanner.results["data"]
 
     def test_receive_empty_data(self):
         scanner = _instantiate_scanner(_make_args())
@@ -566,7 +583,12 @@ class TestReceiveServerResponse:
         mock_sock.recv.return_value = b""
         scanner.conn = mock_sock
 
-        scanner._receive_server_response()  # Should break on empty
+        scanner._receive_server_response()
+
+        # Empty recv() means the peer closed the connection: read loop
+        # bails out with no frame parsed, no ACK/NAK, no analyzer info.
+        mock_sock.sendall.assert_not_called()
+        assert "analyzer_info" not in scanner.results["data"]
 
 
 # ---------------------------------------------------------------------------
@@ -938,7 +960,12 @@ class TestExportResults:
 
     def test_export_no_output(self):
         scanner = _instantiate_scanner(_make_args(output=None))
-        scanner._export_results()  # Should return early, no error
+
+        with patch("oida.utils.export_utils.export_json") as mock_export:
+            scanner._export_results()
+
+        # No --output was requested, so export must be skipped entirely.
+        mock_export.assert_not_called()
 
     def test_export_json(self):
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -983,7 +1010,11 @@ class TestProtoFlow:
             scanner.conn = mock_sock
             scanner.proto_flow()
 
-        # Should have called enum_host_info path
+        # enum_host_info() ran the ENQ/ACK + header exchange to completion,
+        # and _disconnect() at the end of the flow cleared the connection.
+        assert scanner.results["data"]["header_accepted"] is True
+        assert scanner.results.get("success") is not False
+        assert scanner.conn is None
 
     def test_proto_flow_connection_fails(self):
         """Test proto_flow returns early on connection failure."""
@@ -992,7 +1023,9 @@ class TestProtoFlow:
         with patch.object(scanner, "create_conn_obj", return_value=False):
             scanner.proto_flow()
 
-        # Should return early, no data
+        # Bails out before any data is populated and marks the scan failed.
+        assert scanner.results["success"] is False
+        assert scanner.results["data"] == {}
 
     def test_proto_flow_probe_ops(self):
         """Test proto_flow with --probe-ops."""
@@ -1018,6 +1051,11 @@ class TestProtoFlow:
         with patch.object(scanner, "create_conn_obj", return_value=True):
             scanner.conn = mock_sock
             scanner.proto_flow()
+
+        # Frame-level ACK accepted the query, but the peer never opened its
+        # own transmission afterwards, so there's no application-level reply.
+        assert scanner.results["data"]["query_accepted"] is True
+        assert scanner.results["data"]["query_app_accepted"] is False
 
     def test_proto_flow_fuzz_no_confirm(self):
         """Test fuzzing without --confirm is rejected."""
@@ -1079,8 +1117,15 @@ class TestPrintHostInfo:
         scanner = _instantiate_scanner(_make_args())
         scanner.results["data"]["connected"] = True
         scanner.results["data"]["header_accepted"] = True
+        scanner.logger = MagicMock()
 
-        scanner.print_host_info()  # Should not raise
+        scanner.print_host_info()
+
+        scanner.logger.display.assert_any_call("  ASTM Protocol: Header exchange successful")
+        # No TLS was reported, so the plaintext finding must fire.
+        scanner.logger.security_finding.assert_called_once_with(
+            "No encryption", detail="ASTM communication is unencrypted (plaintext)"
+        )
 
     def test_print_with_analyzer(self):
         scanner = _instantiate_scanner(_make_args())
@@ -1092,21 +1137,38 @@ class TestPrintHostInfo:
             "product": "cobas 8000",
             "type": "Chemistry",
         }
+        scanner.logger = MagicMock()
 
-        scanner.print_host_info()  # Should not raise
+        scanner.print_host_info()
+
+        scanner.logger.display.assert_any_call("  Analyzer: COBAS_8000 v8.1.2")
+        scanner.logger.display.assert_any_call("  Vendor: Roche (cobas 8000) [Chemistry]")
 
     def test_print_tls_enabled(self):
         scanner = _instantiate_scanner(_make_args())
         scanner.results["data"]["connected"] = True
         scanner.results["data"]["tls_enabled"] = True
+        scanner.logger = MagicMock()
 
-        scanner.print_host_info()  # Should not raise
+        scanner.print_host_info()
+
+        scanner.logger.display.assert_any_call("  Encryption: TLS enabled")
+        scanner.logger.security_finding.assert_not_called()
 
     def test_print_no_connection(self):
         scanner = _instantiate_scanner(_make_args())
         scanner.results["data"]["connected"] = False
+        scanner.logger = MagicMock()
 
-        scanner.print_host_info()  # Should not raise
+        scanner.print_host_info()
+
+        # Not connected: no header status is printed, but the missing-TLS
+        # finding still fires since tls_enabled was never set.
+        scanner.logger.display.assert_not_called()
+        scanner.logger.warning.assert_not_called()
+        scanner.logger.security_finding.assert_called_once_with(
+            "No encryption", detail="ASTM communication is unencrypted (plaintext)"
+        )
 
 
 # ---------------------------------------------------------------------------

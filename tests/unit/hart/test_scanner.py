@@ -499,7 +499,15 @@ class TestSecurityAnalysis:
     def test_protocol_security_analysis_high(self):
         """Test that HART 6 gets high severity"""
         findings = analyze_protocol_security(revision=6, write_protected=True)
-        next(f for f in findings if f.get("id") == "HART-SEC-001")
+        finding_ids = [f.get("id") for f in findings]
+        sec_001 = next(f for f in findings if f.get("id") == "HART-SEC-001")
+        assert "revision 6" in sec_001["finding"]
+        assert "optional device lock" in sec_001["finding"]
+        # write_protected=True means HART-SEC-002 must NOT fire
+        assert "HART-SEC-002" not in finding_ids
+        # HART 6+ and device_locked defaults to False -> HART-SEC-003 fires
+        assert "HART-SEC-003" in finding_ids
+        assert "HART-SEC-004" in finding_ids
 
     def test_protocol_security_analysis_includes_encryption(self):
         """Test that analyze_protocol_security returns encryption findings"""

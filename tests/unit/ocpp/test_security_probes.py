@@ -853,8 +853,9 @@ class TestTlsAndConfigKeys(unittest.TestCase):
             "oida.utils.socket_helpers.check_tls_certificate",
             side_effect=OSError("no tls"),
         ):
-            # Must not raise.
+            # Must not raise, and must not record a bogus finding.
             obj._check_tls_certificate()
+        self.assertEqual(len(_findings(obj)), 0)
 
     def test_check_config_keys_writable_uses_access_control_category(self):
         obj = _make_instance(version="1.6")
@@ -863,6 +864,11 @@ class TestTlsAndConfigKeys(unittest.TestCase):
         }
 
         obj._handle_check_config_keys()
+
+        findings = _findings(obj)
+        self.assertEqual(len(findings), 1)
+        self.assertIn("SecurityProfile", findings[0]["issue"])
+        self.assertIn("writable", findings[0]["issue"])
 
     def test_check_config_keys_no_data_is_noop(self):
         obj = _make_instance()
@@ -880,11 +886,19 @@ class TestTlsAndConfigKeys(unittest.TestCase):
         """
         obj = _make_instance(username=None)
         obj._handle_check_auth()
+        # The handler only logs; create_conn_obj() owns the finding, so this
+        # handler must not add anything itself.
+        self.assertEqual(len(_findings(obj)), 0)
 
     def test_check_boot_accepted_uses_authentication_category(self):
         obj = _make_instance()
         obj.results["data"]["boot_notification"] = {"status": "Accepted"}
         obj._handle_check_boot()
+
+        findings = _findings(obj)
+        self.assertEqual(len(findings), 1)
+        self.assertIn("BootNotification", findings[0]["issue"])
+        self.assertIn("without authentication", findings[0]["issue"])
 
 
 # ---------------------------------------------------------------------------

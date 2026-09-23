@@ -144,7 +144,12 @@ class TestUDPCounters:
         from src.oida.fuzz.core.connections.udp import CountingUDPConnection
 
         conn = CountingUDPConnection("127.0.0.1", 1)
-        conn.resync_timeouts()  # no live socket -> must not raise
+        # Never opened: _sock is absent/None, so resync_timeouts() must take
+        # its early-return branch (no socket to touch, no sockopt calls).
+        assert getattr(conn, "_sock", None) is None
+        result = conn.resync_timeouts()
+        assert result is None
+        assert getattr(conn, "_sock", None) is None
 
 
 class TestUDPWiring:

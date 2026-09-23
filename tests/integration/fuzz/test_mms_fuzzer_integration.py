@@ -537,8 +537,16 @@ class TestMMSServerInteraction:
             # Should not raise - just logs warning and continues
             fuzzer._define_state_machine()
 
-            # State flags should remain False on connection failure
-            # (unless the fuzzer continues anyway for testing)
+            # State flags must stay False on connection failure -- the
+            # handshake never got past socket.connect(), so neither the COTP
+            # transport connection nor the MMS association can be "up".
+            assert fuzzer.cotp_connection_established is False
+            assert fuzzer.association_established is False
+            assert fuzzer._state_context.get("cotp_connection_established") is False
+            assert fuzzer._state_context.get("association_established") is False
+            # The state machine itself must still be built (with marker
+            # states only) so fuzzing can proceed against a live target later.
+            assert fuzzer.state_machine is not None
 
     def test_fuzzer_handles_timeout(self, mms_fuzzer_config, mock_connection_factory):
         """Graceful handling of connection timeouts."""
@@ -556,6 +564,16 @@ class TestMMSServerInteraction:
 
             # Should not raise - just logs warning and continues
             fuzzer._define_state_machine()
+
+            # A timed-out connect() must leave the same "nothing established"
+            # state as any other connection failure -- the fuzzer shouldn't
+            # believe the handshake progressed just because it saw a timeout
+            # instead of a refused/reset connection.
+            assert fuzzer.cotp_connection_established is False
+            assert fuzzer.association_established is False
+            assert fuzzer._state_context.get("cotp_connection_established") is False
+            assert fuzzer._state_context.get("association_established") is False
+            assert fuzzer.state_machine is not None
 
 
 # =============================================================================

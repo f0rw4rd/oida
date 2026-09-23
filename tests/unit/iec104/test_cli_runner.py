@@ -370,8 +370,13 @@ class TestCleanup(unittest.TestCase):
         obj.conn = Mock()
         del obj.scanner
 
-        # Should not raise (hasattr checks protect both _stop_listen and disconnect)
+        # self.conn truthy but no `scanner` -> disconnect() raises AttributeError,
+        # which cleanup() must swallow and log rather than propagate.
         obj.cleanup()
+
+        assert not hasattr(obj, "scanner")
+        debug_messages = [call.args[0] for call in obj.logger.debug.call_args_list]
+        assert any("Error closing connection" in msg for msg in debug_messages)
 
 
 class TestProtoFlow(unittest.TestCase):

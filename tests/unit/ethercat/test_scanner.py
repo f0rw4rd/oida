@@ -1591,8 +1591,12 @@ class TestErrorHandling(unittest.TestCase):
     def test_disconnect_handles_none(self):
         """Test disconnect with None connection [Category C]"""
         scanner = _make_scanner()
+        scanner._network_info_cache = {"stale": True}
         # Should not raise
         scanner.disconnect(None)
+        # The per-scan network-info cache is invalidated unconditionally, even
+        # when there's no live connection to tear down.
+        self.assertIsNone(scanner._network_info_cache)
 
     def test_disconnect_handles_exception(self):
         """Test disconnect handles error gracefully [Category C]"""

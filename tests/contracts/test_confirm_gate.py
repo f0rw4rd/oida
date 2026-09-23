@@ -23,8 +23,6 @@ import re
 
 from tests._ast_safe import safe_parse
 
-import pytest
-
 SRC_ROOT = pathlib.Path(__file__).resolve().parents[2] / "src" / "oida"
 SNAPSHOT = pathlib.Path(__file__).resolve().parent / "confirm_gate_snapshot.txt"
 
@@ -207,8 +205,16 @@ def test_confirm_gate_snapshot_drift():
             "REMOVE them from confirm_gate_snapshot.txt:"
         )
         msg.extend(f"  - {proto}:{dest}" for proto, dest in sorted(removed))
-    if msg:
-        pytest.fail("\n".join(msg))
+    assert not added, "\n".join(msg)
+    assert not removed, "\n".join(msg)
+    # Snapshot and live computation must agree exactly, and the snapshot
+    # itself must be non-empty proof that the predicate actually finds gaps
+    # (an empty snapshot would make this test vacuous).
+    assert current == snapshot
+    assert len(snapshot) >= 10, (
+        f"confirm_gate_snapshot.txt only has {len(snapshot)} entries — "
+        f"suspiciously small for a known-gap tracking file."
+    )
 
 
 def test_at_least_one_dangerous_flag_was_found():
@@ -248,10 +254,20 @@ def test_confirm_gate_idiom_is_the_only_reader():
             if _RAW_CONFIRM_READ.search(line):
                 rel = path.relative_to(SRC_ROOT.parent.parent)
                 offenders.append(f"  {rel}:{lineno}: {line.strip()}")
-    if offenders:
-        pytest.fail(
-            "Raw confirm reads found — replace with the canonical gate "
-            '`self.require_confirm("--flag")` (hard gate) or '
-            "`self._confirm_flag()` (soft read) from "
-            "oida.utils.confirm_gate.ConfirmGateMixin:\n" + "\n".join(offenders)
-        )
+    assert not offenders, (
+        "Raw confirm reads found — replace with the canonical gate "
+        '`self.require_confirm("--flag")` (hard gate) or '
+        "`self._confirm_flag()` (soft read) from "
+        "oida.utils.confirm_gate.ConfirmGateMixin:\n" + "\n".join(offenders)
+    )
+    # The predicate must actually scan real protocol source, not silently
+    # match nothing (e.g. because _PROTOCOLS_ROOT resolved to an empty dir).
+    scanned_any_confirm_file = any(
+        "confirm" in p.read_text(encoding="utf-8")
+        for p in _PROTOCOLS_ROOT.rglob("*.py")
+        if p.name != "proto_args.py"
+    )
+    assert scanned_any_confirm_file, (
+        f"No protocol source file under {_PROTOCOLS_ROOT} mentions 'confirm' — "
+        f"the scan predicate is probably broken."
+    )

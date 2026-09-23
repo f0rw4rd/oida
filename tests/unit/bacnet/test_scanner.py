@@ -1051,8 +1051,10 @@ class TestBACnetNetworkErrorHandling(unittest.TestCase):
         scanner.logger = Mock()
         scanner.bacnet = None
 
-        # Should not raise exception
+        # Should not raise exception, and since there's no connection there's
+        # nothing to log either (the guard short-circuits before any debug call)
         scanner._disconnect()
+        scanner.logger.debug.assert_not_called()
 
     @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_disconnect_with_exception(self, mock_asyncio_run):
@@ -1091,6 +1093,13 @@ class TestBACnetNetworkErrorHandling(unittest.TestCase):
 
         # Should not raise exception
         scanner._handle_identify()
+
+        # Each of the 13 identification properties is read in its own
+        # try/except, so a failing _read_property logs one debug message per
+        # property and leaves the device record untouched (no vendor_id, etc.)
+        assert scanner._read_property.call_count == 13
+        assert scanner.logger.debug.call_count == 13
+        assert scanner.devices[1001] == {"device_id": 1001, "address": "192.168.1.100"}
 
     @patch("oida.protocols.bacnet.cli_runner.asyncio.run")
     def test_handle_enumerate_objects_with_read_failure(self, mock_asyncio_run):

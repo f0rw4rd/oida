@@ -76,9 +76,12 @@ def make_modbus(args=None, conn=True):
 
 class TestExecuteFeatures:
     def test_no_conn_returns(self):
-        inst = make_modbus(conn=False)
-        # should not raise
-        inst._execute_features()
+        # Even with a flag requesting a handler, the lack of a connection
+        # must short-circuit dispatch entirely -- no handler should run.
+        inst = make_modbus(Args(identify=True), conn=False)
+        with patch.object(inst, "_handle_identify") as hi:
+            inst._execute_features()
+        hi.assert_not_called()
 
     def test_discover_mode_early_return(self):
         inst = make_modbus(Args(discover=True, identify=True))

@@ -551,46 +551,56 @@ class TestHTTP2ProtocolViolations:
         yield conn
         conn.close()
 
+    def assert_protocol_error_logged(self, h2_port, before: int) -> None:
+        """The server must have recorded a new protocol error since `before`."""
+        errors = get_server_errors(MOCK_HOST, h2_port)
+        assert isinstance(errors, list)
+        assert len(errors) > before, (
+            "server did not record a protocol error for the invalid frame: "
+            f"{before} -> {len(errors)}"
+        )
+
     def test_invalid_stream_id_for_ping(self, h2_conn, h2_port):
         """Test PING on non-zero stream (protocol violation)."""
+        before = len(get_server_errors(MOCK_HOST, h2_port))
         ping_data = b"\x00" * 8
         frame = create_frame(FRAME_PING, 0, 1, ping_data)  # Stream 1 is invalid for PING
         h2_conn.send_frame(frame)
 
         time.sleep(0.3)
 
-        # Check for protocol error
-        get_server_errors(MOCK_HOST, h2_port)
-        # Server should detect this as invalid
+        self.assert_protocol_error_logged(h2_port, before)
 
     def test_settings_on_nonzero_stream(self, h2_conn, h2_port):
         """Test SETTINGS on non-zero stream (protocol violation)."""
+        before = len(get_server_errors(MOCK_HOST, h2_port))
         frame = create_frame(FRAME_SETTINGS, 0, 1, b"")  # Stream 1 is invalid
         h2_conn.send_frame(frame)
 
         time.sleep(0.3)
 
-        # Check for protocol error
-        get_server_errors(MOCK_HOST, h2_port)
+        self.assert_protocol_error_logged(h2_port, before)
 
     def test_data_on_stream_zero(self, h2_conn, h2_port):
         """Test DATA on stream 0 (protocol violation)."""
+        before = len(get_server_errors(MOCK_HOST, h2_port))
         frame = create_frame(FRAME_DATA, FLAG_END_STREAM, 0, b"invalid")
         h2_conn.send_frame(frame)
 
         time.sleep(0.3)
 
-        get_server_errors(MOCK_HOST, h2_port)
+        self.assert_protocol_error_logged(h2_port, before)
 
     def test_window_update_zero_increment(self, h2_conn, h2_port):
         """Test WINDOW_UPDATE with zero increment (protocol violation)."""
+        before = len(get_server_errors(MOCK_HOST, h2_port))
         increment = struct.pack(">I", 0)  # Zero increment is invalid
         frame = create_frame(FRAME_WINDOW_UPDATE, 0, 0, increment)
         h2_conn.send_frame(frame)
 
         time.sleep(0.3)
 
-        get_server_errors(MOCK_HOST, h2_port)
+        self.assert_protocol_error_logged(h2_port, before)
 
 
 @pytest.mark.http2

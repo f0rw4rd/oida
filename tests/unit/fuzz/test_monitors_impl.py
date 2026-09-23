@@ -910,11 +910,18 @@ class TestCustomSSLSocketMonitorProbeRuns:
             mock_ctx.return_value.wrap_socket.return_value = secure_sock
 
             monitor = _make_ssl_monitor("192.168.1.1", 8443)
-            monitor.pre_send(target=Mock(), fuzz_data_logger=Mock())
-            monitor.post_send(target=Mock(), fuzz_data_logger=Mock())
+            assert monitor.last_check_time is None  # no probe has run yet
+            pre_result = monitor.pre_send(target=Mock(), fuzz_data_logger=Mock())
+            post_result = monitor.post_send(target=Mock(), fuzz_data_logger=Mock())
 
             # Old broken code: 0 connects. Fixed code: at least one real probe.
             assert secure_sock.connect.call_count >= 1
+            # The real health-tracking state on the monitor itself must reflect
+            # that a probe actually executed and succeeded.
+            assert pre_result is True
+            assert post_result is True
+            assert monitor.last_check_time is not None
+            assert monitor.consecutive_failures == 0
 
     def test_post_send_alone_probes(self):
         """A fresh monitor's post_send runs the probe (no pre_send timer reset)."""

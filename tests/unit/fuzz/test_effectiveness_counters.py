@@ -166,3 +166,7 @@ class TestSessionAttribution:
         mgr = TestCaseManager(f, read_only=True)
         mgr._effectiveness = {"NodeA": {"sent": 1}}
         mgr._flush_effectiveness()  # must not write
+        assert "effectiveness" not in mgr.database.get_all_metadata()
+        # The in-memory accumulator must also be left untouched (no attempt
+        # to drain it on a no-op flush).
+        assert mgr._effectiveness == {"NodeA": {"sent": 1}}

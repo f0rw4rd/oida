@@ -103,6 +103,7 @@ class TestProtocolCategories:
         for p in web_protocols:
             if p not in PROTOCOL_FUZZERS:
                 require_service(f"Web protocol '{p}' not available (missing optional dep?)")
+            assert p in PROTOCOL_FUZZERS, f"Missing web protocol: {p}"
 
     def test_ics_protocols(self):
         """Verify ICS protocols are present."""

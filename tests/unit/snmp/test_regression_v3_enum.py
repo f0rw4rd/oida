@@ -13,7 +13,7 @@ live agent.
 """
 
 import asyncio
-from unittest.mock import patch
+from unittest.mock import MagicMock, patch
 
 from .test_snmp_enhancements import FakeVarBind, scanner  # noqa: F401  (reuse fixture)
 
@@ -105,6 +105,7 @@ class TestV6EnumV3UserFileConfirmGate:
             snmp_auth_protocol="SHA",
         )
         s.enum_v3_target_user = enum_v3_target
+        s.logger = MagicMock(wraps=s.logger)
         called = {}
         monkeypatch.setattr(s, "check_dependencies", lambda: True)
         monkeypatch.setattr(s, "validate_target", lambda h, p: True)
@@ -125,11 +126,19 @@ class TestV6EnumV3UserFileConfirmGate:
         The outer gate must require --confirm (b28e20e closed only bare -E)."""
         userfile = tmp_path / "users.txt"
         userfile.write_text("admin\noperator\nbackup\n")
-        self._run_with(monkeypatch, str(userfile), expect_ran=False)
+        s = self._run_with(monkeypatch, str(userfile), expect_ran=False)
+        # Being gated means run_scan hit the confirm check and bailed via
+        # logger.fail(), never touching version/username state that a real
+        # v3 enumeration would populate.
+        fail_msgs = [str(c.args[0]) for c in s.logger.fail.call_args_list]
+        assert any("-E/--enum-v3 requires --confirm" in m for m in fail_msgs)
 
     def test_single_named_user_with_single_password_still_runs(self, monkeypatch):
         """The legitimate single-credential skip: -E admin -A admin123, no confirm."""
-        self._run_with(monkeypatch, "admin", expect_ran=True)
+        s = self._run_with(monkeypatch, "admin", expect_ran=True)
+        # The single-credential fast path must NOT hit the confirm gate.
+        fail_msgs = [str(c.args[0]) for c in s.logger.fail.call_args_list]
+        assert not any("-E/--enum-v3 requires --confirm" in m for m in fail_msgs)
 
     def test_enum_users_auto_forces_v3_and_runs(self, monkeypatch):
         s = _make_scanner(snmp_version="auto", enum_users=True, confirm_brute=True)

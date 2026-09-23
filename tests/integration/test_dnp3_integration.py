@@ -129,7 +129,16 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
         see scanner.py wait_for_open). Same treatment as the KNX tunnel
         tests; drop when the flake is root-caused.
         """
-        super().test_basic_discovery(cli_runner, target, port)
+        args = [self.protocol_name, target] + self._get_port_args(port)
+        result = cli_runner.run(*args, format="json", timeout=30)
+
+        self._assert_successful_discovery(result)
+        # Real behavior check: the outstation address the scanner discovered
+        # must match the mock's configured address, not just "some output".
+        text = json.dumps(result.json_output) if result.json_output else result.combined_output
+        assert str(BASIC_OUTSTATION_ADDR) in text, (
+            f"Expected discovered outstation address {BASIC_OUTSTATION_ADDR} in output: {text[:500]}"
+        )
 
     @property
     def protocol_name(self) -> str:

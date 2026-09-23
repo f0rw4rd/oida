@@ -267,7 +267,7 @@ class TestListenerQuality:
         ids=[c["id"] for c in LISTENER_PCAP_CASES],
     )
     def test_listener(self, case):
-        _run_listener_test(
+        listener, devices, harvest_result = _run_listener_test(
             case["module"],
             case["cls"],
             case["filter"],
@@ -279,6 +279,22 @@ class TestListenerQuality:
             check_harvest=True,
             decode_as=case.get("decode_as"),
         )
+        # Tie the assertion to this specific case's real output, not just
+        # "the helper didn't raise": the parsed device map and the
+        # harvest() table structure must both reflect actual capture data.
+        min_devices = case.get("min_devices", 1)
+        if min_devices > 0:
+            assert len(devices) >= min_devices, (
+                f"{case['id']}: expected >= {min_devices} devices from real "
+                f"capture, got {len(devices)}"
+            )
+        # harvest()'s documented contract (pyshark_base.PySharkListenerBase.harvest)
+        # is: {} when there is nothing to report, else a dict using only the
+        # "tables"/"alerts"/"results"/"log_messages" keys. Anything else means
+        # a listener is returning a malformed/undocumented harvest shape.
+        assert harvest_result == {} or any(
+            key in harvest_result for key in ("tables", "alerts", "results", "log_messages")
+        ), f"{case['id']}: harvest() returned an unexpected shape: {harvest_result!r}"
 
 
 # ---------------------------------------------------------------------------
@@ -300,4 +316,18 @@ class TestEndToEnd:
         ids=[c["id"] for c in LISTENER_PCAP_CASES],
     )
     def test_pipeline(self, case):
-        _run_e2e_test(case)
+        result = _run_e2e_test(case)
+        # Confirm the real PcapScanner pipeline actually read *this* case's
+        # pcap file and consumed real packets from it -- not just "returned
+        # without raising", and not some stale/cached/wrong-file result.
+        # (protocols_used can legitimately stay empty for device-less
+        # credential-sniffing protocols like pgsql/pap/rdp, so we don't
+        # assert on it here.)
+        assert result["statistics"]["pcap_file"].endswith(case["pcap"]), (
+            f"{case['id']}: pipeline reported pcap_file "
+            f"{result['statistics']['pcap_file']!r}, expected it to end with "
+            f"{case['pcap']!r}"
+        )
+        assert result["statistics"]["packets_processed"] > 0, (
+            f"{case['id']}: pipeline processed zero packets from {case['pcap']}"
+        )

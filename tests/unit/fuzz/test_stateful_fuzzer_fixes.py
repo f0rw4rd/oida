@@ -101,6 +101,10 @@ class TestBugAAuthFailureScope:
         invoke = _wire_pre_send(fuzzer)
 
         invoke("ANY")  # must not raise
+        # ANY requests do not enforce or mutate state; the fuzzer must remain
+        # in whatever state it was in before the call (CONNECTED, per
+        # _make_fuzzer), not get bumped to PRE_AUTH/AUTHENTICATED.
+        assert fuzzer._current_state == CommonState.CONNECTED.value
 
     def test_authenticated_request_still_aborts_after_auth_failure(self):
         fuzzer = _make_fuzzer(default_state=CommonState.AUTHENTICATED, auth_failed=True)

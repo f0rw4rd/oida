@@ -321,6 +321,9 @@ class TestSeedReproducibility:
                 crcs_a = {c.crc32 for c in db_a.get_test_cases()}
                 crcs_b = {c.crc32 for c in db_b.get_test_cases()}
 
+                assert crcs_a, "seed=42 run produced no test cases"
+                assert crcs_b, "seed=999 run produced no test cases"
+
                 # boofuzz primitives are deterministic by index; the seed
                 # only affects RNG-driven mutators (e.g. radamsa). If
                 # CRCs match, the protocol's mutations are RNG-free —
@@ -332,6 +335,12 @@ class TestSeedReproducibility:
                         "seed has no observable effect. Replay determinism "
                         "is upheld trivially for RNG-free fuzzers."
                     )
+
+                assert crcs_a != crcs_b, (
+                    "seed is expected to change mutation output for RNG-driven "
+                    f"mutators; both seed=42 and seed=999 produced the same "
+                    f"{len(crcs_a)} distinct payload CRCs"
+                )
 
 
 # --------------------------------------------------------------------------- #

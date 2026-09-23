@@ -147,7 +147,7 @@ class TestHARTMockBasic:
         sock.settimeout(5)
         try:
             sock.connect((self.HOST, self.TCP_PORT))
-            assert True
+            assert sock.getpeername()[0]
         finally:
             sock.close()
 

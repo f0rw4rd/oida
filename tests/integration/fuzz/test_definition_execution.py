@@ -72,6 +72,7 @@ class TestModbusDefinitionExecution:
                 fuzz_session,
                 enabled_requests=[request_name],
             )
+            fuzzer = None
             try:
                 fuzzer = fuzzer_class(config=config)
                 run_fuzz_with_timeout(fuzzer.fuzz_all, timeout_seconds=15)
@@ -81,6 +82,14 @@ class TestModbusDefinitionExecution:
                 pass  # Connection issues are acceptable
             except ImportError as e:
                 require_service(f"Missing dependency: {e}")
+
+            if fuzzer is None:
+                pytest.skip(f"Could not construct Modbus fuzzer for '{request_name}'")
+
+            assert fuzzer.session.total_mutant_index > 0, (
+                f"Modbus request definition '{request_name}' never sent a single "
+                "mutated test case to the mock server"
+            )
 
 
 # ============================================================================
@@ -113,6 +122,7 @@ class TestOPCUADefinitionExecution:
                 fuzz_session,
                 enabled_requests=[request_name],
             )
+            fuzzer = None
             try:
                 fuzzer = fuzzer_class(config=config)
                 run_fuzz_with_timeout(fuzzer.fuzz_all, timeout_seconds=15)
@@ -126,6 +136,14 @@ class TestOPCUADefinitionExecution:
                 if "No requests specified" in str(e):
                     pytest.skip(f"Request '{request_name}' not loadable: {e}")
                 raise
+
+            if fuzzer is None:
+                pytest.skip(f"Could not construct OPC UA fuzzer for '{request_name}'")
+
+            assert fuzzer.session.total_mutant_index > 0, (
+                f"OPC UA request definition '{request_name}' never sent a single "
+                "mutated test case to the mock server"
+            )
 
 
 # ============================================================================
@@ -158,6 +176,7 @@ class TestIEC104DefinitionExecution:
                 fuzz_session,
                 enabled_requests=[request_name],
             )
+            fuzzer = None
             try:
                 fuzzer = fuzzer_class(config=config)
                 run_fuzz_with_timeout(fuzzer.fuzz_all, timeout_seconds=15)
@@ -167,6 +186,14 @@ class TestIEC104DefinitionExecution:
                 pass
             except ImportError as e:
                 require_service(f"Missing dependency: {e}")
+
+            if fuzzer is None:
+                pytest.skip(f"Could not construct IEC 104 fuzzer for '{request_name}'")
+
+            assert fuzzer.session.total_mutant_index > 0, (
+                f"IEC 104 request definition '{request_name}' never sent a single "
+                "mutated test case to the mock server"
+            )
 
 
 # ============================================================================
@@ -204,6 +231,7 @@ class TestMMSDefinitionExecution:
                 # for the other request_names (their whitelist excludes auth).
                 protocol_options={"enable_auth": True},
             )
+            fuzzer = None
             try:
                 fuzzer = fuzzer_class(config=config)
                 run_fuzz_with_timeout(fuzzer.fuzz_all, timeout_seconds=15)
@@ -213,6 +241,14 @@ class TestMMSDefinitionExecution:
                 pass
             except ImportError as e:
                 require_service(f"Missing dependency: {e}")
+
+            if fuzzer is None:
+                pytest.skip(f"Could not construct MMS fuzzer for '{request_name}'")
+
+            assert fuzzer.session.total_mutant_index > 0, (
+                f"MMS request definition '{request_name}' never sent a single "
+                "mutated test case to the mock server"
+            )
 
 
 # ============================================================================
@@ -245,6 +281,7 @@ class TestMQTTDefinitionExecution:
                 fuzz_session,
                 enabled_requests=[request_name],
             )
+            fuzzer = None
             try:
                 fuzzer = fuzzer_class(config=config)
                 run_fuzz_with_timeout(fuzzer.fuzz_all, timeout_seconds=15)
@@ -254,6 +291,14 @@ class TestMQTTDefinitionExecution:
                 pass
             except ImportError as e:
                 require_service(f"Missing dependency: {e}")
+
+            if fuzzer is None:
+                pytest.skip(f"Could not construct MQTT fuzzer for '{request_name}'")
+
+            assert fuzzer.session.total_mutant_index > 0, (
+                f"MQTT request definition '{request_name}' never sent a single "
+                "mutated test case to the mock server"
+            )
 
 
 if __name__ == "__main__":

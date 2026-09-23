@@ -139,8 +139,20 @@ class TestReadDeviceIdentification:
             information={}, more_follows=False, next_object_id=0
         )
         s._read_device_identification(client)  # default = all
-        # three stream levels probed
+
+        # Real code must issue three distinct reads, one per MEI stream-access
+        # level (BASIC, REGULAR, EXTENDED), each starting at object_id 0x00
+        # for the scanner's own unit_id -- not just call three times.
         assert client.read_device_information.call_count == 3
+        read_codes = [c.kwargs["read_code"] for c in client.read_device_information.call_args_list]
+        assert read_codes == [
+            MEIReadDeviceIdCode.BASIC,
+            MEIReadDeviceIdCode.REGULAR,
+            MEIReadDeviceIdCode.EXTENDED,
+        ]
+        for call in client.read_device_information.call_args_list:
+            assert call.kwargs["object_id"] == 0x00
+            assert call.kwargs["device_id"] == s.unit_id
 
 
 # ---------------------------------------------------------------------------

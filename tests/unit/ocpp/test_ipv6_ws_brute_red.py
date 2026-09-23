@@ -39,4 +39,9 @@ def test_bare_ipv6_target_produces_parseable_probe_url():
     url = captured["url"]
     # The URL handed to websockets must actually parse, or every probe raises
     # InvalidURI and ws_brute silently reports zero endpoints.
-    parse_uri(url)
+    parsed = parse_uri(url)
+    # The bare IPv6 literal must be bracketed and preserved verbatim, and the
+    # charge-point path must have been appended correctly.
+    assert "[2001:db8::1]" in url
+    assert parsed.host == "2001:db8::1"
+    assert parsed.path == "/ocpp/CP1"

@@ -18,10 +18,16 @@ pytestmark = pytest.mark.core
 
 
 def test_dist_name_resolves_to_an_installed_distribution():
+    name = dist_name()
     try:
-        metadata(dist_name())
+        meta = metadata(name)
     except PackageNotFoundError:  # pragma: no cover - the bug this test pins
-        pytest.fail(f"dist_name() returned {dist_name()!r}, which is not installed")
+        pytest.fail(f"dist_name() returned {name!r}, which is not installed")
+    # The resolved name must be one of the known candidates, and the metadata
+    # record returned must actually describe this distribution (not some
+    # unrelated package that happened to resolve).
+    assert name in ("oida-ics", "oida")
+    assert meta["Name"].lower() == name.lower()
 
 
 def test_protocol_dependencies_is_populated_from_extras():

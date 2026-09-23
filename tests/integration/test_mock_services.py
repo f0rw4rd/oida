@@ -222,12 +222,46 @@ class TestHTTP2MockService:
         return MOCK_PORTS.get("http2_python_h2c", 9080)
 
     def test_http2_nghttp2_h2c_available(self, nghttp2_h2c_port, mock_service):
-        """Verify nghttp2 h2c service is running."""
+        """Verify nghttp2 h2c service is running and actually speaks HTTP/2."""
         require_port(MOCK_HOST, nghttp2_h2c_port, "nghttp2 h2c service", timeout=5)
 
+        # An open TCP port alone doesn't prove it's h2c. Send the RFC 7540 3.5
+        # client connection preface and require a real SETTINGS frame (type
+        # 0x04) back -- proof the mock is speaking HTTP/2, not just listening.
+        # RFC 7540 3.5: the preface MUST be immediately followed by a SETTINGS
+        # frame (may be empty) or a compliant server treats it as malformed.
+        preface = b"PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
+        empty_settings_frame = b"\x00\x00\x00\x04\x00\x00\x00\x00\x00"
+        with socket.create_connection((MOCK_HOST, nghttp2_h2c_port), timeout=5) as sock:
+            sock.sendall(preface + empty_settings_frame)
+            sock.settimeout(5)
+            header = sock.recv(9)
+        assert len(header) == 9, f"Expected a 9-byte HTTP/2 frame header, got {header!r}"
+        frame_type = header[3]
+        assert frame_type == 0x04, (
+            f"Expected a SETTINGS frame (type 0x04) after the HTTP/2 preface, "
+            f"got frame type {frame_type:#x}"
+        )
+
     def test_http2_python_h2c_available(self, python_h2c_port, mock_service):
-        """Verify Python HTTP/2 h2c service is running."""
+        """Verify Python h2c service is running and actually speaks HTTP/2."""
         require_port(MOCK_HOST, python_h2c_port, "Python h2c service", timeout=5)
+
+        # Same proof as the nghttp2 h2c check above: an open TCP port alone
+        # doesn't prove it's h2c. Send the RFC 7540 3.5 client connection
+        # preface and require a real SETTINGS frame (type 0x04) back.
+        preface = b"PRI * HTTP/2.0\r\n\r\nSM\r\n\r\n"
+        empty_settings_frame = b"\x00\x00\x00\x04\x00\x00\x00\x00\x00"
+        with socket.create_connection((MOCK_HOST, python_h2c_port), timeout=5) as sock:
+            sock.sendall(preface + empty_settings_frame)
+            sock.settimeout(5)
+            header = sock.recv(9)
+        assert len(header) == 9, f"Expected a 9-byte HTTP/2 frame header, got {header!r}"
+        frame_type = header[3]
+        assert frame_type == 0x04, (
+            f"Expected a SETTINGS frame (type 0x04) after the HTTP/2 preface, "
+            f"got frame type {frame_type:#x}"
+        )
 
     def test_http2_python_state_endpoint(self, python_h2c_port, mock_service):
         """Test /.well-known/h2/state endpoint returns valid JSON."""
@@ -700,6 +734,16 @@ class TestMockServicesIntegration:
 
         if len(services_available) < 2:
             require_service(f"Need at least 2 services running, only found: {services_available}")
+
+        assert len(services_available) >= 2, (
+            f"Expected at least 2 concurrently-running mock services, found: {services_available}"
+        )
+        # modbus is a core mock brought up by every lane profile; if it isn't
+        # among the detected services, the port-detection loop above is
+        # broken (false-negative), not just "modbus happens to be down".
+        assert "modbus" in services_available, (
+            f"Expected the core 'modbus' mock among detected services: {services_available}"
+        )
 
     def test_services_respond_independently(self, cli_runner):
         """Test that services respond independently without interference."""

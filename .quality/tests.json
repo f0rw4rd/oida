@@ -8,20 +8,6 @@
       ]
     },
     {
-      "where": "tests/integration/test_hart_mock.py:140",
-      "name": "test_tcp_connect",
-      "lines": [
-        146
-      ]
-    },
-    {
-      "where": "tests/unit/dnp3/test_scanner_internals.py:59",
-      "name": "test_type_map_is_cached",
-      "lines": [
-        60
-      ]
-    },
-    {
       "where": "tests/unit/discovery/test_cameras.py:84",
       "name": "test_probe_uuid_is_fresh_each_call",
       "lines": [
@@ -80,42 +66,6 @@
   ],
   "no-assert": [
     {
-      "where": "tests/integration/test_coap_integration.py:1737",
-      "name": "test_libcoap_service_available"
-    },
-    {
-      "where": "tests/integration/test_coap_integration.py:1942",
-      "name": "test_dtls_port_responds"
-    },
-    {
-      "where": "tests/integration/test_http2_frames.py:555",
-      "name": "test_invalid_stream_id_for_ping"
-    },
-    {
-      "where": "tests/integration/test_http2_frames.py:567",
-      "name": "test_settings_on_nonzero_stream"
-    },
-    {
-      "where": "tests/integration/test_http2_frames.py:577",
-      "name": "test_data_on_stream_zero"
-    },
-    {
-      "where": "tests/integration/test_http2_frames.py:586",
-      "name": "test_window_update_zero_increment"
-    },
-    {
-      "where": "tests/integration/test_mock_services.py:223",
-      "name": "test_http2_nghttp2_h2c_available"
-    },
-    {
-      "where": "tests/integration/test_mock_services.py:228",
-      "name": "test_http2_python_h2c_available"
-    },
-    {
-      "where": "tests/integration/test_mock_services.py:690",
-      "name": "test_multiple_services_available"
-    },
-    {
       "where": "tests/integration/pcap/test_rtsp_passive.py:45",
       "name": "test_rtsp_options_detected"
     },
@@ -134,14 +84,6 @@
     {
       "where": "tests/integration/pcap/test_rtsp_passive.py:85",
       "name": "test_rtsp_teardown_detected"
-    },
-    {
-      "where": "tests/integration/pcap/test_passive_coverage_meta.py:263",
-      "name": "test_listener"
-    },
-    {
-      "where": "tests/integration/pcap/test_passive_coverage_meta.py:296",
-      "name": "test_pipeline"
     },
     {
       "where": "tests/integration/pcap/test_s7comm_passive.py:270",
@@ -208,14 +150,6 @@
       "name": "test_sip_ruri_user"
     },
     {
-      "where": "tests/integration/pcap/test_dtp_passive.py:20",
-      "name": "test_dtp_basic_smoke"
-    },
-    {
-      "where": "tests/integration/pcap/test_dtp_passive.py:115",
-      "name": "test_dtp_operation_contains_trunk"
-    },
-    {
       "where": "tests/integration/pcap/test_enip_passive.py:90",
       "name": "test_getlist_attr_status_extracted"
     },
@@ -244,68 +178,12 @@
       "name": "test_mqtt_generated"
     },
     {
-      "where": "tests/integration/fuzz/test_definition_execution.py:54",
-      "name": "test_definition_executes"
-    },
-    {
-      "where": "tests/integration/fuzz/test_definition_execution.py:95",
-      "name": "test_definition_executes"
-    },
-    {
-      "where": "tests/integration/fuzz/test_definition_execution.py:140",
-      "name": "test_definition_executes"
-    },
-    {
-      "where": "tests/integration/fuzz/test_definition_execution.py:181",
-      "name": "test_definition_executes"
-    },
-    {
-      "where": "tests/integration/fuzz/test_definition_execution.py:227",
-      "name": "test_definition_executes"
-    },
-    {
-      "where": "tests/integration/fuzz/test_docker_modbus.py:78",
-      "name": "test_definition_executes"
-    },
-    {
-      "where": "tests/integration/fuzz/test_docker_modbus.py:158",
-      "name": "test_connection_reuse_disabled"
-    },
-    {
-      "where": "tests/integration/fuzz/test_crash_detection_real.py:106",
-      "name": "test_monitor_detects_crash"
-    },
-    {
-      "where": "tests/integration/fuzz/test_crash_detection_real.py:156",
-      "name": "test_monitor_detects_crash"
-    },
-    {
-      "where": "tests/integration/fuzz/test_crash_detection_real.py:202",
-      "name": "test_monitor_detects_crash"
-    },
-    {
-      "where": "tests/integration/fuzz/test_mms_fuzzer_integration.py:513",
-      "name": "test_fuzzer_handles_server_disconnect"
-    },
-    {
-      "where": "tests/integration/fuzz/test_mms_fuzzer_integration.py:533",
-      "name": "test_fuzzer_handles_timeout"
-    },
-    {
-      "where": "tests/integration/fuzz/test_cli_deep.py:292",
-      "name": "test_different_seeds_produce_different_payloads"
-    },
-    {
       "where": "tests/contracts/test_listener_field_tokens.py:193",
       "name": "test_no_unbaselined_invalid_tokens"
     },
     {
       "where": "tests/contracts/test_credential_log_leak.py:141",
       "name": "test_credential_log_leak_snapshot_drift"
-    },
-    {
-      "where": "tests/contracts/test_confirm_gate.py:174",
-      "name": "test_confirm_gate_snapshot_drift"
     },
     {
       "where": "tests/contracts/test_uv_lockfile_drift.py:31",
@@ -322,22 +200,6 @@
     {
       "where": "tests/unit/test_compose_ports.py:120",
       "name": "test_mock_ports_values_unique"
-    },
-    {
-      "where": "tests/unit/test_cli_args.py:236",
-      "name": "test_main_output_present"
-    },
-    {
-      "where": "tests/unit/test_cli_args.py:244",
-      "name": "test_main_format_present"
-    },
-    {
-      "where": "tests/unit/test_import_resolution.py:253",
-      "name": "test_function_level_import_symbol_resolves"
-    },
-    {
-      "where": "tests/unit/can/test_nxc_connection.py:948",
-      "name": "test_cleanup_no_conn"
     },
     {
       "where": "tests/unit/can/test_scanner.py:1939",
@@ -374,18 +236,6 @@
     {
       "where": "tests/unit/bacnet/test_security_mixin.py:115",
       "name": "test_check_oos_no_objects"
-    },
-    {
-      "where": "tests/unit/bacnet/test_scanner.py:1057",
-      "name": "test_disconnect_with_no_connection"
-    },
-    {
-      "where": "tests/unit/bacnet/test_scanner.py:1092",
-      "name": "test_handle_identify_with_property_read_failure"
-    },
-    {
-      "where": "tests/unit/dnp3/test_scanner_internals.py:132",
-      "name": "test_begin_end_fragment_are_noops"
     },
     {
       "where": "tests/unit/dnp3/test_scanner.py:620",
@@ -444,36 +294,12 @@
       "name": "test_write_file_with_data_passes"
     },
     {
-      "where": "tests/unit/ocpp/test_security_probes.py:818",
-      "name": "test_tls_certificate_probe_swallows_errors"
-    },
-    {
       "where": "tests/unit/ocpp/test_ws_brute.py:138",
       "name": "test_builtin_wordlist_exists"
     },
     {
-      "where": "tests/unit/ethercat/test_scanner.py:1641",
-      "name": "test_disconnect_handles_none"
-    },
-    {
-      "where": "tests/unit/mqtt/test_connection_mixin.py:816",
-      "name": "test_socket_access_exception_falls_back"
-    },
-    {
-      "where": "tests/unit/mqtt/test_connection_mixin.py:828",
-      "name": "test_no_socket_falls_back_to_standalone_probe"
-    },
-    {
-      "where": "tests/unit/mqtt/test_scanner.py:1519",
-      "name": "test_disconnect_none_connection"
-    },
-    {
       "where": "tests/unit/fhir/test_search_mixin.py:113",
       "name": "test_no_save_response_skips"
-    },
-    {
-      "where": "tests/unit/fhir/test_nxc_connection.py:538",
-      "name": "test_no_output_dir_skips_export"
     },
     {
       "where": "tests/unit/snap7/test_security.py:173",
@@ -528,62 +354,6 @@
       "name": "test_disconnect_none_is_noop"
     },
     {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:364",
-      "name": "test_atomic_read_only"
-    },
-    {
-      "where": "tests/unit/modbus/test_nxc_map_read.py:151",
-      "name": "test_enum_label_rendered"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:588",
-      "name": "test_address_max"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner.py:1127",
-      "name": "test_disconnect_none_connection"
-    },
-    {
-      "where": "tests/unit/modbus/test_nxc_flow.py:83",
-      "name": "test_no_conn_returns"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_connections.py:199",
-      "name": "test_disconnect_with_none"
-    },
-    {
-      "where": "tests/unit/opcua/test_scanner.py:1163",
-      "name": "test_disconnect_method"
-    },
-    {
-      "where": "tests/unit/opcua/test_scanner.py:1174",
-      "name": "test_disconnect_none_client"
-    },
-    {
-      "where": "tests/unit/opcua/test_scanner.py:1509",
-      "name": "test_disconnect_after_browse_error"
-    },
-    {
-      "where": "tests/unit/opcua/test_scanner.py:1516",
-      "name": "test_multiple_disconnect_calls_safe"
-    },
-    {
-      "where": "tests/unit/goose/test_scanner.py:495",
-      "name": "test_disconnect_none_connection"
-    },
-    {
-      "where": "tests/unit/goose/test_scanner.py:513",
-      "name": "test_disconnect_goose_receiver_no_subscriber"
-    },
-    {
-      "where": "tests/unit/goose/test_scanner.py:545",
-      "name": "test_disconnect_mms_no_client"
-    },
-    {
-      "where": "tests/unit/goose/test_scanner.py:563",
-      "name": "test_disconnect_unknown_type"
-    },
-    {
       "where": "tests/unit/ethernetip/test_attacks.py:94",
       "name": "test_patterns_are_valid_regex"
     },
@@ -598,10 +368,6 @@
     {
       "where": "tests/unit/iec104/test_transport.py:165",
       "name": "test_report_findings_101_runs"
-    },
-    {
-      "where": "tests/unit/iec104/test_nxc_connection.py:367",
-      "name": "test_cleanup_without_scanner"
     },
     {
       "where": "tests/unit/iec104/test_scanner.py:1142",
@@ -644,96 +410,12 @@
       "name": "test_query_identity_handles_socket_error"
     },
     {
-      "where": "tests/unit/astm/test_astm_scanner.py:257",
-      "name": "test_disconnect_no_conn"
-    },
-    {
-      "where": "tests/unit/astm/test_astm_scanner.py:519",
-      "name": "test_receive_eot"
-    },
-    {
-      "where": "tests/unit/astm/test_astm_scanner.py:542",
-      "name": "test_receive_timeout"
-    },
-    {
-      "where": "tests/unit/astm/test_astm_scanner.py:551",
-      "name": "test_receive_empty_data"
-    },
-    {
-      "where": "tests/unit/astm/test_astm_scanner.py:920",
-      "name": "test_export_no_output"
-    },
-    {
-      "where": "tests/unit/astm/test_astm_scanner.py:956",
-      "name": "test_proto_flow_basic"
-    },
-    {
-      "where": "tests/unit/astm/test_astm_scanner.py:969",
-      "name": "test_proto_flow_connection_fails"
-    },
-    {
-      "where": "tests/unit/astm/test_astm_scanner.py:991",
-      "name": "test_proto_flow_send_query"
-    },
-    {
-      "where": "tests/unit/astm/test_astm_scanner.py:1059",
-      "name": "test_print_connected"
-    },
-    {
-      "where": "tests/unit/astm/test_astm_scanner.py:1066",
-      "name": "test_print_with_analyzer"
-    },
-    {
-      "where": "tests/unit/astm/test_astm_scanner.py:1079",
-      "name": "test_print_tls_enabled"
-    },
-    {
-      "where": "tests/unit/astm/test_astm_scanner.py:1086",
-      "name": "test_print_no_connection"
-    },
-    {
       "where": "tests/unit/pcap/test_category_filters.py:28",
       "name": "test_network_category_on_snmp"
     },
     {
       "where": "tests/unit/pcap/test_scanner.py:398",
       "name": "test_write_asset_files_noop_without_output_dir"
-    },
-    {
-      "where": "tests/unit/fuzz/test_fuzzer_benchmark.py:469",
-      "name": "test_benchmark_summary_report"
-    },
-    {
-      "where": "tests/unit/fuzz/test_protocol_initialization.py:98",
-      "name": "test_web_protocols"
-    },
-    {
-      "where": "tests/unit/fuzz/test_state_coverage.py:141",
-      "name": "test_expected_states_referenced"
-    },
-    {
-      "where": "tests/unit/fuzz/test_transformers.py:1221",
-      "name": "test_creation_without_brotli_raises"
-    },
-    {
-      "where": "tests/unit/fuzz/test_transformers.py:1378",
-      "name": "test_empty_data_handling"
-    },
-    {
-      "where": "tests/unit/fuzz/test_fuzzer_coverage.py:274",
-      "name": "test_network_protocol_registered"
-    },
-    {
-      "where": "tests/unit/fuzz/test_fuzzer_coverage.py:358",
-      "name": "test_ics_protocol_registered"
-    },
-    {
-      "where": "tests/unit/fuzz/test_state_machine_reachability.py:254",
-      "name": "test_requires_state_references_valid_states"
-    },
-    {
-      "where": "tests/unit/fuzz/test_state_machine_reachability.py:935",
-      "name": "test_orphan_states_reported"
     },
     {
       "where": "tests/unit/fuzz/test_mms_fuzzer.py:555",
@@ -760,22 +442,6 @@
       "name": "test_mock_database_init_schema"
     },
     {
-      "where": "tests/unit/fuzz/test_protocol_define.py:49",
-      "name": "test_define_protocol_completes"
-    },
-    {
-      "where": "tests/unit/fuzz/test_mms_fuzzer_integration.py:581",
-      "name": "test_fuzzer_handles_server_disconnect"
-    },
-    {
-      "where": "tests/unit/fuzz/test_mms_fuzzer_integration.py:601",
-      "name": "test_fuzzer_handles_timeout"
-    },
-    {
-      "where": "tests/unit/fuzz/test_tshark_validation.py:804",
-      "name": "test_tshark_validation_summary"
-    },
-    {
       "where": "tests/unit/fuzz/test_crypto_state.py:235",
       "name": "test_fuzz_unknown_nonce_no_error"
     },
@@ -786,10 +452,6 @@
     {
       "where": "tests/coverage/fidelity/test_conpot_diff.py:72",
       "name": "test_conpot_vs_python_mock"
-    },
-    {
-      "where": "tests/coverage/fuzz/test_cve_replication.py:90",
-      "name": "test_fuzzer_triggers_cve"
     }
   ],
   "mock-only": [
@@ -914,402 +576,6 @@
       "name": "test_progress_logging"
     },
     {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:100",
-      "name": "test_echo_test_success"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:129",
-      "name": "test_echo_test_not_supported"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:151",
-      "name": "test_restart_comm_success"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:163",
-      "name": "test_restart_comm_toggle_mode"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:185",
-      "name": "test_read_diagnostic_register"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:229",
-      "name": "test_read_bus_message_count"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:243",
-      "name": "test_read_bus_comm_error_count"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:257",
-      "name": "test_read_bus_exception_error_count"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:271",
-      "name": "test_read_server_message_count"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:285",
-      "name": "test_read_server_no_response_count"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:299",
-      "name": "test_read_server_nak_count"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:313",
-      "name": "test_read_server_busy_count"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:327",
-      "name": "test_read_bus_character_overrun_count"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:350",
-      "name": "test_clear_counters"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:362",
-      "name": "test_clear_overrun_counter"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:383",
-      "name": "test_get_event_counter_success"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:393",
-      "name": "test_get_event_counter_busy"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:407",
-      "name": "test_get_event_counter_not_supported"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_diagnostics.py:456",
-      "name": "test_get_event_log_not_supported"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:144",
-      "name": "test_read_file_record_not_supported"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:157",
-      "name": "test_read_file_record_invalid_file"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:180",
-      "name": "test_write_file_record_success"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:192",
-      "name": "test_write_file_record_multiple"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:206",
-      "name": "test_write_file_record_not_supported"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:222",
-      "name": "test_write_file_record_read_only"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:247",
-      "name": "test_mask_write_success"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:263",
-      "name": "test_mask_write_set_bits"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:283",
-      "name": "test_mask_write_clear_bits"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:303",
-      "name": "test_mask_write_not_supported"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:321",
-      "name": "test_mask_write_invalid_address"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:379",
-      "name": "test_atomic_read_write_not_supported"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:398",
-      "name": "test_atomic_read_write_max_count"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:468",
-      "name": "test_read_fifo_queue_not_supported"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_advanced_fc.py:481",
-      "name": "test_read_fifo_queue_invalid_address"
-    },
-    {
-      "where": "tests/unit/modbus/test_nxc_map_read.py:412",
-      "name": "test_invalid_address_skipped"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:113",
-      "name": "test_write_coil_on"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:122",
-      "name": "test_write_coil_off"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:135",
-      "name": "test_write_coil_error"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:163",
-      "name": "test_write_register_value"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:172",
-      "name": "test_write_register_zero"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:184",
-      "name": "test_write_register_max_value"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:196",
-      "name": "test_write_register_error"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:225",
-      "name": "test_write_multiple_coils"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:236",
-      "name": "test_write_coils_all_on"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:245",
-      "name": "test_write_coils_all_off"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:254",
-      "name": "test_write_coils_error"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:265",
-      "name": "test_write_coils_max_count"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:287",
-      "name": "test_write_multiple_registers"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:298",
-      "name": "test_write_registers_zeros"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:307",
-      "name": "test_write_registers_max_values"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:316",
-      "name": "test_write_registers_error"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:328",
-      "name": "test_write_registers_max_count"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:350",
-      "name": "test_safe_write_same_value"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:410",
-      "name": "test_write_and_restore"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:437",
-      "name": "test_restore_failure_handling"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:479",
-      "name": "test_write_and_verify"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:608",
-      "name": "test_illegal_function_on_write"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:620",
-      "name": "test_illegal_data_address_on_write"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:632",
-      "name": "test_illegal_data_value_on_write"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_writes.py:644",
-      "name": "test_server_device_busy_on_write"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:103",
-      "name": "test_mei_basic_read"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:143",
-      "name": "test_mei_extended_read"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:168",
-      "name": "test_mei_specific_object_read"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:190",
-      "name": "test_mei_not_supported"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:292",
-      "name": "test_parse_null_terminated_string"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:311",
-      "name": "test_mei_pagination_more_follows"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:367",
-      "name": "test_read_server_id_success"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:383",
-      "name": "test_read_server_id_not_supported"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:396",
-      "name": "test_parse_server_id_response"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:413",
-      "name": "test_server_id_status_stopped"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:436",
-      "name": "test_discover_single_unit"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:533",
-      "name": "test_gateway_path_unavailable"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:547",
-      "name": "test_gateway_target_failed"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:606",
-      "name": "test_read_exception_status"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification.py:620",
-      "name": "test_exception_status_not_supported"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:131",
-      "name": "test_read_coils_error_response"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:180",
-      "name": "test_read_discrete_inputs_error"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:220",
-      "name": "test_read_holding_registers_error"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:275",
-      "name": "test_read_input_registers_error"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:379",
-      "name": "test_illegal_function_exception"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:392",
-      "name": "test_illegal_data_address_exception"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:405",
-      "name": "test_illegal_data_value_exception"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:418",
-      "name": "test_server_device_failure_exception"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:450",
-      "name": "test_gateway_target_device_failed_exception"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:582",
-      "name": "test_address_zero"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:596",
-      "name": "test_count_one"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_registers.py:638",
-      "name": "test_read_timeout"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_identification_mixin.py:140",
-      "name": "test_all_mode_reads_three_codes"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_batched_reads.py:319",
-      "name": "test_coils_higher_batch_limit"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_connections.py:344",
-      "name": "test_serial_connect_with_baudrate"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_connections.py:374",
-      "name": "test_serial_connect_with_parity"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_connections.py:403",
-      "name": "test_serial_ascii_framing"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_connections.py:529",
-      "name": "test_rtu_over_tcp_connect"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_connections.py:565",
-      "name": "test_rtu_over_tcp_legacy_framer"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_connections.py:605",
-      "name": "test_ascii_over_tcp_connect"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_connections.py:681",
-      "name": "test_rtscts_flow_control"
-    },
-    {
-      "where": "tests/unit/modbus/test_scanner_connections.py:714",
-      "name": "test_dsrdtr_flow_control"
-    },
-    {
-      "where": "tests/unit/modbus/test_register_io.py:184",
-      "name": "test_custom_max_batch"
-    },
-    {
-      "where": "tests/unit/modbus/test_register_io.py:263",
-      "name": "test_coil_default_batch_2000"
-    },
-    {
       "where": "tests/unit/common/test_timeouts.py:456",
       "name": "test_retry_after_timeout"
     },
@@ -1374,20 +640,12 @@
       "name": "test_socket_options_set"
     },
     {
-      "where": "tests/unit/astm/test_astm_scanner.py:406",
-      "name": "test_frame_number_wraps"
-    },
-    {
       "where": "tests/unit/fuzz/test_modbus_rtu_fuzzer.py:173",
       "name": "test_crc16_different_slaves"
     },
     {
       "where": "tests/unit/fuzz/test_modbus_rtu_fuzzer.py:181",
       "name": "test_crc16_deterministic"
-    },
-    {
-      "where": "tests/unit/fuzz/test_monitors_impl.py:878",
-      "name": "test_probe_actually_runs_across_pre_post_cycle"
     },
     {
       "where": "tests/unit/fuzz/test_dnp3_fuzzer.py:182",

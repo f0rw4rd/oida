@@ -60,8 +60,14 @@ def test_rendering_a_real_mutation_context_does_not_raise(label, factory):
     request = Request("r", children=(primitive,))
 
     # Must not raise AttributeError on mutation_index.
+    rendered_any = False
     for mutation in request.get_mutations():
-        request.render(MutationContext(mutations=mutation))
+        rendered = request.render(MutationContext(mutations=mutation))
+        assert isinstance(rendered, (bytes, bytearray)) and len(rendered) > 0, (
+            f"{label}: render() must produce non-empty encoded bytes, got {rendered!r}"
+        )
+        rendered_any = True
+    assert rendered_any, f"{label}: expected at least one mutation to be rendered"
 
 
 @pytest.mark.parametrize("label,factory", _primitives(), ids=[n for n, _ in _primitives()])

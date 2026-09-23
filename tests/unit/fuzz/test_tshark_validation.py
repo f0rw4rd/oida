@@ -884,3 +884,21 @@ def test_tshark_validation_summary(tmp_path, capsys):
             f"{skip_count} skipped out of {len(rows)} protocols"
         )
         print("=" * 78)
+
+    # The summary is only meaningful if it actually validated protocols and
+    # none of them came back genuinely FAIL (dissector found but malformed,
+    # or no dissector matched at all despite being expected to).
+    assert rows, "expected at least one protocol row in the tshark summary"
+    by_name = {row[0]: row for row in rows}
+    assert "modbus" in by_name, "modbus must be part of the tshark validation summary"
+    assert by_name["modbus"][1] == "PASS", (
+        f"modbus baseline payload must dissect cleanly via tshark, got status "
+        f"{by_name['modbus'][1]!r}"
+    )
+    assert fail_count == 0, f"{fail_count} protocol(s) genuinely FAILed tshark validation: " + (
+        ", ".join(
+            row[0]
+            for row in rows
+            if row[1] not in ("PASS", "SKIPPED", "NO_FUZZER", "NO_CANDIDATES", "NO_DISSECTOR")
+        )
+    )

@@ -3,8 +3,11 @@
 """
 Unit tests for Modbus scanner write operations.
 
-Tests write single coil (FC 5), write single register (FC 6),
-write multiple coils (FC 15), and write multiple registers (FC 16).
+Drives the real ScannerWriteOpsMixin methods (_write_register_safe,
+_write_multiple_registers, _write_multiple_coils) against a mocked pymodbus
+client and asserts on their returned result dicts, so the scanner logic itself
+(read -> write -> restore ordering, error paths, restore-failure warnings) is
+what's under test.
 """
 
 import pytest
@@ -21,51 +24,33 @@ require_import("pymodbus", reason="pymodbus library not installed")
 # =============================================================================
 
 
+def _ok_response(**attrs):
+    """A pymodbus response object that reports success."""
+    resp = MagicMock()
+    resp.isError.return_value = False
+    for k, v in attrs.items():
+        setattr(resp, k, v)
+    return resp
+
+
+def _err_response(exception_code):
+    """A pymodbus response object reporting an exception."""
+    resp = MagicMock()
+    resp.isError.return_value = True
+    resp.exception_code = exception_code
+    return resp
+
+
 @pytest.fixture
 def mock_client():
-    """Create a mock Modbus client with write responses."""
+    """Mock pymodbus client with successful read/write responses by default."""
     client = MagicMock()
-
-    # Mock write_coil response (FC 5)
-    write_coil_response = MagicMock()
-    write_coil_response.isError.return_value = False
-    write_coil_response.address = 0
-    write_coil_response.value = True
-    client.write_coil.return_value = write_coil_response
-
-    # Mock write_register response (FC 6)
-    write_reg_response = MagicMock()
-    write_reg_response.isError.return_value = False
-    write_reg_response.address = 0
-    write_reg_response.value = 1234
-    client.write_register.return_value = write_reg_response
-
-    # Mock write_coils response (FC 15)
-    write_coils_response = MagicMock()
-    write_coils_response.isError.return_value = False
-    write_coils_response.address = 0
-    write_coils_response.count = 5
-    client.write_coils.return_value = write_coils_response
-
-    # Mock write_registers response (FC 16)
-    write_regs_response = MagicMock()
-    write_regs_response.isError.return_value = False
-    write_regs_response.address = 0
-    write_regs_response.count = 5
-    client.write_registers.return_value = write_regs_response
-
-    # Mock read_holding_registers for read-back verification
-    read_response = MagicMock()
-    read_response.isError.return_value = False
-    read_response.registers = [1234]
-    client.read_holding_registers.return_value = read_response
-
-    # Mock read_coils for read-back verification
-    read_coils_response = MagicMock()
-    read_coils_response.isError.return_value = False
-    read_coils_response.bits = [True]
-    client.read_coils.return_value = read_coils_response
-
+    client.write_coil.return_value = _ok_response(value=True)
+    client.write_register.return_value = _ok_response(value=1234)
+    client.write_coils.return_value = _ok_response(count=5)
+    client.write_registers.return_value = _ok_response(count=5)
+    client.read_holding_registers.return_value = _ok_response(registers=[1234])
+    client.read_coils.return_value = _ok_response(bits=[True] * 5)
     return client
 
 
@@ -81,438 +66,201 @@ def scanner_args():
     }
 
 
-def create_mock_scanner(args):
-    """Create a mock ModbusScanner instance."""
+@pytest.fixture
+def scanner(scanner_args):
+    """A real ModbusScanner instance with __init__ bypassed (no I/O)."""
     from oida.protocols.modbus.scanner import ModbusScanner
 
     with patch.object(ModbusScanner, "__init__", lambda self, *a, **kw: None):
         scanner = ModbusScanner.__new__(ModbusScanner)
-        scanner.args = args
-        scanner.host = args.get("rhost", "127.0.0.1")
-        scanner.port = args.get("rport", 502)
-        scanner.timeout = args.get("timeout", 5)
-        scanner.unit_id = args.get("unit-id", 1)
+        scanner.args = scanner_args
+        scanner.host = scanner_args.get("rhost", "127.0.0.1")
+        scanner.port = scanner_args.get("rport", 502)
+        scanner.timeout = scanner_args.get("timeout", 5)
+        scanner.unit_id = scanner_args.get("unit-id", 1)
         scanner.logger = MagicMock()
         scanner.security = MagicMock()
         return scanner
 
 
 # =============================================================================
-# Test Write Single Coil (FC 5)
+# Test Safe Write (read -> write -> restore) — FC 6 path via mixin
 # =============================================================================
 
 
-class TestWriteSingleCoil:
-    """Tests for write single coil (FC 5)."""
+class TestSafeWriteHolding:
+    """_write_register_safe holding-register path."""
 
-    def test_write_coil_on(self, mock_client, scanner_args):
-        """Test writing coil to ON state."""
-        create_mock_scanner(scanner_args)
+    def test_safe_write_reads_then_writes_then_restores(self, scanner, mock_client):
+        """A safe write reads the original, writes the value, restores it."""
+        result = scanner._write_register_safe(mock_client, 10, 999)
 
-        result = mock_client.write_coil(0, True, device_id=1)
+        assert result["success"] is True
+        assert result["original_value"] == 1234
+        assert result["restored"] is True
+        # Ordering: read original, write test value, write original back.
+        calls = [
+            c
+            for c in mock_client.method_calls
+            if c[0] in ("read_holding_registers", "write_register")
+        ]
+        assert [c[0] for c in calls] == [
+            "read_holding_registers",
+            "write_register",
+            "write_register",
+        ]
+        # The restore write puts the original value back at the same address.
+        assert calls[2].args == (10, 1234)
 
-        assert not result.isError()
-        mock_client.write_coil.assert_called_with(0, True, device_id=1)
+    def test_safe_write_no_restore_when_disabled(self, scanner, mock_client):
+        """restore_on_exit=False skips the restore write entirely."""
+        result = scanner._write_register_safe(mock_client, 10, 999, restore_on_exit=False)
 
-    def test_write_coil_off(self, mock_client, scanner_args):
-        """Test writing coil to OFF state."""
-        write_response = MagicMock()
-        write_response.isError.return_value = False
-        write_response.value = False
-        mock_client.write_coil.return_value = write_response
+        assert result["success"] is True
+        assert result["restored"] is False
+        assert mock_client.write_register.call_count == 1
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_coil(0, False, device_id=1)
+    def test_safe_write_reports_failed_restore(self, scanner, mock_client):
+        """A failing restore write is surfaced in the result and logged."""
+        mock_client.write_register.side_effect = [
+            _ok_response(),
+            _err_response(4),  # restore fails
+        ]
 
-        assert not result.isError()
-        mock_client.write_coil.assert_called_with(0, False, device_id=1)
+        result = scanner._write_register_safe(mock_client, 10, 999)
 
-    def test_write_coil_error(self, mock_client, scanner_args):
-        """Test handling write coil error."""
-        error_response = MagicMock()
-        error_response.isError.return_value = True
-        error_response.exception_code = 2  # Illegal data address
-        mock_client.write_coil.return_value = error_response
+        assert result["success"] is True  # the test write itself worked
+        assert result["restored"] is False
+        assert "error" in result
+        assert scanner.logger.warning.called
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_coil(65535, True, device_id=1)
+    def test_safe_write_write_error_marks_failure(self, scanner, mock_client):
+        """An erroring write (FC 6) reports success=False but keeps original."""
+        mock_client.write_register.return_value = _err_response(3)  # Illegal data value
 
-        assert result.isError()
+        result = scanner._write_register_safe(mock_client, 0, 100000)
 
-    def test_write_coil_at_address(self, mock_client, scanner_args):
-        """Test writing coil at specific address."""
-        create_mock_scanner(scanner_args)
+        assert result["success"] is False
+        assert result["original_value"] == 1234  # read still happened
 
-        mock_client.write_coil(100, True, device_id=1)
-        mock_client.write_coil.assert_called_with(100, True, device_id=1)
+    def test_safe_write_coil_path(self, scanner, mock_client):
+        """register_type='coil' uses the FC 5/1 wire methods."""
+        mock_client.read_coils.return_value = _ok_response(bits=[True])
 
+        result = scanner._write_register_safe(mock_client, 5, 1, register_type="coil")
 
-# =============================================================================
-# Test Write Single Register (FC 6)
-# =============================================================================
+        assert result["success"] is True
+        assert result["original_value"] is True
+        assert result["restored"] is True
+        mock_client.write_coil.assert_any_call(5, True, device_id=1)
 
+    def test_safe_write_exception_returns_error_dict(self, scanner, mock_client):
+        """A transport exception is caught and reported, not raised."""
+        mock_client.read_holding_registers.side_effect = OSError("refused")
 
-class TestWriteSingleRegister:
-    """Tests for write single register (FC 6)."""
+        result = scanner._write_register_safe(mock_client, 10, 999)
 
-    def test_write_register_value(self, mock_client, scanner_args):
-        """Test writing a value to a register."""
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.write_register(0, 1234, device_id=1)
-
-        assert not result.isError()
-        mock_client.write_register.assert_called_with(0, 1234, device_id=1)
-
-    def test_write_register_zero(self, mock_client, scanner_args):
-        """Test writing zero to a register."""
-        write_response = MagicMock()
-        write_response.isError.return_value = False
-        write_response.value = 0
-        mock_client.write_register.return_value = write_response
-
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 0, device_id=1)
-
-        assert not result.isError()
-
-    def test_write_register_max_value(self, mock_client, scanner_args):
-        """Test writing maximum 16-bit value."""
-        write_response = MagicMock()
-        write_response.isError.return_value = False
-        write_response.value = 65535
-        mock_client.write_register.return_value = write_response
-
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 65535, device_id=1)
-
-        assert not result.isError()
-
-    def test_write_register_error(self, mock_client, scanner_args):
-        """Test handling write register error."""
-        error_response = MagicMock()
-        error_response.isError.return_value = True
-        error_response.exception_code = 3  # Illegal data value
-        mock_client.write_register.return_value = error_response
-
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 100000, device_id=1)
-
-        assert result.isError()
-
-    def test_write_register_boundary(self, mock_client, scanner_args):
-        """Test writing at address boundary."""
-        create_mock_scanner(scanner_args)
-
-        # Address near max
-        mock_client.write_register(65535, 1234, device_id=1)
-        mock_client.write_register.assert_called_with(65535, 1234, device_id=1)
+        assert result["success"] is False
+        assert "refused" in result["error"]
 
 
 # =============================================================================
-# Test Write Multiple Coils (FC 15)
-# =============================================================================
-
-
-class TestWriteMultipleCoils:
-    """Tests for write multiple coils (FC 15)."""
-
-    def test_write_multiple_coils(self, mock_client, scanner_args):
-        """Test writing multiple coils."""
-        values = [True, False, True, True, False]
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.write_coils(0, values, device_id=1)
-
-        assert not result.isError()
-        assert result.count == 5
-        mock_client.write_coils.assert_called_with(0, values, device_id=1)
-
-    def test_write_coils_all_on(self, mock_client, scanner_args):
-        """Test writing all coils to ON."""
-        values = [True] * 10
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.write_coils(0, values, device_id=1)
-
-        assert not result.isError()
-
-    def test_write_coils_all_off(self, mock_client, scanner_args):
-        """Test writing all coils to OFF."""
-        values = [False] * 10
-        create_mock_scanner(scanner_args)
-
-        result = mock_client.write_coils(0, values, device_id=1)
-
-        assert not result.isError()
-
-    def test_write_coils_error(self, mock_client, scanner_args):
-        """Test handling write multiple coils error."""
-        error_response = MagicMock()
-        error_response.isError.return_value = True
-        mock_client.write_coils.return_value = error_response
-
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_coils(0, [True] * 5, device_id=1)
-
-        assert result.isError()
-
-    def test_write_coils_max_count(self, mock_client, scanner_args):
-        """Test writing maximum coil count (1968 per spec)."""
-        write_response = MagicMock()
-        write_response.isError.return_value = False
-        write_response.count = 1968
-        mock_client.write_coils.return_value = write_response
-
-        values = [True] * 1968
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_coils(0, values, device_id=1)
-
-        assert not result.isError()
-
-
-# =============================================================================
-# Test Write Multiple Registers (FC 16)
+# Test Write Multiple Registers (FC 16) — via mixin
 # =============================================================================
 
 
 class TestWriteMultipleRegisters:
-    """Tests for write multiple registers (FC 16)."""
+    """_write_multiple_registers."""
 
-    def test_write_multiple_registers(self, mock_client, scanner_args):
-        """Test writing multiple registers."""
-        values = [100, 200, 300, 400, 500]
-        create_mock_scanner(scanner_args)
+    def test_write_multiple_registers_roundtrip(self, scanner, mock_client):
+        """Successful multi-register write restores originals."""
+        mock_client.read_holding_registers.return_value = _ok_response(
+            registers=[100, 200, 300, 400, 500]
+        )
 
-        result = mock_client.write_registers(0, values, device_id=1)
+        result = scanner._write_multiple_registers(mock_client, 0, [1, 2, 3, 4, 5])
 
-        assert not result.isError()
-        assert result.count == 5
-        mock_client.write_registers.assert_called_with(0, values, device_id=1)
+        assert result["success"] is True
+        assert result["original_values"] == [100, 200, 300, 400, 500]
+        assert result["restored"] is True
+        assert result["count"] == 5
+        # Final write restores the originals.
+        last_write = mock_client.write_registers.call_args_list[-1]
+        assert last_write.args == (0, [100, 200, 300, 400, 500])
 
-    def test_write_registers_zeros(self, mock_client, scanner_args):
-        """Test writing zeros to multiple registers."""
-        values = [0] * 10
-        create_mock_scanner(scanner_args)
+    def test_write_registers_error(self, scanner, mock_client):
+        """An erroring FC 16 write reports success=False."""
+        mock_client.write_registers.return_value = _err_response(2)
 
-        result = mock_client.write_registers(0, values, device_id=1)
+        result = scanner._write_multiple_registers(mock_client, 0, [100] * 5)
 
-        assert not result.isError()
+        assert result["success"] is False
 
-    def test_write_registers_max_values(self, mock_client, scanner_args):
-        """Test writing max values to multiple registers."""
-        values = [65535] * 5
-        create_mock_scanner(scanner_args)
+    def test_write_registers_no_restore_when_disabled(self, scanner, mock_client):
+        """restore_on_exit=False writes once, restores never."""
+        result = scanner._write_multiple_registers(mock_client, 0, [0] * 10, restore_on_exit=False)
 
-        result = mock_client.write_registers(0, values, device_id=1)
+        assert result["success"] is True
+        assert mock_client.write_registers.call_count == 1
 
-        assert not result.isError()
-
-    def test_write_registers_error(self, mock_client, scanner_args):
-        """Test handling write multiple registers error."""
-        error_response = MagicMock()
-        error_response.isError.return_value = True
-        error_response.exception_code = 2
-        mock_client.write_registers.return_value = error_response
-
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_registers(0, [100] * 5, device_id=1)
-
-        assert result.isError()
-
-    def test_write_registers_max_count(self, mock_client, scanner_args):
-        """Test writing maximum register count (123 per spec)."""
-        write_response = MagicMock()
-        write_response.isError.return_value = False
-        write_response.count = 123
-        mock_client.write_registers.return_value = write_response
-
+    def test_write_registers_max_count(self, scanner, mock_client):
+        """123 registers (spec maximum) all flow through."""
         values = list(range(123))
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_registers(0, values, device_id=1)
+        mock_client.read_holding_registers.return_value = _ok_response(registers=values)
 
-        assert not result.isError()
+        result = scanner._write_multiple_registers(mock_client, 0, values)
 
-
-# =============================================================================
-# Test Safe Write Testing
-# =============================================================================
-
-
-class TestSafeWriteTesting:
-    """Tests for safe write testing (write same value back)."""
-
-    def test_safe_write_same_value(self, mock_client, scanner_args):
-        """Test safe write by reading then writing same value."""
-        # Read current value
-        read_response = MagicMock()
-        read_response.isError.return_value = False
-        read_response.registers = [1234]
-        mock_client.read_holding_registers.return_value = read_response
-
-        # Write same value back
-        write_response = MagicMock()
-        write_response.isError.return_value = False
-        mock_client.write_register.return_value = write_response
-
-        create_mock_scanner(scanner_args)
-
-        # Read
-        result = mock_client.read_holding_registers(0, 1, device_id=1)
-        assert not result.isError()
-        original_value = result.registers[0]
-
-        # Write same value
-        result = mock_client.write_register(0, original_value, device_id=1)
-        assert not result.isError()
-
-    def test_safe_write_detection(self, mock_client, scanner_args):
-        """Test detecting writable registers via safe write."""
-        # Successful write indicates register is writable
-        write_response = MagicMock()
-        write_response.isError.return_value = False
-        mock_client.write_register.return_value = write_response
-
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 0, device_id=1)
-
-        is_writable = not result.isError()
-        assert is_writable is True
-
-    def test_safe_write_read_only(self, mock_client, scanner_args):
-        """Test detecting read-only registers via safe write."""
-        # Error response indicates register is read-only
-        error_response = MagicMock()
-        error_response.isError.return_value = True
-        error_response.exception_code = 2  # Illegal data address
-        mock_client.write_register.return_value = error_response
-
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 0, device_id=1)
-
-        is_writable = not result.isError()
-        assert is_writable is False
+        assert result["success"] is True
+        assert result["count"] == 123
 
 
 # =============================================================================
-# Test Destructive Write with Restore
+# Test Write Multiple Coils (FC 15) — via mixin
 # =============================================================================
 
 
-class TestDestructiveWriteRestore:
-    """Tests for destructive write testing with value restore."""
+class TestWriteMultipleCoils:
+    """_write_multiple_coils."""
 
-    def test_write_and_restore(self, mock_client, scanner_args):
-        """Test writing temporary value then restoring original."""
-        # Read original
-        read_response = MagicMock()
-        read_response.isError.return_value = False
-        read_response.registers = [1000]
-        mock_client.read_holding_registers.return_value = read_response
+    def test_write_multiple_coils_roundtrip(self, scanner, mock_client):
+        """Successful multi-coil write restores originals."""
+        values = [True, False, True, True, False]
+        mock_client.read_coils.return_value = _ok_response(bits=values)
 
-        write_response = MagicMock()
-        write_response.isError.return_value = False
-        mock_client.write_register.return_value = write_response
+        result = scanner._write_multiple_coils(mock_client, 0, values)
 
-        create_mock_scanner(scanner_args)
+        assert result["success"] is True
+        assert result["original_values"] == values
+        assert result["restored"] is True
+        assert result["count"] == 5
 
-        # 1. Read original value
-        result = mock_client.read_holding_registers(0, 1, device_id=1)
-        original = result.registers[0]
-        assert original == 1000
+    def test_write_coils_error(self, scanner, mock_client):
+        """An erroring FC 15 write reports success=False."""
+        mock_client.write_coils.return_value = _err_response(2)
 
-        # 2. Write test value (different from original)
-        test_value = original + 1 if original < 65535 else original - 1
-        mock_client.write_register(0, test_value, device_id=1)
+        result = scanner._write_multiple_coils(mock_client, 0, [True] * 5)
 
-        # 3. Restore original value
-        result = mock_client.write_register(0, original, device_id=1)
-        assert not result.isError()
+        assert result["success"] is False
 
-    def test_restore_failure_handling(self, mock_client, scanner_args):
-        """Test handling restore failure."""
-        # Read succeeds
-        read_response = MagicMock()
-        read_response.isError.return_value = False
-        read_response.registers = [1000]
-        mock_client.read_holding_registers.return_value = read_response
+    def test_write_coils_all_on(self, scanner, mock_client):
+        """A full-ON coil block writes and restores 10 values."""
+        values = [True] * 10
+        mock_client.read_coils.return_value = _ok_response(bits=values)
 
-        # First write succeeds
-        write_success = MagicMock()
-        write_success.isError.return_value = False
+        result = scanner._write_multiple_coils(mock_client, 0, values)
 
-        # Restore write fails
-        write_fail = MagicMock()
-        write_fail.isError.return_value = True
-        write_fail.exception_code = 4  # Server device failure
+        assert result["success"] is True
+        assert result["restored"] is True
 
-        mock_client.write_register.side_effect = [write_success, write_fail]
+    def test_write_coils_restore_failure_warns(self, scanner, mock_client):
+        """A failing coil restore is logged and flagged, not raised."""
+        mock_client.write_coils.side_effect = [_ok_response(), _err_response(4)]
 
-        create_mock_scanner(scanner_args)
+        result = scanner._write_multiple_coils(mock_client, 0, [True, False])
 
-        # Read original
-        result = mock_client.read_holding_registers(0, 1, device_id=1)
-        original = result.registers[0]
-
-        # Write test value
-        result = mock_client.write_register(0, 1001, device_id=1)
-        assert not result.isError()
-
-        # Restore fails
-        result = mock_client.write_register(0, original, device_id=1)
-        assert result.isError()
-
-
-# =============================================================================
-# Test Write Verification
-# =============================================================================
-
-
-class TestWriteVerification:
-    """Tests for write verification (read-back)."""
-
-    def test_write_and_verify(self, mock_client, scanner_args):
-        """Test writing and reading back to verify."""
-        write_response = MagicMock()
-        write_response.isError.return_value = False
-        mock_client.write_register.return_value = write_response
-
-        read_response = MagicMock()
-        read_response.isError.return_value = False
-        read_response.registers = [5678]  # Value we wrote
-        mock_client.read_holding_registers.return_value = read_response
-
-        create_mock_scanner(scanner_args)
-
-        # Write
-        mock_client.write_register(0, 5678, device_id=1)
-
-        # Read back
-        result = mock_client.read_holding_registers(0, 1, device_id=1)
-        assert result.registers[0] == 5678
-
-    def test_write_verify_mismatch(self, mock_client, scanner_args):
-        """Test detecting write verification mismatch."""
-        write_response = MagicMock()
-        write_response.isError.return_value = False
-        mock_client.write_register.return_value = write_response
-
-        # Read back returns different value
-        read_response = MagicMock()
-        read_response.isError.return_value = False
-        read_response.registers = [9999]  # Different from written value
-        mock_client.read_holding_registers.return_value = read_response
-
-        create_mock_scanner(scanner_args)
-
-        written_value = 5678
-        mock_client.write_register(0, written_value, device_id=1)
-
-        result = mock_client.read_holding_registers(0, 1, device_id=1)
-        read_value = result.registers[0]
-
-        # Values don't match - possible issue
-        assert read_value != written_value
+        assert result["success"] is True
+        assert result["restored"] is False
+        assert scanner.logger.warning.called
 
 
 # =============================================================================
@@ -523,28 +271,24 @@ class TestWriteVerification:
 class TestWriteAccessArguments:
     """Tests for write access argument handling."""
 
-    def test_confirm_flag_required(self, scanner_args):
+    def test_confirm_flag_required(self, scanner, scanner_args):
         """Test confirm flag is set for write operations."""
         scanner_args["confirm"] = True
-        scanner = create_mock_scanner(scanner_args)
         assert scanner.args.get("confirm") is True
 
-    def test_test_write_flag(self, scanner_args):
+    def test_test_write_flag(self, scanner, scanner_args):
         """Test test-write flag."""
         scanner_args["test-write"] = True
-        scanner = create_mock_scanner(scanner_args)
         assert scanner.args.get("test-write") is True
 
-    def test_test_write_thorough_flag(self, scanner_args):
+    def test_test_write_thorough_flag(self, scanner, scanner_args):
         """Test test-write-thorough flag."""
         scanner_args["test-write-thorough"] = True
-        scanner = create_mock_scanner(scanner_args)
         assert scanner.args.get("test-write-thorough") is True
 
-    def test_restore_on_exit_flag(self, scanner_args):
+    def test_restore_on_exit_flag(self, scanner, scanner_args):
         """Test restore-on-exit flag."""
         scanner_args["restore-on-exit"] = True
-        scanner = create_mock_scanner(scanner_args)
         assert scanner.args.get("restore-on-exit") is True
 
 
@@ -593,60 +337,29 @@ class TestWriteValueParsing:
 
 
 # =============================================================================
-# Test Write Error Codes
+# Test Write Error Codes (mapped through the mixin result contract)
 # =============================================================================
 
 
 class TestWriteErrorCodes:
-    """Tests for write error code handling."""
+    """Error-code handling on the mixin write paths."""
 
-    def test_illegal_function_on_write(self, mock_client, scanner_args):
-        """Test handling illegal function on write."""
-        error_response = MagicMock()
-        error_response.isError.return_value = True
-        error_response.exception_code = 1
-        mock_client.write_register.return_value = error_response
+    @pytest.mark.parametrize("code", [1, 2, 3, 6])
+    def test_write_error_codes_reported(self, scanner, mock_client, code):
+        """Each exception code on FC 6 yields success=False."""
+        mock_client.write_register.return_value = _err_response(code)
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 1234, device_id=1)
+        result = scanner._write_register_safe(mock_client, 0, 1234)
 
-        assert result.exception_code == 1
+        assert result["success"] is False
 
-    def test_illegal_data_address_on_write(self, mock_client, scanner_args):
-        """Test handling illegal data address on write."""
-        error_response = MagicMock()
-        error_response.isError.return_value = True
-        error_response.exception_code = 2
-        mock_client.write_register.return_value = error_response
+    def test_server_device_busy_on_write(self, scanner, mock_client):
+        """Server-device-busy (6) on FC 16 is still a plain failure."""
+        mock_client.write_registers.return_value = _err_response(6)
 
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_register(99999, 1234, device_id=1)
+        result = scanner._write_multiple_registers(mock_client, 0, [1234])
 
-        assert result.exception_code == 2
-
-    def test_illegal_data_value_on_write(self, mock_client, scanner_args):
-        """Test handling illegal data value on write."""
-        error_response = MagicMock()
-        error_response.isError.return_value = True
-        error_response.exception_code = 3
-        mock_client.write_register.return_value = error_response
-
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 99999999, device_id=1)
-
-        assert result.exception_code == 3
-
-    def test_server_device_busy_on_write(self, mock_client, scanner_args):
-        """Test handling server device busy on write."""
-        error_response = MagicMock()
-        error_response.isError.return_value = True
-        error_response.exception_code = 6
-        mock_client.write_register.return_value = error_response
-
-        create_mock_scanner(scanner_args)
-        result = mock_client.write_register(0, 1234, device_id=1)
-
-        assert result.exception_code == 6
+        assert result["success"] is False
 
 
 if __name__ == "__main__":

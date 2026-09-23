@@ -157,6 +157,10 @@ def test_expected_states_referenced(protocol_name, state_config):
             f"by any request. Found states: {sorted(states_required)}. "
             f"These may be implicitly covered via default state handling."
         )
+    assert expected_states <= states_required, (
+        f"{protocol_name}: expected states {expected_states} must all be "
+        f"referenced; found states: {sorted(states_required)}"
+    )
 
 
 @pytest.mark.parametrize(

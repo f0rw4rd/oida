@@ -2,6 +2,8 @@
 
 import argparse
 
+import pytest
+
 from oida.protocols.ocpp.scanner import OCPPScanner
 
 
@@ -37,9 +39,11 @@ def test_refused_port_containing_401_not_reported_as_auth():
     try:
         with _s.socket() as sk:
             sk.bind(("127.0.0.1", 14010))
-        assert True  # port free, refused connect guaranteed
+        port_free = True  # port free, refused connect guaranteed
     except OSError:
         pass
+    if not port_free:
+        pytest.skip("port 14010 in use - cannot guarantee a refused connect")
 
     s = _make_scanner()
     result = s._probe_path("ws://127.0.0.1:14010", "/x", "CP1")

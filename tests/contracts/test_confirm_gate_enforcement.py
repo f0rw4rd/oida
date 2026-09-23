@@ -418,8 +418,18 @@ class TestDnp3ControlGate(unittest.TestCase):
     def test_time_sync_allowed_with_confirm(self):
         from oida.protocols.dnp3.proto_args import validate_args
 
-        # With --confirm the control op must pass validation (no raise).
-        validate_args(self._ns(time_sync=True, confirm=True))
+        # With --confirm the control op must pass validation (no raise) and
+        # validate_args is documented to return None on success.
+        result = validate_args(self._ns(time_sync=True, confirm=True))
+        self.assertIsNone(result)
+
+        # Sanity: the same op WITHOUT --outstation-addr must still be rejected —
+        # proves --confirm doesn't bypass the other control-op precondition too.
+        from oida.utils.exceptions import ConfigurationError
+
+        with self.assertRaises(ConfigurationError) as ctx:
+            validate_args(self._ns(time_sync=True, confirm=True, outstation_addr=None))
+        self.assertIn("outstation-addr", str(ctx.exception).lower())
 
 
 if __name__ == "__main__":

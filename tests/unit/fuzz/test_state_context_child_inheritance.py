@@ -61,6 +61,10 @@ def test_root_context_still_creates_its_own_state():
     root = StateContext()
 
     assert root.has_crypto_state() is False
-    assert root.crypto is root.crypto
+    crypto_a = root.crypto
+    crypto_b = root.crypto
+    assert crypto_a is crypto_b  # lazily created once, then stable
     assert root.has_crypto_state() is True
-    assert root.get_sequence_manager("tx") is root.get_sequence_manager("tx")
+    sm_a = root.get_sequence_manager("tx")
+    sm_b = root.get_sequence_manager("tx")
+    assert sm_a is sm_b  # same manager object per name
