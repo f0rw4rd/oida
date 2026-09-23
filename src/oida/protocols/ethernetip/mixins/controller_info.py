@@ -286,7 +286,7 @@ class ControllerInfoMixin(_ScannerBase):
         Args:
             conn: pycomm3 LogixDriver connection
             output_dir: Output directory for files (default: current directory)
-            output_format: Output format ("console", "csv", "json", "xml", "all")
+            output_format: Output format ("console", "csv", "json", "all")
 
         Returns:
             Dict with export summary

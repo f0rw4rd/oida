@@ -15,14 +15,11 @@ Configure once at startup:
 import csv
 import json
 import os
-import re
 import shutil
 import sys
 import threading
 from pathlib import Path
 from typing import List, Any, Optional, Dict, Union
-from xml.etree import ElementTree as ET
-from xml.dom import minidom
 from .ics_logger import log, log_error as error
 
 
@@ -32,7 +29,7 @@ from .ics_logger import log, log_error as error
 
 _config: Dict[str, Any] = {
     "output_dir": None,  # Path or None
-    "format": "csv,json",  # csv, json, xml, or comma-separated combo
+    "format": "csv,json",  # csv, json, or comma-separated combo
     "logger": None,  # Optional logger instance
     "full_width": False,  # When True, don't truncate tables to terminal width
 }
@@ -76,7 +73,7 @@ def configure(
 
     Args:
         output_dir: Directory for file exports (None = no file export)
-        fmt: Export format(s) - "csv", "json", "xml", or comma-separated like "csv,json"
+        fmt: Export format(s) - "csv", "json", or comma-separated like "csv,json"
         logger: Optional logger instance with success/display methods
         full_width: If True, don't truncate tables to terminal width
     """
@@ -163,13 +160,6 @@ def export_table(
                 written_paths.append(str(path))
             else:
                 success = False
-        elif fmt == "xml":
-            path = _safe_path(name, "xml")
-            if _write_xml(path, headers, rows, name):
-                _log_msg(f"Wrote {path}", level="good")
-                written_paths.append(str(path))
-            else:
-                success = False
         else:
             # Previously fell through silently: no file written, still True.
             _log_msg(
@@ -234,8 +224,8 @@ def _safe_path(name: str, ext: str) -> Path:
 
 
 # Formats that actually produce a file. ``console`` is a legitimate
-# "print only, write nothing" selection; ``all`` is an alias for all three.
-_FILE_FORMATS = ("csv", "json", "xml")
+# "print only, write nothing" selection; ``all`` is an alias for both.
+_FILE_FORMATS = ("csv", "json")
 
 
 def _resolve_formats(fmt: str) -> List[str]:
@@ -300,51 +290,6 @@ def _write_json(path: Path, headers: List[str], rows: List[List[Any]]) -> bool:
         return False
 
 
-# Illegal in XML 1.0 content: C0 controls other than tab/LF/CR, UTF-16
-# surrogates, and the U+FFFE/U+FFFF noncharacters. ET.tostring() does NOT
-# validate/escape these (it only escapes ``< > &``), so a raw control byte
-# from device-supplied text (SNMP sysDescr, HTTP banner, echoed ICMP
-# payload, ...) sails through tostring() and then blows up
-# minidom.parseString() with "not well-formed (invalid token)", silently
-# dropping the whole table from the XML deliverable. Policy: strip (don't
-# substitute) illegal chars so the output stays clean.
-_XML_ILLEGAL_CHARS_RE = re.compile("[\x00-\x08\x0b\x0c\x0e-\x1f\ud800-\udfff￾￿]")
-
-
-def _sanitize_xml_text(value: Any) -> str:
-    """Coerce *value* to a string safe to use as XML element text (see policy above)."""
-    text = str(value) if value is not None else ""
-    return _XML_ILLEGAL_CHARS_RE.sub("", text)
-
-
-def _write_xml(path: Path, headers: List[str], rows: List[List[Any]], root_name: str) -> bool:
-    """Write XML file."""
-    try:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        root = ET.Element(root_name)
-        for row in rows:
-            record = ET.SubElement(root, "record")
-            for i, header in enumerate(headers):
-                tag_name = _sanitize_xml_tag(header)
-                field = ET.SubElement(record, tag_name)
-                value = row[i] if i < len(row) else ""
-                field.text = _sanitize_xml_text(value)
-
-        xml_str = ET.tostring(root, encoding="unicode")
-        # Parsing XML we just generated ourselves via ET.tostring — no external
-        # entities or untrusted input. defusedxml is unnecessary here.
-        dom = minidom.parseString(xml_str)  # nosec B318
-        pretty_xml = dom.toprettyxml(indent="  ")
-        lines = [line for line in pretty_xml.split("\n") if line.strip()]
-
-        with open(path, "w", encoding="utf-8") as f:
-            f.write("\n".join(lines))
-        return True
-    except Exception as e:
-        _log_msg(f"Error writing XML: {e}", level="error")
-        return False
-
-
 # =============================================================================
 # Legacy API (backward compatible)
 # =============================================================================
@@ -401,7 +346,7 @@ def export_data(
     # return value (see pcap/scanner.py), so a hard reject here meant the
     # operator silently got nothing in console AND every file format. Short
     # rows are padded with "" to the header width; long rows are truncated
-    # to it. Applied uniformly across console/csv/json/xml for consistency.
+    # to it. Applied uniformly across console/csv/json for consistency.
     normalized_data = []
     warned_ragged = False
     for idx, row in enumerate(data):
@@ -432,7 +377,7 @@ def export_data(
     for fmt in formats:
         if fmt == "console":
             success = print_table(data, headers, title, logger=logger) or success
-        elif fmt in ("csv", "json", "xml"):
+        elif fmt in ("csv", "json"):
             # File output requires an output dir (-o). Without it, skip the
             # write rather than dumping deliverables to /tmp.
             if not output_dir:
@@ -441,12 +386,8 @@ def export_data(
             file_path = os.path.join(output_dir, f"{filename_prefix}.{fmt}")
             if fmt == "csv":
                 success = _export_csv(data, headers, file_path, logger=logger) or success
-            elif fmt == "json":
-                success = _export_json(data, headers, file_path, logger=logger) or success
             else:
-                success = (
-                    _export_xml(data, headers, file_path, filename_prefix, logger=logger) or success
-                )
+                success = _export_json(data, headers, file_path, logger=logger) or success
         else:
             error(f"Unknown export format {fmt}")
 
@@ -477,10 +418,10 @@ def parse_output_format(format_option: str) -> List[str]:
         return ["console"]  # Default to console only
 
     if format_option.lower() == "all":
-        return ["console", "csv", "json", "xml"]
+        return ["console", "csv", "json"]
 
     # Parse comma-separated formats
-    valid_formats = ["console", "csv", "json", "xml"]
+    valid_formats = ["console", "csv", "json"]
     if "," in format_option:
         for fmt in format_option.split(","):
             fmt = fmt.strip().lower()
@@ -697,93 +638,6 @@ def _export_json(data: List[List[Any]], headers: List[str], file_path: str, logg
     except Exception as e:
         _log_message(logger, f"Error exporting to JSON: {e}", level="error")
         return False
-
-
-def _export_xml(
-    data: List[List[Any]],
-    headers: List[str],
-    file_path: str,
-    root_name: str = "results",
-    logger=None,
-) -> bool:
-    """Export data to XML file.
-
-    Args:
-        data: 2D matrix of values (list of rows)
-        headers: List of column headers
-        file_path: Path to output XML file
-        root_name: Name for the root XML element
-
-    Returns:
-        True if export was successful, False otherwise
-    """
-    if not file_path:
-        _log_message(logger, "No file path provided for XML export", level="error")
-        return False
-
-    try:
-        # Create directory if it doesn't exist
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
-
-        # Create root element
-        root = ET.Element(root_name)
-
-        # Add each row as a record element
-        for row in data:
-            record = ET.SubElement(root, "record")
-            for i, header in enumerate(headers):
-                # Sanitize header name for XML tag (replace spaces, ensure valid)
-                tag_name = _sanitize_xml_tag(header)
-                field = ET.SubElement(record, tag_name)
-                # Handle None and convert to string, stripping chars illegal
-                # in XML 1.0 content (see _sanitize_xml_text policy note).
-                value = row[i] if i < len(row) else ""
-                field.text = _sanitize_xml_text(value)
-
-        # Pretty print with minidom
-        xml_str = ET.tostring(root, encoding="unicode")
-        # Parsing XML we just generated ourselves via ET.tostring — no external
-        # entities or untrusted input. defusedxml is unnecessary here.
-        dom = minidom.parseString(xml_str)  # nosec B318
-        pretty_xml = dom.toprettyxml(indent="  ")
-
-        # Remove extra blank lines from minidom output
-        lines = [line for line in pretty_xml.split("\n") if line.strip()]
-        pretty_xml = "\n".join(lines)
-
-        with open(file_path, "w", encoding="utf-8") as f:
-            f.write(pretty_xml)
-
-        _log_message(logger, f"Data exported to XML file: {file_path}", level="good")
-        return True
-    except Exception as e:
-        _log_message(logger, f"Error exporting to XML: {e}", level="error")
-        return False
-
-
-def _sanitize_xml_tag(name: str) -> str:
-    """Sanitize a string to be a valid XML tag name.
-
-    Args:
-        name: Original string to sanitize
-
-    Returns:
-        Valid XML tag name
-    """
-    import re
-
-    # Replace spaces and special chars with underscores
-    sanitized = re.sub(r"[^a-zA-Z0-9_]", "_", str(name))
-
-    # Ensure it starts with a letter or underscore
-    if sanitized and not sanitized[0].isalpha() and sanitized[0] != "_":
-        sanitized = "_" + sanitized
-
-    # Handle empty string
-    if not sanitized:
-        sanitized = "field"
-
-    return sanitized
 
 
 def export_json(

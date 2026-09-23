@@ -120,7 +120,7 @@ scripts/flag_coverage.py --json knx):
   (security: writable access)  [B] test_security_finding_writable_access
   (security: insecure config)  [B] test_security_finding_insecure_configuration
   (security: weak password)    [C] test_security_finding_weak_password_knxproj
-  format (global)              [A] test_csv_output_format, test_xml_output_format
+  format (global)              [A] test_csv_output_format
   -v (global)                  [A] test_verbose_output
   --debug (global)             [A] test_debug_output
   --help (global)              [A] test_help_output
@@ -1358,24 +1358,6 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
         )
 
         assert result.success, f"CSV output failed: {result.stderr}"
-        _assert_log_has_events(result)
-        log = result.scan_log
-        _assert_log_event_structure(log)
-
-    @pytest.mark.containers("knx-calimero")
-    def test_xml_output_format(self, cli_runner, target, port):
-        """Test XML output format [Category A]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            format="xml",
-            json_log=True,
-            timeout=30,
-        )
-
-        assert result.success, f"XML output failed: {result.stderr}"
         _assert_log_has_events(result)
         log = result.scan_log
         _assert_log_event_structure(log)

@@ -74,8 +74,8 @@ class ExportMixin:
             json_file.write_text(json.dumps(results, indent=2, default=str))
             self.logger.success(f"Results exported to {json_file}")
 
-        # Tabular object inventory for console/csv/xml (and the table rows of
-        # "all"). Routed through export_table so xml/all/console no longer
+        # Tabular object inventory for console/csv (and the table rows of
+        # "all"). Routed through export_table so all/console no longer
         # silently no-op; export_table honours the configured format list.
         headers = ["device_id", "address", "object_type", "instance"]
         rows = []
@@ -85,5 +85,5 @@ class ExportMixin:
                 for instance in instances:
                     rows.append([device_id, address, obj_type, instance])
 
-        if rows and any(fmt in formats for fmt in ("console", "csv", "xml")):
+        if rows and any(fmt in formats for fmt in ("console", "csv")):
             export_table("bacnet_objects", headers, rows)

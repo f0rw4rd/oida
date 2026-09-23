@@ -104,7 +104,7 @@ Flag Coverage Matrix (proto_args.py):
   --fuzz-method             [C] test_method_fuzzing
   --fuzz-node               [C] test_fuzz_specific_node
   --fuzz-iterations         [C] test_node_fuzzing, test_fuzz_all_methods
-  format (global)           [B] test_csv_output, test_xml_output
+  format (global)           [B] test_csv_output
   -v (global)               [B] test_verbose_output
   --debug (global)          [B] test_debug_output
   --help (global)           [A] test_help_output
@@ -2133,24 +2133,6 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         assert result.returncode in [0, 1]
         if result.success:
             assert result.stdout, "CSV output should produce stdout on success"
-
-    @pytest.mark.containers("opcua-insecure")
-    def test_xml_output(self, cli_runner, mock_host, mock_ports):
-        """Test XML output format [Category B]"""
-        target = self.get_target(mock_host, mock_ports["opcua_insecure"])
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "-d",
-            "--max-depth",
-            "2",
-            format="xml",
-            expect_json=False,
-        )
-
-        assert result.returncode in [0, 1]
-        if result.success:
-            assert result.stdout, "XML output should produce stdout on success"
 
     @pytest.mark.containers("opcua-insecure")
     def test_verbose_output(self, cli_runner, mock_host, mock_ports):

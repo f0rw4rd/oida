@@ -18,8 +18,8 @@ so 1.0.0 is the first real publish.
       against `git log` since the last tag — anything landed after today needs
       an entry, and the heading date needs to match the actual tag day.
 - [ ] Decide whether the **Known limitations** block is acceptable to ship:
-      `--format xml` silently falls back to JSON, mypy ungated with thousands
-      of errors, 28 of 109 pcap listeners without a dedicated test file.
+      mypy ungated with thousands of errors, 28 of 109 pcap listeners without
+      a dedicated test file.
 - [ ] Re-read the **Architecture (post-1.0)** block — confirm those refactors
       (opcua/knx parallel L1/L2, six L2-only protocols, deep MROs) are
       genuinely deferrable past a 1.0 API promise.
@@ -107,7 +107,7 @@ so 1.0.0 is the first real publish.
 ## 7. Docs & community
 
 - [ ] README: protocol count of 26 is correct; re-check the claims that changed
-      (FHIR `--bulk-export` removed, `--format xml` falls back to JSON,
+      (FHIR `--bulk-export` removed, `--format xml` removed entirely,
       `oida snap7` canonical with `s7` alias).
 - [ ] getoida.dev (separate repo) rebuilt for 1.0: install/quickstart,
       architecture, per-protocol pages, authorized-testing disclaimer.

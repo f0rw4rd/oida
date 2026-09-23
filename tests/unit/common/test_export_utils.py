@@ -13,8 +13,6 @@ import unittest
 from pathlib import Path
 from unittest.mock import MagicMock
 
-from xml.etree import ElementTree as ET
-
 from oida.utils.export_utils import (
     configure,
     export_data,
@@ -22,8 +20,6 @@ from oida.utils.export_utils import (
     get_export_path,
     get_config,
     _config,
-    _export_xml,
-    _write_xml,
     configure_from_args,
 )
 from oida.utils.proto_args_factory import add_output_options
@@ -332,73 +328,6 @@ class TestIntegration(unittest.TestCase):
 
             self.assertTrue(path.exists())
             self.assertEqual(path.read_bytes(), eeprom_data)
-
-
-class TestXmlControlCharSanitization(unittest.TestCase):
-    """Bug 1: a raw control char in a cell must not kill the whole XML export.
-
-    ET.tostring() only escapes ``< > &``; it does not validate that the text
-    is legal XML content, so an illegal control byte (e.g. \\x0b — realistic
-    in an SNMP sysDescr, HTTP banner, or echoed ICMP payload) sails through
-    tostring() and then blows up minidom.parseString() with "not well-formed
-    (invalid token)", silently dropping the table from the XML deliverable
-    while CSV/JSON succeed.
-    """
-
-    def setUp(self):
-        _config["output_dir"] = None
-        _config["format"] = "csv,json"
-        _config["logger"] = None
-
-    def tearDown(self):
-        _config["output_dir"] = None
-        _config["format"] = "csv,json"
-        _config["logger"] = None
-
-    def test_write_xml_with_control_char_succeeds(self):
-        """_write_xml must not blow up on an illegal XML 1.0 control char."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "t.xml"
-            headers = ["Index", "Name"]
-            rows = [[1, "PLC\x0bMain"]]
-
-            result = _write_xml(path, headers, rows, "devices")
-
-            self.assertTrue(result)
-            self.assertTrue(path.exists())
-            # Must be parseable back -- proves it's well-formed XML.
-            tree = ET.parse(path)
-            self.assertIsNotNone(tree)
-
-    def test_export_xml_with_control_char_succeeds(self):
-        """_export_xml (legacy API) must not blow up on an illegal char either."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            file_path = os.path.join(tmpdir, "t.xml")
-            headers = ["Index", "Name"]
-            data = [[1, "PLC\x0bMain"]]
-
-            result = _export_xml(data, headers, file_path, "devices")
-
-            self.assertTrue(result)
-            self.assertTrue(os.path.exists(file_path))
-            tree = ET.parse(file_path)
-            self.assertIsNotNone(tree)
-
-    def test_export_data_xml_format_with_control_char_succeeds(self):
-        """Public export_data(..., output_format='xml') path end to end."""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            headers = ["Index", "Name"]
-            data = [[1, "PLC\x0bMain"]]
-
-            result = export_data(
-                data, headers, output_format="xml", output_dir=tmpdir, filename_prefix="devices"
-            )
-
-            self.assertTrue(result)
-            xml_path = Path(tmpdir) / "devices.xml"
-            self.assertTrue(xml_path.exists())
-            tree = ET.parse(xml_path)
-            self.assertIsNotNone(tree)
 
 
 class TestExportDataRaggedRows(unittest.TestCase):

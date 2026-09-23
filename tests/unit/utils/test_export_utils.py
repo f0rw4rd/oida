@@ -21,7 +21,6 @@ from oida.utils.export_utils import (
     _config,
     _write_csv,
     _write_json,
-    _write_xml,
     print_table,
     export_data,
     configure_from_args,
@@ -86,10 +85,10 @@ class TestConfigure(unittest.TestCase):
 
     def test_configure_multiple_formats(self):
         """Test configure with multiple formats"""
-        configure(fmt="csv,json,xml")
+        configure(fmt="csv,json")
 
         config = get_config()
-        self.assertEqual(config["format"], "csv,json,xml")
+        self.assertEqual(config["format"], "csv,json")
 
     def test_configure_with_path_object(self):
         """Test configure accepts Path object"""
@@ -195,26 +194,6 @@ class TestExportTable(unittest.TestCase):
 
             self.assertTrue((Path(tmpdir) / "status.csv").exists())
             self.assertTrue((Path(tmpdir) / "status.json").exists())
-
-    def test_export_table_xml(self):
-        """Test export_table creates XML file"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            configure(output_dir=tmpdir, fmt="xml")
-
-            headers = ["Device", "IP"]
-            rows = [["plc1", "192.168.1.10"], ["plc2", "192.168.1.11"]]
-
-            result = export_table("devices", headers, rows)
-            self.assertTrue(result)
-
-            xml_path = Path(tmpdir) / "devices.xml"
-            self.assertTrue(xml_path.exists())
-
-            content = xml_path.read_text()
-            self.assertIn("<devices>", content)
-            self.assertIn("<record>", content)
-            self.assertIn("<Device>plc1</Device>", content)
-            self.assertIn("<IP>192.168.1.10</IP>", content)
 
     def test_export_table_with_title(self):
         """Test export_table with title parameter"""
@@ -422,36 +401,6 @@ class TestWriteHelpers(unittest.TestCase):
             result = _write_json(path, headers, rows)
             self.assertTrue(result)
 
-    def test_write_xml(self):
-        """Test _write_xml helper"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "test.xml"
-            headers = ["Name", "Value"]
-            rows = [["item1", "100"]]
-
-            result = _write_xml(path, headers, rows, "root")
-            self.assertTrue(result)
-
-            content = path.read_text()
-            self.assertIn("<root>", content)
-            self.assertIn("<Name>item1</Name>", content)
-
-    def test_write_xml_sanitizes_headers(self):
-        """Test _write_xml sanitizes header names for XML tags"""
-        with tempfile.TemporaryDirectory() as tmpdir:
-            path = Path(tmpdir) / "test.xml"
-            headers = ["Column With Spaces", "123numeric", "special!@#"]
-            rows = [["val1", "val2", "val3"]]
-
-            result = _write_xml(path, headers, rows, "data")
-            self.assertTrue(result)
-
-            content = path.read_text()
-            # Spaces should be replaced with underscores
-            self.assertIn("<Column_With_Spaces>", content)
-            # Leading numbers should be prefixed
-            self.assertIn("<_123numeric>", content)
-
     def test_write_creates_parent_dirs(self):
         """Test write helpers create parent directories"""
         with tempfile.TemporaryDirectory() as tmpdir:
@@ -501,14 +450,13 @@ class TestLegacyAPI(unittest.TestCase):
 
             self.assertTrue((Path(tmpdir) / "all_test.csv").exists())
             self.assertTrue((Path(tmpdir) / "all_test.json").exists())
-            self.assertTrue((Path(tmpdir) / "all_test.xml").exists())
 
     def test_export_data_json_non_serializable_field(self):
         """Legacy JSON export must not silently drop non-serializable fields.
 
         Regression for BUG-3: _export_json lacked default=str (unlike
         _write_json / export_json), so any bytes/datetime field made the JSON
-        deliverable fail while CSV/XML succeeded -> partially-missing export.
+        deliverable fail while CSV succeeded -> partially-missing export.
         """
         import datetime
 

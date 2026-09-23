@@ -145,20 +145,10 @@ class TestExportResults:
         cli.export_results(self._results(), str(tmp_path), "all", protocol_name="modbus")
         assert (tmp_path / "modbus.json").exists()
         assert (tmp_path / "modbus.csv").exists()
-        assert (tmp_path / "modbus.xml").exists()
 
     def test_empty_results_writes_nothing(self, tmp_path):
         cli.export_results([], str(tmp_path), "json", protocol_name="modbus")
         assert not (tmp_path / "modbus.json").exists()
-
-    def test_xml_export_writes_file(self, tmp_path):
-        # XML export writes a well-formed protocol.xml with one <record> per result.
-        cli.export_results(self._results(), str(tmp_path), "xml", protocol_name="modbus")
-        xml_path = tmp_path / "modbus.xml"
-        assert xml_path.exists()
-        text = xml_path.read_text()
-        assert "<modbus>" in text
-        assert "<record>" in text
 
     def test_tables_exported_to_dedicated_csv(self, tmp_path):
         results = [

@@ -126,7 +126,7 @@ class StateMixin:
 
         if output_path:
             dump_file = Path(output_path)
-            # The real parser default for --format is "console", and csv/xml/all
+            # The real parser default for --format is "console", and csv/all
             # have no dump serializer. Anything that isn't an explicit yaml dump
             # (or a .yaml path) falls back to json so a -o backup always writes a
             # file instead of silently no-op'ing while claiming success.

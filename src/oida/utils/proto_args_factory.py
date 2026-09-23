@@ -308,14 +308,14 @@ def add_output_options(
 
     if include_format:
         if formats is None:
-            # Free-form format string (csv, json, xml, or comma-separated)
+            # Free-form format string (csv, json, or comma-separated)
             output_group.add_argument(
                 "-f",
                 "--format",
                 type=str,
                 metavar="FMT",
                 default=default_format,
-                help=f"Export format(s): csv, json, xml, or comma-separated (default: {default_format})",
+                help=f"Export format(s): csv, json, or comma-separated (default: {default_format})",
             )
         else:
             # Restricted choices

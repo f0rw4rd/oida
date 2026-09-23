@@ -40,7 +40,7 @@ from oida.targets import parse_targets, split_host_port
 from oida.serial_cli import serial_args, handle_serial_command
 from oida.fuzz_cli import fuzz_args, handle_fuzz_command
 from oida.utils.ics_logger import get_logger, ICSLogger
-from oida.utils.export_utils import configure_from_args, _write_xml
+from oida.utils.export_utils import configure_from_args
 from oida.utils.result_types import ScanResult
 from oida.utils.ics_logger import get_module_logger
 from oida.utils import crash_report
@@ -281,8 +281,7 @@ def _export_tables(
     _log = nxc_logger or get_logger("EXPORT", "", 0)
     want_csv = "csv" in formats
     want_json = "json" in formats
-    want_xml = "xml" in formats
-    if not (want_csv or want_json or want_xml):
+    if not (want_csv or want_json):
         return []
     os.makedirs(output_dir, exist_ok=True)
     seen: Dict[str, int] = {}
@@ -320,21 +319,13 @@ def _export_tables(
             written.append("json")
             written_files.append(f"{stem}.json")
 
-        if want_xml:
-            # Previously missing: `--format xml` hit the early return above and
-            # every harvest table was silently discarded.
-            xml_path = Path(output_dir) / f"{stem}.xml"
-            if _write_xml(xml_path, headers, rows, stem):
-                written.append("xml")
-                written_files.append(f"{stem}.xml")
-
         _log.debug("Table exported: %s (%s)", stem, "/".join(written))
 
     return written_files
 
 
 def _flatten_results_for_export(results: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    """Flatten scan results into tabular rows (shared by CSV and XML export).
+    """Flatten scan results into tabular rows (used by CSV export).
 
     ``data`` sub-fields are hoisted to ``data_<key>`` columns; the ``tables``
     key is skipped (it gets dedicated per-table files).
@@ -380,7 +371,7 @@ def export_results(
     Args:
         results: List of result dictionaries from scans
         output_path: Output directory
-        output_format: Format option ("json", "csv", "xml", "console", "all")
+        output_format: Format option ("json", "csv", "console", "all")
         protocol_name: Protocol identifier used for the summary filename
         nxc_logger: Optional NXC-style logger for prefixed output
     """
@@ -392,8 +383,8 @@ def export_results(
     # Determine formats to export
     formats = []
     if output_format.lower() == "all":
-        formats = ["json", "csv", "xml"]
-    elif output_format.lower() in ["json", "csv", "xml"]:
+        formats = ["json", "csv"]
+    elif output_format.lower() in ["json", "csv"]:
         formats = [output_format.lower()]
 
     # Treat -o as a directory
@@ -446,16 +437,6 @@ def export_results(
                     writer.writerows(flat_results)
                 written.append(f"{protocol_name}.csv")
                 _log.debug("Results exported to %s", csv_path)
-
-        elif fmt == "xml":
-            xml_path = Path(output_dir) / f"{protocol_name}.xml"
-            flat_results = _flatten_results_for_export(results)
-            if flat_results:
-                headers = sorted({k for r in flat_results for k in r})
-                rows = [[r.get(h, "") for h in headers] for r in flat_results]
-                if _write_xml(xml_path, headers, rows, protocol_name):
-                    written.append(f"{protocol_name}.xml")
-                    _log.debug("Results exported to %s", xml_path)
 
     # Write each harvest table as dedicated file(s), honouring --format
     if all_tables:
@@ -626,14 +607,14 @@ def gen_cli_args(argv=None):
         type=str,
         metavar="DIR",
         help=(
-            "Output directory for exported results (<protocol>.json/csv/xml, "
+            "Output directory for exported results (<protocol>.json/csv, "
             "plus per-table CSVs where available; default format: all)"
         ),
     )
 
     output_group.add_argument(
         "--format",
-        choices=["json", "csv", "xml", "console", "all"],
+        choices=["json", "csv", "console", "all"],
         default="console",
         help="Output format (default: console)",
     )
@@ -708,13 +689,13 @@ def gen_cli_args(argv=None):
         default=argparse.SUPPRESS,
         metavar="DIR",
         help=(
-            "Output directory for exported results (<protocol>.json/csv/xml, "
+            "Output directory for exported results (<protocol>.json/csv, "
             "plus per-table CSVs where available; default format: all)"
         ),
     )
     post_cmd.add_argument(
         "--format",
-        choices=["json", "csv", "xml", "console", "all"],
+        choices=["json", "csv", "console", "all"],
         default=argparse.SUPPRESS,
         help="Output format",
     )

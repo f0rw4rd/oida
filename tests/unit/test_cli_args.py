@@ -309,7 +309,7 @@ def test_main_format_present(main_parser):
     """--format must exist on the main parser with the documented choices/default."""
     for action in main_parser._actions:
         if "--format" in action.option_strings:
-            assert action.choices == ["json", "csv", "xml", "console", "all"]
+            assert action.choices == ["json", "csv", "console", "all"]
             assert action.default == "console"
             return
     pytest.fail("Main parser missing --format")

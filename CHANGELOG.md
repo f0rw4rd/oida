@@ -292,6 +292,9 @@ First stable release.
 - **`setup.py`** — duplicate of `pyproject.toml` with stale pins.
 - **`justfile`** — superseded by `services.py` (commit `810367d4` added the
   replacement but left the old file).
+- **`--format xml`** — it never matured past the "warns and falls back to
+  JSON" state noted above; dropped entirely rather than shipped half-working.
+  `--format` now accepts `json`, `csv`, `console`, or `all`.
 
 ### Architecture (post-1.0 work documented but not landed)
 
@@ -307,8 +310,6 @@ Known refactor targets, documented on the docs site:
 
 ### Known limitations
 
-- **`--format xml`** parses but isn't implemented per-protocol — the CLI warns
-  and falls back to JSON.
 - **mypy** reports thousands of errors and is not a CI gate; the KNX scanner
   cluster has the most concentrated drift.
 - **109 pcap listeners**, 28 without a dedicated test file.

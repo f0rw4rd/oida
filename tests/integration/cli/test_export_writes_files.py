@@ -2,7 +2,7 @@
 
 CODE_REVIEW.md / TEST_GAP_AUDIT.md §−1 deferred item: 5+ protocols
 silently produced zero files when the operator passed `-o out/` without
-`-f json|csv|xml`. The root cause was format defaulting to "console"
+`-f json|csv`. The root cause was format defaulting to "console"
 which writes nothing to disk.
 
 The actual file-writing contract lives at the framework layer in
@@ -82,7 +82,7 @@ class TestExportResultsContract(unittest.TestCase):
 
     def test_all_writes_json_and_csv(self):
         export_results(_sample_results(), self.tmp, "all", "modbus")
-        self.assertEqual(self._files(), sorted(["modbus.csv", "modbus.json", "modbus.xml"]))
+        self.assertEqual(self._files(), sorted(["modbus.csv", "modbus.json"]))
 
     def test_console_writes_no_files(self):
         """The bug class: -o out/ alone (default format=console) writes
