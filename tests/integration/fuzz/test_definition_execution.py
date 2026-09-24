@@ -42,6 +42,22 @@ def _get_request_names(protocol_name):
     return [r.name for r in fuzzer_class.get_request_definitions()]
 
 
+def _get_request_categories(protocol_name):
+    """Map request definition name -> category for a protocol without instantiating."""
+    from oida.fuzz.protocols import PROTOCOL_FUZZERS
+
+    fuzzer_class = PROTOCOL_FUZZERS.get(protocol_name)
+    if not fuzzer_class:
+        return {}
+    return {r.name: r.category for r in fuzzer_class.get_request_definitions()}
+
+
+# Connectivity-only sanity checks: these are deliberately built from static,
+# non-fuzzable fields (they exist to confirm the target speaks the protocol at
+# all, not to mutate it), so they never send a mutated test case by design.
+_NON_FUZZING_CATEGORIES = {"baseline", "quick"}
+
+
 # ============================================================================
 # Modbus
 # ============================================================================
@@ -97,6 +113,7 @@ class TestModbusDefinitionExecution:
 # ============================================================================
 
 OPCUA_REQUESTS = _get_request_names("opcua")
+OPCUA_CATEGORIES = _get_request_categories("opcua")
 
 
 class TestOPCUADefinitionExecution:
@@ -140,6 +157,9 @@ class TestOPCUADefinitionExecution:
             if fuzzer is None:
                 pytest.skip(f"Could not construct OPC UA fuzzer for '{request_name}'")
 
+            if OPCUA_CATEGORIES.get(request_name) in _NON_FUZZING_CATEGORIES:
+                return
+
             assert fuzzer.session.total_mutant_index > 0, (
                 f"OPC UA request definition '{request_name}' never sent a single "
                 "mutated test case to the mock server"
@@ -151,6 +171,7 @@ class TestOPCUADefinitionExecution:
 # ============================================================================
 
 IEC104_REQUESTS = _get_request_names("iec104")
+IEC104_CATEGORIES = _get_request_categories("iec104")
 
 
 class TestIEC104DefinitionExecution:
@@ -189,6 +210,9 @@ class TestIEC104DefinitionExecution:
 
             if fuzzer is None:
                 pytest.skip(f"Could not construct IEC 104 fuzzer for '{request_name}'")
+
+            if IEC104_CATEGORIES.get(request_name) in _NON_FUZZING_CATEGORIES:
+                return
 
             assert fuzzer.session.total_mutant_index > 0, (
                 f"IEC 104 request definition '{request_name}' never sent a single "

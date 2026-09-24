@@ -7,10 +7,10 @@ directory-traversal-safe path handling).
 """
 
 import os
-from typing import Optional
+from typing import Any, Optional
 
 
-def parse_bool(value):
+def parse_bool(value: Any) -> bool:
     """Parse a value into a boolean.
 
     Accepts bool, string ('true'/'yes'/'y'/'1' -> True), else False.

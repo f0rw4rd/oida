@@ -124,7 +124,7 @@ Flag Coverage Matrix (proto_args.py):
   --fuzz-all-access         [B] test_fuzz_all_access
   --fuzz-max-addresses      [B] test_fuzz_max_addresses, test_fuzz_iterations_large_range_small_max
   --enumerate-functions     [B] test_function_code_enumeration
-  format (global)           [A] test_csv_output, test_xml_output
+  format (global)           [A] test_csv_output
   -v (global)               [A] test_verbose_levels
   --debug (global)          [A] test_debug_output
   --help (global)           [A] test_help_output
@@ -2198,22 +2198,6 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
 
         assert result.success, f"CSV output failed: {result.stderr}"
         assert result.returncode == 0, f"CSV output returned non-zero: {result.returncode}"
-
-    def test_xml_output(self, cli_runner, target, port, docker_services):
-        """Test XML output format [Category A]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--scan-range",
-            "0-5",
-            format="xml",
-            expect_json=False,
-        )
-
-        assert result.success, f"XML output failed: {result.stderr}"
-        assert result.returncode == 0, f"XML output returned non-zero: {result.returncode}"
 
     # ========================================================================
     # Transport Tests

@@ -989,12 +989,14 @@ class MMSFuzzer(BaseFuzzer):
             # Wrap the MMS PDU in TPKT + COTP headers
             wrapped_pdu = wrap_in_tpkt_cotp(mms_pdu)
             return Request(
-                name=name, children=(Static(name=f"{name}_wrapped_pdu", default_value=wrapped_pdu))
+                name=name,
+                children=(SmartBytes(name=f"{name}_wrapped_pdu", default_value=wrapped_pdu)),
             )
         else:
             # Legacy mode: send raw MMS PDU
             return Request(
-                name=name, children=(Static(name=f"{name}_raw_pdu", default_value=mms_pdu))
+                name=name,
+                children=(SmartBytes(name=f"{name}_raw_pdu", default_value=mms_pdu)),
             )
 
     def _add_osi_layer_tests(self):

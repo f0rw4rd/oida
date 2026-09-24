@@ -238,17 +238,46 @@ def get_server_frames(host: str, port: int) -> List[Dict]:
 
 
 def get_server_errors(host: str, port: int) -> List[Dict]:
-    """Fetch error log from validation server using HTTP/2."""
+    """Fetch the (size-bounded, most-recent) error log entries from the validation server.
+
+    The server also tracks a monotonic total error count that is never
+    truncated; use `get_server_error_count()` to detect "was a new error
+    logged" rather than comparing `len()` of this bounded list, which can
+    plateau once the server has logged more errors than it keeps details for.
+    """
     conn = HTTP2Connection(host, port, use_tls=False)
     if not conn.connect():
         return []
     try:
         body = conn.http2_get("/.well-known/h2/errors", stream_id=99)
         if body:
-            return json.loads(body.decode("utf-8"))
+            payload = json.loads(body.decode("utf-8"))
+            if isinstance(payload, dict):
+                return payload.get("errors", [])
+            return payload
         return []
     except Exception:
         return []
+    finally:
+        conn.close()
+
+
+def get_server_error_count(host: str, port: int) -> int:
+    """Fetch the monotonic total protocol-error count from the validation server."""
+    conn = HTTP2Connection(host, port, use_tls=False)
+    if not conn.connect():
+        return 0
+    try:
+        body = conn.http2_get("/.well-known/h2/errors", stream_id=99)
+        if body:
+            payload = json.loads(body.decode("utf-8"))
+            if isinstance(payload, dict) and "total_error_count" in payload:
+                return payload["total_error_count"]
+            if isinstance(payload, list):
+                return len(payload)
+        return 0
+    except Exception:
+        return 0
     finally:
         conn.close()
 
@@ -553,16 +582,14 @@ class TestHTTP2ProtocolViolations:
 
     def assert_protocol_error_logged(self, h2_port, before: int) -> None:
         """The server must have recorded a new protocol error since `before`."""
-        errors = get_server_errors(MOCK_HOST, h2_port)
-        assert isinstance(errors, list)
-        assert len(errors) > before, (
-            "server did not record a protocol error for the invalid frame: "
-            f"{before} -> {len(errors)}"
+        after = get_server_error_count(MOCK_HOST, h2_port)
+        assert after > before, (
+            f"server did not record a protocol error for the invalid frame: {before} -> {after}"
         )
 
     def test_invalid_stream_id_for_ping(self, h2_conn, h2_port):
         """Test PING on non-zero stream (protocol violation)."""
-        before = len(get_server_errors(MOCK_HOST, h2_port))
+        before = get_server_error_count(MOCK_HOST, h2_port)
         ping_data = b"\x00" * 8
         frame = create_frame(FRAME_PING, 0, 1, ping_data)  # Stream 1 is invalid for PING
         h2_conn.send_frame(frame)
@@ -573,7 +600,7 @@ class TestHTTP2ProtocolViolations:
 
     def test_settings_on_nonzero_stream(self, h2_conn, h2_port):
         """Test SETTINGS on non-zero stream (protocol violation)."""
-        before = len(get_server_errors(MOCK_HOST, h2_port))
+        before = get_server_error_count(MOCK_HOST, h2_port)
         frame = create_frame(FRAME_SETTINGS, 0, 1, b"")  # Stream 1 is invalid
         h2_conn.send_frame(frame)
 
@@ -583,7 +610,7 @@ class TestHTTP2ProtocolViolations:
 
     def test_data_on_stream_zero(self, h2_conn, h2_port):
         """Test DATA on stream 0 (protocol violation)."""
-        before = len(get_server_errors(MOCK_HOST, h2_port))
+        before = get_server_error_count(MOCK_HOST, h2_port)
         frame = create_frame(FRAME_DATA, FLAG_END_STREAM, 0, b"invalid")
         h2_conn.send_frame(frame)
 
@@ -593,7 +620,7 @@ class TestHTTP2ProtocolViolations:
 
     def test_window_update_zero_increment(self, h2_conn, h2_port):
         """Test WINDOW_UPDATE with zero increment (protocol violation)."""
-        before = len(get_server_errors(MOCK_HOST, h2_port))
+        before = get_server_error_count(MOCK_HOST, h2_port)
         increment = struct.pack(">I", 0)  # Zero increment is invalid
         frame = create_frame(FRAME_WINDOW_UPDATE, 0, 0, increment)
         h2_conn.send_frame(frame)

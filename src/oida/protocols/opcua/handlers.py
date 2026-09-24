@@ -6,11 +6,13 @@ OPC UA Event and Data Change Handlers
 This module provides handler classes for OPC UA subscriptions and events.
 """
 
+from typing import Any
+
 
 class DataChangeHandler:
     """Handler for subscription data changes"""
 
-    def __init__(self, logger):
+    def __init__(self, logger: Any):
         self.logger = logger
         self.changes = []
 

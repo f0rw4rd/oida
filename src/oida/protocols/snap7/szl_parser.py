@@ -186,7 +186,7 @@ class SZLParser:
     @staticmethod
     def _parse_0x0132(data: bytes, index: int) -> Dict[str, Any]:
         """Parse protection level SZL (0x0132 index 4)"""
-        result = {"szl_id": "0x0132", "index": index}
+        result: Dict[str, Any] = {"szl_id": "0x0132", "index": index}
         try:
             if index == 4 and len(data) >= 12:
                 result["sch_schal"] = data[2]

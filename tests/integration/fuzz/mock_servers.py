@@ -572,7 +572,7 @@ def _mms_handler(conn, addr, stop_event, handle):
                         app_data = body[data_start:]
                         if app_data and app_data[0] == 0xA8:  # MMS Initiate-Request
                             # Send MMS Initiate-Response wrapped in TPKT/COTP
-                            mms_resp = bytes(
+                            mms_initiate_resp = bytes(
                                 [
                                     0xA9,
                                     0x1A,  # MMS Initiate-Response tag + length
@@ -603,6 +603,31 @@ def _mms_handler(conn, addr, stop_event, handle):
                                     0x01,  # proposedParameterCBB
                                 ]
                             )
+                            # Real MMS associations run over ACSE: the Initiate-ResponsePDU
+                            # is carried as user-information inside an AARE-apdu (tag 0x61).
+                            # Callers detect a successful association by that 0x61 tag, so it
+                            # must be present even in this minimal mock.
+                            mms_abstract_syntax_oid = bytes(
+                                [0x06, 0x05, 0x28, 0xCA, 0x22, 0x02, 0x03]
+                            )
+                            single_asn1_type = (
+                                bytes([0xA0, len(mms_initiate_resp)]) + mms_initiate_resp
+                            )
+                            external = mms_abstract_syntax_oid + single_asn1_type
+                            user_info_field = bytes([0x28, len(external)]) + external
+                            user_information = bytes([0xBE, len(user_info_field)]) + user_info_field
+                            application_context = bytes([0xA1, 0x07]) + mms_abstract_syntax_oid
+                            result = bytes([0xA2, 0x03, 0x02, 0x01, 0x00])  # accepted
+                            result_source_diagnostic = bytes(
+                                [0xA3, 0x05, 0xA1, 0x03, 0x02, 0x01, 0x00]
+                            )
+                            aare_content = (
+                                application_context
+                                + result
+                                + result_source_diagnostic
+                                + user_information
+                            )
+                            mms_resp = bytes([0x61, len(aare_content)]) + aare_content
                             cotp_dt = bytes([0x02, 0xF0, 0x80])
                             total_len = 4 + len(cotp_dt) + len(mms_resp)
                             tpkt_resp = bytes([0x03, 0x00]) + struct.pack(">H", total_len)

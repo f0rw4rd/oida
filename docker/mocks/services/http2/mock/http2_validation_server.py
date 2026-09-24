@@ -225,7 +225,11 @@ class HTTP2ValidationServer:
 
     def _diagnostic_json(self, path: str) -> bytes:
         """Build the JSON body for a diagnostic / echo path (shared by h2 + h1)."""
-        max_events = 100
+        # Kept small enough that the JSON body reliably fits inside a single
+        # default HTTP/2 flow-control window (65535 bytes): clients that
+        # never send WINDOW_UPDATE (e.g. minimal test clients) would
+        # otherwise see the response stall and truncate.
+        max_events = 25
         if path == "/.well-known/h2/state":
             payload = {
                 "server": "http2-python-validation",
@@ -235,7 +239,16 @@ class HTTP2ValidationServer:
         elif path == "/.well-known/h2/frames":
             payload = [e.to_dict() for e in list(self.frame_events)[-max_events:]]
         elif path == "/.well-known/h2/errors":
-            payload = [e.to_dict() for e in list(self.protocol_errors)[-max_events:]]
+            # self.stats["protocol_errors"] is a monotonic counter that is
+            # never truncated, unlike the bounded `errors` list below (which
+            # only ever holds the most recent max_events entries once the
+            # server has logged more than that over its lifetime). Clients
+            # that need to detect "did a new error just get logged" must
+            # compare total_error_count, not len(errors).
+            payload = {
+                "total_error_count": self.stats["protocol_errors"],
+                "errors": [e.to_dict() for e in list(self.protocol_errors)[-max_events:]],
+            }
         elif path == "/.well-known/h2/hpack":
             payload = self.hpack_state
         else:
@@ -660,8 +673,11 @@ class HTTP2ValidationServer:
         path: str,
     ):
         """Handle diagnostic endpoint requests."""
-        # Limit results to prevent huge responses
-        max_events = 100
+        # Kept small enough that the JSON body reliably fits inside a single
+        # default HTTP/2 flow-control window (65535 bytes): clients that
+        # never send WINDOW_UPDATE (e.g. minimal test clients) would
+        # otherwise see the response stall and truncate.
+        max_events = 25
 
         if path == "/.well-known/h2/state":
             body = json.dumps(
@@ -677,9 +693,20 @@ class HTTP2ValidationServer:
             recent_events = list(self.frame_events)[-max_events:]
             body = json.dumps([e.to_dict() for e in recent_events], indent=2)
         elif path == "/.well-known/h2/errors":
-            # Return most recent errors only
+            # self.stats["protocol_errors"] is a monotonic counter that is
+            # never truncated, unlike `errors` below (which only ever holds
+            # the most recent max_events entries once the server has logged
+            # more than that over its lifetime). Clients that need to detect
+            # "was a new error just logged" must compare total_error_count,
+            # not len(errors).
             recent_errors = list(self.protocol_errors)[-max_events:]
-            body = json.dumps([e.to_dict() for e in recent_errors], indent=2)
+            body = json.dumps(
+                {
+                    "total_error_count": self.stats["protocol_errors"],
+                    "errors": [e.to_dict() for e in recent_errors],
+                },
+                indent=2,
+            )
         elif path == "/.well-known/h2/hpack":
             body = json.dumps(self.hpack_state, indent=2)
         else:

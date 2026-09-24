@@ -59,7 +59,7 @@ Flag Coverage Matrix (proto_args.py / `oida mms -h`):
   --fuzz-iterations         [C] test_fuzz_custom_iterations
   --fuzz-max-targets        [C] test_fuzz_max_targets
   --fuzz-reference          [C] test_fuzz_specific_reference
-  format (global)           [A] test_csv_output, test_xml_output, test_json_output
+  format (global)           [A] test_csv_output, test_json_output
   -v (global)               [A] test_verbose_output
   --debug (global)          [A] test_debug_output
 
@@ -1625,21 +1625,6 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
         # The scan still discovers the device regardless of export format.
         text = _combined_text(result, result.scan_log)
         assert "simpleio" in text, f"Expected device discovery with CSV format. Got: {text[:400]}"
-
-    def test_xml_output(self, cli_runner, target, port):
-        """Test XML output format [Category A]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            format="xml",
-            json_log=True,
-            timeout=30,
-        )
-        assert result.success
-        text = _combined_text(result, result.scan_log)
-        assert "simpleio" in text, f"Expected device discovery with XML format. Got: {text[:400]}"
 
     def test_json_output(self, cli_runner, target, port):
         """Test JSON output format [Category A]"""

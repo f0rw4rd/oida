@@ -291,8 +291,11 @@ class TestHTTP2MockService:
             with urllib.request.urlopen(req, timeout=5) as resp:
                 data = json.loads(resp.read().decode("utf-8"))
 
-                # Should be a list (possibly empty)
-                assert isinstance(data, list), "Expected list of errors"
+                # Should be an object with a monotonic total count plus a
+                # size-bounded list of the most recent error entries.
+                assert isinstance(data, dict), "Expected error log object"
+                assert isinstance(data.get("total_error_count"), int)
+                assert isinstance(data.get("errors"), list)
 
         except (urllib.error.URLError, http.client.BadStatusLine) as e:
             require_service(f"Could not connect to HTTP/2 Python server: {e}")
