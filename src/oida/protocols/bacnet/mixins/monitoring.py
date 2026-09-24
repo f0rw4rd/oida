@@ -5,7 +5,7 @@ Handles schedules, calendars, alarms, trendlogs, priority arrays, and life safet
 """
 
 import asyncio
-from ..constants import _load_bacpypes3, CONTROL_POINT_TYPES
+from oida.protocols.bacnet.constants import _load_bacpypes3, CONTROL_POINT_TYPES
 
 
 class _UnraisableSentinel(BaseException):

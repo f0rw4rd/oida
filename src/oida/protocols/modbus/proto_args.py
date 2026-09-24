@@ -5,8 +5,8 @@ This module registers Modbus-specific command-line arguments
 following the NXC pattern.
 """
 
-from ...utils.cli import bounded_int
-from ...utils.proto_args_factory import (
+from oida.utils.cli import bounded_int
+from oida.utils.proto_args_factory import (
     create_protocol_parser,
     add_network_options,
     add_serial_options,

@@ -15,20 +15,20 @@ from typing import Any, List
 
 from boofuzz import Block, Byte, Bytes, Delim, Group, Request, Size, Static, Word
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..core.session.state_context import StateContext
-from ..core.session.sequence import SequenceConfig, SequenceDirection
-from ..core.session.state_machine import ProtocolState, StateMachine, StateType
-from ..monitors import SocketHealthMonitor
-from ..primitives.asn1 import (
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.core.session.state_context import StateContext
+from oida.fuzz.core.session.sequence import SequenceConfig, SequenceDirection
+from oida.fuzz.core.session.state_machine import ProtocolState, StateMachine, StateType
+from oida.fuzz.monitors import SocketHealthMonitor
+from oida.fuzz.primitives.asn1 import (
     encode_ber_context_tag,
     encode_ber_integer,
     encode_ber_length,
     encode_ber_visible_string,
 )
-from ..primitives.dynamic import SmartBytes, SmartString, StringContext
-from ..primitives.osi import MMSStackBuilder, TPKTCOTPBuilder, wrap_in_tpkt_cotp
+from oida.fuzz.primitives.dynamic import SmartBytes, SmartString, StringContext
+from oida.fuzz.primitives.osi import MMSStackBuilder, TPKTCOTPBuilder, wrap_in_tpkt_cotp
 
 import logging
 

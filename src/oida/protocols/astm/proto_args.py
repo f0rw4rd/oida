@@ -5,7 +5,7 @@ This module registers ASTM E1381/E1394 (CLSI LIS01/LIS02) specific
 command-line arguments for the laboratory information system protocol.
 """
 
-from ...utils.proto_args_factory import (
+from oida.utils.proto_args_factory import (
     create_protocol_parser,
     add_target_argument,
     add_network_options,

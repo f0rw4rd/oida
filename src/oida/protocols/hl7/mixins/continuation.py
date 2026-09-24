@@ -13,8 +13,8 @@ from typing import List, Optional
 from hl7apy.core import Message, Segment
 from hl7apy.parser import parse_message
 
-from ..segments import HL7SegmentParser
-from ._helpers import populate_msh
+from oida.protocols.hl7.segments import HL7SegmentParser
+from oida.protocols.hl7.mixins._helpers import populate_msh
 
 # Hard cap on continuation rounds so a misbehaving/hostile server that keeps
 # returning a DSC pointer can't drive an unbounded request loop.

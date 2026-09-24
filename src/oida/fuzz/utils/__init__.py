@@ -2,7 +2,7 @@
 
 import subprocess
 
-from ...utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger
 
 _log = get_logger("FUZZ", "utils", 0)
 

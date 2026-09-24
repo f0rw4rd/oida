@@ -18,7 +18,7 @@ Usage:
 
 from boofuzz import helpers
 from boofuzz.fuzzable import Fuzzable
-from ..core.mutation import NativeRadamsaMutator, get_mutation_seed
+from oida.fuzz.core.mutation import NativeRadamsaMutator, get_mutation_seed
 
 
 class RadamsaString(Fuzzable):

@@ -4,11 +4,11 @@ from typing import List, Optional
 
 from boofuzz import Block, Byte, DWord, Group, Request, Size, Static
 
-from ..core.codecs.asn1 import ASN1Builder, ber_content
-from ..primitives.asn1 import encode_ber_object_identifier
-from ..primitives.asn1_blocks import BERSize, encode_length as _encode_ber_length
-from ..primitives.dynamic import SmartBytes, SmartString
-from ..primitives.smart_string import StringContext
+from oida.fuzz.core.codecs.asn1 import ASN1Builder, ber_content
+from oida.fuzz.primitives.asn1 import encode_ber_object_identifier
+from oida.fuzz.primitives.asn1_blocks import BERSize, encode_length as _encode_ber_length
+from oida.fuzz.primitives.dynamic import SmartBytes, SmartString
+from oida.fuzz.primitives.smart_string import StringContext
 
 # Shared ASN.1/BER builder driving the structured codec mutators (see
 # structured_ber_varbind_values below).

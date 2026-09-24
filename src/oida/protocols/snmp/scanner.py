@@ -16,19 +16,13 @@ import os
 import time
 from typing import Any, Dict
 
-from ...utils import (
-    NetworkScanner,
-)
-from ...utils.lazy_import import lazy_import
-from ...utils.export_utils import export_table, configure as configure_export
+from oida.utils import NetworkScanner
+from oida.utils.lazy_import import lazy_import
+from oida.utils.export_utils import export_table, configure as configure_export
 
-from .constants import (
-    SNMP_OIDS,
-    VENDOR_OIDS,
-    ENUM_CATEGORIES,
-)
+from oida.protocols.snmp.constants import SNMP_OIDS, VENDOR_OIDS, ENUM_CATEGORIES
 
-from .mixins import (
+from oida.protocols.snmp.mixins import (
     BruteForceMixin,
     VersionDetectionMixin,
     WriteAccessMixin,
@@ -133,7 +127,7 @@ class SNMPScanner(
             )
         else:
             # Auto-detect file: if auth_value is a readable file, load communities
-            from ...utils.default_credentials import parse_credential_input
+            from oida.utils.default_credentials import parse_credential_input
 
             values, is_file = parse_credential_input(auth_value)
             if is_file:
@@ -335,7 +329,7 @@ class SNMPScanner(
     def run_scan(self) -> Dict[str, Any]:
         """Override run_scan to support brute, comma-separated -C, and raw queries."""
         if not self.check_dependencies():
-            from ...utils import ics_logger as _log
+            from oida.utils import ics_logger as _log
 
             _log.log_error(f"Missing dependencies for {self.get_protocol_name()} scanner")
             return {"error": "missing_dependencies"}
@@ -393,7 +387,7 @@ class SNMPScanner(
                     self.logger.fail("--enum-users requires --confirm (active probing)")
                     return results
                 self.version = "3"  # --enum-users implies SNMPv3
-                from ...utils.default_credentials import SNMP_V3_USERNAMES, parse_credential_input
+                from oida.utils.default_credentials import SNMP_V3_USERNAMES, parse_credential_input
 
                 if self.username:
                     usernames, _ = parse_credential_input(self.username)
@@ -443,7 +437,7 @@ class SNMPScanner(
                 # against each hit) -- not a single-credential test.
                 is_single_credential = False
                 if self.auth_pass and self.enum_v3_target_user:
-                    from ...utils.default_credentials import parse_credential_input
+                    from oida.utils.default_credentials import parse_credential_input
 
                     _pw_list, _ = parse_credential_input(self.auth_pass)
                     _user_list, _user_is_file = parse_credential_input(self.enum_v3_target_user)
@@ -617,7 +611,7 @@ class SNMPScanner(
             return results
 
         except Exception as e:
-            from ...utils import ics_logger as _log
+            from oida.utils import ics_logger as _log
 
             _log.log_exc(f"Error during {self.get_protocol_name()} scan")
             results.setdefault("error", str(e))
@@ -697,7 +691,7 @@ class SNMPScanner(
 
     async def _async_discover(self, engine, auth_data, transport, context) -> Dict:
         """Async implementation of single-target SNMP discovery."""
-        from ._oid_fetch import fetch_oid_values
+        from oida.protocols.snmp._oid_fetch import fetch_oid_values
 
         # Get basic system info
         sys_info = await fetch_oid_values(
@@ -771,7 +765,7 @@ def scan_targets(targets, **kwargs):
     Returns:
         Dict mapping IP -> result dict
     """
-    from ...utils import ics_logger as _log
+    from oida.utils import ics_logger as _log
 
     results = {}
     for target in targets:

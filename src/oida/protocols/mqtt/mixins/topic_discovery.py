@@ -10,7 +10,7 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Set
 
-from ..scanner import COMMON_TOPICS, MQTTMessage
+from oida.protocols.mqtt.scanner import COMMON_TOPICS, MQTTMessage
 
 import logging
 

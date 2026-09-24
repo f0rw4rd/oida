@@ -12,12 +12,12 @@ Mixins:
     - FuzzMixin: C-FIND fuzzing
 """
 
-from .cfind import CFindMixin
-from .operations import OperationsMixin
-from .enumeration import EnumerationMixin
-from .reporting import ReportingMixin
-from .worklist import WorklistMixin
-from .fuzz import FuzzMixin
+from oida.protocols.dicom.mixins.cfind import CFindMixin
+from oida.protocols.dicom.mixins.operations import OperationsMixin
+from oida.protocols.dicom.mixins.enumeration import EnumerationMixin
+from oida.protocols.dicom.mixins.reporting import ReportingMixin
+from oida.protocols.dicom.mixins.worklist import WorklistMixin
+from oida.protocols.dicom.mixins.fuzz import FuzzMixin
 
 __all__ = [
     "CFindMixin",

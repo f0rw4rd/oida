@@ -19,16 +19,13 @@ plus its accessor. Everything else is imported directly from the submodules.
 
 # Re-export from helpers (asyncua is the mock.patch anchor used by the scanner
 # tests via oida.protocols.opcua.asyncua).
-from .helpers import (
-    asyncua,
-    _get_asyncua,
-)
+from oida.protocols.opcua.helpers import asyncua, _get_asyncua
 
 # Re-export from scanner
-from .scanner import OPCUAScanner
+from oida.protocols.opcua.scanner import OPCUAScanner
 
 # Re-export from cli_runner (loader resolves the protocol class by name)
-from .cli_runner import opcua
+from oida.protocols.opcua.cli_runner import opcua
 
 # Define __all__ for explicit exports
 __all__ = [

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 import asyncio
 
-from .conftest import (
+from tests.unit.snmp.conftest import (
     FakeVarBind,
     get_router,
     make_walk,
@@ -607,7 +607,7 @@ class TestQueryVendorOids:
         first_oid = next(iter(VENDOR_SPECIFIC_OIDS[vendor].values()))
 
         async def get(*args, **kwargs):
-            from .conftest import _base_oid_from_args
+            from tests.unit.snmp.conftest import _base_oid_from_args
 
             base = _base_oid_from_args(args)
             if base == first_oid:

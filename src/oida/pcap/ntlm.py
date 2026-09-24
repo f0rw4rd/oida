@@ -22,10 +22,8 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import (
-    is_valid_discovered_ip,
-)
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip
 
 # NTLM message types
 NTLMSSP_TYPE2 = 2  # Challenge (0x00000002)

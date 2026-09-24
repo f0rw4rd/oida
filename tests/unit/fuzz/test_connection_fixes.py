@@ -117,7 +117,7 @@ class TestRawSocketTimeout:
     """RawSocketConnection must set a socket timeout so recv() can't block."""
 
     def test_open_applies_timeout_icmp(self):
-        from src.oida.fuzz.core.connections.raw_socket import RawSocketConnection
+        from oida.fuzz.core.connections.raw_socket import RawSocketConnection
 
         fake = _FakeRawSock()
         conn = RawSocketConnection("127.0.0.1", protocol="icmp", timeout=1.5)
@@ -126,7 +126,7 @@ class TestRawSocketTimeout:
         assert conn._sock.gettimeout() == 1.5
 
     def test_open_applies_timeout_raw(self):
-        from src.oida.fuzz.core.connections.raw_socket import RawSocketConnection
+        from oida.fuzz.core.connections.raw_socket import RawSocketConnection
 
         fake = _FakeRawSock()
         conn = RawSocketConnection("127.0.0.1", protocol="raw", timeout=2.0)
@@ -135,7 +135,7 @@ class TestRawSocketTimeout:
         assert conn._sock.gettimeout() == 2.0
 
     def test_recv_returns_empty_on_timeout(self):
-        from src.oida.fuzz.core.connections.raw_socket import RawSocketConnection
+        from oida.fuzz.core.connections.raw_socket import RawSocketConnection
 
         conn = RawSocketConnection("127.0.0.1", protocol="raw", timeout=0.1)
         conn._sock = _FakeRawSock()  # recvfrom() raises socket.timeout
@@ -144,9 +144,9 @@ class TestRawSocketTimeout:
         assert conn.recv() == b""
 
     def test_factory_wires_timeout_from_config(self):
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
-        from src.oida.fuzz.core.connections.raw_socket import RawSocketConnection
-        from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.connections.raw_socket import RawSocketConnection
+        from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 
         config = FuzzerConfig(target_ip="127.0.0.1", target_port=0, recv_timeout=3.0)
         config.protocol_type = ProtocolType.RAW
@@ -164,7 +164,7 @@ class TestResilientSendAll:
     """send() must deliver every byte despite short underlying writes."""
 
     def _make_conn(self):
-        from src.oida.fuzz.core.connections.tcp import ResilientTCPConnection
+        from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
         return ResilientTCPConnection("127.0.0.1", 502)
 
@@ -206,7 +206,7 @@ class TestStartDtHandshake:
     TESTFR_CON = b"\x68\x04\x83\x00\x00\x00"
 
     def _make_conn(self, segments):
-        from src.oida.fuzz.core.connections.tcp import IEC104SocketConnection
+        from oida.fuzz.core.connections.tcp import IEC104SocketConnection
 
         conn = IEC104SocketConnection("127.0.0.1", 2404)
         conn._sock = _SegmentedSock(segments)
@@ -251,7 +251,7 @@ class TestResetSurfacing:
             return b""
 
     def _make_conn(self):
-        from src.oida.fuzz.core.connections.tcp import ResilientTCPConnection
+        from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
         conn = ResilientTCPConnection("127.0.0.1", 502)
         conn.set_resilient(True)

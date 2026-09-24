@@ -58,11 +58,8 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import (
-    is_valid_discovered_ip,
-    lookup_mac_vendor,
-)
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 # IEEE C37.118 Frame Types (from synphasor.frtype, shifted)
 # The frtype field has mask 0x70, so values are 0x00-0x70 in steps of 0x10

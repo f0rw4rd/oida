@@ -3,14 +3,14 @@
 from enum import IntEnum
 
 from boofuzz import BitField, Block, DWord, Group, Request, Size, Static, Word
-from ..core.connections import CountingUDPConnection as UDPSocketConnection
+from oida.fuzz.core.connections import CountingUDPConnection as UDPSocketConnection
 
 from typing import List
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig
-from ..primitives.dynamic import SmartString
-from ..primitives.smart_string import StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig
+from oida.fuzz.primitives.dynamic import SmartString
+from oida.fuzz.primitives.smart_string import StringContext
 
 
 class DNSType(IntEnum):
@@ -108,7 +108,7 @@ class MDNSFuzzer(BaseFuzzer):
 
     def setup_custom_monitors(self) -> list:
         """Setup mDNS-specific monitoring with DNS query comparison"""
-        from ..monitors import DNSQueryMonitor
+        from oida.fuzz.monitors import DNSQueryMonitor
 
         mdns_monitor = DNSQueryMonitor(
             host=self.config.target_ip,

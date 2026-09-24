@@ -5,7 +5,7 @@ This module registers HART-specific command-line arguments using the
 central proto_args_factory functions for standard option groups.
 """
 
-from ...utils.proto_args_factory import (
+from oida.utils.proto_args_factory import (
     create_protocol_parser,
     add_target_argument,
     add_network_options,

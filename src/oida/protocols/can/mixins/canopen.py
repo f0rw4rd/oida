@@ -18,8 +18,8 @@ Handles CANopen (CiA 301) protocol operations:
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
-from ....utils.export_utils import export_table
-from ..constants import (
+from oida.utils.export_utils import export_table
+from oida.protocols.can.constants import (
     CANOPEN_DEVICE_PROFILES,
     CANOPEN_EMCY_CODES,
     CANOPEN_ERR_REGISTER_BITS,
@@ -56,7 +56,7 @@ from ..constants import (
 
 def _get_python_can():
     """Resolve _python_can from scanner module (avoids circular import)."""
-    from ..scanner import _python_can
+    from oida.protocols.can.scanner import _python_can
 
     return _python_can
 

@@ -15,7 +15,7 @@ observed a crash at all, and otherwise trust the manager's de-bounced count.
 
 from types import SimpleNamespace
 
-from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
+from oida.fuzz.core.base_fuzzer import BaseFuzzer
 
 
 def _monitor(**kw):

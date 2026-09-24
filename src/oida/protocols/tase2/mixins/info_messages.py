@@ -69,7 +69,7 @@ class InfoMessagesMixin(_ScannerBase):
             List of IM store info dicts with name, info_reference, local_reference,
             scope, max_messages, current_count, storage_status
         """
-        from ..scanner import TASE2IMScope, TASE2IMStorageStatus
+        from oida.protocols.tase2.scanner import TASE2IMScope, TASE2IMStorageStatus
 
         stores = []
 
@@ -351,7 +351,7 @@ class InfoMessagesMixin(_ScannerBase):
         Returns:
             List of security concerns
         """
-        from ..scanner import TASE2IMStorageStatus
+        from oida.protocols.tase2.scanner import TASE2IMStorageStatus
 
         concerns = []
 

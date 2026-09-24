@@ -26,22 +26,22 @@ import struct
 import ipaddress
 from typing import Dict, List, Any, Optional
 
-from ...utils.ics_logger import get_module_logger
+from oida.utils.ics_logger import get_module_logger
 
 _logger = get_module_logger(__name__)
 
 # Import from scanner module (Layer 1 - traditional scanner pattern)
-from .scanner import (
+from oida.protocols.ethernetip.scanner import (
     EtherNetIPScanner,
     dependencies_missing,
     protocol_options,
 )
 
 # Shared broadcast-response collection loop
-from .broadcast_common import collect_list_identity_responses
+from oida.protocols.ethernetip.broadcast_common import collect_list_identity_responses
 
 # Import from attacks module
-from .attacks import (
+from oida.protocols.ethernetip.attacks import (
     ATTACK_STOPCPU_PAYLOAD,
     ATTACK_CRASHCPU_PAYLOAD,
     ATTACK_CRASHETHER_PAYLOAD,
@@ -50,7 +50,7 @@ from .attacks import (
 )
 
 # Import from constants module
-from .constants import (
+from oida.protocols.ethernetip.constants import (
     ENIP_CMD_LIST_SERVICES,
     ENIP_CMD_LIST_IDENTITY,
     ENIP_CMD_LIST_INTERFACES,
@@ -62,10 +62,10 @@ from .constants import (
 )
 
 # Shared packet parsers
-from .parsers import parse_list_identity
+from oida.protocols.ethernetip.parsers import parse_list_identity
 
 # Import NXC-style callable class (Layer 2 - NXC pattern)
-from .cli_runner import ethernetip
+from oida.protocols.ethernetip.cli_runner import ethernetip
 
 
 def broadcast_discovery(

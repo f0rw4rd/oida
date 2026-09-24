@@ -18,24 +18,18 @@ else, import directly from the relevant submodule:
     from oida.utils.default_credentials import load_credentials
 """
 
-from .base_scanner import (
-    BaseScanner,
-    NetworkScanner,
-    SerialScanner,
-)
-from .protocol_helpers import (
+from oida.utils.base_scanner import BaseScanner, NetworkScanner, SerialScanner
+from oida.utils.protocol_helpers import (
     ProtocolParser,
     SecurityAnalyzer,
     ProgressTracker,
     safe_int_conversion,
 )
-from .common_types import (
-    parse_bool,
-)
+from oida.utils.common_types import parse_bool
 
 # Legacy 'module' alias - some files import `module` from utils
 # and use module.log_exc(), module.warn(), etc.
-from . import ics_logger as module
+from oida.utils import ics_logger as module
 
 __all__ = [
     # Base scanner classes

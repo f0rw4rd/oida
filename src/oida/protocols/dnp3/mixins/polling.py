@@ -17,16 +17,16 @@ from __future__ import annotations
 import re as _re
 from typing import Any, Dict, TYPE_CHECKING
 
-from ..constants import (
+from oida.protocols.dnp3.constants import (
     KNOWN_ATTRIBUTES,
     SECURITY_RELEVANT_ATTRS,
     SECURITY_RELEVANT_ATTR_IDS,
     DNP3_GROUP_NAMES,
     _decode_flags,
 )
-from ....utils import ProgressTracker
-from ....utils.export_utils import export_table
-from ....utils.export_utils import configure as configure_export
+from oida.utils import ProgressTracker
+from oida.utils.export_utils import export_table
+from oida.utils.export_utils import configure as configure_export
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

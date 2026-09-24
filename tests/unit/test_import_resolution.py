@@ -5,12 +5,20 @@ Walks every `.py` under ``src/oida/``, finds every function-body
 resolves each against ``importlib.util.find_spec``. Fails the test on
 miss.
 
-Catches the **import-depth-crash** class of bugs: a mixin writes
-``from ...utils.X import Y`` (3 dots) but should be 4, because the
-mixin is one package deeper than the author thought. The module-import
-smoke tests pass because the import lives inside a function body and
-never runs at import time — the bug only fires the first time the
-feature is used in production.
+This used to catch the **import-depth-crash** class of bugs: a mixin
+writes ``from ...utils.X import Y`` (3 dots) but should be 4, because
+the mixin is one package deeper than the author thought. That class is
+now extinct by construction — ruff's TID252 (``ban-relative-imports =
+"all"``) means there are no dots left to miscount, and the depth
+arithmetic below found zero cases once the tree went absolute.
+
+What survives the switch is the reason the class was dangerous in the
+first place: the import lives inside a function body, so it never runs
+at import time and the module-import smoke tests pass regardless. An
+absolute lazy import naming a module that does not exist fails exactly
+as late and exactly as invisibly as a mis-dotted relative one did. So
+the walk now collects function-body ``from oida.… import …`` and
+resolves the target module.
 
 Sub-second runtime, no protocol dependencies required (every target
 in question is `oida.utils.*` or `oida.protocols.*` which are always
@@ -33,10 +41,17 @@ import pytest
 SRC_ROOT = pathlib.Path(__file__).resolve().parents[2] / "src" / "oida"
 
 
-def _collect_function_level_relative_imports():
-    """Walk every .py under src/oida, yield (file, lineno, level, module, pkg_parts)
-    for each ImportFrom that lives inside a function/method body and uses a
-    relative (dotted) import.
+def _collect_function_level_internal_imports():
+    """Walk every .py under src/oida, yield (file, lineno, module) for each
+    ImportFrom that lives inside a function/method body and targets an oida
+    module.
+
+    Relative imports are gone from the tree (ruff TID252), so there is no
+    level/pkg_parts arithmetic left to do: the module name on a function-body
+    `from oida.… import …` IS the absolute target. A relative one reappearing
+    is a lint failure, not this test's problem — but collect it anyway rather
+    than silently skipping, so a TID252 regression cannot make this walk go
+    quietly empty.
     """
     out = []
     for py in SRC_ROOT.rglob("*.py"):
@@ -50,45 +65,41 @@ def _collect_function_level_relative_imports():
             n for n in ast.walk(tree) if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
         ):
             for node in ast.walk(fn):
-                if isinstance(node, ast.ImportFrom) and node.level and node.module:
-                    out.append((str(py), node.lineno, node.level, node.module, pkg_parts))
+                if not isinstance(node, ast.ImportFrom) or not node.module:
+                    continue
+                if node.level:
+                    base = pkg_parts[: len(pkg_parts) - (node.level - 1)]
+                    out.append((str(py), node.lineno, ".".join(base + node.module.split("."))))
+                elif node.module.split(".")[0] == "oida":
+                    out.append((str(py), node.lineno, node.module))
     return out
 
 
-_IMPORT_CASES = _collect_function_level_relative_imports()
+_IMPORT_CASES = _collect_function_level_internal_imports()
 
 
 @pytest.mark.parametrize(
-    "path,lineno,level,module,pkg_parts",
+    "path,lineno,module",
     _IMPORT_CASES,
     ids=lambda v: str(v).rsplit("/", 1)[-1] if isinstance(v, str) else "",
 )
-def test_function_level_relative_import_resolves(
-    path: str, lineno: int, level: int, module: str, pkg_parts: list
-):
-    """Function-body `from ...x import y` must resolve to a real package.
+def test_function_level_internal_import_resolves(path: str, lineno: int, module: str):
+    """Function-body `from oida.x import y` must resolve to a real module.
 
-    Regression guard for the import-depth-crash class. Caught at original
-    sites: dicom/mixins/reporting.py:312 (3 dots, needs 4), knx/mixins/
-    properties.py:130 (same), opcua/mixins/fuzz.py:94, opcua/mixins/
-    credentials.py:310, dicom/mixins/fuzz.py:40, ocpp/mixins/security.py:54,
-    snap7/cli_runner.py:634+727 (level=4 exceeds depth 3).
+    Successor to the import-depth-crash guard. The original sites were
+    mis-dotted relative imports — dicom/mixins/reporting.py:312 (3 dots,
+    needs 4), knx/mixins/properties.py:130 (same), opcua/mixins/fuzz.py:94,
+    opcua/mixins/credentials.py:310, dicom/mixins/fuzz.py:40, ocpp/mixins/
+    security.py:54, snap7/cli_runner.py:634+727 (level=4 exceeds depth 3).
+    Absolute imports cannot get the depth wrong, but they can still name a
+    module that does not exist, and a lazy import fails just as late.
     """
-    assert level <= len(pkg_parts), (
-        f"{path}:{lineno}: relative level {level} exceeds package depth "
-        f"{len(pkg_parts)} (pkg_parts={pkg_parts})"
-    )
-    base = pkg_parts[: len(pkg_parts) - (level - 1)]
-    target = ".".join(base + module.split("."))
     try:
-        spec = importlib.util.find_spec(target)
+        spec = importlib.util.find_spec(module)
     except (ImportError, ModuleNotFoundError, ValueError) as exc:
-        pytest.fail(
-            f"{path}:{lineno}: `from {'.' * level}{module}` resolves to "
-            f"non-existent {target!r}: {exc}"
-        )
+        pytest.fail(f"{path}:{lineno}: `from {module} import …` is not importable: {exc}")
     assert spec is not None, (
-        f"{path}:{lineno}: `from {'.' * level}{module}` resolves to missing package {target!r}"
+        f"{path}:{lineno}: `from {module} import …` resolves to missing module {module!r}"
     )
 
 
@@ -96,7 +107,7 @@ def test_at_least_one_lazy_import_was_found():
     """Sanity check: if this test catches 0 lazy imports we have a parser bug,
     not a clean codebase. OIDA has many function-body lazy_import() patterns."""
     assert len(_IMPORT_CASES) >= 50, (
-        f"Only found {len(_IMPORT_CASES)} function-body relative imports — "
+        f"Only found {len(_IMPORT_CASES)} function-body internal imports — "
         "the AST walker is probably broken."
     )
 

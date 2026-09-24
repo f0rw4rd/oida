@@ -23,13 +23,13 @@ Features:
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any
 
-from ...utils import NetworkScanner
-from ...utils.lazy_import import lazy_import
-from .mixins import DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin
+from oida.utils import NetworkScanner
+from oida.utils.lazy_import import lazy_import
+from oida.protocols.hart.mixins import DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin
 
 _hartip = lazy_import("hartip", "HART")
 
-from .hartip import (
+from oida.protocols.hart.hartip import (
     HARTIPClient,
     HARTIP_UDP_PORT,
     get_device_type_name,

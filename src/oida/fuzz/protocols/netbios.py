@@ -18,10 +18,10 @@ from typing import List
 
 from boofuzz import Block, Byte, Group, Request, Static, Word
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import CountingUDPConnection as UDPSocketConnection
-from ..primitives.dynamic import SmartString
-from ..primitives.smart_string import StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.connections import CountingUDPConnection as UDPSocketConnection
+from oida.fuzz.primitives.dynamic import SmartString
+from oida.fuzz.primitives.smart_string import StringContext
 
 # NBNS QTYPEs (RFC 1002)
 NB = 0x0020  # general Name query

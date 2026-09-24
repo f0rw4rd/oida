@@ -127,9 +127,9 @@ import pytest
 
 from tests.service_gate import require_service
 
-from .base_protocol_test import BaseProtocolIntegrationTest
-from .cli_runner import CLIRunner
-from .conftest import MOCK_HOST, MOCK_PORTS
+from tests.integration.base_protocol_test import BaseProtocolIntegrationTest
+from tests.integration.cli_runner import CLIRunner
+from tests.integration.conftest import MOCK_HOST, MOCK_PORTS
 
 pytestmark = [pytest.mark.bacnet, pytest.mark.xdist_group("bacnet_service")]
 

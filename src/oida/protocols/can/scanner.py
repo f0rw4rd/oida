@@ -20,16 +20,10 @@ Functionality is split across mixin classes:
 
 from typing import Any, Dict
 
-from ...utils import (
-    SerialScanner,
-    parse_bool,
-)
-from ...utils.lazy_import import lazy_import
-from .constants import (
-    DEFAULT_BAUDRATE,
-    UDS_SERVICES,
-)
-from .mixins import CANopenMixin, ISOTPMixin, TrafficMixin, UDSMixin, XCPMixin
+from oida.utils import SerialScanner, parse_bool
+from oida.utils.lazy_import import lazy_import
+from oida.protocols.can.constants import DEFAULT_BAUDRATE, UDS_SERVICES
+from oida.protocols.can.mixins import CANopenMixin, ISOTPMixin, TrafficMixin, UDSMixin, XCPMixin
 
 # Lazy import for python-can
 _python_can = lazy_import("can", "CAN")

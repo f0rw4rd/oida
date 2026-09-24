@@ -5,13 +5,13 @@ from typing import Any, Dict, List, Optional, Set
 
 from boofuzz import Block, Delim, Group, Request, Size, Static
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig
-from ...utils.ics_logger import get_logger
-from ..core.connections import TCPSocketConnection
-from ..primitives.dynamic import SmartString
-from ..primitives.smart_string import StringContext
-from ..primitives.transformers import (
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig
+from oida.utils.ics_logger import get_logger
+from oida.fuzz.core.connections import TCPSocketConnection
+from oida.fuzz.primitives.dynamic import SmartString
+from oida.fuzz.primitives.smart_string import StringContext
+from oida.fuzz.primitives.transformers import (
     Base64Transformer,
     BasicAuthTransformer,
     GzipTransformer,
@@ -2618,7 +2618,7 @@ class HTTPFuzzer(BaseFuzzer):
         Returns:
             List of monitor instances for HTTP service health checking
         """
-        from ..monitors import HTTPGetMonitor
+        from oida.fuzz.monitors import HTTPGetMonitor
 
         # Create HTTP GET monitor with default settings
         http_monitor = HTTPGetMonitor(
@@ -2646,7 +2646,7 @@ class HTTPFuzzer(BaseFuzzer):
         - PERSISTENT: Keep-alive connection active
         - AUTHENTICATED: For auth-required resources
         """
-        from ..core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             StateType,

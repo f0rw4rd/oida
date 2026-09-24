@@ -8,8 +8,8 @@ NXC-style callable class that executes scanning on instantiation.
 
 from typing import Any
 
-from ...connection import NetworkConnection
-from .scanner import EtherNetIPScanner, _pycomm3
+from oida.connection import NetworkConnection
+from oida.protocols.ethernetip.scanner import EtherNetIPScanner, _pycomm3
 
 
 class ethernetip(NetworkConnection):

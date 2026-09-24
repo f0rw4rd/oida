@@ -10,19 +10,19 @@ This module contains the core functionality of the OIDA fuzzing framework.
 def __getattr__(name):
     """Lazy load core modules on first access."""
     if name in ("FuzzerConfig", "ProtocolType"):
-        from .config import FuzzerConfig, ProtocolType
+        from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 
         return FuzzerConfig if name == "FuzzerConfig" else ProtocolType
     elif name == "FuzzerApplication":
-        from .application import FuzzerApplication
+        from oida.fuzz.core.application import FuzzerApplication
 
         return FuzzerApplication
     elif name == "TestCaseManager":
-        from .session.manager import TestCaseManager
+        from oida.fuzz.core.session.manager import TestCaseManager
 
         return TestCaseManager
     elif name in ("BaseFuzzer", "CommonState", "RequestInfo"):
-        from .base_fuzzer import BaseFuzzer, CommonState, RequestInfo
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
 
         if name == "BaseFuzzer":
             return BaseFuzzer
@@ -30,25 +30,25 @@ def __getattr__(name):
             return CommonState
         return RequestInfo
     elif name == "StatefulFuzzer":
-        from .stateful_fuzzer import StatefulFuzzer
+        from oida.fuzz.core.stateful_fuzzer import StatefulFuzzer
 
         return StatefulFuzzer
     elif name in ("DatabaseInterface", "MockDatabase"):
-        from .database import DatabaseInterface, MockDatabase
+        from oida.fuzz.core.database import DatabaseInterface, MockDatabase
 
         if name == "DatabaseInterface":
             return DatabaseInterface
         return MockDatabase
     elif name == "SQLAlchemyDatabase":
-        from .database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
         return SQLAlchemyDatabase
     elif name in ("ConnectionFactory", "MockConnectionFactory"):
-        from .connections import ConnectionFactory, MockConnectionFactory
+        from oida.fuzz.core.connections import ConnectionFactory, MockConnectionFactory
 
         return ConnectionFactory if name == "ConnectionFactory" else MockConnectionFactory
     elif name in ("CommandRunner", "MockCommandRunner"):
-        from .session.commands import CommandRunner, MockCommandRunner
+        from oida.fuzz.core.session.commands import CommandRunner, MockCommandRunner
 
         return CommandRunner if name == "CommandRunner" else MockCommandRunner
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

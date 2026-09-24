@@ -10,7 +10,12 @@ Also tests existing field extraction quality and message-type-specific parsing.
 
 import pytest
 
-from .conftest import _run_listener_test, _load_packets, _pcap_path, _skip_unless_pyshark
+from tests.integration.pcap.conftest import (
+    _run_listener_test,
+    _load_packets,
+    _pcap_path,
+    _skip_unless_pyshark,
+)
 
 pytestmark = [pytest.mark.integration]
 

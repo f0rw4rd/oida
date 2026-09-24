@@ -40,11 +40,8 @@ Reference: HP PJL Technical Reference Manual
 import re
 from typing import Any, Dict, List, Optional
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import (
-    is_valid_discovered_ip,
-    lookup_mac_vendor,
-)
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 # PJL command patterns
 RE_PJL_COMMAND = re.compile(r"@PJL\s+(\S+)(.*?)(?:\r?\n|$)", re.IGNORECASE)

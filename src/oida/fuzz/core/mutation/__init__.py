@@ -5,7 +5,7 @@ This module provides mutation primitives for fuzzing:
 - Mutation configuration (singleton)
 """
 
-from .config import (
+from oida.fuzz.core.mutation.config import (
     MutationConfig,
     MutationStrategy,
     enable_radamsa,
@@ -14,8 +14,8 @@ from .config import (
     set_mutation_seed,
     get_mutation_seed,
 )
-from .radamsa import SeedLoader
-from .radamsa_native import (
+from oida.fuzz.core.mutation.radamsa import SeedLoader
+from oida.fuzz.core.mutation.radamsa_native import (
     NativeRadamsaMutator,
     get_native_mutator,
     INTERESTING_8,

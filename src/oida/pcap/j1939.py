@@ -84,7 +84,7 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
 
 # Well-known J1939 PGNs
 J1939_PGNS = {

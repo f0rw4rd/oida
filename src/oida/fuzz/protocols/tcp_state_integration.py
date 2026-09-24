@@ -30,7 +30,7 @@ from typing import Dict, Optional, Tuple
 import struct
 import logging
 
-from ..core.session.state_machine import StateTransitionError
+from oida.fuzz.core.session.state_machine import StateTransitionError
 
 logger = logging.getLogger(__name__)
 

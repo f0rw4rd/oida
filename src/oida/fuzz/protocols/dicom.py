@@ -30,9 +30,9 @@ from typing import List
 
 from boofuzz import Group, Request, Static
 
-from ..core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..primitives.dynamic import SmartBytes, SmartString, StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.primitives.dynamic import SmartBytes, SmartString, StringContext
 
 # ---------------------------------------------------------------------------
 # DICOM well-known UIDs

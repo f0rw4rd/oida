@@ -12,8 +12,8 @@ Object references accept short codes (``AV:1``) or full names
 import asyncio
 from typing import List, Optional, Tuple
 
-from ..constants import _load_bacpypes3, OBJECT_TYPE_NAMES
-from ..service_catalog import SERVICES, RISK_CONTROL, lookup
+from oida.protocols.bacnet.constants import _load_bacpypes3, OBJECT_TYPE_NAMES
+from oida.protocols.bacnet.service_catalog import SERVICES, RISK_CONTROL, lookup
 
 # Short object-type codes accepted in --call specs (in addition to the full
 # camelCase names already in OBJECT_TYPE_NAMES).

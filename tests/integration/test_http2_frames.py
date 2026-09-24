@@ -18,7 +18,7 @@ import struct
 import time
 from typing import Dict, List, Optional, Tuple
 
-from .conftest import MOCK_HOST, MOCK_PORTS
+from tests.integration.conftest import MOCK_HOST, MOCK_PORTS
 from tests.service_gate import require_port, require_service
 
 

@@ -9,7 +9,7 @@ from typing import Optional
 
 from boofuzz import Block, Byte, Bytes, DWord, Group, RandomData, Static, Word
 
-from .constants import (
+from oida.fuzz.protocols.modbus.constants import (
     ADDRESS_BOUNDARIES,
     ALL_DIAGNOSTIC_CODES,
     ALL_FUNCTION_CODES,
@@ -277,7 +277,7 @@ def create_read_fifo_queue_pdu() -> Block:
 
 def create_vendor_functions_pdu() -> Block:
     """Create vendor-specific functions PDU (FC 44-48)."""
-    from ...primitives.dynamic import SmartString
+    from oida.fuzz.primitives.dynamic import SmartString
 
     return Block(
         "PDU",
@@ -579,7 +579,7 @@ def create_combined_byte_count_mismatch_pdu() -> Block:
 
 def create_combined_oversized_pdu() -> Block:
     """Create oversized quantity + byte count PDU."""
-    from ...primitives.dynamic import SmartString
+    from oida.fuzz.primitives.dynamic import SmartString
 
     return Block(
         "PDU",
@@ -612,7 +612,7 @@ def create_combined_high_addr_max_qty_pdu() -> Block:
 
 def create_malformed_pdu() -> Block:
     """Create malformed Modbus with invalid function codes and random data."""
-    from ...primitives.dynamic import SmartString
+    from oida.fuzz.primitives.dynamic import SmartString
 
     return Block(
         "PDU",

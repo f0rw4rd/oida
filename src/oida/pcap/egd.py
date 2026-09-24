@@ -38,8 +38,8 @@ Reference: https://en.wikipedia.org/wiki/Ethernet_Global_Data_Protocol
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 # EGD production status codes -- verbatim from the packet-egd.c value_string
 # (`tshark -G values | grep egd.stat`).  The previous 4-entry table mislabeled

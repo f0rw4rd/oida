@@ -15,11 +15,11 @@ Mixins:
       Modbus gateway detection, Modbus register mapping
 """
 
-from .canopen import CANopenMixin
-from .isotp import ISOTPMixin
-from .traffic import TrafficMixin
-from .uds import UDSMixin
-from .xcp import XCPMixin
+from oida.protocols.can.mixins.canopen import CANopenMixin
+from oida.protocols.can.mixins.isotp import ISOTPMixin
+from oida.protocols.can.mixins.traffic import TrafficMixin
+from oida.protocols.can.mixins.uds import UDSMixin
+from oida.protocols.can.mixins.xcp import XCPMixin
 
 __all__ = [
     "ISOTPMixin",

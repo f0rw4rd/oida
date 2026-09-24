@@ -15,11 +15,8 @@ Contains:
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import (
-    is_valid_discovered_ip,
-    lookup_mac_vendor,
-)
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 # SMB2/3 dialect codes
 SMB2_DIALECTS = {

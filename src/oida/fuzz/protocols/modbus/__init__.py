@@ -3,11 +3,11 @@
 This module provides fuzzers for Modbus TCP and RTU protocols.
 """
 
-from .tcp import ModbusFuzzer
-from .rtu import ModbusRTUFuzzer
+from oida.fuzz.protocols.modbus.tcp import ModbusFuzzer
+from oida.fuzz.protocols.modbus.rtu import ModbusRTUFuzzer
 
 # Re-export constants for backward compatibility
-from .constants import (
+from oida.fuzz.protocols.modbus.constants import (
     ModbusFunctionCodes,
     ModbusDiagnosticCodes,
     ModbusMEITypes,

@@ -1,6 +1,6 @@
 """PROFINET lazy imports and utility functions."""
 
-from ...utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
 import logging
 

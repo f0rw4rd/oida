@@ -37,7 +37,7 @@ References:
 from dataclasses import dataclass
 from typing import Any, Dict, List, Optional
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
 
 # SOCKS authentication method names (RFC 1928 Section 3)
 AUTH_METHOD_NAMES: Dict[str, str] = {

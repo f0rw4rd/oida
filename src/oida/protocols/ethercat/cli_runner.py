@@ -4,10 +4,10 @@
 
 from typing import Dict, Any
 
-from ...connection import SerialConnection
+from oida.connection import SerialConnection
 
 
-from . import EtherCATScanner
+from oida.protocols.ethercat import EtherCATScanner
 
 import logging
 

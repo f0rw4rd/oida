@@ -91,8 +91,8 @@ import json
 import pytest
 from typing import Optional
 
-from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST, MOCK_PORTS
+from tests.integration.base_protocol_test import BaseProtocolIntegrationTest
+from tests.integration.conftest import MOCK_HOST, MOCK_PORTS
 
 
 # All MMS tests share a single libiec61850 server per port (102/10106/10107/10108),

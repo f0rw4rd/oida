@@ -8,8 +8,8 @@ import pytest
 from abc import ABC, abstractmethod
 from typing import Any, Dict, List, Optional
 
-from .conftest import MOCK_HOST, check_port_open, ensure_mock
-from .cli_runner import CLIResult
+from tests.integration.conftest import MOCK_HOST, check_port_open, ensure_mock
+from tests.integration.cli_runner import CLIResult
 
 
 class BaseProtocolIntegrationTest(ABC):

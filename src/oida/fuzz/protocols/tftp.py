@@ -14,10 +14,10 @@ from typing import List
 
 from boofuzz import Block, Byte, Group, Request, Static, Word
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import CountingUDPConnection as UDPSocketConnection
-from ..primitives.dynamic import SmartString
-from ..primitives.smart_string import StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.connections import CountingUDPConnection as UDPSocketConnection
+from oida.fuzz.primitives.dynamic import SmartString
+from oida.fuzz.primitives.smart_string import StringContext
 
 
 class TFTPFuzzer(BaseFuzzer):
@@ -86,7 +86,7 @@ class TFTPFuzzer(BaseFuzzer):
 
     def setup_custom_monitors(self) -> list:
         """Setup TFTP-specific monitoring with RRQ/response validation"""
-        from ..monitors import TFTPReadMonitor
+        from oida.fuzz.monitors import TFTPReadMonitor
 
         tftp_monitor = TFTPReadMonitor(
             host=self.config.target_ip,

@@ -22,7 +22,7 @@ import pytest
 
 from tests.service_gate import require_service
 
-from .conftest import require_docker_mock, run_fuzz_cli
+from tests.integration.fuzz.conftest import require_docker_mock, run_fuzz_cli
 
 # Mark all tests in this module
 pytestmark = [pytest.mark.mms, pytest.mark.fuzz, pytest.mark.cli]

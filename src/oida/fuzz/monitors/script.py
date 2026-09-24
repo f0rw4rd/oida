@@ -19,8 +19,8 @@ Example::
 import shlex
 from typing import List, Optional, Union
 
-from .base import ProtocolMonitor
-from ..core.session.commands import CommandRunner, RealCommandRunner
+from oida.fuzz.monitors.base import ProtocolMonitor
+from oida.fuzz.core.session.commands import CommandRunner, RealCommandRunner
 
 
 class ScriptMonitor(ProtocolMonitor):

@@ -37,7 +37,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
 
 # ---------------------------------------------------------------------------
 # Lookup tables (RFC 8907)

@@ -36,8 +36,8 @@ PyShark LLDP field reference (packet.lldp.*):
 from datetime import datetime
 from typing import Any, List
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import lookup_mac_vendor, normalize_mac
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import lookup_mac_vendor, normalize_mac
 
 import logging
 

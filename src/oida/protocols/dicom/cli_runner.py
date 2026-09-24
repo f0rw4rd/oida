@@ -26,8 +26,8 @@ CLI examples:
 from pathlib import Path
 from typing import Any, Optional
 
-from ...connection import NetworkConnection
-from ...utils.lazy_import import lazy_import
+from oida.connection import NetworkConnection
+from oida.utils.lazy_import import lazy_import
 
 # Lazy imports for DICOM libraries
 _pynetdicom = lazy_import("pynetdicom", "DICOM")
@@ -346,7 +346,7 @@ DICOM_VENDOR_MAP = {
 }
 
 
-from .mixins import (
+from oida.protocols.dicom.mixins import (
     CFindMixin,
     OperationsMixin,
     EnumerationMixin,
@@ -703,7 +703,7 @@ class dicom(
             # Set up TLS context if requested
             tls_args = None
             if use_tls:
-                from ...utils.socket_helpers import check_tls_certificate
+                from oida.utils.socket_helpers import check_tls_certificate
 
                 tls_args = _build_dicom_tls_args(self.args, self.ip, self.logger)
                 self.logger.display("Using DICOM TLS (Upper Layer Security)")

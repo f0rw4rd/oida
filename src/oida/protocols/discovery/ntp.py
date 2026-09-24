@@ -19,13 +19,9 @@ import time
 from datetime import datetime
 from typing import Dict, Iterator
 
-from .core import (
-    DiscoveredDevice,
-    validate_interface,
-    validate_timeout,
-)
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.protocols.discovery.core import DiscoveredDevice, validate_interface, validate_timeout
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
 _scapy_all = lazy_import("scapy.all", "discovery")
 

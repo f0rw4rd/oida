@@ -10,7 +10,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Tuple
 
-from ..constants import MessageType
+from oida.protocols.ocpp.constants import MessageType
 
 
 class MessagesMixin:

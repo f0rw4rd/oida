@@ -26,12 +26,9 @@ Easy CLI examples:
 
 from typing import Any
 
-from .scanner import (
-    OCPPScanner,
-    dependencies_missing,
-)
+from oida.protocols.ocpp.scanner import OCPPScanner, dependencies_missing
 
-from .constants import (
+from oida.protocols.ocpp.constants import (
     MessageType,
     OCPPVersion,
     SecurityProfile,
@@ -49,8 +46,8 @@ from .constants import (
     DEFAULT_WSS_PORT,
 )
 
-from ...connection import NetworkConnection
-from .mixins import DiscoveryMixin, SecurityMixin, MessagesMixin, ChargingMixin
+from oida.connection import NetworkConnection
+from oida.protocols.ocpp.mixins import DiscoveryMixin, SecurityMixin, MessagesMixin, ChargingMixin
 
 
 def _payload_status(payload, container_key: str | None = None) -> str:
@@ -474,7 +471,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             self.logger.debug("Brute force triggered by --default-creds flag")
             return True
         # Auto-detect file input on -u or -P (like OPC UA pattern)
-        from ...utils.default_credentials import parse_credential_input
+        from oida.utils.default_credentials import parse_credential_input
 
         username = getattr(self.args, "username", None)
         password = getattr(self.args, "password", None)
@@ -492,10 +489,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
 
     def _dispatch_brute_force(self):
         """Dispatch brute force credential testing."""
-        from ...utils.default_credentials import (
-            parse_credential_input,
-            get_protocol_defaults,
-        )
+        from oida.utils.default_credentials import parse_credential_input, get_protocol_defaults
 
         username = getattr(self.args, "username", None)
         password = getattr(self.args, "password", None)

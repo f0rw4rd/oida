@@ -36,8 +36,8 @@ PyShark DTP field reference (packet.dtp.*):
 from datetime import datetime
 from typing import Any, Dict, List
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import lookup_mac_vendor, normalize_mac
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import lookup_mac_vendor, normalize_mac
 
 
 # DTP Trunk ADMINISTRATIVE Status (dtp.tas), per tshark -G values

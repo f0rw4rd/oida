@@ -133,10 +133,7 @@ class ScannerIdentificationMixin(_ScannerBase):
             dict: Device identification objects (VendorName, ProductCode, etc.)
                   or None if not supported
         """
-        from ..constants import (
-            ModbusExceptionCode,
-            MEIReadDeviceIdCode,
-        )
+        from oida.protocols.modbus.constants import ModbusExceptionCode, MEIReadDeviceIdCode
 
         device_info = {}
 
@@ -234,7 +231,7 @@ class ScannerIdentificationMixin(_ScannerBase):
 
     def _parse_mei_response(self, result: Any) -> Dict[str, str]:
         """Parse MEI Device ID response into dictionary"""
-        from ..constants import MEI_OBJECT_NAMES
+        from oida.protocols.modbus.constants import MEI_OBJECT_NAMES
 
         objects = {}
 
@@ -272,7 +269,7 @@ class ScannerIdentificationMixin(_ScannerBase):
         Returns:
             Status byte (0-255) or None if not supported
         """
-        from ..constants import ModbusExceptionCode
+        from oida.protocols.modbus.constants import ModbusExceptionCode
 
         try:
             result = client.read_exception_status(device_id=self.unit_id)
@@ -308,7 +305,7 @@ class ScannerIdentificationMixin(_ScannerBase):
         Returns:
             Dict with server_id, run_status, and additional_data, or None if not supported
         """
-        from ..constants import ModbusExceptionCode
+        from oida.protocols.modbus.constants import ModbusExceptionCode
 
         try:
             result = client.report_device_id(device_id=self.unit_id)
@@ -361,7 +358,7 @@ class ScannerIdentificationMixin(_ScannerBase):
         Manually construct and send the MEI request when pymodbus
         doesn't handle it properly. Handles pagination via more_follows flag.
         """
-        from ..constants import MEI_OBJECT_NAMES, EXCEPTION_CODES
+        from oida.protocols.modbus.constants import MEI_OBJECT_NAMES, EXCEPTION_CODES
 
         # TODO: Replace raw client.socket access with pymodbus
         # ReadDeviceInformationRequest. This bypasses the library and breaks

@@ -107,7 +107,7 @@ class LazyModule:
         with self._load_lock:
             if self._loaded:
                 if self._module is None:
-                    from .exceptions import DependencyError
+                    from oida.utils.exceptions import DependencyError
 
                     raise DependencyError(
                         f"{self._module_name} library required for {self._protocol} protocol.\n"
@@ -129,7 +129,7 @@ class LazyModule:
                 self._module = None
                 self._available = False
                 self._loaded = True
-                from .exceptions import DependencyError
+                from oida.utils.exceptions import DependencyError
 
                 raise DependencyError(
                     f"{self._module_name} library required for {self._protocol} protocol.\n"
@@ -164,7 +164,7 @@ class LazyModule:
         if not self._loaded:
             self._load()
         if self._module is None:
-            from .exceptions import DependencyError
+            from oida.utils.exceptions import DependencyError
 
             raise DependencyError(
                 f"{self._module_name} library required for {self._protocol} protocol.\n"

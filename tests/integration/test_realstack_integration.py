@@ -31,7 +31,7 @@ import pytest
 
 from tests.service_gate import require_service
 
-from .conftest import MOCK_HOST
+from tests.integration.conftest import MOCK_HOST
 
 pytestmark = pytest.mark.integration
 

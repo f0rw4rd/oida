@@ -12,7 +12,7 @@ from __future__ import annotations
 import struct
 from typing import TYPE_CHECKING, Optional, Tuple
 
-from ..constants import CANopenMEICommand, CANOPEN_COMMON_OBJECTS
+from oida.protocols.modbus.constants import CANopenMEICommand, CANOPEN_COMMON_OBJECTS
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

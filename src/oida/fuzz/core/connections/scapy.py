@@ -6,7 +6,7 @@ with boofuzz-generated payloads. Scapy handles all IP layer complexity
 (checksums, fragmentation, routing) while boofuzz handles fuzzing logic.
 """
 
-from ....utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger
 
 
 class ScapyRawConnection:

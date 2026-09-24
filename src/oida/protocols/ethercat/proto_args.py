@@ -10,10 +10,7 @@ add_dangerous_options would clobber both, so they stay local.
 
 import argparse
 
-from ...utils.proto_args_factory import (
-    create_protocol_parser,
-    add_target_argument,
-)
+from oida.utils.proto_args_factory import create_protocol_parser, add_target_argument
 
 EXAMPLES = r"""
 Examples:

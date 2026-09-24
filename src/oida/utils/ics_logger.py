@@ -697,7 +697,7 @@ def setup_debugging(args):
         True if debug mode is now enabled.
     """
     global _module_log_level
-    from .common_types import parse_bool
+    from oida.utils.common_types import parse_bool
 
     if "debug" in args and parse_bool(args["debug"]):
         _module_log_level = logging.DEBUG
@@ -721,7 +721,7 @@ def _get_cli():
     if _cli_instance is None:
         with _cli_instance_lock:
             if _cli_instance is None:
-                from .cli import MockCLI
+                from oida.utils.cli import MockCLI
 
                 _cli_instance = MockCLI()
     return _cli_instance

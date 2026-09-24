@@ -10,7 +10,7 @@ import importlib
 
 import pytest
 
-from .conftest import (
+from tests.integration.pcap.conftest import (
     LISTENER_PCAP_CASES,
     _ek_mode_available,
     _pyshark_available,

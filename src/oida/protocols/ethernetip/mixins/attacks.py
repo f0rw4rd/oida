@@ -12,17 +12,14 @@ from __future__ import annotations
 import struct
 from typing import Any, Dict, TYPE_CHECKING
 
-from ....utils.protocol_helpers import ConnectionHelper
-from ..attacks import (
+from oida.utils.protocol_helpers import ConnectionHelper
+from oida.protocols.ethernetip.attacks import (
     ATTACK_STOPCPU_PAYLOAD,
     ATTACK_CRASHCPU_PAYLOAD,
     ATTACK_CRASHETHER_PAYLOAD,
     ATTACK_RESETETHER_PAYLOAD,
 )
-from ..constants import (
-    ENIP_CMD_SEND_RR_DATA,
-    CIP_GENERAL_STATUS,
-)
+from oida.protocols.ethernetip.constants import ENIP_CMD_SEND_RR_DATA, CIP_GENERAL_STATUS
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

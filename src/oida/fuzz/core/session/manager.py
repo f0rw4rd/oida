@@ -26,12 +26,12 @@ from collections import deque
 from typing import Optional, List, Tuple, Dict, TYPE_CHECKING
 from datetime import datetime
 
-from ...protocols import PROTOCOL_FUZZERS
-from ..config import FuzzerConfig, hexdump
-from ..database.interface import DatabaseInterface, TestCase, Crash
-from ..database.orm import SQLAlchemyDatabase
-from ..base_fuzzer import BaseFuzzer
-from ...utils import get_git_commit_hash
+from oida.fuzz.protocols import PROTOCOL_FUZZERS
+from oida.fuzz.core.config import FuzzerConfig, hexdump
+from oida.fuzz.core.database.interface import DatabaseInterface, TestCase, Crash
+from oida.fuzz.core.database.orm import SQLAlchemyDatabase
+from oida.fuzz.core.base_fuzzer import BaseFuzzer
+from oida.fuzz.utils import get_git_commit_hash
 
 if TYPE_CHECKING:
     pass

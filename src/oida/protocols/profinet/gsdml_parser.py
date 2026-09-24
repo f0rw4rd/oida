@@ -14,7 +14,7 @@ from zipfile import ZipFile
 
 import logging
 
-from ...utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
 logger = logging.getLogger(__name__)
 

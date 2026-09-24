@@ -6,7 +6,7 @@ for the boilerplate. Discovery has an optional `target` (nargs='?') so
 we can't use the standard add_target_argument helper.
 """
 
-from ...utils.proto_args_factory import create_protocol_parser
+from oida.utils.proto_args_factory import create_protocol_parser
 
 
 def proto_args(parser, parents):

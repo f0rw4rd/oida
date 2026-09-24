@@ -19,7 +19,7 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Tuple
 
 from tests.service_gate import require_service
-from .cli_runner import CLIRunner
+from tests.integration.cli_runner import CLIRunner
 
 
 # Configuration Constants

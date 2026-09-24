@@ -4,9 +4,7 @@ Argument parser definition for PCAP analysis protocol.
 Uses the framework factory pattern for consistent CLI flags.
 """
 
-from ...utils.proto_args_factory import (
-    create_protocol_parser,
-)
+from oida.utils.proto_args_factory import create_protocol_parser
 
 
 def proto_args(parser, parents):

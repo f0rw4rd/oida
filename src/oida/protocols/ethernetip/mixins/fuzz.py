@@ -270,7 +270,7 @@ class FuzzMixin(_ScannerBase):
             cip_type: CIP data type (USINT, UINT, DWORD, STRING, etc.)
             iterations: Number of fuzz iterations (default: 100)
         """
-        from ..cip_definitions import get_object_name
+        from oida.protocols.ethernetip.cip_definitions import get_object_name
 
         results = {
             "test_count": 0,
@@ -291,7 +291,7 @@ class FuzzMixin(_ScannerBase):
         self.logger.display(f"    Original: {orig_hex}")
 
         # Generate type-aware fuzz payloads using central fuzzer
-        from ....utils.fuzzer import fuzz
+        from oida.utils.fuzzer import fuzz
 
         fuzz_payloads = list(fuzz(original_value, count=iterations, data_type=cip_type))
 

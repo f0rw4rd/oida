@@ -7,7 +7,7 @@ and record type probing.
 
 from typing import Dict, List
 
-from ..records import ASTM_VENDOR_MAP, LAB_TEST_TYPES
+from oida.protocols.astm.records import ASTM_VENDOR_MAP, LAB_TEST_TYPES
 
 
 class EnumerationMixin:

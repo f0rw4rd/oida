@@ -21,14 +21,14 @@ class TestProtocolAuthenticatorInterface:
 
     def test_cannot_instantiate_directly(self):
         """ProtocolAuthenticator cannot be instantiated directly."""
-        from src.oida.fuzz.core.auth import ProtocolAuthenticator
+        from oida.fuzz.core.auth import ProtocolAuthenticator
 
         with pytest.raises(TypeError):
             ProtocolAuthenticator()
 
     def test_subclass_must_implement_authenticate(self):
         """Subclass must implement authenticate."""
-        from src.oida.fuzz.core.auth import ProtocolAuthenticator
+        from oida.fuzz.core.auth import ProtocolAuthenticator
 
         class IncompleteAuth(ProtocolAuthenticator):
             def validate(self, connection):
@@ -39,7 +39,7 @@ class TestProtocolAuthenticatorInterface:
 
     def test_subclass_must_implement_validate(self):
         """Subclass must implement validate."""
-        from src.oida.fuzz.core.auth import ProtocolAuthenticator
+        from oida.fuzz.core.auth import ProtocolAuthenticator
 
         class IncompleteAuth(ProtocolAuthenticator):
             def authenticate(self, connection):
@@ -50,7 +50,7 @@ class TestProtocolAuthenticatorInterface:
 
     def test_get_credentials_default_empty(self):
         """Default get_credentials returns empty dict."""
-        from src.oida.fuzz.core.auth import ProtocolAuthenticator
+        from oida.fuzz.core.auth import ProtocolAuthenticator
 
         class MinimalAuth(ProtocolAuthenticator):
             def authenticate(self, connection):
@@ -73,7 +73,7 @@ class TestUsernamePasswordAuthCreation:
 
     def test_basic_creation(self):
         """UsernamePasswordAuth can be created with basic params."""
-        from src.oida.fuzz.core.auth import UsernamePasswordAuth
+        from oida.fuzz.core.auth import UsernamePasswordAuth
 
         auth = UsernamePasswordAuth("admin", "password123")
         assert auth.username == "admin"
@@ -81,7 +81,7 @@ class TestUsernamePasswordAuthCreation:
 
     def test_default_command_formats(self):
         """Default command formats use USER/PASS."""
-        from src.oida.fuzz.core.auth import UsernamePasswordAuth
+        from oida.fuzz.core.auth import UsernamePasswordAuth
 
         auth = UsernamePasswordAuth("user", "pass")
         assert "USER" in auth.user_cmd_fmt
@@ -89,7 +89,7 @@ class TestUsernamePasswordAuthCreation:
 
     def test_default_response_codes(self):
         """Default response codes are 331 for USER and 230 for PASS."""
-        from src.oida.fuzz.core.auth import UsernamePasswordAuth
+        from oida.fuzz.core.auth import UsernamePasswordAuth
 
         auth = UsernamePasswordAuth("user", "pass")
         assert 331 in auth.user_ok_codes
@@ -101,7 +101,7 @@ class TestUsernamePasswordAuthAuthenticate:
 
     def test_successful_auth(self):
         """Successful authentication returns True."""
-        from src.oida.fuzz.core.auth import UsernamePasswordAuth
+        from oida.fuzz.core.auth import UsernamePasswordAuth
 
         auth = UsernamePasswordAuth("admin", "pass123")
 
@@ -118,7 +118,7 @@ class TestUsernamePasswordAuthAuthenticate:
 
     def test_auth_connection_error(self):
         """Connection error during auth returns False."""
-        from src.oida.fuzz.core.auth import UsernamePasswordAuth
+        from oida.fuzz.core.auth import UsernamePasswordAuth
 
         auth = UsernamePasswordAuth("admin", "pass")
 
@@ -130,7 +130,7 @@ class TestUsernamePasswordAuthAuthenticate:
 
     def test_auth_generic_error(self):
         """Generic error during auth returns False."""
-        from src.oida.fuzz.core.auth import UsernamePasswordAuth
+        from oida.fuzz.core.auth import UsernamePasswordAuth
 
         auth = UsernamePasswordAuth("admin", "pass")
 
@@ -142,14 +142,14 @@ class TestUsernamePasswordAuthAuthenticate:
 
     def test_validate_returns_true(self):
         """Default validate always returns True."""
-        from src.oida.fuzz.core.auth import UsernamePasswordAuth
+        from oida.fuzz.core.auth import UsernamePasswordAuth
 
         auth = UsernamePasswordAuth("admin", "pass")
         assert auth.validate(Mock()) is True
 
     def test_get_credentials(self):
         """get_credentials returns username and password."""
-        from src.oida.fuzz.core.auth import UsernamePasswordAuth
+        from oida.fuzz.core.auth import UsernamePasswordAuth
 
         auth = UsernamePasswordAuth("admin", "secret")
         creds = auth.get_credentials()
@@ -167,7 +167,7 @@ class TestMQTTAuthenticatorCreation:
 
     def test_default_creation(self):
         """MQTTAuthenticator created with defaults."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator()
         assert auth.client_id == "oida-fuzz"
@@ -179,7 +179,7 @@ class TestMQTTAuthenticatorCreation:
 
     def test_custom_creation(self):
         """MQTTAuthenticator with custom parameters."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator(
             client_id="test-client",
@@ -202,7 +202,7 @@ class TestMQTTAuthenticatorBuildPacket:
 
     def test_basic_connect_packet(self):
         """Basic CONNECT packet structure."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator(client_id="test")
         packet = auth._build_connect_packet()
@@ -215,7 +215,7 @@ class TestMQTTAuthenticatorBuildPacket:
 
     def test_connect_packet_with_credentials(self):
         """CONNECT packet includes username and password."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator(client_id="test", username="admin", password="secret")
         packet = auth._build_connect_packet()
@@ -224,7 +224,7 @@ class TestMQTTAuthenticatorBuildPacket:
 
     def test_connect_packet_v3(self):
         """CONNECT packet for MQTT v3.1 uses MQIsdp."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator(protocol_version=3)
         packet = auth._build_connect_packet()
@@ -232,7 +232,7 @@ class TestMQTTAuthenticatorBuildPacket:
 
     def test_remaining_length_encoding_small(self):
         """Remaining length encoding for small values."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator()
         encoded = auth._encode_remaining_length(0)
@@ -240,7 +240,7 @@ class TestMQTTAuthenticatorBuildPacket:
 
     def test_remaining_length_encoding_medium(self):
         """Remaining length encoding for medium values."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator()
         encoded = auth._encode_remaining_length(127)
@@ -248,7 +248,7 @@ class TestMQTTAuthenticatorBuildPacket:
 
     def test_remaining_length_encoding_multi_byte(self):
         """Remaining length encoding for multi-byte values."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator()
         encoded = auth._encode_remaining_length(128)
@@ -260,7 +260,7 @@ class TestMQTTAuthenticatorAuthenticate:
 
     def test_successful_connack(self):
         """Successful CONNACK returns True."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator()
         conn = Mock()
@@ -271,7 +271,7 @@ class TestMQTTAuthenticatorAuthenticate:
 
     def test_bad_credentials_connack(self):
         """CONNACK with bad credentials returns False."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator()
         conn = Mock()
@@ -282,7 +282,7 @@ class TestMQTTAuthenticatorAuthenticate:
 
     def test_wrong_packet_type(self):
         """Non-CONNACK response returns False."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator()
         conn = Mock()
@@ -292,7 +292,7 @@ class TestMQTTAuthenticatorAuthenticate:
 
     def test_incomplete_connack(self):
         """Incomplete CONNACK returns False."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator()
         conn = Mock()
@@ -302,7 +302,7 @@ class TestMQTTAuthenticatorAuthenticate:
 
     def test_connection_error(self):
         """Connection error during auth returns False."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator()
         conn = Mock()
@@ -316,7 +316,7 @@ class TestMQTTAuthenticatorValidate:
 
     def test_successful_pingresp(self):
         """Successful PINGRESP returns True."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator()
         conn = Mock()
@@ -326,7 +326,7 @@ class TestMQTTAuthenticatorValidate:
 
     def test_invalid_pingresp(self):
         """Invalid PINGRESP returns False."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator()
         conn = Mock()
@@ -336,7 +336,7 @@ class TestMQTTAuthenticatorValidate:
 
     def test_validate_connection_error(self):
         """Connection error during validate returns False."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator()
         conn = Mock()
@@ -350,7 +350,7 @@ class TestMQTTAuthenticatorCredentials:
 
     def test_credentials_with_username(self):
         """Credentials with username present."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator(client_id="test", username="user", password="pass")
         creds = auth.get_credentials()
@@ -360,7 +360,7 @@ class TestMQTTAuthenticatorCredentials:
 
     def test_credentials_without_username(self):
         """Credentials without username."""
-        from src.oida.fuzz.core.auth import MQTTAuthenticator
+        from oida.fuzz.core.auth import MQTTAuthenticator
 
         auth = MQTTAuthenticator(client_id="test")
         creds = auth.get_credentials()

@@ -30,12 +30,9 @@ import re
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from ._mongodb_redis_common import WriteOpsHarvestMixin
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import (
-    is_valid_discovered_ip,
-    lookup_mac_vendor,
-)
+from oida.pcap._mongodb_redis_common import WriteOpsHarvestMixin
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 # Standard Redis port
 REDIS_PORT = 6379

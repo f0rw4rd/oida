@@ -12,7 +12,7 @@ MAX_BUS_ADDRESSES = 10000
 MAX_KEY_RANGE = 100000
 
 # Lazy import reference for dependency checking
-from ...utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
 _xknx = lazy_import("xknx", "KNX")
 
@@ -63,7 +63,7 @@ class _xknx_cls:
 
 def _ensure_xknx_classes():
     """Ensure xknx classes are loaded into _xknx_cls namespace (thread-safe)."""
-    from .helpers import (
+    from oida.protocols.knx.helpers import (
         _get_xknx,
         _get_xknx_classes,
         _get_apci_classes,

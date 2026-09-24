@@ -7,7 +7,7 @@ from types import SimpleNamespace
 
 from oida.protocols.pcap.scanner import PcapScanner
 
-from .conftest import (
+from tests.unit.pcap.conftest import (
     FIXTURES_ROOT,
     requires_pyshark,
     _skip_unless_exists,

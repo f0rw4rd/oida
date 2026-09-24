@@ -14,10 +14,10 @@ import socket
 import struct
 from typing import Any, Dict, List, TYPE_CHECKING
 
-from ....utils.vendor_maps import ethernetip_vendor_ids as vendor_ids
-from ....utils.vendor_maps import ethernetip_device_types as device_types
-from ..broadcast_common import collect_list_identity_responses
-from ..constants import (
+from oida.utils.vendor_maps import ethernetip_vendor_ids as vendor_ids
+from oida.utils.vendor_maps import ethernetip_device_types as device_types
+from oida.protocols.ethernetip.broadcast_common import collect_list_identity_responses
+from oida.protocols.ethernetip.constants import (
     ENIP_CMD_LIST_IDENTITY,
     ENIP_CMD_LIST_SERVICES,
     ENIP_CMD_LIST_INTERFACES,

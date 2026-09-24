@@ -12,8 +12,8 @@ Handles passive traffic sniffing and raw CAN operations:
 import time
 from typing import Any, Dict, List, Optional, Set
 
-from ....utils.export_utils import export_table
-from ..constants import (
+from oida.utils.export_utils import export_table
+from oida.protocols.can.constants import (
     CAN_EXT_ID_MAX,
     CAN_STD_ID_MAX,
     CANOPEN_HEARTBEAT_BASE,
@@ -32,7 +32,7 @@ from ..constants import (
 
 def _get_python_can():
     """Resolve _python_can from scanner module (avoids circular import)."""
-    from ..scanner import _python_can
+    from oida.protocols.can.scanner import _python_can
 
     return _python_can
 

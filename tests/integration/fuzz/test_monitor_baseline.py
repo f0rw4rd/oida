@@ -12,8 +12,8 @@ import pytest
 
 from tests.service_gate import require_import, require_service
 
-from .conftest import FuzzTimeout, create_fuzzer_config, run_fuzz_with_timeout
-from .mock_servers import (
+from tests.integration.fuzz.conftest import FuzzTimeout, create_fuzzer_config, run_fuzz_with_timeout
+from tests.integration.fuzz.mock_servers import (
     iec104_server,
     mms_server,
     modbus_server,

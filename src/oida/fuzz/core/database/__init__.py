@@ -14,13 +14,8 @@ legacy ``.db`` files from older OIDA versions, ``SQLAlchemyDatabase`` can
 read the same on-disk schema — call ``init_schema()`` once on open.
 """
 
-from .interface import (
-    DatabaseInterface,
-    TestCase,
-    Crash,
-    SessionMetadata,
-)
-from .mock import MockDatabase
+from oida.fuzz.core.database.interface import DatabaseInterface, TestCase, Crash, SessionMetadata
+from oida.fuzz.core.database.mock import MockDatabase
 
 
 def __getattr__(name):
@@ -46,7 +41,7 @@ def __getattr__(name):
     }
 
     if name in _orm_attrs:
-        from .orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
         return SQLAlchemyDatabase
 

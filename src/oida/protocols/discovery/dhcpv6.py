@@ -24,14 +24,10 @@ import time
 from datetime import datetime
 from typing import Dict, Optional
 
-from .core import (
-    DiscoveredDevice,
-    validate_interface,
-    validate_timeout,
-)
-from ...utils.rate_limiter import scapy_sendp
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.protocols.discovery.core import DiscoveredDevice, validate_interface, validate_timeout
+from oida.utils.rate_limiter import scapy_sendp
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
 _scapy_all = lazy_import("scapy.all", "discovery")
 _scapy_dhcp6 = lazy_import("scapy.layers.dhcp6", "discovery")

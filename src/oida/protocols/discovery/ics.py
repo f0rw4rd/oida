@@ -16,7 +16,7 @@ import time
 from datetime import datetime
 from typing import Any, Dict, Optional, Set
 
-from .core import (
+from oida.protocols.discovery.core import (
     DiscoveredDevice,
     create_udp_socket,
     get_all_broadcast_addresses,
@@ -25,9 +25,9 @@ from .core import (
     validate_subnet,
     validate_timeout,
 )
-from ...utils.rate_limiter import sendto
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.utils.rate_limiter import sendto
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
 _ethernetip = lazy_import("oida.protocols.ethernetip", "EtherNet/IP")
 
@@ -604,7 +604,7 @@ class CODESYSScanner:
         # Get local IP last octet for relative addressing. CODESYS is a LAN
         # protocol so use the broadcast address (which the discovery socket is
         # already bound to) as the route target instead of an external IP.
-        from ...utils.socket_helpers import get_local_ip
+        from oida.utils.socket_helpers import get_local_ip
 
         src_ip_octet = 1
         local_ip, err = get_local_ip("255.255.255.255", fallback="0.0.0.0")

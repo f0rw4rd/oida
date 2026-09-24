@@ -7,7 +7,7 @@ for protocol-specific authentication strategies.
 from abc import ABC, abstractmethod
 from typing import Dict, Optional
 
-from ...utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger
 
 
 class ProtocolAuthenticator(ABC):

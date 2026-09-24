@@ -6,14 +6,14 @@ from asyncua import ua
 from asyncua.ua.ua_binary import nodeid_to_binary
 from boofuzz import Block, Byte, DWord, Group, QWord, RandomData, Request, Size, Static, Word
 
-from ..core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
-from ..core.codecs.asn1 import ASN1Builder, ASN1Tag, ber_content
-from ..core.session.sequence import SequenceConfig, SequenceDirection
-from ..core.session.state_context import StateContext
-from ..core.session.state_machine import ProtocolState, StateMachine, StateType
-from ..primitives.dynamic import DynamicBytes, DynamicDWord, SmartString
-from ..primitives.smart_string import StringContext
-from .opcua_constants import (
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
+from oida.fuzz.core.codecs.asn1 import ASN1Builder, ASN1Tag, ber_content
+from oida.fuzz.core.session.sequence import SequenceConfig, SequenceDirection
+from oida.fuzz.core.session.state_context import StateContext
+from oida.fuzz.core.session.state_machine import ProtocolState, StateMachine, StateType
+from oida.fuzz.primitives.dynamic import DynamicBytes, DynamicDWord, SmartString
+from oida.fuzz.primitives.smart_string import StringContext
+from oida.fuzz.protocols.opcua_constants import (
     OPCUAMessageTypes,
     OPCUASecurityPolicies,
     OPCUANodeIdTypes,

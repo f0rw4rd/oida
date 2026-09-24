@@ -13,12 +13,12 @@ import time
 from dataclasses import dataclass
 from typing import Any, List, Optional, Set, Tuple, Type, Union
 
-from .base_fuzzer import BaseFuzzer, CommonState, RequestInfo
-from .config import FuzzerConfig
-from .connections import ConnectionFactory
-from .connections.stateful import StatefulConnection
-from .auth import ProtocolAuthenticator
-from .session.state_machine import StateTransitionError
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig
+from oida.fuzz.core.connections import ConnectionFactory
+from oida.fuzz.core.connections.stateful import StatefulConnection
+from oida.fuzz.core.auth import ProtocolAuthenticator
+from oida.fuzz.core.session.state_machine import StateTransitionError
 
 
 class AuthenticationFailedError(Exception):

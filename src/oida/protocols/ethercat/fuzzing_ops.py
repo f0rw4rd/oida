@@ -6,7 +6,7 @@ import struct
 import time
 from typing import Any, Dict, TYPE_CHECKING
 
-from ...utils.fuzzer import fuzz
+from oida.utils.fuzzer import fuzz
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

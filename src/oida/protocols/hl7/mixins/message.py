@@ -16,7 +16,7 @@ from typing import Optional
 
 from hl7apy.core import Message
 
-from ._helpers import ack_accepted, populate_msh
+from oida.protocols.hl7.mixins._helpers import ack_accepted, populate_msh
 
 
 class MessageMixin:

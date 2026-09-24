@@ -146,9 +146,9 @@ def create_monitor(
 def _init_registry() -> None:
     """Initialize the monitor registry with all available monitors."""
     # Import monitors - use lazy imports to avoid circular dependencies
-    from .network import PingMonitor, SocketHealthMonitor, H2CSocketMonitor
-    from .script import ScriptMonitor
-    from .industrial import (
+    from oida.fuzz.monitors.network import PingMonitor, SocketHealthMonitor, H2CSocketMonitor
+    from oida.fuzz.monitors.script import ScriptMonitor
+    from oida.fuzz.monitors.industrial import (
         ModbusMonitor,
         IEC104Monitor,
         MMSMonitor,
@@ -156,9 +156,14 @@ def _init_registry() -> None:
         OPCUAMonitor,
         BACnetMonitor,
     )
-    from .application import HTTPGetMonitor, FTPCommandMonitor, SMTPCommandMonitor, DNSQueryMonitor
-    from .infrastructure import DHCPDiscoverMonitor, TFTPReadMonitor
-    from .medical import HL7Monitor
+    from oida.fuzz.monitors.application import (
+        HTTPGetMonitor,
+        FTPCommandMonitor,
+        SMTPCommandMonitor,
+        DNSQueryMonitor,
+    )
+    from oida.fuzz.monitors.infrastructure import DHCPDiscoverMonitor, TFTPReadMonitor
+    from oida.fuzz.monitors.medical import HL7Monitor
 
     # Network monitors
     register_monitor("ping", PingMonitor, 100)
@@ -176,7 +181,7 @@ def _init_registry() -> None:
     register_monitor("script", ScriptMonitor, 10)
 
     # On-target oida-fuzzing-agent client (needs host:port[:token]; wired via CLI flag)
-    from .agent import AgentMonitor
+    from oida.fuzz.monitors.agent import AgentMonitor
 
     register_monitor("agent", AgentMonitor, 10, default_port=5555)
 

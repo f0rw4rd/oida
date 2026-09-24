@@ -8,7 +8,7 @@ Defines command-line arguments for the TASE.2 protocol scanner.
 
 import argparse
 
-from ...utils.proto_args_factory import (
+from oida.utils.proto_args_factory import (
     create_protocol_parser,
     add_target_argument,
     add_network_options,

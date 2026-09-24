@@ -7,7 +7,7 @@ Provides serial port connectivity for protocols like Modbus RTU.
 import serial
 from typing import Optional
 
-from ....utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger
 
 # Module-level logger for standalone functions
 _module_log = get_logger("SERIAL", "parse", 0)

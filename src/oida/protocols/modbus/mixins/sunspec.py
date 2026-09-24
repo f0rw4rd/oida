@@ -22,7 +22,7 @@ import math
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, List, Optional
 
-from ..decoder import REGISTERS_PER_TYPE, ModbusDecoder
+from oida.protocols.modbus.decoder import REGISTERS_PER_TYPE, ModbusDecoder
 
 import logging
 
@@ -33,7 +33,7 @@ if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 else:
     _ScannerBase = object
-from .sunspec_constants import (
+from oida.protocols.modbus.mixins.sunspec_constants import (
     SUNSPEC_ACTIVE_STATES,
     SUNSPEC_BASE_ADDRESSES,
     SUNSPEC_CRITICAL_CONTROLS,
@@ -457,7 +457,7 @@ class SunSpecMixin(_ScannerBase):
             verbose: Verbosity level
             result_data: Dict to populate with decoded values
         """
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         registers_def = reg_map.get("registers", {})
         if not registers_def:
@@ -691,7 +691,7 @@ class SunSpecMixin(_ScannerBase):
         Args:
             results_models: Decoded model results from _sunspec_read_model()
         """
-        from ....utils.export_utils import print_table
+        from oida.utils.export_utils import print_table
 
         self.logger.display("")
         self.logger.display("[SunSpec Security Assessment]")

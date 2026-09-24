@@ -18,15 +18,12 @@ from pathlib import Path
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Set
 
-from ...utils import (
-    NetworkScanner,
-    parse_bool,
-)
+from oida.utils import NetworkScanner, parse_bool
 
 
 # Default wordlist paths (searched in order, platform-aware)
 def _get_default_wordlist_paths():
-    from ...utils.platform_compat import get_config_search_paths
+    from oida.utils.platform_compat import get_config_search_paths
 
     return [p / "default_credentials.txt" for p in get_config_search_paths("mqtt/wordlists")]
 
@@ -316,7 +313,7 @@ DEFAULT_CREDENTIALS = [
 ]
 
 # Lazy imports for paho-mqtt dependency
-from ...utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
 paho_client = lazy_import("paho.mqtt.client", "MQTT", install_hint="pip install oida-ics[mqtt]")
 paho_enums = lazy_import("paho.mqtt.enums", "MQTT", install_hint="pip install oida-ics[mqtt]")
@@ -505,7 +502,13 @@ protocol_options = {
 
 
 # Import mixins (after module-level data so mixins can reference them)
-from .mixins import ConnectionMixin, TopicDiscoveryMixin, AuthMixin, MessagingMixin, SecurityMixin
+from oida.protocols.mqtt.mixins import (
+    ConnectionMixin,
+    TopicDiscoveryMixin,
+    AuthMixin,
+    MessagingMixin,
+    SecurityMixin,
+)
 
 
 class MQTTScanner(

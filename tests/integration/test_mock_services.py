@@ -20,7 +20,7 @@ import urllib.error
 
 from tests.service_gate import require_port, require_service
 
-from .conftest import MOCK_HOST, MOCK_PORTS, check_port_open
+from tests.integration.conftest import MOCK_HOST, MOCK_PORTS, check_port_open
 
 
 @pytest.fixture

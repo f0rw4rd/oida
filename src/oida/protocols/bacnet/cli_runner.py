@@ -20,14 +20,11 @@ import random
 import socket
 from typing import Any, Optional
 
-from ...connection import NetworkConnection
-from ...utils.exceptions import ConfigurationError
+from oida.connection import NetworkConnection
+from oida.utils.exceptions import ConfigurationError
 
-from .constants import (
-    _is_bac0_available,
-    _load_bacpypes3,
-)
-from .mixins import (
+from oida.protocols.bacnet.constants import _is_bac0_available, _load_bacpypes3
+from oida.protocols.bacnet.mixins import (
     ConnectionMixin,
     DiscoveryMixin,
     ObjectsMixin,
@@ -415,7 +412,7 @@ class bacnet(
         the scan. The fallback loses local broadcast discovery but keeps every
         unicast ReadProperty working.
         """
-        from .constants import _load_bacpypes3
+        from oida.protocols.bacnet.constants import _load_bacpypes3
 
         Address = _load_bacpypes3()["Address"]
 
@@ -506,7 +503,7 @@ class bacnet(
             systemStatus=DeviceStatus.operational,
         )
 
-        from ...utils.socket_helpers import get_local_ip
+        from oida.utils.socket_helpers import get_local_ip
 
         local_ip, _err = get_local_ip(target)
 

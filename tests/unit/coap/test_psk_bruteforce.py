@@ -207,6 +207,60 @@ class TestPSKBruteforce(unittest.TestCase):
         finally:
             os.unlink(key_file)
 
+    def test_connection_refused_aborts_after_threshold(self):
+        """An unreachable DTLS service aborts the brute rather than reporting
+        every untested PSK as a failed key."""
+        from oida.utils.protocol_helpers import MAX_CONSECUTIVE_CONNECTION_ERRORS
+
+        instance = self._make_coap_instance()
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write("\n".join(f"key{i}" for i in range(50)) + "\n")
+            key_file = f.name
+
+        try:
+            call_count = 0
+
+            def mock_run(coro):
+                nonlocal call_count
+                call_count += 1
+                return (False, None, "[Errno 111] Connection refused")
+
+            with patch("oida.protocols.coap.cli_runner.run_async", side_effect=mock_run):
+                result = instance._bruteforce_dtls_psk(key_file, "id1")
+
+            assert result is False
+            # Stops after the consecutive-failure threshold, not all 50.
+            assert call_count == MAX_CONSECUTIVE_CONNECTION_ERRORS
+        finally:
+            os.unlink(key_file)
+
+    def test_timeout_not_treated_as_connection_error(self):
+        """A bare timeout is ambiguous over UDP, so it counts as a failed key
+        (a real test) and does NOT abort the brute-force."""
+        instance = self._make_coap_instance()
+
+        with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
+            f.write("key1\nkey2\nkey3\n")
+            key_file = f.name
+
+        try:
+            call_count = 0
+
+            def mock_run(coro):
+                nonlocal call_count
+                call_count += 1
+                return (False, None, "timeout")
+
+            with patch("oida.protocols.coap.cli_runner.run_async", side_effect=mock_run):
+                result = instance._bruteforce_dtls_psk(key_file, "id1")
+
+            assert result is False
+            # All three are tried (timeout != abort).
+            assert call_count == 3
+        finally:
+            os.unlink(key_file)
+
 
 # ---------------------------------------------------------------------------
 # Probe Paths Wordlist Tests

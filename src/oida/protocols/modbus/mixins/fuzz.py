@@ -90,7 +90,7 @@ class FuzzMixin(_ScannerBase):
         self.logger.display(f"Fuzzing {len(fuzz_addrs)} of {len(addresses)} register(s)...")
 
         # Batch-read original values for restoration after fuzzing.
-        from ..register_io import read_registers_batched
+        from oida.protocols.modbus.register_io import read_registers_batched
 
         originals = read_registers_batched(
             self.conn,
@@ -231,7 +231,7 @@ class FuzzMixin(_ScannerBase):
 
     def _fuzz_registers_from_map(self, map_name: str, iterations: int) -> Dict:
         """Fuzz registers based on a vendor register map."""
-        from ..decoder import load_register_map
+        from oida.protocols.modbus.decoder import load_register_map
 
         reg_map = load_register_map(map_name)
         if not reg_map:
@@ -292,7 +292,7 @@ class FuzzMixin(_ScannerBase):
 
     def _parse_fuzz_range(self, range_str: str) -> List[int]:
         """Parse register range for fuzzing (central range parser)."""
-        from ....utils import ProtocolParser
+        from oida.utils import ProtocolParser
 
         return ProtocolParser.parse_address_range(range_str)
 

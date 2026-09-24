@@ -9,8 +9,8 @@ the standard NXC proto_flow → create_conn_obj → enum_host_info →
 print_host_info contract.
 """
 
-from ...connection import NetworkConnection
-from ...utils.lazy_import import lazy_import
+from oida.connection import NetworkConnection
+from oida.utils.lazy_import import lazy_import
 
 _pysnmp = lazy_import("pysnmp", "SNMP")
 
@@ -44,7 +44,7 @@ class snmp(NetworkConnection):
 
     def create_conn_obj(self):
         """Initialize SNMPScanner and verify dependencies."""
-        from .scanner import SNMPScanner
+        from oida.protocols.snmp.scanner import SNMPScanner
 
         args_dict = self._convert_args_to_dict()
         self.scanner = SNMPScanner(args_dict)

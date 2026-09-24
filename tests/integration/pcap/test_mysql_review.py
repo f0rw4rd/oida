@@ -21,7 +21,7 @@ import pytest
 
 from tests.service_gate import require_import, require_service
 
-from .conftest import _pcap_path, _skip_unless_pyshark
+from tests.integration.pcap.conftest import _pcap_path, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
 
@@ -167,7 +167,7 @@ class TestMySQLErrorMessageField:
         asyncio.set_event_loop(asyncio.new_event_loop())
         kwargs = {"input_file": str(pcap), "display_filter": "mysql"}
         if use_ek:
-            from .conftest import _ek_mode_available
+            from tests.integration.pcap.conftest import _ek_mode_available
 
             if not _ek_mode_available:
                 require_service("pyshark EK-mode fork not installed")

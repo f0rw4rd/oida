@@ -15,13 +15,9 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from zipfile import ZipFile
 
-from .helpers import (
-    _get_xknxproject,
-    _get_xknxproject_exceptions,
-    _get_pyzipper,
-)
-from ...utils import ics_logger as module
-from ...utils.ics_logger import get_module_logger
+from oida.protocols.knx.helpers import _get_xknxproject, _get_xknxproject_exceptions, _get_pyzipper
+from oida.utils import ics_logger as module
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 

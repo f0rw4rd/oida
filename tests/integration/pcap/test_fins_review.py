@@ -24,7 +24,7 @@ import pytest
 
 from tests.service_gate import require_service
 
-from .conftest import FIXTURE_DIR, _skip_unless_pyshark
+from tests.integration.pcap.conftest import FIXTURE_DIR, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
 
@@ -86,7 +86,7 @@ class TestFinsBaseHexParsing:
 
     def test_xml_and_ek_modes_agree(self):
         _skip_unless_pyshark()
-        from .conftest import _ek_mode_available
+        from tests.integration.pcap.conftest import _ek_mode_available
 
         if not _ek_mode_available:
             require_service("pyshark EK-mode fork not installed")

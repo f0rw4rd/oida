@@ -99,7 +99,7 @@ import json
 
 import pytest
 
-from .conftest import MOCK_HOST, MOCK_PORTS, skip_unless_l2_docker
+from tests.integration.conftest import MOCK_HOST, MOCK_PORTS, skip_unless_l2_docker
 
 
 # ---------------------------------------------------------------------------

@@ -26,31 +26,26 @@ import re
 import struct
 from typing import Dict, Any, Optional
 
-from ...utils import ProgressTracker
+from oida.utils import ProgressTracker
 
 # Shared CoE definitions
-from ..ethercat.coe import (
+from oida.protocols.ethercat.coe import (
     get_al_state_name,
     COE_SCAN_RANGES,
     get_coe_object_name,
     parse_coe_ranges,
 )
-from ..ethercat.constants import lookup_vendor, get_al_status_error, ESC_REGISTER_MAP
-from ..ethercat.soe import SOE_ELEMENTS, SOE_STANDARD_IDNS, encode_soe_offset
-from ..ethercat.foe import FOE_COMMON_FILENAMES
-from ..ethercat.fsoe import FSOE_COE_OBJECTS, FSOE_PARAM_OBJECTS
-from ..ethercat.eeprom import parse_sii_header
+from oida.protocols.ethercat.constants import lookup_vendor, get_al_status_error, ESC_REGISTER_MAP
+from oida.protocols.ethercat.soe import SOE_ELEMENTS, SOE_STANDARD_IDNS, encode_soe_offset
+from oida.protocols.ethercat.foe import FOE_COMMON_FILENAMES
+from oida.protocols.ethercat.fsoe import FSOE_COE_OBJECTS, FSOE_PARAM_OBJECTS
+from oida.protocols.ethercat.eeprom import parse_sii_header
 
 # ADS protocol constants
-from .constants import (
-    ADS_ERROR_CODES,
-    ADS_FILE_FLAG,
-    ADS_FUZZ_DELAY,
-    ADS_IDX_GRP,
-)
+from oida.protocols.ads.constants import ADS_ERROR_CODES, ADS_FILE_FLAG, ADS_FUZZ_DELAY, ADS_IDX_GRP
 
 # Shared helpers
-from .helpers import (
+from oida.protocols.ads.helpers import (
     _get_pyads,
     _read_raw,
     _read_coe_string,
@@ -2397,7 +2392,7 @@ class EtherCATOpsMixin:
             Dict mapping port to list of fuzz result dicts.
         """
         import time
-        from ...utils.fuzzer import fuzz
+        from oida.utils.fuzzer import fuzz
 
         pyads = _get_pyads()
         results = {}

@@ -6,9 +6,9 @@ Provides data change and event subscription functionality.
 
 import asyncio
 
-from ....utils.protocol_helpers import refuse_without_confirm
-from ..handlers import DataChangeHandler, EventHandler
-from ..helpers import ua
+from oida.utils.protocol_helpers import refuse_without_confirm
+from oida.protocols.opcua.handlers import DataChangeHandler, EventHandler
+from oida.protocols.opcua.helpers import ua
 
 
 class SubscriptionsMixin:

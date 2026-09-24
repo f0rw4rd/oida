@@ -2,12 +2,12 @@
 
 from typing import Any, Dict, Optional
 
-from ...connection import NetworkConnection
-from ...utils.lazy_import import lazy_import
-from ...utils.permissions import check_raw_socket_capability
-from .gsdml_parser import parse_gsdml, GSDMLDevice
-from .models import ProfinetDevice
-from .mixins import RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin
+from oida.connection import NetworkConnection
+from oida.utils.lazy_import import lazy_import
+from oida.utils.permissions import check_raw_socket_capability
+from oida.protocols.profinet.gsdml_parser import parse_gsdml, GSDMLDevice
+from oida.protocols.profinet.models import ProfinetDevice
+from oida.protocols.profinet.mixins import RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin
 
 _profinet = lazy_import("profinet", "PROFINET")
 
@@ -350,7 +350,7 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
         Returns:
             OIDA ProfinetDevice instance
         """
-        from ...utils.vendor_maps import profinet_vendor_map
+        from oida.utils.vendor_maps import profinet_vendor_map
 
         info = pn_dev._info  # DCPDeviceDescription
         vendor_id = info.vendor_id

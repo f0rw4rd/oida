@@ -5,9 +5,9 @@
 import time
 from typing import Dict
 
-from ...connection import NetworkConnection
+from oida.connection import NetworkConnection
 
-from . import MMSScanner, _Lib, _pyiec61850, _write_under_fc
+from oida.protocols.mms import MMSScanner, _Lib, _pyiec61850, _write_under_fc
 
 
 class mms(NetworkConnection):
@@ -151,7 +151,7 @@ class mms(NetworkConnection):
     def _fuzz_data_object(self, reference: str, iterations: int) -> None:
         """Fuzz a single MMS data object."""
         import struct
-        from ...utils.fuzzer import fuzz
+        from oida.utils.fuzzer import fuzz
 
         _Lib.require()
 

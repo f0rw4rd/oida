@@ -133,9 +133,9 @@ import threading
 
 import pytest
 
-from .base_protocol_test import BaseProtocolIntegrationTest
-from .cli_runner import CLIResult
-from .conftest import MOCK_HOST, check_port_open
+from tests.integration.base_protocol_test import BaseProtocolIntegrationTest
+from tests.integration.cli_runner import CLIResult
+from tests.integration.conftest import MOCK_HOST, check_port_open
 
 ASTM_DATA_PORT = 1396
 

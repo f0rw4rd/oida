@@ -14,12 +14,12 @@ import time
 from pathlib import Path
 from typing import Any, Dict, List, Optional
 
-from ...connection import SerialConnection
-from ...utils.result_types import ScanResult
-from ...utils.export_utils import configure as configure_export
-from ...utils.export_utils import export_data, get_export_path
-from ...utils.ics_logger import get_logger, get_module_logger, set_progress_active
-from ...utils.lazy_import import lazy_import
+from oida.connection import SerialConnection
+from oida.utils.result_types import ScanResult
+from oida.utils.export_utils import configure as configure_export
+from oida.utils.export_utils import export_data, get_export_path
+from oida.utils.ics_logger import get_logger, get_module_logger, set_progress_active
+from oida.utils.lazy_import import lazy_import
 
 logger = get_module_logger(__name__)
 
@@ -126,7 +126,7 @@ class PcapScanner:
         self.logger.info(f"PCAP analysis: {self.pcap_file}")
 
         # Initialize traffic statistics
-        from ..discovery.stats import PassiveStatistics
+        from oida.protocols.discovery.stats import PassiveStatistics
 
         # Run PyShark pipeline with retry on tshark crash (intermittent retcode 255).
         # Truncated pcap files ("cut short") always exit non-zero — don't retry those.
@@ -219,7 +219,7 @@ class PcapScanner:
 
     def _print_listeners(self) -> None:
         """Print available listeners and exit."""
-        from .listener_registry import list_listeners, CATEGORIES
+        from oida.protocols.pcap.listener_registry import list_listeners, CATEGORIES
 
         listeners = list_listeners()
         self.logger.info(f"Available listeners ({len(listeners)}):")
@@ -240,7 +240,7 @@ class PcapScanner:
 
     def _resolve_listener_names(self):
         """Resolve which listeners to activate based on args."""
-        from .listener_registry import resolve_listener_names
+        from oida.protocols.pcap.listener_registry import resolve_listener_names
 
         protocols = None
         if self.args.get("protocols"):
@@ -658,7 +658,7 @@ class PcapScanner:
                 return 0
 
         # Harvest protocol-specific data from all listeners via generic interface
-        from ...pcap.pyshark_base import PySharkListenerBase
+        from oida.pcap.pyshark_base import PySharkListenerBase
 
         all_tables: List[Dict[str, Any]] = []
         all_interactions = []
@@ -927,7 +927,7 @@ class PcapScanner:
         MAC address (fallback: IP address for MAC-less devices), keep the
         richest device as the primary, and merge_from() the rest.
         """
-        from ..discovery.core import normalize_ipv6
+        from oida.protocols.discovery.core import normalize_ipv6
 
         devices = self.discovered_devices
         original_count = len(devices)
@@ -1123,7 +1123,7 @@ class PcapScanner:
             self.logger.debug("_create_pyshark_listeners: pyshark not available")
             return {}
 
-        from .listener_registry import create_listeners
+        from oida.protocols.pcap.listener_registry import create_listeners
 
         names = self._resolve_listener_names()
         listeners = create_listeners(names, logger=self.logger)
@@ -1218,7 +1218,7 @@ class PcapScanner:
         if not hasattr(packet, "eth"):
             return
 
-        from ..discovery.stats import _str
+        from oida.protocols.discovery.stats import _str
 
         src_mac = _str(getattr(packet.eth, "src", None)).lower()
         dst_mac = _str(getattr(packet.eth, "dst", None)).lower()
@@ -1247,7 +1247,11 @@ class PcapScanner:
         2. Endpoint tracker (IP→MAC from every packet)
         3. Stats open ports (per-IP service detection)
         """
-        from ..discovery.core import DiscoveredDevice, build_device_description, lookup_mac_vendor
+        from oida.protocols.discovery.core import (
+            DiscoveredDevice,
+            build_device_description,
+            lookup_mac_vendor,
+        )
 
         # ── Merge stats IP→MAC into endpoint tracker ──
         # Stats collects IP→MAC from conversations; merge so endpoint tracker
@@ -1352,7 +1356,7 @@ class PcapScanner:
         Only writes when -o / --output provides an output directory.
         Reuses the same format as the discovery scanner for consistency.
         """
-        from ..discovery.core import build_device_description, lookup_mac_vendor
+        from oida.protocols.discovery.core import build_device_description, lookup_mac_vendor
 
         output_dir = self.args.get("output") or self.args.get("output_dir")
         if not output_dir:

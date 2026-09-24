@@ -14,7 +14,7 @@ All scanners support:
 import time
 from typing import List, Callable, Dict, Any, Optional
 
-from .ics_logger import log, get_module_logger
+from oida.utils.ics_logger import log, get_module_logger
 
 _logger = get_module_logger(__name__)
 
@@ -84,7 +84,7 @@ def load_passwords(source: Optional[str], protocol: str = "generic") -> List[str
     Returns:
         List of passwords to test
     """
-    from .default_credentials import get_protocol_defaults
+    from oida.utils.default_credentials import get_protocol_defaults
 
     if source is None:
         # Fall back to protocol defaults

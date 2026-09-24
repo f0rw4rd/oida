@@ -12,7 +12,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING, Any, Dict, List
 
-from ....utils.protocol_helpers import safe_int_conversion
+from oida.utils.protocol_helpers import safe_int_conversion
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

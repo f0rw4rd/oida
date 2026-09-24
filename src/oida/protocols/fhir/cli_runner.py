@@ -14,9 +14,9 @@ import json
 from typing import Any, Dict, Optional
 from urllib.parse import urlparse
 
-from ...connection import NetworkConnection
+from oida.connection import NetworkConnection
 
-from .helpers import (
+from oida.protocols.fhir.helpers import (
     FHIR_SECURITY_MODES,
     FHIR_VENDOR_MAP,
     _get_fhir_validation_error,
@@ -25,7 +25,7 @@ from .helpers import (
     is_fhirclient_available,
     validate_credential_path,
 )
-from .mixins import CRUDMixin, SearchMixin, SecurityMixin
+from oida.protocols.fhir.mixins import CRUDMixin, SearchMixin, SecurityMixin
 
 
 class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
@@ -324,7 +324,7 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
 
     def _check_tls_certificate(self, url: str):
         """Check TLS certificate for security issues"""
-        from ...utils.socket_helpers import check_tls_certificate
+        from oida.utils.socket_helpers import check_tls_certificate
 
         parsed = urlparse(url)
         hostname = parsed.hostname
@@ -594,7 +594,7 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
             if (
                 "csv" in export_format.lower() or export_format.lower() == "all"
             ) and self.results.get("data", {}).get("patients", {}).get("records"):
-                from ...utils.export_utils import export_data
+                from oida.utils.export_utils import export_data
 
                 patients = self.results["data"]["patients"]["records"]
                 headers = ["id", "name", "birth_date", "gender", "phone", "address"]

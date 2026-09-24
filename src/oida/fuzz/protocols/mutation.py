@@ -6,8 +6,8 @@ from boofuzz import FromFile, Request, Simple
 
 from typing import List
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.mutation import NativeRadamsaMutator, SeedLoader
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.mutation import NativeRadamsaMutator, SeedLoader
 
 
 class MutationFuzzer(BaseFuzzer):

@@ -4,11 +4,11 @@
 
 from typing import Any
 
-from ...connection import NetworkConnection
-from ...utils.lazy_import import lazy_import
-from .scanner import HARTScanner, PhysicalSignaling
-from .hartip import get_device_type_name
-from .mixins.enumeration import parse_command_range
+from oida.connection import NetworkConnection
+from oida.utils.lazy_import import lazy_import
+from oida.protocols.hart.scanner import HARTScanner, PhysicalSignaling
+from oida.protocols.hart.hartip import get_device_type_name
+from oida.protocols.hart.mixins.enumeration import parse_command_range
 
 _hartip = lazy_import("hartip", "HART")
 
@@ -718,7 +718,7 @@ class hart(NetworkConnection):
 
         self.logger.display("Checking device lock state...")
 
-        from .scanner import LockState
+        from oida.protocols.hart.scanner import LockState
 
         lock_state = self.scanner.read_lock_state()
         self.results["data"]["lock_state"] = lock_state
@@ -750,7 +750,7 @@ class hart(NetworkConnection):
         wordlist = getattr(self.args, "bruteforce_lock", None)
         delay = getattr(self.args, "bruteforce_delay", 0.1)
 
-        from ...utils.login_scanner import format_wordlist_source
+        from oida.utils.login_scanner import format_wordlist_source
 
         self.logger.display(f"Bruteforcing lock codes from: {format_wordlist_source(wordlist)}")
 

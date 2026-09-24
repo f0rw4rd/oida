@@ -13,8 +13,8 @@ import hashlib
 import json
 import time
 from typing import Dict, Optional, Any
-from .base import BaseTransformer
-from .encoding import Base64Transformer
+from oida.fuzz.primitives.transformers.base import BaseTransformer
+from oida.fuzz.primitives.transformers.encoding import Base64Transformer
 
 import logging
 

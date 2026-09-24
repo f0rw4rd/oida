@@ -31,7 +31,7 @@ from pydicom.dataset import Dataset
 
 # Reuse the construction helper / fixtures from the sibling scanner suite so the
 # NXC object is built WITHOUT triggering proto_flow (no real socket opened).
-from .test_scanner import _make_dicom_instance
+from tests.unit.dicom.test_scanner import _make_dicom_instance
 
 
 # ---------------------------------------------------------------------------

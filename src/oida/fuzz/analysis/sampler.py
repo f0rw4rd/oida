@@ -14,8 +14,8 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import List, Optional
 
-from .predictability import SequenceVerdict, classify_sequence
-from ...utils.ics_logger import get_logger
+from oida.fuzz.analysis.predictability import SequenceVerdict, classify_sequence
+from oida.utils.ics_logger import get_logger
 
 
 @dataclass

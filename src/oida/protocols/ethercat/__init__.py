@@ -6,27 +6,23 @@ import time
 import threading
 from typing import Dict, List, Any, Optional
 from datetime import datetime
-from ...utils import (
-    SerialScanner,
-    parse_bool,
-    ProtocolParser,
-)
-from ...utils.permissions import check_raw_socket_capability
-from ...utils.lazy_import import lazy_import
+from oida.utils import SerialScanner, parse_bool, ProtocolParser
+from oida.utils.permissions import check_raw_socket_capability
+from oida.utils.lazy_import import lazy_import
 
 # Import from submodules
-from .constants import (
+from oida.protocols.ethercat.constants import (
     lookup_vendor,
     get_slave_state_name,
     get_al_status_error,
 )
 
 # Import mixin classes
-from .eeprom_ops import EepromOpsMixin
-from .coe_ops import CoeOpsMixin
-from .advanced_ops import AdvancedOpsMixin
-from .fuzzing_ops import FuzzingOpsMixin
-from .reporting import ReportingMixin
+from oida.protocols.ethercat.eeprom_ops import EepromOpsMixin
+from oida.protocols.ethercat.coe_ops import CoeOpsMixin
+from oida.protocols.ethercat.advanced_ops import AdvancedOpsMixin
+from oida.protocols.ethercat.fuzzing_ops import FuzzingOpsMixin
+from oida.protocols.ethercat.reporting import ReportingMixin
 
 # Lazy imports - only load when actually used
 _pysoem = lazy_import("pysoem", "EtherCAT")
@@ -749,7 +745,7 @@ class EtherCATScanner(
 
     def _enrich_device_info(self, master: Any, slaves: Dict[str, Any]):
         """Read SDO identity/version objects and enrich the slaves dict (--device-info / -i)."""
-        from .coe import COMMON_SDO_OBJECTS
+        from oida.protocols.ethercat.coe import COMMON_SDO_OBJECTS
 
         targets = self._slave_filter()
         self.logger.display("Reading device information via SDO...")
@@ -790,7 +786,7 @@ class EtherCATScanner(
 
     def _scan_fsoe(self, master: Any) -> Dict[str, Any]:
         """Scan FSoE (Functional Safety) CoE objects from slaves."""
-        from .fsoe import FSOE_COE_OBJECTS, FSOE_PARAM_OBJECTS
+        from oida.protocols.ethercat.fsoe import FSOE_COE_OBJECTS, FSOE_PARAM_OBJECTS
 
         all_objects = FSOE_COE_OBJECTS + FSOE_PARAM_OBJECTS
 
@@ -848,7 +844,7 @@ class EtherCATScanner(
                             str(entry["value"]),
                         ]
                     )
-                from ...utils.export_utils import print_table
+                from oida.utils.export_utils import print_table
 
                 print_table(
                     table_data,
@@ -912,4 +908,4 @@ class EtherCATScanner(
 
 
 # NXC-style callable class
-from .cli_runner import ethercat  # noqa: E402, F401
+from oida.protocols.ethercat.cli_runner import ethercat  # noqa: E402, F401

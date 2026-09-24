@@ -23,8 +23,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.oida.fuzz.core.database.mock import MockDatabase
-from src.oida.fuzz.core.session.manager import TestCaseManager
+from oida.fuzz.core.database.mock import MockDatabase
+from oida.fuzz.core.session.manager import TestCaseManager
 
 
 class _FakeLog:

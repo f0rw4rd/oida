@@ -46,14 +46,10 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Tuple
 
-from .base import PassiveListenerBase
-from .core import (
-    DiscoveredDevice,
-    validate_interface,
-    validate_timeout,
-)
-from ...utils.rate_limiter import sendto
-from ...utils.ics_logger import get_module_logger
+from oida.protocols.discovery.base import PassiveListenerBase
+from oida.protocols.discovery.core import DiscoveredDevice, validate_interface, validate_timeout
+from oida.utils.rate_limiter import sendto
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 

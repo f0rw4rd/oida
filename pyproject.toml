@@ -195,6 +195,7 @@ select = [
     "PLE",                  # pylint errors (genuine bugs, not style)
     "B006", "B008",         # mutable default arg, function call in default
     "S102", "S307", "S608", # exec, eval, SQL injection
+    "TID252",               # relative import — one import style, see below
 ]
 ignore = [
     # Module-level imports not at top: required for optional dependency patterns,
@@ -213,6 +214,18 @@ ignore = [
     # Abstract base class without abstract methods: service layer pattern
     "B024",
 ]
+
+[tool.ruff.lint.flake8-tidy-imports]
+# One import style across the tree: absolute, `from oida.x import y`. The
+# codebase had both, sometimes in the same file, and the mix is not cosmetic —
+# a module reached as `oida.foo` and as `src.oida.foo` is imported TWICE into
+# distinct module objects, so its classes fail `is` comparisons and its
+# module-level state exists in two copies.
+#
+# "all", not the default "parents": the default only bans `from ..x import y`
+# and would leave same-package `from .x import y` — the overwhelming majority
+# here — untouched, which is the mix we are removing.
+ban-relative-imports = "all"
 
 [tool.ruff.lint.flake8-unused-arguments]
 # `*args` / `**kwargs` on compatibility shims and callback signatures are

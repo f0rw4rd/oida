@@ -40,8 +40,8 @@ import sys
 from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
 logger = get_module_logger(__name__)
 
@@ -556,7 +556,7 @@ Examples:
     logger.info("Converted %d/%d files to %s", success, total, output_dir)
 
     logger.info("Running validation...")
-    from .validate_maps import validate_all_maps, print_report
+    from oida.protocols.modbus.validate_maps import validate_all_maps, print_report
 
     results = validate_all_maps(output_dir)
     print_report(results, verbose=False)

@@ -21,7 +21,7 @@ import pytest
 
 from tests.service_gate import require_import, require_service
 
-from .conftest import FIXTURE_DIR, _skip_unless_pyshark
+from tests.integration.pcap.conftest import FIXTURE_DIR, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
 
@@ -75,7 +75,7 @@ class TestDhcpOption67BootFile:
     def test_option67_boot_file_extracted(self, tmp_path, use_ek):
         _skip_unless_pyshark()
         if use_ek:
-            from .conftest import _ek_mode_available
+            from tests.integration.pcap.conftest import _ek_mode_available
 
             if not _ek_mode_available:
                 require_service("pyshark EK-mode fork not installed")

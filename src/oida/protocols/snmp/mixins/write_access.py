@@ -70,7 +70,7 @@ class WriteAccessMixin(_ScannerBase):
         """Walk VACM access table to detect write view configuration."""
         from pysnmp.hlapi.asyncio import ObjectIdentity, ObjectType, walk_cmd
 
-        from ..constants import VACM_OIDS
+        from oida.protocols.snmp.constants import VACM_OIDS
 
         write_view_oid = VACM_OIDS["vacmAccessWriteViewName"]
         read_view_oid = VACM_OIDS["vacmAccessReadViewName"]
@@ -157,7 +157,7 @@ class WriteAccessMixin(_ScannerBase):
             set_cmd,
         )
 
-        from ..constants import SNMP_OIDS
+        from oida.protocols.snmp.constants import SNMP_OIDS
 
         sys_contact_oid = SNMP_OIDS["sysContact"]
 
@@ -512,7 +512,7 @@ class WriteAccessMixin(_ScannerBase):
         )
         from pysnmp.proto import rfc1905
 
-        from ....utils.export_utils import export_table
+        from oida.utils.export_utils import export_table
 
         # Walk the subtree
         self.logger.info(f"Walk-write: walking {oid}...")

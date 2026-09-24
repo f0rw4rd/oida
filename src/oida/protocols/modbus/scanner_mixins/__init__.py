@@ -15,14 +15,14 @@ Mixins:
     - ScannerCustomFCMixin: Custom/raw function code handling
 """
 
-from .identification import ScannerIdentificationMixin
-from .discovery import ScannerDiscoveryMixin
-from .diagnostics import ScannerDiagnosticsMixin
-from .comm_events import ScannerCommEventsMixin
-from .file_ops import ScannerFileOpsMixin
-from .write_ops import ScannerWriteOpsMixin
-from .reporting import ScannerReportingMixin
-from .custom_fc import ScannerCustomFCMixin
+from oida.protocols.modbus.scanner_mixins.identification import ScannerIdentificationMixin
+from oida.protocols.modbus.scanner_mixins.discovery import ScannerDiscoveryMixin
+from oida.protocols.modbus.scanner_mixins.diagnostics import ScannerDiagnosticsMixin
+from oida.protocols.modbus.scanner_mixins.comm_events import ScannerCommEventsMixin
+from oida.protocols.modbus.scanner_mixins.file_ops import ScannerFileOpsMixin
+from oida.protocols.modbus.scanner_mixins.write_ops import ScannerWriteOpsMixin
+from oida.protocols.modbus.scanner_mixins.reporting import ScannerReportingMixin
+from oida.protocols.modbus.scanner_mixins.custom_fc import ScannerCustomFCMixin
 
 __all__ = [
     "ScannerIdentificationMixin",

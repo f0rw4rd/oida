@@ -8,7 +8,7 @@ from typing import Any, Dict, TYPE_CHECKING
 from datetime import datetime
 from binascii import hexlify
 
-from ...utils.export_utils import print_table
+from oida.utils.export_utils import print_table
 
 
 if TYPE_CHECKING:
@@ -367,7 +367,7 @@ class AdvancedOpsMixin(_ScannerBase):
 
                 # Save to dump path if specified
                 if self.dump_path and data:
-                    from ...utils.common_types import safe_output_path
+                    from oida.utils.common_types import safe_output_path
 
                     safe_name = os.path.basename(filename).replace("\x00", "")
                     try:

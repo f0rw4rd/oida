@@ -11,9 +11,9 @@ from pathlib import Path
 from datetime import datetime, timezone
 from typing import Any, Dict, List
 
-from ..scanner import ListenStats
-from ....utils.export_utils import print_table
-from ....utils.fuzzer import fuzz
+from oida.protocols.mqtt.scanner import ListenStats
+from oida.utils.export_utils import print_table
+from oida.utils.fuzzer import fuzz
 
 # fuzz_publish_payloads() only fuzzes the first N topics; callers that log a
 # pre-cap topic count (e.g. cli_runner._handle_fuzz) should use this so

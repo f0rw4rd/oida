@@ -14,16 +14,16 @@ Requires: pip install oida-ics[mms]
 import time
 from typing import Dict, List, Any, Optional
 
-from ...utils import (
+from oida.utils import (
     NetworkScanner,
     SecurityAnalyzer,
     ProgressTracker,
     parse_bool,
     safe_int_conversion,
 )
-from ...utils.exceptions import DependencyError
-from ...utils.lazy_import import lazy_import
-from .fingerprint import FingerprintMatcher, FingerprintMatch
+from oida.utils.exceptions import DependencyError
+from oida.utils.lazy_import import lazy_import
+from oida.protocols.mms.fingerprint import FingerprintMatcher, FingerprintMatch
 
 # Lazy imports for pyiec61850-ng (only loaded when actually used)
 _pyiec61850 = lazy_import("pyiec61850", "MMS", install_hint="pip install oida-ics[mms]")
@@ -885,4 +885,4 @@ class MMSScanner(NetworkScanner):
 
 
 # Re-export NXC-style callable class
-from .cli_runner import mms as mms  # noqa: E402
+from oida.protocols.mms.cli_runner import mms as mms  # noqa: E402

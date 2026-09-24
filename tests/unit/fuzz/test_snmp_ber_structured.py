@@ -18,12 +18,12 @@ import pytest
 
 from boofuzz.mutation_context import MutationContext
 
-from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
-from src.oida.fuzz.core.connections.base import MockConnectionFactory
-from src.oida.fuzz.protocols.snmp_common import structured_ber_varbind_values
-from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
-from src.oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
-from src.oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.core.connections.base import MockConnectionFactory
+from oida.fuzz.protocols.snmp_common import structured_ber_varbind_values
+from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+from oida.fuzz.protocols.snmpv2 import SNMPv2cFuzzer
+from oida.fuzz.protocols.snmpv3 import SNMPv3Fuzzer
 
 
 # (fuzzer class, Structured request name, varbind OID the node fuzzes)

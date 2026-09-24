@@ -23,9 +23,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.oida.fuzz.core.database.interface import DatabaseInterface
-from src.oida.fuzz.core.database.mock import MockDatabase
-from src.oida.fuzz.core.session.manager import TestCaseManager
+from oida.fuzz.core.database.interface import DatabaseInterface
+from oida.fuzz.core.database.mock import MockDatabase
+from oida.fuzz.core.session.manager import TestCaseManager
 
 
 class _FakeLog:
@@ -100,7 +100,7 @@ def test_payload_storage_respects_disabled_flag():
 
 
 def test_get_payload_falls_back_to_crash_table():
-    from src.oida.fuzz.core.database.interface import Crash
+    from oida.fuzz.core.database.interface import Crash
 
     db = MockDatabase()
     db.init_schema(store_all_payloads=False)
@@ -189,14 +189,14 @@ class _FakeSocket:
 
 
 def _replay_manager(sock):
-    from src.oida.fuzz.core.database.interface import Crash
+    from oida.fuzz.core.database.interface import Crash
 
     db = MockDatabase()
     db.init_schema()
     fuzzer = _make_fuzzer()
     fuzzer._create_socket = lambda: sock
     mgr = TestCaseManager(fuzzer, database=db, read_only=True)
-    from src.oida.fuzz.core.database.interface import TestCase as TC
+    from oida.fuzz.core.database.interface import TestCase as TC
 
     db.store_test_case(TC(id=1, name="c1", timestamp="t", result="crash", crc32=0))
     db.store_crash(Crash(test_case_id=1, payload=b"\x01\x02", crash_info="boom"))

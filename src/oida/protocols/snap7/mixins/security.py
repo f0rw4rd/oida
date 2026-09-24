@@ -109,7 +109,7 @@ class SecurityMixin(_ScannerBase):
         Returns:
             Dict with: enabled (bool), method (str), details (str)
         """
-        from ..scanner import _get_snap7_client, _suppress_snap7_logging
+        from oida.protocols.snap7.scanner import _get_snap7_client, _suppress_snap7_logging
 
         self.logger.debug("Detecting PUT/GET access for series=%s...", series)
         result = {
@@ -193,15 +193,21 @@ class SecurityMixin(_ScannerBase):
         """
         import time
 
-        from ....utils.login_scanner import format_wordlist_source, load_passwords
-        from ....utils import ProgressTracker
-        from ..scanner import _suppress_snap7_logging
+        from oida.utils.login_scanner import format_wordlist_source, load_passwords
+        from oida.utils import ProgressTracker
+        from oida.utils.protocol_helpers import (
+            MAX_CONSECUTIVE_CONNECTION_ERRORS,
+            is_connection_error,
+        )
+        from oida.protocols.snap7.scanner import _suppress_snap7_logging
 
         results: Dict[str, Any] = {
             "success": False,
             "password": None,
             "attempts": 0,
             "found": [],
+            "connection_errors": 0,
+            "aborted": False,
         }
 
         with _suppress_snap7_logging():
@@ -218,10 +224,9 @@ class SecurityMixin(_ScannerBase):
                 f"Starting brute force with {len(passwords)} passwords from {source}..."
             )
             progress = ProgressTracker(len(passwords), logger=self.logger)
+            consecutive_connection_errors = 0
 
             for password in passwords:
-                results["attempts"] += 1
-
                 # S7 passwords are max 8 chars
                 test_password = password[:8] if len(password) > 8 else password
 
@@ -231,6 +236,9 @@ class SecurityMixin(_ScannerBase):
                     connection.get_cpu_state()
 
                     # Success!
+                    results["attempts"] += 1
+                    consecutive_connection_errors = 0
+                    progress.success += 1
                     results["success"] = True
                     results["password"] = test_password
                     results["found"].append(test_password)
@@ -244,12 +252,36 @@ class SecurityMixin(_ScannerBase):
                     self.report_credential("", test_password, host=host, port=port)
 
                     if not continue_on_success:
+                        progress.update()
                         break
 
-                except Exception:
-                    # Wrong password - continue
-                    self.logger.debug(f"    {test_password}")
-                    self.clear_session(connection)
+                except Exception as e:
+                    if is_connection_error(e):
+                        # Lost the connection to the PLC: this password was
+                        # never actually tested against the device.
+                        results["connection_errors"] += 1
+                        consecutive_connection_errors += 1
+                        self.logger.debug(
+                            f"    NOT tested (connection error): {test_password} -> {e}"
+                        )
+                        self.clear_session(connection)
+                        if consecutive_connection_errors >= MAX_CONSECUTIVE_CONNECTION_ERRORS:
+                            results["aborted"] = True
+                            progress.update()
+                            self.logger.fail(
+                                f"PLC unreachable after {consecutive_connection_errors} "
+                                f"consecutive connection failures -- aborting brute force. "
+                                f"{results['attempts']} of {len(passwords)} passwords were "
+                                f"actually tested."
+                            )
+                            break
+                    else:
+                        # Wrong password - continue
+                        results["attempts"] += 1
+                        consecutive_connection_errors = 0
+                        progress.failed += 1
+                        self.logger.debug(f"    {test_password}")
+                        self.clear_session(connection)
 
                 progress.update()
 
@@ -257,7 +289,14 @@ class SecurityMixin(_ScannerBase):
                 if rate_limit > 0:
                     time.sleep(rate_limit)
 
-            if not results["success"]:
+            progress.finish()
+
+            if results["connection_errors"] and not results["aborted"]:
+                self.logger.warning(
+                    f"{results['connection_errors']} password(s) were skipped because the "
+                    f"PLC could not be reached -- they were NOT tested."
+                )
+            if not results["success"] and not results["aborted"]:
                 self.logger.warning(f"Password not found after {results['attempts']} attempts")
 
         return results
@@ -301,7 +340,7 @@ class SecurityMixin(_ScannerBase):
 
     def _analyze_security(self, results: Dict[str, Any]) -> Dict[str, Any]:
         """Analyze security configuration"""
-        from ....utils import SecurityAnalyzer
+        from oida.utils import SecurityAnalyzer
 
         self.logger.debug("Analyzing security configuration")
         protection_data = results.get("protection_level")
@@ -363,7 +402,7 @@ class SecurityMixin(_ScannerBase):
 
     def _test_write_access(self, conn: Any) -> Dict[str, Any]:
         """Test write access by reading a value and writing it back unchanged."""
-        from ..constants import S7MemoryArea
+        from oida.protocols.snap7.constants import S7MemoryArea
 
         result = {"writable_areas": [], "read_only": True}
         # Test markers area (safest to test)

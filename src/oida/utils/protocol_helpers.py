@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 
+import asyncio
 import socket
 import time
 from typing import Dict, List, Any
@@ -20,6 +21,68 @@ def _compat_log(message, level="info"):
         _logger.debug(message)
     else:
         _logger.info(message)
+
+
+# --- Credential brute-force error classification -------------------------
+#
+# During a credential brute force we must distinguish an *authentication
+# rejection* (the server received the credential and said "no" — a real test)
+# from a *transport/connection failure* (the server was never reached, so the
+# credential was NOT actually tested). Counting the latter as "tested" makes a
+# tool report passwords as tried when the host had simply gone away.
+
+# Substrings that identify a transport/connection failure.
+CONNECTION_ERROR_MARKERS = (
+    "connect call failed",
+    "connection refused",
+    "connection reset",
+    "connection aborted",
+    "broken pipe",
+    "timed out",
+    "timeout",
+    "unreachable",
+    "no route to host",
+    "cannot connect",
+    "not connected",
+    "server disconnected",
+    "connection closed",
+    "connection lost",
+)
+
+# Substrings that identify a genuine authentication rejection by the server.
+AUTH_REJECT_MARKERS = (
+    "badidentitytoken",
+    "badusername",
+    "baduseraccessdenied",
+    "access denied",
+    "denied",
+    "unauthorized",
+    "authentication failed",
+    "invalid password",
+    "bad password",
+    "wrong password",
+)
+
+# Abort a brute-force run once this many credentials in a row fail to connect:
+# the server has almost certainly gone away and the remaining pairs would only
+# produce more connection errors, not real results.
+MAX_CONSECUTIVE_CONNECTION_ERRORS = 5
+
+
+def is_connection_error(exc: Exception) -> bool:
+    """True if the exception is a transport failure, not an auth rejection.
+
+    Used by credential brute-forcers so that an unreachable server does not
+    get its untested credentials reported as "tested".
+    """
+    if isinstance(exc, (ConnectionError, TimeoutError, OSError, asyncio.TimeoutError)):
+        return True
+    return any(marker in str(exc).lower() for marker in CONNECTION_ERROR_MARKERS)
+
+
+def is_auth_rejection(exc: Exception) -> bool:
+    """True if the exception looks like the server explicitly rejecting creds."""
+    return any(marker in str(exc).lower() for marker in AUTH_REJECT_MARKERS)
 
 
 class ProgressTracker:
@@ -164,7 +227,7 @@ class ConnectionHelper:
         sock = ConnectionHelper.create_tcp_socket(host, port, timeout=timeout)
         try:
             if use_tls:
-                from .socket_helpers import build_tls_context
+                from oida.utils.socket_helpers import build_tls_context
 
                 ssl_context = build_tls_context(
                     {
@@ -184,7 +247,7 @@ class ConnectionHelper:
                 try:
                     cert_der = sock.getpeercert(binary_form=True)
                     if cert_der:
-                        from .security_findings import display_cert_info
+                        from oida.utils.security_findings import display_cert_info
 
                         display_cert_info(
                             logger=log,

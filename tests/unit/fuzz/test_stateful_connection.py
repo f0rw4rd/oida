@@ -25,14 +25,14 @@ class TestStatefulConnectionInterface:
 
     def test_cannot_instantiate_directly(self):
         """StatefulConnection requires _perform_handshake to be implemented."""
-        from src.oida.fuzz.core.connections.stateful import StatefulConnection
+        from oida.fuzz.core.connections.stateful import StatefulConnection
 
         with pytest.raises(TypeError):
             StatefulConnection("127.0.0.1", 21)
 
     def test_concrete_subclass_accepted(self):
         """Concrete subclass with _perform_handshake can be instantiated."""
-        from src.oida.fuzz.core.connections.stateful import StatefulConnection
+        from oida.fuzz.core.connections.stateful import StatefulConnection
 
         class ConcreteConn(StatefulConnection):
             def _perform_handshake(self):
@@ -49,7 +49,7 @@ class TestStatefulConnectionInit:
 
     def _make_concrete(self, *args, **kwargs):
         """Create a concrete StatefulConnection for testing."""
-        from src.oida.fuzz.core.connections.stateful import StatefulConnection
+        from oida.fuzz.core.connections.stateful import StatefulConnection
 
         class TestConn(StatefulConnection):
             def _perform_handshake(self):
@@ -86,7 +86,7 @@ class TestStatefulConnectionParseResponseCode:
     """Tests for _parse_response_code."""
 
     def _make_concrete(self, *args, **kwargs):
-        from src.oida.fuzz.core.connections.stateful import StatefulConnection
+        from oida.fuzz.core.connections.stateful import StatefulConnection
 
         class TestConn(StatefulConnection):
             def _perform_handshake(self):
@@ -118,7 +118,7 @@ class TestStatefulConnectionClose:
 
     def test_close_resets_state(self):
         """close() resets handshake_complete and server_info."""
-        from src.oida.fuzz.core.connections.stateful import StatefulConnection
+        from oida.fuzz.core.connections.stateful import StatefulConnection
 
         class TestConn(StatefulConnection):
             def _perform_handshake(self):
@@ -146,7 +146,7 @@ class TestTLSHandler:
 
     def test_default_creation(self):
         """TLSHandler created with defaults."""
-        from src.oida.fuzz.core.connections.stateful import TLSHandler
+        from oida.fuzz.core.connections.stateful import TLSHandler
 
         handler = TLSHandler()
         assert handler.sslcontext is None
@@ -154,7 +154,7 @@ class TestTLSHandler:
 
     def test_creation_with_context(self):
         """TLSHandler with explicit SSL context."""
-        from src.oida.fuzz.core.connections.stateful import TLSHandler
+        from oida.fuzz.core.connections.stateful import TLSHandler
 
         ctx = ssl.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
         handler = TLSHandler(sslcontext=ctx)
@@ -162,7 +162,7 @@ class TestTLSHandler:
 
     def test_get_tls_info_not_secure(self):
         """get_tls_info returns not secure when not upgraded."""
-        from src.oida.fuzz.core.connections.stateful import TLSHandler
+        from oida.fuzz.core.connections.stateful import TLSHandler
 
         handler = TLSHandler()
         info = handler.get_tls_info()
@@ -170,7 +170,7 @@ class TestTLSHandler:
 
     def test_get_tls_info_secure(self):
         """get_tls_info returns secure info after upgrade."""
-        from src.oida.fuzz.core.connections.stateful import TLSHandler
+        from oida.fuzz.core.connections.stateful import TLSHandler
 
         handler = TLSHandler()
         handler.is_secure = True
@@ -186,7 +186,7 @@ class TestTLSHandler:
 
     def test_create_default_context_is_permissive(self):
         """Default context is permissive for testing."""
-        from src.oida.fuzz.core.connections.stateful import TLSHandler
+        from oida.fuzz.core.connections.stateful import TLSHandler
 
         handler = TLSHandler()
         ctx = handler._create_default_context()
@@ -204,7 +204,7 @@ class TestTLSUpgradeMixin:
 
     def test_init_defaults(self):
         """TLSUpgradeMixin initializes with defaults."""
-        from src.oida.fuzz.core.connections.stateful import TLSUpgradeMixin
+        from oida.fuzz.core.connections.stateful import TLSUpgradeMixin
 
         mixin = TLSUpgradeMixin.__new__(TLSUpgradeMixin)
         TLSUpgradeMixin.__init__(mixin)
@@ -213,7 +213,7 @@ class TestTLSUpgradeMixin:
 
     def test_get_tls_info_not_secure(self):
         """_get_tls_info returns not secure when not upgraded."""
-        from src.oida.fuzz.core.connections.stateful import TLSUpgradeMixin
+        from oida.fuzz.core.connections.stateful import TLSUpgradeMixin
 
         mixin = TLSUpgradeMixin.__new__(TLSUpgradeMixin)
         TLSUpgradeMixin.__init__(mixin)
@@ -231,21 +231,21 @@ class TestBannerConnection:
 
     def test_creation(self):
         """BannerConnection can be created."""
-        from src.oida.fuzz.core.connections.stateful import BannerConnection
+        from oida.fuzz.core.connections.stateful import BannerConnection
 
         conn = BannerConnection("127.0.0.1", 21, expected_prefix=b"220", protocol_name="FTP")
         assert conn._expected_prefix == b"220"
 
     def test_creation_without_prefix(self):
         """BannerConnection can be created without expected prefix."""
-        from src.oida.fuzz.core.connections.stateful import BannerConnection
+        from oida.fuzz.core.connections.stateful import BannerConnection
 
         conn = BannerConnection("127.0.0.1", 25, protocol_name="SMTP")
         assert conn._expected_prefix is None
 
     def test_handshake_consumes_banner(self):
         """_perform_handshake consumes banner and stores in server_info."""
-        from src.oida.fuzz.core.connections.stateful import BannerConnection
+        from oida.fuzz.core.connections.stateful import BannerConnection
 
         conn = BannerConnection("127.0.0.1", 21, expected_prefix=b"220")
 
@@ -259,7 +259,7 @@ class TestBannerConnection:
 
     def test_handshake_with_wrong_prefix_raises(self):
         """_perform_handshake raises on wrong banner prefix."""
-        from src.oida.fuzz.core.connections.stateful import BannerConnection
+        from oida.fuzz.core.connections.stateful import BannerConnection
 
         conn = BannerConnection("127.0.0.1", 21, expected_prefix=b"220")
 

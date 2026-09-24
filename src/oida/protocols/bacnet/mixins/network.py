@@ -5,7 +5,7 @@ Handles BBMD, FDT, router discovery, and remote network scanning.
 """
 
 import asyncio
-from ..constants import _load_bacpypes3
+from oida.protocols.bacnet.constants import _load_bacpypes3
 
 
 class NetworkMixin:

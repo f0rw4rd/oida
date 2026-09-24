@@ -6,7 +6,7 @@ Handles protocol fuzzing and security analysis.
 
 import socket
 
-from ..records import STX, ETX, ENQ, CR, LF
+from oida.protocols.astm.records import STX, ETX, ENQ, CR, LF
 
 
 class SecurityMixin:

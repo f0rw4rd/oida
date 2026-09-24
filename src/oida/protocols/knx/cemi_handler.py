@@ -8,11 +8,7 @@ import asyncio
 from datetime import datetime
 from typing import Dict, Set, List, Any, TYPE_CHECKING
 
-from .helpers import (
-    _get_cemi_message_code,
-    _get_xknx_classes,
-    parse_bus_ranges,
-)
+from oida.protocols.knx.helpers import _get_cemi_message_code, _get_xknx_classes, parse_bus_ranges
 
 if TYPE_CHECKING:
     from xknx import XKNX

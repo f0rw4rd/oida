@@ -9,7 +9,7 @@ a custom default port (3671) and timeout type (float), so we keep the
 network group local.
 """
 
-from ...utils.proto_args_factory import create_protocol_parser
+from oida.utils.proto_args_factory import create_protocol_parser
 
 
 def proto_args(parser, parents):

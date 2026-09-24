@@ -31,7 +31,7 @@ class DiscoveryMixin:
 
     async def _find_servers_on_network(self):
         """Discover OPC UA servers via GDS/LDS FindServersOnNetwork"""
-        from ..helpers import _get_client_class
+        from oida.protocols.opcua.helpers import _get_client_class
 
         gds_url = getattr(self.args, "gds_url", None)
 

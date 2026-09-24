@@ -7,7 +7,7 @@ The production backend is :class:`oida.fuzz.core.database.orm.SQLAlchemyDatabase
 
 from typing import Any, Dict, List, Optional
 
-from .interface import Crash, DatabaseInterface, TestCase
+from oida.fuzz.core.database.interface import Crash, DatabaseInterface, TestCase
 
 
 class MockDatabase(DatabaseInterface):
@@ -37,7 +37,7 @@ class MockDatabase(DatabaseInterface):
         # production backend.
         if crash.crash_hash is None:
             try:
-                from .models import Crash as ORMCrash
+                from oida.fuzz.core.database.models import Crash as ORMCrash
 
                 crash.crash_hash = ORMCrash.compute_crash_hash(crash.crash_info, crash.stack_trace)
             except ImportError:

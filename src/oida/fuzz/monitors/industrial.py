@@ -7,8 +7,8 @@ import time
 from enum import IntEnum, auto
 from typing import Optional
 
-from .base import ProtocolBaseline, ProtocolMonitor
-from .opcua import OPCUAMonitor
+from oida.fuzz.monitors.base import ProtocolBaseline, ProtocolMonitor
+from oida.fuzz.monitors.opcua import OPCUAMonitor
 
 
 class IEC104States(IntEnum):
@@ -480,14 +480,14 @@ class MMSMonitor(ProtocolMonitor):
 
     def _build_mms_initiate(self) -> bytes:
         """Build MMS Initiate-RequestPDU."""
-        from ..core.codecs.mms import MMSCodec
+        from oida.fuzz.core.codecs.mms import MMSCodec
 
         codec = MMSCodec()
         return codec.build_initiate_request()
 
     def _build_mms_identify(self) -> bytes:
         """Build MMS Identify request."""
-        from ..core.codecs.mms import MMSCodec
+        from oida.fuzz.core.codecs.mms import MMSCodec
 
         codec = MMSCodec()
         return codec.build_identify_request()

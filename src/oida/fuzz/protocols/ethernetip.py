@@ -8,12 +8,12 @@ from typing import List
 
 from boofuzz import Block, Byte, DWord, Group, QWord, Request, Size, Word
 
-from ..core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
-from ..core.connections import TCPSocketConnection
-from ..core.session.state_context import StateContext
-from ..core.session.sequence import SequenceConfig, SequenceDirection
-from ..core.session.state_machine import ProtocolState, StateMachine, StateType
-from ..primitives.dynamic import DynamicDWord, SmartString, StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, CommonState, RequestInfo
+from oida.fuzz.core.connections import TCPSocketConnection
+from oida.fuzz.core.session.state_context import StateContext
+from oida.fuzz.core.session.sequence import SequenceConfig, SequenceDirection
+from oida.fuzz.core.session.state_machine import ProtocolState, StateMachine, StateType
+from oida.fuzz.primitives.dynamic import DynamicDWord, SmartString, StringContext
 
 import logging
 

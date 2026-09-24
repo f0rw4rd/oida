@@ -20,18 +20,18 @@ Mixins:
     - SecurityAnalysisMixin: Security analysis and reporting
 """
 
-from .controller_info import ControllerInfoMixin
-from .enip_commands import EnipCommandsMixin
-from .attacks import AttacksMixin
-from .discovery import DiscoveryMixin
-from .cip_objects import CipObjectsMixin
-from .cip_security import CipSecurityMixin
-from .network_parsers import NetworkParsersMixin
-from .advanced_parsers import AdvancedParsersMixin
-from .class_explorer import ClassExplorerMixin
-from .write_test import WriteTestMixin
-from .fuzz import FuzzMixin
-from .security_analysis import SecurityAnalysisMixin
+from oida.protocols.ethernetip.mixins.controller_info import ControllerInfoMixin
+from oida.protocols.ethernetip.mixins.enip_commands import EnipCommandsMixin
+from oida.protocols.ethernetip.mixins.attacks import AttacksMixin
+from oida.protocols.ethernetip.mixins.discovery import DiscoveryMixin
+from oida.protocols.ethernetip.mixins.cip_objects import CipObjectsMixin
+from oida.protocols.ethernetip.mixins.cip_security import CipSecurityMixin
+from oida.protocols.ethernetip.mixins.network_parsers import NetworkParsersMixin
+from oida.protocols.ethernetip.mixins.advanced_parsers import AdvancedParsersMixin
+from oida.protocols.ethernetip.mixins.class_explorer import ClassExplorerMixin
+from oida.protocols.ethernetip.mixins.write_test import WriteTestMixin
+from oida.protocols.ethernetip.mixins.fuzz import FuzzMixin
+from oida.protocols.ethernetip.mixins.security_analysis import SecurityAnalysisMixin
 
 __all__ = [
     "ControllerInfoMixin",

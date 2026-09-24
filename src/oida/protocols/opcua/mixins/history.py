@@ -4,7 +4,7 @@ OPC UA History Mixin
 Provides historical data reading and historizing node discovery functionality.
 """
 
-from ..helpers import ua
+from oida.protocols.opcua.helpers import ua
 
 
 class HistoryMixin:

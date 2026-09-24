@@ -153,7 +153,7 @@ def check_tls_certificate(
             with ctx.wrap_socket(sock, server_hostname=host) as ssock:
                 cert_der = ssock.getpeercert(binary_form=True)
                 if cert_der:
-                    from .security_findings import display_cert_info
+                    from oida.utils.security_findings import display_cert_info
 
                     return display_cert_info(
                         logger=logger,

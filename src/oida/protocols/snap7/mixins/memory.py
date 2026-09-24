@@ -26,8 +26,8 @@ class MemoryMixin(_ScannerBase):
 
     def _enumerate_data_blocks(self, connection: Any) -> List[Dict[str, Any]]:
         """Enumerate accessible data blocks"""
-        from ..scanner import _get_block_types
-        from ....utils import ProgressTracker
+        from oida.protocols.snap7.scanner import _get_block_types
+        from oida.utils import ProgressTracker
 
         self.logger.debug("Enumerating data blocks (max=%d)", self.max_dbs)
         data_blocks = []
@@ -85,9 +85,9 @@ class MemoryMixin(_ScannerBase):
 
     def _test_memory_areas(self, connection: Any) -> Dict[str, Any]:
         """Test access to different memory areas"""
-        from ..constants import S7MemoryArea
+        from oida.protocols.snap7.constants import S7MemoryArea
 
-        from ....utils import parse_bool
+        from oida.utils import parse_bool
 
         self.logger.debug("Testing memory area access")
         memory_areas = {}
@@ -148,7 +148,7 @@ class MemoryMixin(_ScannerBase):
 
     def _read_sample_values(self, connection: Any, results: Dict[str, Any]) -> Dict[str, Any]:
         """Read sample values from accessible areas"""
-        from ..constants import S7MemoryArea
+        from oida.protocols.snap7.constants import S7MemoryArea
 
         samples = {}
 
@@ -191,7 +191,7 @@ class MemoryMixin(_ScannerBase):
 
     def read_inputs(self, connection: Any, start: int, size: int) -> Dict[str, Any]:
         """Read process inputs (I/PE area)"""
-        from ....utils.protocol_helpers import DataFormatter
+        from oida.utils.protocol_helpers import DataFormatter
 
         try:
             data = connection.eb_read(start, size)
@@ -205,7 +205,7 @@ class MemoryMixin(_ScannerBase):
 
     def read_outputs(self, connection: Any, start: int, size: int) -> Dict[str, Any]:
         """Read process outputs (Q/PA area)"""
-        from ....utils.protocol_helpers import DataFormatter
+        from oida.utils.protocol_helpers import DataFormatter
 
         try:
             data = connection.ab_read(start, size)
@@ -219,7 +219,7 @@ class MemoryMixin(_ScannerBase):
 
     def read_markers(self, connection: Any, start: int, size: int) -> Dict[str, Any]:
         """Read markers/flags (M/MK area)"""
-        from ....utils.protocol_helpers import DataFormatter
+        from oida.utils.protocol_helpers import DataFormatter
 
         try:
             data = connection.mb_read(start, size)
@@ -233,7 +233,7 @@ class MemoryMixin(_ScannerBase):
 
     def read_timers(self, connection: Any, start: int, count: int) -> Dict[str, Any]:
         """Read timers (S7-300/400 only)"""
-        from ....utils.protocol_helpers import DataFormatter
+        from oida.utils.protocol_helpers import DataFormatter
 
         try:
             data = connection.tm_read(start, count)
@@ -253,7 +253,7 @@ class MemoryMixin(_ScannerBase):
 
     def read_counters(self, connection: Any, start: int, count: int) -> Dict[str, Any]:
         """Read counters (S7-300/400 only)"""
-        from ....utils.protocol_helpers import DataFormatter
+        from oida.utils.protocol_helpers import DataFormatter
 
         try:
             data = connection.ct_read(start, count)
@@ -273,7 +273,7 @@ class MemoryMixin(_ScannerBase):
 
     def read_db_area(self, connection: Any, db: int, start: int, size: int) -> Dict[str, Any]:
         """Read specific area from data block"""
-        from ....utils.protocol_helpers import DataFormatter
+        from oida.utils.protocol_helpers import DataFormatter
 
         try:
             data = connection.db_read(db, start, size)
@@ -287,8 +287,8 @@ class MemoryMixin(_ScannerBase):
 
     def dump_db(self, connection: Any, db_num: int) -> Dict[str, Any]:
         """Dump entire data block with hex view"""
-        from ..scanner import _get_block_types
-        from ....utils.protocol_helpers import DataFormatter
+        from oida.protocols.snap7.scanner import _get_block_types
+        from oida.utils.protocol_helpers import DataFormatter
 
         Block = _get_block_types()
         try:

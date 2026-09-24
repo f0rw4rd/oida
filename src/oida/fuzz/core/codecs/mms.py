@@ -22,7 +22,7 @@ MMS PDU Types:
 """
 
 from typing import List, Optional, Tuple
-from .asn1 import ASN1Builder, ber_content
+from oida.fuzz.core.codecs.asn1 import ASN1Builder, ber_content
 
 
 class MMSServiceType:

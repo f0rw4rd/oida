@@ -20,14 +20,11 @@ import ssl
 from typing import Any, Dict, List, Optional
 from urllib.parse import urlparse
 
-from ...utils import (
-    NetworkScanner,
-    parse_bool,
-)
-from ...utils.socket_helpers import build_tls_context
-from ...utils.lazy_import import lazy_import
+from oida.utils import NetworkScanner, parse_bool
+from oida.utils.socket_helpers import build_tls_context
+from oida.utils.lazy_import import lazy_import
 
-from .constants import (
+from oida.protocols.ocpp.constants import (
     OCPP_SUBPROTOCOLS,
     SUBPROTOCOL_TO_VERSION,
     DEFAULT_WS_PORT,
@@ -290,6 +287,10 @@ class OCPPScanner(NetworkScanner):
             WebSocket connection object or None on auth failure
         """
         self.logger.debug(f"Auth probe connection to {target_url}")
+        # Records why the last probe returned None so brute-force callers can
+        # tell an auth rejection ("auth") from an unreachable server
+        # ("connection"). Defaults to "connection"; set to "auth"/"ok" below.
+        self._last_probe_reason = "connection"
         self.check_dependencies()
         _ = _websockets()  # Ensure module is loaded
 
@@ -327,12 +328,17 @@ class OCPPScanner(NetworkScanner):
                     return ws
                 except Exception as e:
                     if self._extract_http_status(e) in (401, 403):
+                        # Server received and rejected the credential.
+                        self._last_probe_reason = "auth"
                         return None
+                    # Never got an HTTP response: transport-level failure.
+                    self._last_probe_reason = "connection"
                     self.logger.debug(f"Auth probe connection error: {e}")
                     return None
 
             result = loop.run_until_complete(_try_connect())
             if result is not None:
+                self._last_probe_reason = "ok"
                 # Associate this per-probe loop with the connection it created,
                 # NOT with self._event_loop. Overwriting self._event_loop would
                 # clobber the main connection's loop, and disconnect()ing the

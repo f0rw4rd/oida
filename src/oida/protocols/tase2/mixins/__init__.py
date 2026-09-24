@@ -14,12 +14,12 @@ Mixins:
     - SecurityMixin: Security analysis and findings reporting
 """
 
-from .control import ControlMixin
-from .discovery import DiscoveryMixin
-from .enumeration import EnumerationMixin
-from .info_messages import InfoMessagesMixin
-from .security import SecurityMixin
-from .transfer_sets import TransferSetsMixin
+from oida.protocols.tase2.mixins.control import ControlMixin
+from oida.protocols.tase2.mixins.discovery import DiscoveryMixin
+from oida.protocols.tase2.mixins.enumeration import EnumerationMixin
+from oida.protocols.tase2.mixins.info_messages import InfoMessagesMixin
+from oida.protocols.tase2.mixins.security import SecurityMixin
+from oida.protocols.tase2.mixins.transfer_sets import TransferSetsMixin
 
 __all__ = [
     "ControlMixin",

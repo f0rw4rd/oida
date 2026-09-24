@@ -12,9 +12,9 @@ Mixins:
       octet string reads
 """
 
-from .polling import PollingMixin
-from .control import ControlMixin
-from .file_transfer import FileTransferMixin
+from oida.protocols.dnp3.mixins.polling import PollingMixin
+from oida.protocols.dnp3.mixins.control import ControlMixin
+from oida.protocols.dnp3.mixins.file_transfer import FileTransferMixin
 
 __all__ = [
     "PollingMixin",

@@ -15,8 +15,8 @@ logger = logging.getLogger(__name__)
 if TYPE_CHECKING:
     from xknx import XKNX
 
-from ..constants import _xknx_cls  # noqa: E402
-from ..data import (
+from oida.protocols.knx.constants import _xknx_cls  # noqa: E402
+from oida.protocols.knx.data import (
     OBJECT_TYPES,
     PROP_TYPE_MAP,
     get_object_type_name as get_obj_type_name,
@@ -24,8 +24,8 @@ from ..data import (
     get_data_type_name,
     get_vendor_name,
 )
-from ....utils import ProgressTracker
-from ....utils.export_utils import print_table
+from oida.utils import ProgressTracker
+from oida.utils.export_utils import print_table
 
 
 class PropertiesMixin:
@@ -127,7 +127,7 @@ class PropertiesMixin:
     ) -> Dict[str, Any]:
         """Fuzz a writable property"""
         import asyncio
-        from ....utils.fuzzer import fuzz
+        from oida.utils.fuzzer import fuzz
 
         self.logger.debug(f"Fuzzing property: {address} arg={prop_arg}, iterations={iterations}")
         result = {

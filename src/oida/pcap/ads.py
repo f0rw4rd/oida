@@ -55,12 +55,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import (
-    is_valid_discovered_ip,
-    lookup_mac_vendor,
-)
-from ..protocols.ads.constants import (
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
+from oida.protocols.ads.constants import (
     ADS_COMMANDS,
     ADS_ERROR_CODES,
     ADS_IDX_GRP_NAMES,

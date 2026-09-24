@@ -32,7 +32,7 @@ class _FakeLog:
 
 class TestFactoryReturnsPolicyCapableConnection:
     def _tcp_config(self):
-        from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
+        from oida.fuzz.core.config import FuzzerConfig, ProtocolType
 
         config = FuzzerConfig(target_ip="127.0.0.1", target_port=1234)
         config.protocol_type = ProtocolType.TCP
@@ -42,7 +42,7 @@ class TestFactoryReturnsPolicyCapableConnection:
 
     def test_default_tcp_is_resilient_wrapper(self):
         """Default TCP connections carry the reply-policy hooks."""
-        from src.oida.fuzz.core.connections.tcp import (
+        from oida.fuzz.core.connections.tcp import (
             RealConnectionFactory,
             ResilientTCPConnection,
         )
@@ -54,7 +54,7 @@ class TestFactoryReturnsPolicyCapableConnection:
 
     def test_default_tcp_not_resilient_without_flag(self):
         """The wrapper is present but auto-reconnect stays opt-in (-R)."""
-        from src.oida.fuzz.core.connections.tcp import RealConnectionFactory
+        from oida.fuzz.core.connections.tcp import RealConnectionFactory
 
         conn = RealConnectionFactory().create_connection(self._tcp_config())
         assert conn.resilient is False
@@ -62,7 +62,7 @@ class TestFactoryReturnsPolicyCapableConnection:
 
 class TestPolicyAttachThroughTarget:
     def _fake_fuzzer_with_target(self, connection):
-        from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer
 
         class _ConcreteFuzzer(BaseFuzzer):
             def _define_protocol(self):
@@ -78,13 +78,13 @@ class TestPolicyAttachThroughTarget:
 
     def _offline_connection(self):
         """A real wrapper instance (no socket opened; boofuzz defers connect)."""
-        from src.oida.fuzz.core.connections.tcp import ResilientTCPConnection
+        from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
         return ResilientTCPConnection("127.0.0.1", 1)
 
     def test_attach_uses_target_connection_attribute(self):
         """Policy lands on Target._target_connection (current boofuzz layout)."""
-        from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer
 
         conn = self._offline_connection()
 
@@ -98,8 +98,8 @@ class TestPolicyAttachThroughTarget:
 
     def test_attach_sets_wait_cap(self):
         """reply_wait_cap rides along with the policy."""
-        from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
-        from src.oida.fuzz.protocols.mqtt import MQTTFuzzer
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer
+        from oida.fuzz.protocols.mqtt import MQTTFuzzer
 
         conn = self._offline_connection()
         f = self._fake_fuzzer_with_target(conn)
@@ -111,7 +111,7 @@ class TestPolicyAttachThroughTarget:
 
     def test_no_policy_is_noop(self):
         """No reply_policy defined -> nothing attached, no error."""
-        from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer
 
         conn = self._offline_connection()
         f = self._fake_fuzzer_with_target(conn)
@@ -123,7 +123,7 @@ class TestPolicyAttachThroughTarget:
 class TestTimeoutResync:
     def test_preflight_opened_session_gets_calibrated_timeouts(self):
         """A connection built pre-calibration is re-synced post-calibration."""
-        from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer
 
         class _Conn:
             _recv_timeout = 5.0
@@ -150,7 +150,7 @@ class TestTimeoutResync:
 
     def test_resync_skipped_without_connection(self):
         """No session/targets -> silent no-op."""
-        from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer
 
         class _ConcreteFuzzer(BaseFuzzer):
             def _define_protocol(self):
@@ -187,7 +187,7 @@ class TestLazySessionAttach:
     Reading the raw _session attribute silently no-ops both."""
 
     def test_data_connection_builds_session_lazily(self):
-        from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer
 
         class _ConcreteFuzzer(BaseFuzzer):
             def _define_protocol(self):
@@ -223,8 +223,8 @@ class TestLazySessionAttach:
 
     def test_attach_policy_works_when_session_not_yet_built(self):
         """End-to-end: hook on a policy-defining plain fuzzer attaches."""
-        from src.oida.fuzz.core.base_fuzzer import BaseFuzzer
-        from src.oida.fuzz.core.connections.tcp import ResilientTCPConnection
+        from oida.fuzz.core.base_fuzzer import BaseFuzzer
+        from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
         class _ConcreteFuzzer(BaseFuzzer):
             def _define_protocol(self):
@@ -264,7 +264,7 @@ class TestReplyPolicyFastPath:
         b.close()
 
     def _conn(self, pair):
-        from src.oida.fuzz.core.connections.tcp import ResilientTCPConnection
+        from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
         conn = ResilientTCPConnection("127.0.0.1", 1, recv_timeout=0.4)
         conn._sock = pair[0]
@@ -349,7 +349,7 @@ class TestResyncTimeoutsSocket:
         """resync_timeouts() rewrites SO_RCVTIMEO/SO_SNDTIMEO on the socket."""
         import struct
 
-        from src.oida.fuzz.core.connections.tcp import ResilientTCPConnection
+        from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
         a, b = socket.socketpair()
         try:
@@ -372,7 +372,7 @@ class TestResyncTimeoutsSocket:
 
     def test_resync_without_socket_is_noop(self):
         """Unopened connection (no _sock) -> silent no-op."""
-        from src.oida.fuzz.core.connections.tcp import ResilientTCPConnection
+        from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
         conn = ResilientTCPConnection("127.0.0.1", 1)
         conn._log = _FakeLog()
@@ -405,26 +405,26 @@ class TestMQTTReplyPolicyTable:
         ],
     )
     def test_packet_type_table(self, byte0, label, expected):
-        from src.oida.fuzz.protocols.mqtt import MQTTFuzzer
+        from oida.fuzz.protocols.mqtt import MQTTFuzzer
 
         assert MQTTFuzzer._reply_expected_for_payload(bytes([byte0])) is expected
 
     def test_publish_qos1_waits(self):
-        from src.oida.fuzz.protocols.mqtt import MQTTFuzzer
+        from oida.fuzz.protocols.mqtt import MQTTFuzzer
 
         assert MQTTFuzzer._reply_expected_for_payload(bytes([0x33])) is True  # QoS1
 
     def test_publish_qos2_waits(self):
-        from src.oida.fuzz.protocols.mqtt import MQTTFuzzer
+        from oida.fuzz.protocols.mqtt import MQTTFuzzer
 
         assert MQTTFuzzer._reply_expected_for_payload(bytes([0x34])) is True  # QoS2
 
     def test_empty_payload_waits(self):
-        from src.oida.fuzz.protocols.mqtt import MQTTFuzzer
+        from oida.fuzz.protocols.mqtt import MQTTFuzzer
 
         assert MQTTFuzzer._reply_expected_for_payload(b"") is True
 
     def test_mqtt_sets_wait_cap(self):
-        from src.oida.fuzz.protocols.mqtt import MQTTFuzzer
+        from oida.fuzz.protocols.mqtt import MQTTFuzzer
 
         assert 0 < MQTTFuzzer.reply_wait_cap <= 1.0

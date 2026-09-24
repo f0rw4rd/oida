@@ -19,9 +19,9 @@ from types import SimpleNamespace
 
 import pytest
 
-from src.oida.fuzz.core.database.interface import TestCase
-from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
-from src.oida.fuzz.core.session.manager import TestCaseManager
+from oida.fuzz.core.database.interface import TestCase
+from oida.fuzz.core.database.orm import SQLAlchemyDatabase
+from oida.fuzz.core.session.manager import TestCaseManager
 
 
 class _FakeLog:

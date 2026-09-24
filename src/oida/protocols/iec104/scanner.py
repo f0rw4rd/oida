@@ -11,16 +11,13 @@ import struct
 import time
 import threading
 
-from ...utils import (
-    NetworkScanner,
-    SecurityAnalyzer,
-)
-from ...utils.protocol_helpers import ConnectionHelper
-from ...utils.ics_logger import get_module_logger
+from oida.utils import NetworkScanner, SecurityAnalyzer
+from oida.utils.protocol_helpers import ConnectionHelper
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 
-from .constants import (
+from oida.protocols.iec104.constants import (
     IEC104_TYPE_IDS,
     CapturedASDU,
     ListenStats,
@@ -49,10 +46,10 @@ from .constants import (
     SIQ_SPI_MASK,
     VTI_VALUE_MASK,
 )
-from . import _deps
-from .serial import IEC101Mixin
-from .commands import CommandMixin
-from .listen import ListenMixin
+from oida.protocols.iec104 import _deps
+from oida.protocols.iec104.serial import IEC101Mixin
+from oida.protocols.iec104.commands import CommandMixin
+from oida.protocols.iec104.listen import ListenMixin
 
 
 class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
@@ -724,7 +721,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
 
     def _check_tls_certificate(self) -> None:
         """Probe the TLS endpoint to retrieve and check the server certificate."""
-        from ...utils.socket_helpers import check_tls_certificate
+        from oida.utils.socket_helpers import check_tls_certificate
 
         check_tls_certificate(
             host=self.host,
@@ -1022,7 +1019,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         UNKNOWN_CA for non-existent stations.  Active stations are those
         that do NOT trigger UNKNOWN_CA.
         """
-        from ...utils.protocol_helpers import ProgressTracker
+        from oida.utils.protocol_helpers import ProgressTracker
 
         ca_start = self.ca_scan_start
         ca_end = self.ca_scan_end
@@ -1137,7 +1134,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
 
     def _report_station_scan(self, ca_details: Dict[int, Dict[str, Any]]) -> None:
         """Print a table of active stations found during station scan."""
-        from ...utils.export_utils import export_table, configure as configure_export
+        from oida.utils.export_utils import export_table, configure as configure_export
 
         configure_export(logger=self.logger, output_dir=self.output_dir, full_width=self.full_width)
         headers = ["CA", "Status", "Points", "Type IDs"]
@@ -1640,7 +1637,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         self.report_service_info(self.host, port=self.port, **service_info)
 
         if data_points:
-            from ...utils.export_utils import export_table, configure as configure_export
+            from oida.utils.export_utils import export_table, configure as configure_export
 
             configure_export(
                 logger=self.logger, output_dir=self.output_dir, full_width=self.full_width

@@ -96,8 +96,8 @@ class RawQueryMixin(_ScannerBase):
 
     async def _async_raw_queries(self, engine, auth_data, transport, context) -> Dict:
         """Execute --walk and/or --get queries."""
-        from ..constants import WALK_LISTS
-        from ....utils.export_utils import export_table
+        from oida.protocols.snmp.constants import WALK_LISTS
+        from oida.utils.export_utils import export_table
 
         results: Dict[str, Any] = {}
 

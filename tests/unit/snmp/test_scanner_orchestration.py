@@ -13,7 +13,7 @@ import asyncio
 
 import pytest
 
-from .conftest import FakeVarBind, get_router, patch_pysnmp
+from tests.unit.snmp.conftest import FakeVarBind, get_router, patch_pysnmp
 
 
 def run(coro):
@@ -22,7 +22,7 @@ def run(coro):
 
 def make_scanner(**kw):
     from oida.protocols.snmp.scanner import SNMPScanner
-    from .conftest import RecordingLogger
+    from tests.unit.snmp.conftest import RecordingLogger
 
     args = {"host": "10.0.0.5", "port": 161, "timeout": 1, "snmp_version": "2c"}
     args.update(kw)
@@ -226,7 +226,7 @@ class TestAsyncDiscover:
         }
 
         async def get(*args, **kwargs):
-            from .conftest import _base_oid_from_args
+            from tests.unit.snmp.conftest import _base_oid_from_args
 
             base = _base_oid_from_args(args)
             val = responses.get(base)

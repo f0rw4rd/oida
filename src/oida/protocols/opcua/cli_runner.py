@@ -30,10 +30,10 @@ import asyncio
 import os
 from typing import Any, Dict, Optional
 
-from ...connection import NetworkConnection
-from ...utils.lazy_import import lazy_import
+from oida.connection import NetworkConnection
+from oida.utils.lazy_import import lazy_import
 
-from .helpers import (
+from oida.protocols.opcua.helpers import (
     _asyncua,
     _get_client_class,
     _normalize_opcua_url,
@@ -48,7 +48,7 @@ _asyncua_validator = lazy_import(
     "asyncua.crypto.validator", "OPC UA", install_hint="pip install oida-ics[opcua]"
 )
 # Import mixins for modular functionality
-from .mixins import (
+from oida.protocols.opcua.mixins import (
     DiscoveryMixin,
     BrowseMixin,
     SecurityMixin,
@@ -428,7 +428,7 @@ class opcua(
         auto_cert_path = None
         auto_key_path = None
         try:
-            from ...utils.default_credentials import parse_credential_input
+            from oida.utils.default_credentials import parse_credential_input
 
             self.logger.debug("Starting OPC UA async workflow")
             url = self._original_url

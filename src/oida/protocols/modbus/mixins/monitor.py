@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING, Dict, List
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
 
-    from ..cli_runner import modbus
+    from oida.protocols.modbus.cli_runner import modbus
 else:
     _ScannerBase = object
 
@@ -132,7 +132,7 @@ class MonitorMixin(_ScannerBase):
 
     def _parse_register_range(self, range_str: str) -> List[int]:
         """Parse register range string into a list of addresses (central parser)."""
-        from ....utils import ProtocolParser
+        from oida.utils import ProtocolParser
 
         return ProtocolParser.parse_address_range(range_str)
 
@@ -141,7 +141,7 @@ class MonitorMixin(_ScannerBase):
 
         Delegates to :func:`register_io.read_registers_batched`.
         """
-        from ..register_io import read_registers_batched
+        from oida.protocols.modbus.register_io import read_registers_batched
 
         return read_registers_batched(
             self.conn,

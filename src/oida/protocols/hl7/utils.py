@@ -19,8 +19,8 @@ try:
 except ImportError:  # pragma: no cover — release-checked dep
     Message = None  # type: ignore[assignment]
 
-from .segments import HL7SegmentBuilder
-from ...utils.protocol_helpers import ConnectionHelper
+from oida.protocols.hl7.segments import HL7SegmentBuilder
+from oida.utils.protocol_helpers import ConnectionHelper
 
 import logging
 

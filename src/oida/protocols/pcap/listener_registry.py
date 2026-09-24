@@ -15,7 +15,7 @@ Usage:
 import importlib
 from typing import Any, Dict, List, Optional, Set
 
-from ...utils.ics_logger import get_module_logger
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 

@@ -7,7 +7,7 @@ handles only the parser construction + standard target + standard
 --port (48898 ADS-default).
 """
 
-from ...utils.proto_args_factory import (
+from oida.utils.proto_args_factory import (
     create_protocol_parser,
     add_target_argument,
     add_network_options,
@@ -515,7 +515,7 @@ def validate_args(args) -> None:
     fuzzing).  The help text on each flag already says "Requires --confirm";
     this turns that promise into a hard gate.
     """
-    from ...utils.exceptions import ConfigurationError
+    from oida.utils.exceptions import ConfigurationError
 
     triggered = [cli for dest, cli in _CONFIRM_REQUIRED_FLAGS.items() if getattr(args, dest, None)]
     if triggered and not getattr(args, "confirm", False):

@@ -16,15 +16,12 @@ This module keeps only:
 from typing import Dict, Any, List, Optional
 import struct
 
-from ...utils import (
-    NetworkScanner,
-    parse_bool,
-)
-from ...utils.ics_logger import log_exc
-from ...utils.lazy_import import lazy_import
+from oida.utils import NetworkScanner, parse_bool
+from oida.utils.ics_logger import log_exc
+from oida.utils.lazy_import import lazy_import
 
 # Mixins -- imported here so they are resolved at class-definition time.
-from .mixins import (
+from oida.protocols.ethernetip.mixins import (
     ControllerInfoMixin,
     EnipCommandsMixin,
     AttacksMixin,
@@ -368,7 +365,7 @@ class EtherNetIPScanner(
         if not parsed:
             return None
 
-        from .mixins.cip_objects import _port_segment_mod
+        from oida.protocols.ethernetip.mixins.cip_objects import _port_segment_mod
 
         try:
             return [

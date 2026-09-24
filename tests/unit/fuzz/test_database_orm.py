@@ -18,7 +18,7 @@ from datetime import datetime
 
 def _setup_logging_context():
     """Set up logging context needed by ORM operations."""
-    from src.oida.utils.ics_logger import set_context
+    from oida.utils.ics_logger import set_context
 
     try:
         set_context("TEST", "localhost", 0)
@@ -36,7 +36,7 @@ class TestDatabaseModels:
 
     def test_test_case_model_fields(self):
         """TestCase model has expected fields."""
-        from src.oida.fuzz.core.database.models import TestCase
+        from oida.fuzz.core.database.models import TestCase
 
         tc = TestCase(name="test_1", timestamp=datetime.now().isoformat(), result="pass")
         assert tc.name == "test_1"
@@ -44,7 +44,7 @@ class TestDatabaseModels:
 
     def test_crash_model_fields(self):
         """Crash model has expected fields."""
-        from src.oida.fuzz.core.database.models import Crash
+        from oida.fuzz.core.database.models import Crash
 
         crash = Crash(test_case_id=1, payload=b"\x00\x01\x02", crash_info="segfault")
         assert crash.test_case_id == 1
@@ -53,7 +53,7 @@ class TestDatabaseModels:
 
     def test_payload_model_fields(self):
         """Payload model has expected fields."""
-        from src.oida.fuzz.core.database.models import Payload
+        from oida.fuzz.core.database.models import Payload
 
         payload = Payload(test_case_id=1, payload=b"\x00\x01\x02")
         assert payload.test_case_id == 1
@@ -61,7 +61,7 @@ class TestDatabaseModels:
 
     def test_session_metadata_model(self):
         """SessionMetadata model has expected fields."""
-        from src.oida.fuzz.core.database.models import SessionMetadata
+        from oida.fuzz.core.database.models import SessionMetadata
 
         meta = SessionMetadata(key="protocol", value="modbus")
         assert meta.key == "protocol"
@@ -73,7 +73,7 @@ class TestCreateDatabaseEngine:
 
     def test_create_in_memory_engine(self):
         """Create in-memory SQLite engine."""
-        from src.oida.fuzz.core.database.models import create_database_engine
+        from oida.fuzz.core.database.models import create_database_engine
 
         engine = create_database_engine(":memory:")
         assert engine is not None
@@ -81,7 +81,7 @@ class TestCreateDatabaseEngine:
 
     def test_create_file_engine(self):
         """Create file-based SQLite engine."""
-        from src.oida.fuzz.core.database.models import create_database_engine
+        from oida.fuzz.core.database.models import create_database_engine
 
         with tempfile.NamedTemporaryFile(suffix=".db", delete=False) as f:
             db_path = f.name
@@ -94,7 +94,7 @@ class TestCreateDatabaseEngine:
 
     def test_create_all_tables(self):
         """create_all_tables creates tables without error."""
-        from src.oida.fuzz.core.database.models import create_database_engine, create_all_tables
+        from oida.fuzz.core.database.models import create_database_engine, create_all_tables
 
         engine = create_database_engine(":memory:")
         create_all_tables(engine)  # Should not raise
@@ -111,7 +111,7 @@ class TestDatabaseInterface:
 
     def test_cannot_instantiate_directly(self):
         """DatabaseInterface cannot be instantiated directly."""
-        from src.oida.fuzz.core.database.interface import DatabaseInterface
+        from oida.fuzz.core.database.interface import DatabaseInterface
 
         with pytest.raises(TypeError):
             DatabaseInterface()
@@ -127,7 +127,7 @@ class TestSQLAlchemyDatabaseInit:
 
     def test_create_in_memory(self):
         """Create in-memory database."""
-        from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
         db = SQLAlchemyDatabase(":memory:")
         assert db is not None
@@ -136,7 +136,7 @@ class TestSQLAlchemyDatabaseInit:
     def test_init_schema(self):
         """Initialize schema creates tables."""
         _setup_logging_context()
-        from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
         db = SQLAlchemyDatabase(":memory:")
         db.init_schema()
@@ -145,7 +145,7 @@ class TestSQLAlchemyDatabaseInit:
     def test_init_schema_idempotent(self):
         """init_schema can be called multiple times."""
         _setup_logging_context()
-        from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
         db = SQLAlchemyDatabase(":memory:")
         db.init_schema()
@@ -158,7 +158,7 @@ class TestSQLAlchemyDatabaseSession:
     def test_get_session_context_manager(self):
         """Session context manager provides session."""
         _setup_logging_context()
-        from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
         db = SQLAlchemyDatabase(":memory:")
         db.init_schema()
@@ -173,7 +173,7 @@ class TestSQLAlchemyDatabaseTestCases:
     def db(self):
         """Create initialized in-memory database."""
         _setup_logging_context()
-        from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
         database = SQLAlchemyDatabase(":memory:")
         database.init_schema()
@@ -181,7 +181,7 @@ class TestSQLAlchemyDatabaseTestCases:
 
     def test_store_test_case(self, db):
         """Store a test case."""
-        from src.oida.fuzz.core.database.interface import TestCase as TestCaseDTO
+        from oida.fuzz.core.database.interface import TestCase as TestCaseDTO
 
         tc = TestCaseDTO(
             id=0,
@@ -199,7 +199,7 @@ class TestSQLAlchemyDatabaseTestCases:
 
     def test_get_test_case(self, db):
         """Store and retrieve a test case."""
-        from src.oida.fuzz.core.database.interface import TestCase as TestCaseDTO
+        from oida.fuzz.core.database.interface import TestCase as TestCaseDTO
 
         tc = TestCaseDTO(
             id=0,
@@ -224,7 +224,7 @@ class TestSQLAlchemyDatabaseTestCases:
 
     def test_get_test_cases_by_result(self, db):
         """Filter test cases by result."""
-        from src.oida.fuzz.core.database.interface import TestCase as TestCaseDTO
+        from oida.fuzz.core.database.interface import TestCase as TestCaseDTO
 
         for i, result in enumerate(["pass", "pass", "fail", "crash"]):
             db.store_test_case(
@@ -257,7 +257,7 @@ class TestSQLAlchemyDatabaseCrashes:
     def db(self):
         """Create initialized in-memory database."""
         _setup_logging_context()
-        from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
         database = SQLAlchemyDatabase(":memory:")
         database.init_schema()
@@ -265,7 +265,7 @@ class TestSQLAlchemyDatabaseCrashes:
 
     def test_store_crash(self, db):
         """Store a crash associated with a test case."""
-        from src.oida.fuzz.core.database.interface import TestCase as TestCaseDTO, Crash as CrashDTO
+        from oida.fuzz.core.database.interface import TestCase as TestCaseDTO, Crash as CrashDTO
 
         # First create a test case
         tc = TestCaseDTO(
@@ -301,7 +301,7 @@ class TestSQLAlchemyDatabaseCrashes:
         PRAGMA foreign_keys=ON) and destroyed the already-persisted crash.
         The on_conflict_do_update upsert must update the row in place instead.
         """
-        from src.oida.fuzz.core.database.interface import TestCase as TestCaseDTO, Crash as CrashDTO
+        from oida.fuzz.core.database.interface import TestCase as TestCaseDTO, Crash as CrashDTO
 
         # Persist a test case, then attach a crash to it.
         tc = TestCaseDTO(
@@ -345,7 +345,7 @@ class TestSQLAlchemyDatabaseMetadata:
     def db(self):
         """Create initialized in-memory database."""
         _setup_logging_context()
-        from src.oida.fuzz.core.database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
         database = SQLAlchemyDatabase(":memory:")
         database.init_schema()

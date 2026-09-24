@@ -24,7 +24,7 @@ class BruteForceMixin(_ScannerBase):
 
     def _brute_communities(self) -> List[str]:
         """Test built-in ICS community strings, return first valid."""
-        from ....utils.login_scanner import load_passwords
+        from oida.utils.login_scanner import load_passwords
 
         # Fail-closed: brute-force is an active operation. The orchestrator gates
         # this on --confirm, but enforce it here too so no other caller can
@@ -74,7 +74,7 @@ class BruteForceMixin(_ScannerBase):
             get_cmd,
         )
 
-        from ..constants import SNMP_OIDS
+        from oida.protocols.snmp.constants import SNMP_OIDS
 
         async def _probe():
             engine = SnmpEngine()

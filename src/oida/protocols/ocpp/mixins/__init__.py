@@ -8,10 +8,10 @@ Provides modular functionality for the OCPP NXC-style connection class:
 - ChargingMixin: Charging session security testing (authorize, start/stop, meter injection)
 """
 
-from .discovery import DiscoveryMixin
-from .security import SecurityMixin
-from .messages import MessagesMixin
-from .charging import ChargingMixin
+from oida.protocols.ocpp.mixins.discovery import DiscoveryMixin
+from oida.protocols.ocpp.mixins.security import SecurityMixin
+from oida.protocols.ocpp.mixins.messages import MessagesMixin
+from oida.protocols.ocpp.mixins.charging import ChargingMixin
 
 __all__ = [
     "DiscoveryMixin",

@@ -5,13 +5,8 @@ import struct
 from datetime import datetime
 from typing import Dict, List, Any
 
-from ...utils import (
-    NetworkScanner,
-    ProtocolParser,
-    ProgressTracker,
-    parse_bool,
-)
-from ...utils.lazy_import import lazy_import
+from oida.utils import NetworkScanner, ProtocolParser, ProgressTracker, parse_bool
+from oida.utils.lazy_import import lazy_import
 
 # Lazy import for pymodbus - only loads when actually used.
 # lazy_import() already memoizes the imported module, so no extra caching needed.
@@ -85,12 +80,12 @@ def execute_pdu(client, pdu, unit_id=0):
     return client.execute(False, pdu)
 
 
-from ...utils.ics_logger import get_module_logger
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 
 # Re-export constants for backwards compatibility (tests import from scanner)
-from .constants import (  # noqa: F401
+from oida.protocols.modbus.constants import (  # noqa: F401 - re-exported
     ModbusFunctionCode,
     ModbusExceptionCode,
     MEIType,
@@ -105,7 +100,7 @@ from .constants import (  # noqa: F401
     DISCOVERY_FUNCTION_CODES,
 )
 
-from .scanner_mixins import (
+from oida.protocols.modbus.scanner_mixins import (
     ScannerIdentificationMixin,
     ScannerDiscoveryMixin,
     ScannerDiagnosticsMixin,
@@ -247,7 +242,7 @@ class ModbusScanner(
             self.logger.debug(f"Connecting via TLS: {self.host}:{self.port}")
 
             # Build SSL context using central TLS function
-            from ...utils.socket_helpers import build_tls_context
+            from oida.utils.socket_helpers import build_tls_context
 
             ssl_context = build_tls_context(self.args, logger=self.logger)
 
@@ -364,8 +359,8 @@ class ModbusScanner(
         Tries to extract the cert from the pymodbus client socket first,
         falls back to a standalone TLS probe via the central helper.
         """
-        from ...utils.security_findings import display_cert_info
-        from ...utils.socket_helpers import check_tls_certificate
+        from oida.utils.security_findings import display_cert_info
+        from oida.utils.socket_helpers import check_tls_certificate
 
         cert_der = None
         try:
@@ -491,7 +486,7 @@ class ModbusScanner(
         read fails the affected chunk is re-scanned one address at a time so
         that individual readable addresses are still discovered.
         """
-        from .register_io import build_batches, read_registers_batched
+        from oida.protocols.modbus.register_io import build_batches, read_registers_batched
 
         progress = ProgressTracker(len(address_range), logger=self.logger)
 
@@ -553,7 +548,7 @@ class ModbusScanner(
         Thin wrapper around :func:`register_io.build_batches` kept for
         backwards compatibility with existing tests.
         """
-        from .register_io import build_batches
+        from oida.protocols.modbus.register_io import build_batches
 
         return build_batches(address_range, max_batch)
 

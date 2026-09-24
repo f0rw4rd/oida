@@ -11,8 +11,8 @@ import time
 from datetime import datetime
 from typing import Dict
 
-from .base import PassiveListenerBase
-from .core import (
+from oida.protocols.discovery.base import PassiveListenerBase
+from oida.protocols.discovery.core import (
     DiscoveredDevice,
     get_interface_ipv6,
     IPV6_ALL_NODES,
@@ -21,9 +21,9 @@ from .core import (
     validate_interface,
     validate_timeout,
 )
-from ...utils.rate_limiter import scapy_sendp
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.utils.rate_limiter import scapy_sendp
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
 _scapy_all = lazy_import("scapy.all", "discovery")
 
@@ -66,7 +66,7 @@ class IPv6Scanner:
 
     def _query_ndp_cache(self) -> None:
         """Query system NDP neighbor cache for known IPv6 hosts (cross-platform)."""
-        from ...utils.platform_compat import get_ipv6_neighbors
+        from oida.utils.platform_compat import get_ipv6_neighbors
 
         try:
             entries = get_ipv6_neighbors(self.interface)

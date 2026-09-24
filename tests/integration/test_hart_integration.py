@@ -99,8 +99,8 @@ Flag Coverage Matrix (oida hart -h):
 import pytest
 from typing import Optional
 
-from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST
+from tests.integration.base_protocol_test import BaseProtocolIntegrationTest
+from tests.integration.conftest import MOCK_HOST
 
 
 # The HART mock holds mutable per-device state (lock status, password, poll

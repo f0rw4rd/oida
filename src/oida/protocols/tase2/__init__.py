@@ -13,10 +13,10 @@ Usage:
     oida tase2 192.168.1.100 --test-rbe --test-control
 """
 
-from ...utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
-from .scanner import TASE2Scanner
-from .cli_runner import tase2
+from oida.protocols.tase2.scanner import TASE2Scanner
+from oida.protocols.tase2.cli_runner import tase2
 
 _pyiec61850_tase2 = lazy_import(
     "pyiec61850.tase2", "TASE.2", install_hint="pip install oida-ics[tase2]"

@@ -42,13 +42,13 @@ from typing import List, Optional
 
 from boofuzz import Block, Group, Request, Size, Static
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..monitors import BaseMonitor
-from ..primitives.asn1 import encode_ber_context_tag, encode_ber_length
-from ..primitives.asn1_blocks import BERSize
-from ..primitives.dynamic import SmartBytes, SmartString
-from ..primitives.smart_string import StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.monitors import BaseMonitor
+from oida.fuzz.primitives.asn1 import encode_ber_context_tag, encode_ber_length
+from oida.fuzz.primitives.asn1_blocks import BERSize
+from oida.fuzz.primitives.dynamic import SmartBytes, SmartString
+from oida.fuzz.primitives.smart_string import StringContext
 
 
 class GOOSEFuzzer(BaseFuzzer):

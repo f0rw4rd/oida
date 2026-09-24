@@ -59,8 +59,8 @@ class SlotScanMixin(_ScannerBase):
         Returns:
             Dict with slot info if a device was found, or None.
         """
-        from ..scanner import _get_snap7_client
-        from ....utils.protocol_helpers import ConnectionHelper
+        from oida.protocols.snap7.scanner import _get_snap7_client
+        from oida.utils.protocol_helpers import ConnectionHelper
         from snap7.type import Parameter
 
         try:
@@ -113,9 +113,9 @@ class SlotScanMixin(_ScannerBase):
         detailed: bool = True,
     ) -> Optional[Dict[str, Any]]:
         """Query a CONNECTED client for slot info. Caller owns disconnect."""
-        from ..scanner import _get_order_code_extended
-        from ..szl_parser import SZLParser
-        from ..device_lookup import lookup_device_name
+        from oida.protocols.snap7.scanner import _get_order_code_extended
+        from oida.protocols.snap7.szl_parser import SZLParser
+        from oida.protocols.snap7.device_lookup import lookup_device_name
 
         try:
             self.logger.debug("Slot %d: detailed=%s mode", slot, detailed)
@@ -227,7 +227,7 @@ class SlotScanMixin(_ScannerBase):
 
     def scan_slots(self, host: str, port: int) -> List[Dict[str, Any]]:
         """Scan all rack/slot combinations to find S7 PLCs"""
-        from ..scanner import _suppress_snap7_logging, _identify_main_slot
+        from oida.protocols.snap7.scanner import _suppress_snap7_logging, _identify_main_slot
 
         found = []
 

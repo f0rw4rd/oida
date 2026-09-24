@@ -20,7 +20,7 @@ stop-after-N-recovery path. These tests lock in:
 import pytest
 from boofuzz.exception import BoofuzzFailure
 
-from src.oida.fuzz.monitors.base import ProtocolMonitor
+from oida.fuzz.monitors.base import ProtocolMonitor
 
 
 class _VerdictMonitor(ProtocolMonitor):

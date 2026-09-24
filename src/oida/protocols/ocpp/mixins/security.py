@@ -9,7 +9,7 @@ import base64
 import time
 
 
-from ..constants import (
+from oida.protocols.ocpp.constants import (
     SECURITY_CONFIG_KEYS,
     SENSITIVE_CONFIG_KEYS,
     HARMLESS_CONFIG_KEY,
@@ -26,6 +26,11 @@ from ..constants import (
     PROBE_TEST_CERTIFICATE,
     PROBE_DISPLAY_MESSAGE,
     SSRF_PROBE_URLS,
+)
+from oida.utils.protocol_helpers import (
+    MAX_CONSECUTIVE_CONNECTION_ERRORS,
+    ProgressTracker,
+    is_connection_error,
 )
 
 
@@ -57,7 +62,7 @@ class SecurityMixin:
         try:
             from urllib.parse import urlparse
 
-            from ....utils.socket_helpers import check_tls_certificate
+            from oida.utils.socket_helpers import check_tls_certificate
 
             # self.ip is the resolved connection host, but for wss:// targets
             # it can end up holding the raw target URL when resolution fails
@@ -1269,11 +1274,33 @@ class SecurityMixin:
             }
             return
 
-        valid_creds = []
-        tested = 0
+        # If the pre-check could not even reach the server, there is nothing to
+        # brute force -- bail out instead of grinding through every pair and
+        # reporting them as "tested".
+        if getattr(self.scanner, "_last_probe_reason", None) == "connection":
+            self.logger.fail(
+                "[Brute] Could not reach the endpoint for the enforcement "
+                "pre-check -- server unreachable; skipping brute-force "
+                "(no credentials were tested)."
+            )
+            self.results["data"].setdefault("brute_force", {})["http_auth"] = {
+                "enforced": None,
+                "tested": 0,
+                "valid": [],
+                "connection_errors": 1,
+                "aborted": True,
+            }
+            return
 
-        for username, password in credentials:
-            tested += 1
+        valid_creds = []
+        tested = 0  # credentials the server actually evaluated
+        connection_errors = 0  # attempts that never reached the server
+        consecutive_connection_errors = 0
+        aborted = False
+
+        progress = ProgressTracker(len(credentials), logger=self.logger)
+
+        for index, (username, password) in enumerate(credentials, start=1):
             try:
                 # Build auth header
                 cred_bytes = f"{username}:{password}".encode()
@@ -1281,8 +1308,12 @@ class SecurityMixin:
 
                 # Attempt WebSocket connection with these credentials
                 conn = self.scanner._connect_with_auth(target_url, auth_value)
+                reason = getattr(self.scanner, "_last_probe_reason", "auth")
 
                 if conn is not None:
+                    tested += 1
+                    consecutive_connection_errors = 0
+                    progress.success += 1
                     self.logger.security_finding(
                         "Default credentials",
                         detail=f"Valid HTTP Basic Auth: {username}:{password}",
@@ -1296,22 +1327,75 @@ class SecurityMixin:
                         self.logger.debug(f"self.scanner.disconnect(conn): {e}")
 
                     if not continue_on_success:
+                        progress.update(pos=index)
+                        break
+                elif reason == "connection":
+                    # Never reached the server: the credential was NOT tested.
+                    connection_errors += 1
+                    consecutive_connection_errors += 1
+                    self.logger.debug(f"[Brute] NOT tested (connection): {username}:{password}")
+                    if consecutive_connection_errors >= MAX_CONSECUTIVE_CONNECTION_ERRORS:
+                        aborted = True
+                        progress.update(pos=index)
+                        self.logger.fail(
+                            f"[Brute] Server unreachable after "
+                            f"{consecutive_connection_errors} consecutive connection "
+                            f"failures -- aborting. {tested} of {len(credentials)} "
+                            f"credentials were actually tested."
+                        )
                         break
                 else:
+                    tested += 1
+                    consecutive_connection_errors = 0
+                    progress.failed += 1
                     self.logger.debug(f"[Brute] Failed: {username}:{password}")
 
             except Exception as e:
-                self.logger.debug(f"[Brute] {username}:{password} -> {e}")
+                if is_connection_error(e):
+                    connection_errors += 1
+                    consecutive_connection_errors += 1
+                    self.logger.debug(
+                        f"[Brute] NOT tested (connection): {username}:{password} -> {e}"
+                    )
+                    if consecutive_connection_errors >= MAX_CONSECUTIVE_CONNECTION_ERRORS:
+                        aborted = True
+                        progress.update(pos=index)
+                        self.logger.fail(
+                            f"[Brute] Server unreachable after "
+                            f"{consecutive_connection_errors} consecutive connection "
+                            f"failures -- aborting. {tested} of {len(credentials)} "
+                            f"credentials were actually tested."
+                        )
+                        break
+                else:
+                    tested += 1
+                    consecutive_connection_errors = 0
+                    progress.failed += 1
+                    self.logger.debug(f"[Brute] {username}:{password} -> {e}")
+
+            progress.update(pos=index)
 
             if delay > 0:
                 time.sleep(delay)
 
-        self.logger.display(f"[Brute] Tested {tested} credentials, found {len(valid_creds)} valid")
+        progress.finish()
+
+        summary = f"[Brute] Tested {tested} credentials, found {len(valid_creds)} valid"
+        if connection_errors:
+            summary += f" ({connection_errors} not tested due to connection errors)"
+        self.logger.display(summary)
+        if connection_errors and not aborted:
+            self.logger.warning(
+                f"[Brute] {connection_errors} credential(s) were skipped because the "
+                f"server could not be reached -- they were NOT tested."
+            )
 
         self.results["data"].setdefault("brute_force", {})["http_auth"] = {
             "enforced": True,
             "tested": tested,
             "valid": valid_creds,
+            "connection_errors": connection_errors,
+            "aborted": aborted,
         }
 
         if valid_creds:

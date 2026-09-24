@@ -16,7 +16,7 @@ import html
 import json
 import binascii
 from urllib.parse import quote, unquote, quote_plus, unquote_plus
-from .base import BaseTransformer
+from oida.fuzz.primitives.transformers.base import BaseTransformer
 
 
 def _decode_bytes(data: bytes) -> tuple[str, str]:

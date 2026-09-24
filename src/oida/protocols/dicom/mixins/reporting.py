@@ -8,7 +8,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ..cli_runner import DICOM_VENDOR_MAP
+from oida.protocols.dicom.cli_runner import DICOM_VENDOR_MAP
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -309,7 +309,7 @@ class ReportingMixin(_ScannerBase):
 
     def _export_results(self):
         """Export query results using central export_data() utility"""
-        from ....utils.export_utils import export_data
+        from oida.utils.export_utils import export_data
 
         output_dir = getattr(self.args, "output", None)
         if not output_dir:

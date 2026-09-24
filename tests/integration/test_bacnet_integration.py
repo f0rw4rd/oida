@@ -61,9 +61,9 @@ from unittest.mock import Mock, patch
 
 from tests.service_gate import require_service
 
-from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST
-from .cli_runner import CLIRunner
+from tests.integration.base_protocol_test import BaseProtocolIntegrationTest
+from tests.integration.conftest import MOCK_HOST
+from tests.integration.cli_runner import CLIRunner
 
 # Mark all tests in this module
 pytestmark = pytest.mark.bacnet

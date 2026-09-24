@@ -6,8 +6,8 @@ Provides create, update, and delete operations for FHIR resources.
 
 import json
 
-from ..helpers import observation, patient
-from ..resources import FHIRResourceBuilder
+from oida.protocols.fhir.helpers import observation, patient
+from oida.protocols.fhir.resources import FHIRResourceBuilder
 
 
 class CRUDMixin:

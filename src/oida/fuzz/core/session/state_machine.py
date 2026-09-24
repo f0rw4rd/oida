@@ -7,10 +7,10 @@ import threading
 import time
 import inspect
 
-from ....utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger
 
 if TYPE_CHECKING:
-    from .state_context import StateContext
+    from oida.fuzz.core.session.state_context import StateContext
 
 # Module-level logger for state machine operations
 _log = get_logger("STATE", "machine", 0)

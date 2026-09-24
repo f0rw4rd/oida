@@ -35,8 +35,8 @@ PyShark CDP field reference (packet.cdp.*):
 from datetime import datetime
 from typing import Any, List
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import normalize_mac
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import normalize_mac
 
 
 # CDP capability bits

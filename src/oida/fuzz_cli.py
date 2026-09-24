@@ -301,7 +301,7 @@ For protocol-specific options: oida fuzz <protocol> --show-options
     # gracefully: still register the fuzz subcommand; it errors with a clear
     # "install oida-ics[fuzz]" message at run time via check_dependencies.
     try:
-        from .fuzz.monitors.registry import MONITOR_REGISTRY
+        from oida.fuzz.monitors.registry import MONITOR_REGISTRY
 
         available_monitors = ", ".join(sorted(MONITOR_REGISTRY.keys()))
     except Exception:
@@ -601,7 +601,7 @@ def handle_fuzz_command(args):
 
 def show_fuzz_help():
     """Show comprehensive fuzz help with all protocols listed"""
-    from .fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_CATEGORIES
+    from oida.fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_CATEGORIES
 
     print()
     print(colored("[!]", "yellow", attrs=["bold"]) + " Protocol is required")
@@ -649,7 +649,7 @@ def show_fuzz_help():
 
 def handle_list_command(args):
     """List available protocol fuzzers with NXC-style output"""
-    from .fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_CATEGORIES
+    from oida.fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_CATEGORIES
 
     category_filter = getattr(args, "category", None)
     with_options = getattr(args, "with_options", False)
@@ -720,7 +720,7 @@ def handle_replay_command(args):
     # Import database. The fuzzer writes via SQLAlchemyDatabase (ORM) — use
     # the same backend for reads so we never see schema drift. SQLiteDatabase
     # (raw SQL) is kept for backward compatibility but no longer the default.
-    from .fuzz.core.database.orm import SQLAlchemyDatabase
+    from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
     import os
 
@@ -846,7 +846,7 @@ def _open_session_db(session):
 
     from oida.utils.ics_logger import set_context
 
-    from .fuzz.core.database.orm import SQLAlchemyDatabase
+    from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
     if not session:
         logger.error("Session name is required")
@@ -865,7 +865,7 @@ def handle_crashes_command(args):
     """Report stored crashes for a session, grouped by crash signature."""
     import base64
 
-    from .fuzz.core.config import hexdump
+    from oida.fuzz.core.config import hexdump
 
     session = getattr(args, "session", None)
     db = _open_session_db(session)
@@ -974,9 +974,9 @@ def handle_reproduce_command(args):
     """
     import time
 
-    from .fuzz.core.config import FuzzerConfig
-    from .fuzz.core.connections import RealConnectionFactory
-    from .fuzz.protocols import PROTOCOL_FUZZERS
+    from oida.fuzz.core.config import FuzzerConfig
+    from oida.fuzz.core.connections import RealConnectionFactory
+    from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
     session = getattr(args, "session", None)
     db = _open_session_db(session)
@@ -1110,9 +1110,9 @@ def _build_repro_fuzzer(protocol, host, port, verbose=False):
     Returns the fuzzer (with monitors built via _setup_monitor) or None if the
     protocol is unknown. Does not fuzz or enumerate.
     """
-    from .fuzz.core.config import FuzzerConfig
-    from .fuzz.core.connections import RealConnectionFactory
-    from .fuzz.protocols import PROTOCOL_FUZZERS
+    from oida.fuzz.core.config import FuzzerConfig
+    from oida.fuzz.core.connections import RealConnectionFactory
+    from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
     if protocol not in PROTOCOL_FUZZERS:
         return None
@@ -1179,7 +1179,7 @@ def handle_narrow_command(args):
     import subprocess
     import time
 
-    from .fuzz.core.config import hexdump
+    from oida.fuzz.core.config import hexdump
 
     session = getattr(args, "session", None)
     db = _open_session_db(session)
@@ -1324,7 +1324,7 @@ def handle_narrow_command(args):
 
 def show_protocol_usage(protocol):
     """Show comprehensive usage help when target is missing"""
-    from .fuzz.protocols import PROTOCOL_FUZZERS
+    from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
     try:
         fuzzer_class = PROTOCOL_FUZZERS[protocol]
@@ -1392,7 +1392,7 @@ def show_protocol_usage(protocol):
 
 def show_protocol_options(protocol):
     """Show available options for a protocol with NXC-style output"""
-    from .fuzz.protocols import PROTOCOL_FUZZERS
+    from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
     try:
         fuzzer_class = PROTOCOL_FUZZERS[protocol]
@@ -1415,7 +1415,7 @@ def show_protocol_options(protocol):
 
 def show_protocol_requests(protocol):
     """Show available requests for a protocol with NXC-style output"""
-    from .fuzz.protocols import PROTOCOL_FUZZERS
+    from oida.fuzz.protocols import PROTOCOL_FUZZERS
 
     try:
         fuzzer_class = PROTOCOL_FUZZERS[protocol]
@@ -1442,8 +1442,8 @@ def show_protocol_requests(protocol):
 def run_fuzzing(args, protocol, target):
     """Run the actual fuzzing with NXC-style output"""
     try:
-        from .fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_IMPORT_ERRORS, install_hint
-        from .fuzz import FuzzerApplication
+        from oida.fuzz.protocols import PROTOCOL_FUZZERS, PROTOCOL_IMPORT_ERRORS, install_hint
+        from oida.fuzz import FuzzerApplication
     except ImportError as e:
         # The fuzzer core is built on boofuzz (the optional 'fuzz' extra). This
         # only fires if the fuzz subsystem itself cannot import (e.g. boofuzz is
@@ -1615,7 +1615,7 @@ def run_fuzzing(args, protocol, target):
         fuzz_logger.display(f"Disabled: {', '.join(disabled_requests)}")
 
     # Parse monitor configuration
-    from .fuzz.core.config import MonitorConfig
+    from oida.fuzz.core.config import MonitorConfig
 
     monitor_config = None
     monitor_logic = getattr(args, "monitor_logic", "and")
@@ -1716,7 +1716,7 @@ def run_fuzzing(args, protocol, target):
     print()
     try:
         if os.path.exists(db_path):
-            from .fuzz.core.database.orm import SQLAlchemyDatabase
+            from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
             db = SQLAlchemyDatabase(db_path)
             db.init_schema()

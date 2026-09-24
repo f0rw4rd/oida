@@ -19,7 +19,7 @@ import sys
 import unittest
 from unittest.mock import patch
 
-from .conftest import _make_hl7_instance
+from tests.unit.hl7.conftest import _make_hl7_instance
 
 BASE_ARGV = ["hl7", "127.0.0.1", "--port", "2575", "-I", "PT001", "--confirm"]
 

@@ -67,9 +67,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.can.constants import make_traffic_key, split_traffic_key
-from ..protocols.discovery.core import lookup_mac_vendor
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.can.constants import make_traffic_key, split_traffic_key
+from oida.protocols.discovery.core import lookup_mac_vendor
 
 
 @dataclass

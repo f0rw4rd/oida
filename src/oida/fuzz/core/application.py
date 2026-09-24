@@ -1,8 +1,8 @@
 import traceback
 from typing import Optional, Callable
-from .config import FuzzerConfig
-from .base_fuzzer import BaseFuzzer
-from ...utils.ics_logger import get_logger
+from oida.fuzz.core.config import FuzzerConfig
+from oida.fuzz.core.base_fuzzer import BaseFuzzer
+from oida.utils.ics_logger import get_logger
 
 # Module-level logger for application startup/shutdown
 _log = get_logger("FUZZ", "app", 0)
@@ -15,7 +15,7 @@ class FuzzerApplication:
         self,
         fuzzer_factory: Optional[Callable] = None,
     ):
-        from .session.manager import (
+        from oida.fuzz.core.session.manager import (
             TestCaseManager,
             create_fuzzer,
         )  # Import here to avoid circular imports
@@ -159,7 +159,7 @@ class FuzzerApplication:
 
     def _execute_command(self, args, fuzzer: BaseFuzzer) -> int:
         """Execute the specific command requested"""
-        from .database.orm import SQLAlchemyDatabase
+        from oida.fuzz.core.database.orm import SQLAlchemyDatabase
 
         if args.command == "list":
             # List doesn't need a fuzzer session, just read from DB

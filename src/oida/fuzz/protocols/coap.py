@@ -20,12 +20,12 @@ CVE Coverage:
 from typing import List, Optional
 
 from boofuzz import Byte, DWord, Group, Request, Static, Word
-from ..core.connections import CountingUDPConnection as UDPSocketConnection
+from oida.fuzz.core.connections import CountingUDPConnection as UDPSocketConnection
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..monitors import BaseMonitor
-from ..primitives.dynamic import SmartString
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.monitors import BaseMonitor
+from oida.fuzz.primitives.dynamic import SmartString
 
 
 def coap_header_byte(version: int = 1, msg_type: int = 0, token_length: int = 0) -> int:
@@ -858,7 +858,7 @@ class CoAPFuzzer(BaseFuzzer):
     def _get_monitors(self) -> List[BaseMonitor]:
         """Return list of monitors for CoAP service"""
         monitors = []
-        from ..monitors import CoAPHealthMonitor
+        from oida.fuzz.monitors import CoAPHealthMonitor
 
         # CoAP runs over UDP; a TCP-connect monitor (SocketHealthMonitor)
         # always fails against it -- preflight aborted every run. Probe with

@@ -18,7 +18,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING, Any, Dict, Optional
 
-from .device_info import decode_s7_field
+from oida.protocols.snap7.mixins.device_info import decode_s7_field
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -72,7 +72,7 @@ class BlockOperationsMixin(_ScannerBase):
 
     def list_blocks(self, connection: Any) -> Dict[str, Any]:
         """List all blocks on PLC"""
-        from ..scanner import _suppress_snap7_logging
+        from oida.protocols.snap7.scanner import _suppress_snap7_logging
 
         with _suppress_snap7_logging():
             try:
@@ -104,8 +104,8 @@ class BlockOperationsMixin(_ScannerBase):
         self, connection: Any, db_num: int, output_file: Optional[str] = None
     ) -> Dict[str, Any]:
         """Upload (read) data block from PLC"""
-        from ..scanner import _get_block_types
-        from ....utils.common_types import safe_file_path
+        from oida.protocols.snap7.scanner import _get_block_types
+        from oida.utils.common_types import safe_file_path
 
         Block = _get_block_types()
         try:
@@ -161,7 +161,7 @@ class BlockOperationsMixin(_ScannerBase):
     @staticmethod
     def _get_block_type_map() -> Dict[str, Any]:
         """Get mapping of block type strings to snap7 Block constants."""
-        from ..scanner import _get_block_types
+        from oida.protocols.snap7.scanner import _get_block_types
 
         Block = _get_block_types()
         return {
@@ -250,8 +250,8 @@ class BlockOperationsMixin(_ScannerBase):
         self, conn: Any, block_type: str, block_num: int, output_file: Optional[str] = None
     ) -> Dict[str, Any]:
         """Upload block with headers and footers"""
-        from ....utils.common_types import safe_file_path
-        from ....utils.protocol_helpers import DataFormatter
+        from oida.utils.common_types import safe_file_path
+        from oida.utils.protocol_helpers import DataFormatter
 
         try:
             type_map = self._get_block_type_map()
@@ -372,7 +372,7 @@ class BlockOperationsMixin(_ScannerBase):
 
     def read_szl(self, conn: Any, szl_id: int, index: int = 0) -> Dict[str, Any]:
         """Read specific SZL"""
-        from ....utils.protocol_helpers import DataFormatter
+        from oida.utils.protocol_helpers import DataFormatter
 
         try:
             data = conn.read_szl(szl_id, index)
@@ -386,8 +386,8 @@ class BlockOperationsMixin(_ScannerBase):
 
     def enumerate_szl(self, conn: Any) -> Dict[str, Any]:
         """Enumerate all valuable SZL data with parsed output"""
-        from ..scanner import _suppress_snap7_logging
-        from ..szl_parser import SZLParser
+        from oida.protocols.snap7.scanner import _suppress_snap7_logging
+        from oida.protocols.snap7.szl_parser import SZLParser
 
         results = {
             "success": True,
@@ -444,8 +444,8 @@ class BlockOperationsMixin(_ScannerBase):
 
     def info_action(self, conn: Any) -> Dict[str, Any]:
         """Get combined device info (CPU info, state, order code, datetime, PDU)"""
-        from ..scanner import _suppress_snap7_logging
-        from ..device_lookup import lookup_device_name
+        from oida.protocols.snap7.scanner import _suppress_snap7_logging
+        from oida.protocols.snap7.device_lookup import lookup_device_name
 
         result = {"success": True}
 
@@ -622,7 +622,7 @@ class BlockOperationsMixin(_ScannerBase):
             conn: S7 connection
             quick: If True, skip slow password brute-force test
         """
-        from ..scanner import _suppress_snap7_logging
+        from oida.protocols.snap7.scanner import _suppress_snap7_logging
 
         self.logger.display("Starting S7 security audit%s...", " (quick)" if quick else "")
         results: Dict[str, Any] = {"success": True, "checks": {}}

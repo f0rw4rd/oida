@@ -2,10 +2,10 @@
 # -*- coding: utf-8 -*-
 """GOOSE NXC-style callable class."""
 
-from ...connection import SerialConnection
-from ...utils.permissions import check_raw_socket_capability
+from oida.connection import SerialConnection
+from oida.utils.permissions import check_raw_socket_capability
 
-from . import GOOSEScanner
+from oida.protocols.goose import GOOSEScanner
 
 
 class goose(SerialConnection):
@@ -137,7 +137,7 @@ class goose(SerialConnection):
     @staticmethod
     def check_dependencies() -> bool:
         """Check if pyiec61850-ng is available."""
-        from ...utils.lazy_import import lazy_import
+        from oida.utils.lazy_import import lazy_import
 
         _pyiec61850_goose = lazy_import(
             "pyiec61850.goose", "GOOSE", install_hint="pip install oida-ics[goose]"

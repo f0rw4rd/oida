@@ -32,7 +32,7 @@ from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 from urllib.parse import parse_qs, urlparse
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
 
 
 @dataclass

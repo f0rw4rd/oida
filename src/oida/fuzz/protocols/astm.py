@@ -42,9 +42,9 @@ from typing import List
 
 from boofuzz import Bytes, Group, Request
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import TCPSocketConnection
-from ..primitives.dynamic import SmartString, StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.connections import TCPSocketConnection
+from oida.fuzz.primitives.dynamic import SmartString, StringContext
 
 # ASTM E1381 low-level control bytes
 STX = b"\x02"

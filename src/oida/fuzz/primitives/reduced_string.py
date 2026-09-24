@@ -15,7 +15,7 @@ import logging
 
 from boofuzz import String
 
-from ...utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger
 
 _log = get_logger("STRING", "reduced", 0)
 

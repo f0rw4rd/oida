@@ -14,7 +14,7 @@ import pytest
 
 from oida.pcap.x11 import X11PassiveListener
 
-from .conftest import _run_listener_test
+from tests.integration.pcap.conftest import _run_listener_test
 
 pytestmark = [pytest.mark.integration]
 

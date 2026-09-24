@@ -20,11 +20,11 @@ from typing import List
 
 from boofuzz import Group, RandomData, Request, Static
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import TCPSocketConnection
-from ..core.connections import CountingUDPConnection as UDPSocketConnection
-from ..monitors import BaseMonitor
-from ..primitives.dynamic import SmartString
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.connections import TCPSocketConnection
+from oida.fuzz.core.connections import CountingUDPConnection as UDPSocketConnection
+from oida.fuzz.monitors import BaseMonitor
+from oida.fuzz.primitives.dynamic import SmartString
 
 
 class DaytimeFuzzer(BaseFuzzer):

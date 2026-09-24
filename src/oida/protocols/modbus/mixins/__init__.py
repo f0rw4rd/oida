@@ -18,17 +18,17 @@ Mixins:
     - SunSpecMixin: SunSpec runtime model discovery
 """
 
-from .identification import IdentificationMixin
-from .diagnostics import DiagnosticsMixin
-from .events import EventsMixin
-from .files import FilesMixin
-from .writes import WritesMixin
-from .monitor import MonitorMixin
-from .fuzz import FuzzMixin
-from .canopen import CANopenMixin
-from .raw_function_codes import RawFCMixin
-from .sunspec import SunSpecMixin
-from .read_write import MapReadWriteMixin
+from oida.protocols.modbus.mixins.identification import IdentificationMixin
+from oida.protocols.modbus.mixins.diagnostics import DiagnosticsMixin
+from oida.protocols.modbus.mixins.events import EventsMixin
+from oida.protocols.modbus.mixins.files import FilesMixin
+from oida.protocols.modbus.mixins.writes import WritesMixin
+from oida.protocols.modbus.mixins.monitor import MonitorMixin
+from oida.protocols.modbus.mixins.fuzz import FuzzMixin
+from oida.protocols.modbus.mixins.canopen import CANopenMixin
+from oida.protocols.modbus.mixins.raw_function_codes import RawFCMixin
+from oida.protocols.modbus.mixins.sunspec import SunSpecMixin
+from oida.protocols.modbus.mixins.read_write import MapReadWriteMixin
 
 __all__ = [
     "IdentificationMixin",

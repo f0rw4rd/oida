@@ -14,12 +14,12 @@ Mixins:
     - HostEnumerationMixin: Host enumeration (interfaces, TCP, storage, creds, etc.)
 """
 
-from .brute_force import BruteForceMixin
-from .version_detection import VersionDetectionMixin
-from .write_access import WriteAccessMixin
-from .v3_enumeration import V3EnumerationMixin
-from .raw_queries import RawQueryMixin
-from .host_enumeration import HostEnumerationMixin
+from oida.protocols.snmp.mixins.brute_force import BruteForceMixin
+from oida.protocols.snmp.mixins.version_detection import VersionDetectionMixin
+from oida.protocols.snmp.mixins.write_access import WriteAccessMixin
+from oida.protocols.snmp.mixins.v3_enumeration import V3EnumerationMixin
+from oida.protocols.snmp.mixins.raw_queries import RawQueryMixin
+from oida.protocols.snmp.mixins.host_enumeration import HostEnumerationMixin
 
 __all__ = [
     "BruteForceMixin",

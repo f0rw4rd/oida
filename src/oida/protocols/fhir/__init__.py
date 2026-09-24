@@ -17,10 +17,10 @@ CLI examples:
 """
 
 # Re-export the NXC-style connection class (mixin-based)
-from .cli_runner import fhir
+from oida.protocols.fhir.cli_runner import fhir
 
 # Re-export constants and utilities used by tests and external code
-from .helpers import (
+from oida.protocols.fhir.helpers import (
     FHIR_SECURITY_MODES,
     FHIR_VENDOR_MAP,
     is_fhirclient_available,

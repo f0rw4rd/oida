@@ -10,9 +10,9 @@ import urllib3
 from boofuzz.exception import BoofuzzFailure
 from boofuzz.monitors import BaseMonitor
 
-from ..core.session.commands import RealCommandRunner
-from ..core.calibration import DriftDetector, RtoEstimator, TimeoutCalibrator
-from ...utils.ics_logger import get_logger
+from oida.fuzz.core.session.commands import RealCommandRunner
+from oida.fuzz.core.calibration import DriftDetector, RtoEstimator, TimeoutCalibrator
+from oida.utils.ics_logger import get_logger
 
 # Disable SSL warnings for fuzzing contexts
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -810,8 +810,8 @@ class ProtocolMonitor(BaseMonitor):
             # Record crashed test case to DB for resume
             if self.session_filename and self.crash_info:
                 try:
-                    from ..core.database.orm import SQLAlchemyDatabase
-                    from ..core.database.interface import TestCase as TestCaseDTO
+                    from oida.fuzz.core.database.orm import SQLAlchemyDatabase
+                    from oida.fuzz.core.database.interface import TestCase as TestCaseDTO
 
                     db = SQLAlchemyDatabase(f"{self.session_filename}.db")
                     db.init_schema()

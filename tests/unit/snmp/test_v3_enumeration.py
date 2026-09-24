@@ -127,7 +127,7 @@ class TestEnumV3Users:
 class TestEnumV3:
     def _scanner(self, **kw):
         from oida.protocols.snmp.scanner import SNMPScanner
-        from .conftest import RecordingLogger
+        from tests.unit.snmp.conftest import RecordingLogger
 
         args = {
             "host": "10.0.0.5",

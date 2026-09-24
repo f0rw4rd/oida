@@ -9,7 +9,7 @@ harvest output. Covers the T1 field gaps fixed in the GOOSE listener:
 
 import pytest
 
-from .conftest import _run_listener_test
+from tests.integration.pcap.conftest import _run_listener_test
 
 pytestmark = [pytest.mark.integration]
 

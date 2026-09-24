@@ -15,7 +15,7 @@ mode; john's `vnc` format PASSes self-test and consumes this exact string).
 
 import pytest
 
-from .conftest import _run_listener_test
+from tests.integration.pcap.conftest import _run_listener_test
 
 pytestmark = [pytest.mark.integration]
 

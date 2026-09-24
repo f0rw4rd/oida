@@ -9,9 +9,9 @@ Auto-executing connection class that follows the NXC pattern.
 
 from typing import List
 
-from ...connection import NetworkConnection
-from .scanner import Snap7Scanner, _get_block_types
-from .constants import S7MemoryArea
+from oida.connection import NetworkConnection
+from oida.protocols.snap7.scanner import Snap7Scanner, _get_block_types
+from oida.protocols.snap7.constants import S7MemoryArea
 
 import logging
 
@@ -76,7 +76,7 @@ class s7(NetworkConnection):
                     )
                     return
 
-                from ...utils.login_scanner import format_wordlist_source
+                from oida.utils.login_scanner import format_wordlist_source
 
                 self.logger.display(f"Password file detected: {format_wordlist_source(password)}")
                 rate_limit = getattr(self.args, "brute_rate", 0.5)
@@ -482,7 +482,7 @@ class s7(NetworkConnection):
     def _action_download_db(self):
         """Handle --download-db action"""
 
-        from ...utils.common_types import safe_file_path
+        from oida.utils.common_types import safe_file_path
 
         input_file = self.args.download_db
         db_num = getattr(self.args, "db_target", None)
@@ -692,7 +692,7 @@ class s7(NetworkConnection):
     def _fuzz_db(self, iterations: int) -> None:
         """Fuzz data block contents"""
         import time
-        from ...utils.fuzzer import fuzz
+        from oida.utils.fuzzer import fuzz
 
         fuzz_db_arg = getattr(self.args, "fuzz_db", None)
 
@@ -787,7 +787,7 @@ class s7(NetworkConnection):
     def _fuzz_area(self, area, size: int, label: str, iterations: int) -> None:
         """Fuzz a single S7 memory area: read original, write mutations, restore."""
         import time
-        from ...utils.fuzzer import fuzz
+        from oida.utils.fuzzer import fuzz
 
         try:
             self.conn.read_area(area, 0, 0, size)  # Test read
@@ -840,7 +840,7 @@ class s7(NetworkConnection):
 
     def cleanup(self):
         """Cleanup Snap7 connection"""
-        from .scanner import _suppress_snap7_logging
+        from oida.protocols.snap7.scanner import _suppress_snap7_logging
 
         with _suppress_snap7_logging():
             if self.conn:
@@ -852,7 +852,7 @@ class s7(NetworkConnection):
 
     @staticmethod
     def check_dependencies() -> bool:
-        from .scanner import _snap7
+        from oida.protocols.snap7.scanner import _snap7
 
         return _snap7.is_available
 

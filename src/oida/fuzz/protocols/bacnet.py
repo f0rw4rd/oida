@@ -36,9 +36,9 @@ from typing import List
 
 from boofuzz import Block, Byte, DWord, Group, Request, Size, Word
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import ProtocolType
-from ..primitives.dynamic import SmartString, StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import ProtocolType
+from oida.fuzz.primitives.dynamic import SmartString, StringContext
 
 
 # BACnet service codes for quick reference
@@ -243,7 +243,7 @@ class BACnetFuzzer(BaseFuzzer):
         The bind tuple (host, port) specifies where to listen for responses.
         Using port 0 lets the OS pick an available ephemeral port.
         """
-        from ..core.connections import CountingUDPConnection as UDPSocketConnection
+        from oida.fuzz.core.connections import CountingUDPConnection as UDPSocketConnection
 
         return UDPSocketConnection(
             self.config.target_ip,

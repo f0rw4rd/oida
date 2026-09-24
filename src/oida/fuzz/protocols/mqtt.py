@@ -51,16 +51,16 @@ from typing import List, Optional
 from boofuzz import Block, Byte, Group, Request, Size, Static, Word
 from boofuzz.monitors import BaseMonitor
 
-from ..core.base_fuzzer import CommonState, RequestInfo
-from ..core.stateful_fuzzer import StatefulFuzzer
-from ..core.auth import MQTTAuthenticator, ProtocolAuthenticator
-from ..core.config import FuzzerConfig
-from ..core.session import StateContext, ResponseData
-from ..core.session.sequence import SequenceConfig, SequenceDirection
-from ..core.session.state_machine import StateTransitionError
-from ..monitors import MQTTMonitor
-from ..primitives.dynamic import DynamicWord, SmartString
-from ..primitives.smart_string import StringContext
+from oida.fuzz.core.base_fuzzer import CommonState, RequestInfo
+from oida.fuzz.core.stateful_fuzzer import StatefulFuzzer
+from oida.fuzz.core.auth import MQTTAuthenticator, ProtocolAuthenticator
+from oida.fuzz.core.config import FuzzerConfig
+from oida.fuzz.core.session import StateContext, ResponseData
+from oida.fuzz.core.session.sequence import SequenceConfig, SequenceDirection
+from oida.fuzz.core.session.state_machine import StateTransitionError
+from oida.fuzz.monitors import MQTTMonitor
+from oida.fuzz.primitives.dynamic import DynamicWord, SmartString
+from oida.fuzz.primitives.smart_string import StringContext
 
 import logging
 
@@ -1381,7 +1381,7 @@ class MQTTFuzzer(StatefulFuzzer):
             self.log.display("MQTT state machine disabled (no authentication)")
             return
 
-        from ..core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             StateType,

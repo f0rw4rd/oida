@@ -21,7 +21,7 @@ import sys
 from boofuzz import UDPSocketConnection
 from boofuzz import exception as boofuzz_exception
 
-from ....utils.ics_logger import get_logger
+from oida.utils.ics_logger import get_logger
 
 
 class CountingUDPConnection(UDPSocketConnection):

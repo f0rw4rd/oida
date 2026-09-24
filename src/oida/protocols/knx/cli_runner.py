@@ -13,15 +13,11 @@ facade pattern.
 import asyncio
 from pathlib import Path
 
-from ...connection import NetworkConnection
+from oida.connection import NetworkConnection
 
-from .scanner import (
-    KNXScanner,
-    _ensure_xknx_classes,
-    _xknx_cls,
-)
-from .helpers import resolve_local_ip
-from .ets import (
+from oida.protocols.knx.scanner import KNXScanner, _ensure_xknx_classes, _xknx_cls
+from oida.protocols.knx.helpers import resolve_local_ip
+from oida.protocols.knx.ets import (
     get_knxproj_info,
     parse_knxproj,
     crack_knxproj,

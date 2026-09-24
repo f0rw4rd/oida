@@ -22,16 +22,13 @@ import sys
 import tempfile
 from contextlib import contextmanager
 
-from ...utils.lazy_import import lazy_import
+from oida.utils.lazy_import import lazy_import
 
 # Shared CoE definitions (no pysoem dependency -- pure data module)
-from ..ethercat.coe import (
-    COE_SDO_OFFSETS,
-    encode_sdo_offset,
-)
+from oida.protocols.ethercat.coe import COE_SDO_OFFSETS, encode_sdo_offset
 
 # ADS protocol constants (shared with passive listener)
-from .constants import (
+from oida.protocols.ads.constants import (
     ADS_ERROR_CODES,
     ADS_TIMEOUT_MS,
     INDEXGROUP_IOIMAGE_RWIB,

@@ -8,17 +8,12 @@ from datetime import datetime
 import struct
 import threading
 
-from ...utils import (
-    SerialScanner,
-    SecurityAnalyzer,
-    ProgressTracker,
-    parse_bool,
-)
-from ...utils import ics_logger as module
-from ...utils.permissions import check_raw_socket_capability
-from ...utils.lazy_import import lazy_import
-from ...utils.ics_logger import get_module_logger
-from .core import lookup_mac_vendor
+from oida.utils import SerialScanner, SecurityAnalyzer, ProgressTracker, parse_bool
+from oida.utils import ics_logger as module
+from oida.utils.permissions import check_raw_socket_capability
+from oida.utils.lazy_import import lazy_import
+from oida.utils.ics_logger import get_module_logger
+from oida.protocols.discovery.core import lookup_mac_vendor
 
 
 # Lazy import for scapy - only loads when actually used
@@ -928,7 +923,7 @@ class LLDPPassiveListener:
         interface: str,
         timeout: int = 60,
     ):
-        from .core import validate_interface, validate_timeout
+        from oida.protocols.discovery.core import validate_interface, validate_timeout
 
         self.interface = validate_interface(interface)
 
@@ -998,7 +993,7 @@ class LLDPPassiveListener:
 
         with self._lock:
             if src_mac not in self.discovered_devices:
-                from .core import DiscoveredDevice
+                from oida.protocols.discovery.core import DiscoveredDevice
 
                 device = DiscoveredDevice(
                     mac_address=src_mac,

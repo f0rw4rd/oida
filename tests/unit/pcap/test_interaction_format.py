@@ -19,7 +19,7 @@ import pytest
 
 from oida.pcap.pyshark_base import PySharkListenerBase
 
-from .conftest import requires_pyshark
+from tests.unit.pcap.conftest import requires_pyshark
 
 FIXTURES_ROOT = Path(__file__).resolve().parents[2] / "fixtures" / "pcap"
 

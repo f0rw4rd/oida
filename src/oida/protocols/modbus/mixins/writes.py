@@ -12,8 +12,8 @@ Handles write operations:
 
 from __future__ import annotations
 
-from ..decoder import ModbusEncoder, parse_endian
-from ....utils.protocol_helpers import ProtocolParser
+from oida.protocols.modbus.decoder import ModbusEncoder, parse_endian
+from oida.utils.protocol_helpers import ProtocolParser
 
 from typing import TYPE_CHECKING
 

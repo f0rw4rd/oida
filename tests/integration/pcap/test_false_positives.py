@@ -10,7 +10,7 @@ import importlib
 
 import pytest
 
-from .conftest import _load_packets, _pcap_path, _skip_unless_pyshark
+from tests.integration.pcap.conftest import _load_packets, _pcap_path, _skip_unless_pyshark
 
 pytestmark = [pytest.mark.integration]
 

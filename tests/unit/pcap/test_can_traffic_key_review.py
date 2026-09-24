@@ -8,7 +8,7 @@ scanner side got traffic keys (EFF-flagged) in f990c52; the pcap listener was
 missed.
 """
 
-from .test_can_id_base_review import _Layer, _Packet, _feed
+from tests.unit.pcap.test_can_id_base_review import _Layer, _Packet, _feed
 
 
 def test_std_and_ext_same_id_not_merged():

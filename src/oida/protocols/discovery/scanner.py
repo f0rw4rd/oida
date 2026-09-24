@@ -19,27 +19,27 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 from typing import Any, Dict, Optional
 
-from ...connection import SerialConnection
-from ...utils.result_types import ScanResult
-from ...utils.base_scanner import SerialScanner
-from ...utils.export_utils import export_data
-from ...utils.permissions import check_raw_socket_capability
-from ...utils.protocol_helpers import SecurityAnalyzer
-from ...utils.rate_limiter import scapy_srp, set_rate_limit, get_rate_limiter
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.connection import SerialConnection
+from oida.utils.result_types import ScanResult
+from oida.utils.base_scanner import SerialScanner
+from oida.utils.export_utils import export_data
+from oida.utils.permissions import check_raw_socket_capability
+from oida.utils.protocol_helpers import SecurityAnalyzer
+from oida.utils.rate_limiter import scapy_srp, set_rate_limit, get_rate_limiter
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
 _scapy = lazy_import("scapy", "discovery")
 _profinet = lazy_import("profinet", "PROFINET")
-from ...utils import iface_info as _netifaces
+from oida.utils import iface_info as _netifaces
 
-from .arp import ARPScanner, ARPPassiveListener, EthernetPassiveListener
-from .dhcp import DHCPPassiveListener, DHCPServerScanner
-from .fins import FINSScanner, FINSPassiveListener
-from .hsrp import HSRPPassiveListener
-from .igmp import IGMPPassiveListener
-from .dhcpv6 import DHCPv6PassiveListener, DHCPv6ServerScanner
-from .core import (
+from oida.protocols.discovery.arp import ARPScanner, ARPPassiveListener, EthernetPassiveListener
+from oida.protocols.discovery.dhcp import DHCPPassiveListener, DHCPServerScanner
+from oida.protocols.discovery.fins import FINSScanner, FINSPassiveListener
+from oida.protocols.discovery.hsrp import HSRPPassiveListener
+from oida.protocols.discovery.igmp import IGMPPassiveListener
+from oida.protocols.discovery.dhcpv6 import DHCPv6PassiveListener, DHCPv6ServerScanner
+from oida.protocols.discovery.core import (
     DiscoveredDevice,
     OutOfScopeWarning,
     build_device_description,
@@ -50,34 +50,40 @@ from .core import (
     mac_to_eui64,
     eui64_to_mac,
 )
-from .ics import ADSScanner, BACnetScanner, CODESYSScanner, EtherNetIPScanner, KNXScanner
-from .igmp import IGMPQueryScanner
-from .enrich import (
+from oida.protocols.discovery.ics import (
+    ADSScanner,
+    BACnetScanner,
+    CODESYSScanner,
+    EtherNetIPScanner,
+    KNXScanner,
+)
+from oida.protocols.discovery.igmp import IGMPQueryScanner
+from oida.protocols.discovery.enrich import (
     PingEnrichScanner,
     ReverseDNSEnrichScanner,
     NetBIOSEnrichScanner,
     MDNSEnrichScanner,
 )
-from .ipv4_resolve import IPv4ResolveScanner
-from .ipv6 import IPv6PassiveListener, IPv6Scanner
-from .lldp import LLDPPassiveListener, LLDPScanner
-from .mdns import DNSSDScanner, MDNSScanner, MDNSPassiveListener
-from .netmanage import NetManageScanner, NetManagePassiveListener
-from .network import (
+from oida.protocols.discovery.ipv4_resolve import IPv4ResolveScanner
+from oida.protocols.discovery.ipv6 import IPv6PassiveListener, IPv6Scanner
+from oida.protocols.discovery.lldp import LLDPPassiveListener, LLDPScanner
+from oida.protocols.discovery.mdns import DNSSDScanner, MDNSScanner, MDNSPassiveListener
+from oida.protocols.discovery.netmanage import NetManageScanner, NetManagePassiveListener
+from oida.protocols.discovery.network import (
     CDPPassiveListener,
     LLMNRScanner,
     NetBIOSScanner,
     NetBIOSPassiveListener,
     STPPassiveListener,
 )
-from .ntp import NTPPassiveListener
-from .ssdp import SSDPScanner, SSDPPassiveListener, WSDiscoveryScanner
-from .vendor import LantronixScanner, MoxaScanner, ADDPScanner
-from .cameras import HikvisionSADPScanner, DahuaDHDiscoverScanner
-from .energy import SMASpeedwireScanner
-from .av import CrestronCIPScanner, ArtNetScanner
-from .netgear import UbiquitiScanner, MNDPScanner
-from .infra import (
+from oida.protocols.discovery.ntp import NTPPassiveListener
+from oida.protocols.discovery.ssdp import SSDPScanner, SSDPPassiveListener, WSDiscoveryScanner
+from oida.protocols.discovery.vendor import LantronixScanner, MoxaScanner, ADDPScanner
+from oida.protocols.discovery.cameras import HikvisionSADPScanner, DahuaDHDiscoverScanner
+from oida.protocols.discovery.energy import SMASpeedwireScanner
+from oida.protocols.discovery.av import CrestronCIPScanner, ArtNetScanner
+from oida.protocols.discovery.netgear import UbiquitiScanner, MNDPScanner
+from oida.protocols.discovery.infra import (
     HIDScanner,
     MSSQLBrowserScanner,
     BJNPScanner,
@@ -90,16 +96,16 @@ from .infra import (
     IPMIScanner,
     SLPScanner,
 )
-from .vrrp import VRRPPassiveListener
+from oida.protocols.discovery.vrrp import VRRPPassiveListener
 
 # Routing protocol passive listeners
-from .ospf_passive import OSPFPassiveListener
-from .eigrp_passive import EIGRPPassiveListener
-from .rip_passive import RIPPassiveListener
-from .pim_passive import PIMPassiveListener
+from oida.protocols.discovery.ospf_passive import OSPFPassiveListener
+from oida.protocols.discovery.eigrp_passive import EIGRPPassiveListener
+from oida.protocols.discovery.rip_passive import RIPPassiveListener
+from oida.protocols.discovery.pim_passive import PIMPassiveListener
 
 # Scapy-based file carving listener
-from .file_carving import FileCarvingListener
+from oida.protocols.discovery.file_carving import FileCarvingListener
 
 logger = get_module_logger(__name__)
 
@@ -546,7 +552,10 @@ class DiscoveryScanner(SerialScanner):
         Returns empty InterfaceCapabilities on error.
         Errors during capability detection should not prevent the scanner from running.
         """
-        from .core import check_interface_capabilities, InterfaceCapabilities
+        from oida.protocols.discovery.core import (
+            check_interface_capabilities,
+            InterfaceCapabilities,
+        )
 
         try:
             return check_interface_capabilities(self.interface)
@@ -654,7 +663,7 @@ class DiscoveryScanner(SerialScanner):
 
         try:
             from scapy.all import AsyncSniffer, conf
-            from .core import is_interface_up
+            from oida.protocols.discovery.core import is_interface_up
             import os
 
             # Check interface is up before starting
@@ -721,7 +730,7 @@ class DiscoveryScanner(SerialScanner):
 
         try:
             from scapy.all import wrpcap
-            from .core import is_interface_up
+            from oida.protocols.discovery.core import is_interface_up
 
             # Check if interface is currently down
             if not is_interface_up(self.interface):
@@ -797,7 +806,7 @@ class DiscoveryScanner(SerialScanner):
         has_raw, raw_error = check_raw_socket_capability()
         if not has_raw:
             if raw_error == "permission_error":
-                from ...utils.permissions import raw_socket_help_lines
+                from oida.utils.permissions import raw_socket_help_lines
 
                 self.logger.fail("Raw socket access required")
                 for _line in raw_socket_help_lines():
@@ -1470,7 +1479,7 @@ class DiscoveryScanner(SerialScanner):
 
     def _run_lldp_passive(self) -> Dict[str, DiscoveredDevice]:
         """Run LLDP passive listening"""
-        from .lldp import LLDPScanner
+        from oida.protocols.discovery.lldp import LLDPScanner
 
         try:
             scanner = LLDPScanner(
@@ -1801,7 +1810,7 @@ class DiscoveryScanner(SerialScanner):
         if not addresses_to_ping:
             return 0
 
-        from ...utils.platform_compat import build_ping_command
+        from oida.utils.platform_compat import build_ping_command
 
         responded = 0
         for mac, addr in addresses_to_ping:
@@ -1989,7 +1998,7 @@ class DiscoveryScanner(SerialScanner):
         ARP entries for those IPs. Reads the system ARP cache cross-platform.
         Returns number of MACs resolved.
         """
-        from ...utils.platform_compat import get_arp_cache_as_ip_to_mac
+        from oida.utils.platform_compat import get_arp_cache_as_ip_to_mac
 
         resolved = 0
         arp_cache = get_arp_cache_as_ip_to_mac()
@@ -2107,7 +2116,7 @@ class DiscoveryScanner(SerialScanner):
 
         Returns number of IPv4 addresses resolved.
         """
-        from ...utils.platform_compat import get_arp_cache_as_mac_to_ips
+        from oida.utils.platform_compat import get_arp_cache_as_mac_to_ips
 
         resolved = 0
         mac_to_ipv4 = get_arp_cache_as_mac_to_ips()
@@ -2482,7 +2491,7 @@ class DiscoveryScanner(SerialScanner):
 
         # Gate file output on -o, like the rest of the framework. No -o ->
         # console only, don't litter /tmp with CSV/IP lists.
-        from ...utils.export_utils import get_config
+        from oida.utils.export_utils import get_config
 
         output_dir = get_config().get("output_dir")
         if not output_dir:

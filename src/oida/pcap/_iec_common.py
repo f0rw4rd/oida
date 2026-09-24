@@ -33,7 +33,7 @@ from __future__ import annotations
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from .pyshark_base import PySharkListenerBase
+from oida.pcap.pyshark_base import PySharkListenerBase
 
 
 def parse_asdu_field(raw: Any, default: Any = 0) -> Any:

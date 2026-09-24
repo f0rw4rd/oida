@@ -11,7 +11,7 @@ Examples:
 
 from argparse import SUPPRESS
 
-from ...utils.proto_args_factory import (
+from oida.utils.proto_args_factory import (
     create_protocol_parser,
     add_target_argument,
     add_network_options,

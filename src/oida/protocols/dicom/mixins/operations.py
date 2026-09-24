@@ -9,7 +9,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from ..cli_runner import _get_dcmread, _new_dataset, _sop
+from oida.protocols.dicom.cli_runner import _get_dcmread, _new_dataset, _sop
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase

@@ -13,11 +13,11 @@ Mixins:
     - SecurityMixin: Security analysis and finding reporting
 """
 
-from .connection import ConnectionMixin
-from .topic_discovery import TopicDiscoveryMixin
-from .auth import AuthMixin
-from .messaging import MessagingMixin
-from .security import SecurityMixin
+from oida.protocols.mqtt.mixins.connection import ConnectionMixin
+from oida.protocols.mqtt.mixins.topic_discovery import TopicDiscoveryMixin
+from oida.protocols.mqtt.mixins.auth import AuthMixin
+from oida.protocols.mqtt.mixins.messaging import MessagingMixin
+from oida.protocols.mqtt.mixins.security import SecurityMixin
 
 __all__ = [
     "ConnectionMixin",

@@ -7,19 +7,12 @@ import asyncio
 import time as _time
 from typing import Any, Dict, List
 
-from ...utils import (
-    NetworkScanner,
-)
-from ...utils.ics_logger import get_module_logger
-from ...utils.lazy_import import lazy_import
+from oida.utils import NetworkScanner
+from oida.utils.ics_logger import get_module_logger
+from oida.utils.lazy_import import lazy_import
 
-from .constants import (
-    DEFAULT_PORT,
-    COMMON_PATHS,
-    LWM2M_OBJECTS,
-    LWM2M_SEC_MODES,
-)
-from .helpers import (
+from oida.protocols.coap.constants import DEFAULT_PORT, COMMON_PATHS, LWM2M_OBJECTS, LWM2M_SEC_MODES
+from oida.protocols.coap.helpers import (
     _get_aiocoap,
     coap_ping,
     coap_get,

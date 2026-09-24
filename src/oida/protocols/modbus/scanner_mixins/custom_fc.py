@@ -188,7 +188,7 @@ class ScannerCustomFCMixin(_ScannerBase):
         get the same 'unsupported / failed' branch they already have), or
         a dict {data, raw, error?} on any other outcome.
         """
-        from ..constants import MEIType
+        from oida.protocols.modbus.constants import MEIType
 
         payload = bytes([int(MEIType.CANOPEN)]) + bytes(request_data)
         result = self.send_custom_fc(client, 43, payload, self.unit_id)

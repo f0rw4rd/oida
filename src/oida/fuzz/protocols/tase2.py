@@ -32,13 +32,13 @@ from typing import List
 
 from boofuzz import Block, Group, Request, Size, Static
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.codecs.asn1 import ber_content as _ber_content
-from ..core.codecs.mms import MMSCodec, MMSObjectClass
-from ..core.config import FuzzerConfig, ProtocolType
-from ..primitives.asn1 import encode_ber_context_tag, encode_ber_integer, encode_ber_length
-from ..primitives.dynamic import SmartBytes, SmartString, StringContext
-from ..primitives.osi import MMSStackBuilder, wrap_in_tpkt_cotp
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.codecs.asn1 import ber_content as _ber_content
+from oida.fuzz.core.codecs.mms import MMSCodec, MMSObjectClass
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.primitives.asn1 import encode_ber_context_tag, encode_ber_integer, encode_ber_length
+from oida.fuzz.primitives.dynamic import SmartBytes, SmartString, StringContext
+from oida.fuzz.primitives.osi import MMSStackBuilder, wrap_in_tpkt_cotp
 
 logger = logging.getLogger(__name__)
 

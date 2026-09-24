@@ -23,7 +23,7 @@ class TestStateType:
 
     def test_state_types_exist(self):
         """All expected state types are defined."""
-        from src.oida.fuzz.core.session.state_machine import StateType
+        from oida.fuzz.core.session.state_machine import StateType
 
         assert StateType.CONNECTION
         assert StateType.AUTHENTICATION
@@ -34,7 +34,7 @@ class TestStateType:
 
     def test_state_types_unique(self):
         """State type values are unique."""
-        from src.oida.fuzz.core.session.state_machine import StateType
+        from oida.fuzz.core.session.state_machine import StateType
 
         values = [st.value for st in StateType]
         assert len(values) == len(set(values))
@@ -50,7 +50,7 @@ class TestTransitionRuleCreation:
 
     def test_basic_creation(self):
         """TransitionRule can be created with basic parameters."""
-        from src.oida.fuzz.core.session.state_machine import TransitionRule
+        from oida.fuzz.core.session.state_machine import TransitionRule
 
         rule = TransitionRule("STATE_A", "STATE_B")
         assert rule.from_state == "STATE_A"
@@ -58,7 +58,7 @@ class TestTransitionRuleCreation:
 
     def test_creation_with_condition(self):
         """TransitionRule accepts condition callback."""
-        from src.oida.fuzz.core.session.state_machine import TransitionRule
+        from oida.fuzz.core.session.state_machine import TransitionRule
 
         condition = Mock(return_value=True)
         rule = TransitionRule("A", "B", condition=condition)
@@ -66,7 +66,7 @@ class TestTransitionRuleCreation:
 
     def test_creation_with_action(self):
         """TransitionRule accepts action callback."""
-        from src.oida.fuzz.core.session.state_machine import TransitionRule
+        from oida.fuzz.core.session.state_machine import TransitionRule
 
         action = Mock()
         rule = TransitionRule("A", "B", action=action)
@@ -74,7 +74,7 @@ class TestTransitionRuleCreation:
 
     def test_creation_with_description(self):
         """TransitionRule accepts description."""
-        from src.oida.fuzz.core.session.state_machine import TransitionRule
+        from oida.fuzz.core.session.state_machine import TransitionRule
 
         rule = TransitionRule("A", "B", description="Test transition")
         assert rule.description == "Test transition"
@@ -85,14 +85,14 @@ class TestTransitionRuleCanTransition:
 
     def test_can_transition_no_condition(self):
         """Without condition, can_transition returns True."""
-        from src.oida.fuzz.core.session.state_machine import TransitionRule
+        from oida.fuzz.core.session.state_machine import TransitionRule
 
         rule = TransitionRule("A", "B")
         assert rule.can_transition() is True
 
     def test_can_transition_condition_true(self):
         """Returns True when condition returns True."""
-        from src.oida.fuzz.core.session.state_machine import TransitionRule
+        from oida.fuzz.core.session.state_machine import TransitionRule
 
         condition = Mock(return_value=True)
         rule = TransitionRule("A", "B", condition=condition)
@@ -101,7 +101,7 @@ class TestTransitionRuleCanTransition:
 
     def test_can_transition_condition_false(self):
         """Returns False when condition returns False."""
-        from src.oida.fuzz.core.session.state_machine import TransitionRule
+        from oida.fuzz.core.session.state_machine import TransitionRule
 
         condition = Mock(return_value=False)
         rule = TransitionRule("A", "B", condition=condition)
@@ -109,7 +109,7 @@ class TestTransitionRuleCanTransition:
 
     def test_can_transition_condition_exception(self):
         """Returns False when condition raises exception."""
-        from src.oida.fuzz.core.session.state_machine import TransitionRule
+        from oida.fuzz.core.session.state_machine import TransitionRule
 
         condition = Mock(side_effect=RuntimeError("test error"))
         rule = TransitionRule("A", "B", condition=condition)
@@ -121,14 +121,14 @@ class TestTransitionRuleExecuteAction:
 
     def test_execute_action_no_action(self):
         """Without action, execute_action does nothing."""
-        from src.oida.fuzz.core.session.state_machine import TransitionRule
+        from oida.fuzz.core.session.state_machine import TransitionRule
 
         rule = TransitionRule("A", "B")
         rule.execute_action()  # Should not raise
 
     def test_execute_action_calls_callback(self):
         """Action callback is called."""
-        from src.oida.fuzz.core.session.state_machine import TransitionRule
+        from oida.fuzz.core.session.state_machine import TransitionRule
 
         action = Mock()
         rule = TransitionRule("A", "B", action=action)
@@ -137,7 +137,7 @@ class TestTransitionRuleExecuteAction:
 
     def test_execute_action_propagates_exception(self):
         """Action exceptions are propagated."""
-        from src.oida.fuzz.core.session.state_machine import TransitionRule
+        from oida.fuzz.core.session.state_machine import TransitionRule
 
         action = Mock(side_effect=RuntimeError("action failed"))
         rule = TransitionRule("A", "B", action=action)
@@ -150,7 +150,7 @@ class TestTransitionRuleRepr:
 
     def test_repr(self):
         """Repr shows from and to states."""
-        from src.oida.fuzz.core.session.state_machine import TransitionRule
+        from oida.fuzz.core.session.state_machine import TransitionRule
 
         rule = TransitionRule("CONNECTED", "AUTHENTICATED")
         assert "CONNECTED" in repr(rule)
@@ -167,14 +167,14 @@ class TestProtocolStateCreation:
 
     def test_basic_creation(self):
         """ProtocolState can be created with name only."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("TEST_STATE")
         assert state.name == "TEST_STATE"
 
     def test_creation_with_callbacks(self):
         """ProtocolState accepts setup and validation callbacks."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         setup = Mock(return_value=True)
         validation = Mock(return_value=True)
@@ -184,21 +184,21 @@ class TestProtocolStateCreation:
 
     def test_creation_with_requires(self):
         """ProtocolState accepts requires list."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("TEST", requires=["CONNECTED", "READY"])
         assert state.requires == ["CONNECTED", "READY"]
 
     def test_creation_with_state_type(self):
         """ProtocolState accepts state type."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState, StateType
+        from oida.fuzz.core.session.state_machine import ProtocolState, StateType
 
         state = ProtocolState("TEST", state_type=StateType.AUTHENTICATION)
         assert state.state_type == StateType.AUTHENTICATION
 
     def test_creation_with_timeout(self):
         """ProtocolState accepts timeout."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("TEST", timeout=5.0)
         assert state.timeout == 5.0
@@ -209,14 +209,14 @@ class TestProtocolStateEnter:
 
     def test_enter_no_setup(self):
         """Without setup, enter returns True."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("TEST")
         assert state.enter() is True
 
     def test_enter_setup_success(self):
         """With setup returning True, enter returns True."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         setup = Mock(return_value=True)
         state = ProtocolState("TEST", setup=setup)
@@ -225,7 +225,7 @@ class TestProtocolStateEnter:
 
     def test_enter_setup_failure(self):
         """With setup returning False, enter returns False."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         setup = Mock(return_value=False)
         state = ProtocolState("TEST", setup=setup)
@@ -233,7 +233,7 @@ class TestProtocolStateEnter:
 
     def test_enter_setup_exception(self):
         """Setup exception is propagated."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         setup = Mock(side_effect=RuntimeError("setup failed"))
         state = ProtocolState("TEST", setup=setup)
@@ -242,7 +242,7 @@ class TestProtocolStateEnter:
 
     def test_enter_records_entry_time(self):
         """Enter records entry time."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("TEST")
         assert state.entry_time is None
@@ -255,14 +255,14 @@ class TestProtocolStateValidate:
 
     def test_validate_no_callback(self):
         """Without validation callback, validate returns True."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("TEST")
         assert state.validate() is True
 
     def test_validate_success(self):
         """With callback returning True, validate returns True."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         validation = Mock(return_value=True)
         state = ProtocolState("TEST", validation=validation)
@@ -270,7 +270,7 @@ class TestProtocolStateValidate:
 
     def test_validate_failure(self):
         """With callback returning False, validate returns False."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         validation = Mock(return_value=False)
         state = ProtocolState("TEST", validation=validation)
@@ -278,7 +278,7 @@ class TestProtocolStateValidate:
 
     def test_validate_exception(self):
         """Validation exception returns False."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         validation = Mock(side_effect=RuntimeError())
         state = ProtocolState("TEST", validation=validation)
@@ -290,7 +290,7 @@ class TestProtocolStateTimeout:
 
     def test_is_timed_out_no_timeout(self):
         """Without timeout, is_timed_out returns False."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("TEST")
         state.enter()
@@ -298,14 +298,14 @@ class TestProtocolStateTimeout:
 
     def test_is_timed_out_not_entered(self):
         """Before enter, is_timed_out returns False."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("TEST", timeout=0.001)
         assert state.is_timed_out() is False
 
     def test_is_timed_out_after_timeout(self):
         """After timeout duration, is_timed_out returns True."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("TEST", timeout=0.01)
         state.enter()
@@ -314,7 +314,7 @@ class TestProtocolStateTimeout:
 
     def test_is_timed_out_before_timeout(self):
         """Before timeout duration, is_timed_out returns False."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("TEST", timeout=10.0)
         state.enter()
@@ -322,7 +322,7 @@ class TestProtocolStateTimeout:
 
     def test_get_time_in_state(self):
         """get_time_in_state returns elapsed time."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("TEST")
         state.enter()
@@ -333,7 +333,7 @@ class TestProtocolStateTimeout:
 
     def test_handle_timeout_calls_callback(self):
         """handle_timeout calls timeout_callback."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         callback = Mock()
         state = ProtocolState("TEST", timeout=0.01, timeout_callback=callback)
@@ -346,21 +346,21 @@ class TestProtocolStateRepr:
 
     def test_repr_basic(self):
         """Repr shows state name."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("MY_STATE")
         assert "MY_STATE" in repr(state)
 
     def test_repr_with_type(self):
         """Repr shows state type if set."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState, StateType
+        from oida.fuzz.core.session.state_machine import ProtocolState, StateType
 
         state = ProtocolState("TEST", state_type=StateType.CONNECTION)
         assert "CONNECTION" in repr(state)
 
     def test_repr_with_timeout(self):
         """Repr shows timeout if set."""
-        from src.oida.fuzz.core.session.state_machine import ProtocolState
+        from oida.fuzz.core.session.state_machine import ProtocolState
 
         state = ProtocolState("TEST", timeout=5.0)
         assert "5.0" in repr(state)
@@ -376,7 +376,7 @@ class TestStateMachineCreation:
 
     def test_basic_creation(self):
         """StateMachine can be created."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         initial = ProtocolState("INITIAL")
         sm = StateMachine(initial_state=initial, states=[initial])
@@ -384,7 +384,7 @@ class TestStateMachineCreation:
 
     def test_creation_with_multiple_states(self):
         """StateMachine tracks multiple states."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("STATE_1")
         s2 = ProtocolState("STATE_2")
@@ -394,7 +394,7 @@ class TestStateMachineCreation:
 
     def test_creation_with_transitions(self):
         """StateMachine accepts transition rules."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             StateMachine,
             ProtocolState,
             TransitionRule,
@@ -408,7 +408,7 @@ class TestStateMachineCreation:
 
     def test_initial_state_history(self):
         """State history starts with initial state."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         initial = ProtocolState("INITIAL")
         sm = StateMachine(initial_state=initial, states=[initial])
@@ -420,7 +420,7 @@ class TestStateMachineCanTransition:
 
     def test_can_transition_unknown_state(self):
         """Returns False for unknown target state."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         sm = StateMachine(initial_state=s1, states=[s1])
@@ -428,7 +428,7 @@ class TestStateMachineCanTransition:
 
     def test_can_transition_with_rule(self):
         """Checks transition rule condition."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             StateMachine,
             ProtocolState,
             TransitionRule,
@@ -443,7 +443,7 @@ class TestStateMachineCanTransition:
 
     def test_can_transition_with_requires(self):
         """Uses requires field when no rule exists."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         s2 = ProtocolState("B", requires=["A"])
@@ -453,7 +453,7 @@ class TestStateMachineCanTransition:
 
     def test_can_transition_no_restrictions(self):
         """Returns True when no rules or requires."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         s2 = ProtocolState("B")
@@ -466,7 +466,7 @@ class TestStateMachineTransitionTo:
 
     def test_transition_to_success(self):
         """Successful transition updates current state."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         s2 = ProtocolState("B", requires=["A"])
@@ -476,7 +476,7 @@ class TestStateMachineTransitionTo:
 
     def test_transition_to_unknown_state_raises(self):
         """Transition to unknown state raises."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             StateMachine,
             ProtocolState,
             StateTransitionError,
@@ -489,7 +489,7 @@ class TestStateMachineTransitionTo:
 
     def test_transition_to_invalid_raises(self):
         """Invalid transition raises error."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             StateMachine,
             ProtocolState,
             StateTransitionError,
@@ -503,7 +503,7 @@ class TestStateMachineTransitionTo:
 
     def test_transition_to_with_force(self):
         """Force bypasses validation."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         s2 = ProtocolState("B", requires=["C"])  # Invalid normally
@@ -513,7 +513,7 @@ class TestStateMachineTransitionTo:
 
     def test_transition_to_updates_history(self):
         """Transition updates state history."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         s2 = ProtocolState("B", requires=["A"])
@@ -523,7 +523,7 @@ class TestStateMachineTransitionTo:
 
     def test_transition_executes_rule_action(self):
         """Transition executes rule action."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             StateMachine,
             ProtocolState,
             TransitionRule,
@@ -539,7 +539,7 @@ class TestStateMachineTransitionTo:
 
     def test_transition_setup_failure_raises(self):
         """Setup failure raises error."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             StateMachine,
             ProtocolState,
             StateTransitionError,
@@ -557,7 +557,7 @@ class TestStateMachineValidation:
 
     def test_validate_current_state(self):
         """validate_current_state calls state validation."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         validation = Mock(return_value=True)
         s1 = ProtocolState("A", validation=validation)
@@ -567,7 +567,7 @@ class TestStateMachineValidation:
 
     def test_require_state_already_in(self):
         """require_state validates if already in state."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         validation = Mock(return_value=True)
         s1 = ProtocolState("A", validation=validation)
@@ -577,7 +577,7 @@ class TestStateMachineValidation:
 
     def test_require_state_transitions(self):
         """require_state transitions if not in state."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         s2 = ProtocolState("B", requires=["A"])
@@ -591,7 +591,7 @@ class TestStateMachineAttackMode:
 
     def test_allow_invalid_transitions_flag(self):
         """allow_invalid_transitions bypasses validation."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         s2 = ProtocolState("B", requires=["C"])  # Invalid from A
@@ -601,7 +601,7 @@ class TestStateMachineAttackMode:
 
     def test_enable_invalid_state_testing(self):
         """enable_invalid_state_testing sets flag."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         sm = StateMachine(initial_state=s1, states=[s1])
@@ -610,7 +610,7 @@ class TestStateMachineAttackMode:
 
     def test_disable_invalid_state_testing(self):
         """disable_invalid_state_testing clears flag."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         sm = StateMachine(initial_state=s1, states=[s1], allow_invalid_transitions=True)
@@ -623,7 +623,7 @@ class TestStateMachineHistory:
 
     def test_get_state_history(self):
         """get_state_history returns copy of history."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         s2 = ProtocolState("B", requires=["A"])
@@ -637,7 +637,7 @@ class TestStateMachineHistory:
 
     def test_get_transition_log(self):
         """get_transition_log returns detailed log."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         s2 = ProtocolState("B", requires=["A"])
@@ -651,7 +651,7 @@ class TestStateMachineHistory:
 
     def test_reset_to_initial(self):
         """reset_to_initial returns to initial state."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         s2 = ProtocolState("B", requires=["A"])
@@ -667,7 +667,7 @@ class TestStateMachineTransitionGraph:
 
     def test_get_transition_graph(self):
         """get_transition_graph returns valid transitions."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         s2 = ProtocolState("B", requires=["A"])
@@ -679,7 +679,7 @@ class TestStateMachineTransitionGraph:
 
     def test_get_valid_next_states(self):
         """get_valid_next_states returns reachable states."""
-        from src.oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
+        from oida.fuzz.core.session.state_machine import StateMachine, ProtocolState
 
         s1 = ProtocolState("A")
         s2 = ProtocolState("B", requires=["A"])
@@ -700,7 +700,7 @@ class TestCreateAuthStateMachine:
 
     def test_creates_two_states(self):
         """Factory creates CONNECTED and AUTHENTICATED states."""
-        from src.oida.fuzz.core.session.state_machine import create_auth_state_machine
+        from oida.fuzz.core.session.state_machine import create_auth_state_machine
 
         login = Mock(return_value=True)
         sm = create_auth_state_machine(login_callback=login)
@@ -709,7 +709,7 @@ class TestCreateAuthStateMachine:
 
     def test_initial_state_is_connected(self):
         """Initial state is CONNECTED."""
-        from src.oida.fuzz.core.session.state_machine import create_auth_state_machine
+        from oida.fuzz.core.session.state_machine import create_auth_state_machine
 
         login = Mock(return_value=True)
         sm = create_auth_state_machine(login_callback=login)
@@ -717,7 +717,7 @@ class TestCreateAuthStateMachine:
 
     def test_login_required_for_authenticated(self):
         """Login callback is used for AUTHENTICATED state."""
-        from src.oida.fuzz.core.session.state_machine import create_auth_state_machine
+        from oida.fuzz.core.session.state_machine import create_auth_state_machine
 
         login = Mock(return_value=True)
         sm = create_auth_state_machine(login_callback=login)
@@ -729,7 +729,7 @@ class TestStateMachineRegressions:
     """Regression tests for state machine correctness fixes."""
 
     def _two_state_cycle(self):
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             TransitionRule,
@@ -766,7 +766,7 @@ class TestStateMachineRegressions:
     def test_get_path_is_rules_traversable(self):
         """get_path_to_state must respect the rule table (not just 'requires'),
         and traverse_to_state must follow the path without raising."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             TransitionRule,
@@ -791,7 +791,7 @@ class TestStateMachineRegressions:
     def test_failed_enter_does_not_exit_current_state(self):
         """A failed enter() must not run the current state's on_exit, and must
         leave the machine in its current state (clean rollback)."""
-        from src.oida.fuzz.core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             StateTransitionError,
@@ -821,7 +821,7 @@ class TestStateMachineRegressions:
     def test_context_callback_internal_typeerror_propagates(self):
         """A TypeError raised *inside* a context-accepting callback must
         propagate, not be silently swallowed and retried with no args."""
-        from src.oida.fuzz.core.session.state_machine import _call_with_optional_context
+        from oida.fuzz.core.session.state_machine import _call_with_optional_context
 
         def cb(_ctx):
             raise TypeError("internal boom")

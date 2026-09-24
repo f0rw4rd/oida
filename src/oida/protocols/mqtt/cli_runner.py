@@ -4,8 +4,8 @@
 
 from typing import Any, Optional
 
-from ...connection import NetworkConnection
-from .scanner import MQTTScanner, dependencies_missing
+from oida.connection import NetworkConnection
+from oida.protocols.mqtt.scanner import MQTTScanner, dependencies_missing
 
 
 class mqtt(NetworkConnection):
@@ -402,7 +402,7 @@ class mqtt(NetworkConnection):
 
         # fuzz_publish_payloads() caps at MAX_FUZZ_TOPICS topics; log the
         # effective count so it matches what actually gets fuzzed.
-        from .mixins.messaging import MAX_FUZZ_TOPICS
+        from oida.protocols.mqtt.mixins.messaging import MAX_FUZZ_TOPICS
 
         effective_topics = min(len(topics), MAX_FUZZ_TOPICS)
         self.logger.display(

@@ -27,11 +27,11 @@ from typing import List
 
 from boofuzz import Block, Group, Request, Static
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import TCPSocketConnection
-from ..core.session import StateContext
-from ..primitives.dynamic import SmartString
-from ..primitives.smart_string import StringContext
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.connections import TCPSocketConnection
+from oida.fuzz.core.session import StateContext
+from oida.fuzz.primitives.dynamic import SmartString
+from oida.fuzz.primitives.smart_string import StringContext
 
 import logging
 
@@ -187,7 +187,7 @@ class SMTPFuzzer(BaseFuzzer):
 
     def setup_custom_monitors(self) -> list:
         """Setup SMTP-specific monitoring with EHLO command comparison"""
-        from ..monitors import SMTPCommandMonitor
+        from oida.fuzz.monitors import SMTPCommandMonitor
 
         smtp_monitor = SMTPCommandMonitor(
             host=self.config.target_ip,
@@ -962,7 +962,7 @@ class SMTPFuzzer(BaseFuzzer):
         This creates a detailed state machine that tracks the complete SMTP
         STARTTLS upgrade process.
         """
-        from ..core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             StateType,
@@ -1093,7 +1093,7 @@ class SMTPFuzzer(BaseFuzzer):
         path, the EHLO/STARTTLS/TLS handshake runs on _get_auth_socket() rather
         than boofuzz's connection (which is not open yet).
         """
-        from ..core.connections.base import MockConnectionFactory
+        from oida.fuzz.core.connections.base import MockConnectionFactory
 
         if isinstance(self.connection_factory, MockConnectionFactory):
             self.log.display("SMTP STARTTLS upgrade skipped (mock connection)")
@@ -1127,7 +1127,7 @@ class SMTPFuzzer(BaseFuzzer):
         Auth is deferred — transition happens during fuzz_all() when the
         connection is open, not during session initialization.
         """
-        from ..core.session.state_machine import create_auth_state_machine
+        from oida.fuzz.core.session.state_machine import create_auth_state_machine
 
         # Create simple auth state machine with StateContext
         self.state_machine = create_auth_state_machine(

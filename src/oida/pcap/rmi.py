@@ -32,8 +32,8 @@ tshark fields used (requires decode_as tcp.port==1099,rmi):
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Set, Tuple
 
-from .pyshark_base import ProtocolInteraction, PySharkListenerBase
-from ..protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
+from oida.pcap.pyshark_base import ProtocolInteraction, PySharkListenerBase
+from oida.protocols.discovery.core import is_valid_discovered_ip, lookup_mac_vendor
 
 # RMI protocol types (hex and decimal for pyshark EK/XML modes)
 PROTOCOL_TYPES = {

@@ -23,8 +23,8 @@ def _make_starttls_fuzzer(use_auth=False):
     """Build an SMTPFuzzer with use_starttls=True over a *real* (non-mock)
     connection factory so the (previously eager) STARTTLS block is in scope.
     """
-    from src.oida.fuzz.core.config import FuzzerConfig, ProtocolType
-    from src.oida.fuzz.protocols.smtp import SMTPFuzzer
+    from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+    from oida.fuzz.protocols.smtp import SMTPFuzzer
 
     config = FuzzerConfig(
         target_ip="192.0.2.10",
@@ -106,7 +106,7 @@ def test_fuzz_all_defers_starttls_until_connection_ready():
         with (
             patch.object(fuzzer, "_run_starttls_sequence") as run_seq,
             patch.object(fuzzer, "_close_auth_socket") as close_sock,
-            patch("src.oida.fuzz.core.base_fuzzer.BaseFuzzer.fuzz_all") as super_fuzz_all,
+            patch("oida.fuzz.core.base_fuzzer.BaseFuzzer.fuzz_all") as super_fuzz_all,
         ):
             fuzzer.fuzz_all()
 

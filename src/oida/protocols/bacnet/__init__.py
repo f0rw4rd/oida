@@ -29,10 +29,10 @@ CLI examples:
 """
 
 # Re-export the NXC-style connection class (mixin-based)
-from .cli_runner import bacnet
+from oida.protocols.bacnet.cli_runner import bacnet
 
 # Re-export constants used by tests and external code
-from .constants import (
+from oida.protocols.bacnet.constants import (
     CONTROL_POINT_TYPES,
     OBJECT_TYPE_NAMES,
     OBJECT_TYPES,

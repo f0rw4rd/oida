@@ -4,12 +4,12 @@ from boofuzz import Block, Byte, Bytes, DWord, Group, Request, Size, Static, Wor
 
 from typing import List
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.connections import CountingUDPConnection as UDPSocketConnection
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.connections import CountingUDPConnection as UDPSocketConnection
 from functools import partial
 
-from ..primitives.dynamic import SmartString as _SmartString
-from ..primitives.smart_string import StringContext
+from oida.fuzz.primitives.dynamic import SmartString as _SmartString
+from oida.fuzz.primitives.smart_string import StringContext
 
 # Every string in a DNS message is a name label (QNAME labels, NS/MX/PTR
 # targets, reverse-DNS octets). Default the curated corpus to HOSTNAME so
@@ -44,7 +44,7 @@ class DNSFuzzer(BaseFuzzer):
         Returns:
             List of monitor instances for DNS service health checking
         """
-        from ..monitors import DNSQueryMonitor
+        from oida.fuzz.monitors import DNSQueryMonitor
 
         # Create DNS query monitor
         dns_monitor = DNSQueryMonitor(

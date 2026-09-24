@@ -17,15 +17,10 @@ import struct
 from datetime import datetime
 from typing import List
 
-from .base import PassiveListenerBase
-from .core import DiscoveredDevice
-from ...shared.pim_constants import (  # noqa: F401 - re-exported
-    PIM_HELLO_OPTIONS,
-    PIM_MULTICAST,
-    PIM_PROTOCOL,
-    PIM_TYPES,
-)
-from ...utils.ics_logger import get_module_logger
+from oida.protocols.discovery.base import PassiveListenerBase
+from oida.protocols.discovery.core import DiscoveredDevice
+from oida.shared.pim_constants import PIM_HELLO_OPTIONS, PIM_MULTICAST, PIM_PROTOCOL, PIM_TYPES  # noqa: F401
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 

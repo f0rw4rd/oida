@@ -43,7 +43,7 @@ class VersionDetectionMixin(_ScannerBase):
             usmHMACSHAAuthProtocol,
         )
 
-        from ..constants import SNMP_OIDS
+        from oida.protocols.snmp.constants import SNMP_OIDS
 
         # Mutable container for v3 observer to capture engine ID
         v3_engine_data: Dict[str, Any] = {}
@@ -208,7 +208,7 @@ class VersionDetectionMixin(_ScannerBase):
           Byte 4: format indicator (1=IPv4, 2=IPv6, 3=MAC, 4=text, 5=octets)
           Bytes 5+: format-specific data
         """
-        from ..constants import VENDOR_OIDS
+        from oida.protocols.snmp.constants import VENDOR_OIDS
 
         info: Dict[str, Any] = {"raw": raw, "hex": raw.hex()}
 

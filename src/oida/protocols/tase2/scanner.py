@@ -8,13 +8,10 @@ Security scanner for TASE.2/ICCP protocol used in utility control center communi
 
 from typing import Any, Dict
 
-from ...utils import (
-    NetworkScanner,
-    parse_bool,
-)
-from ...utils.exceptions import DependencyError
-from ...utils.lazy_import import lazy_import
-from .mixins import (
+from oida.utils import NetworkScanner, parse_bool
+from oida.utils.exceptions import DependencyError
+from oida.utils.lazy_import import lazy_import
+from oida.protocols.tase2.mixins import (
     ControlMixin,
     DiscoveryMixin,
     EnumerationMixin,

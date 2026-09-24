@@ -7,7 +7,7 @@ Handles security analysis:
 - Encryption status checking
 """
 
-from ._helpers import ack_accepted
+from oida.protocols.hl7.mixins._helpers import ack_accepted
 
 
 class SecurityMixin:

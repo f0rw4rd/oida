@@ -14,12 +14,12 @@ import pytest
 
 from tests.service_gate import require_import, require_service
 
-from .conftest import (
+from tests.integration.fuzz.conftest import (
     create_fuzzer_config,
     require_docker_mock,
     run_fuzz_capture,
 )
-from ..conftest import MOCK_HOST, MOCK_PORTS
+from tests.integration.conftest import MOCK_HOST, MOCK_PORTS
 
 pytestmark = pytest.mark.integration_fuzzers
 

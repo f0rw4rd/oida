@@ -8,11 +8,7 @@ import time
 from typing import Optional
 
 
-from ..helpers import (
-    fhirclient,
-    patient,
-    validate_credential_path,
-)
+from oida.protocols.fhir.helpers import fhirclient, patient, validate_credential_path
 
 
 class SecurityMixin:
@@ -143,7 +139,7 @@ class SecurityMixin:
         This mirrors _apply_session_config's cert/verify precedence.
         """
         import requests
-        from ..helpers import validate_credential_path
+        from oida.protocols.fhir.helpers import validate_credential_path
 
         session = requests.Session()
         tls_cert = getattr(self.args, "tls_cert", None)
@@ -305,7 +301,7 @@ class SecurityMixin:
 
     def _load_credentials(self) -> tuple:
         """Load usernames and passwords from args or files"""
-        from ....utils.default_credentials import parse_credential_input
+        from oida.utils.default_credentials import parse_credential_input
 
         usernames = []
         passwords = []
@@ -366,7 +362,7 @@ class SecurityMixin:
                                 passwords.append(p)
                 # Use basename only — full wordlist path can leak
                 # engagement context (client name, operator filesystem).
-                from ....utils.login_scanner import format_wordlist_source
+                from oida.utils.login_scanner import format_wordlist_source
 
                 self.logger.display(
                     f"Loaded credentials from wordlist: {format_wordlist_source(wordlist)}"

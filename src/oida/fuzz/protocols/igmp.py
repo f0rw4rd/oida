@@ -35,9 +35,9 @@ from typing import List
 
 from boofuzz import Block, Byte, Bytes, Checksum, Group, Request, Word
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..primitives.dynamic import SmartBytes
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.primitives.dynamic import SmartBytes
 
 
 class IGMPFuzzer(BaseFuzzer):

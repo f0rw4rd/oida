@@ -91,7 +91,7 @@ import time
 
 import pytest
 
-from .conftest import skip_unless_l2_docker
+from tests.integration.conftest import skip_unless_l2_docker
 
 # PROFINET RPC-only mode (-R) talks DCE/RPC over UDP on a fixed port -- this lets us
 # exercise real, non-raw-socket CLI code paths in a sandbox with no CAP_NET_RAW.

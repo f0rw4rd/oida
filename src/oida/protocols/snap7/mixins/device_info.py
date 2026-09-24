@@ -38,8 +38,8 @@ class DeviceInfoMixin(_ScannerBase):
 
     def _get_cpu_info(self, connection: Any) -> Dict[str, Any]:
         """Get CPU information with timeout protection"""
-        from ..scanner import _run_with_timeout
-        from ....utils.vendor_maps import lookup_s7_series
+        from oida.protocols.snap7.scanner import _run_with_timeout
+        from oida.utils.vendor_maps import lookup_s7_series
 
         self.logger.debug("Fetching CPU info...")
         timeout = self.timeout
@@ -99,7 +99,7 @@ class DeviceInfoMixin(_ScannerBase):
 
     def _get_plc_status(self, connection: Any) -> Dict[str, Any]:
         """Get PLC status information with timeout protection"""
-        from ..scanner import _run_with_timeout
+        from oida.protocols.snap7.scanner import _run_with_timeout
 
         self.logger.debug("Fetching PLC run status...")
         timeout = self.timeout
@@ -136,9 +136,9 @@ class DeviceInfoMixin(_ScannerBase):
 
     def get_firmware_version(self, connection: Any) -> Dict[str, Any]:
         """Extract comprehensive firmware information using multiple methods"""
-        from ..models import S7FirmwareVersion
-        from ..szl_parser import SZLParser
-        from ....utils.vendor_maps import lookup_s7_series
+        from oida.protocols.snap7.models import S7FirmwareVersion
+        from oida.protocols.snap7.szl_parser import SZLParser
+        from oida.utils.vendor_maps import lookup_s7_series
 
         result = {
             "version": None,

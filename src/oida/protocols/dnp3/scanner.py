@@ -34,15 +34,12 @@ from functools import cached_property
 from typing import Dict, Any, List, Optional
 from datetime import datetime
 
-from ...utils import (
-    NetworkScanner,
-    ProgressTracker,
-)
-from ...utils.lazy_import import lazy_import
-from ...utils.exceptions import ICSConnectionError, ConfigurationError
+from oida.utils import NetworkScanner, ProgressTracker
+from oida.utils.lazy_import import lazy_import
+from oida.utils.exceptions import ICSConnectionError, ConfigurationError
 
-from .constants import KNOWN_ATTRIBUTES, DNP3_GROUP_NAMES, protocol_options
-from .mixins import PollingMixin, ControlMixin, FileTransferMixin
+from oida.protocols.dnp3.constants import KNOWN_ATTRIBUTES, DNP3_GROUP_NAMES, protocol_options
+from oida.protocols.dnp3.mixins import PollingMixin, ControlMixin, FileTransferMixin
 
 __all__ = ["DNP3Scanner", "KNOWN_ATTRIBUTES", "DNP3_GROUP_NAMES", "protocol_options", "_yadnp3"]
 
@@ -538,7 +535,7 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
 
     def _check_tls_certificate(self, host: str, port: int) -> None:
         """Probe the TLS endpoint to retrieve and check the server certificate."""
-        from ...utils.socket_helpers import check_tls_certificate
+        from oida.utils.socket_helpers import check_tls_certificate
 
         check_tls_certificate(
             host=host,

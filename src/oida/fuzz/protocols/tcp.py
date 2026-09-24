@@ -17,12 +17,12 @@ from boofuzz import (
     Word,
 )
 
-from ..core.base_fuzzer import BaseFuzzer, RequestInfo
-from ..core.config import FuzzerConfig, ProtocolType
-from ..core.connections import TCPSocketConnection
-from ..monitors import BaseMonitor
-from ..primitives.dynamic import SmartString
-from .tcp_state_integration import StatefulTCPFuzzerMixin
+from oida.fuzz.core.base_fuzzer import BaseFuzzer, RequestInfo
+from oida.fuzz.core.config import FuzzerConfig, ProtocolType
+from oida.fuzz.core.connections import TCPSocketConnection
+from oida.fuzz.monitors import BaseMonitor
+from oida.fuzz.primitives.dynamic import SmartString
+from oida.fuzz.protocols.tcp_state_integration import StatefulTCPFuzzerMixin
 
 
 class TCPOptions(Enum):
@@ -277,7 +277,7 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
         if self.use_raw_socket:
             # Use ScapyRawConnection for raw socket mode
             # Scapy handles all IP layer complexity (checksums, routing, etc.)
-            from ..core.connections.scapy import ScapyRawConnection
+            from oida.fuzz.core.connections.scapy import ScapyRawConnection
 
             source_ip = self.config.get_option("source_ip", None)
             return ScapyRawConnection(
@@ -315,7 +315,7 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
             options_block_name: If provided, Data_Offset will be dynamically
                                calculated based on this block's size
         """
-        from ..primitives.tcp_data_offset import TCPDataOffsetByte
+        from oida.fuzz.primitives.tcp_data_offset import TCPDataOffsetByte
 
         if custom_flags is not None:
             # Determine Data_Offset field
@@ -1668,7 +1668,7 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
     def _get_monitors(self) -> List[BaseMonitor]:
         """Return list of monitors for TCP service"""
         monitors = []
-        from ..monitors import SocketHealthMonitor
+        from oida.fuzz.monitors import SocketHealthMonitor
 
         # TCP socket monitor
         if (
@@ -1704,7 +1704,7 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
         - LAST_ACK: Waiting for final ACK
         - TIME_WAIT: Waiting to ensure remote received ACK
         """
-        from ..core.session.state_machine import (
+        from oida.fuzz.core.session.state_machine import (
             ProtocolState,
             StateMachine,
             StateType,

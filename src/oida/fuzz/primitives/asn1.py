@@ -13,7 +13,7 @@ Based on ITU-T X.690 standard.
 from typing import Union, Optional
 
 # Import the canonical ASN.1 implementation
-from ..core.codecs.asn1 import ASN1Builder, ASN1Tag
+from oida.fuzz.core.codecs.asn1 import ASN1Builder, ASN1Tag
 
 # Singleton builder instance for module-level functions
 _builder = ASN1Builder()

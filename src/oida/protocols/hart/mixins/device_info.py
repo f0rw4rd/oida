@@ -29,8 +29,8 @@ class DeviceInfoMixin(_ScannerBase):
         Uses the library's parse_cmd0() to decode Command 0 response into
         a DeviceInfo dataclass, then maps it to our HARTDeviceInfo.
         """
-        from ..scanner import HARTDeviceInfo, PhysicalSignaling
-        from ..hartip import get_vendor_name
+        from oida.protocols.hart.scanner import HARTDeviceInfo, PhysicalSignaling
+        from oida.protocols.hart.hartip import get_vendor_name
 
         client = client or self.client
         if not client:
@@ -89,8 +89,8 @@ class DeviceInfoMixin(_ScannerBase):
 
         Uses the library's parse_cmd1() for decoding.
         """
-        from ..scanner import HARTVariable
-        from ..hartip import get_unit_name
+        from oida.protocols.hart.scanner import HARTVariable
+        from oida.protocols.hart.hartip import get_unit_name
 
         client = client or self.client
         if not client:
@@ -145,8 +145,8 @@ class DeviceInfoMixin(_ScannerBase):
         Uses the library's parse_cmd3() for decoding.
         Returns up to 4 dynamic variables plus loop current.
         """
-        from ..scanner import HARTVariable
-        from ..hartip import HARTCommand, get_unit_name
+        from oida.protocols.hart.scanner import HARTVariable
+        from oida.protocols.hart.hartip import HARTCommand, get_unit_name
 
         client = client or self.client
         if not client:
@@ -239,7 +239,7 @@ class DeviceInfoMixin(_ScannerBase):
         Uses resp.parsed for auto-dispatch and decode_extended_device_status()
         for human-readable flag interpretation.
         """
-        from ..hartip import decode_extended_device_status
+        from oida.protocols.hart.hartip import decode_extended_device_status
 
         client = client or self.client
         if not client:

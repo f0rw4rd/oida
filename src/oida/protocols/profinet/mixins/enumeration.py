@@ -13,8 +13,8 @@ from __future__ import annotations
 
 from typing import Dict, List, Optional, Tuple, TYPE_CHECKING
 
-from ....utils.export_utils import export_table
-from ..models import ProfinetDevice
+from oida.utils.export_utils import export_table
+from oida.protocols.profinet.models import ProfinetDevice
 
 if TYPE_CHECKING:
     from oida.utils.mixin_protocol import ScannerMixin as _ScannerBase
@@ -457,7 +457,7 @@ class EnumerationMixin(_ScannerBase):
         )
 
         try:
-            from ..helpers import get_indices_module
+            from oida.protocols.profinet.helpers import get_indices_module
 
             idx_module = get_indices_module()
 

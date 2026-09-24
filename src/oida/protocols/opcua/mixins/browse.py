@@ -26,7 +26,7 @@ class BrowseMixin:
             write: Only show writable Variable nodes
         """
         from oida.utils.export_utils import export_data
-        from ..helpers import _get_asyncua
+        from oida.protocols.opcua.helpers import _get_asyncua
 
         max_depth = getattr(self.args, "max_depth", 3)
         max_nodes = getattr(self.args, "max_nodes", 1000)

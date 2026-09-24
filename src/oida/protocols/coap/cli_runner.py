@@ -5,11 +5,11 @@
 import time as _time
 from typing import Any
 
-from ...connection import NetworkConnection
-from ...utils.payload import resolve_file_payload
+from oida.connection import NetworkConnection
+from oida.utils.payload import resolve_file_payload
 
-from .scanner import CoAPScanner
-from .helpers import (
+from oida.protocols.coap.scanner import CoAPScanner
+from oida.protocols.coap.helpers import (
     parse_payload,
     coap_request,
     try_dtls_psk,
@@ -17,13 +17,22 @@ from .helpers import (
     try_dtls_rpk,
     run_async,
 )
-from .constants import (
-    CONTENT_FORMATS,
-    CONTENT_FORMAT_ALIASES,
-    DEFAULT_DTLS_PORT,
+from oida.protocols.coap.constants import CONTENT_FORMATS, CONTENT_FORMAT_ALIASES, DEFAULT_DTLS_PORT
+from oida.utils.protocol_helpers import (
+    CONNECTION_ERROR_MARKERS,
+    MAX_CONSECUTIVE_CONNECTION_ERRORS,
 )
 
-from ...utils.lazy_import import lazy_import
+# DTLS runs over UDP, where a bare "timeout" is ambiguous: it can mean the
+# service is unreachable OR that the server silently drops a wrong PSK. Acting
+# on timeouts would make the brute-force falsely abort against silent-drop
+# servers, so for CoAP we only treat *unambiguous* transport failures
+# (refused / unreachable / reset) as "server unreachable".
+_COAP_CONNECTION_ERROR_MARKERS = tuple(
+    m for m in CONNECTION_ERROR_MARKERS if "timeout" not in m and "timed out" not in m
+)
+
+from oida.utils.lazy_import import lazy_import
 
 _aiocoap = lazy_import("aiocoap", "CoAP")
 # DTLSSocket is deliberately NOT a declared dependency of the `coap` extra
@@ -505,7 +514,7 @@ class coap(NetworkConnection):
 
     def _bruteforce_dtls_psk(self, psk_arg, psk_id_arg):
         """Attempt DTLS-PSK connection, supporting wordlist bruteforce."""
-        from ...utils.default_credentials import parse_credential_input
+        from oida.utils.default_credentials import parse_credential_input
 
         # Parse inputs -- auto-detect files
         keys, k_is_file = parse_credential_input(psk_arg) if psk_arg else ([], False)
@@ -532,6 +541,8 @@ class coap(NetworkConnection):
         total = len(combinations)
         success_count = 0
         fail_count = 0
+        conn_err_count = 0  # attempts that never reached the DTLS service
+        consecutive_conn_errors = 0
 
         if total > 1:
             self.logger.info("Starting DTLS-PSK bruteforce: %d combinations", total)
@@ -567,8 +578,36 @@ class coap(NetworkConnection):
                         idx, total, success=success_count, failed=fail_count, end="\n"
                     )
                 return True
+
+            # A transport failure (no DTLS service / unreachable / timeout)
+            # means the PSK was never actually tested -- don't count it as a
+            # failed key, and give up once the server is clearly gone.
+            reason = (detail or "").lower()
+            if any(marker in reason for marker in _COAP_CONNECTION_ERROR_MARKERS):
+                conn_err_count += 1
+                consecutive_conn_errors += 1
+                self.logger.debug(
+                    "DTLS-PSK NOT tested (connection): identity=%s key=%s reason=%s",
+                    identity,
+                    key,
+                    detail,
+                )
+                if consecutive_conn_errors >= MAX_CONSECUTIVE_CONNECTION_ERRORS:
+                    if total > 1:
+                        self.logger.progress(
+                            idx, total, success=success_count, failed=fail_count, end="\n"
+                        )
+                    self.logger.fail(
+                        "DTLS-PSK server unreachable after %d consecutive connection "
+                        "failures -- aborting. %d of %d combinations were actually tested.",
+                        consecutive_conn_errors,
+                        fail_count,
+                        total,
+                    )
+                    return False
             else:
                 fail_count += 1
+                consecutive_conn_errors = 0
                 self.logger.debug(
                     "DTLS-PSK failed: identity=%s key=%s reason=%s",
                     identity,
@@ -578,13 +617,21 @@ class coap(NetworkConnection):
 
         if total > 1:
             self.logger.progress(total, total, success=success_count, failed=fail_count, end="\n")
-        self.logger.fail("DTLS-PSK bruteforce exhausted: %d/%d failed", fail_count, total)
+        if conn_err_count:
+            self.logger.fail(
+                "DTLS-PSK bruteforce: %d/%d failed, %d not tested (connection errors)",
+                fail_count,
+                total,
+                conn_err_count,
+            )
+        else:
+            self.logger.fail("DTLS-PSK bruteforce exhausted: %d/%d failed", fail_count, total)
         return False
 
     def _probe_paths_wordlist(self, wordlist_path):
         """Probe paths loaded from a wordlist file."""
-        from ...utils.default_credentials import parse_credential_input
-        from ...utils.login_scanner import format_wordlist_source
+        from oida.utils.default_credentials import parse_credential_input
+        from oida.utils.login_scanner import format_wordlist_source
 
         paths, is_file = parse_credential_input(wordlist_path)
         # Use the basename for log output so an engagement-sensitive path

@@ -19,12 +19,8 @@ from collections import OrderedDict
 from dataclasses import dataclass, field
 from typing import Any, List, Optional, Set, Tuple
 
-from .pyshark_base import PySharkListenerBase
-from ..shared.file_carving_common import (
-    ExtractedFile,
-    FileCarvingMixin,
-    StreamBuffer,
-)
+from oida.pcap.pyshark_base import PySharkListenerBase
+from oida.shared.file_carving_common import ExtractedFile, FileCarvingMixin, StreamBuffer
 
 import logging
 

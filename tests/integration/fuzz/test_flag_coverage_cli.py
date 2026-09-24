@@ -107,7 +107,7 @@ import pytest
 
 from oida.fuzz.core.database import Crash, SQLAlchemyDatabase, TestCase
 
-from .conftest import MOCK_HOST, MOCK_PORTS, require_docker_mock, run_fuzz_cli
+from tests.integration.fuzz.conftest import MOCK_HOST, MOCK_PORTS, require_docker_mock, run_fuzz_cli
 
 pytestmark = [
     pytest.mark.fuzz,

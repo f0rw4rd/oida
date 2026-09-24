@@ -10,7 +10,7 @@ from datetime import datetime
 from typing import Dict, List, Optional, Any, Tuple
 from collections import defaultdict
 
-from ...utils.ics_logger import get_module_logger
+from oida.utils.ics_logger import get_module_logger
 
 logger = get_module_logger(__name__)
 
@@ -1274,7 +1274,7 @@ class PassiveStatistics:
         if not self.mac_conversations:
             return
 
-        from ...utils.export_utils import export_data
+        from oida.utils.export_utils import export_data
 
         sorted_convs = sorted(self.mac_conversations.values(), key=lambda x: -x.packets)
 
@@ -1305,7 +1305,7 @@ class PassiveStatistics:
         if not self.ip_conversations:
             return
 
-        from ...utils.export_utils import export_data
+        from oida.utils.export_utils import export_data
 
         sorted_convs = sorted(self.ip_conversations.values(), key=lambda x: -x.packets)
 
@@ -1358,7 +1358,7 @@ class PassiveStatistics:
         if not self.open_ports:
             return
 
-        from ...utils.export_utils import export_data
+        from oida.utils.export_utils import export_data
 
         sorted_ports = sorted(self.open_ports.values(), key=lambda x: (x.ip, x.port))
 

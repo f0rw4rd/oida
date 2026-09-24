@@ -28,7 +28,7 @@ from boofuzz import Fuzzable, Size
 
 import logging
 
-from ..core.codecs.asn1 import ASN1Tag, encode_length
+from oida.fuzz.core.codecs.asn1 import ASN1Tag, encode_length
 
 logger = logging.getLogger(__name__)
 

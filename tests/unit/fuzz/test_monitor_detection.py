@@ -25,7 +25,7 @@ import pytest
 
 from boofuzz.exception import BoofuzzFailure
 
-from src.oida.fuzz.monitors.base import ProtocolMonitor
+from oida.fuzz.monitors.base import ProtocolMonitor
 
 
 class _ScriptedMonitor(ProtocolMonitor):

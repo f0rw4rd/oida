@@ -16,9 +16,9 @@ import os
 import time
 from typing import Any, Dict, List, Optional
 
-from ...connection import SerialConnection
-from ...utils.lazy_import import lazy_import
-from .constants import (
+from oida.connection import SerialConnection
+from oida.utils.lazy_import import lazy_import
+from oida.protocols.can.constants import (
     CAN_STD_ID_MAX,
     CANOPEN_OD_ENTRIES,
     DEFAULT_BAUDRATE,
@@ -29,8 +29,8 @@ from .constants import (
     UDS_SESSIONS,
     split_traffic_key,
 )
-from .mixins import ISOTPMixin
-from .scanner import CANScanner
+from oida.protocols.can.mixins import ISOTPMixin
+from oida.protocols.can.scanner import CANScanner
 
 _python_can = lazy_import("can", "CAN")
 
@@ -103,7 +103,7 @@ class can(ISOTPMixin, SerialConnection):
     def create_conn_obj(self) -> None:
         """Create python-can Bus connection object."""
         if not _python_can.is_available:
-            from ...utils.exceptions import DependencyError
+            from oida.utils.exceptions import DependencyError
 
             raise DependencyError(
                 "python-can library required for CAN protocol.\n"
@@ -639,7 +639,7 @@ class can(ISOTPMixin, SerialConnection):
 
         readable = self.scanner.uds_did_scan(self.conn, req_id, did_range=did_range)
 
-        from .constants import UDS_STANDARD_DIDS
+        from oida.protocols.can.constants import UDS_STANDARD_DIDS
 
         self.results["data"]["uds_dids"] = {
             "request_id": f"0x{req_id:03X}",

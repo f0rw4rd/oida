@@ -135,8 +135,8 @@ Flag Coverage Matrix (proto_args.py):
 import pytest
 from typing import Optional
 
-from .base_protocol_test import BaseProtocolIntegrationTest
-from .conftest import MOCK_HOST
+from tests.integration.base_protocol_test import BaseProtocolIntegrationTest
+from tests.integration.conftest import MOCK_HOST
 
 
 # ---------------------------------------------------------------------------

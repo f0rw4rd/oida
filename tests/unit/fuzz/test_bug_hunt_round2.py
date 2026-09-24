@@ -19,7 +19,7 @@ import struct
 import pytest
 from boofuzz.exception import BoofuzzFailure
 
-from src.oida.fuzz.monitors.base import ProtocolMonitor
+from oida.fuzz.monitors.base import ProtocolMonitor
 from tests.unit.fuzz.test_reply_policy_wiring import _FakeLog
 
 
@@ -82,7 +82,7 @@ class TestEffectivenessEdgePaths:
     """Counters on the paths found uncounted in round 2."""
 
     def _conn(self, sock):
-        from src.oida.fuzz.core.connections.tcp import ResilientTCPConnection
+        from oida.fuzz.core.connections.tcp import ResilientTCPConnection
 
         conn = ResilientTCPConnection("127.0.0.1", 1, recv_timeout=0.3)
         conn._sock = sock
@@ -158,7 +158,7 @@ def errno_reset():
 class TestCoAPMonitor:
     def test_con_get_probe_bytes(self):
         """The probe is a well-formed CON GET: ver=1, CON, TKL=0, code 0.01."""
-        from src.oida.fuzz.monitors.network import CoAPHealthMonitor
+        from oida.fuzz.monitors.network import CoAPHealthMonitor
 
         pkt = CoAPHealthMonitor._build_con_get(0xABCD)
         assert len(pkt) == 4
@@ -171,10 +171,10 @@ class TestCoAPMonitor:
 
     def test_coap_fuzzer_uses_udp_monitor(self):
         """CoAPFuzzer wires CoAPHealthMonitor, not the TCP SocketHealthMonitor."""
-        from src.oida.fuzz.protocols.coap import CoAPFuzzer
-        from src.oida.fuzz.monitors import CoAPHealthMonitor
+        from oida.fuzz.protocols.coap import CoAPFuzzer
+        from oida.fuzz.monitors import CoAPHealthMonitor
 
-        cfg_mod = __import__("src.oida.fuzz.core.config", fromlist=["FuzzerConfig", "ProtocolType"])
+        cfg_mod = __import__("oida.fuzz.core.config", fromlist=["FuzzerConfig", "ProtocolType"])
         config = cfg_mod.FuzzerConfig(target_ip="127.0.0.1", target_port=5683)
         f = CoAPFuzzer.__new__(CoAPFuzzer)
         f.config = config
@@ -184,10 +184,10 @@ class TestCoAPMonitor:
 
     def test_snmpv1_fuzzer_uses_udp_monitor(self):
         """SNMPv1 wires SNMPHealthMonitor, not the TCP SocketHealthMonitor."""
-        from src.oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
-        from src.oida.fuzz.monitors import SNMPHealthMonitor
+        from oida.fuzz.protocols.snmpv1 import SNMPv1Fuzzer
+        from oida.fuzz.monitors import SNMPHealthMonitor
 
-        cfg_mod = __import__("src.oida.fuzz.core.config", fromlist=["FuzzerConfig"])
+        cfg_mod = __import__("oida.fuzz.core.config", fromlist=["FuzzerConfig"])
         config = cfg_mod.FuzzerConfig(target_ip="127.0.0.1", target_port=161)
         f = SNMPv1Fuzzer.__new__(SNMPv1Fuzzer)
         f.config = config
@@ -196,7 +196,7 @@ class TestCoAPMonitor:
 
     def test_probe_evidence_set_by_coap_monitor_paths(self):
         """CoAP monitor classifies its failure modes for the verdict split."""
-        from src.oida.fuzz.monitors.network import CoAPHealthMonitor
+        from oida.fuzz.monitors.network import CoAPHealthMonitor
 
         m = CoAPHealthMonitor("127.0.0.1", 1, timeout=0.2)
         # Port 1 with a connected UDP socket: no listener -> ICMP unreachable
@@ -210,7 +210,7 @@ class TestSNTuning:
     """SNMP monitor still healthy after the network.py surgery."""
 
     def test_snmp_get_probe_bytes(self):
-        from src.oida.fuzz.monitors.network import SNMPHealthMonitor
+        from oida.fuzz.monitors.network import SNMPHealthMonitor
 
         m = SNMPHealthMonitor("127.0.0.1", 161, community="public", version=1)
         pkt = m._build_get()
@@ -225,8 +225,8 @@ class TestEffectivenessResumeMerge:
     flushes."""
 
     def _manager(self, tmp_path):
-        from src.oida.fuzz.core.session.manager import TestCaseManager
-        from src.oida.fuzz.core.database.mock import MockDatabase
+        from oida.fuzz.core.session.manager import TestCaseManager
+        from oida.fuzz.core.database.mock import MockDatabase
 
         class _Cfg:
             session_filename = str(tmp_path / "s")

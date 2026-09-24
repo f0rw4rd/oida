@@ -8,7 +8,7 @@ from __future__ import annotations
 import asyncio
 from unittest.mock import MagicMock, patch
 
-from .conftest import FakeVarBind, make_walk, patch_pysnmp
+from tests.unit.snmp.conftest import FakeVarBind, make_walk, patch_pysnmp
 
 
 def run(coro):
@@ -123,7 +123,7 @@ class TestGetMacTable:
             return gen()
 
         async def get(*args, **kwargs):
-            from .conftest import _base_oid_from_args
+            from tests.unit.snmp.conftest import _base_oid_from_args
 
             base = _base_oid_from_args(args).lstrip(".")
             if base.startswith(port_base):
@@ -146,7 +146,7 @@ class TestGetMacTable:
         vlan_mac_suffix = "10.0.17.34.51.68.85"  # vlan 10 + MAC
 
         def walk(*args, **kwargs):
-            from .conftest import _base_oid_from_args
+            from tests.unit.snmp.conftest import _base_oid_from_args
 
             base = _base_oid_from_args(args).lstrip(".")
 
@@ -300,7 +300,7 @@ class TestEnumSoftware:
         )
 
         def router(*args, **kwargs):
-            from .conftest import _base_oid_from_args
+            from tests.unit.snmp.conftest import _base_oid_from_args
 
             b = _base_oid_from_args(args).lstrip(".")
 

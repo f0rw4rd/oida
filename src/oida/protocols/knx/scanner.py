@@ -14,19 +14,12 @@ from typing import Dict, List, Any, TYPE_CHECKING
 
 # xknx asyncio warning suppression is configured once in this package's __init__.
 
-from ...utils import (
-    NetworkScanner,
-    parse_bool,
-)
-from .helpers import validate_individual_address
-from .bcu import validate_bcu_key, load_keys_from_file, parse_key_range
-from .constants import (
-    _xknx,
-    _xknx_cls,
-    _ensure_xknx_classes,
-)
-from .data import COMMON_BCU_KEYS
-from .mixins import (
+from oida.utils import NetworkScanner, parse_bool
+from oida.protocols.knx.helpers import validate_individual_address
+from oida.protocols.knx.bcu import validate_bcu_key, load_keys_from_file, parse_key_range
+from oida.protocols.knx.constants import _xknx, _xknx_cls, _ensure_xknx_classes
+from oida.protocols.knx.data import COMMON_BCU_KEYS
+from oida.protocols.knx.mixins import (
     DiscoveryMixin,
     DeviceInfoMixin,
     PropertiesMixin,

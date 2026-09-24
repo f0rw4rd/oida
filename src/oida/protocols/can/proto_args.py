@@ -7,12 +7,12 @@ the NXC pattern.
 
 from typing import Any
 
-from ...utils.proto_args_factory import (
+from oida.utils.proto_args_factory import (
     add_dangerous_options,
     add_monitor_options,
     create_protocol_parser,
 )
-from .constants import CAN_BAUDRATES, DEFAULT_BAUDRATE
+from oida.protocols.can.constants import CAN_BAUDRATES, DEFAULT_BAUDRATE
 
 
 def proto_args(parser: Any, parents: list) -> Any:
