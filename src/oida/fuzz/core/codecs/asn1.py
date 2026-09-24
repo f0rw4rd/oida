@@ -41,13 +41,10 @@ class ASN1Tag:
     CLASS_CONTEXT = 0x80
     CLASS_PRIVATE = 0xC0
 
-    # Short aliases (kept for compatibility with callers that spell the tag
-    # classes without the CLASS_ prefix, e.g. asn1_blocks.py's boofuzz
-    # primitives).
-    UNIVERSAL = CLASS_UNIVERSAL
-    APPLICATION = CLASS_APPLICATION
+    # Short alias for the one tag class callers spell without the CLASS_
+    # prefix (asn1_blocks.py's boofuzz primitives build context tags as
+    # ``ASN1Tag.CONTEXT | context_tag``). Use CLASS_* for the others.
     CONTEXT = CLASS_CONTEXT
-    PRIVATE = CLASS_PRIVATE
 
     # Primitive/Constructed (bit 5)
     PRIMITIVE = 0x00

@@ -32,7 +32,7 @@ from typing import Any, Dict, Optional
 
 from oida.connection import NetworkConnection
 from oida.utils.lazy_import import lazy_import
-from oida.utils.protocol_helpers import AUTH_REJECT_MARKERS
+from oida.utils.protocol_helpers import is_auth_rejection
 
 from oida.protocols.opcua.helpers import (
     _asyncua,
@@ -624,7 +624,7 @@ class opcua(
             # the identity that was rejected. Otherwise "Error: ...
             # BadUserAccessDenied" reads like a scanner fault rather than
             # "this username/password is wrong".
-            if any(marker in error_msg.lower() for marker in AUTH_REJECT_MARKERS):
+            if is_auth_rejection(e):
                 if usernames and passwords:
                     identity = f"{usernames[0]}:{passwords[0]}"
                 elif cert_path:

@@ -10,8 +10,8 @@ from typing import Any, Dict
 from oida.protocols.opcua.helpers import _get_client_class, ua
 from oida.utils.protocol_helpers import (
     MAX_CONSECUTIVE_CONNECTION_ERRORS,
-    AUTH_REJECT_MARKERS,
     ProgressTracker,
+    is_auth_rejection,
     is_connection_error,
 )
 
@@ -93,8 +93,7 @@ class CredentialsMixin:
                     break
 
             except Exception as e:
-                err_str = str(e).lower()
-                if any(marker in err_str for marker in AUTH_REJECT_MARKERS):
+                if is_auth_rejection(e):
                     # Server evaluated and rejected the credential: a real test.
                     tested += 1
                     consecutive_connection_errors = 0

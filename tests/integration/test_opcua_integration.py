@@ -1019,11 +1019,16 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
                 or "same access" in text
                 or "no authentication" in text
             )
-            # On insecure server, if both anonymous and named user connected,
-            # they should have same access, triggering the finding
-            if "connected" in text and has_rbac_finding:
-                assert True  # Finding confirmed
-            # Otherwise at minimum we should see the RBAC test attempted
+            # The comparison only runs once at least two auth methods connect.
+            # On the insecure server (OPCUA_AUTH=false) anonymous and the named
+            # user see the same node set, so the comparison must land on the
+            # no-RBAC finding, not on "RBAC appears to be configured".
+            if "connected auth methods: 2/2" in text:
+                assert has_rbac_finding, (
+                    "Both auth methods connected to the insecure server, so the "
+                    f"no-RBAC finding must fire. Got: {text[:500]}"
+                )
+            # At minimum we should see the RBAC test attempted
             assert "rbac" in text or "role" in text or "auth method" in text, (
                 f"Expected RBAC analysis output. Got: {text[:500]}"
             )

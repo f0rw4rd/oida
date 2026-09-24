@@ -414,10 +414,12 @@ class TestASN1TagConstants:
         """Tag class constants are correct."""
         from oida.fuzz.primitives.asn1_blocks import ASN1Tag
 
-        assert ASN1Tag.UNIVERSAL == 0x00
-        assert ASN1Tag.APPLICATION == 0x40
-        assert ASN1Tag.CONTEXT == 0x80
-        assert ASN1Tag.PRIVATE == 0xC0
+        assert ASN1Tag.CLASS_UNIVERSAL == 0x00
+        assert ASN1Tag.CLASS_APPLICATION == 0x40
+        assert ASN1Tag.CLASS_CONTEXT == 0x80
+        assert ASN1Tag.CLASS_PRIVATE == 0xC0
+        # CONTEXT is the short alias the boofuzz primitives build tags with.
+        assert ASN1Tag.CONTEXT == ASN1Tag.CLASS_CONTEXT
 
 
 class TestASN1Integer:
