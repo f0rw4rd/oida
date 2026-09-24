@@ -32,6 +32,7 @@ from typing import Any, Dict, Optional
 
 from oida.connection import NetworkConnection
 from oida.utils.lazy_import import lazy_import
+from oida.utils.protocol_helpers import AUTH_REJECT_MARKERS
 
 from oida.protocols.opcua.helpers import (
     _asyncua,
@@ -566,6 +567,15 @@ class opcua(
             self._restore_asyncua_logging(_orig_levels)
             self.logger.success("Connected")
 
+            # An activated anonymous session is the only proof that anonymous
+            # access is real; the endpoint list merely advertises the policy.
+            if use_anonymous:
+                self.results["data"]["anonymous_verified"] = True
+                self.logger.security_finding(
+                    "Anonymous access",
+                    detail="Anonymous session activated - server grants access without credentials",
+                )
+
             # Store the security mode actually negotiated (applied_mode), which
             # already accounts for the cert-auth 'None' -> SignAndEncrypt upgrade.
             self._store_security_info(
@@ -610,7 +620,20 @@ class opcua(
         except Exception as e:
             self.logger.debug(f"async proto flow failed: {e}")
             error_msg = str(e) if str(e) else f"{type(e).__name__}"
-            self.logger.fail(f"Error: {error_msg}")
+            # A credential rejection is not a generic failure: say so, and name
+            # the identity that was rejected. Otherwise "Error: ...
+            # BadUserAccessDenied" reads like a scanner fault rather than
+            # "this username/password is wrong".
+            if any(marker in error_msg.lower() for marker in AUTH_REJECT_MARKERS):
+                if usernames and passwords:
+                    identity = f"{usernames[0]}:{passwords[0]}"
+                elif cert_path:
+                    identity = f"certificate {cert_path}"
+                else:
+                    identity = "anonymous"
+                self.logger.fail(f"Authentication failed ({identity}) - {error_msg}")
+            else:
+                self.logger.fail(f"Error: {error_msg}")
             self.results["success"] = False
             self.results["error"] = error_msg
         finally:

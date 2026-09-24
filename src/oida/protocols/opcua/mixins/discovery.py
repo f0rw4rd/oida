@@ -282,7 +282,14 @@ class DiscoveryMixin:
         # Collect security issues
         issues = []
         if has_anon_endpoint:
-            issues.append("Anonymous authentication allowed")
+            # GetEndpoints only tells us the server *advertises* an Anonymous user
+            # token policy. Hardened servers routinely advertise one and still
+            # reject the session with BadUserAccessDenied, so claiming "allowed"
+            # here is a guess. The confirmed finding is emitted by the runner once
+            # an anonymous session actually activates.
+            issues.append(
+                "Anonymous token policy advertised (unconfirmed - session not yet attempted)"
+            )
         if has_mode_invalid:
             issues.append(
                 "SecurityMode Invalid: endpoint advertises an invalid/unspecified "
@@ -316,6 +323,8 @@ class DiscoveryMixin:
         self.results["data"]["has_policy_none"] = has_policy_none
         self.results["data"]["has_sign_only"] = has_sign_only
         self.results["data"]["has_anonymous"] = has_anon_endpoint
+        # Flipped to True by the runner only if an anonymous session activates.
+        self.results["data"].setdefault("anonymous_verified", False)
         self.results["data"]["has_nosecurity"] = has_mode_none or has_policy_none
         self.results["data"]["deprecated_policies"] = list(deprecated_policies)
 

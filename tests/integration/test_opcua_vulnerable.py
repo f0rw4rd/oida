@@ -92,7 +92,12 @@ class TestOPCUAVulnerabilityDetection:
     """Test OPC UA scanner vulnerability detection capabilities."""
 
     def test_detects_anonymous_auth(self, vulnerable_opcua_server):
-        """Test detection of anonymous authentication."""
+        """Test detection of an advertised anonymous token policy.
+
+        --get-endpoints stops at discovery, so the scanner can only report what
+        GetEndpoints advertises. The confirmed "Anonymous access" finding needs
+        an activated session and is covered in test_opcua_integration.py.
+        """
         result = subprocess.run(
             [sys.executable, "-m", "oida.cli", "opcua", vulnerable_opcua_server, "--get-endpoints"],
             capture_output=True,
@@ -101,7 +106,7 @@ class TestOPCUAVulnerabilityDetection:
         )
 
         assert result.returncode == 0
-        assert "Anonymous authentication allowed" in result.stdout
+        assert "Anonymous token policy advertised" in result.stdout
 
     def test_detects_no_security(self, vulnerable_opcua_server):
         """Test detection of missing security policy."""
