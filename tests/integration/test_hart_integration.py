@@ -2115,30 +2115,20 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             ]
         ), f"Expected discover mode output: {text[:500]}"
 
-    def test_quick_mode(self, cli_runner, target, port):
-        """Test --quick quick scan mode [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--quick",
-            format="json",
-            json_log=True,
-            timeout=45,
-        )
+    def test_quick_and_deep_scan_are_rejected(self, cli_runner, target, port):
+        """--quick/--deep-scan are no longer accepted [Category C]
 
-        assert result.returncode in [0, 1]
-        text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text
-            for term in [
-                "quick",
-                "hart",
-                "connected",
-                "device",
-            ]
-        ), f"Expected quick mode output: {text[:500]}"
+        HART's runner reads --discover and --full, but never read args.quick or
+        args.deep_scan, so those two ran the plain default scan. The old tests
+        accepted any of "quick"/"hart"/"connected"/"device" in the output, all of
+        which a default scan emits -- so they passed regardless.
+        """
+        for flag in ("--quick", "--deep-scan"):
+            result = cli_runner.run(self.protocol_name, target, "--port", str(port), flag)
+            assert result.returncode == 2, f"{flag} should be rejected by argparse"
+            assert "unrecognized arguments" in (result.stderr or ""), (
+                f"{flag} should be reported as unrecognized, got: {result.stderr!r}"
+            )
 
     @pytest.mark.timeout(180)
     @pytest.mark.flaky(reruns=2, reruns_delay=3)
@@ -2174,32 +2164,6 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
                 "device",
             ]
         ), f"Expected full mode output: {text[:500]}"
-
-    def test_deep_scan(self, cli_runner, target, port):
-        """Test --deep-scan for thorough scanning [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--deep-scan",
-            format="json",
-            json_log=True,
-            timeout=60,
-        )
-
-        assert result.returncode in [0, 1]
-        text = _combined_text(result, result.scan_log)
-        assert any(
-            term in text
-            for term in [
-                "deep",
-                "scan",
-                "hart",
-                "connected",
-                "device",
-            ]
-        ), f"Expected deep scan output: {text[:500]}"
 
     # ========================================================================
     # TLS/PSK Tests

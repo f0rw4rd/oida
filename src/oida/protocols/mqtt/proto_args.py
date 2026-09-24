@@ -149,11 +149,14 @@ Examples:
     )
 
     # === Listen Mode (central) ===
+    # MQTT selects what it captures with --topics/--topic-list (broker-side subscription
+    # patterns) and thins the result with --unique; it never reads --listen-filter —
+    # omit it instead of advertising a second, unused filter flag.
     listen_group = add_listen_options(
         mqtt_parser,
         include_duration=True,
         include_output=True,
-        include_filter=True,
+        include_filter=False,
         default_duration=60,
     )
 
@@ -212,10 +215,13 @@ Examples:
     )
 
     # === Fuzzing ===
+    # MQTT fuzzes one broker connection, so --fuzz-max-targets (a multi-target cap)
+    # is never read — omit it instead of advertising an unused flag.
     fuzz_group = add_dangerous_options(
         mqtt_parser,
         include_fuzz=True,
         fuzz_default_iterations=20,
+        include_max_targets=False,
     )
 
     # Add MQTT-specific fuzz option

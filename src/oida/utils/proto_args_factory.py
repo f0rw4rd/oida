@@ -492,17 +492,31 @@ def add_scan_options(
     return scan_group
 
 
-def add_discovery_options(parser, include_quick: bool = True, include_deep: bool = True):
+def add_discovery_options(
+    parser,
+    include_quick: bool = True,
+    include_deep: bool = True,
+    include_quick_mode: bool = True,
+    include_deep_scan: bool = True,
+):
     """
     Add discovery/enumeration options group.
 
     This creates a "Discovery Options" argument group with common discovery
     and enumeration parameters.
 
+    A protocol that reads only some of these dests should switch the rest off
+    rather than advertise a dead flag. ``include_quick``/``include_deep`` drop a
+    whole pair; ``include_quick_mode``/``include_deep_scan`` drop just the
+    ``--quick``/``--deep-scan`` half when the protocol still honours
+    ``--discover``/``--full``.
+
     Args:
         parser: argparse parser or subparser
-        include_quick: Whether to include --quick/--discover shortcuts
-        include_deep: Whether to include --deep/--full-scan options
+        include_quick: Whether to include the --discover/--quick pair
+        include_deep: Whether to include the --full/--deep-scan pair
+        include_quick_mode: Whether to include --quick (requires include_quick)
+        include_deep_scan: Whether to include --deep-scan (requires include_deep)
 
     Returns:
         argparse._ArgumentGroup: The discovery options group for further customization
@@ -520,11 +534,12 @@ def add_discovery_options(parser, include_quick: bool = True, include_deep: bool
             help="Quick discovery mode (device identification only)",
         )
 
-        discovery_group.add_argument(
-            "--quick",
-            action="store_true",
-            help="Quick scan mode (basic enumeration)",
-        )
+        if include_quick_mode:
+            discovery_group.add_argument(
+                "--quick",
+                action="store_true",
+                help="Quick scan mode (basic enumeration)",
+            )
 
     if include_deep:
         discovery_group.add_argument(
@@ -533,11 +548,12 @@ def add_discovery_options(parser, include_quick: bool = True, include_deep: bool
             help="Full scan mode (comprehensive enumeration)",
         )
 
-        discovery_group.add_argument(
-            "--deep-scan",
-            action="store_true",
-            help="Deep scan mode (exhaustive enumeration, slower)",
-        )
+        if include_deep_scan:
+            discovery_group.add_argument(
+                "--deep-scan",
+                action="store_true",
+                help="Deep scan mode (exhaustive enumeration, slower)",
+            )
 
     return discovery_group
 
@@ -547,6 +563,7 @@ def add_monitor_options(
     include_interval: bool = True,
     include_duration: bool = True,
     default_interval: float = 1.0,
+    include_monitor: bool = True,
 ):
     """
     Add monitoring/continuous scan options group.
@@ -559,6 +576,10 @@ def add_monitor_options(
         include_interval: Whether to include --interval argument
         include_duration: Whether to include --duration argument
         default_interval: Default polling interval in seconds
+        include_monitor: Whether to include the --monitor toggle. Protocols whose
+            continuous mode is driven by something else (e.g. OPC UA's
+            ``--subscribe``) and never read ``--monitor`` should pass ``False``
+            rather than advertise a flag that silently does a single read.
 
     Returns:
         argparse._ArgumentGroup: The monitor options group for further customization
@@ -569,11 +590,12 @@ def add_monitor_options(
     """
     monitor_group = parser.add_argument_group("Monitoring")
 
-    monitor_group.add_argument(
-        "--monitor",
-        action="store_true",
-        help="Continuous monitoring mode (runs indefinitely)",
-    )
+    if include_monitor:
+        monitor_group.add_argument(
+            "--monitor",
+            action="store_true",
+            help="Continuous monitoring mode (runs indefinitely)",
+        )
 
     if include_interval:
         monitor_group.add_argument(
@@ -845,6 +867,7 @@ def add_brute_options(
     include_rate: bool = True,
     default_rate: float = 1.0,
     include_brute: bool = True,
+    include_default_creds: bool = True,
 ):
     """
     Add credential brute-force options group.
@@ -858,6 +881,9 @@ def add_brute_options(
             brute-force is driven by file inputs (e.g. OPC UA's
             ``--username FILE``/``--password FILE``) and never read ``--brute``
             should pass ``False`` so the flag isn't advertised as a dead option.
+        include_default_creds: Whether to include --default-creds. Protocols that
+            ship no built-in credential list to spray should pass ``False``
+            rather than advertise a flag that silently changes nothing.
 
     Returns:
         argparse._ArgumentGroup: The brute-force options group
@@ -871,11 +897,12 @@ def add_brute_options(
             help="Enable credential brute-force",
         )
 
-    brute_group.add_argument(
-        "--default-creds",
-        action="store_true",
-        help="Test built-in default credentials for this protocol",
-    )
+    if include_default_creds:
+        brute_group.add_argument(
+            "--default-creds",
+            action="store_true",
+            help="Test built-in default credentials for this protocol",
+        )
 
     if include_wordlist:
         brute_group.add_argument(

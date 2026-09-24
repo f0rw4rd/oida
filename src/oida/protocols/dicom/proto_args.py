@@ -10,7 +10,6 @@ from ...utils.proto_args_factory import (
     add_network_options,
     add_tls_options,
     add_dangerous_options,
-    add_discovery_options,
 )
 
 
@@ -56,8 +55,10 @@ Examples:
     # TLS Options (--tls, --tls-cert, --tls-key, --tls-ca, --tls-insecure)
     add_tls_options(dicom_parser, default_tls_port=2762)
 
-    # Discovery Options (--discover, --quick, --full, --deep-scan)
-    add_discovery_options(dicom_parser)
+    # NOTE: --discover/--quick/--full/--deep-scan were removed. They were
+    # accepted by argparse but never consumed by this protocol's cli_runner
+    # (nothing under src/oida/protocols/dicom/ or central CLI code read their
+    # dests), so they silently did nothing on every invocation.
 
     # DICOM Association Options
     assoc_group = dicom_parser.add_argument_group("DICOM Association")
@@ -353,6 +354,10 @@ Examples:
     )
 
     # Fuzzing (--confirm, --fuzz, --fuzz-iterations)
-    add_dangerous_options(dicom_parser, include_fuzz=True, fuzz_default_iterations=10)
+    # DICOM fuzzes the single association it opens, so --fuzz-max-targets (a
+    # multi-target cap) is never read — omit it instead of advertising an unused flag.
+    add_dangerous_options(
+        dicom_parser, include_fuzz=True, fuzz_default_iterations=10, include_max_targets=False
+    )
 
     return dicom_parser

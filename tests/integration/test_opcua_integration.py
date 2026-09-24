@@ -51,10 +51,6 @@ Flag Coverage Matrix (proto_args.py):
   --find-servers            [B] test_find_servers
   --find-servers-on-network [B] test_find_servers_on_network
   --gds-url                 [B] test_gds_url
-  --discover                [B] test_discover_mode
-  --quick                   [B] test_quick_mode
-  --full                    [B] test_full_mode
-  --deep-scan               [B] test_deep_scan_mode
   -d/--dump                 [A] test_browse_address_space, test_browse_max_depth
   -D/--dump-all             [A] test_dump_all_with_access_levels
   --dump-values             [A] test_dump_all_with_values
@@ -76,8 +72,7 @@ Flag Coverage Matrix (proto_args.py):
   --subscribe               [B] test_subscribe_values
   --subscribe-events        [B] test_subscribe_events
   --subscription-interval   [B] test_subscription_interval
-  --monitor                 [B] test_monitor_mode
-  --interval/--duration     [B] test_subscribe_values, test_monitor_mode
+  --duration                [B] test_subscribe_values, test_subscribe_honours_duration
   --history-read            [B] test_history_read
   --history-start/end       [B] test_history_read_with_time_range
   --history-max             [B] test_history_read_with_time_range
@@ -90,7 +85,6 @@ Flag Coverage Matrix (proto_args.py):
   --username/--password     [A] test_valid_credentials, [C] test_invalid_credentials;
                             file-driven brute: test_security_finding_brute_force_valid_creds_advanced
   --brute-rate              [B] test_brute_delay
-  --default-creds           [B] test_default_creds
   --mode                    [B] test_security_modes, test_security_mode_sign_and_encrypt
   --policy                  [B] test_security_policy_basic256, test_security_policy_basic256sha256
   --certificate/--privatekey [C] test_certificate_auth_missing_files
@@ -109,6 +103,8 @@ Flag Coverage Matrix (proto_args.py):
   --debug (global)          [B] test_debug_output
   --help (global)           [A] test_help_output
 """
+
+import time
 
 import pytest
 from typing import Optional
@@ -1447,76 +1443,38 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             _assert_log_event_structure(result.scan_log)
 
     @pytest.mark.containers("opcua-insecure")
-    def test_discover_mode(self, cli_runner, mock_host, mock_ports):
-        """Test --discover scan mode [Category B]"""
+    def test_dead_scan_mode_flags_are_rejected(self, cli_runner, mock_host, mock_ports):
+        """--discover/--quick/--deep-scan are no longer accepted [Category C]
+
+        These were parsed but never read, so passing any of them produced output
+        byte-identical to a plain scan -- the tests that used to live here asserted
+        only ``returncode in [0, 1]`` and so passed no matter what. OPC UA discovery
+        is driven by the explicit services (--get-endpoints, --find-servers,
+        --find-servers-on-network) and browse breadth by --max-depth/--max-nodes.
+
+        --full is asserted separately below: it is NOT rejected, because it is an
+        unambiguous abbreviation of the global --full-width, so argparse silently
+        absorbs it. That distinction is the whole trap, so it is pinned as an
+        invariant rather than left as a comment -- if --full-width is ever renamed,
+        --full would start being rejected and this test would tell us.
+        """
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--discover",
-            format="json",
-            json_log=True,
+        for flag in ("--discover", "--quick", "--deep-scan"):
+            result = cli_runner.run(self.protocol_name, target, flag)
+            assert result.returncode == 2, f"{flag} should be rejected by argparse"
+            assert "unrecognized arguments" in (result.stderr or ""), (
+                f"{flag} should be reported as unrecognized, got: {result.stderr!r}"
+            )
+
+        # --full is absorbed by the global --full-width, so it must NOT be rejected.
+        result = cli_runner.run(self.protocol_name, target, "--full")
+        assert result.returncode != 2, (
+            "--full should be absorbed as an abbreviation of --full-width, not "
+            f"rejected; got rc={result.returncode}, stderr={result.stderr!r}"
         )
-
-        assert result.returncode in [0, 1]
-        assert result.stdout or result.stderr, "Should produce output"
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
-
-    @pytest.mark.containers("opcua-insecure")
-    def test_quick_mode(self, cli_runner, mock_host, mock_ports):
-        """Test --quick scan mode [Category B]"""
-        target = self.get_target(mock_host, mock_ports["opcua_insecure"])
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--quick",
-            format="json",
-            json_log=True,
+        assert "unrecognized arguments" not in (result.stderr or ""), (
+            f"--full should not be reported as unrecognized, got: {result.stderr!r}"
         )
-
-        assert result.returncode in [0, 1]
-        assert result.stdout or result.stderr, "Should produce output"
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
-
-    @pytest.mark.containers("opcua-insecure")
-    def test_full_mode(self, cli_runner, mock_host, mock_ports):
-        """Test --full scan mode [Category B]"""
-        target = self.get_target(mock_host, mock_ports["opcua_insecure"])
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--full",
-            format="json",
-            json_log=True,
-            timeout=60,
-        )
-
-        assert result.returncode in [0, 1]
-        assert result.stdout or result.stderr, "Should produce output"
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
-
-    @pytest.mark.containers("opcua-insecure")
-    def test_deep_scan_mode(self, cli_runner, mock_host, mock_ports):
-        """Test --deep-scan mode for thorough address space exploration [Category B]"""
-        target = self.get_target(mock_host, mock_ports["opcua_insecure"])
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--deep-scan",
-            "--max-depth",
-            "3",
-            format="json",
-            json_log=True,
-            timeout=60,
-        )
-
-        assert result.returncode in [0, 1]
-        assert result.stdout or result.stderr, "Should produce output"
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
 
     # ========================================================================
     # Category B: Address Space Browsing Variants
@@ -1763,25 +1721,52 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             _assert_log_event_structure(result.scan_log)
 
     @pytest.mark.containers("opcua-insecure")
-    @pytest.mark.slow
-    def test_monitor_mode(self, cli_runner, mock_host, mock_ports):
-        """Test --monitor flag for continuous polling [Category B]"""
+    def test_monitor_and_interval_are_rejected(self, cli_runner, mock_host, mock_ports):
+        """--monitor/--interval are no longer accepted [Category C]
+
+        Nothing read args.monitor or args.interval, so --monitor performed a single
+        read and returned immediately, ignoring --duration. The old test asserted
+        only ``returncode in [0, 1]`` and so never noticed. Continuous watching is
+        --subscribe (see test_subscribe_honours_duration).
+        """
         target = self.get_target(mock_host, mock_ports["opcua_insecure"])
+        for flag in ("--monitor", "--interval"):
+            result = cli_runner.run(self.protocol_name, target, flag, "1")
+            assert result.returncode == 2, f"{flag} should be rejected by argparse"
+            assert "unrecognized arguments" in (result.stderr or ""), (
+                f"{flag} should be reported as unrecognized, got: {result.stderr!r}"
+            )
+
+    @pytest.mark.containers("opcua-insecure")
+    @pytest.mark.slow
+    def test_subscribe_honours_duration(self, cli_runner, mock_host, mock_ports):
+        """--subscribe actually watches for --duration seconds [Category B]
+
+        Regression guard for the bug that --monitor hid: a watch flag must spend the
+        requested time on the wire, not return after a single read. Asserting on
+        elapsed time is what distinguishes a real subscription from a no-op flag.
+        """
+        target = self.get_target(mock_host, mock_ports["opcua_insecure"])
+        start = time.monotonic()
         result = cli_runner.run(
             self.protocol_name,
             target,
-            "--monitor",
-            "--interval",
-            "1",
+            "--subscribe",
+            "--start-node",
+            "ns=2;i=2",
             "--duration",
-            "3",
+            "5",
             format="json",
             json_log=True,
-            timeout=20,
+            timeout=60,
         )
+        elapsed = time.monotonic() - start
 
         assert result.returncode in [0, 1]
-        assert result.stdout or result.stderr, "Should produce output"
+        assert elapsed >= 4.5, (
+            f"--subscribe --duration 5 returned after {elapsed:.1f}s; "
+            "the flag is not actually subscribing"
+        )
         if result.scan_log is not None and len(result.scan_log) > 0:
             _assert_log_event_structure(result.scan_log)
 
@@ -2043,22 +2028,26 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
 
     @pytest.mark.auth
     @pytest.mark.containers("opcua-advanced")
-    def test_default_creds(self, cli_runner, mock_host, mock_ports):
-        """Test --default-creds checks known default credentials [Category B]"""
-        target = self.get_target(mock_host, mock_ports["opcua"])
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--default-creds",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
+    def test_default_creds_and_credentials_file_are_rejected(
+        self, cli_runner, mock_host, mock_ports
+    ):
+        """--default-creds/--credentials are no longer accepted [Category C]
 
-        assert result.returncode in [0, 1]
-        assert result.stdout or result.stderr, "Should produce output"
-        if result.scan_log is not None and len(result.scan_log) > 0:
-            _assert_log_event_structure(result.scan_log)
+        OPC UA ships no built-in credential list to spray (see the comment in
+        scanner.py where default credentials are looked up), and the runner reads
+        only args.username/args.password -- passing a --credentials file left the
+        client on anonymous auth. Credential lists are supplied by handing a file
+        path to --username/--password instead.
+        """
+        target = self.get_target(mock_host, mock_ports["opcua"])
+
+        result = cli_runner.run(self.protocol_name, target, "--default-creds")
+        assert result.returncode == 2
+        assert "unrecognized arguments" in (result.stderr or "")
+
+        result = cli_runner.run(self.protocol_name, target, "--credentials", "/dev/null")
+        assert result.returncode == 2
+        assert "unrecognized arguments" in (result.stderr or "")
 
     @pytest.mark.auth
     @pytest.mark.containers("opcua-advanced")

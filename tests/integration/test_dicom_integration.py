@@ -1152,81 +1152,23 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             x in text for x in ["tls", "ssl", "encrypt", "secure", "handshake", "association"]
         ), f"Expected TLS-related output: {text[:500]}"
 
-    def test_discover_mode(self, cli_runner, target, port):
-        """Test --discover scan mode (C-ECHO only) [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--discover",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
+    def test_dead_scan_mode_flags_are_rejected(self, cli_runner, target, port):
+        """--discover/--quick/--deep-scan are no longer accepted [Category C]
 
-        assert result.returncode in [0, 1], f"discover mode crashed: rc={result.returncode}"
-        text = _combined_text(result, result.scan_log if result.scan_log else None)
-        assert any(x in text for x in ["echo", "association", "mock_pacs", "c-echo"]), (
-            f"Expected C-ECHO output from --discover: {text[:500]}"
-        )
+        These were parsed but never read by the DICOM runner, so each one ran the
+        same default scan. The tests that used to live here asserted only that
+        C-ECHO output appeared -- which it did for a plain scan too, so they would
+        have passed even if the flags were deleted.
 
-    def test_quick_mode(self, cli_runner, target, port):
-        """Test --quick scan mode (C-ECHO + basic C-FIND) [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--quick",
-            format="json",
-            json_log=True,
-            timeout=30,
-        )
-
-        assert result.returncode in [0, 1], f"quick mode crashed: rc={result.returncode}"
-        text = _combined_text(result, result.scan_log if result.scan_log else None)
-        assert any(x in text for x in ["echo", "association", "mock_pacs", "c-echo"]), (
-            f"Expected C-ECHO output from --quick: {text[:500]}"
-        )
-
-    def test_full_mode(self, cli_runner, target, port):
-        """Test --full scan mode (C-ECHO + C-FIND + enumeration) [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--full",
-            format="json",
-            json_log=True,
-            timeout=60,
-        )
-
-        assert result.returncode in [0, 1], f"full mode crashed: rc={result.returncode}"
-        text = _combined_text(result, result.scan_log if result.scan_log else None)
-        assert any(x in text for x in ["echo", "mock_pacs", "c-echo", "find", "patient"]), (
-            f"Expected C-ECHO + query output from --full: {text[:500]}"
-        )
-
-    def test_deep_scan_mode(self, cli_runner, target, port):
-        """Test --deep-scan scan mode (all operations) [Category B]"""
-        result = cli_runner.run(
-            self.protocol_name,
-            target,
-            "--port",
-            str(port),
-            "--deep-scan",
-            format="json",
-            json_log=True,
-            timeout=60,
-        )
-
-        assert result.returncode in [0, 1], f"deep-scan mode crashed: rc={result.returncode}"
-        text = _combined_text(result, result.scan_log if result.scan_log else None)
-        assert any(
-            x in text for x in ["echo", "mock_pacs", "c-echo", "find", "patient", "security"]
-        ), f"Expected extensive scan output from --deep-scan: {text[:500]}"
+        --full is not checked here: it is an unambiguous abbreviation of the global
+        --full-width, so argparse still absorbs it.
+        """
+        for flag in ("--discover", "--quick", "--deep-scan"):
+            result = cli_runner.run(self.protocol_name, target, "--port", str(port), flag)
+            assert result.returncode == 2, f"{flag} should be rejected by argparse"
+            assert "unrecognized arguments" in (result.stderr or ""), (
+                f"{flag} should be reported as unrecognized, got: {result.stderr!r}"
+            )
 
     # ========================================================================
     # Category C: Error handling (assert doesn't crash)
