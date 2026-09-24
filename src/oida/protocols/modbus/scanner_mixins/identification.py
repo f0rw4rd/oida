@@ -105,7 +105,8 @@ class ScannerIdentificationMixin(_ScannerBase):
         for probe in probes:
             try:
                 resp = probe()
-            except Exception:
+            except (OSError, TimeoutError, ValueError, TypeError) as exc:
+                self.logger.debug(f"Modbus identification probe failed: {exc}")
                 continue
             if _is_modbus_response(resp):
                 return True
@@ -465,10 +466,10 @@ class ScannerIdentificationMixin(_ScannerBase):
                 for _ in range(64):
                     if not client.socket.recv(4096):
                         break
-            except Exception:
-                pass
+            except (OSError, AttributeError) as exc:
+                self.logger.debug(f"Unable to drain Modbus socket: {exc}")
             finally:
                 try:
                     client.socket.settimeout(self.timeout)
-                except Exception:
-                    pass
+                except (OSError, AttributeError) as exc:
+                    self.logger.debug(f"Unable to restore Modbus socket timeout: {exc}")

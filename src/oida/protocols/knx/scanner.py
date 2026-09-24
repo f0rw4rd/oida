@@ -553,8 +553,9 @@ class KNXScanner(
             # still torn down server-side.
             try:
                 await asyncio.sleep(0.5)
-            except Exception:
-                pass
+            except RuntimeError as e:
+                # No running loop during teardown; the cooldown is best-effort.
+                self.logger.debug(f"KNX cleanup cooldown skipped: {e}")
 
         return results
 

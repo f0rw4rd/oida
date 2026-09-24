@@ -355,9 +355,13 @@ class can(ISOTPMixin, SerialConnection):
         while time.time() < end_time:
             try:
                 resp = self.conn.recv(timeout=0.1)
-            except Exception:
+            except StopIteration:
+                # An iterator-backed bus is exhausted -- no more frames to read.
+                break
+            except (ValueError, TypeError, OSError) as exc:
                 # udp_multicast datagrams can coalesce under load, yielding
                 # msgpack decode failures; skip the corrupt packet and continue.
+                self.logger.debug(f"Ignoring malformed CAN response: {exc}")
                 continue
             if resp is None:
                 continue

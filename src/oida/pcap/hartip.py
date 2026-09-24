@@ -374,7 +374,10 @@ class HARTIPPassiveListener(PySharkListenerBase):
                 for k, v in nested.items():
                     # keys like "hart_ip_hart_ip_message_id" -> "message_id"
                     flat.setdefault(k.split("_")[-1], v)
-        except Exception:
+        except (AttributeError, TypeError, KeyError):
+            # EkLayer.get_field is absent in XML mode (AttributeError) or the
+            # nested value isn't a normal mapping; the XML-mode `flat` built
+            # above still stands, so fall through with what we have.
             pass
         hart_keys = {k for k in flat if k in _HART_FIELD_KEYS}
         if not hart_keys:

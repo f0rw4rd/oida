@@ -425,19 +425,29 @@ def record(
         return
 
 
+def _emit_block(printer, block: str) -> bool:
+    """Best-effort print of one crash block; report whether it was emitted.
+
+    The printer is caller-supplied (default ``print``), so it may raise
+    anything — a closed pipe, a custom sink. A broken sink must never stop the
+    remaining crash blocks from flushing, so failures are swallowed here and
+    surfaced only through the ``False`` return.
+    """
+    try:
+        printer(block)
+    except Exception:
+        return False
+    return True
+
+
 def flush(print_fn=None) -> int:
     """Print and clear all queued crash-report blocks. Returns the number of
-    blocks printed."""
+    blocks successfully printed."""
     printer = print_fn or print
     with _lock:
         blocks = _pending_blocks[:]
         _pending_blocks.clear()
-    for block in blocks:
-        try:
-            printer(block)
-        except Exception:
-            pass
-    return len(blocks)
+    return sum(_emit_block(printer, block) for block in blocks)
 
 
 def reset_for_tests() -> None:

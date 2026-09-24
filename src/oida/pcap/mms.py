@@ -1049,7 +1049,10 @@ class MMSPassiveListener(PySharkListenerBase):
             try:
                 if layer.has_field(field_name):
                     return True
-            except Exception:  # pragma: no cover - defensive, pyshark internals
+            except (AttributeError, TypeError, KeyError):
+                # pragma: no cover - defensive, pyshark internals. has_field is
+                # a positive-only signal here; fall through to the _all_fields
+                # and attribute-based checks below.
                 pass
 
         # XML mode: the raw field map is keyed by the fully-qualified tshark
