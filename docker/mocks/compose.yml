@@ -1200,7 +1200,7 @@ services:
       start_period: 15s
     labels:
       oida.group: "opcua"
-      oida.description: "OPC UA server with security policies + username auth (admin:admin123)"
+      oida.description: "OPC UA server with security policies + username auth (admin:admin, operator:operator123, readonly:readonly)"
       oida.ports: "4841"
 
   opcua-gds:

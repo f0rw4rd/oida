@@ -907,7 +907,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     ):
         """Test that brute force detects default credentials and fires finding [Category B]
 
-        The advanced server (port 4841) has OPCUA_AUTH=true with admin:admin123.
+        The advanced server (port 4841) has OPCUA_AUTH=true with admin:admin.
         When passing username/password as files, _brute_force_credentials() tests each pair.
         On success it fires: security_finding('Default credentials', 'Valid OPC UA credentials: ...')
         """
@@ -915,7 +915,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
         user_file = tmp_path / "opcua_users.txt"
         user_file.write_text("admin\noperator\ninvalid_user\n")
         pass_file = tmp_path / "opcua_passwords.txt"
-        pass_file.write_text("admin123\noper@t0r\nwrong_pass\n")
+        pass_file.write_text(f"{AUTH_DEFAULT[1]}\n{AUTH_OPERATOR[1]}\nwrong_pass\n")
 
         target = self.get_target(mock_host, mock_ports["opcua_auth"])
         result = cli_runner.run(
@@ -949,8 +949,13 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
                 or f.get("data", {}).get("finding", "").lower() == "default credentials"
             ]
             if cred_findings:
-                # Validate the finding mentions the actual username
-                finding_text = " ".join(f.get("message", "") for f in cred_findings).lower()
+                # Validate the finding mentions the actual username. The username
+                # lives in data.details ("Valid OPC UA credentials: user:pass");
+                # message carries only the finding title.
+                finding_text = " ".join(
+                    f"{f.get('message', '')} {f.get('data', {}).get('details', '')}"
+                    for f in cred_findings
+                ).lower()
                 assert "admin" in finding_text or "valid" in finding_text, (
                     f"Expected credential finding to mention 'admin'. Got: {finding_text[:300]}"
                 )
@@ -1096,9 +1101,9 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             target,
             "--get-endpoints",
             "--username",
-            "admin",
+            AUTH_DEFAULT[0],
             "--password",
-            "admin123",
+            AUTH_DEFAULT[1],
             format="json",
             json_log=True,
             timeout=30,
@@ -1196,17 +1201,17 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     def test_security_finding_brute_force_valid_creds_advanced(
         self, cli_runner, mock_host, mock_ports, tmp_path
     ):
-        """Test brute force against advanced server finds admin:admin123 [Category B]
+        """Test brute force against advanced server finds admin:admin [Category B]
 
-        The advanced server (opcua_auth_server.py) has:
-            admin:admin123, operator:oper@t0r, readonly:readonly, guest:guest
+        The advanced server (opcua_server.py CustomUserManager) has:
+            admin:admin, operator:operator123, readonly:readonly, user:user
         Passing these as files triggers _brute_force_credentials() which fires
         security_finding('Default credentials', ...) for each valid pair found.
         """
         user_file = tmp_path / "opcua_brute_users.txt"
         user_file.write_text("admin\nwronguser\n")
         pass_file = tmp_path / "opcua_brute_passwords.txt"
-        pass_file.write_text("admin123\nwrongpass\n")
+        pass_file.write_text(f"{AUTH_DEFAULT[1]}\nwrongpass\n")
 
         target = self.get_target(mock_host, mock_ports["opcua_auth"])
         result = cli_runner.run(
