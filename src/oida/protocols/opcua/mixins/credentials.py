@@ -8,6 +8,46 @@ import asyncio
 from typing import Any, Dict
 
 from oida.protocols.opcua.helpers import _get_client_class, ua
+from oida.utils.protocol_helpers import ProgressTracker
+
+# Substrings that identify a transport/connection failure (server down,
+# refused, unreachable, timed out) as opposed to an authentication rejection.
+# A connection failure means the credential was NEVER actually tested.
+_CONNECTION_ERROR_MARKERS = (
+    "connect call failed",
+    "connection refused",
+    "connection reset",
+    "connection aborted",
+    "broken pipe",
+    "timed out",
+    "timeout",
+    "unreachable",
+    "no route to host",
+    "cannot connect",
+    "not connected",
+    "server disconnected",
+)
+
+# Substrings that identify a genuine authentication rejection by the server.
+# These mean the credential WAS tested and rejected.
+_AUTH_REJECT_MARKERS = (
+    "badidentitytoken",
+    "badusername",
+    "baduseraccessdenied",
+    "denied",
+)
+
+# Abort a brute-force run once this many credentials in a row fail to connect:
+# the server has almost certainly gone away and the remaining pairs would only
+# produce more connection errors, not real results.
+_MAX_CONSECUTIVE_CONNECTION_ERRORS = 5
+
+
+def _is_connection_error(exc: Exception) -> bool:
+    """True if the exception is a transport failure, not an auth rejection."""
+    if isinstance(exc, (ConnectionError, TimeoutError, OSError, asyncio.TimeoutError)):
+        return True
+    return any(marker in str(exc).lower() for marker in _CONNECTION_ERROR_MARKERS)
 
 
 class CredentialsMixin:
@@ -53,13 +93,17 @@ class CredentialsMixin:
             return
 
         valid_creds = []
-        tested = 0
+        tested = 0  # credentials the server actually evaluated (auth accept/reject)
+        connection_errors = 0  # attempts that never reached authentication
+        consecutive_connection_errors = 0
+        aborted = False
+
+        progress = ProgressTracker(len(credentials), logger=self.logger)
+        timeout = getattr(self.args, "timeout", 5)
 
         Client = _get_client_class()
-        for username, password in credentials:
-            tested += 1
+        for index, (username, password) in enumerate(credentials, start=1):
             try:
-                timeout = getattr(self.args, "timeout", 5)
                 test_client = Client(url=url, timeout=timeout)
                 test_client.set_user(username)
                 test_client.set_password(password)
@@ -68,6 +112,9 @@ class CredentialsMixin:
                 await test_client.disconnect()
 
                 # Success
+                tested += 1
+                consecutive_connection_errors = 0
+                progress.success += 1
                 self.logger.security_finding(
                     "Default credentials",
                     detail=f"Valid OPC UA credentials: {username}:{password}",
@@ -76,22 +123,61 @@ class CredentialsMixin:
 
                 # Stop on first valid credential (default behavior)
                 if not getattr(self.args, "continue_on_success", False):
+                    progress.update(pos=index)
                     break
 
             except Exception as e:
                 err_str = str(e).lower()
-                if "badidentitytoken" in err_str or "badusername" in err_str or "denied" in err_str:
-                    self.logger.debug(f"Tested {username}:{password} -> BadIdentityToken")
+                if any(marker in err_str for marker in _AUTH_REJECT_MARKERS):
+                    # Server evaluated and rejected the credential: a real test.
+                    tested += 1
+                    consecutive_connection_errors = 0
+                    progress.failed += 1
+                    self.logger.debug(f"Tested {username}:{password} -> auth rejected ({e})")
+                elif _is_connection_error(e):
+                    # Never reached authentication — the credential was NOT tested.
+                    connection_errors += 1
+                    consecutive_connection_errors += 1
+                    self.logger.debug(f"NOT tested {username}:{password} -> connection error: {e}")
+                    if consecutive_connection_errors >= _MAX_CONSECUTIVE_CONNECTION_ERRORS:
+                        progress.update(pos=index)
+                        self.logger.fail(
+                            f"Server unreachable after {consecutive_connection_errors} "
+                            f"consecutive connection failures — aborting brute force. "
+                            f"{tested} of {len(credentials)} credentials were actually tested "
+                            f"({len(credentials) - index} never attempted)."
+                        )
+                        aborted = True
+                        break
                 else:
-                    self.logger.debug(f"Tested {username}:{password} -> {e}")
+                    # Neither a clear auth rejection nor a transport failure
+                    # (e.g. certificate / security-policy error): inconclusive,
+                    # so don't count it as a tested credential.
+                    connection_errors += 1
+                    self.logger.debug(f"NOT tested {username}:{password} -> inconclusive: {e}")
+
+            progress.update(pos=index)
 
             if delay > 0:
                 await asyncio.sleep(delay)
 
-        self.logger.display(f"Tested {tested} credentials, found {len(valid_creds)} valid")
+        progress.finish()
+
+        summary = f"Tested {tested} credentials, found {len(valid_creds)} valid"
+        if connection_errors:
+            summary += f" ({connection_errors} not tested due to connection errors)"
+        self.logger.display(summary)
+        if connection_errors and not aborted:
+            self.logger.warning(
+                f"{connection_errors} credential(s) were skipped because the server "
+                f"could not be reached — they were NOT tested."
+            )
+
         self.results["data"]["brute_force"] = {
             "tested": tested,
             "valid": valid_creds,
+            "connection_errors": connection_errors,
+            "aborted": aborted,
         }
 
     async def _test_rbac(self, url: str, usernames: list, passwords: list):
