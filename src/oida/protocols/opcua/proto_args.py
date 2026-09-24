@@ -28,13 +28,67 @@ def proto_args(parser, parents):
         parents=parents,
         epilog="""
 Examples:
-  oida opcua opc.tcp://192.168.1.100:4840    # Basic discovery
-  oida opcua 192.168.1.100 --quick           # Quick scan
-  oida opcua 192.168.1.100 --dump            # Dump address space
-  oida opcua 192.168.1.100 --dump-methods    # Show callable methods
-  oida opcua 192.168.1.100 --dump-write      # Show writable nodes
-  oida opcua 192.168.1.100 -u admin -p pass  # Authenticate
-  oida opcua 192.168.1.100 -u users.txt -p pass.txt  # File-driven credential testing
+  oida opcua opc.tcp://192.168.1.100:4840      # Connect and show server info
+  oida opcua 192.168.1.100 --get-endpoints     # List endpoints, policies and token types
+  oida opcua 192.168.1.100 --find-servers      # Ask the discovery service what it hosts
+  oida opcua 192.168.1.100 --dump              # Browse the address space
+  oida opcua 192.168.1.100 --dump-values       # Browse and read every value
+  oida opcua 192.168.1.100 --dump-methods      # Show callable methods
+  oida opcua 192.168.1.100 --dump-write        # Show writable nodes
+
+Authentication (note: -p is --port; the short flag for --password is -P):
+  oida opcua 192.168.1.100 --username admin --password s3cret
+  oida opcua 192.168.1.100 -u admin -P s3cret
+  oida opcua 192.168.1.100 -u users.txt -P passwords.txt   # File-driven credential testing
+  oida opcua 192.168.1.100 -u users.txt -P passwords.txt --brute-rate 0.5 --continue-on-success
+
+Encrypted sessions (Sign/SignAndEncrypt need a client keypair):
+  oida opcua 192.168.1.100 --mode Sign --policy Basic256Sha256 \\
+      --certificate client.der --privatekey client_key.pem --get-endpoints
+  oida opcua 192.168.1.100 --mode SignAndEncrypt --policy Basic256Sha256 \\
+      --certificate client.der --privatekey client_key.pem -u admin -P s3cret --dump
+
+Browsing the address space (breadth is set by --max-depth/--max-nodes):
+  oida opcua 192.168.1.100 --dump --ns 2                   # Only namespace index 2
+  oida opcua 192.168.1.100 --dump --start-node "ns=2;i=1"  # Start below a known node
+  oida opcua 192.168.1.100 -D --max-depth 5 --max-nodes 200  # Dump everything, bounded
+  oida opcua 192.168.1.100 --dump-namespaces               # Namespace table only
+  oida opcua 192.168.1.100 --dump-examples                 # Ready-to-run commands for this server
+
+Reading and writing nodes:
+  oida opcua 192.168.1.100 --node-id "ns=2;i=10"                    # Read one value
+  oida opcua 192.168.1.100 --node-id "ns=2;i=10" --read-attributes  # All attributes
+  oida opcua 192.168.1.100 --node-id "ns=2;i=40" --write-value 1500 --confirm
+  oida opcua 192.168.1.100 --call-method StartPump --confirm
+  oida opcua 192.168.1.100 --call-method SetTemperature --method-args "[21.5]" --confirm
+
+Watching values (use --subscribe; there is no polling mode):
+  oida opcua 192.168.1.100 --subscribe --duration 30
+  oida opcua 192.168.1.100 --subscribe --start-node "ns=2;i=2" --duration 30
+  oida opcua 192.168.1.100 --subscribe --subscription-interval 250 --duration 30
+  oida opcua 192.168.1.100 --subscribe-events --duration 60      # Alarms and events
+
+Historical data:
+  oida opcua 192.168.1.100 --history-read --node-id "ns=2;i=10" --history-max 100
+  oida opcua 192.168.1.100 --history-read --node-id "ns=2;i=10" \\
+      --history-start 2024-01-01T00:00:00 --history-end 2024-01-02T00:00:00
+
+File transfer (OPC UA FileType nodes):
+  oida opcua 192.168.1.100 --dump-files                            # Find FileType nodes
+  oida opcua 192.168.1.100 --read-file "ns=2;i=240" --file-output out.txt
+  oida opcua 192.168.1.100 --write-file "ns=2;i=230" --file-data "<recipe/>" --confirm
+
+Security assessment:
+  oida opcua 192.168.1.100 --scan-writable           # Which nodes accept writes
+  oida opcua 192.168.1.100 --test-cert-trust         # Does it accept untrusted certs
+  oida opcua 192.168.1.100 --test-rbac --rbac-detailed   # Per-role permission matrix
+  oida opcua 192.168.1.100 --test-subscription-limits --confirm  # Subscription exhaustion
+
+Fuzzing (all require --confirm):
+  oida opcua 192.168.1.100 --fuzz --fuzz-mode nodes --fuzz-iterations 50 --confirm
+  oida opcua 192.168.1.100 --fuzz --fuzz-mode methods --fuzz-iterations 50 --confirm
+  oida opcua 192.168.1.100 --fuzz --fuzz-node "ns=2;i=40" --confirm
+  oida opcua 192.168.1.100 --fuzz --fuzz-method StartPump --confirm
 """,
     )
 
@@ -47,8 +101,11 @@ Examples:
     # Network Options (--port, --timeout)
     add_network_options(opcua_parser, default_port=4840)
 
-    # Authentication Options (--username, --password, --credentials)
-    auth_group = add_auth_options(opcua_parser)
+    # Authentication Options (--username, --password).
+    # --credentials is omitted: OPC UA loads credential lists by passing a file path to
+    # --username/--password (load_credentials auto-detects files), and nothing here ever
+    # read args.credentials, so the flag silently left the client on anonymous auth.
+    auth_group = add_auth_options(opcua_parser, include_creds_file=False)
     auth_group.add_argument("--certificate", type=str, help="Path to client certificate file")
     auth_group.add_argument("--privatekey", type=str, help="Path to client private key file")
 
@@ -69,8 +126,12 @@ Examples:
         help="Security policy (default: None)",
     )
 
-    # Discovery Options (--discover, --quick, --full, --deep-scan)
-    discovery_group = add_discovery_options(opcua_parser)
+    # Discovery Options. NOTE: --discover/--quick/--full/--deep-scan are not offered.
+    # OPC UA discovery is driven by the explicit services below (--get-endpoints,
+    # --find-servers, ...) and by the dump options; the generic scan-mode flags were
+    # accepted but never consumed, so a scan with --quick or --deep-scan produced output
+    # byte-identical to a plain scan. Dump breadth is controlled by --max-depth/--max-nodes.
+    discovery_group = add_discovery_options(opcua_parser, include_quick=False, include_deep=False)
     discovery_group.add_argument(
         "--get-endpoints",
         action="store_true",
@@ -198,8 +259,12 @@ Examples:
         help="JSON array of method arguments (e.g., '[42.5, \"test\"]')",
     )
 
-    # Subscription/Monitor (--monitor, --interval, --duration)
-    monitor_group = add_monitor_options(opcua_parser)
+    # Subscription/Monitor (--duration, plus the --subscribe* flags below).
+    # --monitor and --interval are omitted: OPC UA watches values by subscribing to the
+    # server (--subscribe / --subscribe-events, paced by --subscription-interval), and
+    # nothing here read args.monitor or args.interval. Passing --monitor performed a
+    # single read and returned immediately, ignoring --duration entirely.
+    monitor_group = add_monitor_options(opcua_parser, include_monitor=False, include_interval=False)
     monitor_group.add_argument(
         "--subscribe",
         action="store_true",
@@ -258,11 +323,19 @@ Examples:
         help="File path or data to upload (use with --write-file)",
     )
 
-    # Credential Testing (--default-creds, --brute-rate, --continue-on-success).
+    # Credential Testing (--brute-rate, --continue-on-success).
     # OPC UA brute-force is driven by file inputs (--username FILE / --password
     # FILE), not a --brute toggle, and it has no password --wordlist path, so
-    # both are omitted rather than advertised as dead flags.
-    add_brute_options(opcua_parser, default_rate=0.5, include_wordlist=False, include_brute=False)
+    # both are omitted rather than advertised as dead flags. --default-creds is
+    # omitted for the same reason: there is no built-in OPC UA credential list to
+    # spray, so the flag left the client on anonymous auth and changed nothing.
+    add_brute_options(
+        opcua_parser,
+        default_rate=0.5,
+        include_wordlist=False,
+        include_brute=False,
+        include_default_creds=False,
+    )
 
     # Security Analysis
     sec_analysis_group = opcua_parser.add_argument_group("Security Analysis")

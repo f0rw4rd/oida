@@ -2,6 +2,7 @@
 
 import argparse
 
+import pytest
 
 from oida.protocols.hart.proto_args import proto_args
 
@@ -63,8 +64,13 @@ class TestHARTProtoArgs:
     def test_full_flag(self):
         assert _parse("--full").full is True
 
-    def test_quick_flag(self):
-        assert _parse("--quick").quick is True
+    # --quick and --deep-scan are deliberately NOT registered: cli_runner only reads
+    # discover/full, so both fell through to the plain enumeration path and changed
+    # nothing. They are suppressed rather than advertised as no-ops.
+    @pytest.mark.parametrize("flag", ["--quick", "--deep-scan"])
+    def test_inert_scan_mode_flags_are_not_registered(self, flag):
+        with pytest.raises(SystemExit):
+            _parse(flag)
 
     # Previously-unregistered flags whose handlers were unreachable (finding #2).
     def test_enumerate_device_specific_flag(self):

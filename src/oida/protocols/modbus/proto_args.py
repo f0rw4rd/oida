@@ -460,7 +460,10 @@ Custom Function Codes:
     )
 
     # Fuzzing (--confirm, --fuzz, --fuzz-iterations)
-    fuzz_group = add_dangerous_options(modbus_parser, include_fuzz=True)
+    # Modbus fuzzes one unit ID on one connection (--fuzz-mode picks what to mutate),
+    # so --fuzz-max-targets (a multi-target cap) is never read — omit it instead of
+    # advertising an unused flag.
+    fuzz_group = add_dangerous_options(modbus_parser, include_fuzz=True, include_max_targets=False)
     fuzz_group.add_argument(
         "--fuzz-mode",
         choices=["basic", "function", "data", "boundary", "full"],

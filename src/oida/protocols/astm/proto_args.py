@@ -267,7 +267,12 @@ Examples:
     )
 
     # Fuzzing (--confirm, --fuzz, --fuzz-iterations)
-    fuzz_group = add_dangerous_options(astm_parser, include_fuzz=True, fuzz_default_iterations=10)
+    # ASTM fuzzes one record type (--fuzz-record) against the connected analyzer, so
+    # --fuzz-max-targets (a multi-target cap) is never read — omit it instead of
+    # advertising an unused flag.
+    fuzz_group = add_dangerous_options(
+        astm_parser, include_fuzz=True, fuzz_default_iterations=10, include_max_targets=False
+    )
 
     fuzz_group.add_argument(
         "--fuzz-record",

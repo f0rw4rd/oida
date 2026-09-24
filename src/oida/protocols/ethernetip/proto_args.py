@@ -190,11 +190,15 @@ def proto_args(parser, parents):
     )
 
     # Dangerous attack options + --confirm + --fuzz via factory.
-    # include_fuzz=True keeps --fuzz/--fuzz-iterations/--fuzz-max-targets
-    # consistent across all migrated protocols; the three protocol-specific
-    # attack flags below are kept local since they're EtherNet/IP-only.
+    # include_fuzz=True keeps --fuzz/--fuzz-iterations consistent across all migrated
+    # protocols; the three protocol-specific attack flags below are kept local since
+    # they're EtherNet/IP-only. --fuzz-max-targets (a multi-target cap) is never read,
+    # so it's omitted instead of advertised as an unused flag.
     attack_group = add_dangerous_options(
-        enip_parser, include_fuzz=True, group_name="Attack Options (DANGEROUS)"
+        enip_parser,
+        include_fuzz=True,
+        group_name="Attack Options",
+        include_max_targets=False,
     )
     attack_group.add_argument(
         "--cpu-stop",
