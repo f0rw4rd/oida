@@ -567,7 +567,52 @@ class TestBruteForceHttpAuth(unittest.TestCase):
 
         obj._brute_force_http_auth(["admin"], ["x"])
 
-        self.assertEqual(obj.results["data"]["brute_force"]["http_auth"]["tested"], 1)
+        # A connection failure means the credential was never reached by the
+        # server, so it must NOT be counted as tested -- it is a connection
+        # error instead.
+        http_auth = obj.results["data"]["brute_force"]["http_auth"]
+        self.assertEqual(http_auth["tested"], 0)
+        self.assertEqual(http_auth["connection_errors"], 1)
+        self.assertEqual(len(_findings(obj)), 0)
+
+    def test_unreachable_precheck_aborts_without_testing(self):
+        """If the enforcement pre-check cannot reach the server, the brute is
+        skipped entirely rather than reporting untested pairs."""
+        obj = _make_instance()
+        obj.scanner._connect_with_auth.return_value = None
+        obj.scanner._last_probe_reason = "connection"
+
+        obj._brute_force_http_auth(["admin"], ["a", "b", "c"])
+
+        # Only the pre-check runs; no credentials are attempted.
+        self.assertEqual(obj.scanner._connect_with_auth.call_count, 1)
+        http_auth = obj.results["data"]["brute_force"]["http_auth"]
+        self.assertTrue(http_auth["aborted"])
+        self.assertEqual(http_auth["tested"], 0)
+        self.assertEqual(len(_findings(obj)), 0)
+
+    def test_aborts_after_consecutive_connection_errors(self):
+        """A server that dies mid-run stops the brute after N consecutive
+        connection failures; untested pairs are not counted as tested."""
+        obj = _make_instance()
+        calls = {"n": 0}
+
+        def side_effect(url, auth):
+            calls["n"] += 1
+            # First call is the enforcement pre-check: endpoint is enforcing
+            # (rejects the bogus cred). After that the server is unreachable.
+            obj.scanner._last_probe_reason = "auth" if calls["n"] == 1 else "connection"
+            return None
+
+        obj.scanner._connect_with_auth.side_effect = side_effect
+        obj.args.continue_on_success = True
+
+        obj._brute_force_http_auth(["admin"], [f"p{i}" for i in range(50)])
+
+        http_auth = obj.results["data"]["brute_force"]["http_auth"]
+        self.assertTrue(http_auth["aborted"])
+        self.assertEqual(http_auth["tested"], 0)
+        self.assertEqual(http_auth["connection_errors"], 5)
         self.assertEqual(len(_findings(obj)), 0)
 
 
