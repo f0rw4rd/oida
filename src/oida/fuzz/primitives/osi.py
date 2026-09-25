@@ -23,11 +23,11 @@ from oida.utils.exceptions import ProtocolError
 TPKT_MAX_PAYLOAD_LENGTH = 65531
 
 # ISO 8327-1: both the outer SPDU length indicator (LI) and the PI=0xC1
-# user-data sub-parameter length use a 1-byte short form for values below
-# 254, and a long form (marker octet 0xFF followed by a 2-byte big-endian
-# length) above that. The 2-byte length field itself caps the representable
-# length at 65535.
-ISO8327_SHORT_LI_LIMIT = 254
+# user-data sub-parameter length use a 1-byte short form for values 0-254,
+# and a long form (marker octet 0xFF followed by a 2-byte big-endian length)
+# for 255 and above. 0xFF is the only reserved LI value. The 2-byte length
+# field itself caps the representable length at 65535.
+ISO8327_SHORT_LI_LIMIT = 255
 ISO8327_LONG_LI_MARKER = 0xFF
 ISO8327_MAX_LONG_LENGTH = 0xFFFF
 
