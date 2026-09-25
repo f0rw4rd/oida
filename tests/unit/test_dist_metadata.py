@@ -14,7 +14,10 @@ import pytest
 
 from oida.utils.lazy_import import PROTOCOL_DEPENDENCIES, dist_name
 
-pytestmark = pytest.mark.core
+# version_sensitive: importlib.metadata resolution is a packaging-layer
+# behaviour that can differ across interpreters, so run it on every matrix
+# Python, not only the canonical lane.
+pytestmark = [pytest.mark.core, pytest.mark.version_sensitive]
 
 
 def test_dist_name_resolves_to_an_installed_distribution():

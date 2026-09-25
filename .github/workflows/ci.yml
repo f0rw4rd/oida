@@ -78,12 +78,32 @@ jobs:
         run: uv run python scripts/quality/mypy_gate.py
 
   test:
-    name: Tests (Python ${{ matrix.python-version }})
+    name: Tests (Python ${{ matrix.python-version }}, ${{ matrix.scope }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        # The full unit suite is ~13k pure-Python tests that behave identically
+        # on every interpreter; running all of it on all five versions was five
+        # copies of the same result and the slowest thing in CI. Instead: one
+        # CANONICAL lane runs everything, and every other version runs a curated
+        # cross-version SUBSET — the `-m version_sensitive` tests (packaging/
+        # metadata, stdlib API, asyncio/mock timing), the import-smoke that
+        # imports every oida module (catches syntax/stdlib breaks on new/old
+        # Pythons), and the repo-invariant contracts. Anything genuinely
+        # version-dependent MUST carry the `version_sensitive` marker to be
+        # exercised off the canonical lane — see pyproject.toml.
+        include:
+          - python-version: "3.13"  # canonical: whole suite runs here
+            scope: full
+          - python-version: "3.10"
+            scope: subset
+          - python-version: "3.11"
+            scope: subset
+          - python-version: "3.12"
+            scope: subset
+          - python-version: "3.14"
+            scope: subset
     steps:
       - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
         with:
@@ -105,7 +125,8 @@ jobs:
         # lockfile-drift contract test, but belt-and-braces here too).
         run: uv sync --all-extras --frozen
 
-      - name: Unit tests
+      - name: Full unit & contract suite (canonical Python)
+        if: matrix.scope == 'full'
         # tests/unit/pcap/ and tests/unit/fuzz/test_tshark_validation.py shell
         # out to the real tshark binary and assert on its dissector output, so
         # they are integration-grade and sensitive to the runner's tshark
@@ -115,12 +136,33 @@ jobs:
         # rather than a skip — and run in the `pcap` job with a pinned tshark.
         # tests/contracts/ are fast static repo-invariant guards (confirm-gate,
         # credential-leak, dead-import resolution, …) — run them here so they
-        # actually gate PRs.
+        # actually gate PRs. -n auto --dist worksteal parallelises across cores.
         run: >-
           uv run pytest tests/unit/ tests/contracts/
           --ignore=tests/unit/pcap
           --ignore=tests/unit/fuzz/test_tshark_validation.py
-          -x -q --timeout=15
+          -n auto --dist worksteal -q --timeout=15
+
+      - name: Cross-version subset (non-canonical Python)
+        if: matrix.scope == 'subset'
+        # Two invocations because contracts are unmarked repo-invariants (run
+        # them wholesale) while the unit lane is filtered to -m version_sensitive
+        # so only interpreter-divergent behaviour + import-smoke run here. bash
+        # -e (GitHub default) fails the job if either call fails.
+        #
+        # --ignore=tests/unit/dnp3: those modules do `opendnp3 = require_import(
+        # "opendnp3")` at import time, which HARD-FAILS at collection (service_gate
+        # is strict) on any lane where the dnp3 extra can't install — notably 3.14,
+        # whose only gap is yadnp3 having no cp314 wheel. The dnp3 tests aren't
+        # version_sensitive so nothing is deselected by skipping them; the canonical
+        # `full` lane (opendnp3 present) still runs them.
+        run: |
+          uv run pytest tests/contracts/ -q --timeout=15
+          uv run pytest tests/unit/ -m version_sensitive \
+            --ignore=tests/unit/pcap \
+            --ignore=tests/unit/fuzz/test_tshark_validation.py \
+            --ignore=tests/unit/dnp3 \
+            -n auto --dist worksteal -q --timeout=15
 
   pcap:
     name: Dissector tests (pinned tshark)

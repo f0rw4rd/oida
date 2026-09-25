@@ -27,6 +27,11 @@ from pathlib import Path
 
 import pytest
 
+# tomllib is stdlib only on 3.11+ (tomli backport on 3.10) and metadata lookup
+# is exactly the kind of packaging behaviour that shifts between interpreters,
+# so this suite runs on every matrix Python, not just the canonical lane.
+pytestmark = pytest.mark.version_sensitive
+
 REPO_ROOT = Path(__file__).resolve().parents[2]
 
 # Any importlib.metadata accessor called with the *import* package name.
