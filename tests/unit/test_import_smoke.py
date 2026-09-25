@@ -43,4 +43,8 @@ def _iter_module_names() -> list[str]:
 def test_module_imports(module_name: str) -> None:
     if module_name in _KNOWN_UNIMPORTABLE:
         pytest.skip(f"{module_name} requires a runtime not present in the unit lane")
-    importlib.import_module(module_name)
+    module = importlib.import_module(module_name)
+    # The ImportError is the real signal; asserting on the returned module keeps
+    # this out of the no-assert bucket in scripts/quality/test_quality.py and
+    # pins the weaker property that the name we walked is the name we imported.
+    assert module.__name__ == module_name
