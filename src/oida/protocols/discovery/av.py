@@ -252,7 +252,9 @@ class ArtNetScanner:
         long_name = self._asciiz(data[self._OFF_LONGNAME : self._OFF_LONGNAME + 64])
         mac = ":".join(f"{b:02x}" for b in data[self._OFF_MAC : self._OFF_MAC + 6])
         oem = struct.unpack_from(">H", data, self._OFF_OEM)[0]
-        esta = struct.unpack_from(">H", data, self._OFF_ESTA)[0]
+        # ArtPollReply sends OemHi/OemLo but EstaManLo/EstaManHi: the ESTA code
+        # is the one little-endian field in the reply.
+        esta = struct.unpack_from("<H", data, self._OFF_ESTA)[0]
 
         artnet_data: Dict[str, Any] = {
             "short_name": short_name,
