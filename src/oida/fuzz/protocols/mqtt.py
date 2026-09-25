@@ -561,14 +561,17 @@ class MQTTFuzzer(StatefulFuzzer):
                 Group(
                     "Length_Payload",
                     values=[
-                        # 64 bytes payload
+                        # Remaining length is the varint for 2 + 4 + N: the
+                        # 2-byte topic length, the "test" topic, and N payload
+                        # bytes. QoS 0, so there is no packet identifier.
+                        # 64 bytes payload -> 70
                         b"\x46\x00\x04test" + b"A" * 64,
-                        # 256 bytes payload
-                        b"\x82\x02\x00\x04test" + b"A" * 256,
-                        # 1024 bytes payload
-                        b"\x88\x08\x00\x04test" + b"A" * 1024,
-                        # 4096 bytes payload
-                        b"\xa0\x20\x00\x04test" + b"A" * 4096,
+                        # 256 bytes payload -> 262
+                        b"\x86\x02\x00\x04test" + b"A" * 256,
+                        # 1024 bytes payload -> 1030
+                        b"\x86\x08\x00\x04test" + b"A" * 1024,
+                        # 4096 bytes payload -> 4102
+                        b"\x86\x20\x00\x04test" + b"A" * 4096,
                     ],
                 ),
             ),

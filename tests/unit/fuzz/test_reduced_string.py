@@ -206,6 +206,32 @@ class TestReductionLevels:
         ReducedString.set_reduction_level("balanced")
         assert ReducedString.reduction_level == "balanced"
 
+    def test_switch_back_to_balanced_restores_the_corpus(self):
+        """The reset must restore the payload lists, not just the level string.
+
+        The aggressive branch overwrites the class attributes in place, so a
+        reset that read them back left the corpus stuck at ~38 mutations
+        process-globally.
+        """
+        balanced_total = ReducedString.get_stats()["total_per_field"]
+        ReducedString.set_reduction_level("aggressive")
+        assert ReducedString.get_stats()["total_per_field"] < balanced_total
+
+        ReducedString.set_reduction_level("balanced")
+        assert ReducedString._fuzz_library == self._original_fuzz_library
+        assert ReducedString.long_string_seeds == self._original_seeds
+        assert ReducedString._long_string_lengths == self._original_lengths
+        assert ReducedString._long_string_deltas == self._original_deltas
+        assert ReducedString.get_stats()["total_per_field"] == balanced_total
+
+    def test_balanced_restore_survives_two_round_trips(self):
+        """A second aggressive->balanced cycle must not shrink the corpus again."""
+        balanced_total = ReducedString.get_stats()["total_per_field"]
+        for _ in range(2):
+            ReducedString.set_reduction_level("aggressive")
+            ReducedString.set_reduction_level("balanced")
+            assert ReducedString.get_stats()["total_per_field"] == balanced_total
+
     def test_invalid_level_raises(self):
         with pytest.raises(ValueError, match="Unknown reduction level"):
             ReducedString.set_reduction_level("turbo")

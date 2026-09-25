@@ -87,7 +87,9 @@ def _artpollreply(ip, short_name: bytes, long_name: bytes, mac: bytes, oem=0x01A
     buf[10:14] = bytes(int(x) for x in ip.split("."))
     struct.pack_into("<H", buf, 14, 0x1936)  # Port 6454
     struct.pack_into(">H", buf, 20, oem)
-    struct.pack_into(">H", buf, 24, esta)
+    # EstaManLo/EstaManHi: the ESTA code is little-endian on the wire, unlike
+    # the OemHi/OemLo field just above it.
+    struct.pack_into("<H", buf, 24, esta)
     buf[26 : 26 + len(short_name)] = short_name
     buf[44 : 44 + len(long_name)] = long_name
     buf[201:207] = mac
