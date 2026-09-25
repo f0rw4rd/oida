@@ -9,6 +9,7 @@ Only socket I/O is mocked (via the autouse ``mock_netifaces`` fixture and
 local socket fakes); all parse/merge logic runs for real.
 """
 
+import itertools
 import socket
 import struct
 import threading
@@ -22,6 +23,12 @@ from oida.protocols.discovery.ics import (
     CODESYSScanner,
     KNXScanner,
 )
+
+# The scan-loop tests here drive mock clocks (itertools.count) and iterator-backed
+# sockets whose exhaustion semantics and asyncio/timeout interactions have already
+# broken differently across 3.10 vs newer interpreters, so exercise this module on
+# every matrix Python lane, not just the canonical one.
+pytestmark = pytest.mark.version_sensitive
 
 
 # ---------------------------------------------------------------------------
@@ -441,17 +448,23 @@ class TestKNXScanLoop:
 
         mock_sock = MagicMock()
         mock_sock.getsockname.return_value = ("192.168.1.100", 5000)
-        mock_sock.recvfrom.side_effect = [
-            (response, ("192.168.1.200", 3671)),
-            TimeoutError(),
-            TimeoutError(),
-        ]
+        mock_sock.recvfrom.side_effect = itertools.chain(
+            [(response, ("192.168.1.200", 3671))],
+            itertools.repeat(TimeoutError()),
+        )
 
         with (
             patch("oida.protocols.discovery.ics.create_udp_socket", return_value=mock_sock),
             patch("oida.protocols.discovery.ics.get_interface_ip", return_value="192.168.1.100"),
             patch("oida.protocols.discovery.ics.sendto") as mock_sendto,
-            patch("oida.protocols.discovery.ics.time.time", side_effect=[0, 0, 0.5, 2.0]),
+            patch(
+                "oida.protocols.discovery.ics.time.time",
+                # Strictly increasing, unbounded clock: guarantees every scan
+                # loop (including multi-port loops that re-capture start_time)
+                # terminates regardless of how many time.time() calls a given
+                # Python version makes, without ever exhausting the iterator.
+                side_effect=itertools.count(0.0, 0.3),
+            ),
         ):
             devices = scanner.scan()
 
@@ -471,10 +484,10 @@ class TestBACnetScanLoop:
         response = build_bacnet_i_am(device_instance=7777, vendor_id=15)
 
         mock_sock = MagicMock()
-        mock_sock.recvfrom.side_effect = [
-            (response, ("192.168.1.210", 47808)),
-            TimeoutError(),
-        ]
+        mock_sock.recvfrom.side_effect = itertools.chain(
+            [(response, ("192.168.1.210", 47808))],
+            itertools.repeat(TimeoutError()),
+        )
 
         with (
             patch("oida.protocols.discovery.ics.create_udp_socket", return_value=mock_sock),
@@ -483,7 +496,14 @@ class TestBACnetScanLoop:
                 return_value=["192.168.1.255"],
             ),
             patch("oida.protocols.discovery.ics.sendto") as mock_sendto,
-            patch("oida.protocols.discovery.ics.time.time", side_effect=[0, 0, 0.5, 2.0]),
+            patch(
+                "oida.protocols.discovery.ics.time.time",
+                # Strictly increasing, unbounded clock: guarantees every scan
+                # loop (including multi-port loops that re-capture start_time)
+                # terminates regardless of how many time.time() calls a given
+                # Python version makes, without ever exhausting the iterator.
+                side_effect=itertools.count(0.0, 0.3),
+            ),
         ):
             devices = scanner.scan()
 
@@ -498,11 +518,13 @@ class TestADSScanLoop:
         response = build_ads_response(hostname="ADS-Live")
 
         mock_sock = MagicMock()
-        mock_sock.recvfrom.side_effect = [
-            (response, ("10.1.1.1", 48899)),
-            (response, ("10.1.1.1", 48899)),  # duplicate IP -> ignored
-            TimeoutError(),
-        ]
+        mock_sock.recvfrom.side_effect = itertools.chain(
+            [
+                (response, ("10.1.1.1", 48899)),
+                (response, ("10.1.1.1", 48899)),  # duplicate IP -> ignored
+            ],
+            itertools.repeat(TimeoutError()),
+        )
 
         with (
             patch("oida.protocols.discovery.ics.create_udp_socket", return_value=mock_sock),
@@ -511,7 +533,10 @@ class TestADSScanLoop:
                 return_value=["10.1.1.255"],
             ),
             patch("oida.protocols.discovery.ics.sendto"),
-            patch("oida.protocols.discovery.ics.time.time", side_effect=[0, 0, 0.3, 0.6, 2.0]),
+            patch(
+                "oida.protocols.discovery.ics.time.time",
+                side_effect=itertools.count(0.0, 0.3),
+            ),
         ):
             devices = scanner.scan()
 
@@ -533,10 +558,10 @@ class TestCODESYSScanLoop:
         response = build_codesys_response(device_name="CODESYS Control Win V3")
 
         mock_sock = MagicMock()
-        mock_sock.recvfrom.side_effect = [
-            (response, ("10.2.2.2", 1740)),
-            TimeoutError(),
-        ]
+        mock_sock.recvfrom.side_effect = itertools.chain(
+            [(response, ("10.2.2.2", 1740))],
+            itertools.repeat(TimeoutError()),
+        )
 
         with (
             patch("oida.protocols.discovery.ics.create_udp_socket", return_value=mock_sock),
@@ -546,7 +571,14 @@ class TestCODESYSScanLoop:
             ),
             patch("oida.protocols.discovery.ics.sendto"),
             patch("oida.protocols.discovery.ics.time.sleep"),
-            patch("oida.protocols.discovery.ics.time.time", side_effect=[0, 0, 0.5, 2.0]),
+            patch(
+                "oida.protocols.discovery.ics.time.time",
+                # Strictly increasing, unbounded clock: guarantees every scan
+                # loop (including multi-port loops that re-capture start_time)
+                # terminates regardless of how many time.time() calls a given
+                # Python version makes, without ever exhausting the iterator.
+                side_effect=itertools.count(0.0, 0.3),
+            ),
         ):
             devices = scanner.scan()
 

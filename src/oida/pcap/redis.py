@@ -377,7 +377,7 @@ class RedisPassiveListener(WriteOpsHarvestMixin, PySharkListenerBase):
 
             values = self._parse_bulk_values(bulk_string_value)
             preview = values[0][:60] if values else "?"
-            details: Dict[str, Any] = {
+            details = {
                 "response_type": "bulk_string",
                 "value": preview,
             }

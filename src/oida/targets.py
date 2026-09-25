@@ -411,7 +411,7 @@ def parse_ip_range(ip_range: str) -> List[str]:
         raise ValueError(f"Invalid IP address in range '{ip_range}': {e}")
 
 
-def parse_target_file(filepath: str, _visited_files: set = None) -> List[str]:
+def parse_target_file(filepath: str, _visited_files: Optional[set] = None) -> List[str]:
     """
     Parse targets from a file
 

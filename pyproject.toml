@@ -32,6 +32,8 @@ classifiers = [
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Operating System :: OS Independent",
     "Environment :: Console",
 ]
@@ -290,6 +292,7 @@ filterwarnings = [
 ]
 markers = [
     "smoke: fast structural tests that verify basic wiring, args, and constants (select with '-m smoke')",
+    "version_sensitive: behavior that can diverge across Python versions (packaging/metadata, stdlib API, asyncio/mock timing). The canonical matrix lane runs the whole suite; the other Python lanes run only '-m version_sensitive' + tests/contracts + import-smoke, so anything genuinely version-dependent MUST carry this marker to be exercised on 3.10/3.11/3.12/3.14.",
     "flaky: timing-sensitive against a shared mock; auto-retried (pytest-rerunfailures). NOT for code bugs",
     "slow: marks tests as slow running (deselect with '-m \"not slow\"')",
     "network: marks tests requiring network access",

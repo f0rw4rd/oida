@@ -2,7 +2,7 @@ name: PR quick check
 
 # Manual-only (to conserve Actions minutes): run from the Actions tab or
 # `gh workflow run pr.yml`. Runs lint (seconds) + unit/contract tests on a
-# single Python version; the full 3.10/3.11/3.12 matrix lives in ci.yml.
+# single Python version; the full 3.10-3.14 matrix lives in ci.yml.
 on:
   workflow_dispatch:
 

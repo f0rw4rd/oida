@@ -66,6 +66,11 @@ jobs:
   quality:
     name: CI
     uses: ./.github/workflows/ci.yml
+    # run_heavy: release is the gate that runs the full suite — the ~60 min
+    # docker-mock integration job and the pinned-tshark pcap job that push/PR
+    # skip. Publishing must not happen on a green-but-partial run.
+    with:
+      run_heavy: true
     permissions:
       contents: read
 

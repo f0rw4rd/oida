@@ -4,6 +4,9 @@
 # Bug-hunt campaign scratch notes — local working material, never ship
 .bughunt/
 
+# Release working checklist — local maintainer scratch, not part of the tree
+/RELEASE_CHECKLIST.md
+
 # Core dumps. Anchored and suffixed so it can never swallow a future core.py
 # or a core/ package directory.
 /core

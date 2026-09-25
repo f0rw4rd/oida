@@ -7,8 +7,24 @@ on:
   push:
     branches: [main]
   pull_request:
+  # The heavy jobs (integration, ~60 min docker-mock suite; pcap, pinned-tshark
+  # dissector tests) are gated behind `run_heavy` so a push to main or a PR —
+  # even a README-only change — runs only lint + the fast unit/contract matrix
+  # (minutes), not ~2h of CI. run_heavy is passed true by the release gate and
+  # defaults true for manual dispatch; on push/PR the `inputs` context is empty
+  # (falsy), so integration/pcap skip. See the `if:` on those jobs below.
   workflow_dispatch:
+    inputs:
+      run_heavy:
+        description: "Run the heavy integration + pcap jobs too"
+        type: boolean
+        default: true
   workflow_call:  # Allow release.yml to reuse this as a pre-publish quality gate
+    inputs:
+      run_heavy:
+        description: "Run the heavy integration + pcap jobs (release passes true)"
+        type: boolean
+        default: false
 
 permissions:
   contents: read
@@ -78,12 +94,45 @@ jobs:
         run: uv run python scripts/quality/mypy_gate.py
 
   test:
-    name: Tests (Python ${{ matrix.python-version }})
+    name: Tests (Python ${{ matrix.python-version }}, ${{ matrix.scope }})
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        python-version: ["3.10", "3.11", "3.12"]
+        # The full unit suite is ~13k pure-Python tests that behave identically
+        # on every interpreter; running all of it on all five versions was five
+        # copies of the same result and the slowest thing in CI. Instead: one
+        # CANONICAL lane runs everything, and every other version runs a curated
+        # cross-version SUBSET — the `-m version_sensitive` tests (packaging/
+        # metadata, stdlib API, asyncio/mock timing), the import-smoke that
+        # imports every oida module (catches syntax/stdlib breaks on new/old
+        # Pythons), and the repo-invariant contracts. Anything genuinely
+        # version-dependent MUST carry the `version_sensitive` marker to be
+        # exercised off the canonical lane — see pyproject.toml.
+        #
+        # `extras` selects which optional-dependency groups uv installs. Every
+        # lane wants them all EXCEPT 3.14, where the dnp3 extra's yadnp3 has no
+        # cp314 wheel yet and its sdist build is broken upstream. `--all-extras`
+        # alone won't drop it (the `all` meta-extra re-pulls it), so 3.14 uses
+        # `--no-extra all --no-extra dnp3` to install every other protocol on
+        # 3.14 while skipping only DNP3. Drop this special-case once yadnp3
+        # ships a cp314 wheel.
+        include:
+          - python-version: "3.13"  # canonical: whole suite runs here
+            scope: full
+            extras: "--all-extras"
+          - python-version: "3.10"
+            scope: subset
+            extras: "--all-extras"
+          - python-version: "3.11"
+            scope: subset
+            extras: "--all-extras"
+          - python-version: "3.12"
+            scope: subset
+            extras: "--all-extras"
+          - python-version: "3.14"
+            scope: subset
+            extras: "--all-extras --no-extra all --no-extra dnp3"
     steps:
       - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
         with:
@@ -99,13 +148,15 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Sync environment from lockfile
-        # `uv sync --all-extras` materializes EXACT versions from uv.lock —
-        # the same set every CI run, every dev box. --frozen errors if
-        # uv.lock is out of date vs pyproject.toml (caught by the
-        # lockfile-drift contract test, but belt-and-braces here too).
-        run: uv sync --all-extras --frozen
+        # `uv sync <extras>` materializes EXACT versions from uv.lock — the same
+        # set every CI run, every dev box. --frozen errors if uv.lock is out of
+        # date vs pyproject.toml (caught by the lockfile-drift contract test, but
+        # belt-and-braces here too). matrix.extras is --all-extras everywhere
+        # except 3.14 (see the matrix comment: yadnp3/dnp3 has no cp314 wheel).
+        run: uv sync ${{ matrix.extras }} --frozen
 
-      - name: Unit tests
+      - name: Full unit & contract suite (canonical Python)
+        if: matrix.scope == 'full'
         # tests/unit/pcap/ and tests/unit/fuzz/test_tshark_validation.py shell
         # out to the real tshark binary and assert on its dissector output, so
         # they are integration-grade and sensitive to the runner's tshark
@@ -115,15 +166,39 @@ jobs:
         # rather than a skip — and run in the `pcap` job with a pinned tshark.
         # tests/contracts/ are fast static repo-invariant guards (confirm-gate,
         # credential-leak, dead-import resolution, …) — run them here so they
-        # actually gate PRs.
+        # actually gate PRs. -n auto --dist worksteal parallelises across cores.
         run: >-
           uv run pytest tests/unit/ tests/contracts/
           --ignore=tests/unit/pcap
           --ignore=tests/unit/fuzz/test_tshark_validation.py
-          -x -q --timeout=15
+          -n auto --dist worksteal -q --timeout=15
+
+      - name: Cross-version subset (non-canonical Python)
+        if: matrix.scope == 'subset'
+        # Two invocations because contracts are unmarked repo-invariants (run
+        # them wholesale) while the unit lane is filtered to -m version_sensitive
+        # so only interpreter-divergent behaviour + import-smoke run here. bash
+        # -e (GitHub default) fails the job if either call fails.
+        #
+        # --ignore=tests/unit/dnp3: those modules do `opendnp3 = require_import(
+        # "opendnp3")` at import time, which HARD-FAILS at collection (service_gate
+        # is strict) on any lane where the dnp3 extra can't install — notably 3.14,
+        # whose only gap is yadnp3 having no cp314 wheel. The dnp3 tests aren't
+        # version_sensitive so nothing is deselected by skipping them; the canonical
+        # `full` lane (opendnp3 present) still runs them.
+        run: |
+          uv run pytest tests/contracts/ -q --timeout=15
+          uv run pytest tests/unit/ -m version_sensitive \
+            --ignore=tests/unit/pcap \
+            --ignore=tests/unit/fuzz/test_tshark_validation.py \
+            --ignore=tests/unit/dnp3 \
+            -n auto --dist worksteal -q --timeout=15
 
   pcap:
     name: Dissector tests (pinned tshark)
+    # Heavy/slow: runs only on release (workflow_call passes run_heavy) and
+    # manual dispatch. Skipped on push/PR, where inputs.run_heavy is empty.
+    if: ${{ inputs.run_heavy }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
@@ -157,6 +232,9 @@ jobs:
 
   integration:
     name: Integration (docker mocks)
+    # Heavy/slow (~60 min): runs only on release (workflow_call passes
+    # run_heavy) and manual dispatch. Skipped on push/PR.
+    if: ${{ inputs.run_heavy }}
     runs-on: ubuntu-latest
     # 5,448 tests that ran in no workflow before this job existed — the mock
     # stack makes them too heavy for the unit lane but they are the only
