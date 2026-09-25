@@ -261,6 +261,561 @@ class TestPushCommand:
         m.assert_not_called()
 
 
+class TestPushLatestDrift:
+    """push must repair a stale `:latest`, not just skip the image as present.
+
+    Presence of the content tag is what makes push skip an image, and that says
+    nothing about where `:latest` resolves — so a drifted tag would otherwise be
+    reported by `stale` forever and never fixed by `push`.
+    """
+
+    BASE = "reg.example/img-a"
+    HASH = "deadbeef1234"
+
+    def _setup(self, monkeypatch, tmp_path, *, digests, retag_rc=0):
+        """Run cmd_push against one already-published image. Returns the recorded argv."""
+        monkeypatch.setattr(dev, "_load_dotenv", lambda: None)
+        monkeypatch.setenv("OIDA_REGISTRY", "reg.example")
+        monkeypatch.setattr(dev, "_get_compose_config", lambda *a, **k: {})
+        monkeypatch.setattr(dev, "_image_tags", lambda cfg: {self.BASE: self.HASH})
+        monkeypatch.setattr(dev, "_registry_has", lambda ref: True)  # already published
+        monkeypatch.setattr(dev, "_registry_digest", lambda ref: digests.get(ref))
+        monkeypatch.setattr(dev, "_context_is_dirty", lambda ctx: False)
+
+        bake = {
+            "target": {
+                "t1": {
+                    "tags": [f"{self.BASE}:latest"],
+                    "context": str(tmp_path),
+                    "dockerfile": "Dockerfile",
+                }
+            }
+        }
+        calls: list[list[str]] = []
+
+        def fake_run(cmd, **kwargs):
+            calls.append(cmd)
+            if "--print" in cmd:
+                return SimpleNamespace(returncode=0, stdout=json.dumps(bake), stderr="")
+            if "imagetools" in cmd:
+                return SimpleNamespace(returncode=retag_rc, stdout="", stderr="boom")
+            return SimpleNamespace(returncode=0, stdout="", stderr="")
+
+        monkeypatch.setattr(dev, "_run", fake_run)
+        rc = dev.cmd_push(SimpleNamespace(batch=10, force=False))
+        return rc, calls
+
+    @staticmethod
+    def _retags(calls):
+        return [c for c in calls if "imagetools" in c]
+
+    def test_drifted_latest_is_repointed_at_the_content_tag(self, monkeypatch, tmp_path):
+        rc, calls = self._setup(
+            monkeypatch,
+            tmp_path,
+            digests={
+                f"{self.BASE}:{self.HASH}": "sha256:new",
+                f"{self.BASE}:latest": "sha256:old",
+            },
+        )
+        assert rc == 0
+        retags = self._retags(calls)
+        assert len(retags) == 1
+        # Re-tag in place — copying the published manifest, never a rebuild.
+        assert retags[0] == [
+            "docker",
+            "buildx",
+            "imagetools",
+            "create",
+            "-t",
+            f"{self.BASE}:latest",
+            f"{self.BASE}:{self.HASH}",
+        ]
+
+    def test_aligned_latest_is_left_alone(self, monkeypatch, tmp_path, capsys):
+        rc, calls = self._setup(
+            monkeypatch,
+            tmp_path,
+            digests={
+                f"{self.BASE}:{self.HASH}": "sha256:same",
+                f"{self.BASE}:latest": "sha256:same",
+            },
+        )
+        assert rc == 0
+        assert self._retags(calls) == []
+        assert "already up to date" in capsys.readouterr().out
+
+    def test_unreadable_digest_is_not_treated_as_drift(self, monkeypatch, tmp_path):
+        """A probe that merely failed must never trigger a write to the registry."""
+        rc, calls = self._setup(monkeypatch, tmp_path, digests={})
+        assert rc == 0
+        assert self._retags(calls) == []
+
+    def test_failed_retag_fails_the_command(self, monkeypatch, tmp_path):
+        rc, calls = self._setup(
+            monkeypatch,
+            tmp_path,
+            digests={
+                f"{self.BASE}:{self.HASH}": "sha256:new",
+                f"{self.BASE}:latest": "sha256:old",
+            },
+            retag_rc=1,
+        )
+        assert rc == 1
+        assert len(self._retags(calls)) == 1
+
+
+# ---------------------------------------------------------------------------
+# stale command / registry probing Tests
+# ---------------------------------------------------------------------------
+
+
+@pytest.mark.smoke
+class TestRegistryProbe:
+    """_registry_probe must distinguish 'absent' from 'unreadable'."""
+
+    def _probe_with(self, monkeypatch, returncode, stderr):
+        monkeypatch.setattr(dev.time, "sleep", lambda s: None)  # skip the retry backoff
+        monkeypatch.setattr(
+            dev,
+            "_run",
+            lambda *a, **k: SimpleNamespace(returncode=returncode, stdout="", stderr=stderr),
+        )
+        return dev._registry_probe("reg/img:tag")
+
+    def test_present_on_success(self, monkeypatch):
+        assert self._probe_with(monkeypatch, 0, "") == dev.PROBE_PRESENT
+
+    def test_absent_only_on_manifest_unknown(self, monkeypatch):
+        """'manifest unknown' means the repo is readable and the tag truly isn't there."""
+        assert self._probe_with(monkeypatch, 1, "manifest unknown") == dev.PROBE_ABSENT
+        assert self._probe_with(monkeypatch, 1, "errors: not found") == dev.PROBE_ABSENT
+
+    def test_denied_is_not_absent(self, monkeypatch):
+        """A private repo with no login answers exactly like a nonexistent one.
+
+        Treating 'denied' as absence would report published images as never-pushed
+        and abort a release over a missing `docker login`.
+        """
+        assert self._probe_with(monkeypatch, 1, "denied: denied") == dev.PROBE_DENIED
+        assert self._probe_with(monkeypatch, 1, "unauthorized") == dev.PROBE_DENIED
+        assert self._probe_with(monkeypatch, 1, "i/o timeout") == dev.PROBE_DENIED
+
+    def test_retries_once_before_reporting_denied(self, monkeypatch):
+        """A throttled reply looks exactly like a denial, so re-ask once.
+
+        Observed live: an image that answers on its own probed 'denied' under
+        48-way concurrency.
+        """
+        monkeypatch.setattr(dev.time, "sleep", lambda s: None)
+        calls = []
+
+        def _run(*a, **k):
+            calls.append(1)
+            rc = 1 if len(calls) == 1 else 0
+            return SimpleNamespace(returncode=rc, stdout="", stderr="denied" if rc else "")
+
+        monkeypatch.setattr(dev, "_run", _run)
+        assert dev._registry_probe("reg/img:tag") == dev.PROBE_PRESENT
+        assert len(calls) == 2
+
+    def test_absent_is_not_retried(self, monkeypatch):
+        """'manifest unknown' is definitive — no point paying for a second probe."""
+        monkeypatch.setattr(dev.time, "sleep", lambda s: None)
+        calls = []
+
+        def _run(*a, **k):
+            calls.append(1)
+            return SimpleNamespace(returncode=1, stdout="", stderr="manifest unknown")
+
+        monkeypatch.setattr(dev, "_run", _run)
+        assert dev._registry_probe("reg/img:tag") == dev.PROBE_ABSENT
+        assert len(calls) == 1
+
+    def test_registry_has_collapses_to_present(self, monkeypatch):
+        monkeypatch.setattr(dev.time, "sleep", lambda s: None)
+        for rc, err, expect in (
+            (0, "", True),
+            (1, "manifest unknown", False),
+            (1, "denied", False),
+        ):
+            monkeypatch.setattr(
+                dev,
+                "_run",
+                lambda *a, rc=rc, err=err, **k: SimpleNamespace(
+                    returncode=rc, stdout="", stderr=err
+                ),
+            )
+            assert dev._registry_has("reg/img:tag") is expect
+
+
+@pytest.mark.smoke
+class TestRegistryTags:
+    """_registry_tags reads the v2 tag catalogue; _repo_hash_tagged interprets it."""
+
+    class _Response:
+        """Minimal stand-in for the context-managed object urlopen returns.
+
+        A real class, not SimpleNamespace: `with` looks the dunders up on the type.
+        """
+
+        def __init__(self, payload):
+            self._body = json.dumps(payload).encode()
+
+        def read(self, *args):
+            return self._body
+
+        def __enter__(self):
+            return self
+
+        def __exit__(self, *args):
+            return False
+
+    @classmethod
+    def _response(cls, payload):
+        return cls._Response(payload)
+
+    def _patch_urlopen(self, monkeypatch, handler):
+        dev._registry_tags.cache_clear()  # lru_cached: a stale hit would mask the stub
+        monkeypatch.setattr(dev.urllib.request, "urlopen", handler)
+
+    def test_returns_tags_on_success(self, monkeypatch):
+        calls = []
+
+        def handler(req, timeout=None):
+            calls.append(getattr(req, "full_url", req))
+            return self._response({"tags": ["abc123", "latest"]})
+
+        self._patch_urlopen(monkeypatch, handler)
+        assert dev._registry_tags("ghcr.io/o/img") == ("abc123", "latest")
+        assert calls[0].startswith("https://ghcr.io/v2/o/img/tags/list")
+
+    def test_empty_catalogue_is_empty_not_unknown(self, monkeypatch):
+        """A repo with no tags is a fact; it must not be confused with an unreadable one."""
+        self._patch_urlopen(monkeypatch, lambda req, timeout=None: self._response({"tags": None}))
+        assert dev._registry_tags("ghcr.io/o/img") == ()
+
+    def test_unauthorized_triggers_token_exchange_then_retries(self, monkeypatch):
+        seen = []
+
+        def handler(req, timeout=None):
+            url = getattr(req, "full_url", req)
+            seen.append(url)
+            if url.startswith("https://auth.example"):
+                return self._response({"token": "t0ken"})
+            auth = req.get_header("Authorization") if hasattr(req, "get_header") else None
+            if auth is None:
+                raise dev.urllib.error.HTTPError(
+                    url,
+                    401,
+                    "unauthorized",
+                    {"WWW-Authenticate": 'Bearer realm="https://auth.example/token",service="reg"'},
+                    None,
+                )
+            assert auth == "Bearer t0ken"
+            return self._response({"tags": ["latest"]})
+
+        self._patch_urlopen(monkeypatch, handler)
+        assert dev._registry_tags("reg.example/o/img") == ("latest",)
+        assert any(u.startswith("https://auth.example/token?") for u in seen)
+
+    def test_http_error_is_unknown_not_empty(self, monkeypatch):
+        """403 on a private repo must read as "can't tell", never as "has no tags"."""
+
+        def handler(req, timeout=None):
+            raise dev.urllib.error.HTTPError(getattr(req, "full_url", req), 403, "denied", {}, None)
+
+        self._patch_urlopen(monkeypatch, handler)
+        assert dev._registry_tags("ghcr.io/o/img") is None
+
+    def test_network_failure_is_unknown(self, monkeypatch):
+        def handler(req, timeout=None):
+            raise dev.urllib.error.URLError("no route to host")
+
+        self._patch_urlopen(monkeypatch, handler)
+        assert dev._registry_tags("ghcr.io/o/img") is None
+
+    def test_bare_name_resolves_to_docker_hub_library(self, monkeypatch):
+        calls = []
+
+        def handler(req, timeout=None):
+            calls.append(getattr(req, "full_url", req))
+            return self._response({"tags": ["latest"]})
+
+        self._patch_urlopen(monkeypatch, handler)
+        dev._registry_tags("alpine")
+        assert calls[0].startswith("https://registry-1.docker.io/v2/library/alpine/tags/list")
+
+    @pytest.mark.parametrize(
+        ("tags", "expect"),
+        [
+            (("abc123", "latest"), True),
+            (("latest",), False),
+            ((), False),
+            (None, None),
+        ],
+    )
+    def test_repo_hash_tagged_interprets_the_catalogue(self, monkeypatch, tags, expect):
+        monkeypatch.setattr(dev, "_registry_tags", lambda repo: tags)
+        assert dev._repo_hash_tagged("ghcr.io/o/img") is expect
+
+
+@pytest.mark.smoke
+class TestDirtyContexts:
+    """_dirty_contexts maps `git status` output onto build contexts by path prefix."""
+
+    def _dirty(self, monkeypatch, porcelain, contexts):
+        monkeypatch.setattr(
+            dev,
+            "_run",
+            lambda *a, **k: SimpleNamespace(returncode=0, stdout=porcelain, stderr=""),
+        )
+        return dev._dirty_contexts(contexts)
+
+    def test_matches_file_under_context(self, monkeypatch):
+        ctx = str(dev.PROJECT_ROOT / "docker/mocks/services/modbus")
+        out = self._dirty(monkeypatch, " M docker/mocks/services/modbus/server.py\n", [ctx])
+        assert out == {ctx}
+
+    def test_sibling_prefix_does_not_match(self, monkeypatch):
+        """/ctx-other must not count as a change inside /ctx."""
+        ctx = str(dev.PROJECT_ROOT / "docker/mocks/services/ads")
+        other = " M docker/mocks/services/ads-twincat/server.py\n"
+        assert self._dirty(monkeypatch, other, [ctx]) == set()
+
+    def test_rename_uses_destination_path(self, monkeypatch):
+        ctx = str(dev.PROJECT_ROOT / "docker/mocks/services/knx")
+        line = "R  docker/mocks/services/old/a.py -> docker/mocks/services/knx/a.py\n"
+        assert self._dirty(monkeypatch, line, [ctx]) == {ctx}
+
+    def test_clean_tree_is_empty(self, monkeypatch):
+        ctx = str(dev.PROJECT_ROOT / "docker/mocks/services/knx")
+        assert self._dirty(monkeypatch, "", [ctx]) == set()
+
+    def test_git_failure_degrades_to_empty(self, monkeypatch):
+        monkeypatch.setattr(
+            dev, "_run", lambda *a, **k: SimpleNamespace(returncode=128, stdout="", stderr="")
+        )
+        assert dev._dirty_contexts(["/anything"]) == set()
+
+
+class TestStaleCommand:
+    """cmd_stale verdicts and exit codes.
+
+    Exit-code contract, relied on by scripts/release_check.sh step 8:
+    0 = current, 1 = outdated (abort the release), 2 = could not verify (skip).
+    """
+
+    HASH = "deadbeef1234"
+
+    def _setup(self, monkeypatch, images, *, probe, digest=None, local=None, dirty=(), tags=None):
+        """Wire cmd_stale to fake specs. *images* is a list of bare image names.
+
+        *tags* stubs the registry tag listing (``repo -> tuple | None``); the default
+        None stands for "could not read the tag list", which is also what keeps these
+        tests off the network.
+        """
+        specs = {
+            f"reg.example/{name}": {"context": f"/ctx/{name}", "services": [name]}
+            for name in images
+        }
+        monkeypatch.setenv("OIDA_REGISTRY", "reg.example")
+        monkeypatch.setattr(dev, "_load_dotenv", lambda: None)
+        monkeypatch.setattr(dev, "_check_docker", lambda: True)
+        monkeypatch.setattr(dev, "_get_compose_config", lambda *a, **k: {})
+        monkeypatch.setattr(dev, "_image_specs", lambda cfg: specs)
+        monkeypatch.setattr(dev, "_content_tag", lambda spec: self.HASH)
+        monkeypatch.setattr(dev, "_dirty_contexts", lambda ctxs: {f"/ctx/{d}" for d in dirty})
+        monkeypatch.setattr(dev, "_registry_probe", probe)
+        monkeypatch.setattr(dev, "_registry_digest", digest or (lambda ref: "sha256:same"))
+        monkeypatch.setattr(dev, "_local_ident", local or (lambda ref: None))
+        monkeypatch.setattr(dev, "_registry_tags", tags or (lambda repo: None))
+        return specs
+
+    def _run_json(self, capsys, **kwargs):
+        rc = dev.cmd_stale(SimpleNamespace(json=True, verbose=False, **kwargs))
+        payload = json.loads(capsys.readouterr().out)
+        return rc, payload
+
+    @staticmethod
+    def _both_present(ref):
+        return dev.PROBE_PRESENT
+
+    def test_current_exits_zero(self, monkeypatch, capsys):
+        self._setup(monkeypatch, ["m"], probe=self._both_present)
+        rc, payload = self._run_json(capsys, local=False)
+        assert rc == 0
+        assert payload["images"][0]["status"] == dev.STALE_OK
+        assert payload["outdated"] == 0
+
+    def test_missing_image_blocks(self, monkeypatch, capsys):
+        """No tag at all -> genuinely never published -> abort."""
+        self._setup(monkeypatch, ["m"], probe=lambda ref: dev.PROBE_ABSENT)
+        rc, payload = self._run_json(capsys, local=False)
+        assert rc == 1
+        assert payload["images"][0]["status"] == dev.STALE_MISSING
+
+    def test_latest_drift_blocks(self, monkeypatch, capsys):
+        """Hash tag exists but :latest points elsewhere — compose pins :latest."""
+        self._setup(
+            monkeypatch,
+            ["m"],
+            probe=self._both_present,
+            digest=lambda ref: "sha256:aa" if ref.endswith(self.HASH) else "sha256:bb",
+        )
+        rc, payload = self._run_json(capsys, local=False)
+        assert rc == 1
+        assert payload["images"][0]["status"] == dev.STALE_DRIFT
+
+    def test_probe_error_exits_two_not_one(self, monkeypatch, capsys):
+        """Unreadable registry is 'cannot verify' (skip), never 'outdated' (abort)."""
+        self._setup(monkeypatch, ["m"], probe=lambda ref: dev.PROBE_DENIED)
+        rc, payload = self._run_json(capsys, local=False)
+        assert rc == 2
+        assert payload["images"][0]["status"] == dev.STALE_PROBE_ERROR
+        assert payload["outdated"] == 0
+        assert payload["unverifiable"] == 1
+
+    def test_uncommitted_blocks_without_probing(self, monkeypatch, capsys):
+        """A dirty context can't match any published tag, so don't waste a probe."""
+
+        def _explode(ref):
+            raise AssertionError("must not probe a dirty context")
+
+        self._setup(monkeypatch, ["m"], probe=_explode, dirty=["m"])
+        rc, payload = self._run_json(capsys, local=False)
+        assert rc == 1
+        assert payload["images"][0]["status"] == dev.STALE_UNCOMMITTED
+
+    @staticmethod
+    def _latest_only(ref):
+        return dev.PROBE_PRESENT if ref.endswith(":latest") else dev.PROBE_ABSENT
+
+    def test_repo_with_only_latest_is_untagged_not_outdated(self, monkeypatch, capsys):
+        """A `:latest`-only publisher leaves nothing to compare the source against.
+
+        The registry says these repos were never content-tagged, so the missing hash
+        tag is not evidence of staleness — report it, don't abort the release.
+        """
+        self._setup(
+            monkeypatch,
+            ["a", "b"],
+            probe=self._latest_only,
+            tags=lambda repo: ("latest",),
+        )
+        rc, payload = self._run_json(capsys, local=False)
+        assert rc == 0
+        assert payload["hash_tagging_in_use"] is False
+        assert payload["counts"][dev.STALE_UNTAGGED] == 2
+        assert payload["outdated"] == 0
+
+    def test_hash_tagged_repo_missing_current_tag_blocks(self, monkeypatch, capsys):
+        """The case the gate exists for: `push` tagged this repo once, then it fell behind.
+
+        The old verdict-only heuristic missed it — an image whose *current* hash tag is
+        absent contributes no proof that tagging is in use, so a lone straggler looked
+        exactly like a repo that was never tagged. Reading the tag list settles it.
+        """
+        self._setup(
+            monkeypatch,
+            ["lagging"],
+            probe=self._latest_only,
+            tags=lambda repo: ("53b7a4bcd050", "latest"),
+        )
+        rc, payload = self._run_json(capsys, local=False)
+        assert rc == 1
+        assert payload["hash_tagging_in_use"] is True
+        assert payload["images"][0]["status"] == dev.STALE_UNPUBLISHED
+        assert payload["outdated"] == 1
+
+    def test_unreadable_tag_list_falls_back_to_the_sweep_heuristic(self, monkeypatch, capsys):
+        """No tag catalogue (private repo, registry without one) must not invent a verdict.
+
+        Unknown stays UNPUBLISHED and defers to whether hash tags showed up elsewhere;
+        with none, that is a warning rather than a failed release.
+        """
+        self._setup(monkeypatch, ["a", "b"], probe=self._latest_only, tags=lambda repo: None)
+        rc, payload = self._run_json(capsys, local=False)
+        assert rc == 0
+        assert payload["hash_tagging_in_use"] is False
+        assert payload["counts"][dev.STALE_UNPUBLISHED] == 2
+        assert payload["outdated"] == 0
+
+    def test_unpublished_blocks_once_hash_tags_are_in_use(self, monkeypatch, capsys):
+        """One current image proves hash tagging works -> the laggard is a real fail."""
+
+        def probe(ref):
+            if ref.startswith("reg.example/good"):
+                return dev.PROBE_PRESENT
+            return dev.PROBE_PRESENT if ref.endswith(":latest") else dev.PROBE_ABSENT
+
+        self._setup(monkeypatch, ["good", "lagging"], probe=probe)
+        rc, payload = self._run_json(capsys, local=False)
+        assert rc == 1
+        assert payload["hash_tagging_in_use"] is True
+        statuses = {r["image"]: r["status"] for r in payload["images"]}
+        assert statuses["good"] == dev.STALE_OK
+        assert statuses["lagging"] == dev.STALE_UNPUBLISHED
+        assert payload["outdated"] == 1
+
+    def test_local_stale_does_not_block(self, monkeypatch, capsys):
+        """A stale local pull is a `docker pull` away — not a release problem."""
+        self._setup(
+            monkeypatch,
+            ["m"],
+            probe=self._both_present,
+            local=lambda ref: "sha256:old",
+        )
+        rc, payload = self._run_json(capsys, local=True)
+        assert rc == 0
+        assert payload["images"][0]["status"] == dev.STALE_LOCAL
+
+    def test_local_unknown_when_never_pulled(self, monkeypatch, capsys):
+        """Locally-built images have no RepoDigest, so they aren't comparable."""
+        self._setup(monkeypatch, ["m"], probe=self._both_present, local=lambda ref: None)
+        rc, payload = self._run_json(capsys, local=True)
+        assert rc == 0
+        assert payload["images"][0]["status"] == dev.STALE_UNKNOWN
+
+    def test_no_docker_exits_two(self, monkeypatch):
+        monkeypatch.setattr(dev, "_load_dotenv", lambda: None)
+        monkeypatch.setattr(dev, "_check_docker", lambda: False)
+        assert dev.cmd_stale(SimpleNamespace(json=True, verbose=False, local=False)) == 2
+
+    def test_no_images_exits_two(self, monkeypatch, capsys):
+        self._setup(monkeypatch, [], probe=self._both_present)
+        rc = dev.cmd_stale(SimpleNamespace(json=True, verbose=False, local=False))
+        assert rc == 2
+        assert "No buildable images" in capsys.readouterr().out
+
+    def test_human_output_lists_only_outdated_by_default(self, monkeypatch, capsys):
+        """Default output is the exception list; -v adds the healthy images."""
+
+        def probe(ref):
+            if ref.startswith("reg.example/good"):
+                return dev.PROBE_PRESENT
+            return dev.PROBE_ABSENT
+
+        self._setup(monkeypatch, ["good", "gone"], probe=probe)
+        dev.cmd_stale(SimpleNamespace(json=False, verbose=False, local=False))
+        quiet = capsys.readouterr().out
+        assert "gone" in quiet and "good" not in quiet
+
+        self._setup(monkeypatch, ["good", "gone"], probe=probe)
+        dev.cmd_stale(SimpleNamespace(json=False, verbose=True, local=False))
+        assert "good" in capsys.readouterr().out
+
+    def test_worst_status_sorts_first(self, monkeypatch, capsys):
+        def probe(ref):
+            if ref.startswith("reg.example/ok"):
+                return dev.PROBE_PRESENT
+            return dev.PROBE_ABSENT
+
+        self._setup(monkeypatch, ["ok", "zz-gone"], probe=probe)
+        _, payload = self._run_json(capsys, local=False)
+        assert [r["status"] for r in payload["images"]] == [dev.STALE_MISSING, dev.STALE_OK]
+
+
 # ---------------------------------------------------------------------------
 # check_port / check_port_udp Tests
 # ---------------------------------------------------------------------------

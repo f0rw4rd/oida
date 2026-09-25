@@ -4,6 +4,36 @@ All notable changes to OIDA are documented here. Format roughly follows
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/); versions follow
 [SemVer](https://semver.org/spec/v2.0.0.html).
 
+## Unreleased
+
+### Added
+
+- **`python services.py stale`** — read-only check for which mock images are
+  outdated vs the registry, without building or pushing. `--local`, `-v`, `--json`.
+  Exit codes: 0 current, 1 outdated, 2 could not verify.
+- **`scripts/release_check.sh` step 3** gates a release on it — fails on 1, skips
+  on 2. Runs before the integration tests, which now refuse to run when the mock
+  images are outdated rather than certifying stale mocks. Steps 3-7 renumbered to
+  4-8.
+- **`NO-HASH-TAGS` verdict**, separating "this repo was never content-tagged, so
+  there is nothing to compare" from `UNPUBLISHED`, which now means "content-tagged,
+  but not with this source". Decided per image by listing the repo's tags over the
+  registry v2 API, so an image a past `push` tagged and that has since fallen behind
+  blocks a release even when every other image is untagged — previously it was
+  indistinguishable from one that was never tagged, and the gate passed.
+
+### Fixed
+
+- **`python services.py push` now repairs a stale `:latest`.** It skipped any image
+  whose content tag was published, which said nothing about where `:latest` — the tag
+  `up`/`pull` resolve — actually pointed, so a drifted tag was reported by `stale`
+  forever and only fixable with `--force`. Drift is now detected and the tag re-pointed
+  with `buildx imagetools create`, copying the published manifest instead of rebuilding.
+- **`_registry_has` no longer treats an unreadable repository as an absent one.**
+  ghcr answers a private repo and a nonexistent one identically (403 `DENIED`), so
+  probing is now tri-state and only `manifest unknown` proves absence — a missing
+  `docker login` can't fail a release.
+
 ## 1.0.0 — 2026-09-23
 
 First stable release.

@@ -5,6 +5,11 @@
 #   ./scripts/release_check.sh          # Quick release check (~2 min)
 #   ./scripts/release_check.sh --full   # Full check with integration tests (~25 min)
 #
+# Step 3 probes the container registry, so it needs Docker and network; without
+# either it reports SKIP rather than failing. It runs before the integration tests
+# deliberately — outdated mock images make step 8 refuse to run, because a pass
+# against stale mocks would certify images this release doesn't ship.
+#
 # Exit codes: 0 = all gates passed, 1 = failure
 
 set -euo pipefail
@@ -78,9 +83,37 @@ else
     record "Security scan" "fail"
 fi
 
-# ── Step 3: Test collection ───────────────────────────────────────────────
+# ── Step 3: Mock images published ────────────────────────────────────────
 
-step 3 "Test collection (import/syntax check)"
+step 3 "Mock images published (services.py stale)"
+# Runs BEFORE the integration tests on purpose: those tests are only meaningful
+# against mocks built from the committed source. If the registry is behind, a green
+# integration run is testing last month's mocks and proves nothing about this
+# release, so step 8 refuses to run rather than reporting a misleading pass.
+# Exit 1 = outdated (fail), 2 = could not verify — no Docker or an unreadable
+# registry — which is a skip, not a false failure.
+set +e
+python services.py stale
+STALE_RC=$?
+set -e
+case $STALE_RC in
+    0)
+        echo -e "${GREEN}OK${RESET}"
+        record "Mock images published" "pass"
+        ;;
+    2)
+        echo -e "${YELLOW}Skipped — could not verify (Docker or registry unreachable)${RESET}"
+        record "Mock images published" "skip"
+        ;;
+    *)
+        echo -e "${RED}Mock images are outdated — run: python services.py push${RESET}"
+        record "Mock images published" "fail"
+        ;;
+esac
+
+# ── Step 4: Test collection ───────────────────────────────────────────────
+
+step 4 "Test collection (import/syntax check)"
 if python -m pytest tests/unit/ --collect-only -q --no-header; then
     echo -e "${GREEN}OK${RESET}"
     record "Test collection" "pass"
@@ -89,9 +122,9 @@ else
     record "Test collection" "fail"
 fi
 
-# ── Step 4: Core unit tests ──────────────────────────────────────────────
+# ── Step 5: Core unit tests ──────────────────────────────────────────────
 
-step 4 "Unit tests (core)"
+step 5 "Unit tests (core)"
 if python -m pytest tests/unit/ -x -q --tb=short; then
     echo -e "${GREEN}OK${RESET}"
     record "Unit tests" "pass"
@@ -100,9 +133,9 @@ else
     record "Unit tests" "fail"
 fi
 
-# ── Step 5: Package build ────────────────────────────────────────────────
+# ── Step 6: Package build ────────────────────────────────────────────────
 
-step 5 "Package build (sdist + wheel)"
+step 6 "Package build (sdist + wheel)"
 DIST_DIR=$(mktemp -d)
     # Prefer uv build (fast, no extra dependency); fall back to python -m build
     # for environments where uv isn't installed but the build package is.
@@ -125,9 +158,9 @@ else
     record "Package build" "fail"
 fi
 
-# ── Step 6: Wheel install + CLI smoke ────────────────────────────────────
+# ── Step 7: Wheel install + CLI smoke ────────────────────────────────────
 
-step 6 "Wheel install + CLI smoke test"
+step 7 "Wheel install + CLI smoke test"
 if [[ -n "${WHEEL:-}" ]]; then
     VENV_DIR=$(mktemp -d)
     # Prefer uv (10x faster venv create + install) when available; fall
@@ -167,15 +200,21 @@ if [[ -n "${WHEEL:-}" ]]; then
     deactivate
     rm -rf "$VENV_DIR"
 else
-    echo -e "${YELLOW}Skipped (no wheel from step 5)${RESET}"
+    echo -e "${YELLOW}Skipped (no wheel from step 6)${RESET}"
     record "Wheel install + CLI" "skip"
 fi
 rm -rf "$DIST_DIR"
 
-# ── Step 7: Integration tests (--full only) ──────────────────────────────
+# ── Step 8: Integration tests (--full only) ──────────────────────────────
 
-step 7 "Integration tests (Docker mocks)"
-if $FULL; then
+step 8 "Integration tests (Docker mocks)"
+if [[ "${STALE_RC:-0}" == "1" ]]; then
+    # Refuse rather than mislead: the mocks in the registry are behind the committed
+    # source (step 3), so a pass here would certify images this release doesn't ship.
+    echo -e "${RED}Skipped — mock images are outdated (step 3).${RESET}"
+    echo -e "${RED}Testing against them would certify stale mocks; run: python services.py push${RESET}"
+    record "Integration tests" "fail"
+elif $FULL; then
     # Feed the whole listing through grep (no -q): `grep -q` exits at the
     # first match, docker compose takes SIGPIPE, and under `set -o pipefail`
     # the pipeline reads as failed even with mocks running.
