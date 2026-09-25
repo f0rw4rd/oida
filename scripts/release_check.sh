@@ -9,12 +9,12 @@
 # CI does not run it (release.yml passes run_integration: false), because a
 # timing flake on a contended hosted runner cost a 60-minute job plus the whole
 # publish pipeline. Here a flake costs a serial re-run of just the failures and
-# the maintainer decides. A run that reaches step 9 writes .release-evidence.json
+# the maintainer decides. A run that reaches step 10 writes .release-evidence.json
 # pinned to the commit; a run that skips it says so in the summary.
 #
-# Step 4 probes the container registry, so it needs Docker and network; without
+# Step 5 probes the container registry, so it needs Docker and network; without
 # either it reports SKIP rather than failing. It runs before the integration tests
-# deliberately — outdated mock images make step 9 refuse to run, because a pass
+# deliberately — outdated mock images make step 10 refuse to run, because a pass
 # against stale mocks would certify images this release doesn't ship.
 #
 # Exit codes: 0 = all gates passed, 1 = failure
@@ -96,9 +96,28 @@ else
     record "Pre-push quality gates" "fail"
 fi
 
-# ── Step 3: Security scan ─────────────────────────────────────────────────
+# ── Step 3: Type gate (mypy_gate.py, blocking) ────────────────────────────
 
-step 3 "Security scan (bandit)"
+step 3 "Type gate (mypy_gate.py, blocking)"
+# The pre-push mypy hook above is informational (exit 0 always) — it never
+# catches anything. scripts/quality/mypy_gate.py is the real, baseline-diffed
+# gate CI runs and blocks on. CI syncs `--extra dev --frozen` only (no protocol
+# extras), so run it against an isolated venv with the same extras rather than
+# the full-extras dev .venv: extra protocol stubs change what mypy can infer
+# and surface findings CI would never see (or hide ones it would).
+MYPY_GATE_VENV=".venv-mypy-gate"
+if UV_PROJECT_ENVIRONMENT="$MYPY_GATE_VENV" uv sync --extra dev --frozen --quiet \
+    && UV_PROJECT_ENVIRONMENT="$MYPY_GATE_VENV" uv run python scripts/quality/mypy_gate.py; then
+    echo -e "${GREEN}OK${RESET}"
+    record "Type gate" "pass"
+else
+    echo -e "${RED}mypy_gate.py failed — same gate CI blocks on${RESET}"
+    record "Type gate" "fail"
+fi
+
+# ── Step 4: Security scan ─────────────────────────────────────────────────
+
+step 4 "Security scan (bandit)"
 # Skip rules expected in a security testing framework:
 #   B104 (bind 0.0.0.0), B310 (urlopen), B501 (verify=False)
 if bandit -r src/oida/ -ll -ii -q --skip B104,B310,B314,B318,B324,B501 2>/dev/null; then
@@ -109,13 +128,13 @@ else
     record "Security scan" "fail"
 fi
 
-# ── Step 4: Mock images published ────────────────────────────────────────
+# ── Step 5: Mock images published ────────────────────────────────────────
 
-step 4 "Mock images published (services.py stale)"
+step 5 "Mock images published (services.py stale)"
 # Runs BEFORE the integration tests on purpose: those tests are only meaningful
 # against mocks built from the committed source. If the registry is behind, a green
 # integration run is testing last month's mocks and proves nothing about this
-# release, so step 9 refuses to run rather than reporting a misleading pass.
+# release, so step 10 refuses to run rather than reporting a misleading pass.
 # Exit 1 = outdated (fail), 2 = could not verify — no Docker or an unreadable
 # registry — which is a skip, not a false failure.
 set +e
@@ -137,9 +156,9 @@ case $STALE_RC in
         ;;
 esac
 
-# ── Step 5: Test collection ───────────────────────────────────────────────
+# ── Step 6: Test collection ───────────────────────────────────────────────
 
-step 5 "Test collection (import/syntax check)"
+step 6 "Test collection (import/syntax check)"
 if python -m pytest tests/unit/ --collect-only -q --no-header; then
     echo -e "${GREEN}OK${RESET}"
     record "Test collection" "pass"
@@ -148,9 +167,9 @@ else
     record "Test collection" "fail"
 fi
 
-# ── Step 6: Core unit tests ──────────────────────────────────────────────
+# ── Step 7: Core unit tests ──────────────────────────────────────────────
 
-step 6 "Unit tests (core)"
+step 7 "Unit tests (core)"
 if python -m pytest tests/unit/ -x -q --tb=short; then
     echo -e "${GREEN}OK${RESET}"
     record "Unit tests" "pass"
@@ -159,9 +178,9 @@ else
     record "Unit tests" "fail"
 fi
 
-# ── Step 7: Package build ────────────────────────────────────────────────
+# ── Step 8: Package build ────────────────────────────────────────────────
 
-step 7 "Package build (sdist + wheel)"
+step 8 "Package build (sdist + wheel)"
 DIST_DIR=$(mktemp -d)
     # Prefer uv build (fast, no extra dependency); fall back to python -m build
     # for environments where uv isn't installed but the build package is.
@@ -184,9 +203,9 @@ else
     record "Package build" "fail"
 fi
 
-# ── Step 8: Wheel install + CLI smoke ────────────────────────────────────
+# ── Step 9: Wheel install + CLI smoke ────────────────────────────────────
 
-step 8 "Wheel install + CLI smoke test"
+step 9 "Wheel install + CLI smoke test"
 if [[ -n "${WHEEL:-}" ]]; then
     VENV_DIR=$(mktemp -d)
     # Prefer uv (10x faster venv create + install) when available; fall
@@ -231,15 +250,15 @@ else
 fi
 rm -rf "$DIST_DIR"
 
-# ── Step 9: Integration tests (--full only) ──────────────────────────────
+# ── Step 10: Integration tests (--full only) ──────────────────────────────
 
-step 9 "Integration tests (Docker mocks)"
+step 10 "Integration tests (Docker mocks)"
 INTEG_STATUS=skip
 INTEG_FLAKES=0
 if [[ "${STALE_RC:-0}" == "1" ]]; then
     # Refuse rather than mislead: the mocks in the registry are behind the committed
-    # source (step 4), so a pass here would certify images this release doesn't ship.
-    echo -e "${RED}Skipped — mock images are outdated (step 4).${RESET}"
+    # source (step 5), so a pass here would certify images this release doesn't ship.
+    echo -e "${RED}Skipped — mock images are outdated (step 5).${RESET}"
     echo -e "${RED}Testing against them would certify stale mocks; run: python services.py push${RESET}"
     record "Integration tests" "fail"
     INTEG_STATUS=fail

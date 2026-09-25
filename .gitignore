@@ -131,6 +131,7 @@ coverage.json
 # Environments
 .env
 .venv
+.venv-*
 env/
 venv/
 ENV/
