@@ -1,6 +1,6 @@
 """Common SNMP encoding utilities shared across SNMPv1, v2c, and v3 fuzzers."""
 
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 
 from boofuzz import Block, Byte, DWord, Group, Request, Size, Static
 
@@ -589,7 +589,7 @@ def build_boundary_values(
     Returns:
         A boofuzz ``Request`` fuzzing request-id/error-status/error-index boundary values
     """
-    community_kwargs = {"fuzzable": community_fuzzable}
+    community_kwargs: Dict[str, Any] = {"fuzzable": community_fuzzable}
     if community_max_len is not None:
         community_kwargs["max_len"] = community_max_len
     return Request(

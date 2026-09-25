@@ -417,7 +417,7 @@ class PcapScanner:
             collect_endpoints = bool(self.args.get("assets"))
             display_filter = None
             if not collect_stats and not collect_endpoints:
-                parts: List[str] = []
+                parts = []
                 for listener in listeners.values():
                     df = getattr(listener, "DISPLAY_FILTER", "")
                     if not df:

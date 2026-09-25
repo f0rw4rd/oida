@@ -361,7 +361,7 @@ def export_results(
     output_format: str,
     protocol_name: str = "scan",
     nxc_logger=None,
-) -> None:
+) -> List[str]:
     """
     Export scan results to file(s) in specified format(s).
 
@@ -1071,7 +1071,9 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
     # get_default_port(), an instance method) — args.port already carries the
     # protocol's real default via add_network_options(..., default_port=N),
     # so prefer it and only fall back to the (usually absent) class attribute.
-    default_port = getattr(args, "port", None) or getattr(protocol_class, "default_port", 0)
+    default_port: int = (
+        getattr(args, "port", None) or getattr(protocol_class, "default_port", 0) or 0
+    )
     # When every target carries the same embedded "<host>:<port>" port, show it
     # in the banner instead of the flag/default -- otherwise (mixed or no
     # embedded ports) fall back to the run-global default. Each scan still uses
@@ -1145,7 +1147,7 @@ def _accepts_host_port(protocol_name: Optional[str], target: str) -> bool:
         return False
     # args.protocol carries the CLI name, so "discover" has to fold into
     # "discovery" before the exemption sets are consulted.
-    canonical = PROTOCOL_ALIASES.get(protocol_name, protocol_name)
+    canonical = PROTOCOL_ALIASES.get(protocol_name or "", protocol_name or "")
     if canonical in FILE_TARGET_PROTOCOLS:
         return False
     return canonical not in INTERFACE_TARGET_PROTOCOLS
@@ -1640,7 +1642,9 @@ def _main(argv: Optional[List[str]] = None):
         # --output without --format (or with the default console) implies the
         # user wants everything on disk, not a lone JSON file.
         fmt = args.format if args.format != "console" else "all"
-        default_port = getattr(args, "port", None) or getattr(protocol_class, "default_port", 0)
+        default_port: int = (
+            getattr(args, "port", None) or getattr(protocol_class, "default_port", 0) or 0
+        )
         # A fresh ICSLogger, not get_logger(): the cache key collides with the
         # scan's migrated logger whose thread-local extra still seeds host
         # with the raw target (the pcap file path), leaking into the prefix.
