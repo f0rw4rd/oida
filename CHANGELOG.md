@@ -11,7 +11,7 @@ All notable changes to OIDA are documented here. Format roughly follows
 - **`python services.py stale`** — read-only check for which mock images are
   outdated vs the registry, without building or pushing. `--local`, `-v`, `--json`.
   Exit codes: 0 current, 1 outdated, 2 could not verify.
-- **`scripts/release_check.sh` step 3** gates a release on it — fails on 1, skips
+- **`scripts/release_check.sh` step 4** gates a release on it — fails on 1, skips
   on 2. Runs before the integration tests, which now refuse to run when the mock
   images are outdated rather than certifying stale mocks. Steps 3-7 renumbered to
   4-8.

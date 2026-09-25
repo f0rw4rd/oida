@@ -9,12 +9,12 @@
 # CI does not run it (release.yml passes run_integration: false), because a
 # timing flake on a contended hosted runner cost a 60-minute job plus the whole
 # publish pipeline. Here a flake costs a serial re-run of just the failures and
-# the maintainer decides. A run that reaches step 8 writes .release-evidence.json
+# the maintainer decides. A run that reaches step 9 writes .release-evidence.json
 # pinned to the commit; a run that skips it says so in the summary.
 #
-# Step 3 probes the container registry, so it needs Docker and network; without
+# Step 4 probes the container registry, so it needs Docker and network; without
 # either it reports SKIP rather than failing. It runs before the integration tests
-# deliberately — outdated mock images make step 8 refuse to run, because a pass
+# deliberately — outdated mock images make step 9 refuse to run, because a pass
 # against stale mocks would certify images this release doesn't ship.
 #
 # Exit codes: 0 = all gates passed, 1 = failure
@@ -77,9 +77,28 @@ else
     record "Lint" "fail"
 fi
 
-# ── Step 2: Security scan ─────────────────────────────────────────────────
+# ── Step 2: Pre-push quality gates ────────────────────────────────────────
 
-step 2 "Security scan (bandit)"
+step 2 "Pre-push quality gates (pre-commit)"
+# Exactly the hooks `git push` runs: vulture ratchet, structural clones,
+# low-assurance test detection, mypy. Without this a release only learns about
+# them at push time, with the tag already placed on a commit that can't ship.
+# Pre-push stage only — the pre-commit stage runs `ruff check --fix`, which
+# would rewrite the tree mid-check; step 1 covers formatting read-only.
+if ! command -v pre-commit >/dev/null 2>&1; then
+    echo -e "${YELLOW}Skipped — pre-commit not installed (uv sync --extra dev)${RESET}"
+    record "Pre-push quality gates" "skip"
+elif pre-commit run --hook-stage pre-push --all-files; then
+    echo -e "${GREEN}OK${RESET}"
+    record "Pre-push quality gates" "pass"
+else
+    echo -e "${RED}Pre-push hooks failed — this is the same gate git push enforces${RESET}"
+    record "Pre-push quality gates" "fail"
+fi
+
+# ── Step 3: Security scan ─────────────────────────────────────────────────
+
+step 3 "Security scan (bandit)"
 # Skip rules expected in a security testing framework:
 #   B104 (bind 0.0.0.0), B310 (urlopen), B501 (verify=False)
 if bandit -r src/oida/ -ll -ii -q --skip B104,B310,B314,B318,B324,B501 2>/dev/null; then
@@ -90,13 +109,13 @@ else
     record "Security scan" "fail"
 fi
 
-# ── Step 3: Mock images published ────────────────────────────────────────
+# ── Step 4: Mock images published ────────────────────────────────────────
 
-step 3 "Mock images published (services.py stale)"
+step 4 "Mock images published (services.py stale)"
 # Runs BEFORE the integration tests on purpose: those tests are only meaningful
 # against mocks built from the committed source. If the registry is behind, a green
 # integration run is testing last month's mocks and proves nothing about this
-# release, so step 8 refuses to run rather than reporting a misleading pass.
+# release, so step 9 refuses to run rather than reporting a misleading pass.
 # Exit 1 = outdated (fail), 2 = could not verify — no Docker or an unreadable
 # registry — which is a skip, not a false failure.
 set +e
@@ -118,9 +137,9 @@ case $STALE_RC in
         ;;
 esac
 
-# ── Step 4: Test collection ───────────────────────────────────────────────
+# ── Step 5: Test collection ───────────────────────────────────────────────
 
-step 4 "Test collection (import/syntax check)"
+step 5 "Test collection (import/syntax check)"
 if python -m pytest tests/unit/ --collect-only -q --no-header; then
     echo -e "${GREEN}OK${RESET}"
     record "Test collection" "pass"
@@ -129,9 +148,9 @@ else
     record "Test collection" "fail"
 fi
 
-# ── Step 5: Core unit tests ──────────────────────────────────────────────
+# ── Step 6: Core unit tests ──────────────────────────────────────────────
 
-step 5 "Unit tests (core)"
+step 6 "Unit tests (core)"
 if python -m pytest tests/unit/ -x -q --tb=short; then
     echo -e "${GREEN}OK${RESET}"
     record "Unit tests" "pass"
@@ -140,9 +159,9 @@ else
     record "Unit tests" "fail"
 fi
 
-# ── Step 6: Package build ────────────────────────────────────────────────
+# ── Step 7: Package build ────────────────────────────────────────────────
 
-step 6 "Package build (sdist + wheel)"
+step 7 "Package build (sdist + wheel)"
 DIST_DIR=$(mktemp -d)
     # Prefer uv build (fast, no extra dependency); fall back to python -m build
     # for environments where uv isn't installed but the build package is.
@@ -165,9 +184,9 @@ else
     record "Package build" "fail"
 fi
 
-# ── Step 7: Wheel install + CLI smoke ────────────────────────────────────
+# ── Step 8: Wheel install + CLI smoke ────────────────────────────────────
 
-step 7 "Wheel install + CLI smoke test"
+step 8 "Wheel install + CLI smoke test"
 if [[ -n "${WHEEL:-}" ]]; then
     VENV_DIR=$(mktemp -d)
     # Prefer uv (10x faster venv create + install) when available; fall
@@ -207,20 +226,20 @@ if [[ -n "${WHEEL:-}" ]]; then
     deactivate
     rm -rf "$VENV_DIR"
 else
-    echo -e "${YELLOW}Skipped (no wheel from step 6)${RESET}"
+    echo -e "${YELLOW}Skipped (no wheel from step 7)${RESET}"
     record "Wheel install + CLI" "skip"
 fi
 rm -rf "$DIST_DIR"
 
-# ── Step 8: Integration tests (--full only) ──────────────────────────────
+# ── Step 9: Integration tests (--full only) ──────────────────────────────
 
-step 8 "Integration tests (Docker mocks)"
+step 9 "Integration tests (Docker mocks)"
 INTEG_STATUS=skip
 INTEG_FLAKES=0
 if [[ "${STALE_RC:-0}" == "1" ]]; then
     # Refuse rather than mislead: the mocks in the registry are behind the committed
-    # source (step 3), so a pass here would certify images this release doesn't ship.
-    echo -e "${RED}Skipped — mock images are outdated (step 3).${RESET}"
+    # source (step 4), so a pass here would certify images this release doesn't ship.
+    echo -e "${RED}Skipped — mock images are outdated (step 4).${RESET}"
     echo -e "${RED}Testing against them would certify stale mocks; run: python services.py push${RESET}"
     record "Integration tests" "fail"
     INTEG_STATUS=fail
