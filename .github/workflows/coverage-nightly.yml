@@ -1,4 +1,4 @@
-name: Coverage (nightly)
+name: Coverage (scorecards, manual)
 
 # Real-coverage suite (tests/coverage/) — the axes that need the live docker
 # mock stack and are too slow/heavy for the PR lane. Runs axis-1 scanner field
@@ -10,9 +10,11 @@ name: Coverage (nightly)
 # The fuzzer×mock pairs are discovered from the compose `oida.*` labels at
 # collection time, so this needs no per-CVE maintenance here.
 
+# Manual-only. The cron was dropped: two jobs at 90 + 60 min timeouts, every
+# night, for a suite that by design never gates anything — it was the largest
+# standing Actions bill in the repo. A scorecard is worth running when you want
+# to read it (before a release, after a fuzzer change), not at 04:00 daily.
 on:
-  schedule:
-    - cron: "0 4 * * *"   # 04:00 UTC nightly
   workflow_dispatch:
     inputs:
       case_cap:

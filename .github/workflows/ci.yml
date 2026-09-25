@@ -7,22 +7,39 @@ on:
   push:
     branches: [main]
   pull_request:
-  # The heavy jobs (integration, ~60 min docker-mock suite; pcap, pinned-tshark
-  # dissector tests) are gated behind `run_heavy` so a push to main or a PR —
-  # even a README-only change — runs only lint + the fast unit/contract matrix
-  # (minutes), not ~2h of CI. run_heavy is passed true by the release gate and
-  # defaults true for manual dispatch; on push/PR the `inputs` context is empty
-  # (falsy), so integration/pcap skip. See the `if:` on those jobs below.
+  # The heavy jobs are opt-in per job, so a push to main or a PR — even a
+  # README-only change — runs only lint + the fast unit/contract matrix
+  # (minutes). On push/PR the `inputs` context is empty (falsy), so both skip.
+  #
+  # The two are gated separately on purpose:
+  #   run_pcap         — pinned-tshark dissector tests, ~5 min, deterministic.
+  #                      The release gate passes true.
+  #   run_integration  — the ~60 min docker-mock suite. The release gate passes
+  #                      FALSE: it runs locally via scripts/release_check.sh
+  #                      --full before tagging, where the mock stack isn't
+  #                      contended by a shared runner and a timing flake costs
+  #                      a re-run of the failing tests instead of a 60-minute
+  #                      job plus the whole publish pipeline behind it. Set it
+  #                      true by hand (workflow_dispatch) when you do want CI
+  #                      to run the mock suite.
   workflow_dispatch:
     inputs:
-      run_heavy:
-        description: "Run the heavy integration + pcap jobs too"
+      run_pcap:
+        description: "Run the pinned-tshark dissector job"
         type: boolean
         default: true
+      run_integration:
+        description: "Run the ~60 min docker-mock integration job"
+        type: boolean
+        default: false
   workflow_call:  # Allow release.yml to reuse this as a pre-publish quality gate
     inputs:
-      run_heavy:
-        description: "Run the heavy integration + pcap jobs (release passes true)"
+      run_pcap:
+        description: "Run the pinned-tshark dissector job (release passes true)"
+        type: boolean
+        default: false
+      run_integration:
+        description: "Run the docker-mock integration job (release passes false — it runs locally)"
         type: boolean
         default: false
 
@@ -196,9 +213,9 @@ jobs:
 
   pcap:
     name: Dissector tests (pinned tshark)
-    # Heavy/slow: runs only on release (workflow_call passes run_heavy) and
-    # manual dispatch. Skipped on push/PR, where inputs.run_heavy is empty.
-    if: ${{ inputs.run_heavy }}
+    # Runs on release (workflow_call passes run_pcap: true) and on manual
+    # dispatch. Skipped on push/PR, where the inputs context is empty.
+    if: ${{ inputs.run_pcap }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
@@ -232,9 +249,13 @@ jobs:
 
   integration:
     name: Integration (docker mocks)
-    # Heavy/slow (~60 min): runs only on release (workflow_call passes
-    # run_heavy) and manual dispatch. Skipped on push/PR.
-    if: ${{ inputs.run_heavy }}
+    # Off by default everywhere, including the release gate. This suite drives
+    # ~67 shared mock containers and is timing-sensitive; on a contended hosted
+    # runner an unrelated flake failed the whole release pipeline and the only
+    # retry was another 60-minute job. It now runs locally before tagging
+    # (scripts/release_check.sh --full), where a flake is re-run in seconds.
+    # Flip run_integration on via workflow_dispatch to run it here anyway.
+    if: ${{ inputs.run_integration }}
     runs-on: ubuntu-latest
     # 5,448 tests that ran in no workflow before this job existed — the mock
     # stack makes them too heavy for the unit lane but they are the only

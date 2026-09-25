@@ -110,7 +110,7 @@ Each test appends a record to `tests/coverage/results/scanner_<run-id>.json`:
 ## Run identifier
 
 Set `OIDA_COVERAGE_RUN_ID` to group multiple test results into one
-manifest. The nightly workflow sets this to the GitHub run ID:
+manifest. The coverage workflow (manual dispatch) sets this to the GitHub run ID:
 
 ```bash
 OIDA_COVERAGE_RUN_ID=nightly-2026-05-26 pytest tests/coverage/ -m coverage

@@ -5,6 +5,13 @@
 #   ./scripts/release_check.sh          # Quick release check (~2 min)
 #   ./scripts/release_check.sh --full   # Full check with integration tests (~25 min)
 #
+# --full is the release gate of record for the docker-mock integration suite:
+# CI does not run it (release.yml passes run_integration: false), because a
+# timing flake on a contended hosted runner cost a 60-minute job plus the whole
+# publish pipeline. Here a flake costs a serial re-run of just the failures and
+# the maintainer decides. A run that reaches step 8 writes .release-evidence.json
+# pinned to the commit; a run that skips it says so in the summary.
+#
 # Step 3 probes the container registry, so it needs Docker and network; without
 # either it reports SKIP rather than failing. It runs before the integration tests
 # deliberately — outdated mock images make step 8 refuse to run, because a pass
@@ -208,23 +215,45 @@ rm -rf "$DIST_DIR"
 # ── Step 8: Integration tests (--full only) ──────────────────────────────
 
 step 8 "Integration tests (Docker mocks)"
+INTEG_STATUS=skip
+INTEG_FLAKES=0
 if [[ "${STALE_RC:-0}" == "1" ]]; then
     # Refuse rather than mislead: the mocks in the registry are behind the committed
     # source (step 3), so a pass here would certify images this release doesn't ship.
     echo -e "${RED}Skipped — mock images are outdated (step 3).${RESET}"
     echo -e "${RED}Testing against them would certify stale mocks; run: python services.py push${RESET}"
     record "Integration tests" "fail"
+    INTEG_STATUS=fail
 elif $FULL; then
     # Feed the whole listing through grep (no -q): `grep -q` exits at the
     # first match, docker compose takes SIGPIPE, and under `set -o pipefail`
     # the pipeline reads as failed even with mocks running.
     if docker compose -f docker/mocks/compose.yml ps --status running 2>/dev/null | grep "mock" >/dev/null; then
-        if python -m pytest tests/integration/ -v; then
+        # Two passes. Pass 1 is the fast parallel lane; loadgroup pins each
+        # shared-mock xdist_group to one worker. Pass 2 re-runs only the
+        # failures, serially — contention is gone, so a timing flake passes
+        # while a real bug fails again. What needed pass 2 is reported, not
+        # swallowed: that count is the flakiness signal now that CI no longer
+        # runs this suite.
+        if python -m pytest tests/integration/ -n 8 --dist loadgroup -q; then
             echo -e "${GREEN}OK${RESET}"
             record "Integration tests" "pass"
+            INTEG_STATUS=pass
         else
-            echo -e "${RED}Integration tests failed${RESET}"
-            record "Integration tests" "fail"
+            echo -e "${YELLOW}Parallel pass had failures — re-running just those, serially${RESET}"
+            RERUN_LOG=$(mktemp)
+            if python -m pytest tests/integration/ --lf -v 2>&1 | tee "$RERUN_LOG"; then
+                INTEG_FLAKES=$(sed -n 's/.*rerun previous \([0-9]*\) failure.*/\1/p' "$RERUN_LOG" | tail -1)
+                INTEG_FLAKES=${INTEG_FLAKES:-0}
+                echo -e "${YELLOW}OK on serial re-run — $INTEG_FLAKES test(s) flaked under parallelism${RESET}"
+                record "Integration tests ($INTEG_FLAKES flaked, green serially)" "pass"
+                INTEG_STATUS=flaky-pass
+            else
+                echo -e "${RED}Integration tests failed twice — this is a bug, not a flake${RESET}"
+                record "Integration tests" "fail"
+                INTEG_STATUS=fail
+            fi
+            rm -f "$RERUN_LOG"
         fi
     else
         echo -e "${YELLOW}Skipped — mock services not running (start with: just up)${RESET}"
@@ -247,6 +276,30 @@ done
 echo "───────────────────────────────────────"
 echo -e "  ${GREEN}$PASS passed${RESET}  ${RED}$FAIL failed${RESET}  ${YELLOW}$SKIP skipped${RESET}"
 echo ""
+
+# The integration suite no longer runs in CI (see .github/workflows/release.yml),
+# so this run is the only record that it passed. Write it down, pinned to the
+# commit, and say so plainly when it did not run at all.
+if [[ "$INTEG_STATUS" == "skip" ]]; then
+    echo -e "${YELLOW}${BOLD}Integration tests did not run here — and CI does not run them either.${RESET}"
+    echo -e "${YELLOW}Before tagging: python services.py up core && ./scripts/release_check.sh --full${RESET}"
+    echo ""
+else
+    cat > .release-evidence.json <<EOF
+{
+  "commit": "$(git rev-parse HEAD)",
+  "dirty": $(git diff --quiet HEAD 2>/dev/null && echo false || echo true),
+  "checked_at": "$(date -u +%Y-%m-%dT%H:%M:%SZ)",
+  "integration": "$INTEG_STATUS",
+  "flaked_under_parallelism": $INTEG_FLAKES,
+  "passed": $PASS,
+  "failed": $FAIL,
+  "skipped": $SKIP
+}
+EOF
+    echo -e "Evidence written to ${BOLD}.release-evidence.json${RESET} (commit $(git rev-parse --short HEAD))"
+    echo ""
+fi
 
 if [[ $FAIL -gt 0 ]]; then
     echo -e "${RED}${BOLD}RELEASE CHECK FAILED${RESET}"

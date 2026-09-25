@@ -56,7 +56,6 @@ docker/mocks/.claude/
 scripts/test-agent-docker.sh
 scripts/code_review.sh
 docker/agent-test/
-.github/workflows/agent-integration.yml
 docs/
 .claude-work/
 tmp.*
@@ -183,3 +182,6 @@ reference/
 # Sibling-repo clone of the C fuzzing agent (f0rw4rd/oida-fuzzing-agent), for
 # when the parent dir isn't writable -- tests find it here too.
 /oida-fuzzing-agent/
+
+# Local release gate evidence (scripts/release_check.sh --full)
+.release-evidence.json

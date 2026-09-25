@@ -79,8 +79,10 @@ python ../../services.py up --build
 python ../../services.py up --no-pull
 ```
 
-Images are (re)published by the `.github/workflows/mocks-publish.yml` workflow
-on pushes that touch `docker/mocks/**`. The CVE/vulnerable images are published
+Images are (re)published by running `python ../../services.py push` from a host
+with docker + buildx — there is no CI publisher. `services.py stale` says which
+images are behind before you push; a release is gated on it (`scripts/release_check.sh`
+step 3). The CVE/vulnerable images are published
 too — they are deliberately-vulnerable **targets** for authorized testing, in
 the same spirit as [vulhub](https://github.com/vulhub/vulhub); see
 `VULNERABLE_SERVICES.md`.

@@ -1381,10 +1381,11 @@ def cmd_stale(args: argparse.Namespace) -> int:
 
     The UNPUBLISHED/NO-HASH-TAGS split is decided per image by listing the repo's
     tags: one holding anything besides ``:latest`` was published by ``push``, so a
-    missing content tag there is a real gap and blocks. That keeps a publisher which
-    pushes bare ``:latest`` (as ``mocks-publish.yml``'s raw ``buildx bake`` does) from
-    wedging the gate red, without hiding an image that ``push`` once tagged and has
-    since fallen behind — the case the gate exists for. Where the tag list can't be
+    missing content tag there is a real gap and blocks. That keeps images published
+    as bare ``:latest`` from wedging the gate red — the CI workflow that did that
+    (a raw ``buildx bake --push``) is gone, but the tags it left in the registry
+    are not — without hiding an image that ``push`` once tagged and has since
+    fallen behind, the case the gate exists for. Where the tag list can't be
     read the verdict stays UNPUBLISHED, and blocks only if hash tags are in use
     elsewhere in the sweep.
 
@@ -1473,10 +1474,10 @@ def cmd_stale(args: argparse.Namespace) -> int:
             f"{YELLOW}[~~]{RST} {counts[STALE_UNTAGGED]} image(s) carry no content-hash "
             f"tag at all, so they cannot be checked against the source — reported, not "
             f"failed.\n"
-            f"{DIM}     .github/workflows/mocks-publish.yml publishes with a raw "
-            f"`buildx bake --push`, which tags `:latest` only and bypasses the "
-            f"content-hash tagging in `services.py push`. For these images this check "
-            f"can prove an image exists, not that it matches the source.{RST}"
+            f"{DIM}     They were published as bare `:latest` by the retired CI bake "
+            f"workflow, which bypassed the content-hash tagging in `services.py push`. "
+            f"For these images this check can prove an image exists, not that it "
+            f"matches the source — `python services.py push` gives them a content tag.{RST}"
         )
 
     if blocking:
