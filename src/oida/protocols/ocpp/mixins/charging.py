@@ -120,7 +120,6 @@ class ChargingMixin:
         self.logger.debug(f"Charging session test: connector={connector_id}, idTag={FAKE_ID_TAG}")
         transaction_id = None
 
-        # Step 1: StartTransaction
         self.logger.debug("Step 1: StartTransaction")
         try:
             start_msg = self._build_start_transaction(

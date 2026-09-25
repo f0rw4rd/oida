@@ -1902,7 +1902,7 @@ class DiscoveryScanner(SerialScanner):
                     # Check for out-of-scope IPs after merge
                     self._check_ip_scope(existing, source)
                 else:
-                    # NEW: First time seeing this device
+                    # First time seeing this device
                     device.is_new = True
                     device.updated_fields = ["new_device"]
 

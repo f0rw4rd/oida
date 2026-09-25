@@ -1104,7 +1104,7 @@ LISTENER_PCAP_CASES: list[dict] = [
         "pcap": "tftp/internet_tftp_rrq.pcap",
     },
     # -----------------------------------------------------------------------
-    # NEW: Network infrastructure protocols
+    # Network infrastructure protocols
     # -----------------------------------------------------------------------
     {
         "id": "ntp",
@@ -1157,7 +1157,7 @@ LISTENER_PCAP_CASES: list[dict] = [
         "data_fields": ["role", "protocol"],
     },
     # -----------------------------------------------------------------------
-    # NEW: Storage / VPN protocols
+    # Storage / VPN protocols
     # -----------------------------------------------------------------------
     {
         "id": "nfs",
@@ -1208,7 +1208,7 @@ LISTENER_PCAP_CASES: list[dict] = [
         "data_fields": ["role", "protocol"],
     },
     # -----------------------------------------------------------------------
-    # NEW: Discovery / messaging
+    # Discovery / messaging
     # -----------------------------------------------------------------------
     {
         "id": "wsdiscovery",
@@ -1263,7 +1263,7 @@ LISTENER_PCAP_CASES: list[dict] = [
         "data_fields": ["role", "protocol"],
     },
     # -----------------------------------------------------------------------
-    # NEW: Database protocols (additional)
+    # Database protocols (additional)
     # -----------------------------------------------------------------------
     {
         "id": "tns",
@@ -1317,7 +1317,7 @@ LISTENER_PCAP_CASES: list[dict] = [
         "data_fields": ["role", "protocol"],
     },
     # -----------------------------------------------------------------------
-    # NEW: Printing protocols
+    # Printing protocols
     # -----------------------------------------------------------------------
     {
         "id": "ipp",
@@ -1344,7 +1344,7 @@ LISTENER_PCAP_CASES: list[dict] = [
         "data_fields": ["role", "protocol"],
     },
     # -----------------------------------------------------------------------
-    # NEW: Messaging protocols
+    # Messaging protocols
     # -----------------------------------------------------------------------
     {
         "id": "ibmmq",
@@ -1359,7 +1359,7 @@ LISTENER_PCAP_CASES: list[dict] = [
         "data_fields": ["role", "protocol"],
     },
     # -----------------------------------------------------------------------
-    # NEW: Remote display / X11
+    # Remote display / X11
     # -----------------------------------------------------------------------
     {
         "id": "x11",
@@ -1375,7 +1375,7 @@ LISTENER_PCAP_CASES: list[dict] = [
         "data_fields": ["role", "protocol"],
     },
     # -----------------------------------------------------------------------
-    # NEW: Java / application server protocols
+    # Java / application server protocols
     # -----------------------------------------------------------------------
     {
         "id": "ajp",

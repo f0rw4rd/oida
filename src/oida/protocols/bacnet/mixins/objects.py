@@ -604,9 +604,6 @@ class ObjectsMixin:
             inventory.append(obj_info)
             objects_walked += 1
 
-        # ===================================================================
-        # Step 4: Display results
-        # ===================================================================
         self.logger.display(f"\n  Walked {objects_walked} objects")
 
         # Show objects with names/values (first 30)
