@@ -9,15 +9,9 @@ on:
   # Reusable: test-release.yml calls this via `uses:` to attach the standalone
   # binaries to a GitHub-only pre-release without duplicating the build matrix.
   workflow_call:
-  # Stable + post tags build binaries automatically. Pre-release tags
-  # (vX.Y.Z-rc1 / -test / -beta2 / ...) are owned by test-release.yml, which
-  # reuses this workflow via workflow_call — excluded here to avoid a double
-  # build on the same tag. The PR re-validation trigger was removed to conserve
-  # Actions minutes (run manually via workflow_dispatch instead).
-  push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+.post[0-9]+"
+  # No push-tag trigger: run by hand only (gh workflow run build-binaries.yml
+  # --ref vX.Y.Z), same reasoning as release.yml (879b902) — avoid an
+  # unattended run against a tag before it's known-good.
 
 permissions:
   contents: read
