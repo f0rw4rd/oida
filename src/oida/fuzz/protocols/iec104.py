@@ -201,7 +201,7 @@ class CauseOfTransmission(IntEnum):
 
 
 class IEC104StateMachine:
-    """Enhanced state machine for IEC 104 connection with StateContext support.
+    """State machine for IEC 104 connection with StateContext support.
 
     Wraps the framework StateMachine and adds IEC 104-specific functionality
     (sequence tracking, response storage, protocol-aware transitions). All

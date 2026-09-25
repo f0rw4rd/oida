@@ -121,7 +121,7 @@ class ICMPFuzzer(BaseFuzzer):
     """
     ICMP (Internet Control Message Protocol) Fuzzer
 
-    Comprehensive ICMPv4 fuzzer with RFC 792, RFC 950, RFC 4884, and RFC 8335 support.
+    ICMPv4 fuzzer with RFC 792, RFC 950, RFC 4884, and RFC 8335 support.
 
     Supported message types:
     - Type 0/8: Echo Reply/Request (ping)

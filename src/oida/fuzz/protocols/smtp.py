@@ -623,7 +623,6 @@ class SMTPFuzzer(BaseFuzzer):
             ),
         )
 
-        # Enhanced DATA with MIME and DKIM
         data_enhanced = Request(
             "SMTP_DATA_ENHANCED",
             children=(

@@ -2,7 +2,7 @@
 SQLAlchemy ORM implementation of DatabaseInterface
 
 This module provides an ORM-based implementation of the DatabaseInterface
-using SQLAlchemy for improved type safety, maintainability, and query building.
+using SQLAlchemy for typed schema access.
 """
 
 import json
@@ -38,8 +38,7 @@ class SQLAlchemyDatabase(DatabaseInterface):
     """
     SQLAlchemy ORM implementation of the DatabaseInterface.
 
-    Provides all database operations using SQLAlchemy ORM for improved
-    type safety, automatic relationship handling, and cleaner query syntax.
+    Database operations for fuzz sessions via the SQLAlchemy ORM.
     """
 
     def __init__(self, database_path: str, echo: bool = False):
