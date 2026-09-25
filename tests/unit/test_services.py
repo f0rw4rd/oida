@@ -805,6 +805,29 @@ class TestStaleCommand:
         dev.cmd_stale(SimpleNamespace(json=False, verbose=True, local=False))
         assert "good" in capsys.readouterr().out
 
+    def test_verbose_shows_the_evidence_behind_each_verdict(self, monkeypatch, capsys):
+        """-v has to justify the verdict, not just widen the list.
+
+        Which tags the registry actually serves, and which committed directory produced
+        the content tag they were compared against — otherwise a reader has to take the
+        classification on faith.
+        """
+        self._setup(
+            monkeypatch,
+            ["lagging"],
+            probe=self._latest_only,
+            tags=lambda repo: ("53b7a4bcd050", "latest"),
+        )
+        dev.cmd_stale(SimpleNamespace(json=False, verbose=True, local=False))
+        out = capsys.readouterr().out
+        assert "registry tags: 53b7a4bcd050, latest" in out
+        assert "context:" in out and "services:" in out
+
+    def test_unreadable_tag_list_renders_without_crashing(self, monkeypatch, capsys):
+        self._setup(monkeypatch, ["lagging"], probe=self._latest_only, tags=lambda repo: None)
+        dev.cmd_stale(SimpleNamespace(json=False, verbose=True, local=False))
+        assert "registry tags: —" in capsys.readouterr().out
+
     def test_worst_status_sorts_first(self, monkeypatch, capsys):
         def probe(ref):
             if ref.startswith("reg.example/ok"):

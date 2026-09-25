@@ -1241,7 +1241,9 @@ _STALE_HINT = {
 }
 
 
-def _stale_report(*, check_local: bool = False) -> tuple[list[dict], int] | None:
+def _stale_report(
+    *, check_local: bool = False, detail: bool = False
+) -> tuple[list[dict], int] | None:
     """Classify every distinct mock image against the registry.
 
     Returns ``(rows, distinct_count)`` where each row is
@@ -1301,16 +1303,46 @@ def _stale_report(*, check_local: bool = False) -> tuple[list[dict], int] | None
         with concurrent.futures.ThreadPoolExecutor(max_workers=min(48, len(probe))) as ex:
             verdicts = dict(zip(probe, ex.map(_classify, probe)))
 
+    # Tag-list evidence, threaded for the same reason. Only asked where the answer
+    # means something: UNPUBLISHED/NO-HASH-TAGS already have it cached from `_classify`
+    # (it is what told them apart), and `detail` wants it for the rest so a verdict can
+    # be read back to the registry state that produced it. Repos that just proved
+    # unreadable are skipped — re-asking only fails again, one blocking call per image.
+    detail_wanted = (STALE_OK, STALE_DRIFT, STALE_LOCAL, STALE_UNKNOWN)
+    needs_tags = [
+        b
+        for b in probe
+        if verdicts[b] in (STALE_UNPUBLISHED, STALE_UNTAGGED)
+        or (detail and verdicts[b] in detail_wanted)
+    ]
+    seen_tags: dict[str, tuple[str, ...] | None] = {}
+    if needs_tags:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=min(48, len(needs_tags))) as ex:
+            seen_tags = dict(zip(needs_tags, ex.map(_registry_tags, needs_tags)))
+
+    def _tagged(base: str) -> bool | None:
+        """True/False/None: does this repo carry any tag besides `latest`?"""
+        found = seen_tags.get(base)
+        return None if found is None else any(t != "latest" for t in found)
+
+    def _rel(path: str) -> str:
+        """Context shown relative to the repo — absolute if it points outside it."""
+        try:
+            return str(Path(path).relative_to(PROJECT_ROOT))
+        except ValueError:
+            return path
+
     rows = [
         {
             "image": base.rsplit("/", 1)[-1],
             "tag": tags[base],
             "status": verdicts.get(base, STALE_UNCOMMITTED),
-            # True/False/None: does this repo carry any tag besides `latest`? Recorded
-            # so `cmd_stale` can decide whether UNPUBLISHED is real evidence of a stale
+            # Lets `cmd_stale` decide whether UNPUBLISHED is real evidence of a stale
             # registry from what the registry actually says, rather than guessing from
-            # the shape of the other verdicts. Free — `_repo_hash_tagged` is cached.
-            "hash_tagged": _repo_hash_tagged(base) if base in verdicts else None,
+            # the shape of the other verdicts.
+            "hash_tagged": _tagged(base),
+            "tags_seen": list(seen_tags.get(base) or ()) or None,
+            "context": _rel(specs[base]["context"]),
             "services": sorted(specs[base]["services"]),
         }
         for base in sorted(specs)
@@ -1363,7 +1395,8 @@ def cmd_stale(args: argparse.Namespace) -> int:
     if not _check_docker():
         return 2
 
-    report = _stale_report(check_local=bool(getattr(args, "local", False)))
+    verbose = bool(getattr(args, "verbose", False))
+    report = _stale_report(check_local=bool(getattr(args, "local", False)), detail=verbose)
     if report is None:
         print(f"{RED}[!!]{RST} No buildable images found.")
         return 2
@@ -1417,12 +1450,21 @@ def cmd_stale(args: argparse.Namespace) -> int:
     print(f"{BLUE}=== {distinct} distinct images vs {os.environ['OIDA_REGISTRY']} ==={RST}")
     for row in rows:
         status = row["status"]
-        if status == STALE_OK and not getattr(args, "verbose", False):
+        if status == STALE_OK and not verbose:
             continue
         print(
             f"  {row['image']:<42} {DIM}:{row['tag']}{RST} "
             f"{colour[status]}{status:<14}{RST}{DIM}{_STALE_HINT.get(status, '')}{RST}"
         )
+        if not verbose:
+            continue
+        # The evidence behind the verdict: which tags the registry actually serves,
+        # and which committed directory produced the content tag it was compared to.
+        # Without those, a verdict is an assertion the reader has to take on faith.
+        served = ", ".join(row["tags_seen"]) if row["tags_seen"] else "—"
+        print(f"{DIM}      registry tags: {served}{RST}")
+        print(f"{DIM}      context:       {row['context']}{RST}")
+        print(f"{DIM}      services:      {', '.join(row['services'])}{RST}")
     summary = "  ".join(f"{colour[s]}{counts[s]} {s}{RST}" for s in _STALE_ORDER if counts.get(s))
     print(f"{BLUE}---{RST} {summary}")
 
