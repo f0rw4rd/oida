@@ -12,6 +12,7 @@ Reduction summary:
 """
 
 import logging
+from typing import Any, Dict, List
 
 from boofuzz import String
 
@@ -125,7 +126,7 @@ class ReducedString(String):
     # Snapshot of the balanced defaults. set_reduction_level("aggressive")
     # overwrites the live class attributes in place, so the reset back to
     # "balanced" needs its own copy to restore from.
-    _BALANCED_DEFAULTS = {
+    _BALANCED_DEFAULTS: Dict[str, List[Any]] = {
         "_fuzz_library": list(_fuzz_library),
         "long_string_seeds": list(long_string_seeds),
         "_long_string_lengths": list(_long_string_lengths),
