@@ -122,6 +122,16 @@ class ReducedString(String):
     # Remove extra long strings (too slow for most protocol fuzzing)
     _extra_long_string_lengths = []
 
+    # Snapshot of the balanced defaults. set_reduction_level("aggressive")
+    # overwrites the live class attributes in place, so the reset back to
+    # "balanced" needs its own copy to restore from.
+    _BALANCED_DEFAULTS = {
+        "_fuzz_library": list(_fuzz_library),
+        "long_string_seeds": list(long_string_seeds),
+        "_long_string_lengths": list(_long_string_lengths),
+        "_long_string_deltas": list(_long_string_deltas),
+    }
+
     # Reduction level configuration
     reduction_level = "balanced"  # "balanced" or "aggressive"
 
@@ -157,11 +167,10 @@ class ReducedString(String):
             cls.reduction_level = "aggressive"
 
         elif level == "balanced":
-            # Use default reduced settings (reset if needed)
-            cls._fuzz_library = ReducedString.__dict__["_fuzz_library"]
-            cls.long_string_seeds = ReducedString.__dict__["long_string_seeds"]
-            cls._long_string_lengths = ReducedString.__dict__["_long_string_lengths"]
-            cls._long_string_deltas = ReducedString.__dict__["_long_string_deltas"]
+            # Restore from the snapshot, not from the live attributes: an
+            # earlier switch to "aggressive" replaced those in place.
+            for attr, default in cls._BALANCED_DEFAULTS.items():
+                setattr(cls, attr, list(default))
             cls.reduction_level = "balanced"
 
         else:
