@@ -93,17 +93,30 @@ jobs:
         # Pythons), and the repo-invariant contracts. Anything genuinely
         # version-dependent MUST carry the `version_sensitive` marker to be
         # exercised off the canonical lane — see pyproject.toml.
+        #
+        # `extras` selects which optional-dependency groups uv installs. Every
+        # lane wants them all EXCEPT 3.14, where the dnp3 extra's yadnp3 has no
+        # cp314 wheel yet and its sdist build is broken upstream. `--all-extras`
+        # alone won't drop it (the `all` meta-extra re-pulls it), so 3.14 uses
+        # `--no-extra all --no-extra dnp3` to install every other protocol on
+        # 3.14 while skipping only DNP3. Drop this special-case once yadnp3
+        # ships a cp314 wheel.
         include:
           - python-version: "3.13"  # canonical: whole suite runs here
             scope: full
+            extras: "--all-extras"
           - python-version: "3.10"
             scope: subset
+            extras: "--all-extras"
           - python-version: "3.11"
             scope: subset
+            extras: "--all-extras"
           - python-version: "3.12"
             scope: subset
+            extras: "--all-extras"
           - python-version: "3.14"
             scope: subset
+            extras: "--all-extras --no-extra all --no-extra dnp3"
     steps:
       - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
         with:
@@ -119,11 +132,12 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Sync environment from lockfile
-        # `uv sync --all-extras` materializes EXACT versions from uv.lock —
-        # the same set every CI run, every dev box. --frozen errors if
-        # uv.lock is out of date vs pyproject.toml (caught by the
-        # lockfile-drift contract test, but belt-and-braces here too).
-        run: uv sync --all-extras --frozen
+        # `uv sync <extras>` materializes EXACT versions from uv.lock — the same
+        # set every CI run, every dev box. --frozen errors if uv.lock is out of
+        # date vs pyproject.toml (caught by the lockfile-drift contract test, but
+        # belt-and-braces here too). matrix.extras is --all-extras everywhere
+        # except 3.14 (see the matrix comment: yadnp3/dnp3 has no cp314 wheel).
+        run: uv sync ${{ matrix.extras }} --frozen
 
       - name: Full unit & contract suite (canonical Python)
         if: matrix.scope == 'full'
