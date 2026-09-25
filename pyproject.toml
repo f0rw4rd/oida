@@ -63,8 +63,12 @@ bacnetsc = ["BAC0==2026.7.25", "PyYAML==6.0.3", "websockets==16.0", "cryptograph
 can = ["python-can==4.6.1"]
 # DTLSSocket is the tinydtls C backend aiocoap needs for coaps:// (PSK). Without it
 # aiocoap silently has no DTLS client transport, so every DTLS scan path is untestable.
-# Ships sdist-only, so it is compiled at install time (needs a C toolchain).
-coap = ["aiocoap==0.4.17", "cbor2==6.1.4", "DTLSSocket==0.2.3"]
+# Ships sdist-only, so it is compiled at install time (needs a C toolchain) — no
+# Windows wheel and the sdist needs autotools, which windows-latest lacks. Same
+# marker pattern as ethercat's pysoem above: coap module lazy-imports both
+# aiocoap and DTLSSocket, so plain coap:// scanning still works on Windows,
+# only --dtls/coaps:// does not.
+coap = ["aiocoap==0.4.17", "cbor2==6.1.4", "DTLSSocket==0.2.3; sys_platform != 'win32'"]
 dicom = ["pynetdicom==3.0.4", "pydicom==3.0.2"]
 discovery = ["zeroconf==0.151.3", "scapy==2.7.0", "psutil==7.2.2", "profinet-py==0.6.5", "defusedxml==0.7.1"]
 dnp3 = ["yadnp3==3.2.1.1"]
