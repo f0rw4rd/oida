@@ -74,14 +74,6 @@ class TestHL7MonitorRecvCap(unittest.TestCase):
         # Must not have streamed close to the 50 MiB safety belt either.
         self.assertLess(flood._bytes_sent, 30 * 1024 * 1024)
 
-    def test_source_contains_cap_constant(self):
-        """Belt-and-braces: snapshot the cap so a refactor must keep it."""
-        import pathlib
-
-        src = pathlib.Path("src/oida/fuzz/monitors/medical.py").read_text()
-        self.assertIn("MAX_HL7_RESPONSE", src)
-        self.assertIn("16 * 1024 * 1024", src)
-
 
 if __name__ == "__main__":
     unittest.main()

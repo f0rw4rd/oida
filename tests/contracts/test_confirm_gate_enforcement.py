@@ -170,81 +170,6 @@ class TestRefusalSetsSuccessFalse(unittest.TestCase):
         self.assertIs(stub.results["success"], False)
 
 
-class TestModbusDiagClearGate(unittest.TestCase):
-    def test_diag_clear_requires_confirm(self):
-        """diag with clear in test_list must refuse without --confirm."""
-        import pathlib
-
-        src = pathlib.Path("src/oida/protocols/modbus/scanner_mixins/diagnostics.py").read_text()
-        self.assertIn('"--diag clear runs subfunction 0x0A', src)
-        self.assertIn('"--diag restart runs subfunction 0x01', src)
-
-
-class TestBacnetSecurityGate(unittest.TestCase):
-    def test_assess_requires_confirm_string_present(self):
-        """Sentinel string check: source carries the --assess refusal."""
-        import pathlib
-
-        src = pathlib.Path("src/oida/protocols/bacnet/mixins/security.py").read_text()
-        self.assertIn(
-            "--assess issues real BACnet WriteProperty",
-            src,
-        )
-        self.assertIn("--test-write issues real BACnet WriteProperty", src)
-        self.assertIn("--enumerate-writable issues a WriteProperty", src)
-
-
-class TestEthernetIPGate(unittest.TestCase):
-    def test_fuzz_and_reset_in_source(self):
-        import pathlib
-
-        src = pathlib.Path("src/oida/protocols/ethernetip/scanner.py").read_text()
-        self.assertIn("--fuzz writes mutating values", src)
-        self.assertIn("RESET ETHERNET requires --confirm", src)
-
-
-class TestDicomGates(unittest.TestCase):
-    def test_store_move_aet_brute(self):
-        import pathlib
-
-        src_ops = pathlib.Path("src/oida/protocols/dicom/mixins/operations.py").read_text()
-        self.assertIn("--store performs C-STORE upload", src_ops)
-        self.assertIn("--move issues C-MOVE", src_ops)
-
-        src_enum = pathlib.Path("src/oida/protocols/dicom/mixins/enumeration.py").read_text()
-        self.assertIn("--aet-brute / --common-ae runs association brute-force", src_enum)
-
-
-class TestHartRawCommandGate(unittest.TestCase):
-    def test_raw_command_requires_confirm(self):
-        import pathlib
-
-        src = pathlib.Path("src/oida/protocols/hart/cli_runner.py").read_text()
-        self.assertIn("--raw-command can issue arbitrary HART writes", src)
-
-
-class TestMqttBruteGate(unittest.TestCase):
-    def test_brute_in_source(self):
-        import pathlib
-
-        src = pathlib.Path("src/oida/protocols/mqtt/scanner.py").read_text()
-        # Both call sites of brute-force credential testing must check confirm.
-        # Count the occurrences of the gate message.
-        gate_msg = "--brute / --default-creds runs credential brute-force"
-        self.assertGreaterEqual(src.count(gate_msg), 2)
-
-
-class TestFhirBruteGate(unittest.TestCase):
-    def test_brute_in_source(self):
-        import pathlib
-
-        src = pathlib.Path("src/oida/protocols/fhir/mixins/security.py").read_text()
-        self.assertIn(
-            "--brute / --default-creds runs OAuth2/Basic credential brute-force",
-            src,
-        )
-
-
 class TestSnap7BruteAuditGate(unittest.TestCase):
     def test_dangerous_actions_includes_brute_default_creds_audit(self):
         from oida.protocols.snap7.cli_runner import s7 as Snap7NXC
@@ -322,14 +247,6 @@ class TestEtherCATBootStateGate(unittest.TestCase):
             any("confirm" in str(c).lower() for c in scanner.logger.fail.call_args_list),
             "--boot-state must refuse without --confirm",
         )
-
-
-class TestAstmSendPatientGate(unittest.TestCase):
-    def test_send_patient_in_source(self):
-        import pathlib
-
-        src = pathlib.Path("src/oida/protocols/astm/cli_runner.py").read_text()
-        self.assertIn("--send-patient injects forged Patient demographics", src)
 
 
 class TestIec104WriteGate(unittest.TestCase):

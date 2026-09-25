@@ -1,53 +1,97 @@
-"""NetworkConnection.__init__ must NOT mutate the input args Namespace.
+"""Behavioral tests for NetworkConnection/SerialConnection args isolation.
 
-CODE_REVIEW.md HIGH connection.py:349-353. The shared CLI Namespace is
-reused across protocol dispatches; mutating args.port leaked a previous
-protocol's port to the next invocation.
+The CLI dispatcher reuses a single argparse Namespace across protocol
+invocations in the same process. connection.py:384-432 (NetworkConnection
+and SerialConnection __init__) deep-copies that Namespace before writing
+args.port, so that (a) the caller's original Namespace is never mutated
+with a protocol's default port, and (b) mutable attributes on args (lists,
+dicts, sets such as scan_range) are not aliased across two invocations
+that share the same underlying Namespace object. A shallow copy or no
+copy at all would leak state from one protocol scan into the next.
+
+These tests construct real NetworkConnection/SerialConnection subclasses
+(autostart=False, so no actual scan runs) and assert the deep-copy
+contract directly, plus the _resolve_host() guard against inputs that
+getaddrinfo rejects outright (UnicodeError/gaierror).
 """
 
 import argparse
 import unittest
 
+from oida.connection import NetworkConnection, SerialConnection
 
-class TestArgsCopySemantics(unittest.TestCase):
-    def test_args_copy_unconditional_in_source(self):
-        """Source must copy args FIRST, then mutate the copy."""
-        import pathlib
 
-        src = pathlib.Path("src/oida/connection.py").read_text()
-        # Look for the copy preceding the port set (shallow or deep).
-        self.assertTrue(
-            "args = copy.copy(args)" in src or "args = copy.deepcopy(args)" in src,
-            "args copy missing — see CODE_REVIEW HIGH (Namespace leak)",
-        )
+class _NoopNetwork(NetworkConnection):
+    default_port = 1234
 
-    def test_namespace_not_mutated_when_port_set(self):
-        """A Namespace passed in must come out unchanged."""
-        # We can't easily instantiate NetworkConnection without a real
-        # protocol subclass, so simulate the patched logic in-place:
-        import copy
+    def proto_flow(self):
+        pass
 
-        ns = argparse.Namespace(port=502, timeout=5)
-        before_id = id(ns)
-        before_port = ns.port
+    def create_conn_obj(self):
+        pass
 
-        # Mirror the patched __init__ body
-        local_args = copy.copy(ns)
-        local_args.port = 4840  # Hypothetical protocol default override
+    def enum_host_info(self):
+        pass
 
-        # Original namespace must not have been touched.
-        self.assertEqual(ns.port, before_port)
-        self.assertEqual(id(ns), before_id)
-        # Local copy has the new port.
-        self.assertEqual(local_args.port, 4840)
 
-    def test_resolve_host_uses_getaddrinfo_in_source(self):
-        """IPv6 fix: _resolve_host must not use gethostbyname (IPv4 only)."""
-        import pathlib
+class _NoopSerial(SerialConnection):
+    default_port = 5678
 
-        src = pathlib.Path("src/oida/connection.py").read_text()
-        # The patched _resolve_host uses getaddrinfo.
-        self.assertIn("socket.getaddrinfo(host, None)", src)
+    def proto_flow(self):
+        pass
+
+    def create_conn_obj(self):
+        pass
+
+    def enum_host_info(self):
+        pass
+
+
+def _make_args(**overrides):
+    ns = argparse.Namespace(port=None, verbose=0, scan_range=[1, 2])
+    for k, v in overrides.items():
+        setattr(ns, k, v)
+    return ns
+
+
+class TestNetworkConnectionArgsNotMutated(unittest.TestCase):
+    def test_caller_namespace_port_not_mutated(self):
+        args = _make_args()
+        _NoopNetwork(args, None, "127.0.0.1", autostart=False)
+        self.assertIsNone(args.port)
+
+    def test_instance_args_port_set_to_default(self):
+        args = _make_args()
+        conn = _NoopNetwork(args, None, "127.0.0.1", autostart=False)
+        self.assertEqual(conn.args.port, 1234)
+
+    def test_mutable_attr_on_instance_args_not_aliased_to_caller(self):
+        args = _make_args()
+        conn = _NoopNetwork(args, None, "127.0.0.1", autostart=False)
+        conn.args.scan_range.append(999)
+        self.assertEqual(args.scan_range, [1, 2])
+
+
+class TestSerialConnectionArgsNotMutated(unittest.TestCase):
+    def test_caller_namespace_not_mutated(self):
+        args = _make_args(interface="eth0")
+        _NoopSerial(args, None, "eth0", autostart=False)
+        self.assertEqual(args.scan_range, [1, 2])
+
+    def test_mutable_attr_on_instance_args_not_aliased_to_caller(self):
+        args = _make_args(interface="eth0")
+        conn = _NoopSerial(args, None, "eth0", autostart=False)
+        conn.args.scan_range.append(999)
+        self.assertEqual(args.scan_range, [1, 2])
+
+
+class TestResolveHostRejectsUnresolvableInput(unittest.TestCase):
+    def test_overlong_label_returns_input_unchanged_without_raising(self):
+        args = _make_args()
+        conn = _NoopNetwork(args, None, "127.0.0.1", autostart=False)
+        bad_host = "a" * 70 + ".example"
+        result = conn._resolve_host(bad_host)
+        self.assertEqual(result, bad_host)
 
 
 if __name__ == "__main__":

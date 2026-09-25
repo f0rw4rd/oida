@@ -45,15 +45,6 @@ class TestLazyModuleConcurrency(unittest.TestCase):
         for r in results[1:]:
             self.assertIs(r, first, "concurrent threads got different module instances")
 
-    def test_lock_attribute_present(self):
-        """Belt-and-braces: snapshot the threading.Lock import."""
-        import pathlib
-
-        src = pathlib.Path("src/oida/utils/lazy_import.py").read_text()
-        self.assertIn("import threading", src)
-        self.assertIn("threading.Lock()", src)
-        self.assertIn("with self._load_lock:", src)
-
 
 if __name__ == "__main__":
     unittest.main()

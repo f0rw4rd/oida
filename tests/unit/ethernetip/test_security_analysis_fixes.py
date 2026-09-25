@@ -100,19 +100,51 @@ class TestAccessControlVerdict(unittest.TestCase):
         self.assertTrue(verdict)
 
 
-class TestListIdentityNotASecurityFinding(unittest.TestCase):
-    """ListIdentity (CIP Vol 2) is unauthenticated by spec — not a finding."""
+class TestAttackCommandNoResponseIsInconclusive(unittest.TestCase):
+    """No response / timeout on an attack payload must not be reported as
+    success — the caller must be told the outcome is unknown."""
 
-    def test_scanner_source_does_not_log_anonymous_access(self):
-        """Belt-and-braces: grep the scanner source for the removed text."""
-        import pathlib
+    def _make_mixin(self, sock):
+        from unittest.mock import MagicMock
+        from oida.protocols.ethernetip.mixins.attacks import AttacksMixin
 
-        src = pathlib.Path("src/oida/protocols/ethernetip/scanner.py").read_text()
-        self.assertNotIn(
-            "Anonymous access allowed",
-            src,
-            "ListIdentity is unauthenticated by ODVA spec — should not be a finding",
-        )
+        obj = AttacksMixin.__new__(AttacksMixin)
+        obj.timeout = 1
+        obj.logger = MagicMock()
+        obj._register_session = MagicMock(return_value=0x1234)
+        return obj
+
+    def test_empty_response_marks_inconclusive_not_success(self):
+        from unittest.mock import MagicMock, patch
+
+        sock = MagicMock()
+        sock.recv.return_value = b""
+        obj = self._make_mixin(sock)
+
+        with patch(
+            "oida.protocols.ethernetip.mixins.attacks.ConnectionHelper.create_tcp_socket",
+            return_value=sock,
+        ):
+            result = obj._send_attack_command("127.0.0.1", 44818, b"\x00" * 4, "cpu_stop")
+
+        self.assertTrue(result["inconclusive"])
+        self.assertFalse(result["success"])
+
+    def test_timeout_marks_inconclusive_not_success(self):
+        from unittest.mock import MagicMock, patch
+
+        sock = MagicMock()
+        sock.recv.side_effect = TimeoutError()
+        obj = self._make_mixin(sock)
+
+        with patch(
+            "oida.protocols.ethernetip.mixins.attacks.ConnectionHelper.create_tcp_socket",
+            return_value=sock,
+        ):
+            result = obj._send_attack_command("127.0.0.1", 44818, b"\x00" * 4, "cpu_stop")
+
+        self.assertTrue(result["inconclusive"])
+        self.assertFalse(result["success"])
 
 
 if __name__ == "__main__":

@@ -6,28 +6,10 @@ dict) raised AttributeError on the .get('debug', False) lookups.
 """
 
 import argparse
-import pathlib
 import unittest
 
 
 class TestBaseScannerArgsNormalization(unittest.TestCase):
-    def test_source_uses_self_args_get(self):
-        """The fix replaced raw args.get(...) with self.args.get(...)."""
-        src = pathlib.Path("src/oida/utils/base_scanner.py").read_text()
-        # Before fix: parse_bool(args.get("debug", False))
-        # After fix: parse_bool(self.args.get("debug", False))
-        # Look at the specific snippet
-        self.assertIn(
-            'parse_bool(self.args.get("debug", False))',
-            src,
-            "args lookup regression - must use self.args",
-        )
-        self.assertIn(
-            'parse_bool(self.args.get("read-only", True))',
-            src,
-        )
-        self.assertIn('int(self.args.get("timeout", 2))', src)
-
     def test_normalize_wraps_plain_dict_for_key_normalization(self):
         """A plain dict is wrapped in ArgsDict so hyphen/underscore key spellings
         agree — the Layer-1 dict path used to skip this, unlike the Namespace

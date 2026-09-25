@@ -150,5 +150,31 @@ class TestExtraThreadLocal(unittest.TestCase):
         self.assertEqual(sorted(accesses), ["host", "hostname", "port", "protocol"])
 
 
+class TestLogWarnUsesWarningLevel(unittest.TestCase):
+    """log_warn() previously passed level="warn", which MockCLI.log does not
+    match (it checks "warning"), so warnings silently rendered as info ([*])
+    instead of [!]. The fix emits level="warning"."""
+
+    def test_log_warn_forwards_warning_level(self):
+        # Patch the module-level `log` (the actual fix site) rather than
+        # `_get_cli`, so the assertion is robust to any prior test that left
+        # ics_logger global state (log / _get_cli / _cli_instance) dirty.
+        from unittest.mock import patch
+        from oida.utils import ics_logger
+
+        with patch.object(ics_logger, "log") as fake_log:
+            ics_logger.log_warn("disk almost full")
+        fake_log.assert_called_once_with("disk almost full", level="warning")
+
+    def test_mockcli_renders_warning_sigil(self):
+        """The level string log_warn now sends must be one MockCLI renders as [!]."""
+        from oida.utils.cli import MockCLI
+
+        cli = MockCLI()
+        with self.assertLogs(cli.logger, level="INFO") as cm:
+            cli.log("disk almost full", level="warning")
+        self.assertTrue(any("[!] disk almost full" in line for line in cm.output))
+
+
 if __name__ == "__main__":
     unittest.main()
