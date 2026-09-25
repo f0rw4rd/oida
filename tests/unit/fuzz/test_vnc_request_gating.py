@@ -6,10 +6,9 @@ The VNC fuzzer's get_request_definitions() advertises 15 named requests for
 session.connect() gated under is_request_enabled("<name>"), otherwise
 --list-requests lies and --enable/--disable have no effect.
 
-Regression guard for CODE_REVIEW.md:
-  src/oida/fuzz/protocols/vnc.py:698-704,878-886 - _define_preauth_protocol() and
-  _define_postauth_protocol() connected every request unconditionally (no
-  is_request_enabled gates), so --enable/--disable were silently ignored.
+Regression guard: _define_preauth_protocol() and _define_postauth_protocol()
+connected every request unconditionally (no is_request_enabled gates), so
+--enable/--disable were silently ignored.
 
 VNC splits its advertised requests across two mutually exclusive flows selected
 by the use_auth option:

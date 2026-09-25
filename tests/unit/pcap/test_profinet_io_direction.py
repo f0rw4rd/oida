@@ -1,6 +1,6 @@
 """Regression test: PROFINET acyclic (PNIO-CM) request/response direction.
 
-CODE_REVIEW finding #8 (``src/oida/pcap/profinet.py``): direction was derived
+Direction was derived
 as ``is_response = error_code is not None`` where
 ``error_code = self._parse_int(self.get_field(io_layer, ...))``. ``get_field``
 returns None for an absent field, but ``_parse_int(None, default=0)`` returns 0,

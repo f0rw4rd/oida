@@ -1,7 +1,7 @@
 """Priority-write test must encode the write value with the object's actual
 datatype.
 
-CODE_REVIEW.md MEDIUM bacnet/mixins/security.py:783. Previously the write
+Previously the write
 was always built as AnyAtomic(Real(current_value)) regardless of object
 type. For binaryOutput/binaryValue the presentValue is a BinaryPV
 enumeration, so writing a Real is rejected by a spec-compliant device with

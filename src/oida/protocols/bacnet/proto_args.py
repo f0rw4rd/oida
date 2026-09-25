@@ -314,9 +314,9 @@ def register_bacnet_flags(p):
     # re-declare them here — the test_no_duplicate_output_verbose_flags
     # contract enforces single-source-of-truth.
     # --use-bac0: opt-in back-compat for the BAC0 broadcast path. The
-    # default is now bacpypes3 for every target (see CODE_REVIEW.md HIGH:
-    # The BAC0/bacpypes3 dispatch had a 172.0.0.0/8 routing bug and
-    # asymmetric feature coverage). Operators with BAC0-tuned workflows
+    # default is now bacpypes3 for every target (the BAC0/bacpypes3 dispatch
+    # had a 172.0.0.0/8 routing bug and asymmetric feature coverage).
+    # Operators with BAC0-tuned workflows
     # opt back in here; new users get the consistent bacpypes3 path.
     p.add_argument("--use-bac0", action="store_true", help=SUPPRESS)
     p.add_argument("--object-types", type=str, help=SUPPRESS)

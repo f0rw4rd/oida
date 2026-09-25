@@ -625,7 +625,7 @@ def test_hart_coverage(coverage_results_dir):
 
 
 # ---------------------------------------------------------------------------
-# Stretch protocols added 2026-06-02 — fill RELEASE_TODO §6.1 gap.
+# Stretch protocols added 2026-06-02 to close a scanner field-coverage gap.
 # Each test follows the same pattern: ensure the optional dep, find a
 # reachable mock, run the scanner, assert a semantic hit was recorded.
 # Tests skip cleanly when the mock isn't up; they're not meant to be

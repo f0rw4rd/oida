@@ -1,6 +1,6 @@
 """load_register_map must reject non-JSON direct paths and traversal.
 
-CODE_REVIEW.md HIGH: arbitrary file read via --register-map.
+Guards against arbitrary file read via --register-map.
 """
 
 import json

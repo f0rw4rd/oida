@@ -11,7 +11,7 @@ These tests drive ``process_packet()`` with lightweight fake pyshark layers --
 no pyshark, tshark, or .pcap needed -- and assert the corrected field paths so a
 regression back to the dead ``iscsi.login.*`` / ``iscsi.lun`` reads is caught.
 
-Regression guard for CODE_REVIEW iSCSI HIGH: process_packet read
+Regression guard: process_packet read
 ``iscsi.login.target_name`` / ``initiator_name`` / ``auth_method`` /
 ``session_type`` and ``iscsi.lun`` -- none of which the dissector emits -- so
 target/initiator/auth/session/LUN extraction was entirely dead.

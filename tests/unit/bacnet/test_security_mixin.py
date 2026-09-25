@@ -36,7 +36,7 @@ class TestSecurityAssessment(unittest.TestCase):
     """Test _handle_security_assessment."""
 
     def test_assessment_reports_anonymous_access(self):
-        # --assess now requires --confirm (CODE_REVIEW HIGH gate).
+        # --assess now requires --confirm.
         scanner = _create_instance(confirm=True)
         scanner.bacnet.read = Mock(return_value=42)
         scanner.bacnet.write = Mock(return_value=True)
@@ -51,7 +51,7 @@ class TestSecurityAssessment(unittest.TestCase):
         scanner.logger.display.assert_called()
 
     def test_assessment_refuses_without_confirm(self):
-        """Verify the gate added in CODE_REVIEW HIGH batch."""
+        """Verify the --confirm gate on the security assessment."""
         scanner = _create_instance(confirm=False)
         scanner._handle_security_assessment()
         scanner.logger.fail.assert_called()

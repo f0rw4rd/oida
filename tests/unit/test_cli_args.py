@@ -479,7 +479,7 @@ def caplog_at(level):
 class TestExportResultsDoesNotMutate:
     """export_results must not destructively edit caller-owned result dicts.
 
-    Regression for CODE_REVIEW.md cli.py:303-308: the 'collect tables' loop
+    Regression: the 'collect tables' loop
     used data.pop('tables', ...) which silently stripped 'tables' from the
     live result dicts, so a second consumer (or a re-export) would see
     truncated data. The read loop must leave the source dict intact.

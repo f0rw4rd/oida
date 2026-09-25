@@ -1,6 +1,5 @@
 """
-Regression for CODE_REVIEW finding cli_runner.py:304-476 —
-BBMD/FDT/router/network recon must NOT be silently skipped when the
+Regression: BBMD/FDT/router/network recon must NOT be silently skipped when the
 application-layer device-property read fails (returns empty or raises).
 
 The network-layer recon (enum_bbmd/enum_fdt/enum_routers/who_has/networks/

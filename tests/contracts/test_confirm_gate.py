@@ -2,8 +2,8 @@
 matches a dangerous-verb pattern is enforced by an explicit ``args.confirm``
 / ``self.confirm`` check somewhere in its protocol's code.
 
-Catches the **confirm-gate-missing** gap class (TEST_GAP_AUDIT.md):
-the audit found 22+ flags advertised as dangerous but never enforced —
+Catches the **confirm-gate-missing** gap class: an earlier audit found
+22+ flags advertised as dangerous but never enforced —
 DELETEs, writes, brute-force, master-reset, clock-write, fuzz, etc.
 The pattern is always the same: ``proto_args.py`` carries the warning
 in help text, the dispatcher / NXC connection / mixin forgets the

@@ -1,6 +1,6 @@
 """DCC brute-force / test-dcc / test-reinit must NOT treat timeout as success.
 
-CODE_REVIEW.md HIGH bacnet/mixins/security.py:63-68. Earlier the
+Earlier the
 `_is_success_response` predicate returned True when response was None,
 so any UDP packet loss was reported as 'weak password found'.
 """

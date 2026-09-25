@@ -57,7 +57,7 @@ class TestHARTProtoArgs:
     def test_read_all_vars_flag(self):
         assert _parse("--read-all-vars").read_all_vars is True
 
-    # Discovery shortcut flags drive scan_mode in proto_flow (finding #1).
+    # Discovery shortcut flags drive scan_mode in proto_flow.
     def test_discover_flag(self):
         assert _parse("--discover").discover is True
 
@@ -72,7 +72,7 @@ class TestHARTProtoArgs:
         with pytest.raises(SystemExit):
             _parse(flag)
 
-    # Previously-unregistered flags whose handlers were unreachable (finding #2).
+    # Previously-unregistered flags whose handlers were unreachable.
     def test_enumerate_device_specific_flag(self):
         assert _parse("--enumerate-device-specific").enumerate_device_specific is True
 

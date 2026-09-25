@@ -1,7 +1,7 @@
 """TimeSynchronization is an UNCONFIRMED service: absence of an ACK must NOT
 be reported as a finding.
 
-CODE_REVIEW.md MEDIUM bacnet/mixins/security.py:880. Previously
+Previously
 `_bacpypes3_test_time_sync` treated `response is None` (and the asyncio
 timeout branch) as "device accepted unauthenticated TimeSynchronization",
 so the check fired on essentially every target regardless of behaviour.

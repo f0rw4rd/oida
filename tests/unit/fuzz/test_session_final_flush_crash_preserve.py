@@ -1,7 +1,7 @@
 """
 Regression tests for the end-of-session 'pass' flush corrupting crash rows.
 
-Bug (CODE_REVIEW MEDIUM): during a run, ``_flush_crash_context`` INSERTs every
+Bug: during a run, ``_flush_crash_context`` INSERTs every
 buffered test case (the crash case + preceding 'pass' cases) keyed by id. The
 rolling buffer is NOT cleared afterwards, so ``save_session_progress(final=True)``
 re-inserts the *entire* current buffer as result='pass'. Because

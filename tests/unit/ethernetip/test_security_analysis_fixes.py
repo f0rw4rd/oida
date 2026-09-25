@@ -1,6 +1,6 @@
 """Tests for security_analysis.py false-positive fixes.
 
-Covers three bugs from CODE_REVIEW.md HIGH:
+Covers three bugs:
  1. _count_writable_attrs must use the writable flag, not len(dict)
  2. access_control = None when --write didn't run (not silently True)
  3. ListIdentity must NOT emit 'Anonymous access allowed' (ODVA spec)

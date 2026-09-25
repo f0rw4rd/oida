@@ -2,7 +2,7 @@
 
 Old bug: thread A could flip _loaded=True before _module was set;
 thread B saw _loaded=True with _module=None and raised DependencyError
-even though the install was fine. CODE_REVIEW.md HIGH.
+even though the install was fine.
 """
 
 import threading

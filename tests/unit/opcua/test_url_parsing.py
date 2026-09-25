@@ -1,6 +1,6 @@
 """URL normalisation and parsing tests for the OPC UA helpers.
 
-Covers CODE_REVIEW.md HIGH:
+Covers:
 - _normalize_opcua_url doubled port on bracketed IPv6 with explicit port
 - _parse_opcua_url put '[::1' into host and lost the brackets/zone
 - scanner.get_target_info() crashed on opc.tcp://host:port/path

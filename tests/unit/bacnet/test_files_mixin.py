@@ -1,7 +1,7 @@
 """
 Unit tests for BACnet FilesMixin AtomicReadFile size capping.
 
-Regression for CODE_REVIEW finding files.py:123-235 — an attacker-controlled
+Regression: an attacker-controlled
 fileSize must not drive unbounded in-memory accumulation.
 """
 

@@ -6,7 +6,7 @@ whether the fuzzer triggered a crash. This is the only measurement that
 scores the fuzzers by *outcome* (did they break a known-vulnerable
 target) rather than by *reach* (how many mutations they emit).
 
-Design (see docs/REAL_COVERAGE_PROPOSAL.md axis 2):
+Design:
 
 - **Case discovery is dynamic.** Cases are built at collection time from
   the ``oida.*`` labels on ``docker/mocks/compose.cve.yml`` — the same

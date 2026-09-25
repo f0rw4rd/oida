@@ -11,9 +11,8 @@ These tests build the boofuzz session offline (no live device; the
 RegisterSession handshake in _define_state_machine fails fast and falls through)
 and inspect which advertised names are live.
 
-Regression guard for CODE_REVIEW.md:
-  src/oida/fuzz/protocols/ethernetip.py:179 - EIP_CIP_Boundary was advertised
-  but never built or connected.
+Regression guard: EIP_CIP_Boundary was advertised
+but never built or connected.
 """
 
 import inspect
@@ -111,7 +110,7 @@ def test_enable_whitelists_single_request():
 def test_cip_class_enumeration_independently_selectable():
     """CIP_Class_Enumeration has its own gate, decoupled from EIP_Baseline.
 
-    Regression guard for CODE_REVIEW.md ethernetip.py:210-215: the
+    Regression guard: the
     cip_class_enumeration request was connected inside the EIP_Baseline gate,
     so --enable CIP_Class_Enumeration ran nothing and --disable
     CIP_Class_Enumeration could not suppress it.

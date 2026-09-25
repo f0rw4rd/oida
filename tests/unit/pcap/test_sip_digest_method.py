@@ -1,7 +1,7 @@
 """Regression test: SIP digest hashcat (mode 11400) must use the real request
 method, not a hardcoded REGISTER.
 
-CODE_REVIEW finding (``src/oida/pcap/sip.py``): both
+Both
 ``SIPDigestCredential.hashcat_format`` and
 ``SIPPassiveListener.get_hashcat_hashes()`` emitted the digest with the SIP
 method hardcoded to ``REGISTER``. Hashcat 11400 folds the request method into

@@ -1,7 +1,7 @@
 # Real-Coverage Test Suite
 
 Measures how much of a real target's surface OIDA actually covers, using
-only the docker mock stack. Three axes (see `docs/REAL_COVERAGE_PROPOSAL.md`):
+only the docker mock stack. Three axes:
 
 - **`scanner/`** — Axis 1, **implemented**. Per-protocol coverage of the
   semantic surface (`results["data"]` keys) against the live mock target.

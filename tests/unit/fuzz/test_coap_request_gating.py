@@ -6,11 +6,10 @@ for --list-requests / --enable. Every advertised name must be backed by a
 session.connect() gated under is_request_enabled("<name>"), otherwise
 --list-requests lies and --enable/--disable have no effect.
 
-Regression guard for CODE_REVIEW.md:
-  src/oida/fuzz/protocols/coap.py:159-714 - _define_protocol() connected all 21
-  requests unconditionally (no is_request_enabled gates, so --enable/--disable
-  were ignored), and the connected "CoAP_Cache_Control" request was missing from
-  get_request_definitions() (invisible to --list-requests).
+Regression guard: _define_protocol() connected all 21
+requests unconditionally (no is_request_enabled gates, so --enable/--disable
+were ignored), and the connected "CoAP_Cache_Control" request was missing from
+get_request_definitions() (invisible to --list-requests).
 
 The session is built offline (no live device) via the lazy `.session` property,
 which calls _define_protocol() and wires the boofuzz nodes.

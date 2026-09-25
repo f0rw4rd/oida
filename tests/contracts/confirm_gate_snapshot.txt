@@ -5,7 +5,7 @@
 # Drift in either direction (new gap OR resolved gap) fails the contract test
 # and forces an explicit acknowledgement.
 #
-# Known confirm-gate-missing bugs from CODE_REVIEW.md + TEST_GAP_AUDIT.md are in here.
+# Known confirm-gate-missing bugs are listed here.
 # Some entries are false positives (the regex is intentionally loose — e.g. matches
 # `--fuzz-iterations N` because of `--fuzz` substring). Resolve via either:
 #  - fix the bug (add the guard) and remove the line, OR

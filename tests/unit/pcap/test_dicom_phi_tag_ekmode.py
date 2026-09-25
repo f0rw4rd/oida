@@ -1,6 +1,6 @@
 """Regression test: DICOM PHI tag detection across pyshark EK and XML modes.
 
-CODE_REVIEW finding (``src/oida/pcap/dicom.py``): the PHI tag was parsed with
+The PHI tag was parsed with
 ``self._parse_int(tag_raw, None, base=16)``. In pyshark EK mode the base class
 ``get_field()`` normalises the integer FT_UINT32 ``dicom.tag`` to its DECIMAL
 string (tag 0x00100010 -> "1048592"); ``_parse_int(..., base=16)`` then parsed

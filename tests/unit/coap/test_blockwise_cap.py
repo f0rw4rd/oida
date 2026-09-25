@@ -1,7 +1,7 @@
 """coap_get_blockwise must bound its assembled payload.
 
 Old behavior: a hostile server keeping M=1 indefinitely could drive
-the scanner's bytearray to OOM. CODE_REVIEW.md HIGH.
+the scanner's bytearray to OOM.
 """
 
 import asyncio

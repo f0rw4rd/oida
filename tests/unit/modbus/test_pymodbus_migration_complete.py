@@ -1,6 +1,6 @@
 """Verify the pymodbus slave= -> device_id= migration is complete.
 
-CODE_REVIEW.md CRITICAL modbus. Static check that no remaining
+Static check that no remaining
 'slave=' kwargs appear in src/oida/protocols/modbus/ or its tests.
 """
 

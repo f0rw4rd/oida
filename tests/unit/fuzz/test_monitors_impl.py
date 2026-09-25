@@ -895,7 +895,7 @@ class TestCustomSSLSocketMonitorCheckAlive:
 
 
 class TestCustomSSLSocketMonitorProbeRuns:
-    """Regression guard for the inverted rate-limit gate (finding #4)."""
+    """Regression guard for the inverted rate-limit gate."""
 
     def test_probe_actually_runs_across_pre_post_cycle(self):
         """pre_send+post_send must actually contact the target at least once.

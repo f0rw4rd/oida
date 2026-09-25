@@ -1,7 +1,6 @@
 """HL7Monitor must cap its recv buffer to prevent OOM.
 
-CODE_REVIEW.md §-1 (deferred subsection): fuzz/monitors/medical.HL7Monitor
-had an unbounded `sock.recv(1024)` loop that broke only on MLLP_END or
+fuzz/monitors/medical.HL7Monitor had an unbounded `sock.recv(1024)` loop that broke only on MLLP_END or
 empty chunk. A fuzz target that ignores MLLP framing (the whole point
 of fuzzing) could keep streaming, exhausting client memory. 16 MiB cap
 matches the existing hl7/utils.py:send_probe pattern.

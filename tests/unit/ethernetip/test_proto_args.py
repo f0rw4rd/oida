@@ -125,7 +125,7 @@ class TestProtoArgs(unittest.TestCase):
     def test_proto_args_dump_security_defaults_off(self):
         """--dump-security is the heavy opt-in path and must default to False.
 
-        Regression for CODE_REVIEW.md: the flag was registered with
+        Regression: the flag was registered with
         default=True, so the cert download + Password Authenticator (0x61)
         read ran on every host even when the user never asked for it.
         """

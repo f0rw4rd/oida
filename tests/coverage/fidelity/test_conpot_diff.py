@@ -80,8 +80,7 @@ def test_conpot_vs_python_mock(
 
     Currently a SCAFFOLD: skips when either mock isn't reachable on
     localhost. The per-protocol scanner invocation, normalisation, and
-    diff classification land as the harness matures (see
-    ``docs/REAL_COVERAGE_PROPOSAL.md`` axis 3).
+    diff classification land as the harness matures.
     """
     host = "127.0.0.1"
 
@@ -104,7 +103,7 @@ def test_conpot_vs_python_mock(
     #   classified = classify(diff)  # both_wrong / python_lies / python_incomplete
     #   _write_manifest(protocol, classified)
     #   assert classified.python_lies == [], f"Python mock invents data: {classified.python_lies}"
-    pytest.skip("Fidelity-diff harness pending — see docs/REAL_COVERAGE_PROPOSAL.md")
+    pytest.skip("Fidelity-diff harness pending")
 
 
 def _write_manifest(protocol: str, classified: dict[str, Any]) -> Path:

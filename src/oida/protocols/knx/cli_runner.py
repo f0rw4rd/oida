@@ -3,11 +3,10 @@
 """KNX NXC-style callable class.
 
 ARCHITECTURE TODO: This class does NOT delegate to ``KNXScanner`` (the L1
-class in ``scanner.py``) — both implement parallel protocol logic. See
-``docs/ARCHITECTURE.md`` § Refactor targets P0: extract the protocol work
-into ``KNXScanner`` methods that take an xknx client param and reduce this
-class to a CLI dispatcher that owns one. Modbus is the reference for the
-facade pattern.
+class in ``scanner.py``) — both implement parallel protocol logic.
+Refactor target: extract the protocol work into ``KNXScanner`` methods
+that take an xknx client param and reduce this class to a CLI dispatcher
+that owns one. Modbus is the reference for the facade pattern.
 """
 
 import asyncio

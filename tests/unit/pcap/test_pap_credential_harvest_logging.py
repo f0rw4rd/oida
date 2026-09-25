@@ -1,12 +1,12 @@
 """PAP passive listener logs harvested credentials -- INTENDED behavior.
 
 OIDA is a credential-harvesting pentest tool: surfacing the ``username:password``
-it recovers from a passive capture is a feature, not a leak. TEST_GAP_AUDIT.md
-flagged this as a "credential-log-leak" class; the maintainer decision is that it
+it recovers from a passive capture is a feature, not a leak. This was
+flagged as a "credential-log-leak" class; the maintainer decision is that it
 is intended (see the memory note ``credential-logging-is-intended``), so these
 tests pin the harvest-display behavior rather than forbid it.
 
-They ALSO document a real testing pitfall that the audit surfaced: oida's module
+They ALSO document a real testing pitfall: oida's module
 loggers set ``propagate=False`` (``ics_logger.py``), so up to pytest 9.0
 pytest's ``caplog`` -- which hooks the root logger via propagation -- captured
 NOTHING from a listener. pytest 9.1 (#3697) added capture for

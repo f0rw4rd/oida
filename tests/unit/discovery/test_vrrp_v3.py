@@ -1,4 +1,4 @@
-"""Regression test for CODE_REVIEW.md finding #13.
+"""Regression test.
 
 VRRPv3 (RFC 5798) advertisements dissect as scapy's distinct ``VRRPv3`` layer.
 The passive VRRP listener previously matched only the ``VRRP`` (v2) layer, so

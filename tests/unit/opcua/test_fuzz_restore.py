@@ -1,6 +1,6 @@
 """_fuzz_node must restore an empty-but-valid original value.
 
-CODE_REVIEW.md LOW (fuzz.py:155-176): ``_fuzz_node`` captured
+``_fuzz_node`` captured
 ``original = await read_value()`` (always bytes) and restored with the
 truthiness guard ``if original: await write_value(original)``. For a node
 whose value reads back as empty/None — encoded to ``b""`` — the guard was

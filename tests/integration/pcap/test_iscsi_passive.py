@@ -54,7 +54,8 @@ class TestISCSIOpcodeMap:
         assert OPCODES["49"] == "R2T"
         assert OPCODES["0x32"] == "Async Message"
         assert OPCODES["50"] == "Async Message"
-        # No bogus 0x30/48 R2T entry (the CODE_REVIEW premise was incorrect).
+        # No bogus 0x30/48 R2T entry (an earlier review claim to the
+        # contrary was incorrect).
         assert "0x30" not in OPCODES
         assert "48" not in OPCODES
 

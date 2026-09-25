@@ -4,7 +4,9 @@
 # `pytest tests/` in one pass hangs (integration/coverage open real sockets to
 # the Docker mocks and fixtures aren't timed). This runs the lanes with the
 # right flags each, and keeps going even if a lane fails so you see the full
-# picture. See "Which tests run when" in CLAUDE.md for the why.
+# picture. The lanes exist because integration/coverage tests open real
+# sockets to the Docker mocks and are not fixture-timed, so they must not
+# share a pytest session with the strict unit lane.
 #
 # Usage:
 #   ./scripts/run-all-tests.sh [lane] [select-opts] [-- pytest-args]

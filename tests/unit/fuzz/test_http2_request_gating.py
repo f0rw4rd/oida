@@ -7,11 +7,10 @@ fuzzer wires into the boofuzz session (apart from the mandatory connection
 preface) must be gated by is_request_enabled("<advertised-name>"); otherwise
 --enable/--disable cannot reach it.
 
-Regression guard for CODE_REVIEW.md:
-  src/oida/fuzz/protocols/http2.py:1196,1208,1232,1264,1275 - the ping,
-  window_update, rst_stream, settings_variations and settings_ack requests
-  were connected unconditionally (no is_request_enabled gate), so they ran on
-  every campaign regardless of --enable/--disable and could not be turned off.
+Regression guard: the ping, window_update, rst_stream, settings_variations
+and settings_ack requests were connected unconditionally (no
+is_request_enabled gate), so they ran on every campaign regardless of
+--enable/--disable and could not be turned off.
 """
 
 import inspect

@@ -1,6 +1,6 @@
 """OPC UA fuzzer use_session client-lifecycle regression test.
 
-Covers CODE_REVIEW.md finding #5: in use_session mode the fuzzer extracts the
+Covers: in use_session mode the fuzzer extracts the
 live SecureChannelId/TokenId/AuthToken from an asyncua client, then must keep
 that client connected for the duration of fuzzing. Disconnecting before the
 channel/token is consumed invalidates the session server-side and silently

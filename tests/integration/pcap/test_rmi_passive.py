@@ -42,7 +42,7 @@ class _FakePacket:
 
 class TestRMISilentDropRegression:
     """Regression: an rmi packet with no magic/input/output token must not be
-    silently dropped (CODE_REVIEW.md rmi.py:142-186).
+    silently dropped.
 
     A serialization-data continuation segment carries none of the fresh stream
     tokens. Previously it fell through every branch with no interaction and no

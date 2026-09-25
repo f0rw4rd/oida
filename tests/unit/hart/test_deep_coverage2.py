@@ -594,7 +594,7 @@ class TestProtoFlow:
 
     # --- scan_mode derived from the --discover/--full shortcut flags ---
     # The real HART argparse Namespace has no scan_mode attribute; proto_flow
-    # must derive it from the boolean discovery flags (finding #1).
+    # must derive it from the boolean discovery flags.
     def test_proto_flow_discover_flag_stops_early(self):
         # No scan_mode attr at all; only --discover set.
         args = _full_args(discover=True, full=False, quick=False)
@@ -635,7 +635,7 @@ class TestProtoFlow:
         scanner.security_analysis.assert_called_once()
 
     def test_proto_flow_enumerate_device_specific_flag_reaches_handler(self):
-        # --enumerate-device-specific now reaches its handler (finding #2).
+        # --enumerate-device-specific now reaches its handler.
         # It is gated on --confirm (blind-probes vendor-defined commands).
         args = _full_args(enumerate_device_specific=True, command_range="128-130", confirm=True)
         del args.scan_mode
@@ -656,7 +656,7 @@ class TestProtoFlow:
         assert h.results["data"]["device_specific_commands"] == [129]
 
     def test_proto_flow_probe_write_flag_reaches_handler(self):
-        # --probe-write reaches _handle_command_probes (finding #2). With
+        # --probe-write reaches _handle_command_probes. With
         # --confirm it runs security_analysis; the handler is now reachable.
         args = _full_args(probe_write=True, confirm=True)
         del args.scan_mode

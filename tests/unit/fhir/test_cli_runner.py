@@ -201,8 +201,7 @@ class TestGetBaseURL(unittest.TestCase):
 class TestSchemeResolutionConsistency(unittest.TestCase):
     """Scheme resolution must be coherent: the parser default for --tls and the
     code's getattr(...,'tls', default) must agree so a bare-hostname FHIR target
-    is not silently scanned over cleartext HTTP (CODE_REVIEW finding
-    cli_runner.py:51)."""
+    is not silently scanned over cleartext HTTP."""
 
     @staticmethod
     def _parse(*flags):

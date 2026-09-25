@@ -2,7 +2,7 @@
 """
 Regression test for OPC UA _read_file unbounded-read size cap.
 
-Guards CODE_REVIEW finding: _read_file accumulated the entire file in memory
+Guards against: _read_file accumulated the entire file in memory
 with no upper bound, letting a malicious/misconfigured server drive unbounded
 memory growth. A configurable ceiling (args.max_read_bytes, default
 DEFAULT_MAX_READ_BYTES) must abort the read and not store the partial blob.

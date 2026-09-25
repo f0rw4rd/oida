@@ -7,7 +7,7 @@ the outer try/except in the caller and the function silently falls back to
 generic test messages — caller thinks it sent BAR^P01 with full GT1/IN1/FT1
 segments, server actually got a stub.
 
-CODE_REVIEW.md CRITICAL: master_file.py + financial.py both shipped this way.
+master_file.py + financial.py both shipped this way.
 """
 
 from __future__ import annotations

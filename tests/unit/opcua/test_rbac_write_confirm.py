@@ -1,6 +1,6 @@
 """--test-rbac must not issue live Write service calls without --confirm.
 
-CODE_REVIEW.md MEDIUM (credentials.py:218-229): the RBAC write-access probe
+The RBAC write-access probe
 reads a variable and writes the value straight back for the first child nodes
 of every auth method. That is a real Write against production variables and
 must be gated on --confirm like every other write path in the OPC UA module.

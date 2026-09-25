@@ -1,11 +1,11 @@
 """
-Regression tests for CODE_REVIEW MEDIUM findings in cli_runner.py:
+Regression tests for cli_runner.py:
 
-[1] --monitor/--diff are dead in the default (bacpypes3) path -> must fail()
+- --monitor/--diff are dead in the default (bacpypes3) path -> must fail()
     loudly instead of silently doing nothing.
-[2] Network-layer recon must still run when device discovery fails
+- Network-layer recon must still run when device discovery fails
     (device_id is None) -- the early return was short-circuiting it.
-[4] The --use-bac0 path must call enum_host_info() so results["data"] is
+- The --use-bac0 path must call enum_host_info() so results["data"] is
     populated, mirroring the raw path.
 """
 

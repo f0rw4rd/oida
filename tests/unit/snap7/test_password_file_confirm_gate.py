@@ -1,10 +1,8 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """
-Regression test for CODE_REVIEW.md finding #15 [HIGH]:
-"Password-file brute-force in create_conn_obj bypasses the --confirm safety gate"
-
-Source: src/oida/protocols/snap7/cli_runner.py (create_conn_obj)
+Regression test:
+Password-file brute-force in create_conn_obj bypasses the --confirm safety gate.
 
 A user who passes -P <wordlist-file> triggers the "smart -P" brute-force path.
 Brute-forcing a live PLC is an active, lockout-inducing operation and must be

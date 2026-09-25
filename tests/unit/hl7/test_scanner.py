@@ -1323,9 +1323,8 @@ class TestHL7DangerousOperations(unittest.TestCase):
         """ADT^A01 (Admit Patient) IS a write — it creates a record.
 
         The earlier inverse test (`test_adt_a01_does_not_require_confirm`)
-        codified the bug noted in CODE_REVIEW.md: ADT admission/discharge
-        messages were treated as read-only probes. The mixin at
-        hl7/mixins/message.py:30 has always emitted a fail() requiring
+        codified a bug where ADT admission/discharge messages were treated
+        as read-only probes. The mixin has always emitted a fail() requiring
         --confirm; the test was wrong, not the code.
         """
 

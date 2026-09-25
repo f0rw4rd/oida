@@ -141,17 +141,16 @@ CRITICAL_FEATURE_REQUIREMENTS = {
             "CIP path overflow (CVE-2021-27478)",
             # Delivered by the EIP_Overflow group, which connects the
             # EIP_CIP_Path_Overflow request. Previously this matched the
-            # phantom EIP_CIP_Boundary (advertised but never connected;
-            # CODE_REVIEW.md ethernetip.py:179) - which delivered nothing.
+            # phantom EIP_CIP_Boundary (advertised but never connected)
+            # - which delivered nothing.
             ["Overflow", "Path"],
         ),
     ],
     # fins / tase2 / hartip / profinet_dcp / industrial_ethernet entries
-    # removed in §4 cleanup (2026-06-03): no corresponding fuzzer source
+    # removed (2026-06-03): no corresponding fuzzer source
     # exists in src/oida/fuzz/protocols/; tests unconditionally skipped.
-    # Re-add when the underlying fuzzer modules land — see §4.2 in
-    # RELEASE_TODO.md (currently "deferred post-1.0"). MMS coverage moved
-    # below since it IS implemented.
+    # Re-add when the underlying fuzzer modules land (currently "deferred
+    # post-1.0"). MMS coverage moved below since it IS implemented.
     "mms": [
         (
             "ASN.1 BER attacks (CVE-2022-2971)",

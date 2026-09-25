@@ -1,6 +1,6 @@
 """Regression test: MongoDB OP_MSG replies must be classified as responses.
 
-CODE_REVIEW finding `src/oida/pcap/mongodb.py:162-184`: direction
+Direction
 detection did ``is_reply = opcode_name == "OP_REPLY"`` and treated everything
 else as a request. In MongoDB 3.6+ OP_MSG (2013) carries BOTH client commands
 and server responses -- OP_REPLY is largely legacy. A server -> client OP_MSG

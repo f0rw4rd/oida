@@ -308,9 +308,9 @@ class _FakePacket:
 class TestSOCKSCommandNotDropped:
     """Regression: SOCKS command/connect packets must not be silently dropped.
 
-    See CODE_REVIEW.md socks.py:138-271 -- command/connect packets carry none
-    of the auth fields and previously fell through every branch with neither a
-    recorded interaction nor a debug log.
+    Command/connect packets carry none of the auth fields and previously
+    fell through every branch with neither a recorded interaction nor a
+    debug log.
     """
 
     def test_socks_connect_command_recorded(self):

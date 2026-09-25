@@ -27,7 +27,7 @@ pytestmark = [pytest.mark.integration]
 # Known-incomplete listener / pcap-fixture combinations.
 # Format: (module, pcap basename) -> reason
 # Each entry is a documented gap, NOT a flaky test. Adding here should
-# always come with a TODO / issue reference in RELEASE_TODO.md §2.
+# always come with a TODO / issue reference explaining the gap.
 KNOWN_DROPS: dict[tuple[str, str], str] = {}
 
 

@@ -1,7 +1,7 @@
 """Every flag read by a bacnet mixin must be declared in proto_args.py.
 
-CODE_REVIEW.md HIGH bacnet/proto_args.py:115,199 noted 6 dispatcher-read
-flags absent from the parser. Walk all mixins, collect every
+6 dispatcher-read
+flags were absent from the parser. Walk all mixins, collect every
 getattr(self.args, "<dest>", ...) name, and assert each is either
 declared as a parser argument or has a default in some mixin
 __init__.

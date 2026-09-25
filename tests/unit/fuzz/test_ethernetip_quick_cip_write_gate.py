@@ -9,10 +9,9 @@ is set, mirroring the gating already applied to the dedicated Phase-3 write
 requests. Without the gate the baseline sweep silently bypasses the
 read-only safety default.
 
-Regression guard for CODE_REVIEW.md:
-  src/oida/fuzz/protocols/ethernetip.py:447-471 / 2077-2079 - destructive CIP
-  services in the quick-coverage Service Group were not gated behind
-  enable_write.
+Regression guard: destructive CIP
+services in the quick-coverage Service Group were not gated behind
+enable_write.
 """
 
 import pytest

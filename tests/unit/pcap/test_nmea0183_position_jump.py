@@ -1,6 +1,6 @@
 """Regression test: NMEA 0183 GPS-spoofing position-jump detection.
 
-CODE_REVIEW finding (``src/oida/pcap/nmea0183.py``): ``NMEASource.last_lat`` /
+``NMEASource.last_lat`` /
 ``last_lon`` were declared but NEVER assigned anywhere in the file, so
 ``_check_position_jump()`` always returned at its ``last_lat is None`` guard.
 ``position_jumps`` could never increment and the headline "GPS SPOOFING

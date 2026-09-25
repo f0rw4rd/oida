@@ -1,6 +1,6 @@
 """Regression tests: IMAP session buffer must be bounded + dedup-at-source.
 
-CODE_REVIEW finding (``src/oida/pcap/imap.py``): every IMAP packet appended its
+Every IMAP packet appended its
 payload to ``session.data_buffer`` and then ran three ``re.DOTALL`` searches
 over the ENTIRE accumulated buffer. The buffer was never trimmed, capped, or
 cleared, so a long-lived / high-volume (peer-controlled) session grew it without

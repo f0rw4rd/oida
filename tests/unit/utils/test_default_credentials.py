@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Tests for the default_credentials helper module.
 
-Regression coverage for the shared-mutable-state finding
-(CODE_REVIEW.md: default_credentials.py:144) — get_protocol_defaults() must
+Regression coverage for the shared-mutable-state bug:
+get_protocol_defaults() must
 return a defensive copy so callers cannot mutate the module-level constants
 or leak entries across aliased protocols.
 """

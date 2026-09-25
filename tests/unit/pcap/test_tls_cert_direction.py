@@ -1,7 +1,6 @@
 """Regression test: TLS server certificate direction on non-standard ports.
 
-CODE_REVIEW finding (``src/oida/pcap/tls.py`` ``_process_certificate``):
-server-vs-client classification used ``is_server_cert = src_port in
+Server-vs-client classification used ``is_server_cert = src_port in
 self._SERVER_PORTS`` alone. TLS services on non-standard ports are extremely
 common in ICS/OT (this tool's target). When such a server sends its
 Certificate message, ``src_port`` is not in ``_SERVER_PORTS``, so the cert was

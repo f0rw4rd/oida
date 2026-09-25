@@ -266,7 +266,7 @@ class TestADSProtocolLogic(unittest.TestCase):
     def test_connect_returns_within_timeout_when_open_hangs(self, mock_get_pyads):
         """connect() must honor its timeout even if connection.open() hangs.
 
-        Regression for CODE_REVIEW finding #9: the executor was used as a
+        Regression: the executor was used as a
         `with` context manager, so leaving it on TimeoutError called
         shutdown(wait=True) and blocked until the stuck open() returned,
         defeating the timeout. connect() must return ~at the timeout, not

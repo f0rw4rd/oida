@@ -1,6 +1,6 @@
 """--probe-ops must filter to read-only types unless --confirm.
 
-CODE_REVIEW.md CRITICAL: the probe iterated _get_fuzz_message_types(),
+The probe iterated _get_fuzz_message_types(),
 which includes ADT admissions, ORM orders, BAR/DFT financial, MFN
 master-file updates — every probe was a real HL7 write.
 """

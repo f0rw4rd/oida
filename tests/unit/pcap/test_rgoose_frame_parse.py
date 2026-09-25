@@ -215,7 +215,7 @@ def test_empty_hmac_string_is_treated_as_absent():
 
 
 def test_hmac_read_under_rgoose_prefix_flips_no_auth_verdict():
-    """Regression for CODE_REVIEW R-GOOSE HIGH: the HMAC lives under the
+    """Regression: the HMAC lives under the
     ``rgoose.`` abbreviation (reachable as ``rgoose_hmac``), NOT as a bare
     ``hmac`` on the goose layer. Reading the bare name returned the default, so
     ``has_hmac`` was always False and a bogus ``rgoose_no_auth`` verdict fired

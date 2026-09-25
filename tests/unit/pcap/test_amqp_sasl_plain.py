@@ -1,6 +1,6 @@
 """Regression test: AMQP SASL PLAIN credential extraction from FT_BYTES.
 
-CODE_REVIEW finding (``src/oida/pcap/amqp.py``): _extract_sasl_credentials()
+_extract_sasl_credentials()
 read ``amqp.method.arguments.response`` and passed it to _decode_auth_plain(),
 which runs base64.b64decode() on it. But the AMQP SASL response is FT_BYTES in
 tshark (packet-amqp.c), not a base64 string -- pyshark renders it as colon-hex

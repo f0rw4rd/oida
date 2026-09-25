@@ -173,7 +173,7 @@ def pytest_configure(config):
 # Credential-leak protection (autouse)
 # ---------------------------------------------------------------------------
 #
-# Closes the credential-log-leak gap class (TEST_GAP_AUDIT.md §4).
+# Closes the credential-log-leak gap class.
 #
 # OIDA's defensive-tool contract: a credential the operator passes via
 # --password / --credentials / --psk, or one the scanner recovers via
@@ -263,7 +263,7 @@ def no_credential_leak(request, capsys, monkeypatch):
     opt out with `@pytest.mark.allow_credential_in_log`.
 
     This is the SINGLE fixture that closes the credential-log-leak gap
-    class (TEST_GAP_AUDIT.md §4) across the entire 3000+ test suite.
+    class across the entire 3000+ test suite.
     Each new logger.info(f"...{password}...") regression should make
     at least one existing auth/brute/pcap-credential test fail.
     """

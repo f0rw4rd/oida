@@ -1,6 +1,6 @@
 """Regression tests for ICSLogger.extra thread-local isolation.
 
-Covers CODE_REVIEW.md MEDIUM (connection.py:79-84): get_logger() caches one
+Covers the logger prefix-mutation bug: get_logger() caches one
 ICSLogger per protocol:host:port key, and connection.__init__/proto_logger()
 mutate logger.extra["host"/"hostname"/"port"] in place. Two ThreadPoolExecutor
 workers scanning targets that collapse to the same cache key (a duplicate
@@ -118,7 +118,7 @@ class TestExtraThreadLocal(unittest.TestCase):
     def test_format_snapshots_extra_once(self):
         """_format() reads the per-thread prefix dict a single time.
 
-        Covers CODE_REVIEW.md LOW (ics_logger.py:176-180,225-229,312-325):
+        Covers the case where
         a concurrent get_logger()/update_logger_host() can mutate host/hostname
         in place while _format() runs. Reading self.extra once and rendering
         from that snapshot means all fields on a line come from one consistent

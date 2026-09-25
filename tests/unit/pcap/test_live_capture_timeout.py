@@ -1,6 +1,5 @@
 """Regression test: pyshark live-capture autostop on an idle interface.
 
-CODE_REVIEW finding (``src/oida/pcap/pyshark_base.py`` ``_live_capture``):
 ``sniff_continuously()`` was called with no timeout/autostop, so tshark blocks
 waiting for the next matching packet.  The wall-clock guard
 (``time.time() - start_time >= self.timeout``) sits *inside* the per-packet

@@ -215,7 +215,7 @@ class TestStatefulFuzzerStateMatching:
 
 
 class TestStatefulFuzzerSocketTimeouts:
-    """Regression tests for _create_socket forwarding timeouts (CODE_REVIEW #3).
+    """Regression tests for _create_socket forwarding timeouts.
 
     The stateful data socket must honor CLI --recv/send-timeout overrides
     (surfaced as config.recv_timeout/send_timeout) and the calibrated

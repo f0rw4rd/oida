@@ -1,6 +1,6 @@
 """Regression test: CANopen SDO read counter (src/oida/pcap/canopen.py).
 
-CODE_REVIEW finding: in ``_process_sdo`` the read tally was
+In ``_process_sdo`` the read tally was
 ``elif not is_server_tx: node.sdo_reads += 1``. That branch fired for ANY
 client (RX, func 0xC) frame that was neither a write (ccs 1/6) nor an abort,
 including SDO *Download Segment* frames (ccs=0, part of a write transfer) and

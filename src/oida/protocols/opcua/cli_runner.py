@@ -20,10 +20,10 @@ The class uses mixins to organize functionality into logical groups:
 
 ARCHITECTURE TODO: This class does NOT delegate to ``OPCUAScanner`` (the L1
 class in ``scanner.py``). Both classes implement the protocol independently.
-See ``docs/ARCHITECTURE.md`` § Refactor targets P0: extract the mixin work
-into protocol-impl methods on ``OPCUAScanner`` (taking an asyncua client
-param) and reduce this class to a CLI dispatcher that owns one. Modbus is
-the reference for the facade pattern.
+Refactor target: extract the mixin work into protocol-impl methods on
+``OPCUAScanner`` (taking an asyncua client param) and reduce this class to
+a CLI dispatcher that owns one. Modbus is the reference for the facade
+pattern.
 """
 
 import asyncio

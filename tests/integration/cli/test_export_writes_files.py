@@ -1,7 +1,7 @@
 """When `-o out/` is set, the framework MUST write a file.
 
-CODE_REVIEW.md / TEST_GAP_AUDIT.md §−1 deferred item: 5+ protocols
-silently produced zero files when the operator passed `-o out/` without
+Deferred item: 5+ protocols silently produced zero files when the
+operator passed `-o out/` without
 `-f json|csv`. The root cause was format defaulting to "console"
 which writes nothing to disk.
 

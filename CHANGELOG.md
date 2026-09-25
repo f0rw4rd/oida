@@ -100,7 +100,7 @@ First stable release.
   disclosure goes through https://getoida.dev/contact.
 - **Real-coverage scaffolds** — `tests/coverage/fuzz/test_cve_replication.py`
   and `tests/coverage/fidelity/test_conpot_diff.py` (axes 2 and 3, see
-  `docs/REAL_COVERAGE_PROPOSAL.md`). Per-CVE driver and Conpot diff
+  `tests/coverage/README.md`). Per-CVE driver and Conpot diff
   classification land post-1.0.
 - **`.github/workflows/coverage-nightly.yml`** — nightly run of all three
   coverage axes against the full mock stack; publishes JUnit + JSON artifacts

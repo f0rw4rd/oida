@@ -3,7 +3,7 @@
 Old code: any host starting with '172.' was treated as local. RFC 1918
 only defines 172.16.0.0/12 (172.16 - 172.31) as private. Hosts in
 172.0-172.15 and 172.32-172.255 are PUBLIC and were misrouted to the
-BAC0 broadcast path which can't reach them. CODE_REVIEW.md HIGH.
+BAC0 broadcast path which can't reach them.
 """
 
 import ipaddress

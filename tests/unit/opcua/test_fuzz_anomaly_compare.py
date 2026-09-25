@@ -1,6 +1,6 @@
 """_fuzz_node anomaly detection must compare like-with-like.
 
-CODE_REVIEW.md MEDIUM (fuzz.py:162-166): the anomaly check compared the
+The anomaly check compared the
 re-encoded readback (bytes produced by read_value() re-encoding the stored
 typed value) against the *raw* fuzz payload bytes. For int/float/str nodes
 write_value() first decodes the raw bytes into a typed value, so the typed

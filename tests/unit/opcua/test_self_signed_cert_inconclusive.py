@@ -1,6 +1,5 @@
 """OPC UA self-signed-cert probe must not report vuln-clean on unrelated errors.
 
-CODE_REVIEW.md #14 [HIGH]:
 mixins/security.py _test_self_signed_cert_acceptance treated asyncio.TimeoutError
 and any error mentioning "timeout"/"certificate" as proof the server REJECTS
 untrusted client certs (logger.success). A timeout / unrelated cert-handshake

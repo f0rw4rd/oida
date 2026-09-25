@@ -284,7 +284,7 @@ timeout_method = "signal"
 # session-scoped docker_services fixture brings up ~67 mock containers
 # and routinely exceeds any per-test budget; without this flag it kills
 # the whole pytest session. (Fixture/collection hangs are therefore still
-# possible — run in lanes per docs/TESTING.md, or pass
+# possible — run in lanes per scripts/run-all-tests.sh, or pass
 # -o timeout_func_only=false when the mocks are already up so setup is just a
 # fast health-check.)
 timeout_func_only = true

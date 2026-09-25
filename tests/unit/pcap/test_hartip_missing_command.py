@@ -1,6 +1,6 @@
 """Regression test: HART-IP pass-through frame with no pt_command field.
 
-CODE_REVIEW finding (``src/oida/pcap/hartip.py`` ~line 416-417): the command
+The command
 field was parsed as
 ``command = self._parse_int(self.get_field(hart_layer, "pt_command"))``.
 ``get_field`` returns None for an absent field, but ``_parse_int(None)`` uses

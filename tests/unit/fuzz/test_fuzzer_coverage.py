@@ -148,7 +148,7 @@ ICS_SCADA_TIERS = {
 ICS_AUDIT_REQUEST_COUNTS = {
     "modbus": 15,
     # 12 -> 11: removed phantom RTU_Combined_Attacks (advertised but never
-    # built or connected; CODE_REVIEW.md modbus/rtu.py:126).
+    # built or connected).
     "modbus_rtu": 11,
     "dnp3": 13,
     "iec104": 13,
@@ -157,7 +157,7 @@ ICS_AUDIT_REQUEST_COUNTS = {
     "opcua": 25,
     "bacnet": 13,
     # 12 -> 11: removed phantom EIP_CIP_Boundary (advertised but never built
-    # or connected; CODE_REVIEW.md ethernetip.py:179).
+    # or connected).
     "ethernetip": 11,
     "mms": 14,
     "ads": 12,
@@ -166,12 +166,12 @@ ICS_AUDIT_REQUEST_COUNTS = {
     "hl7": 13,
     "mqtt": 14,
     "coap": 20,
-    # The following entries were removed in §4 cleanup (2026-06-03):
+    # The following entries were removed (2026-06-03):
     # fins, tase2, profinet_dcp, industrial_ethernet, hartip — no
     # corresponding fuzzer source exists in src/oida/fuzz/protocols/;
-    # the tests were unconditionally skipping. §4.2 lists these as
+    # the tests were unconditionally skipping. These are
     # "implement-or-delete"; deleted here, can be re-added once the
-    # underlying fuzzer modules land. See RELEASE_TODO.md §4.2.
+    # underlying fuzzer modules land.
 }
 
 # Combine for backward compatibility

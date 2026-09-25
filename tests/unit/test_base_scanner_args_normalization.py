@@ -1,6 +1,6 @@
 """BaseScanner.__init__ must use the normalized self.args, not raw args.
 
-CODE_REVIEW.md HIGH base_scanner.py:89-93. Raw argparse.Namespace lacks
+Raw argparse.Namespace lacks
 .get(), so any code path that hits BaseScanner with a Namespace (not a
 dict) raised AttributeError on the .get('debug', False) lookups.
 """

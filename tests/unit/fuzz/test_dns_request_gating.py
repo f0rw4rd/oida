@@ -6,10 +6,9 @@ The DNS fuzzer's get_request_definitions() advertises 68 named requests for
 session.connect() gated under is_request_enabled("<name>"), otherwise
 --list-requests lies and --enable/--disable have no effect.
 
-Regression guard for CODE_REVIEW.md:
-  src/oida/fuzz/protocols/dns.py:2687-2769 - _define_protocol() connected all 64
-  requests unconditionally (no is_request_enabled gates), so a user asking to run
-  only DNS_A_QUERY still got all 64 requests.
+Regression guard: _define_protocol() connected all 64
+requests unconditionally (no is_request_enabled gates), so a user asking to run
+only DNS_A_QUERY still got all 64 requests.
 
 The session is built offline (no live device) via the lazy `.session` property,
 which calls _define_protocol() and wires the boofuzz nodes.
