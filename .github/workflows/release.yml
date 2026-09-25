@@ -19,8 +19,8 @@
 # Required GitHub configuration (one-time, in the web UI — no tokens):
 #   1. Create a 'pypi' environment with required reviewers
 #      (Settings → Environments → New environment → pypi → add reviewers).
-#      This is what blocks auto-publish: a tag push pauses the publish job
-#      for manual approval.
+#      This is what blocks auto-publish: dispatching the workflow pauses the
+#      publish job for manual approval.
 #   2. Configure the PyPI trusted publisher for project `oida-ics`
 #      (the PyPI distribution name — the GitHub repo is `oida`):
 #        - Owner:       f0rw4rd
@@ -32,15 +32,12 @@
 #
 # To cut a release: bump __version__ in src/oida/__init__.py, commit, then
 #   git tag v1.0.0 && git push origin v1.0.0
+# then run by hand: gh workflow run release.yml --ref v1.0.0
 # ============================================================================
 
 name: Release to PyPI
 
 on:
-  push:
-    tags:
-      - "v[0-9]+.[0-9]+.[0-9]+"
-      - "v[0-9]+.[0-9]+.[0-9]+.post[0-9]+"
   workflow_dispatch:
     inputs:
       dry_run:
