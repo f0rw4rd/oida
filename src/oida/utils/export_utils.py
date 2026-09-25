@@ -37,7 +37,7 @@ _config: Dict[str, Any] = {
 # Per-thread "last print_table() truncated its output" state. This used to be
 # a key in the shared _config dict, so under `oida <proto> <targets> -t N` two
 # ThreadPoolExecutor workers could interleave print_table() calls and each
-# read the OTHER thread's truncation flag — attaching the "Table truncated /
+# read the OTHER thread's truncation flag - attaching the "Table truncated /
 # full data saved to" hint to the wrong target's table. Thread-local storage
 # keeps the write in print_table() and the read in export_table() scoped to
 # the same thread.
@@ -127,7 +127,7 @@ def export_table(
     # Always print to console
     print_table(rows, headers, title, logger=_config["logger"])
 
-    # Check if table was truncated and inform the user (per-thread state —
+    # Check if table was truncated and inform the user (per-thread state -
     # see _truncation_state above)
     was_truncated = getattr(_truncation_state, "last_table_truncated", False)
 
@@ -486,7 +486,7 @@ def print_table(
         # rows in that case (same as --full-width).
         piped = not sys.stdout.isatty()
         term_width = shutil.get_terminal_size((120, 24)).columns
-        # Subtract logger prefix width — when output() calls logger.display(),
+        # Subtract logger prefix width - when output() calls logger.display(),
         # the logger prepends "PROTO  host:port  [*] " before our line.
         try:
             prefix_w = int(getattr(logger, "prefix_width", 0)) if logger else 0

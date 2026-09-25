@@ -723,7 +723,7 @@ class SecurityMixin:
             # For AuthorizationKey we don't attempt a write (too risky), and
             # for SecurityProfile a fabricated "0" would actually *perform*
             # a security downgrade (TLS/auth off) with no known-good value
-            # to restore afterwards — never write a value we didn't read.
+            # to restore afterwards - never write a value we didn't read.
             if sensitive_key in ("AuthorizationKey", "SecurityProfile"):
                 return "skipped"
             key_value = "0"

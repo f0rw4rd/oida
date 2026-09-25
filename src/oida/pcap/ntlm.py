@@ -472,7 +472,7 @@ class NTLMPassiveListener(PySharkListenerBase):
         else:
             self.logger.warning(
                 f"NTLM Type 3 from {client_ip} -> {server_ip}: "
-                "missing server challenge (Type 2 not in capture) — hash is UNCRACKABLE"
+                "missing server challenge (Type 2 not in capture) - hash is UNCRACKABLE"
             )
 
         try:
@@ -657,7 +657,7 @@ class NTLMPassiveListener(PySharkListenerBase):
                 # positional misalignment between two differently-filtered lists.
                 hashcat_str = h.hashcat_format or ""
             else:
-                hashcat_str = "[!] INCOMPLETE — missing server challenge (Type 2 not captured)"
+                hashcat_str = "[!] INCOMPLETE - missing server challenge (Type 2 not captured)"
             entry: Dict[str, Any] = {
                 "protocol": "NTLMSSP",
                 "hash_type": h.hash_type + (" [!]" if incomplete else ""),
@@ -692,7 +692,7 @@ class NTLMPassiveListener(PySharkListenerBase):
         result = []
         for h in self.hashes:
             if not h.challenge:
-                continue  # Skip — server challenge missing, hash is uncrackable
+                continue  # Skip - server challenge missing, hash is uncrackable
             if h.hash_type == "NTLMv1":
                 # Format: user::domain:lm:nt:challenge
                 result.append(f"{h.username}::{h.domain}:{h.lm_hash}:{h.nt_hash}:{h.challenge}")

@@ -5,7 +5,7 @@ Targets the parse/processing methods that the existing network tests do not
 exercise: NetBIOSScanner._parse_nbstat_response (raw NBSTAT bytes),
 NetBIOSPassiveListener feed paths (scapy NBNS / datagram frames),
 STPPassiveListener._parse_bpdu (scapy BPDU frames), CDP address extraction,
-and LLMNR response parsing. Only scapy packet construction is "synthetic" —
+and LLMNR response parsing. Only scapy packet construction is "synthetic" -
 the code under test (parsers, dedup, device merge) runs for real.
 """
 

@@ -426,7 +426,7 @@ class TestModbusDockerSession:
 
         session = str(tmp_path / "resume_session")
 
-        # First run — create the session DB
+        # First run - create the session DB
         run_fuzz_cli(
             "modbus",
             MOCK_HOST,
@@ -445,7 +445,7 @@ class TestModbusDockerSession:
         if not os.path.exists(db_path):
             pytest.skip("Session DB not created on first run")
 
-        # Second run — resume with same session path
+        # Second run - resume with same session path
         result = run_fuzz_cli(
             "modbus",
             MOCK_HOST,
@@ -498,7 +498,7 @@ def populated_modbus_session(tmp_path, modbus_port):
     db_path = f"{session}.db"
     if not os.path.exists(db_path):
         require_service(
-            "Failed to create Modbus test session — fuzzer may not have run (missing dep?)"
+            "Failed to create Modbus test session - fuzzer may not have run (missing dep?)"
         )
 
     return session
@@ -748,7 +748,7 @@ class TestModbusFuzzCLI:
 
 
 class TestModbusCLIErrors:
-    """CLI error handling — these tests do not require Docker."""
+    """CLI error handling - these tests do not require Docker."""
 
     def test_no_target_shows_usage(self):
         """oida fuzz modbus with no target should show usage/error."""
@@ -782,7 +782,7 @@ class TestModbusCLIErrors:
         )
 
         output = result.output
-        # Should fail gracefully — no Python traceback
+        # Should fail gracefully - no Python traceback
         assert result.returncode != 0 or "error" in output.lower() or "invalid" in output.lower()
         assert "Traceback" not in output, f"Invalid port produced a traceback:\n{output}"
 
@@ -828,7 +828,7 @@ class TestModbusCLIErrors:
 
 
 class TestModbusCLIFeatures:
-    """CLI feature flag tests — some require Docker."""
+    """CLI feature flag tests - some require Docker."""
 
     def test_seed_reproducibility(self, modbus_port):
         """Same seed should produce deterministic output across two runs."""

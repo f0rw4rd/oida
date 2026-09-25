@@ -70,7 +70,7 @@ def _ports_of(request):
     return target, source
 
 
-# Requests built via _create_ams_header() — both ports must follow config.
+# Requests built via _create_ams_header() - both ports must follow config.
 _HELPER_BUILT_REQUESTS = [
     "ADS_READ_DEVICE_INFO",
     "ADS_READ_STATE",
@@ -113,7 +113,7 @@ def test_inline_blocks_use_configured_ports(ads_requests, name):
 
 
 # Requests that deliberately fuzz/override Target_Port (port enumeration, port
-# boundary, route manipulation) — only Source_Port must track config.
+# boundary, route manipulation) - only Source_Port must track config.
 _SOURCE_ONLY_REQUESTS = [
     "ADS_Port_Boundary",
     "ADS_Port_Enumeration",

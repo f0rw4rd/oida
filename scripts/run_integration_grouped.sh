@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# run_integration_grouped.sh — memory-bounded integration test runner.
+# run_integration_grouped.sh - memory-bounded integration test runner.
 #
 # WHY: `pytest tests/integration` in one process needs every mock the whole
 # suite touches running at once. The full mock fleet is ~158 containers and the
 # JVM-based mocks alone (3× HAPI FHIR ≈ 5 GB, HL7 Mirth, 3× OCPP SteVe) hold
 # ~7 GB. On a shared / memory-constrained host that leaves too little headroom
-# and the run gets OOM-killed (the pytest process itself is tiny — ~300 MB flat,
+# and the run gets OOM-killed (the pytest process itself is tiny - ~300 MB flat,
 # no leak; the memory is in the container fleet).
 #
 # WHAT: run the integration suite one PROTOCOL GROUP at a time. Each group's
@@ -23,19 +23,19 @@
 #
 # Modes (pick one; default --heavy-only):
 #   --heavy-only   RECOMMENDED. Keep the ~150 tiny mocks always-up (fast) and
-#                  isolate ONLY the JVM heavyweights — 3× HAPI FHIR (~5 GB),
+#                  isolate ONLY the JVM heavyweights - 3× HAPI FHIR (~5 GB),
 #                  3× OCPP SteVe (~1.6 GB), HL7 Mirth (~0.5 GB). They are stopped
 #                  for the main pass (frees ~7 GB) and each is brought up only
 #                  for its own group, so peak added memory is the single
 #                  heaviest group (~5 GB), not their ~7 GB union. Drives the
 #                  heavy containers by their real `mocks`-project container names
-#                  (docker start/stop — they already exist, so no name clash).
+#                  (docker start/stop - they already exist, so no name clash).
 #   --fresh        Strictest bounding: `python services.py down` first, then run
 #                  ALL 29 protocol groups one at a time so only one group's mocks
 #                  are ever up (peak = one group). Slowest (per-group container
 #                  start/stop for every protocol).
 #   --keep-fleet   Run groups against whatever is already up. Fast, but does NOT
-#                  bound memory — use only when the whole fleet already fits.
+#                  bound memory - use only when the whole fleet already fits.
 #   -- <args>      everything after `--` is passed straight to each pytest call.
 #
 # Exit code: 0 only if every group passed.
@@ -155,7 +155,7 @@ if [[ "$MODE" == "heavy-only" ]]; then
     echo -e "${YELLOW}[$g] starting: ${HEAVY_CONTAINERS[$g]}${NC}"
     docker_start_if_present ${HEAVY_CONTAINERS[$g]}
     wait_heavy_healthy ${HEAVY_CONTAINERS[$g]} \
-      || echo -e "${YELLOW}[$g] not healthy within 90s — tests may skip/fail${NC}"
+      || echo -e "${YELLOW}[$g] not healthy within 90s - tests may skip/fail${NC}"
     run_group "$g" "$g and $BASE_MARK" || FAILED_GROUPS+=("$g")
     docker_stop_if_present ${HEAVY_CONTAINERS[$g]}
   done
@@ -170,7 +170,7 @@ else
     run_group "$g" "$g and $BASE_MARK" || FAILED_GROUPS+=("$g")
   done
   # Everything with no protocol marker (pcap listeners, common, cli, marker-less
-  # fuzz) — needs no mock fleet, so run it as one final group.
+  # fuzz) - needs no mock fleet, so run it as one final group.
   NOMARK="not ($(join_or "${GROUPS[@]}")) and $BASE_MARK"
   run_group "no-mock" "$NOMARK" || FAILED_GROUPS+=("no-mock")
 fi

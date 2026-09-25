@@ -16,7 +16,7 @@ class ProbeMixin:
         """Probe which HL7 message types the server accepts.
 
         Default behaviour is restricted to read-only QRY/QBP message types
-        — every other type in _get_fuzz_message_types() is a state-mutating
+        - every other type in _get_fuzz_message_types() is a state-mutating
         write (ADT admissions, ORM orders, RDE/RAS pharmacy, BAR/DFT
         financial, MFN master-file updates etc.). With --confirm the
         operator opts into sending the full dangerous catalogue.

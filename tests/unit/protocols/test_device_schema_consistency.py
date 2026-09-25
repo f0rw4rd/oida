@@ -97,7 +97,7 @@ def test_listener_data_attrs_are_declared_on_device():
                 offenders.setdefault(attr, []).append(path.name)
     assert not offenders, (
         "Listeners write device data attrs that are NOT declared fields of "
-        f"DiscoveredDevice — merge_from() drops them on merge: {offenders}. "
+        f"DiscoveredDevice - merge_from() drops them on merge: {offenders}. "
         "Declare each attr as `Optional[Dict[str, Any]] = None` on "
         "DiscoveredDevice."
     )
@@ -111,7 +111,7 @@ def test_data_attr_names_are_valid_identifiers():
     for path in _iter_listener_sources():
         written |= _written_device_attrs(path)
     assert len(written) >= 50, (
-        f"AST scan found only {len(written)} attrs — extraction likely broken"
+        f"AST scan found only {len(written)} attrs - extraction likely broken"
     )
     known_good = {"smb_passive_data", "tls_passive_data", "http_passive_data"}
     assert known_good <= written, f"Known attrs missing from scan: {known_good - written}"

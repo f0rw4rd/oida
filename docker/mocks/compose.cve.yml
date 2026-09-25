@@ -486,7 +486,7 @@ services:
       - "oida.description=bacnet-stack CVE-2026-41503 (real, crash-verified)"
 
   # ============================================================================
-  # SNMP CVE (real -real builds) — snmp-cve-2018-18066 REPLACES the phantom stub
+  # SNMP CVE (real -real builds) - snmp-cve-2018-18066 REPLACES the phantom stub
   # ============================================================================
 
   snmp-cve-2018-18066:

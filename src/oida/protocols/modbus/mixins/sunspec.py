@@ -146,7 +146,7 @@ def _raw_regs_to_value(regs: List[int], dtype: str) -> Optional[Any]:
     try:
         decoded = _sunspec_decoder.decode(regs, decode_type)
     except ValueError:
-        # Unknown SunSpec type — fall back to the raw first register.
+        # Unknown SunSpec type - fall back to the raw first register.
         return regs[0]
     return decoded[0]["value"] if decoded else None
 
@@ -474,7 +474,7 @@ class SunSpecMixin(_ScannerBase):
         # the SunS marker (2 more registers). raw_data starts at the first data
         # register after the header, so we subtract the header size.
         # Detect this by finding the "model_id" or "model_length" register in
-        # the map — the data starts right after it.
+        # the map - the data starts right after it.
         header_end = 2  # default: model_id(0) + model_length(1) -> data at 2
         if "model_id" in registers_def:
             header_end = registers_def["model_id"].get("address", 0) + 2

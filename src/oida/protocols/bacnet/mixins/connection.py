@@ -29,7 +29,7 @@ class ConnectionMixin:
             bbmd = getattr(self.args, "bbmd", None)
 
             # Build connection kwargs. BAC0.lite's local-address parameter is
-            # 'ip' (not 'localIPAddr', which is the internal Lite attribute) —
+            # 'ip' (not 'localIPAddr', which is the internal Lite attribute) -
             # passing the latter raises TypeError and the --interface path
             # fails silently as a generic "Failed to connect".
             kwargs = {}

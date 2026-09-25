@@ -123,7 +123,7 @@ class TimeoutCalibrator:
 
     The probe target only needs a ``_check_alive_once(fuzz_data_logger=None) -> bool``
     method (every :class:`ProtocolMonitor` has one). A probe that returns ``False`` or
-    raises is excluded from the statistics — the calibration-time equivalent of Karn's
+    raises is excluded from the statistics - the calibration-time equivalent of Karn's
     rule: never learn latency from a failed exchange.
     """
 
@@ -256,7 +256,7 @@ class RtoEstimator:
         return self.timeout()
 
     def on_timeout(self) -> float:
-        """A probe timed out: Karn's rule — don't learn, back off (cap at 64x)."""
+        """A probe timed out: Karn's rule - don't learn, back off (cap at 64x)."""
         self._backoff = min(self._backoff * 2, 64)
         return self.timeout()
 

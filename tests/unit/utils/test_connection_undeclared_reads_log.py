@@ -2,7 +2,7 @@
 
 ArgsDict already *records* reads of keys that were neither present nor declared
 (``undeclared_reads``) on every scan, but before this the recording had no
-consumer — dormant infra. connection.run()'s finally block now emits one
+consumer - dormant infra. connection.run()'s finally block now emits one
 ``logger.debug`` line naming the suspects, which is the observable consumer.
 A clean scan (no undeclared reads) must stay silent.
 """
@@ -16,7 +16,7 @@ from oida.utils.args_dict import ArgsDict
 
 
 class _StubConnection(NetworkConnection):
-    """Minimal concrete connection — proto_flow is a no-op happy path."""
+    """Minimal concrete connection - proto_flow is a no-op happy path."""
 
     protocol_name = "stub"
     default_port = 9999
@@ -64,7 +64,7 @@ def test_clean_scan_logs_no_typo_line():
     conn = _build()
     debug_calls = _capture_debug(conn)
 
-    # Only declared/present keys were read — nothing to surface.
+    # Only declared/present keys were read - nothing to surface.
     args = ArgsDict({"unit_id": 1}, known_keys={"unit_id", "timeout"})
     assert args.get("unit_id") == 1
     assert args.get("timeout") is None

@@ -1,6 +1,6 @@
 ---
 name: Feature request
-about: Suggest a new feature or improvement (not a new protocol — use the protocol-add template)
+about: Suggest a new feature or improvement (not a new protocol - use the protocol-add template)
 title: "[feat] <one-line summary>"
 labels: enhancement
 assignees: ''
@@ -9,7 +9,7 @@ assignees: ''
 ## Problem
 
 <!-- What can't you do today? Describe the operator workflow that's
-     missing or awkward. Skip "would be nice to have" — focus on a
+     missing or awkward. Skip "would be nice to have" - focus on a
      concrete situation where the lack of this feature bit you. -->
 
 ## Proposed solution
@@ -27,6 +27,6 @@ assignees: ''
 ## Compatibility
 
 - Does this change an existing flag / output schema? (yes/no)
-- Does it need a new optional dependency? (yes/no — which library?)
-- Does it require write access to the target? (yes/no — confirm gating
+- Does it need a new optional dependency? (yes/no - which library?)
+- Does it require write access to the target? (yes/no - confirm gating
   applies)

@@ -8,12 +8,12 @@ auto-scans via ``proto_flow()`` on construct (``autostart=True``).
 
 These tests fail CI if that invariant regresses, e.g. someone:
   * registers a bare ``*Scanner`` (Layer-1 ``BaseScanner``) as a protocol's
-    dispatched class — which the removed ``scan_target`` branch used to special-case
+    dispatched class - which the removed ``scan_target`` branch used to special-case
     and which now silently breaks (its ``__init__`` takes ``(args)`` only), or
   * removes the construction/execution split (``autostart`` kwarg + ``run()``) that
     makes a scanner constructible without side effects.
 
-Pure class introspection — no network, no mocks. Mirrors the runtime-introspection
+Pure class introspection - no network, no mocks. Mirrors the runtime-introspection
 idiom of ``test_reserved_short_flags.py``.
 """
 
@@ -43,9 +43,9 @@ def _dispatched_classes() -> dict[str, type]:
 
 
 def test_every_protocol_dispatches_to_a_layer2_connection():
-    """The single dispatch entrypoint is a ``connection`` subclass — for all of them."""
+    """The single dispatch entrypoint is a ``connection`` subclass - for all of them."""
     dispatched = _dispatched_classes()
-    assert dispatched, "no protocols discovered — loader/introspection broke"
+    assert dispatched, "no protocols discovered - loader/introspection broke"
 
     not_connection = {
         name: cls.__name__
@@ -71,7 +71,7 @@ def test_no_protocol_dispatches_to_a_bare_basescanner():
         and not issubclass(cls, connection)
     }
     assert not layer1_only, (
-        "these protocols dispatch to a bare BaseScanner (Layer-1) — give them a "
+        "these protocols dispatch to a bare BaseScanner (Layer-1) - give them a "
         f"Layer-2 `connection` wrapper instead: {layer1_only}"
     )
 
@@ -81,7 +81,7 @@ def test_connection_preserves_construction_execution_split():
     and an explicit ``run()`` so objects are constructible without scanning."""
     sig = inspect.signature(connection.__init__)
     assert "autostart" in sig.parameters, (
-        "connection.__init__ lost its `autostart` parameter — construction can no "
+        "connection.__init__ lost its `autostart` parameter - construction can no "
         "longer be separated from execution"
     )
     autostart = sig.parameters["autostart"]
@@ -94,7 +94,7 @@ def test_connection_preserves_construction_execution_split():
         "subclasses and the dispatcher stay unchanged"
     )
     assert callable(getattr(connection, "run", None)), (
-        "connection.run() was removed — the scan flow must stay an explicit method, "
+        "connection.run() was removed - the scan flow must stay an explicit method, "
         "not a construction side effect"
     )
 
@@ -105,5 +105,5 @@ def test_representative_protocols_expose_get_results(proto):
     cls = ProtocolLoader(str(_PROTOCOLS_DIR)).get_protocol_class(proto)
     assert cls is not None, f"{proto} did not resolve to a dispatched class"
     assert callable(getattr(cls, "get_results", None)), (
-        f"{proto} dispatched class has no get_results() — the result envelope boundary is missing"
+        f"{proto} dispatched class has no get_results() - the result envelope boundary is missing"
     )

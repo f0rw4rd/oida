@@ -354,7 +354,7 @@ class ADDPScanner:
         0x03 netmask(4), 0x04 name, 0x06 hw-type, 0x08 firmware, 0x0b gateway(4),
         0x0d device, 0x12 serial-port-count, 0x14 version, ...
 
-    OT-safety: safe — a single read-only multicast discovery request (the
+    OT-safety: safe - a single read-only multicast discovery request (the
     config/reboot opcodes that need the "dbps" password are never sent).
 
     References:

@@ -545,7 +545,7 @@ class TestFormatDetailsString:
         assert not bad, f"{case['cls']}: raw objects in protocol column cells: {bad[:5]}"
 
 
-# Listeners that call get_port_info() — TCP/UDP protocols that must
+# Listeners that call get_port_info() - TCP/UDP protocols that must
 # produce at least some interactions with non-zero src_port/dst_port.
 _PORT_LISTENERS = [
     c

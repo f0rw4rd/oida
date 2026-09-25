@@ -17,7 +17,7 @@ assignees: ''
 ## Real-world deployment
 
 <!-- Where is this protocol actually deployed? Which industries / device
-     families? Without this, we'll deprioritise — we don't add scanners
+     families? Without this, we'll deprioritise - we don't add scanners
      for unused protocols just because they exist on paper. -->
 
 ## Reference material
@@ -37,6 +37,6 @@ assignees: ''
 
 ## Are you offering to implement?
 
-(yes / partial / no — looking for someone to take it)
+(yes / partial / no - looking for someone to take it)
 
 See <https://getoida.dev> for the layout of a protocol module.

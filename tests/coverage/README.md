@@ -3,14 +3,14 @@
 Measures how much of a real target's surface OIDA actually covers, using
 only the docker mock stack. Three axes:
 
-- **`scanner/`** — Axis 1, **implemented**. Per-protocol coverage of the
+- **`scanner/`** - Axis 1, **implemented**. Per-protocol coverage of the
   semantic surface (`results["data"]` keys) against the live mock target.
-- **`fuzz/`** — Axis 2, **implemented**. Drives each fuzzer at its matching
+- **`fuzz/`** - Axis 2, **implemented**. Drives each fuzzer at its matching
   CVE mock (pairs discovered from `compose.cve.yml` `oida.*` labels) for a
   bounded run and records whether it triggered a crash. Writes a scorecard
   to `cve_replication_<run-id>.json`; hard-asserts only the curated
   `VERIFIED_REPRODUCTIONS` allowlist (see the module docstring).
-- **`fidelity/`** — Axis 3, *scaffold*. Case table, probe, and manifest
+- **`fidelity/`** - Axis 3, *scaffold*. Case table, probe, and manifest
   writer exist; the diff of scanner output Conpot-side vs. Python-mock-side
   is pending (the test skips with "Fidelity-diff harness pending").
 
@@ -24,7 +24,7 @@ python services.py up               # everything
 # Run the scanner coverage suite (axis 1)
 pytest tests/coverage/ -m coverage -v
 
-# Run the fuzzer CVE-replication suite (axis 2) — needs the CVE mock stack
+# Run the fuzzer CVE-replication suite (axis 2) - needs the CVE mock stack
 python services.py up cve
 pytest tests/coverage/fuzz/ -m cve_replication -v   # OIDA_CVE_CASE_CAP tunes the budget
 
@@ -34,7 +34,7 @@ cat tests/coverage/results/*.json
 
 Tests skip cleanly when:
 - The target container isn't reachable on the host.
-- The protocol's optional Python dep isn't installed (`bacpypes3`, `yadnp3`, …).
+- The protocol's optional Python dep isn't installed (`bacpypes3`, `yadnp3`, ...).
 
 ## Skipping the suite
 
@@ -64,20 +64,20 @@ Each test appends a record to `tests/coverage/results/scanner_<run-id>.json`:
 }
 ```
 
-- `semantic_coverage_pct` — the headline number: % of curated
+- `semantic_coverage_pct` - the headline number: % of curated
   expected keys actually populated by the scan.
-- `semantic_populated` / `semantic_missing` — the diff. Gaps point
+- `semantic_populated` / `semantic_missing` - the diff. Gaps point
   either to a scanner that doesn't reach a feature, or to a mock that
   doesn't expose it. Use it to refine `surface.py` or fix the scanner.
-- `wire_coverage_pct` — % of fields in `ref/<proto>/tshark_fields.json`
-  visible in scanner output. **Reported, not yet asserted** — the
+- `wire_coverage_pct` - % of fields in `ref/<proto>/tshark_fields.json`
+  visible in scanner output. **Reported, not yet asserted** - the
   semantic structure of scanner output doesn't 1:1 match wire field
   names for ICS protocols (the dissector exposes framing fields; the
   scanner exposes parsed PDUs).
 
 ## Adding a new protocol
 
-1. Pick the docker container(s) that target the protocol — prefer Conpot
+1. Pick the docker container(s) that target the protocol - prefer Conpot
    where available, fall back to Python mocks.
 2. Add the protocol's expected semantic surface to `scanner/surface.py`
    under `EXPECTED_SURFACE`. Generate the candidate list with:
@@ -114,7 +114,7 @@ manifest. The coverage workflow (manual dispatch) sets this to the GitHub run ID
 
 ```bash
 OIDA_COVERAGE_RUN_ID=nightly-2026-05-26 pytest tests/coverage/ -m coverage
-# → tests/coverage/results/scanner_nightly-2026-05-26.json
+# -> tests/coverage/results/scanner_nightly-2026-05-26.json
 ```
 
 Without the env var the file is named `scanner_manual-<today>.json`.

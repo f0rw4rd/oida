@@ -129,7 +129,7 @@ class PcapScanner:
         from oida.protocols.discovery.stats import PassiveStatistics
 
         # Run PyShark pipeline with retry on tshark crash (intermittent retcode 255).
-        # Truncated pcap files ("cut short") always exit non-zero — don't retry those.
+        # Truncated pcap files ("cut short") always exit non-zero - don't retry those.
         max_retries = 2
         scan_start = time.time()
         packet_count = 0
@@ -143,7 +143,7 @@ class PcapScanner:
                 if "cut short" in err_msg or "truncated" in err_msg:
                     self.logger.info("PCAP file appears truncated (incomplete final packet)")
                     break
-                # File format errors — show tshark message, don't retry
+                # File format errors - show tshark message, don't retry
                 if "isn't a capture file" in err_msg or "not a capture file" in err_msg:
                     self.logger.fail(_extract_tshark_error(e))
                     break
@@ -160,7 +160,7 @@ class PcapScanner:
                     )
                     time.sleep(0.5)
                     continue
-                # Final attempt exhausted — show clean tshark error
+                # Final attempt exhausted - show clean tshark error
                 self.logger.fail(_extract_tshark_error(e))
         elapsed = time.time() - scan_start
         self.logger.debug(
@@ -211,7 +211,7 @@ class PcapScanner:
         self.results["traffic_statistics"] = self.stats.to_dict()
 
         self.logger.debug(
-            "run_scan: finished — %d devices, %d protocols detected",
+            "run_scan: finished - %d devices, %d protocols detected",
             len(self.discovered_devices),
             len(self.results.get("protocols_used", [])),
         )
@@ -392,7 +392,7 @@ class PcapScanner:
             progress_interval = 200  # update every N packets
             collect_stats = bool(self.args.get("stats") or self.args.get("assets"))
 
-            # Build layer→listeners dispatch table for fast per-packet routing.
+            # Build layer->listeners dispatch table for fast per-packet routing.
             # Instead of calling all listeners for every packet, we only call
             # listeners whose REQUIRED_LAYERS match the packet's actual layers.
             layer_dispatch: Dict[str, List] = {}  # layer_name -> [listener, ...]
@@ -626,7 +626,7 @@ class PcapScanner:
             is_truncated = "cut short" in err_msg or "truncated" in err_msg
             # Truncated pcap files cause tshark to exit non-zero after
             # successfully outputting all complete packets.  Don't discard the
-            # intel already harvested from the valid prefix — fall through to the
+            # intel already harvested from the valid prefix - fall through to the
             # harvest/export block below instead of re-raising.
             if is_crash and (packet_count > 0 or is_truncated):
                 self.logger.debug(
@@ -637,13 +637,13 @@ class PcapScanner:
                 )
                 if is_truncated:
                     self.logger.info(
-                        "PCAP file appears truncated — reporting intel from the valid prefix"
+                        "PCAP file appears truncated - reporting intel from the valid prefix"
                     )
                 # Suppress noisy __del__ exceptions from the orphaned capture
                 # by killing subprocesses and clearing the process list.
                 self._kill_capture_processes(capture)
             elif is_crash:
-                # No packets processed — genuine crash, propagate for retry.
+                # No packets processed - genuine crash, propagate for retry.
                 # Kill subprocesses to suppress noisy __del__ asyncio errors.
                 self._kill_capture_processes(capture)
                 raise
@@ -762,7 +762,7 @@ class PcapScanner:
                         details,
                     ]
                 )
-                # Structured row for JSON/CSV export — individual fields
+                # Structured row for JSON/CSV export - individual fields
                 json_row = {
                     "#": ix.stream_id,
                     "Protocol": ix.protocol,
@@ -809,7 +809,7 @@ class PcapScanner:
                     row[:5]
                     + [
                         (
-                            row[5][:SECRET_PREVIEW] + "…"
+                            row[5][:SECRET_PREVIEW] + "..."
                             if len(row) > 5 and len(row[5] or "") > SECRET_PREVIEW
                             else (row[5] if len(row) > 5 else "")
                         )
@@ -860,7 +860,7 @@ class PcapScanner:
                     port = getattr(cred, "server_port", 0) or getattr(cred, "dest_port", 0)
                     server_str = f"{server}:{port}" if server and port else server
                     self.logger.debug(
-                        "_run_pyshark_pipeline: credential from %s — type=%s method=%s user=%s server=%s",
+                        "_run_pyshark_pipeline: credential from %s - type=%s method=%s user=%s server=%s",
                         name,
                         cred_type,
                         method,
@@ -988,7 +988,7 @@ class PcapScanner:
                     continue
                 other = devices[key]
                 # Preserve the folded device's role ("NetBIOS Host", ...) in
-                # discovery_reasons — merge_from only fills device_type when
+                # discovery_reasons - merge_from only fills device_type when
                 # the primary's is empty.
                 if other.device_type and other.device_type not in (
                     devices[primary].device_type,
@@ -1064,22 +1064,22 @@ class PcapScanner:
         """Collect and export hashcat-compatible hashes from all listeners."""
         # Protocol -> hashcat mode comment
         mode_comments = {
-            "ntlm": "# NTLM — NTLMv1 (hashcat 5500), NTLMv2 (hashcat 5600)",
-            "kerberos": "# Kerberos — AS-REQ (7500/19800/19900), AS-REP (18200/john), "
+            "ntlm": "# NTLM - NTLMv1 (hashcat 5500), NTLMv2 (hashcat 5600)",
+            "kerberos": "# Kerberos - AS-REQ (7500/19800/19900), AS-REP (18200/john), "
             "TGS-REP (13100/19600/19700)",
-            "http": "# HTTP Digest — John the Ripper `hdaa` (no hashcat mode)",
+            "http": "# HTTP Digest - John the Ripper `hdaa` (no hashcat mode)",
             "sip": "# SIP Digest (hashcat 11400)",
-            "vnc": "# VNC — John the Ripper `vnc` (no hashcat mode)",
-            "ipmi": "# IPMI 2.0 RAKP — HMAC-SHA1 (hashcat 7300)",
+            "vnc": "# VNC - John the Ripper `vnc` (no hashcat mode)",
+            "ipmi": "# IPMI 2.0 RAKP - HMAC-SHA1 (hashcat 7300)",
             "mysql": "# MySQL CRAM (hashcat 11200)",
             "pgsql": "# PostgreSQL CRAM-MD5 (hashcat 11100)",
-            "iscsi": "# iSCSI CHAP — MD5 (hashcat 4800)",
+            "iscsi": "# iSCSI CHAP - MD5 (hashcat 4800)",
             "imap": "# CRAM-MD5 (hashcat 10200)",
             "smtp": "# CRAM-MD5 (hashcat 10200)",
-            "tacacs": "# TACACS+ — encrypted AUTHEN, recovers shared secret (hashcat 16100)",
-            "ospf": "# OSPF crypto-auth — John net-md5/net-sha1 (no hashcat mode)",
-            "rip": "# RIPv2 keyed-auth — John net-md5/net-sha1 (no hashcat mode)",
-            "radius": "# RADIUS — CHAP-Password (hashcat 4800), MS-CHAPv2 (hashcat 5500)",
+            "tacacs": "# TACACS+ - encrypted AUTHEN, recovers shared secret (hashcat 16100)",
+            "ospf": "# OSPF crypto-auth - John net-md5/net-sha1 (no hashcat mode)",
+            "rip": "# RIPv2 keyed-auth - John net-md5/net-sha1 (no hashcat mode)",
+            "radius": "# RADIUS - CHAP-Password (hashcat 4800), MS-CHAPv2 (hashcat 5500)",
         }
 
         all_hashes: List[str] = []
@@ -1177,7 +1177,7 @@ class PcapScanner:
                 stats = extractor.get_statistics()
                 for proto, info in stats.get("by_protocol", {}).items():
                     self.logger.debug(
-                        "_run_file_extraction: %s — %d files, %d bytes",
+                        "_run_file_extraction: %s - %d files, %d bytes",
                         proto,
                         info["count"],
                         info["bytes"],
@@ -1214,7 +1214,7 @@ class PcapScanner:
         return False
 
     def _track_endpoint(self, packet) -> None:
-        """Extract IP→MAC mapping from a packet for endpoint discovery."""
+        """Extract IP->MAC mapping from a packet for endpoint discovery."""
         if not hasattr(packet, "eth"):
             return
 
@@ -1244,7 +1244,7 @@ class PcapScanner:
 
         Merges data from three sources into a unified inventory:
         1. Listener-created devices (rich protocol data)
-        2. Endpoint tracker (IP→MAC from every packet)
+        2. Endpoint tracker (IP->MAC from every packet)
         3. Stats open ports (per-IP service detection)
         """
         from oida.protocols.discovery.core import (
@@ -1253,8 +1253,8 @@ class PcapScanner:
             lookup_mac_vendor,
         )
 
-        # ── Merge stats IP→MAC into endpoint tracker ──
-        # Stats collects IP→MAC from conversations; merge so endpoint tracker
+        # ── Merge stats IP->MAC into endpoint tracker ──
+        # Stats collects IP->MAC from conversations; merge so endpoint tracker
         # has the most complete mapping.  Apply same broadcast/multicast filter.
         if hasattr(self, "stats") and self.stats._ip_to_mac:
             for ip, mac in self.stats._ip_to_mac.items():
@@ -1452,12 +1452,12 @@ class pcap(SerialConnection):
         super().__init__(args, db, host)
 
     def _resolve_host(self, host: str) -> str:
-        """Return empty string — host is a file path, not a hostname."""
+        """Return empty string - host is a file path, not a hostname."""
         self.logger.debug("pcap._resolve_host: %s -> (empty)", host)
         return ""
 
     def proto_logger(self):
-        """Set logger host to basename only — no hostname column for file paths."""
+        """Set logger host to basename only - no hostname column for file paths."""
         self.logger.extra["host"] = ""
         self.logger.extra["hostname"] = ""
 
@@ -1491,14 +1491,14 @@ class pcap(SerialConnection):
         return True
 
     def enum_host_info(self) -> None:
-        """No-op framework hook — run_scan owns enumeration/output for pcap.
+        """No-op framework hook - run_scan owns enumeration/output for pcap.
 
         (The previous self.device_info dict had no reader: print_host_info is a
         no-op and get_results returns self._scan_results.)
         """
 
     def print_host_info(self) -> None:
-        """Print host info — no-op, run_scan prints the analysis header."""
+        """Print host info - no-op, run_scan prints the analysis header."""
 
     def _execute_scan(self) -> None:
         """Execute PCAP analysis"""

@@ -346,7 +346,7 @@ class TestOPCUAAttackPatterns:
         rotates 6 service IDs (Read/Browse/Write/Call/CreateSubscription/
         CloseSession) all issued at SECURE_CHANNEL state pre-session.
         The original test wanted >=2 separate requests; the implementation
-        merged them into one Group-driven request (more efficient — one
+        merged them into one Group-driven request (more efficient - one
         boofuzz Request handles the full pre-session matrix).
         """
         defs = _get_opcua_request_definitions()
@@ -356,7 +356,7 @@ class TestOPCUAAttackPatterns:
             if "state_confusion" in d.category.lower() or "State_Confusion" in d.name
         ]
         assert len(state_confusion) >= 1, (
-            "Missing OPCUA_State_Confusion request — §4 sweep added it "
+            "Missing OPCUA_State_Confusion request - §4 sweep added it "
             "as a Group covering pre-session service-ID attacks."
         )
 

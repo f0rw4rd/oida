@@ -2,7 +2,7 @@
 
 The probe iterated _get_fuzz_message_types(),
 which includes ADT admissions, ORM orders, BAR/DFT financial, MFN
-master-file updates — every probe was a real HL7 write.
+master-file updates - every probe was a real HL7 write.
 """
 
 import unittest
@@ -96,7 +96,7 @@ class TestProbeReadOnlyFilter(unittest.TestCase):
 
 
 class TestSegmentBuilderAliasKwargs(unittest.TestCase):
-    """mixins/pharmacy.py uses caller-friendly kwarg names — RXA/RXG/RXD
+    """mixins/pharmacy.py uses caller-friendly kwarg names - RXA/RXG/RXD
     must accept them so calls don't TypeError into silent fallback."""
 
     def test_rxa_accepts_completion_status(self):
@@ -128,7 +128,7 @@ class TestSegmentBuilderAliasKwargs(unittest.TestCase):
 
 
 class TestParseMessageOrders(unittest.TestCase):
-    """parse_message must return an 'orders' key — response.py reads it."""
+    """parse_message must return an 'orders' key - response.py reads it."""
 
     def test_orders_key_present_on_empty_input(self):
         from oida.protocols.hl7.segments import HL7SegmentParser
@@ -136,7 +136,7 @@ class TestParseMessageOrders(unittest.TestCase):
         result = HL7SegmentParser.parse_message(
             "MSH|^~\\&|TEST|TEST|TEST|TEST|20260603120000||ACK^A01|MSG1|P|2.5"
         )
-        self.assertIn("orders", result, "orders key missing — silent KeyError risk")
+        self.assertIn("orders", result, "orders key missing - silent KeyError risk")
         self.assertIsInstance(result["orders"], list)
 
 

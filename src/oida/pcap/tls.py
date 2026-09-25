@@ -88,7 +88,7 @@ class TLSPassiveListener(PySharkListenerBase):
     """
 
     PROTOCOL_NAME = "tls"
-    # DTLS (TLS over UDP — BACnet/SC, CoAPs, QUIC-less handshakes) dissects as
+    # DTLS (TLS over UDP - BACnet/SC, CoAPs, QUIC-less handshakes) dissects as
     # a separate "dtls" layer with a mirroring field tree, so both the capture
     # filter and the layer gate accept either.
     DISPLAY_FILTER = "tls.handshake or tls.alert_message or dtls.handshake or dtls.alert_message"
@@ -186,7 +186,7 @@ class TLSPassiveListener(PySharkListenerBase):
     def process_packet(self, packet) -> None:
         """Process TLS handshake packet using PyShark."""
         if not hasattr(packet, "tls"):
-            # DTLS (TLS over UDP — BACnet/SC, CoAPs, S7comm-plus over UDP):
+            # DTLS (TLS over UDP - BACnet/SC, CoAPs, S7comm-plus over UDP):
             # tshark dissects it as a separate "dtls" layer, but the field
             # tree mirrors tls.* (handshake_type, alert_message_desc, ...)
             # so the same parsing path applies unchanged.
@@ -239,7 +239,7 @@ class TLSPassiveListener(PySharkListenerBase):
         if hs_type_raw is None:
             if not interaction_recorded:
                 # Packet matched the display filter but has no parseable
-                # handshake type and no alert — likely an encrypted Finished,
+                # handshake type and no alert - likely an encrypted Finished,
                 # ChangeCipherSpec, or encrypted alert.  Record a minimal
                 # interaction so the packet is not silently dropped.
                 content_type = self.get_field(tls_layer, "record_content_type", None)
@@ -356,7 +356,7 @@ class TLSPassiveListener(PySharkListenerBase):
         ja3s = self.get_field_any(tls_layer, "handshake_ja3s_hash", "handshake_ja3s")
         if ja3s:
             details["ja3s"] = str(ja3s)
-        # Certificate CN — extract from raw cert hex (works in EK mode)
+        # Certificate CN - extract from raw cert hex (works in EK mode)
         if "11" in hs_types:
             cert_hex = self.get_field(tls_layer, "handshake_certificate", None)
             if not cert_hex:

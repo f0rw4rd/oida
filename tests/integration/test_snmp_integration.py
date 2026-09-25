@@ -20,7 +20,7 @@ from tests.service_gate import require_service
 from tests.integration.conftest import MOCK_HOST, MOCK_PORTS
 
 
-# SNMP runs over UDP, which drops packets under heavy concurrent load — many
+# SNMP runs over UDP, which drops packets under heavy concurrent load - many
 # SNMP classes walking mocks across xdist workers cause incomplete walks and
 # missing findings. Serialize all SNMP tests onto one worker. Honored only
 # under `--dist loadgroup`. Mirrors test_hart/mms/iec104 integration files.
@@ -28,7 +28,7 @@ pytestmark = pytest.mark.xdist_group("snmp_service")
 
 
 # ---------------------------------------------------------------------------
-# Constants — known mock data (ground truth from snmpd.conf / entrypoint.sh)
+# Constants - known mock data (ground truth from snmpd.conf / entrypoint.sh)
 # ---------------------------------------------------------------------------
 
 SNMP_PORT = MOCK_PORTS.get("snmp", 10161)
@@ -1146,7 +1146,7 @@ class TestSNMPIntegration:
     def test_enum_users(self, cli_runner, target, port):
         """Test --enum users (Windows user accounts via LanManager MIB) [Category B]
 
-        Linux mock lacks LanManager MIB — expect graceful no-data.
+        Linux mock lacks LanManager MIB - expect graceful no-data.
         """
         result = cli_runner.run(
             "snmp",
@@ -1165,7 +1165,7 @@ class TestSNMPIntegration:
     def test_enum_shares(self, cli_runner, target, port):
         """Test --enum shares (Windows shares via LanManager MIB) [Category B]
 
-        Linux mock lacks LanManager MIB — expect graceful no-data.
+        Linux mock lacks LanManager MIB - expect graceful no-data.
         """
         result = cli_runner.run(
             "snmp",
@@ -1184,7 +1184,7 @@ class TestSNMPIntegration:
     def test_enum_services(self, cli_runner, target, port):
         """Test --enum services (Windows services via LanManager MIB) [Category B]
 
-        Linux mock lacks LanManager MIB — expect graceful no-data.
+        Linux mock lacks LanManager MIB - expect graceful no-data.
         """
         result = cli_runner.run(
             "snmp",
@@ -1201,7 +1201,7 @@ class TestSNMPIntegration:
             _assert_log_event_structure(result.scan_log)
 
     # ========================================================================
-    # P3: Process Enumeration — CPU/Memory Fields
+    # P3: Process Enumeration - CPU/Memory Fields
     # ========================================================================
 
     def test_enum_processes_has_parameters_column(self, cli_runner, target, port):
@@ -1229,7 +1229,7 @@ class TestSNMPIntegration:
             )
 
     # ========================================================================
-    # P2: Credential Enumeration — Vendor Correlation
+    # P2: Credential Enumeration - Vendor Correlation
     # ========================================================================
 
     @pytest.mark.security
@@ -1237,7 +1237,7 @@ class TestSNMPIntegration:
         """Test --enum creds handles empty vendor tables gracefully [Category B]
 
         P2 added Brocade/Ambit/Netopia credential OIDs and correlation logic.
-        The Linux mock has none of these vendor tables — scanner must not crash.
+        The Linux mock has none of these vendor tables - scanner must not crash.
         """
         result = cli_runner.run(
             "snmp",
@@ -2284,7 +2284,7 @@ class TestSNMPIntegration:
         """Test default scan does NOT render full ARP table [Category B]
 
         A default scan (no --enum) should NOT render the full 'ARP Table'
-        header with columns — that output is only produced by --enum arp.
+        header with columns - that output is only produced by --enum arp.
         """
         result = cli_runner.run(
             "snmp",
@@ -2661,7 +2661,7 @@ class TestSNMPv3Only:
 
 
 # ============================================================================
-# SNMP Switch Mock Tests (port 10162 — H3C switch with credential tables)
+# SNMP Switch Mock Tests (port 10162 - H3C switch with credential tables)
 # ============================================================================
 
 
@@ -2838,7 +2838,7 @@ class TestSNMPSwitch:
         """Test --enum creds reports correct total credential entry count [Category A]
 
         Switch mock has: 3 H3C users × 4 columns (name+pass+level+state) × 2 PENs = 24
-        + 2 Brocade users × 2 columns = 4 → total ≥ 28 credential entries.
+        + 2 Brocade users × 2 columns = 4 -> total ≥ 28 credential entries.
         """
         result = cli_runner.run(
             "snmp",
@@ -2920,7 +2920,7 @@ class TestSNMPSwitch:
             )
 
     # ========================================================================
-    # Credential Table Column Order (Category → Value → OID)
+    # Credential Table Column Order (Category -> Value -> OID)
     # ========================================================================
 
     @pytest.mark.security
@@ -3220,7 +3220,7 @@ class TestSNMPEnumExtend:
             verbose=True,
         )
         assert result.returncode in [0, 1]
-        # Output capture is best-effort — some net-snmp builds may not return it
+        # Output capture is best-effort - some net-snmp builds may not return it
         if result.success:
             messages = _all_messages(result.scan_log)
             # If output was captured, it should contain the script result
@@ -3347,29 +3347,29 @@ class TestSNMPEnumProcessCreds:
 # appropriate mock profile (linux on 10161, switch on 10162, v3only on 10164).
 #
 # Findings inventory (scanner.py line numbers):
-#   1. "Legacy protocol"          (L749)  — SNMPv1 supported        [EXISTING]
-#   2. "Writable access"          (L864)  — VACM/SET write detected  [EXISTING]
-#   3. "Writable OIDs found"      (L1350) — walk-write found writes  [NEW]
-#   4. "No authentication"        (L1589) — v3 noAuthNoPriv user     [NEW]
-#   5. "Credential disclosure"    (L1690) — v3 auth creds bruted     [NEW]
-#   6. "Credential disclosure"    (L1803) — v3 full creds bruted     [NEW]
-#   7. H3C credential found       (L3274) — H3C cred table           [NEW]
-#   8. Brocade credential found   (L3297) — Brocade cred table       [NEW]
-#   9. Credential OID password    (L3332) — password in OID walk     [NEW]
-#  10. Community string in OID    (L3337) — community in OID walk    [NEW]
-#  11. Credential in process args (L3395) — --password= in argv      [STRENGTHENED]
-#  12. "IP forwarding enabled"    (L3505) — ipForwarding=1           [EXISTING]
-#  13. "Insecure configuration"   (L3600) — writable remote mount    [SKIP: no mock data]
-#  14. "RCE risk"                 (L3785) — injected extend script   [STRENGTHENED]
-#  15. "Insecure configuration"   (L3815) — ICS service exposed      [NEW]
-#  16. "Insecure configuration"   (L3826) — default Windows account  [SKIP: no container]
-#  17. "Insecure configuration"   (L3837) — admin share exposed      [SKIP: no container]
-#  18. "Insecure configuration"   (L3847) — trap community string    [NEW]
-#  19. "RCE risk"                 (L3855) — extend scripts count     [NEW]
-#  20. "Hidden attack surface"    (L3864) — global IPv6 addresses    [STRENGTHENED]
-#  21. "Credential exposure"      (L3875) — process creds summary    [STRENGTHENED]
-#  22. "No encryption"            (L3883) — SNMPv1/v2c cleartext     [EXISTING]
-#  23. "Default credentials"      (L3888) — public community         [EXISTING]
+#   1. "Legacy protocol"          (L749)  - SNMPv1 supported        [EXISTING]
+#   2. "Writable access"          (L864)  - VACM/SET write detected  [EXISTING]
+#   3. "Writable OIDs found"      (L1350) - walk-write found writes  [NEW]
+#   4. "No authentication"        (L1589) - v3 noAuthNoPriv user     [NEW]
+#   5. "Credential disclosure"    (L1690) - v3 auth creds bruted     [NEW]
+#   6. "Credential disclosure"    (L1803) - v3 full creds bruted     [NEW]
+#   7. H3C credential found       (L3274) - H3C cred table           [NEW]
+#   8. Brocade credential found   (L3297) - Brocade cred table       [NEW]
+#   9. Credential OID password    (L3332) - password in OID walk     [NEW]
+#  10. Community string in OID    (L3337) - community in OID walk    [NEW]
+#  11. Credential in process args (L3395) - --password= in argv      [STRENGTHENED]
+#  12. "IP forwarding enabled"    (L3505) - ipForwarding=1           [EXISTING]
+#  13. "Insecure configuration"   (L3600) - writable remote mount    [SKIP: no mock data]
+#  14. "RCE risk"                 (L3785) - injected extend script   [STRENGTHENED]
+#  15. "Insecure configuration"   (L3815) - ICS service exposed      [NEW]
+#  16. "Insecure configuration"   (L3826) - default Windows account  [SKIP: no container]
+#  17. "Insecure configuration"   (L3837) - admin share exposed      [SKIP: no container]
+#  18. "Insecure configuration"   (L3847) - trap community string    [NEW]
+#  19. "RCE risk"                 (L3855) - extend scripts count     [NEW]
+#  20. "Hidden attack surface"    (L3864) - global IPv6 addresses    [STRENGTHENED]
+#  21. "Credential exposure"      (L3875) - process creds summary    [STRENGTHENED]
+#  22. "No encryption"            (L3883) - SNMPv1/v2c cleartext     [EXISTING]
+#  23. "Default credentials"      (L3888) - public community         [EXISTING]
 # ============================================================================
 
 
@@ -3399,7 +3399,7 @@ def _credential_finding_details(log):
     INFO_DISCLOSURE, exactly one such event survives in the log; its ``details``
     field carries the vendor + username + password of the first credential
     (e.g. "H3C credential found: admin / admin123"). The full per-credential
-    breakdown lives in the info-level messages — use ``_credential_messages``
+    breakdown lives in the info-level messages - use ``_credential_messages``
     for that.
     """
     return [d[2] for d in _get_security_finding_details(log) if d[0] == "Credential disclosure"]
@@ -3441,7 +3441,7 @@ class TestSNMPSecurityFindings:
             require_service(f"SNMP mock not reachable on {target}:{port}")
 
     # ========================================================================
-    # Finding: "No encryption" (L3883) — _analyze_security
+    # Finding: "No encryption" (L3883) - _analyze_security
     # ========================================================================
 
     @pytest.mark.security
@@ -3485,7 +3485,7 @@ class TestSNMPSecurityFindings:
         )
 
     # ========================================================================
-    # Finding: "Default credentials" (L3888) — _analyze_security
+    # Finding: "Default credentials" (L3888) - _analyze_security
     # ========================================================================
 
     @pytest.mark.security
@@ -3512,7 +3512,7 @@ class TestSNMPSecurityFindings:
         assert "public" in detail_text, f"Expected 'public' mentioned in detail, got: {detail_text}"
 
     # ========================================================================
-    # Finding: "Legacy protocol" (L749) — _detect_versions
+    # Finding: "Legacy protocol" (L749) - _detect_versions
     # ========================================================================
 
     @pytest.mark.security
@@ -3537,7 +3537,7 @@ class TestSNMPSecurityFindings:
         )
 
     # ========================================================================
-    # Finding: "Writable OIDs found" (L1350) — walk_write
+    # Finding: "Writable OIDs found" (L1350) - walk_write
     # ========================================================================
 
     @pytest.mark.security
@@ -3608,7 +3608,7 @@ class TestSNMPSecurityFindings:
         )
 
     # ========================================================================
-    # Finding: "No authentication" (L1589) — SNMPv3 brute discovers noAuthNoPriv
+    # Finding: "No authentication" (L1589) - SNMPv3 brute discovers noAuthNoPriv
     # ========================================================================
 
     @pytest.mark.security
@@ -3634,7 +3634,7 @@ class TestSNMPSecurityFindings:
             json_log=True,
             timeout=30,
         )
-        # v3 brute may timeout (rc=-1) — that's acceptable
+        # v3 brute may timeout (rc=-1) - that's acceptable
         assert result.returncode in [-1, 0, 1]
         # Even on timeout, scan_log should have partial events
         if result.scan_log is not None and len(result.scan_log) > 0:
@@ -3651,7 +3651,7 @@ class TestSNMPSecurityFindings:
                 )
 
     # ========================================================================
-    # Finding: "Credential disclosure" (L1690, L1803) — SNMPv3 brute-force
+    # Finding: "Credential disclosure" (L1690, L1803) - SNMPv3 brute-force
     # ========================================================================
 
     @pytest.mark.security
@@ -3739,7 +3739,7 @@ class TestSNMPSecurityFindings:
         )
 
     # ========================================================================
-    # Finding: "Insecure configuration" — ICS service exposed (L3815)
+    # Finding: "Insecure configuration" - ICS service exposed (L3815)
     # ========================================================================
 
     @pytest.mark.security
@@ -3816,7 +3816,7 @@ class TestSNMPSecurityFindings:
             )
 
     # ========================================================================
-    # Finding: "Insecure configuration" — Trap community string (L3847)
+    # Finding: "Insecure configuration" - Trap community string (L3847)
     # ========================================================================
 
     @pytest.mark.security
@@ -3858,7 +3858,7 @@ class TestSNMPSecurityFindings:
             )
 
     # ========================================================================
-    # Finding: "RCE risk" — extend scripts (L3785, L3855)
+    # Finding: "RCE risk" - extend scripts (L3785, L3855)
     # ========================================================================
 
     @pytest.mark.security
@@ -3927,7 +3927,7 @@ class TestSNMPSecurityFindings:
             )
 
     # ========================================================================
-    # Finding: "Hidden attack surface" (L3864) — global IPv6 addresses
+    # Finding: "Hidden attack surface" (L3864) - global IPv6 addresses
     # ========================================================================
 
     @pytest.mark.security
@@ -3987,7 +3987,7 @@ class TestSNMPSecurityFindings:
             )
 
     # ========================================================================
-    # Finding: "Credential exposure" (L3875) — process args leaking creds
+    # Finding: "Credential exposure" (L3875) - process args leaking creds
     # ========================================================================
 
     @pytest.mark.security
@@ -4052,7 +4052,7 @@ class TestSNMPSecurityFindings:
                 f"Expected PID or password mention in finding, got: {combined}"
             )
 
-    # NOT COVERED (no test exists — do not add skipped placeholders):
+    # NOT COVERED (no test exists - do not add skipped placeholders):
     #   - Writable remote mount finding (scanner L3600)
     #   - Default Windows account finding (scanner L3826)
     #   - Admin share exposed finding (scanner L3837)
@@ -4116,7 +4116,7 @@ class TestSNMPSecurityFindings:
     @pytest.mark.security
     def test_no_findings_leak_between_scans(self, cli_runner, target, port):
         """Test that findings are per-scan, not accumulated across runs [Category A]"""
-        # Run with 'private' community — should NOT get 'Default credentials'
+        # Run with 'private' community - should NOT get 'Default credentials'
         result = cli_runner.run(
             "snmp",
             target,
@@ -4387,7 +4387,7 @@ class TestSNMPSwitchSecurityFindings:
         # events into one, so the per-vendor, per-credential breakdown is proven
         # via the info-level "Credential Findings" table rather than via distinct
         # security events. Require every known H3C and Brocade username AND
-        # password to actually appear — 3 H3C (admin/admin123, monitor/monitor1,
+        # password to actually appear - 3 H3C (admin/admin123, monitor/monitor1,
         # operator/oper@tor) + 2 Brocade (admin, readonly) = 5 credentials.
         messages = _credential_messages(result.scan_log)
         assert "h3c credential:" in messages, f"Expected H3C credentials, got: {messages[:500]}"

@@ -238,7 +238,7 @@ class TestFileTransferOptions:
     """Test file transfer argument group."""
 
     def test_probe_files_long_only(self, parser_setup):
-        """Test --probe-files works (long flag only, no -P short flag — W5 fix)."""
+        """Test --probe-files works (long flag only, no -P short flag - W5 fix)."""
         parser, _ = parser_setup
         args = parser.parse_args(["iec104", T, "--probe-files"])
         assert args.probe_files is True

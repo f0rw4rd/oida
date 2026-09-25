@@ -8,7 +8,7 @@ miss.
 This used to catch the **import-depth-crash** class of bugs: a mixin
 writes ``from ...utils.X import Y`` (3 dots) but should be 4, because
 the mixin is one package deeper than the author thought. That class is
-now extinct by construction — ruff's TID252 (``ban-relative-imports =
+now extinct by construction - ruff's TID252 (``ban-relative-imports =
 "all"``) means there are no dots left to miscount, and the depth
 arithmetic below found zero cases once the tree went absolute.
 
@@ -17,7 +17,7 @@ first place: the import lives inside a function body, so it never runs
 at import time and the module-import smoke tests pass regardless. An
 absolute lazy import naming a module that does not exist fails exactly
 as late and exactly as invisibly as a mis-dotted relative one did. So
-the walk now collects function-body ``from oida.… import …`` and
+the walk now collects function-body ``from oida.... import ...`` and
 resolves the target module.
 
 Sub-second runtime, no protocol dependencies required (every target
@@ -48,8 +48,8 @@ def _collect_function_level_internal_imports():
 
     Relative imports are gone from the tree (ruff TID252), so there is no
     level/pkg_parts arithmetic left to do: the module name on a function-body
-    `from oida.… import …` IS the absolute target. A relative one reappearing
-    is a lint failure, not this test's problem — but collect it anyway rather
+    `from oida.... import ...` IS the absolute target. A relative one reappearing
+    is a lint failure, not this test's problem - but collect it anyway rather
     than silently skipping, so a TID252 regression cannot make this walk go
     quietly empty.
     """
@@ -87,7 +87,7 @@ def test_function_level_internal_import_resolves(path: str, lineno: int, module:
     """Function-body `from oida.x import y` must resolve to a real module.
 
     Successor to the import-depth-crash guard. The original sites were
-    mis-dotted relative imports — dicom/mixins/reporting.py:312 (3 dots,
+    mis-dotted relative imports - dicom/mixins/reporting.py:312 (3 dots,
     needs 4), knx/mixins/properties.py:130 (same), opcua/mixins/fuzz.py:94,
     opcua/mixins/credentials.py:310, dicom/mixins/fuzz.py:40, ocpp/mixins/
     security.py:54, snap7/cli_runner.py:634+727 (level=4 exceeds depth 3).
@@ -97,9 +97,9 @@ def test_function_level_internal_import_resolves(path: str, lineno: int, module:
     try:
         spec = importlib.util.find_spec(module)
     except (ImportError, ModuleNotFoundError, ValueError) as exc:
-        pytest.fail(f"{path}:{lineno}: `from {module} import …` is not importable: {exc}")
+        pytest.fail(f"{path}:{lineno}: `from {module} import ...` is not importable: {exc}")
     assert spec is not None, (
-        f"{path}:{lineno}: `from {module} import …` resolves to missing module {module!r}"
+        f"{path}:{lineno}: `from {module} import ...` resolves to missing module {module!r}"
     )
 
 
@@ -107,7 +107,7 @@ def test_at_least_one_lazy_import_was_found():
     """Sanity check: if this test catches 0 lazy imports we have a parser bug,
     not a clean codebase. OIDA has many function-body lazy_import() patterns."""
     assert len(_IMPORT_CASES) >= 50, (
-        f"Only found {len(_IMPORT_CASES)} function-body internal imports — "
+        f"Only found {len(_IMPORT_CASES)} function-body internal imports - "
         "the AST walker is probably broken."
     )
 
@@ -125,7 +125,7 @@ def test_at_least_one_lazy_import_was_found():
 # Lazy imports never run at load time and these files had near-zero coverage,
 # so import smoke tests, ruff (F401 sees only the import line), vulture, and the
 # coverage gate all missed them. This contract resolves the imported *symbol*
-# for every internal lazy import — relative AND absolute (`from oida.…`).
+# for every internal lazy import - relative AND absolute (`from oida....`).
 # ---------------------------------------------------------------------------
 
 
@@ -135,7 +135,7 @@ def _resolve_internal_target(level: int, module: str, pkg_parts: list) -> str | 
     if level == 0:
         return module if module and module.split(".")[0] == "oida" else None
     if level > len(pkg_parts):
-        return None  # depth error — already flagged by the module-path test
+        return None  # depth error - already flagged by the module-path test
     base = pkg_parts[: len(pkg_parts) - (level - 1)]
     target = ".".join(base + module.split("."))
     return target if target.split(".")[0] == "oida" else None
@@ -143,7 +143,7 @@ def _resolve_internal_target(level: int, module: str, pkg_parts: list) -> str | 
 
 def _collect_internal_symbol_imports():
     """Yield (file, lineno, target_dotted, symbol) for every function-body
-    `from <internal> import <symbol>` — both relative and absolute."""
+    `from <internal> import <symbol>` - both relative and absolute."""
     out = []
     for py in SRC_ROOT.rglob("*.py"):
         rel = py.relative_to(SRC_ROOT.parent)
@@ -188,9 +188,9 @@ def _child_stmt_lists(node):
 def _module_defined_names(target: str):
     """Module-level names a target oida module exports, via static AST parse
     (no import executed). Returns None when the module can't be verified
-    statically — missing/non-.py origin, a star import, or a module-level
+    statically - missing/non-.py origin, a star import, or a module-level
     ``__getattr__`` (lazy re-export packages like fuzz.core.connections /
-    fuzz.monitors) — so the caller falls back to an import-confirm instead of
+    fuzz.monitors) - so the caller falls back to an import-confirm instead of
     false-failing."""
     try:
         spec = importlib.util.find_spec(target)
@@ -281,7 +281,7 @@ def test_function_level_import_symbol_resolves(path, lineno, target, symbol):
         assert isinstance(exports, set) and symbol in exports
         return
 
-    # AST couldn't confirm it — import the target and check for real.
+    # AST couldn't confirm it - import the target and check for real.
     try:
         mod = importlib.import_module(target)
     except Exception as exc:  # noqa: BLE001 - optional dep / import error: inconclusive
@@ -300,7 +300,7 @@ def test_function_level_import_symbol_resolves(path, lineno, target, symbol):
     except Exception:  # noqa: BLE001
         pass
     pytest.fail(
-        f"{path}:{lineno}: `from {target} import {symbol}` — {symbol!r} is not "
+        f"{path}:{lineno}: `from {target} import {symbol}` - {symbol!r} is not "
         f"defined in {target} (dead internal import)"
     )
 
@@ -309,7 +309,7 @@ def test_symbol_resolver_verified_enough():
     """Sanity: the symbol checker must statically verify a healthy number of
     imports, else the collector/AST resolver silently regressed to a no-op."""
     assert len(_SYMBOL_CASES) >= 200, (
-        f"Only collected {len(_SYMBOL_CASES)} internal symbol imports — "
+        f"Only collected {len(_SYMBOL_CASES)} internal symbol imports - "
         "the AST collector is probably broken."
     )
     verified = sum(
@@ -318,6 +318,6 @@ def test_symbol_resolver_verified_enough():
         if (names := _module_defined_names(target)) is not None and symbol in names
     )
     assert verified >= 200, (
-        f"Only {verified} symbol imports resolved statically — the AST name "
+        f"Only {verified} symbol imports resolved statically - the AST name "
         "collector is probably broken."
     )

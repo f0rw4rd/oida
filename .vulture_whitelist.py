@@ -177,7 +177,7 @@ import_error_for  # unused function (fuzz protocol-registry API, tested)
 # tests/unit/fuzz/test_iec104_fuzzer.py (send_seq == 0)
 send_seq  # unused property (iec104 fuzzer backward-compat, tested)
 
-# Protocol documentation tables: kept as the authoritative name→value mapping
+# Protocol documentation tables: kept as the authoritative name->value mapping
 # so future code/docs/tests have one source; referenced by test docstrings
 ADS_DEV_DATA_OFFSETS  # unused variable (ads constants doc-table, test-referenced)
 

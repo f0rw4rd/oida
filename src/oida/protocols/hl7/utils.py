@@ -9,14 +9,14 @@ import time
 from datetime import datetime
 from typing import Any, Dict, Optional, Tuple
 
-# hl7apy is gated by HL7APY_AVAILABLE in __init__.py — if the user runs
-# `oida hl7 …` without the optional `hl7` extra installed, that check
+# hl7apy is gated by HL7APY_AVAILABLE in __init__.py - if the user runs
+# `oida hl7 ...` without the optional `hl7` extra installed, that check
 # fails fast with a friendly install hint. The try/except here protects
 # against transitive import paths that pull this file in before the gate
 # has run (e.g. fuzzer modules importing create_test_message directly).
 try:
     from hl7apy.core import Message
-except ImportError:  # pragma: no cover — release-checked dep
+except ImportError:  # pragma: no cover - release-checked dep
     Message = None  # type: ignore[assignment]
 
 from oida.protocols.hl7.segments import HL7SegmentBuilder
@@ -377,9 +377,9 @@ def probe_server_capabilities(
         "mllp_supported": False,
     }
 
-    # Message types to probe — READ-ONLY ONLY.
+    # Message types to probe - READ-ONLY ONLY.
     # The original list included ADT^A01 (admit patient), ORU^R01 (observation
-    # result), ORM^O01 (order) — all server-side WRITES. A defensive scanner
+    # result), ORM^O01 (order) - all server-side WRITES. A defensive scanner
     # must never create records on the target by default; if the operator
     # wants to probe write-message-type acceptance they go through
     # `--probe-ops --confirm` in the main CLI, not via this importable

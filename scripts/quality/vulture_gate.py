@@ -7,7 +7,7 @@ variables. Every dead-code finding in this codebase (247 unused methods,
 
 Running at 60 outright would report ~1,366 findings, so this wraps it in a
 ratchet: findings present in the baseline are allowed, anything new fails.
-The baseline is meant to shrink — regenerate it after each cleanup batch and
+The baseline is meant to shrink - regenerate it after each cleanup batch and
 commit the smaller file.
 
 Usage:
@@ -88,14 +88,14 @@ def main() -> int:
             print(f"  {f}", file=sys.stderr)
         print(
             "\nDelete the dead symbol, or wire it to a caller. Do not add it to the\n"
-            "baseline — the baseline only shrinks.",
+            "baseline - the baseline only shrinks.",
             file=sys.stderr,
         )
         return 1
 
     stale = len(known) - len({key(f) for f in findings})
     if stale > 0:
-        print(f"{stale} baseline entrie(s) now clean — regenerate with --write-baseline")
+        print(f"{stale} baseline entrie(s) now clean - regenerate with --write-baseline")
     print(f"OK: {len(findings)} findings, all baselined")
     return 0
 

@@ -444,7 +444,7 @@ VENDOR_SPECIFIC_OIDS = {
     },
 }
 
-# VACM (View-based Access Control Model) OIDs — RFC 3415
+# VACM (View-based Access Control Model) OIDs - RFC 3415
 VACM_OIDS = {
     "vacmAccessReadViewName": ".1.3.6.1.6.3.16.1.4.1.5",
     "vacmAccessWriteViewName": ".1.3.6.1.6.3.16.1.4.1.6",
@@ -465,7 +465,7 @@ HOST_RESOURCE_OIDS = {
     "hrStorageAllocationUnits": ".1.3.6.1.2.1.25.2.3.1.4",
     "hrStorageSize": ".1.3.6.1.2.1.25.2.3.1.5",
     "hrStorageUsed": ".1.3.6.1.2.1.25.2.3.1.6",
-    # hrSWRunPerfTable (RFC 2790) — per-process performance
+    # hrSWRunPerfTable (RFC 2790) - per-process performance
     "hrSWRunPerfCPU": ".1.3.6.1.2.1.25.5.1.1.1",
     "hrSWRunPerfMem": ".1.3.6.1.2.1.25.5.1.1.2",
 }
@@ -528,7 +528,7 @@ TRAP_CONFIG_OIDS = {
     "snmpCommunityName": ".1.3.6.1.6.3.18.1.1.1.2",
 }
 
-# Credential hunting OIDs — walked by --enum creds
+# Credential hunting OIDs - walked by --enum creds
 CREDENTIAL_OIDS = {
     # Standard: additional community strings (SNMP-COMMUNITY-MIB)
     "snmpCommunityName": ".1.3.6.1.6.3.18.1.1.1.2",
@@ -547,7 +547,7 @@ CREDENTIAL_OIDS = {
     "hh3cUserName": ".1.3.6.1.4.1.25506.2.12.1.1.1.1",
     "hh3cUserPassword": ".1.3.6.1.4.1.25506.2.12.1.1.1.2",
     "hh3cUserLevel": ".1.3.6.1.4.1.25506.2.12.1.1.1.4",
-    # H3C user state (old + new PEN) — completes user/password/level set
+    # H3C user state (old + new PEN) - completes user/password/level set
     "h3cUserState": ".1.3.6.1.4.1.2011.10.2.12.1.1.1.5",
     "hh3cUserState": ".1.3.6.1.4.1.25506.2.12.1.1.1.5",
     # Brocade ADX: admin users + password hashes (PEN 1991)
@@ -564,7 +564,7 @@ CREDENTIAL_OIDS = {
 
 # IPv6 address table OIDs (RFC 4293 ipAddressTable)
 IPV6_ENUM_OIDS = {
-    "ipAddressIfIndex": ".1.3.6.1.2.1.4.34.1.3",  # maps addr type+bytes → ifIndex
+    "ipAddressIfIndex": ".1.3.6.1.2.1.4.34.1.3",  # maps addr type+bytes -> ifIndex
 }
 
 # NET-SNMP Extend OIDs (nsExtendObjects)
@@ -581,8 +581,8 @@ NETSNMP_EXTEND_OIDS = {
 # Credential patterns for process argument scanning (hrSWRunParameters)
 #
 # Two-level system:
-#   CRED_PATTERNS — high-confidence, context-free (matched against all processes)
-#   CRED_PATTERNS_CONTEXT — process-name-aware (only matched when name matches key)
+#   CRED_PATTERNS - high-confidence, context-free (matched against all processes)
+#   CRED_PATTERNS_CONTEXT - process-name-aware (only matched when name matches key)
 #
 # Sources: HTB writeups (Pandora, Mischief, Mentor), LinPEAS, GitGuardian,
 # secrets-patterns-db, Metasploit snmp_enum, real-world pentesting patterns.
@@ -606,7 +606,7 @@ CRED_PATTERNS = [
 # Keys are regex patterns matched against the process name (case-insensitive).
 # This avoids false positives like `ssh -p 22` or `mkdir -p`.
 CRED_PATTERNS_CONTEXT = {
-    # Sshpass — the #1 HTB SNMP finding (Pandora, Mentor)
+    # Sshpass - the #1 HTB SNMP finding (Pandora, Mentor)
     r"sshpass": [
         r"-p\s+(\S+)",
     ],

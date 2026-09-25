@@ -190,7 +190,7 @@ class TestFormattersAndParsers:
 
     def test_parse_property_arg_invalid_returns_sentinel(self, host):
         # Malformed input must never fall back to a hardcoded default
-        # object/property — that would silently read from a real device.
+        # object/property - that would silently read from a real device.
         assert host._parse_property_arg("bad") == (None, None)
         assert host.logger.records["fail"]
 

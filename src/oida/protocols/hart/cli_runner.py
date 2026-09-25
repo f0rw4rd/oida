@@ -67,7 +67,7 @@ class hart(NetworkConnection):
         else:
             scan_mode = "enumeration"
 
-        # Discovery mode stops after device identification — no further probing
+        # Discovery mode stops after device identification - no further probing
         if scan_mode == "discovery" and not self._has_specific_action():
             return
 
@@ -94,14 +94,14 @@ class hart(NetworkConnection):
         if getattr(self.args, "enumerate_device_specific", False):
             self._handle_enumerate_device_specific()
 
-        # Calibration / write command probes (dangerous — require --confirm)
+        # Calibration / write command probes (dangerous - require --confirm)
         probe_calibration = getattr(self.args, "probe_calibration", False)
         probe_write = getattr(self.args, "probe_write", False)
         if probe_calibration or probe_write:
             if self.require_confirm(
                 "--probe-calibration",
                 detail="--probe-calibration/--probe-write transmit live calibration/write "
-                "commands to the device — requires --confirm",
+                "commands to the device - requires --confirm",
             ):
                 self._handle_command_probes(calibration=probe_calibration, write=probe_write)
 
@@ -470,7 +470,7 @@ class hart(NetworkConnection):
         if not self.require_confirm(
             "--enumerate-device-specific",
             detail="--enumerate-device-specific blind-probes vendor-defined commands "
-            "(128-253) that may write/trim/reset the device — requires --confirm",
+            "(128-253) that may write/trim/reset the device - requires --confirm",
         ):
             return
         # --command-range defaults to "0-48" (shared with other actions), which
@@ -516,7 +516,7 @@ class hart(NetworkConnection):
         if not self.require_confirm(
             "--probe-calibration",
             detail="--probe-calibration/--probe-write transmit write and "
-            "calibration commands to the device — requires --confirm",
+            "calibration commands to the device - requires --confirm",
         ):
             return
         self.logger.display("Probing write/calibration command accessibility...")
@@ -676,13 +676,13 @@ class hart(NetworkConnection):
         if command is None:
             return
 
-        # --raw-command can issue HART writes (6/17/18/19/41/42/53, etc.) —
+        # --raw-command can issue HART writes (6/17/18/19/41/42/53, etc.) -
         # named-write siblings in this file all gate on --confirm; the raw
         # path was wired around. Re-gated per safety-default policy.
         if not self.require_confirm(
             "--raw-command",
             detail="--raw-command can issue arbitrary HART writes "
-            "(6/17/18/19/41/42/53 etc.) — requires --confirm",
+            "(6/17/18/19/41/42/53 etc.) - requires --confirm",
         ):
             return
         data = b""

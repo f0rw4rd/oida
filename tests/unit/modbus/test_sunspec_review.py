@@ -22,7 +22,7 @@ from oida.protocols.modbus.mixins.sunspec import (
 
 
 class FakeLogger:
-    """Minimal logger mock — only `display` is exercised by print_table/callers."""
+    """Minimal logger mock - only `display` is exercised by print_table/callers."""
 
     def __init__(self):
         self.messages = []

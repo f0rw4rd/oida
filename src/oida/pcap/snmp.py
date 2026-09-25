@@ -6,7 +6,7 @@ Passively captures SNMP traffic to extract:
 - SNMPv3 usernames, engine IDs, auth/priv flags
 - OID names and values from GET/SET/TRAP operations
 - System info (sysDescr, sysName, sysLocation, etc.)
-- SET operations (config changes — security-relevant)
+- SET operations (config changes - security-relevant)
 
 Based on PCredz and CredSLayer approaches, now using PyShark for dissection.
 
@@ -160,7 +160,7 @@ class SNMPPassiveListener(PySharkListenerBase):
     - Community strings (SNMPv1/v2c)
     - Usernames (SNMPv3)
     - OID names and values (system info, interface data, etc.)
-    - PDU types (GET, SET, TRAP — SET is security-critical)
+    - PDU types (GET, SET, TRAP - SET is security-critical)
     - SNMPv3 security flags and engine IDs
 
     Usage:

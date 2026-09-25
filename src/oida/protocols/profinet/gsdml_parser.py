@@ -266,7 +266,7 @@ def parse_gsdml(source) -> Optional[GSDMLDevice]:
                 for subslot in elem.iter():
                     if "SubslotItem" in subslot.tag:
                         # SubslotNumber appears both as decimal (32768) and hex
-                        # (0x8000 — the standard interface subslot) in the wild.
+                        # (0x8000 - the standard interface subslot) in the wild.
                         # Parse like every other numeric GSDML attribute: bare
                         # int() raises ValueError on "0x8000", which aborted the
                         # WHOLE GSDML parse via the catch-all below.

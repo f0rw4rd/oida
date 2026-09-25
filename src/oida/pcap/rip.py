@@ -148,7 +148,7 @@ class RIPPassiveListener(PySharkListenerBase):
         route_count = d.get("route_count", 0)
         networks = d.get("networks", [])
         net_str = ", ".join(networks)
-        # Auth type "None" means no authentication (type 0) — show as empty
+        # Auth type "None" means no authentication (type 0) - show as empty
         auth = d.get("auth_type_name", "")
         if auth == "None":
             auth = ""

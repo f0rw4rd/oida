@@ -4,19 +4,19 @@ These lock in the fixes found during the fuzzer-performance evaluation. Each tes
 first *documents* the pre-fix behaviour (so the shape of the problem is captured),
 then asserts the post-fix invariant. The assertions are about growth *shape*
 (bounded vs. linear/quadratic), not absolute speed, so they are robust on both fast
-and slow machines — matching ``test_database_perf.py``'s philosophy.
+and slow machines - matching ``test_database_perf.py``'s philosophy.
 
 Mechanisms guarded:
 
 1. **boofuzz in-memory results DB grew unbounded.** boofuzz always attaches a
    ``FuzzLoggerDb`` and, with ``num_log_cases=0`` (its default, which OIDA used to
-   inherit), commits and keeps *every* passing case forever — a steady RAM leak on
+   inherit), commits and keeps *every* passing case forever - a steady RAM leak on
    long campaigns (opcua ≈ 288k cases). OIDA now caps it via
-   ``FuzzerConfig.fuzz_db_keep_pass_cases`` → ``Session(fuzz_db_keep_only_n_pass_cases)``.
+   ``FuzzerConfig.fuzz_db_keep_pass_cases`` -> ``Session(fuzz_db_keep_only_n_pass_cases)``.
 
 2. **Crash-episode full-buffer re-flush.** While the target stays flagged crashed,
    every test case was flagged ``crash`` and re-flushed the *entire* rolling buffer
-   (~2 × ``monitor_check_interval`` rows) to the on-disk session DB — an
+   (~2 × ``monitor_check_interval`` rows) to the on-disk session DB - an
    O(buffer_size)-per-case write storm. ``_flush_crash_context`` now skips context
    rows already persisted in the episode, so each flush is ~O(new cases).
 
@@ -111,7 +111,7 @@ class TestBoofuzzDbCap:
 
     @pytest.mark.slow
     def test_db_logger_retains_a_failing_case(self):
-        """Capping passing cases must not drop crashes — those are always kept."""
+        """Capping passing cases must not drop crashes - those are always kept."""
         from boofuzz.fuzz_logger_db import FuzzLoggerDb
 
         db = FuzzLoggerDb(db_filename=":memory:", num_log_cases=10)

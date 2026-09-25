@@ -26,7 +26,7 @@ Default ports:
 
 # Re-export everything from the library for scanner.py and __init__.py.
 # The import is wrapped so the OIDA HART module can be loaded for --help and
-# CLI registration even when the optional hartip-py dependency is missing —
+# CLI registration even when the optional hartip-py dependency is missing -
 # the names below resolve to ``None`` in that case and any caller that
 # actually uses them gets a clear ImportError via ``check_dependencies()``.
 try:
@@ -98,7 +98,7 @@ try:
         get_parser,
     )
 
-except ImportError:  # pragma: no cover — gated by .[hart] extra
+except ImportError:  # pragma: no cover - gated by .[hart] extra
     # Assign None so module loads; check_dependencies() in scanner/nxc handles
     # the actual install hint via lazy_import("hartip", "HART"). No caller
     # touches these names without first gating on _hartip.is_available, so

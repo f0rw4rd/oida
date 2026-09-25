@@ -92,7 +92,7 @@ class TestSelfSignedCertInconclusive(unittest.TestCase):
         self.assertEqual(h.logger.success_calls, [])
 
     def test_unrelated_certificate_error_is_inconclusive(self):
-        # Error string merely mentions "certificate" — not a trust decision.
+        # Error string merely mentions "certificate" - not a trust decision.
         h, result = self._run(OSError("certificate file unreadable"))
         self.assertFalse(result.get("tested"))
         self.assertEqual(result.get("status"), "inconclusive")
@@ -108,7 +108,7 @@ class TestSelfSignedCertInconclusive(unittest.TestCase):
 
     def test_bad_certificate_invalid_is_a_rejection(self):
         # Servers use BadCertificateInvalid as a catch-all when refusing an
-        # untrusted client cert — it must count as a clean rejection, not get
+        # untrusted client cert - it must count as a clean rejection, not get
         # lost to "inconclusive".
         h, result = self._run(Exception("BadCertificateInvalid"))
         self.assertTrue(result.get("tested"))
@@ -117,7 +117,7 @@ class TestSelfSignedCertInconclusive(unittest.TestCase):
         self.assertEqual(len(h.logger.success_calls), 1)
 
     def test_session_level_denial_is_not_a_rejection(self):
-        # BadUserAccessDenied happens at ActivateSession — the secure channel was
+        # BadUserAccessDenied happens at ActivateSession - the secure channel was
         # already built with our untrusted cert. The old code mis-reported this as
         # "Server rejects untrusted client certificates" (false negative).
         h, result = self._run(Exception("BadUserAccessDenied"))
@@ -128,7 +128,7 @@ class TestSelfSignedCertInconclusive(unittest.TestCase):
         self.assertEqual(h.logger.success_calls, [])
 
     def test_identity_token_rejected_is_not_a_cert_rejection(self):
-        # "rejected" substring used to match here too — but BadIdentityTokenRejected
+        # "rejected" substring used to match here too - but BadIdentityTokenRejected
         # is session-level, i.e. the channel accepted the cert.
         h, result = self._run(Exception("BadIdentityTokenRejected"))
         self.assertFalse(result.get("tested"))

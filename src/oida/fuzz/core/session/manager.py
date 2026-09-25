@@ -189,7 +189,7 @@ class TestCaseManager:
         # Ids already persisted to the DB by a crash-context flush. The rolling
         # buffer is intentionally NOT cleared after a flush (it keeps providing
         # crash context for later cases), so the final 'pass' flush must skip
-        # these ids — re-inserting them as 'pass' would downgrade the recorded
+        # these ids - re-inserting them as 'pass' would downgrade the recorded
         # crash/fail row and erase its crash-specific fields.
         self._persisted_ids: set[int] = set()
 
@@ -640,8 +640,8 @@ class TestCaseManager:
             # boofuzz's own counters. total_mutant_index is the mutation-space POSITION;
             # it decomposes as resume_base + sent + skipped:
             #   resume_base = mutations covered by EARLIER sessions, fast-forwarded on resume
-            #                 (index_start-1) — already fuzzed, not skipped now.
-            #   sent        = num_cases_actually_fuzzed — transmitted THIS run.
+            #                 (index_start-1) - already fuzzed, not skipped now.
+            #   sent        = num_cases_actually_fuzzed - transmitted THIS run.
             #   skipped     = within-run jumps (boofuzz crash-threshold fast-forward).
             # None of these is a recording loss.
             bf_session = getattr(self.fuzzer, "session", None)
@@ -652,7 +652,7 @@ class TestCaseManager:
             index_start = getattr(cfg, "index_start", 1) or 1
             resume_base = max(0, index_start - 1)
 
-            # `total` (boofuzz position) — fall back to the last sent index if the session
+            # `total` (boofuzz position) - fall back to the last sent index if the session
             # object is gone, so it never reads below the sent count.
             total = (
                 total_mutant_index if total_mutant_index is not None else progress["current_case"]
@@ -669,7 +669,7 @@ class TestCaseManager:
                 "resume_base": str(resume_base),
                 "last_updated": datetime.now().isoformat(),
             }
-            # One transaction instead of five — saves four fsyncs per save.
+            # One transaction instead of five - saves four fsyncs per save.
             self.database.store_metadata_bulk(metadata)
 
             # Per-node effectiveness counters (sent/replies/timeouts/... per
@@ -697,7 +697,7 @@ class TestCaseManager:
                     target_ip = getattr(cfg, "target_ip", None)
                     target_port = getattr(cfg, "target_port", None)
                     protocol = getattr(cfg, "protocol", None)
-                    # Skip ids already persisted as crash context — re-inserting
+                    # Skip ids already persisted as crash context - re-inserting
                     # them as 'pass' would clobber the recorded crash/fail row.
                     pending = [
                         TestCase(

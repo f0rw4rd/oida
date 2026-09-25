@@ -2,7 +2,7 @@
 Regression tests for the ASTM "link-level ACK != application acceptance" fix.
 
 A frame-level ACK (the single ACK byte _send_frame waits on) only confirms
-data-link receipt + checksum per ASTM E1381 — it says nothing about whether
+data-link receipt + checksum per ASTM E1381 - it says nothing about whether
 the LIS application accepted/persisted the record. These tests verify that the
 HIGH/CRITICAL injection/PHI findings are only raised when the LIS returns an
 application-level acknowledgement; otherwise the finding is downgraded to LOW

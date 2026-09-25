@@ -61,7 +61,7 @@ class MockServicesIntegrationTest(unittest.TestCase):
         # test_<proto>_integration.py suites. If the compose mocks are already
         # serving the required ports, use them (same fallback as
         # test_pytest_integration.py's mock_service fixture); otherwise try the
-        # legacy build, and if that is unavailable skip rather than error —
+        # legacy build, and if that is unavailable skip rather than error -
         # the per-protocol suites are the real coverage.
         try:
             if all(
@@ -238,11 +238,11 @@ class MockServicesIntegrationTest(unittest.TestCase):
                             f"{protocol} {key} should be {expected_value}",
                         )
 
-            print(f"  ✅ {protocol.upper()} test passed")
+            print(f"  [OK] {protocol.upper()} test passed")
             return result
 
         except Exception as e:
-            print(f"  ❌ {protocol.upper()} test failed: {e}")
+            print(f"  [FAIL] {protocol.upper()} test failed: {e}")
             raise
 
     def test_modbus_scanner(self):
@@ -357,7 +357,7 @@ class MockServicesIntegrationTest(unittest.TestCase):
             with self.subTest(protocol=protocol, port=port):
                 is_open = self._check_port_open(self.mock_host, port, timeout=5)
                 self.assertTrue(is_open, f"{protocol} service on port {port} should be responsive")
-                print(f"  ✅ {protocol.upper()} port {port} is responsive")
+                print(f"  [OK] {protocol.upper()} port {port} is responsive")
 
     def test_container_health(self):
         """Test that the mock services container is healthy"""
@@ -438,16 +438,16 @@ class MockServicesIntegrationTest(unittest.TestCase):
         for protocol, (success, result) in results.items():
             with self.subTest(protocol=protocol):
                 if success:
-                    print(f"  ✅ {protocol.upper()} concurrent test passed")
+                    print(f"  [OK] {protocol.upper()} concurrent test passed")
                     self.assertIsInstance(result, dict, f"{protocol} should return a dictionary")
                 else:
                     # Some failures are expected due to dependencies or connection issues
                     if any(
                         err in str(result) for err in ["missing_dependencies", "connection_failed"]
                     ):
-                        print(f"  ⚠️  {protocol.upper()} expected issue: {result}")
+                        print(f"  WARNING: {protocol.upper()} expected issue: {result}")
                     else:
-                        print(f"  ❌ {protocol.upper()} unexpected failure: {result}")
+                        print(f"  [FAIL] {protocol.upper()} unexpected failure: {result}")
                         self.fail(f"{protocol} failed unexpectedly: {result}")
 
 

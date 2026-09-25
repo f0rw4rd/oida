@@ -262,7 +262,7 @@ class OPCUASession:
     security_mode: str = ""
     # True once an OPN/GetEndpoints actually carried a security policy or mode.
     # Distinguishes an observed "None" (genuinely insecure) from the empty-string
-    # default (never observed — e.g. a mid-stream or already-encrypted capture).
+    # default (never observed - e.g. a mid-stream or already-encrypted capture).
     security_observed: bool = False
     encryption_algorithm: str = ""
     user_authentications: List[OPCUAUserAuth] = field(default_factory=list)
@@ -1236,7 +1236,7 @@ class OPCUAPassiveListener(PySharkListenerBase):
             client_ip: Client IP address
             is_request: True if packet is a request
         """
-        # Server certificate — from CreateSession/GetEndpoints response
+        # Server certificate - from CreateSession/GetEndpoints response
         # (ServerCertificate field) or OPN response (security.scert).
         # For OPN responses (!is_request), security.scert holds the server cert.
         server_cert_hex = self._get_opcua_field(fields, "ServerCertificate")
@@ -1257,7 +1257,7 @@ class OPCUAPassiveListener(PySharkListenerBase):
                     )
                     break
 
-        # Client certificate — from ActivateSession/CreateSession request
+        # Client certificate - from ActivateSession/CreateSession request
         # (ClientCertificate field) or OPN request (security.scert holds the
         # sender cert, which is the client cert for requests).
         client_cert_hex = self._get_opcua_field(fields, "ClientCertificate")
@@ -1314,7 +1314,7 @@ class OPCUAPassiveListener(PySharkListenerBase):
             sha1_thumb = hashlib.sha1(cert_der, usedforsecurity=False).hexdigest().upper()  # nosec B324
             sha256_thumb = hashlib.sha256(cert_der).hexdigest().upper()
 
-            # When _x509 is off, _display_cert_info returns None — fall
+            # When _x509 is off, _display_cert_info returns None - fall
             # back to lightweight parsing so OPC UA cert tracking still
             # works (thumbprints, subject/issuer CN, self-signed check).
             if not info:
@@ -2001,7 +2001,7 @@ class OPCUAPassiveListener(PySharkListenerBase):
         for session in self.sessions.values():
             # Only judge sessions whose security config was actually observed.
             # An empty-string default means no OPN/GetEndpoints was captured
-            # (mid-stream / already-encrypted flow) — "not observed" is not
+            # (mid-stream / already-encrypted flow) - "not observed" is not
             # evidence of "insecure", so don't emit a false-unsafe verdict.
             if not session.security_observed:
                 continue
@@ -2192,7 +2192,7 @@ class OPCUAPassiveListener(PySharkListenerBase):
                         {
                             "level": "warning",
                             "message": (
-                                f"OPC UA CERT: {issue['ip']} CN={issue['subject_cn']} — {desc}"
+                                f"OPC UA CERT: {issue['ip']} CN={issue['subject_cn']} - {desc}"
                             ),
                         }
                     )

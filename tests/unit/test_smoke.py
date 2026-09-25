@@ -1,4 +1,4 @@
-"""Smoke tests — verify core imports and protocol discoverability.
+"""Smoke tests - verify core imports and protocol discoverability.
 
 These are intentionally lightweight: no network, no optional deps required.
 They catch broken imports, missing __init__.py files, and loader regressions.
@@ -66,7 +66,7 @@ def test_common_types():
 
 
 # ---------------------------------------------------------------------------
-# Protocol modules importable (lazy — doesn't require optional deps)
+# Protocol modules importable (lazy - doesn't require optional deps)
 # ---------------------------------------------------------------------------
 
 PROTOCOL_PACKAGES = [
@@ -100,14 +100,14 @@ def test_protocol_package_importable(proto):
     """Each protocol __init__.py must be importable (syntax/import errors fail here).
 
     ImportError/ModuleNotFoundError for *optional* third-party deps is acceptable
-    (e.g. xknx, c104) — the test only fails on errors within our own code.
+    (e.g. xknx, c104) - the test only fails on errors within our own code.
     """
     try:
         mod = importlib.import_module(f"oida.protocols.{proto}")
         assert mod is not None
     except (ImportError, ModuleNotFoundError) as exc:
         # Allow failures caused by missing optional third-party packages.
-        # SyntaxError would propagate (not caught here) — which is the point.
+        # SyntaxError would propagate (not caught here) - which is the point.
         # "cannot import name 'X' from 'oida...'" is a cascading failure from
         # a third-party dep not being installed, so we skip those too.
         require_service(f"Optional dependency not installed: {exc}")

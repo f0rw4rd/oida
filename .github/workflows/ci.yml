@@ -7,14 +7,14 @@ on:
   push:
     branches: [main]
   pull_request:
-  # The heavy jobs are opt-in per job, so a push to main or a PR — even a
-  # README-only change — runs only lint + the fast unit/contract matrix
+  # The heavy jobs are opt-in per job, so a push to main or a PR - even a
+  # README-only change - runs only lint + the fast unit/contract matrix
   # (minutes). On push/PR the `inputs` context is empty (falsy), so both skip.
   #
   # The two are gated separately on purpose:
-  #   run_pcap         — pinned-tshark dissector tests, ~5 min, deterministic.
+  #   run_pcap         - pinned-tshark dissector tests, ~5 min, deterministic.
   #                      The release gate passes true.
-  #   run_integration  — the ~60 min docker-mock suite. The release gate passes
+  #   run_integration  - the ~60 min docker-mock suite. The release gate passes
   #                      FALSE: it runs locally via scripts/release_check.sh
   #                      --full before tagging, where the mock stack isn't
   #                      contended by a shared runner and a timing flake costs
@@ -39,7 +39,7 @@ on:
         type: boolean
         default: false
       run_integration:
-        description: "Run the docker-mock integration job (release passes false — it runs locally)"
+        description: "Run the docker-mock integration job (release passes false - it runs locally)"
         type: boolean
         default: false
 
@@ -68,7 +68,7 @@ jobs:
       - name: Sync dev tools from lockfile
         # `uv sync --extra dev --frozen` installs ruff/vulture/bandit at
         # the EXACT versions pinned in uv.lock. Don't `uv pip install
-        # ruff vulture bandit` — that bypasses the lockfile and fetches
+        # ruff vulture bandit` - that bypasses the lockfile and fetches
         # latest from PyPI, breaking reproducibility.
         run: uv sync --extra dev --frozen
 
@@ -97,7 +97,7 @@ jobs:
       - name: Low-assurance test detection
         run: uv run python scripts/quality/test_quality.py tests/ --baseline .quality/tests.json
 
-      # B110/B112 are no longer skipped — they were the mechanism behind three
+      # B110/B112 are no longer skipped - they were the mechanism behind three
       # security checks that reported "clean" after crashing. Existing sites are
       # baselined; new ones fail.
       - name: Bandit security lint
@@ -120,12 +120,12 @@ jobs:
         # on every interpreter; running all of it on all five versions was five
         # copies of the same result and the slowest thing in CI. Instead: one
         # CANONICAL lane runs everything, and every other version runs a curated
-        # cross-version SUBSET — the `-m version_sensitive` tests (packaging/
+        # cross-version SUBSET - the `-m version_sensitive` tests (packaging/
         # metadata, stdlib API, asyncio/mock timing), the import-smoke that
         # imports every oida module (catches syntax/stdlib breaks on new/old
         # Pythons), and the repo-invariant contracts. Anything genuinely
         # version-dependent MUST carry the `version_sensitive` marker to be
-        # exercised off the canonical lane — see pyproject.toml.
+        # exercised off the canonical lane - see pyproject.toml.
         #
         # `extras` selects which optional-dependency groups uv installs. Every
         # lane wants them all EXCEPT 3.14, where the dnp3 extra's yadnp3 has no
@@ -165,7 +165,7 @@ jobs:
           python-version: ${{ matrix.python-version }}
 
       - name: Sync environment from lockfile
-        # `uv sync <extras>` materializes EXACT versions from uv.lock — the same
+        # `uv sync <extras>` materializes EXACT versions from uv.lock - the same
         # set every CI run, every dev box. --frozen errors if uv.lock is out of
         # date vs pyproject.toml (caught by the lockfile-drift contract test, but
         # belt-and-braces here too). matrix.extras is --all-extras everywhere
@@ -178,11 +178,11 @@ jobs:
         # out to the real tshark binary and assert on its dissector output, so
         # they are integration-grade and sensitive to the runner's tshark
         # version (CI ships 4.2.x, dev boxes run 4.6.x). They are excluded from
-        # the fast/deterministic unit lane — which has no tshark at all, and
+        # the fast/deterministic unit lane - which has no tshark at all, and
         # tests/service_gate.py turns a missing dependency into a hard failure
-        # rather than a skip — and run in the `pcap` job with a pinned tshark.
+        # rather than a skip - and run in the `pcap` job with a pinned tshark.
         # tests/contracts/ are fast static repo-invariant guards (confirm-gate,
-        # credential-leak, dead-import resolution, …) — run them here so they
+        # credential-leak, dead-import resolution, ...) - run them here so they
         # actually gate PRs. -n auto --dist worksteal parallelises across cores.
         run: >-
           uv run pytest tests/unit/ tests/contracts/
@@ -199,7 +199,7 @@ jobs:
         #
         # --ignore=tests/unit/dnp3: those modules do `opendnp3 = require_import(
         # "opendnp3")` at import time, which HARD-FAILS at collection (service_gate
-        # is strict) on any lane where the dnp3 extra can't install — notably 3.14,
+        # is strict) on any lane where the dnp3 extra can't install - notably 3.14,
         # whose only gap is yadnp3 having no cp314 wheel. The dnp3 tests aren't
         # version_sensitive so nothing is deselected by skipping them; the canonical
         # `full` lane (opendnp3 present) still runs them.
@@ -258,7 +258,7 @@ jobs:
     # Flip run_integration on via workflow_dispatch to run it here anyway.
     if: ${{ inputs.run_integration }}
     runs-on: ubuntu-latest
-    # 5,448 tests that ran in no workflow before this job existed — the mock
+    # 5,448 tests that ran in no workflow before this job existed - the mock
     # stack makes them too heavy for the unit lane but they are the only
     # coverage the protocol scanners get against real servers.
     timeout-minutes: 60
@@ -287,7 +287,7 @@ jobs:
       # an oida subprocess (~2 cores) and shares the one mock stack, so a
       # worker-per-core run oversubscribes the box and makes timing-sensitive
       # scans miss their timeouts and flake. The upper cap holds regardless of
-      # core count because the shared mock stack — not the CPU — is the limit,
+      # core count because the shared mock stack - not the CPU - is the limit,
       # so a bigger runner must not push more workers at it.
       - name: Integration tests
         run: |

@@ -418,7 +418,7 @@ services:
   # Genuine bacnet-stack BSC server (BACDL=bsc) in direct-connect accept mode
   # over WSS/TLS. The SECURE image is built STRICT=1 (mutual-auth required +
   # TLS 1.3 floor); the WEAK image is the stock binary (accepts anonymous/rogue
-  # clients + TLS 1.2) — used to validate OIDA's automatic TLS findings fire.
+  # clients + TLS 1.2) - used to validate OIDA's automatic TLS findings fire.
   # The container mints its own PKI on first boot into /certs (a named volume),
   # which the integration tests read to present a client cert.
   bacnetsc-realstack-secure:
@@ -2284,8 +2284,8 @@ services:
     container_name: ocpp-insecure-csms
     hostname: ocpp-insecure
     ports:
-      - "9000:9000"     # OCPP ws:// (insecure — no auth, accepts everything)
-      - "9001:9001"     # OCPP ws:// (secure — HTTP Basic Auth, hardened)
+      - "9000:9000"     # OCPP ws:// (insecure - no auth, accepts everything)
+      - "9001:9001"     # OCPP ws:// (secure - HTTP Basic Auth, hardened)
     environment:
       - TZ=UTC
       - PYTHONUNBUFFERED=1
@@ -2306,7 +2306,7 @@ services:
 
   # ============================================================================
   # SteVe (real OCPP 1.2/1.5/1.6 Central System / CSMS)
-  # GPL-3.0 — built from source at image-build time, NO binaries committed.
+  # GPL-3.0 - built from source at image-build time, NO binaries committed.
   # See ./services/ocpp/steve/README.md for the license note + config matrix.
   # One MariaDB backend + three SteVe app containers sharing one built image,
   # differing only by runtime Spring -D overrides and per-config DB schema.
@@ -2340,7 +2340,7 @@ services:
       oida.description: "SteVe OCPP CSMS MariaDB backend (steve:changeme), schemas: stevedb_open/registered/secure"
       oida.ports: ""
 
-  # Config 1: OPEN — auto-registers unknown stations, accepts BootNotification
+  # Config 1: OPEN - auto-registers unknown stations, accepts BootNotification
   # from ANY chargeBoxId. ws:// on 8180.
   ocpp-steve-open:
     build:
@@ -2355,7 +2355,7 @@ services:
       ocpp-steve-db:
         condition: service_healthy
     ports:
-      - "8180:8180"     # SteVe HTTP — web UI :/steve/manager, ws OCPP
+      - "8180:8180"     # SteVe HTTP - web UI :/steve/manager, ws OCPP
     environment:
       - TZ=UTC
       - BUILD_DB_SCHEMA=stevedb_open
@@ -2377,7 +2377,7 @@ services:
       oida.description: "Real SteVe OCPP 1.6J CSMS (open), ws://8180/steve/websocket/CentralSystemService/<id>, auto-registers any CP, web UI admin:1234"
       oida.ports: "8180"
 
-  # Config 2: REGISTERED-ONLY — rejects unknown chargeBoxIds (auto-register
+  # Config 2: REGISTERED-ONLY - rejects unknown chargeBoxIds (auto-register
   # false). Only pre-registered (via web UI/API) charge boxes are accepted.
   ocpp-steve-registered:
     image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ocpp-steve:latest
@@ -2411,7 +2411,7 @@ services:
       oida.description: "Real SteVe OCPP 1.6J CSMS (registered-only), ws://8181/steve/..., rejects unknown CP (auto-register off), web UI admin:1234"
       oida.ports: "8181"
 
-  # Config 3: SECURE — HTTPS/WSS with a self-signed PKCS12 keystore generated
+  # Config 3: SECURE - HTTPS/WSS with a self-signed PKCS12 keystore generated
   # at container start; rejects unknown chargeBoxIds. wss:// on 8543.
   ocpp-steve-secure:
     image: ${OIDA_REGISTRY:-ghcr.io/f0rw4rd}/oida-mock-ocpp-steve:latest
@@ -2423,7 +2423,7 @@ services:
       ocpp-steve-open:
         condition: service_started
     ports:
-      - "8543:8443"     # SteVe HTTPS — wss OCPP + web UI over TLS
+      - "8543:8443"     # SteVe HTTPS - wss OCPP + web UI over TLS
     environment:
       - TZ=UTC
     command:
@@ -2472,7 +2472,7 @@ services:
       oida.ports: "8543"
 
   # ============================================================================
-  # CAN Bus Mock (UDP multicast — no kernel modules needed)
+  # CAN Bus Mock (UDP multicast - no kernel modules needed)
   # ============================================================================
 
   # ============================================================================
@@ -2987,7 +2987,7 @@ services:
       oida.ports: "8083"
 
   # ============================================================================
-  # Medical Protocols — HL7 / DICOM / FHIR
+  # Medical Protocols - HL7 / DICOM / FHIR
   # ============================================================================
 
   hl7-mock:

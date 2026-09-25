@@ -342,9 +342,9 @@ class CANopenMixin:
                             seg_resp = candidate
                             break
                         if cand_scs != SDO_SCS_SEGMENT_UPLOAD:
-                            continue  # stray initiate/other frame — ignore
+                            continue  # stray initiate/other frame - ignore
                         if ((candidate[0] >> 4) & 0x01) != toggle:
-                            continue  # duplicate/reordered segment — ignore
+                            continue  # duplicate/reordered segment - ignore
                         seg_resp = candidate
                         break
 
@@ -380,7 +380,7 @@ class CANopenMixin:
                     toggle = 1 - toggle
 
                 # A segmented transfer that never delivered its final segment, or
-                # came up short of the indicated size, is incomplete — report it
+                # came up short of the indicated size, is incomplete - report it
                 # as an error rather than handing back a truncated/garbled value.
                 if not is_last or (total_size > 0 and len(assembled) < total_size):
                     result.error = True

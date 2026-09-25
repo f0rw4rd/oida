@@ -6,7 +6,7 @@
 Bug (core bug hunt): ``_save_file`` swallowed every failure at DEBUG level and
 returned None, while ``_record_file`` had already appended the file and logged
 "File carved". With an unwritable output_dir the operator saw a successful
-carve, a full ``files`` list, and a files summary — and nothing on disk.
+carve, a full ``files`` list, and a files summary - and nothing on disk.
 
 Reproduced before the fix (output_dir occupied by a regular file so makedirs
 raises):

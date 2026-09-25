@@ -1,7 +1,7 @@
 """Performance benchmarks for the SQLAlchemy fuzz-session DB.
 
 These tests assert *throughput floors* against a real on-disk SQLite
-database — not microbenchmarks. The numbers below are conservative
+database - not microbenchmarks. The numbers below are conservative
 floors picked so that:
 
 - Slow CI runners and rotating disks still pass.
@@ -131,7 +131,7 @@ class TestPragmaConfig:
         )
         assert fresh_db.get_crash(case.id) is not None
 
-        # Delete the parent test case — crash row must cascade.
+        # Delete the parent test case - crash row must cascade.
         with fresh_db.get_session() as session:
             from oida.fuzz.core.database.models import TestCase as ORMTestCase
 
@@ -139,7 +139,7 @@ class TestPragmaConfig:
             session.delete(tc)
 
         assert fresh_db.get_crash(case.id) is None, (
-            "Crash row not cascade-deleted — PRAGMA foreign_keys not active"
+            "Crash row not cascade-deleted - PRAGMA foreign_keys not active"
         )
 
 
@@ -157,13 +157,13 @@ class TestWriteThroughput:
 
         On a developer laptop this typically runs in ~50 ms; the floor
         is generous to accommodate the slowest CI runner. With the
-        per-row commit path this would take 10–30 s on rotating disks.
+        per-row commit path this would take 10-30 s on rotating disks.
         """
         cases = [_make_case(i) for i in range(2000)]
         elapsed = _time(lambda: fresh_db.store_test_cases_bulk(cases))
         assert elapsed < 1.0, (
             f"bulk insert of 2000 test cases took {elapsed:.2f}s, "
-            f"expected <1.0s — likely lost the bulk path or WAL"
+            f"expected <1.0s - likely lost the bulk path or WAL"
         )
 
         # And the rows are actually there.
@@ -183,7 +183,7 @@ class TestBulkIsFasterThanSingular:
     """Shape test: bulk must be strictly faster than per-row.
 
     This is the load-bearing assertion. It doesn't depend on absolute
-    speed — only on the ratio between the two paths.
+    speed - only on the ratio between the two paths.
 
     We size N so both paths complete inside the test timeout even on
     slow disks (500 rows ≈ 500 fsyncs in the singular path).
@@ -206,10 +206,10 @@ class TestBulkIsFasterThanSingular:
         db_bulk.close()
 
         ratio = t_singular / max(t_bulk, 1e-6)
-        # 5x is conservative — bulk is typically 30–100x faster.
+        # 5x is conservative - bulk is typically 30-100x faster.
         assert ratio >= 5.0, (
             f"bulk insert was only {ratio:.1f}x faster than per-row "
-            f"(singular={t_singular:.3f}s, bulk={t_bulk:.3f}s) — "
+            f"(singular={t_singular:.3f}s, bulk={t_bulk:.3f}s) - "
             f"the bulk path may be falling through to per-row commits"
         )
 
@@ -225,7 +225,7 @@ class TestReadThroughput:
 
     @pytest.fixture
     def populated_db(self, tmp_path):
-        """A DB with 10k cases — large enough that O(N) queries hurt."""
+        """A DB with 10k cases - large enough that O(N) queries hurt."""
         path = tmp_path / "populated.db"
         db = SQLAlchemyDatabase(str(path))
         db.init_schema()
@@ -236,12 +236,12 @@ class TestReadThroughput:
         db.close()
 
     def test_get_stats_under_100ms_for_10k(self, populated_db):
-        """One aggregate query must finish fast — the coalesced path."""
+        """One aggregate query must finish fast - the coalesced path."""
         # Warm up the page cache so we measure the query, not first I/O.
         populated_db.get_stats()
         elapsed = _time(populated_db.get_stats)
         assert elapsed < 0.1, (
-            f"get_stats() over 10k cases took {elapsed:.3f}s — "
+            f"get_stats() over 10k cases took {elapsed:.3f}s - "
             f"the 8-aggregate-query regression may be back"
         )
 
@@ -260,7 +260,7 @@ class TestReadThroughput:
             lambda: populated_db.get_test_cases(protocol="http", result_filter="crash", limit=1000)
         )
         assert elapsed < 0.3, (
-            f"filtered get_test_cases took {elapsed:.3f}s — may be doing a full table scan"
+            f"filtered get_test_cases took {elapsed:.3f}s - may be doing a full table scan"
         )
 
 
@@ -283,7 +283,7 @@ def test_database_file_stays_compact(tmp_path):
     db.close()
 
     size_mb = os.path.getsize(tmp_path / "compact.db") / (1024 * 1024)
-    # 10k cases at ~120 bytes per row plus indexes — should be well
+    # 10k cases at ~120 bytes per row plus indexes - should be well
     # under 10 MB. We assert <20 MB to leave headroom for WAL.
     assert size_mb < 20.0, f"DB grew to {size_mb:.1f} MB for 10k metadata-only cases"
 
@@ -311,7 +311,7 @@ class TestIndexesPresent:
     }
 
     def test_all_expected_indexes_exist(self, fresh_db):
-        # Pull the index list directly from sqlite_master — most
+        # Pull the index list directly from sqlite_master - most
         # faithful representation of what was actually created.
         path = fresh_db.database_path
         with sqlite3.connect(path) as conn:

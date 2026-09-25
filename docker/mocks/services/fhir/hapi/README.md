@@ -9,7 +9,7 @@ OIDA's `fhir` scanner against a real FHIR server (not the Python simulation in
 - Project: <https://github.com/hapifhir/hapi-fhir-jpaserver-starter>
 - License: **Apache-2.0**
 - Image: official `hapiproject/hapi` published to Docker Hub by the project.
-  We pin a stable tag and pull it at runtime — **no jars or binaries are
+  We pin a stable tag and pull it at runtime - **no jars or binaries are
   vendored into this repo**. Only the `application-*.yaml` config files here are
   committed.
 

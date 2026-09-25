@@ -577,7 +577,7 @@ class ProtocolMonitor(BaseMonitor):
             self._recalibrate_after_drift()
 
     def _on_probe_timeout(self) -> None:
-        """A probe failed: back the adaptive timeout off (Karn's rule — don't learn)."""
+        """A probe failed: back the adaptive timeout off (Karn's rule - don't learn)."""
         if self.rto_estimator is not None:
             self.timeout = self.rto_estimator.on_timeout()
 

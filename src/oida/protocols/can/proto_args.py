@@ -453,7 +453,7 @@ Replay:
 
     # --- Security Testing ---
     # CAN fuzzes a single arbitration ID on one interface, so --fuzz-max-targets
-    # (a multi-target cap) is never read — omit it instead of advertising an unused flag.
+    # (a multi-target cap) is never read - omit it instead of advertising an unused flag.
     fuzz_group = add_dangerous_options(can_parser, include_fuzz=True, include_max_targets=False)
 
     fuzz_group.add_argument(

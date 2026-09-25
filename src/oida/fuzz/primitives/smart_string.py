@@ -506,9 +506,9 @@ class SmartStringPrimitive(ReducedString):
         Non-ASCII curated context payloads are yielded pre-encoded as UTF-8
         bytes (see ``_encode_context_payload``); pass them through unchanged
         so their real multi-byte form reaches the wire, applying only the
-        field's size padding. Every ``str`` mutation — the baseline value,
+        field's size padding. Every ``str`` mutation - the baseline value,
         length-boundary seeds, format strings, NULL/control payloads and the
-        base malformed-UTF-8 library — still renders via boofuzz's normal
+        base malformed-UTF-8 library - still renders via boofuzz's normal
         field-encoding path, so baseline output is byte-for-byte unchanged.
         """
         if isinstance(value, bytes):

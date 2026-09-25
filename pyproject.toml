@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 # PyPI distribution name. "oida" is taken on PyPI by an unrelated package, so the
 # published artifact is "oida-ics". The console script stays `oida` (see
-# [project.scripts]) and the import package stays `oida` — only the pip/PyPI name
+# [project.scripts]) and the import package stays `oida` - only the pip/PyPI name
 # differs. Install with: pip install 'oida-ics[all]'
 name = "oida-ics"
 dynamic = ["version"]
@@ -43,7 +43,7 @@ requires-python = ">=3.10"
 # time; an exact pin means pip can only ever fetch the one immutable PyPI file
 # for that version, so a malicious *new* in-range release of a dependency (or a
 # hijacked maintainer account) cannot reach them. uv.lock only protects
-# from-source `uv sync`, never a `pip install` from PyPI — hence the pins here.
+# from-source `uv sync`, never a `pip install` from PyPI - hence the pins here.
 # Bump deliberately: edit the version, re-run `uv lock`, then re-release.
 dependencies = [
     "tqdm==4.70.1",
@@ -63,7 +63,7 @@ bacnetsc = ["BAC0==2026.7.25", "PyYAML==6.0.3", "websockets==16.0", "cryptograph
 can = ["python-can==4.6.1"]
 # DTLSSocket is the tinydtls C backend aiocoap needs for coaps:// (PSK). Without it
 # aiocoap silently has no DTLS client transport, so every DTLS scan path is untestable.
-# Ships sdist-only, so it is compiled at install time (needs a C toolchain) — no
+# Ships sdist-only, so it is compiled at install time (needs a C toolchain) - no
 # Windows wheel and the sdist needs autotools, which windows-latest lacks. Same
 # marker pattern as ethercat's pysoem above: coap module lazy-imports both
 # aiocoap and DTLSSocket, so plain coap:// scanning still works on Windows,
@@ -79,7 +79,7 @@ goose = ["pyiec61850-ng==1.6.1.10"]
 hart = ["hartip-py==0.3.0"]
 hl7 = ["hl7apy==1.3.5"]
 # Pinned to upstream main (2.2.2-dev): fixes the garbage-bytes SIGSEGV in the
-# native parser (iec104-python#76, ~9% of junk-impostor runs) — verified 40/40
+# native parser (iec104-python#76, ~9% of junk-impostor runs) - verified 40/40
 # clean against this commit vs a segv at run 11 on the 2.2.1 wheel. Every c104
 # API OIDA uses is unchanged. Swap back to a PyPI pin (`c104==2.2.2`) the day
 # it ships; the flaky(reruns=3) shim on the junk-bytes test can then be retired.
@@ -127,9 +127,9 @@ dev = [
     # CI sees the full skip-free count.
     "Brotli>=1.2.0",          # tests/unit/fuzz/test_transformers.py
     "docker>=7.1.0",          # tests/integration/common/test_mock_services_integration.py
-    "defusedxml>=0.7.1",      # SSDP/UPnP — also in discovery extra; here for unit tests
-    "msgpack>=1.1.0",         # python-can udp_multicast — gates tests/integration/test_can_mock_e2e.py
-    "tomli>=2.0.0; python_version < '3.11'",  # tests/unit/test_dist_name_resolution.py — stdlib tomllib is 3.11+
+    "defusedxml>=0.7.1",      # SSDP/UPnP - also in discovery extra; here for unit tests
+    "msgpack>=1.1.0",         # python-can udp_multicast - gates tests/integration/test_can_mock_e2e.py
+    "tomli>=2.0.0; python_version < '3.11'",  # tests/unit/test_dist_name_resolution.py - stdlib tomllib is 3.11+
 ]
 docs = [
     # Note: docs site lives in the separate oida-website repo
@@ -197,12 +197,12 @@ docstring-code-format = false
 # a per-file-ignore below, and say why.
 select = [
     "E4", "E7", "E9", "F",  # ruff defaults, now explicit rather than implied
-    "F821",                 # undefined name — catches hallucinated symbols
+    "F821",                 # undefined name - catches hallucinated symbols
     "F811",                 # redefinition of unused name
     "PLE",                  # pylint errors (genuine bugs, not style)
     "B006", "B008",         # mutable default arg, function call in default
     "S102", "S307", "S608", # exec, eval, SQL injection
-    "TID252",               # relative import — one import style, see below
+    "TID252",               # relative import - one import style, see below
 ]
 ignore = [
     # Module-level imports not at top: required for optional dependency patterns,
@@ -224,14 +224,14 @@ ignore = [
 
 [tool.ruff.lint.flake8-tidy-imports]
 # One import style across the tree: absolute, `from oida.x import y`. The
-# codebase had both, sometimes in the same file, and the mix is not cosmetic —
+# codebase had both, sometimes in the same file, and the mix is not cosmetic -
 # a module reached as `oida.foo` and as `src.oida.foo` is imported TWICE into
 # distinct module objects, so its classes fail `is` comparisons and its
 # module-level state exists in two copies.
 #
 # "all", not the default "parents": the default only bans `from ..x import y`
-# and would leave same-package `from .x import y` — the overwhelming majority
-# here — untouched, which is the mix we are removing.
+# and would leave same-package `from .x import y` - the overwhelming majority
+# here - untouched, which is the mix we are removing.
 ban-relative-imports = "all"
 
 [tool.ruff.lint.flake8-unused-arguments]
@@ -274,17 +274,17 @@ addopts = "-ra -q --strict-markers --strict-config -m 'not network' --tb=line"
 testpaths = ["tests/unit", "tests/integration", "tests/contracts"]
 timeout = 60
 # Use the signal method, not "thread". The thread method cannot interrupt a
-# blocked socket syscall — on timeout it dumps stacks and hard-exits the whole
+# blocked socket syscall - on timeout it dumps stacks and hard-exits the whole
 # pytest process (os._exit), so a single hung test body kills the entire run
 # with no per-test report. The signal method (SIGALRM) raises into the test, so
-# one slow test fails and the run continues. Linux/main-thread only — fine here
+# one slow test fails and the run continues. Linux/main-thread only - fine here
 # (xdist workers run each test in their own main thread).
 timeout_method = "signal"
 # Don't apply the per-test timer to setup/teardown/fixtures. The
 # session-scoped docker_services fixture brings up ~67 mock containers
 # and routinely exceeds any per-test budget; without this flag it kills
 # the whole pytest session. (Fixture/collection hangs are therefore still
-# possible — run in lanes per scripts/run-all-tests.sh, or pass
+# possible - run in lanes per scripts/run-all-tests.sh, or pass
 # -o timeout_func_only=false when the mocks are already up so setup is just a
 # fast health-check.)
 timeout_func_only = true
@@ -416,7 +416,7 @@ skips = [
 # ──────────────────────────────────────────────────────────────────────
 [tool.uv]
 # Pin the build backend resolution to the one declared in [build-system]
-# above (setuptools) — uv otherwise auto-picks per the PEP 517 hint.
+# above (setuptools) - uv otherwise auto-picks per the PEP 517 hint.
 package = true
 
 # Compile bytecode after install for faster cold-start on first import.

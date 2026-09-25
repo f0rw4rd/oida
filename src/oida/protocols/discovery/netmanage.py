@@ -435,7 +435,7 @@ class NetManageDevice:
 
         Prior to the fix this passed kwargs (`ip`, `mac`, `hostname`,
         `vendor`, `protocol`, `metadata`, raw `datetime`) that don't
-        exist on DiscoveredDevice — every Schneider PLC discovery
+        exist on DiscoveredDevice - every Schneider PLC discovery
         raised TypeError; passive listener swallowed it silently;
         CHANGELOG advertised a non-functional feature. Real fields are
         `mac_address`, `ip_addresses: List[str]`, `name`, `manufacturer`,

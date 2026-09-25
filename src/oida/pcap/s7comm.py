@@ -246,7 +246,7 @@ class S7commPassiveListener(PySharkListenerBase):
             # must produce at least one).
             src_ip = src_ip or "0.0.0.0"
             dst_ip = dst_ip or "0.0.0.0"
-            self.logger.debug("S7comm packet missing IP layer — using placeholder addresses")
+            self.logger.debug("S7comm packet missing IP layer - using placeholder addresses")
 
         flow_id = self.get_flow_id(packet)
 
@@ -880,13 +880,13 @@ class S7commPassiveListener(PySharkListenerBase):
                 strings.append(s)
 
         if len(strings) >= 3:
-            # Take the last 3 strings — they're typically author, family, name
+            # Take the last 3 strings - they're typically author, family, name
             candidates = strings[-3:]
             transfer.setdefault("block_author", candidates[0])
             transfer.setdefault("block_family", candidates[1])
             transfer.setdefault("block_name", candidates[2])
         elif len(strings) >= 1:
-            # Partial extraction — at least capture what we can
+            # Partial extraction - at least capture what we can
             for s in strings:
                 if not transfer.get("block_name"):
                     transfer.setdefault("block_name", s)
@@ -1248,7 +1248,7 @@ class S7commPassiveListener(PySharkListenerBase):
         details: Dict[str, Any],
     ) -> None:
         """Extract SZL 0011 Module Identification (order number + FW version)."""
-        # Order number (anz field — may be comma-separated list from array)
+        # Order number (anz field - may be comma-separated list from array)
         anz_raw = self.get_field(s7comm, "szl_xy11_0001_anz", None)
         if anz_raw is None:
             anz_raw = self.get_field(s7comm, "szl.xy11.0001.anz", None)
@@ -1367,7 +1367,7 @@ class S7commPassiveListener(PySharkListenerBase):
             if pairs:
                 details["block_summary"] = " ".join(pairs)
         elif bi_type_raw is not None:
-            # Single value — request specifying which type to list/query
+            # Single value - request specifying which type to list/query
             bt = self._parse_int(bi_type_raw)
             details["block_type"] = (
                 S7_BLOCK_TYPES.get(bt, f"0x{bt:02x}") if bt else str(bi_type_raw)
@@ -1546,7 +1546,7 @@ class S7commPassiveListener(PySharkListenerBase):
         if raw is not None:
             val = str(raw).strip()
             if val:
-                # Compact colon-hex to plain hex (00:09:00:18 → 00090018)
+                # Compact colon-hex to plain hex (00:09:00:18 -> 00090018)
                 return val.replace(":", "")
 
         # Fallback: s7comm.data.userdata for userdata payloads
@@ -1681,7 +1681,7 @@ class S7commPassiveListener(PySharkListenerBase):
                 size = d.get("length", "")
                 data = d.get("data", "")
             else:
-                # Response — show data or error, no area/db/addr
+                # Response - show data or error, no area/db/addr
                 data = d.get("data", "")
                 rc = d.get("return_code")
                 if rc is not None and rc != 0xFF:

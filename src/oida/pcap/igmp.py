@@ -128,7 +128,7 @@ class IGMPPassiveListener(PySharkListenerBase):
         result = super().harvest()
         # Do NOT early-return on an empty result: super().harvest() returns {}
         # whenever there are no write/control ops, which is always the case for
-        # IGMP — that would silently drop every bad-checksum alert below.
+        # IGMP - that would silently drop every bad-checksum alert below.
         result = result or {}
         # Add bad checksum alerts
         for bc in self._bad_checksums:

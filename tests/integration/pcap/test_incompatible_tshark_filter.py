@@ -50,7 +50,7 @@ def test_full_pipeline_completes_with_all_listeners():
     stats = result.get("statistics", {})
     processed = stats.get("packets_processed", 0)
     assert processed >= 500, (
-        f"pipeline processed only {processed} packets — the combined display "
+        f"pipeline processed only {processed} packets - the combined display "
         "filter or the XML fallback aborted the scan"
     )
 

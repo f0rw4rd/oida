@@ -261,7 +261,7 @@ class TestRPCBindGreedyGuard:
         assert listener.interactions, "Real portmap traffic must still be processed"
         assert devices, "Real portmap traffic must still create devices"
         # Unfiltered replay must match the count seen through the portmap
-        # display filter — i.e. no genuine portmap PDU is dropped by the guard.
+        # display filter - i.e. no genuine portmap PDU is dropped by the guard.
         filtered, _, _ = _run_listener_test(
             "rpcbind",
             "RPCBindPassiveListener",

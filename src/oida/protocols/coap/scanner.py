@@ -82,7 +82,7 @@ class CoAPScanner(NetworkScanner):
             self.logger.debug(
                 "CoAP ping got no response from %s:%s, trying GET fallback", host, port
             )
-            # Try a real GET as fallback — some devices ignore empty CON
+            # Try a real GET as fallback - some devices ignore empty CON
             ctx = None
             try:
                 ctx = run_async(create_context())
@@ -90,11 +90,11 @@ class CoAPScanner(NetworkScanner):
                 code, _ = run_async(coap_get(ctx, uri, timeout=timeout))
                 self.logger.debug("Fallback GET to %s returned %s", uri, code)
                 if code.startswith("2.") or code.startswith("4."):
-                    # Got a real CoAP response — server is alive
+                    # Got a real CoAP response - server is alive
                     elapsed = _time.monotonic() - t0
                     self.logger.debug("Connection established via GET fallback in %.2fs", elapsed)
                     return ctx
-                # No usable response — shut down and fail
+                # No usable response - shut down and fail
                 run_async(shutdown_context(ctx))
             except Exception as e:
                 self.logger.debug("Fallback GET failed: %s", e)
@@ -310,7 +310,7 @@ class CoAPScanner(NetworkScanner):
 
         Always tests the read-only methods (GET / FETCH).
         Tests the write methods (PUT / POST / DELETE / PATCH / IPATCH)
-        only when ``confirm`` is True — DELETE on a live actuator can
+        only when ``confirm`` is True - DELETE on a live actuator can
         wipe physical state, so unattended scans must stop at reads.
 
         When ``confirm`` is False the matrix entries for write methods
@@ -381,7 +381,7 @@ class CoAPScanner(NetworkScanner):
             except (ValueError, UnicodeDecodeError) as e:
                 self.logger.debug(f"Failed to get mode_val: {e}")
 
-        # Probe for unauthenticated write — sends a real PUT, so require BOTH
+        # Probe for unauthenticated write - sends a real PUT, so require BOTH
         # --confirm AND explicit write-testing intent (--methods). Otherwise a
         # bare `--confirm` discovery would silently flip an actuator (relay/
         # valve) as a side effect, which the cross-protocol convention forbids.

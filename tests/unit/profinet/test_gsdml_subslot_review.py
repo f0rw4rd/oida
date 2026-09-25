@@ -1,7 +1,7 @@
 """Regression test: GSDML SubslotNumber must accept hex form.
 
 GSDML files in the wild encode SubslotNumber either decimally (32768) or
-hexadecimally (0x8000 — the standard interface subslot). VendorID, DeviceID
+hexadecimally (0x8000 - the standard interface subslot). VendorID, DeviceID
 and record Index attributes are all parsed with _parse_hex(); SubslotNumber
 was parsed with bare int(), which raises ValueError on "0x8000". That
 exception escapes to the parse_gsdml catch-all, so the ENTIRE GSDML

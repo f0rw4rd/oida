@@ -558,7 +558,7 @@ class ModbusScanner(
         """
         Test write access by writing the SAME value back (truly non-destructive).
 
-        Pattern: read → write same value → verify
+        Pattern: read -> write same value -> verify
         This is the safest write test that confirms write capability without
         modifying any data.
 
@@ -607,7 +607,7 @@ class ModbusScanner(
         """
         Test write access by writing a DIFFERENT value and restoring (Metasploit-style).
 
-        Pattern: read → write different value → restore original
+        Pattern: read -> write different value -> restore original
         This is more thorough but temporarily modifies the register value.
 
         Args:

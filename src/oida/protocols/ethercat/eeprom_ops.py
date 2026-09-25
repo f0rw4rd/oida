@@ -49,7 +49,7 @@ class EepromOpsMixin(_ScannerBase):
             try:
                 # Parse the SII/ESI structure once, then derive every category
                 # from the parsed result. pysoem's CdefSlave only exposes
-                # man/id/rev/name/input/output — everything else (serial,
+                # man/id/rev/name/input/output - everything else (serial,
                 # FMMU/SM counts, strings, PDO sizes) must come from the SII.
                 sii = self._read_slave_sii(master, i)
                 eeprom_data[i + 1] = {

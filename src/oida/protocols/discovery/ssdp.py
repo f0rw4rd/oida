@@ -15,7 +15,7 @@ from urllib.parse import urlparse
 
 try:
     from defusedxml import ElementTree  # Protect against XML bomb / XXE
-except ImportError as _ssdp_xml_err:  # pragma: no cover — release-checked dep
+except ImportError as _ssdp_xml_err:  # pragma: no cover - release-checked dep
     raise ImportError(
         "SSDP/UPnP parsing requires defusedxml to protect against XXE and XML-bomb "
         "attacks on untrusted UPnP device descriptions. Install with: "

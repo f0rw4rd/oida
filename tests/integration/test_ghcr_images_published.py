@@ -1,7 +1,7 @@
 """Verify the core mock images are published on GHCR (ghcr.io/f0rw4rd).
 
-The expected image set is derived from ``docker/mocks/compose.yml`` — the single
-source of truth for the core mocks — so this test tracks the real ``image:``
+The expected image set is derived from ``docker/mocks/compose.yml`` - the single
+source of truth for the core mocks - so this test tracks the real ``image:``
 refs and needs no hand-maintained list.
 
 By default it asserts each core image is **anonymously pullable**, which proves
@@ -9,7 +9,7 @@ both presence AND public visibility (the end state we want: users pull the
 mocks without auth). GHCR keeps new packages private until they are flipped
 public by hand, so while that flip is pending set ``OIDA_GHCR_ALLOW_PRIVATE=1``
 to fall back to an authenticated presence check (token read from
-``~/.docker/config.json``) — the test then passes on a *present* image
+``~/.docker/config.json``) - the test then passes on a *present* image
 regardless of visibility.
 
 Marked ``network`` so it is excluded from the default run (``-m 'not network'``).
@@ -72,7 +72,7 @@ def _ghcr_basic_from_docker_config() -> str | None:
 
     docker stores exactly this (base64 of ``username:token``) in the ``auth``
     field, which is what the ghcr.io token endpoint expects as ``Basic <blob>``
-    — so it is used verbatim, not decoded.
+    - so it is used verbatim, not decoded.
     """
     cfg = Path.home() / ".docker" / "config.json"
     try:
@@ -87,7 +87,7 @@ def _registry_token(repo: str, basic: str | None) -> tuple[str | None, int]:
     """Exchange for a ghcr.io pull token (authenticated if ``basic`` given).
 
     Returns ``(token, status)``. ``status`` is 200 when a token was granted,
-    the HTTP error code otherwise (401 = access denied — a *private* or missing
+    the HTTP error code otherwise (401 = access denied - a *private* or missing
     repo for an anonymous request), or 0 when the endpoint was unreachable. A
     429 burst is retried with exponential backoff so a large parametrized run
     doesn't collapse mid-way.
@@ -155,13 +155,13 @@ def test_core_image_present_on_ghcr(ref):
             require_service("cannot reach ghcr.io token endpoint (offline)")
         assert token is not None, (
             f"ghcr.io/{repo}: no pull token even with auth (HTTP {tstatus}) "
-            f"— repo missing or login lacks access"
+            f"- repo missing or login lacks access"
         )
         status = _manifest_status(repo, tag, token)
         if status == 0:
             require_service("cannot reach ghcr.io registry (offline)")
         assert status == 200, (
-            f"ghcr.io/{repo}:{tag} not present (HTTP {status}) — image was not pushed"
+            f"ghcr.io/{repo}:{tag} not present (HTTP {status}) - image was not pushed"
         )
         return
 
@@ -179,5 +179,5 @@ def test_core_image_present_on_ghcr(ref):
         require_service("cannot reach ghcr.io registry (offline)")
     assert status == 200, (
         f"ghcr.io/{repo}:{tag} anon token granted but manifest HTTP {status} "
-        "— unexpected (tag missing?)"
+        "- unexpected (tag missing?)"
     )

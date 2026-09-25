@@ -28,7 +28,7 @@ WRITE_COMMAND_IDS: FrozenSet[int] = frozenset({0x0003, 0x0005, 0x0009})
 READ_COMMAND_IDS: FrozenSet[int] = frozenset({0x0001, 0x0002, 0x0004})
 
 # ---------------------------------------------------------------------------
-# ADS Index Groups  (name → int, for building requests)
+# ADS Index Groups  (name -> int, for building requests)
 # ---------------------------------------------------------------------------
 
 ADS_IDX_GRP: Dict[str, int] = {
@@ -125,7 +125,7 @@ ADS_IDX_GRP: Dict[str, int] = {
     "ECAT_DC_STAT": 0x2F,  # EtherCAT DC statistics
     "ECAT_SLAVE_COUNT": 0x0006,  # Slave count (2 bytes at offset 0)
     "ECAT_FIRST_PORT": 0x0007,  # First slave port number (2 bytes at offset 0)
-    "ECAT_AL_STATE": 0x0009,  # AL state: offset=0 → master, offset=port → slave (2 bytes)
+    "ECAT_AL_STATE": 0x0009,  # AL state: offset=0 -> master, offset=port -> slave (2 bytes)
     "ECAT_SLAVE_IDENT": 0x0011,  # Slave identity (16 bytes at offset=slave_port)
     # CoE SDO access (slave ports 1001+)
     "COE_SDO": 0xF302,  # CANopen-over-EtherCAT SDO
@@ -160,7 +160,7 @@ ADS_DEV_DATA_OFFSETS: Dict[str, int] = {
     "DEV_DATA_ADSVERSIONCHECK": 0x0005,  # ADS version check (1 byte)
 }
 
-# Reverse lookup: int → name (for decoding captured packets).  Built only
+# Reverse lookup: int -> name (for decoding captured packets).  Built only
 # from true index groups -- see ADS_DEV_DATA_OFFSETS above for why the
 # DEV_DATA sub-offsets are excluded.
 ADS_IDX_GRP_NAMES: Dict[int, str] = {v: k for k, v in ADS_IDX_GRP.items()}
@@ -172,7 +172,7 @@ ADS_IDX_GRP_NAMES: Dict[int, str] = {v: k for k, v in ADS_IDX_GRP.items()}
 ADS_ERROR_CODES: Dict[int, str] = {
     # Success
     0x0000: "OK",
-    # Global/AMS errors (0x01-0x1C) — from packet-ams.h
+    # Global/AMS errors (0x01-0x1C) - from packet-ams.h
     0x01: "Internal error",
     0x02: "No real-time",
     0x03: "Allocation locked",
@@ -201,7 +201,7 @@ ADS_ERROR_CODES: Dict[int, str] = {
     0x1A: "TCP send error",
     0x1B: "Host unreachable",
     0x1C: "Invalid AMS fragment",
-    # Router errors (0x0500-0x050D) — from packet-ams.h
+    # Router errors (0x0500-0x050D) - from packet-ams.h
     0x0500: "Router: no locked memory",
     0x0501: "Router: resize memory",
     0x0502: "Router: mailbox full",
@@ -216,7 +216,7 @@ ADS_ERROR_CODES: Dict[int, str] = {
     0x050B: "Router: fragment box full",
     0x050C: "Router: fragment timeout",
     0x050D: "Router: to be removed",
-    # ADS device errors (0x0700-0x072F) — from AdsDef.h
+    # ADS device errors (0x0700-0x072F) - from AdsDef.h
     0x0700: "Device error",
     0x0701: "Service not supported",
     0x0702: "Invalid index group",
@@ -265,7 +265,7 @@ ADS_ERROR_CODES: Dict[int, str] = {
     0x072D: "License duplicated",
     0x072E: "Signature invalid",
     0x072F: "Certificate invalid",
-    # ADS client errors (0x0740-0x0755) — from packet-ams.h
+    # ADS client errors (0x0740-0x0755) - from packet-ams.h
     0x0740: "Client error",
     0x0741: "Client: invalid parameter",
     0x0742: "Client: list empty",
@@ -312,7 +312,7 @@ ADS_STATE_MAP: Dict[int, str] = {
 }
 
 # ---------------------------------------------------------------------------
-# AMS Service Ports  (name → port)
+# AMS Service Ports  (name -> port)
 # ---------------------------------------------------------------------------
 
 AMS_SERVICE_PORTS: Dict[str, int] = {
@@ -400,7 +400,7 @@ AMS_SERVICE_PORTS: Dict[str, int] = {
     "MULTIUSER": 19600,
 }
 
-# Reverse lookup: port → name (for decoding captured packets)
+# Reverse lookup: port -> name (for decoding captured packets)
 AMS_PORT_NAMES: Dict[int, str] = {v: k for k, v in AMS_SERVICE_PORTS.items()}
 
 # ---------------------------------------------------------------------------

@@ -7,7 +7,7 @@ E1 -- ``lookup_mac_vendor`` raised on hostile MACs. manuf2 raises
      ``ValueError`` for unparseable input ("Could not parse MAC: ..."), and
      the string fed to the wrapper comes straight off the wire:
      ``packet[Ether].src`` in the LLDP passive path is stored verbatim (no
-     ``normalize_mac``/``is_valid_mac`` — scapy happily accepts a 5- or
+     ``normalize_mac``/``is_valid_mac`` - scapy happily accepts a 5- or
      7-octet ``src``), BOOTP ``chaddr``, xknx DIB ``mac_address``.
      ``LLDPScanner._generate_statistics`` runs inside the top-level
      ``discover()`` try, so ONE malformed frame's MAC aborted the whole LLDP

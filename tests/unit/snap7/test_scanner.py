@@ -1134,7 +1134,7 @@ class TestSnap7WithErrorInjection:
 class TestSnap7MonitorAction(unittest.TestCase):
     """Regression: --monitor is a store_true bool (shared factory), so the
     handler must source areas from --monitor-areas, not from args.monitor.
-    Previously it did `args.monitor.split(...)` → 'bool' has no attribute 'split'
+    Previously it did `args.monitor.split(...)` -> 'bool' has no attribute 'split'
     and monitor mode could never run.
     """
 

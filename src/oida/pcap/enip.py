@@ -440,7 +440,7 @@ class EtherNetIPPassiveListener(PySharkListenerBase):
 
         These are UDP class-1 connections carrying CPF Sequenced Address
         Items with real-time I/O data between a scanner and an adapter.
-        Aggregated by flow — a single summary row is emitted in harvest().
+        Aggregated by flow - a single summary row is emitted in harvest().
         """
         details: Dict[str, Any] = {
             "command_code": None,

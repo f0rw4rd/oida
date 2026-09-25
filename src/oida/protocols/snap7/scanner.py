@@ -136,7 +136,7 @@ def _get_order_code_extended(client) -> Dict[str, Any]:
             result["firmware"] = f"V{v1}.{v2}.{v3}"
 
         # Note: the bootloader (V4-V6) lived in a 27-byte extended buffer read
-        # via client._lib / Cli_GetOrderCode — ctypes internals removed in
+        # via client._lib / Cli_GetOrderCode - ctypes internals removed in
         # python-snap7 2.x, so that block always AttributeError'd and is gone.
 
     except Exception as e:

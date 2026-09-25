@@ -10,7 +10,7 @@ The salt is the exact HMAC message the BMC signs:
 
 This test reconstructs the on-wire RAKP-1 and RAKP-2 message bodies from those
 components, feeds them through the listener's parsers + salt builder, and asserts
-the reassembled ``salt:hmac`` equals the canonical line — pinning the field
+the reassembled ``salt:hmac`` equals the canonical line - pinning the field
 offsets AND the salt field ORDER (the parts that were previously discarded).
 """
 

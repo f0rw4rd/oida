@@ -169,7 +169,7 @@ def test_enum_devices_study_fallback_is_capped():
     EnumerationMixin._enum_devices(scanner)
 
     # The endless STUDY stream never yields Modality/StationName/etc, so no
-    # device info is ever collected — real code takes the early-return
+    # device info is ever collected - real code takes the early-return
     # "nothing found" branch and never populates results["data"]["devices"].
     assert "devices" not in scanner.results["data"]
     # The study-fallback cap (max_study_uids=500) must have kicked in, which

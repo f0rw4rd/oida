@@ -673,7 +673,7 @@ class SMBPassiveListener(PySharkListenerBase):
                 except (ValueError, TypeError) as e:
                     self.logger.debug(f"SMB2: cipher_id int parse (scalar) failed: {e}")
 
-        # Tree connect path (share name) — may be EkMultiField
+        # Tree connect path (share name) - may be EkMultiField
         tree_path = self.get_field(smb2, "tree")
         if tree_path is not None:
             tree_path = str(self._resolve_value(tree_path, ""))

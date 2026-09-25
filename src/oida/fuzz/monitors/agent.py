@@ -5,7 +5,7 @@ Where the other monitors probe the target directly over the wire, this one talks
 to a small C agent running *on the target host* that owns the target process. The
 agent sees the real exit signal/code, distinguishes a crash from a clean exit,
 detects hangs, correlates a crash to the current test case, and restarts the
-target — none of which a black-box network probe can do.
+target - none of which a black-box network probe can do.
 
 Protocol (newline-delimited text; see the oida-fuzzing-agent repo README):
     HELLO 1 <token>   -> OK version=1 instance=<n> state=<state>

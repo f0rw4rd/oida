@@ -510,7 +510,7 @@ class TestBACnetMockService:
             import bacpypes3  # noqa: F401
         except ImportError:
             require_service("bacpypes3 not installed")
-        # BACnet uses UDP — sendto never fails, so we must wait for a response
+        # BACnet uses UDP - sendto never fails, so we must wait for a response
         try:
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.settimeout(2)

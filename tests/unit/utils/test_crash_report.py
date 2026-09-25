@@ -125,7 +125,7 @@ class TestSanitizeArgv:
     def test_store_true_flags_do_not_swallow_the_next_token(self):
         # Regression: a naive substring match ("pass" in "no-passive",
         # "pin" in "no-ping") would wrongly redact the token AFTER a boolean
-        # store_true flag — here the scan target and a numeric unit id.
+        # store_true flag - here the scan target and a numeric unit id.
         argv = ["modbus", "--no-passive", "192.168.1.1", "--no-ping", "--unit-id", "5"]
         assert crash_report.sanitize_argv(argv) == argv
 

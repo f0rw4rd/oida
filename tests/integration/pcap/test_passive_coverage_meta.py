@@ -138,11 +138,11 @@ class TestListenerImportability:
                 cls = getattr(mod, class_name)
                 layers = getattr(cls, "REQUIRED_LAYERS", None)
                 if layers is not None and len(layers) == 0:
-                    # Class has empty REQUIRED_LAYERS — must define its own guard
+                    # Class has empty REQUIRED_LAYERS - must define its own guard
                     if "should_process_packet" not in cls.__dict__:
                         failures.append(
                             f"{class_name}: REQUIRED_LAYERS=() but no "
-                            f"should_process_packet() override — will match all packets"
+                            f"should_process_packet() override - will match all packets"
                         )
             except Exception as e:
                 failures.append(f"{module_name}: {e}")

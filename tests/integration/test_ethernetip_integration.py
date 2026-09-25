@@ -2277,7 +2277,7 @@ def _dummy_tcp_server():
 
     Safety: binds only to 127.0.0.1 on an ephemeral port. It provides a
     "TCP connects but is not an EtherNet/IP device" target for the connection-1
-    false-positive regression below — it never touches a real device or external
+    false-positive regression below - it never touches a real device or external
     network. Accepted sockets are held open and silent so that ListIdentity /
     RegisterSession never receive a valid encapsulation reply.
     """
@@ -2330,7 +2330,7 @@ class TestEtherNetIPP1FalsePositiveRegression:
     CIP Vol.2 every EtherNet/IP device must answer on 44818.
 
     Safety: targets only a local in-process dummy TCP server bound to 127.0.0.1
-    and a closed local port — never a real device or external network.
+    and a closed local port - never a real device or external network.
     """
 
     def _read_result_payload(self, out_dir, result):

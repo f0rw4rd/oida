@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# release_check.sh — Local release quality gate for OIDA
+# release_check.sh - Local release quality gate for OIDA
 #
 # Usage:
 #   ./scripts/release_check.sh          # Quick release check (~2 min)
@@ -14,7 +14,7 @@
 #
 # Step 5 probes the container registry, so it needs Docker and network; without
 # either it reports SKIP rather than failing. It runs before the integration tests
-# deliberately — outdated mock images make step 10 refuse to run, because a pass
+# deliberately - outdated mock images make step 10 refuse to run, because a pass
 # against stale mocks would certify images this release doesn't ship.
 #
 # Exit codes: 0 = all gates passed, 1 = failure
@@ -83,23 +83,23 @@ step 2 "Pre-push quality gates (pre-commit)"
 # Exactly the hooks `git push` runs: vulture ratchet, structural clones,
 # low-assurance test detection, mypy. Without this a release only learns about
 # them at push time, with the tag already placed on a commit that can't ship.
-# Pre-push stage only — the pre-commit stage runs `ruff check --fix`, which
+# Pre-push stage only - the pre-commit stage runs `ruff check --fix`, which
 # would rewrite the tree mid-check; step 1 covers formatting read-only.
 if ! command -v pre-commit >/dev/null 2>&1; then
-    echo -e "${YELLOW}Skipped — pre-commit not installed (uv sync --extra dev)${RESET}"
+    echo -e "${YELLOW}Skipped - pre-commit not installed (uv sync --extra dev)${RESET}"
     record "Pre-push quality gates" "skip"
 elif pre-commit run --hook-stage pre-push --all-files; then
     echo -e "${GREEN}OK${RESET}"
     record "Pre-push quality gates" "pass"
 else
-    echo -e "${RED}Pre-push hooks failed — this is the same gate git push enforces${RESET}"
+    echo -e "${RED}Pre-push hooks failed - this is the same gate git push enforces${RESET}"
     record "Pre-push quality gates" "fail"
 fi
 
 # ── Step 3: Type gate (mypy_gate.py, blocking) ────────────────────────────
 
 step 3 "Type gate (mypy_gate.py, blocking)"
-# The pre-push mypy hook above is informational (exit 0 always) — it never
+# The pre-push mypy hook above is informational (exit 0 always) - it never
 # catches anything. scripts/quality/mypy_gate.py is the real, baseline-diffed
 # gate CI runs and blocks on. CI syncs `--extra dev --frozen` only (no protocol
 # extras), so run it against an isolated venv with the same extras rather than
@@ -111,7 +111,7 @@ if UV_PROJECT_ENVIRONMENT="$MYPY_GATE_VENV" uv sync --extra dev --frozen --quiet
     echo -e "${GREEN}OK${RESET}"
     record "Type gate" "pass"
 else
-    echo -e "${RED}mypy_gate.py failed — same gate CI blocks on${RESET}"
+    echo -e "${RED}mypy_gate.py failed - same gate CI blocks on${RESET}"
     record "Type gate" "fail"
 fi
 
@@ -135,8 +135,8 @@ step 5 "Mock images published (services.py stale)"
 # against mocks built from the committed source. If the registry is behind, a green
 # integration run is testing last month's mocks and proves nothing about this
 # release, so step 10 refuses to run rather than reporting a misleading pass.
-# Exit 1 = outdated (fail), 2 = could not verify — no Docker or an unreadable
-# registry — which is a skip, not a false failure.
+# Exit 1 = outdated (fail), 2 = could not verify - no Docker or an unreadable
+# registry - which is a skip, not a false failure.
 set +e
 python services.py stale
 STALE_RC=$?
@@ -147,11 +147,11 @@ case $STALE_RC in
         record "Mock images published" "pass"
         ;;
     2)
-        echo -e "${YELLOW}Skipped — could not verify (Docker or registry unreachable)${RESET}"
+        echo -e "${YELLOW}Skipped - could not verify (Docker or registry unreachable)${RESET}"
         record "Mock images published" "skip"
         ;;
     *)
-        echo -e "${RED}Mock images are outdated — run: python services.py push${RESET}"
+        echo -e "${RED}Mock images are outdated - run: python services.py push${RESET}"
         record "Mock images published" "fail"
         ;;
 esac
@@ -163,7 +163,7 @@ if python -m pytest tests/unit/ --collect-only -q --no-header; then
     echo -e "${GREEN}OK${RESET}"
     record "Test collection" "pass"
 else
-    echo -e "${RED}Test collection failed — import or syntax error in tests${RESET}"
+    echo -e "${RED}Test collection failed - import or syntax error in tests${RESET}"
     record "Test collection" "fail"
 fi
 
@@ -192,7 +192,7 @@ DIST_DIR=$(mktemp -d)
     if "${BUILD_CMD[@]}" >/dev/null 2>&1; then
     WHEEL=$(ls "$DIST_DIR"/*.whl 2>/dev/null | head -1)
     if [[ -n "$WHEEL" ]]; then
-        echo -e "${GREEN}OK${RESET} — $(basename "$WHEEL")"
+        echo -e "${GREEN}OK${RESET} - $(basename "$WHEEL")"
         record "Package build" "pass"
     else
         echo -e "${RED}No wheel produced${RESET}"
@@ -231,7 +231,7 @@ if [[ -n "${WHEEL:-}" ]]; then
         oida --version >/dev/null 2>&1   || OK=false
         oida modbus --help >/dev/null 2>&1 || OK=false
         if $OK; then
-            echo -e "${GREEN}OK${RESET} — wheel installs (${INSTALLER}); oida --version and oida modbus --help work"
+            echo -e "${GREEN}OK${RESET} - wheel installs (${INSTALLER}); oida --version and oida modbus --help work"
             record "Wheel install + CLI" "pass"
         else
             echo -e "${RED}CLI commands failed${RESET}"
@@ -258,7 +258,7 @@ INTEG_FLAKES=0
 if [[ "${STALE_RC:-0}" == "1" ]]; then
     # Refuse rather than mislead: the mocks in the registry are behind the committed
     # source (step 5), so a pass here would certify images this release doesn't ship.
-    echo -e "${RED}Skipped — mock images are outdated (step 5).${RESET}"
+    echo -e "${RED}Skipped - mock images are outdated (step 5).${RESET}"
     echo -e "${RED}Testing against them would certify stale mocks; run: python services.py push${RESET}"
     record "Integration tests" "fail"
     INTEG_STATUS=fail
@@ -269,7 +269,7 @@ elif $FULL; then
     if docker compose -f docker/mocks/compose.yml ps --status running 2>/dev/null | grep "mock" >/dev/null; then
         # Two passes. Pass 1 is the fast parallel lane; loadgroup pins each
         # shared-mock xdist_group to one worker. Pass 2 re-runs only the
-        # failures, serially — contention is gone, so a timing flake passes
+        # failures, serially - contention is gone, so a timing flake passes
         # while a real bug fails again. What needed pass 2 is reported, not
         # swallowed: that count is the flakiness signal now that CI no longer
         # runs this suite.
@@ -278,23 +278,23 @@ elif $FULL; then
             record "Integration tests" "pass"
             INTEG_STATUS=pass
         else
-            echo -e "${YELLOW}Parallel pass had failures — re-running just those, serially${RESET}"
+            echo -e "${YELLOW}Parallel pass had failures - re-running just those, serially${RESET}"
             RERUN_LOG=$(mktemp)
             if python -m pytest tests/integration/ --lf -v 2>&1 | tee "$RERUN_LOG"; then
                 INTEG_FLAKES=$(sed -n 's/.*rerun previous \([0-9]*\) failure.*/\1/p' "$RERUN_LOG" | tail -1)
                 INTEG_FLAKES=${INTEG_FLAKES:-0}
-                echo -e "${YELLOW}OK on serial re-run — $INTEG_FLAKES test(s) flaked under parallelism${RESET}"
+                echo -e "${YELLOW}OK on serial re-run - $INTEG_FLAKES test(s) flaked under parallelism${RESET}"
                 record "Integration tests ($INTEG_FLAKES flaked, green serially)" "pass"
                 INTEG_STATUS=flaky-pass
             else
-                echo -e "${RED}Integration tests failed twice — this is a bug, not a flake${RESET}"
+                echo -e "${RED}Integration tests failed twice - this is a bug, not a flake${RESET}"
                 record "Integration tests" "fail"
                 INTEG_STATUS=fail
             fi
             rm -f "$RERUN_LOG"
         fi
     else
-        echo -e "${YELLOW}Skipped — mock services not running (start with: just up)${RESET}"
+        echo -e "${YELLOW}Skipped - mock services not running (start with: just up)${RESET}"
         record "Integration tests" "skip"
     fi
 else
@@ -319,7 +319,7 @@ echo ""
 # so this run is the only record that it passed. Write it down, pinned to the
 # commit, and say so plainly when it did not run at all.
 if [[ "$INTEG_STATUS" == "skip" ]]; then
-    echo -e "${YELLOW}${BOLD}Integration tests did not run here — and CI does not run them either.${RESET}"
+    echo -e "${YELLOW}${BOLD}Integration tests did not run here - and CI does not run them either.${RESET}"
     echo -e "${YELLOW}Before tagging: python services.py up core && ./scripts/release_check.sh --full${RESET}"
     echo ""
 else

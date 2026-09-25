@@ -26,7 +26,7 @@ def _compat_log(message, level="info"):
 # --- Credential brute-force error classification -------------------------
 #
 # During a credential brute force we must distinguish an *authentication
-# rejection* (the server received the credential and said "no" — a real test)
+# rejection* (the server received the credential and said "no" - a real test)
 # from a *transport/connection failure* (the server was never reached, so the
 # credential was NOT actually tested). Counting the latter as "tested" makes a
 # tool report passwords as tried when the host had simply gone away.

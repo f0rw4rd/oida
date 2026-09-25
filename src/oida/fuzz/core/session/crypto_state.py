@@ -160,7 +160,7 @@ class CryptoStateManager:
         Returns:
             Generated nonce bytes
         """
-        # Check for fuzz override first — skip generation entirely so internal
+        # Check for fuzz override first - skip generation entirely so internal
         # NonceState.value stays at the real counter/value and INCREMENT doesn't drift.
         if name in self._fuzz_overrides:
             return self._fuzz_overrides[name]

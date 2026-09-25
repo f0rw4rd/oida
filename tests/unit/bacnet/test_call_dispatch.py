@@ -71,7 +71,7 @@ class TestSplitWriteSpec(unittest.TestCase):
         self.assertEqual(priority, 8)
 
     def test_typed_value_colon_is_not_priority(self):
-        # "real:1.0" must stay intact, not be split into value="real" priority=…
+        # "real:1.0" must stay intact, not be split into value="real" priority=...
         otype, inst, prop, value, priority = self.scanner._split_write_spec("AV:1:pv:real:1.0")
         self.assertEqual(value, "real:1.0")
         self.assertIsNone(priority)

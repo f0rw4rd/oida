@@ -102,7 +102,7 @@ def coap_ping(host: str, port: int, timeout: float = DEFAULT_TIMEOUT) -> bool:
         # Validate this is actually a CoAP reply to OUR ping, not arbitrary
         # UDP noise: version must be 1 (top 2 bits of byte 0), the message
         # ID must echo the one we sent (bytes 2-3), and the Type must be a
-        # reply type — ACK(2) or RST(3). A verbatim-echo UDP responder (or
+        # reply type - ACK(2) or RST(3). A verbatim-echo UDP responder (or
         # any reflector) returns our CON unchanged, passing version+MID
         # checks while still being Type=CON(0); a real CoAP endpoint never
         # answers a CON with a CON echoing the same MID.
@@ -466,10 +466,10 @@ async def try_dtls_psk(
         code_str = str(response.code)
 
         if code_str.startswith("2.") or code_str.startswith("4."):
-            # Got a real CoAP response — DTLS handshake succeeded
+            # Got a real CoAP response - DTLS handshake succeeded
             return True, ctx, code_str
 
-        # Unexpected response code — close and report
+        # Unexpected response code - close and report
         await ctx.shutdown()
         return False, None, f"unexpected response: {code_str}"
 

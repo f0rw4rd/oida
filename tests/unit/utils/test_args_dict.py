@@ -146,7 +146,7 @@ def test_fromkeys_normalizes():
 def test_known_keys_off_by_default_no_recording():
     d = ArgsDict({"unit-id": 1})
     assert d.get("totally-made-up") is None
-    assert d.undeclared_reads == set()  # no known_keys → nothing tracked
+    assert d.undeclared_reads == set()  # no known_keys -> nothing tracked
 
 
 def test_declared_but_absent_optional_is_not_a_typo():
@@ -171,7 +171,7 @@ def test_strict_raises_on_undeclared_read():
 def test_strict_does_not_raise_for_declared_or_present_keys():
     d = ArgsDict({"unit-id": 1}, known_keys={"unit_id", "timeout"}, strict=True)
     assert d.get("unit-id") == 1  # present
-    assert d.get("timeout") is None  # declared, absent — fine
+    assert d.get("timeout") is None  # declared, absent - fine
 
 
 def test_copy_preserves_known_keys_and_strict():

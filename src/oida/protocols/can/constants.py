@@ -884,7 +884,7 @@ CANOPEN_OD_RPDO1_MAPPING = 0x1600
 CANOPEN_OD_TPDO1_COMM = 0x1800
 CANOPEN_OD_TPDO1_MAPPING = 0x1A00
 
-# Standard CANopen PDO entries — shared with EtherCAT CoE (ethercat/coe.py)
+# Standard CANopen PDO entries - shared with EtherCAT CoE (ethercat/coe.py)
 CANOPEN_PDO_ENTRIES: Dict[int, str] = {
     0x1400: "RPDO1 Communication Parameter",
     0x1401: "RPDO2 Communication Parameter",

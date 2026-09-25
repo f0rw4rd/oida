@@ -36,7 +36,7 @@ class EnumerationMixin(_ScannerBase):
         if not self.require_confirm(
             "--aet-brute",
             detail="--aet-brute / --common-ae runs association brute-force "
-            "(trips PACS rate-limit / SIEM) — requires --confirm",
+            "(trips PACS rate-limit / SIEM) - requires --confirm",
         ):
             return
         aet_brute_arg = getattr(self.args, "aet_brute", None)
@@ -371,7 +371,7 @@ class EnumerationMixin(_ScannerBase):
 
             # First try a flat SERIES-level query with an empty StudyInstanceUID.
             # Lenient SCPs accept this; strict Study-Root SCPs require the unique
-            # StudyInstanceUID key to descend and return nothing — handled by the
+            # StudyInstanceUID key to descend and return nothing - handled by the
             # study-by-study fallback below.
             responses = self.assoc.send_c_find(
                 _build_series_ds(""),

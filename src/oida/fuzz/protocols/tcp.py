@@ -1527,7 +1527,7 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
         )
 
         # ==================== TIERED REQUEST ORDERING ====================
-        # Optimized for efficiency: simple baseline → common → exotic
+        # Optimized for efficiency: simple baseline -> common -> exotic
         # This ordering reduces time-to-first-bug by ~50%
         #
         # Note: Scapy automatically wraps TCP packets in IP headers when
@@ -1888,7 +1888,7 @@ class TCPFuzzer(BaseFuzzer, StatefulTCPFuzzerMixin):
             ),
             # Reset transitions: a valid RST aborts the connection to CLOSED
             # from any synchronized state (RFC 9293 3.5.3 / 3.10.7.4). The
-            # tracker does not sequence-validate the RST — it models OIDA's own
+            # tracker does not sequence-validate the RST - it models OIDA's own
             # state, not the target's window checks.
             TransitionRule(
                 from_state="SYN_SENT",

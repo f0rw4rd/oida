@@ -92,7 +92,7 @@ def run_integration_tests(args):
     if not args.no_container:
         print("Setting up test environment...")
         if not setup_test_environment():
-            print("❌ Failed to set up test environment")
+            print("[FAIL] Failed to set up test environment")
             return False
 
     try:
@@ -106,10 +106,10 @@ def run_integration_tests(args):
             return run_full_test_suite(args)
 
     except KeyboardInterrupt:
-        print("\n⚠️  Tests interrupted by user")
+        print("\nWARNING: Tests interrupted by user")
         return False
     except Exception as e:
-        print(f"❌ Test execution failed: {e}")
+        print(f"[FAIL] Test execution failed: {e}")
         return False
 
 
@@ -122,7 +122,7 @@ def setup_test_environment():
 
         # Check if Docker is available
         client.ping()
-        print("✅ Docker is available")
+        print("[OK] Docker is available")
 
         # Check if mock services container exists
         try:
@@ -131,20 +131,20 @@ def setup_test_environment():
                 print("Starting existing container...")
                 container.start()
             else:
-                print("✅ Mock services container already running")
+                print("[OK] Mock services container already running")
         except docker.errors.NotFound:
-            print("✅ Will create new container during tests")
+            print("[OK] Will create new container during tests")
 
         return True
 
     except Exception as e:
-        print(f"❌ Docker setup failed: {e}")
+        print(f"[FAIL] Docker setup failed: {e}")
         return False
 
 
 def run_quick_tests(args):
     """Run quick connectivity tests"""
-    print("\n🚀 Running quick connectivity tests...")
+    print("\nRunning quick connectivity tests...")
 
     import unittest
 
@@ -157,14 +157,14 @@ def run_quick_tests(args):
     result = runner.run(suite)
 
     success = result.wasSuccessful()
-    print(f"\n✅ Quick tests {'PASSED' if success else 'FAILED'}")
+    print(f"\n[OK] Quick tests {'PASSED' if success else 'FAILED'}")
 
     return success
 
 
 def run_concurrent_tests(args):
     """Run concurrent connection tests"""
-    print("\n🚀 Running concurrent connection tests...")
+    print("\nRunning concurrent connection tests...")
 
     import unittest
 
@@ -176,7 +176,7 @@ def run_concurrent_tests(args):
     result = runner.run(suite)
 
     success = result.wasSuccessful()
-    print(f"\n✅ Concurrent tests {'PASSED' if success else 'FAILED'}")
+    print(f"\n[OK] Concurrent tests {'PASSED' if success else 'FAILED'}")
 
     return success
 
@@ -184,7 +184,7 @@ def run_concurrent_tests(args):
 def run_single_protocol_test(args):
     """Run tests for a single protocol"""
     protocol = args.protocol
-    print(f"\n🚀 Running {protocol.upper()} protocol tests...")
+    print(f"\nRunning {protocol.upper()} protocol tests...")
 
     import unittest
 
@@ -199,7 +199,7 @@ def run_single_protocol_test(args):
     }
 
     if protocol not in test_methods:
-        print(f"❌ Unknown protocol: {protocol}")
+        print(f"[FAIL] Unknown protocol: {protocol}")
         return False
 
     suite = unittest.TestSuite()
@@ -210,31 +210,31 @@ def run_single_protocol_test(args):
     result = runner.run(suite)
 
     success = result.wasSuccessful()
-    print(f"\n✅ {protocol.upper()} tests {'PASSED' if success else 'FAILED'}")
+    print(f"\n[OK] {protocol.upper()} tests {'PASSED' if success else 'FAILED'}")
 
     return success
 
 
 def run_full_test_suite(args):
     """Run the complete test suite"""
-    print("\n🚀 Running full integration test suite...")
+    print("\nRunning full integration test suite...")
 
     runner = TestRunner()
     success = runner.run_tests(verbosity=args.verbose)
 
-    print(f"\n✅ Full test suite {'PASSED' if success else 'FAILED'}")
+    print(f"\n[OK] Full test suite {'PASSED' if success else 'FAILED'}")
 
     return success
 
 
 def generate_reports_only(output_dir):
     """Generate reports from existing test results"""
-    print("📊 Generating test reports...")
+    print("Generating test reports...")
 
     results_file = os.path.join(output_dir, "test_results.json")
 
     if not os.path.exists(results_file):
-        print("❌ No test results found. Run tests first.")
+        print("[FAIL] No test results found. Run tests first.")
         return
 
     try:
@@ -247,10 +247,10 @@ def generate_reports_only(output_dir):
         # Generate markdown report
         generate_markdown_report(results, output_dir)
 
-        print("✅ Reports generated successfully")
+        print("[OK] Reports generated successfully")
 
     except Exception as e:
-        print(f"❌ Failed to generate reports: {e}")
+        print(f"[FAIL] Failed to generate reports: {e}")
 
 
 def generate_html_report(results, output_dir):
@@ -340,7 +340,7 @@ def generate_html_report(results, output_dir):
     with open(html_file, "w") as f:
         f.write(html_content)
 
-    print(f"📄 HTML report: {html_file}")
+    print(f"HTML report: {html_file}")
 
 
 def generate_markdown_report(results, output_dir):
@@ -379,7 +379,7 @@ def generate_markdown_report(results, output_dir):
     with open(md_file, "w") as f:
         f.write(md_content)
 
-    print(f"📄 Markdown report: {md_file}")
+    print(f"Markdown report: {md_file}")
 
 
 if __name__ == "__main__":

@@ -1,4 +1,4 @@
-"""Unit tests for services.py — OIDA service manager.
+"""Unit tests for services.py - OIDA service manager.
 
 Tests cover:
 - Argparse subcommand parsing
@@ -265,7 +265,7 @@ class TestPushLatestDrift:
     """push must repair a stale `:latest`, not just skip the image as present.
 
     Presence of the content tag is what makes push skip an image, and that says
-    nothing about where `:latest` resolves — so a drifted tag would otherwise be
+    nothing about where `:latest` resolves - so a drifted tag would otherwise be
     reported by `stale` forever and never fixed by `push`.
     """
 
@@ -321,7 +321,7 @@ class TestPushLatestDrift:
         assert rc == 0
         retags = self._retags(calls)
         assert len(retags) == 1
-        # Re-tag in place — copying the published manifest, never a rebuild.
+        # Re-tag in place - copying the published manifest, never a rebuild.
         assert retags[0] == [
             "docker",
             "buildx",
@@ -420,7 +420,7 @@ class TestRegistryProbe:
         assert len(calls) == 2
 
     def test_absent_is_not_retried(self, monkeypatch):
-        """'manifest unknown' is definitive — no point paying for a second probe."""
+        """'manifest unknown' is definitive - no point paying for a second probe."""
         monkeypatch.setattr(dev.time, "sleep", lambda s: None)
         calls = []
 
@@ -656,7 +656,7 @@ class TestStaleCommand:
         assert payload["images"][0]["status"] == dev.STALE_MISSING
 
     def test_latest_drift_blocks(self, monkeypatch, capsys):
-        """Hash tag exists but :latest points elsewhere — compose pins :latest."""
+        """Hash tag exists but :latest points elsewhere - compose pins :latest."""
         self._setup(
             monkeypatch,
             ["m"],
@@ -695,7 +695,7 @@ class TestStaleCommand:
         """A `:latest`-only publisher leaves nothing to compare the source against.
 
         The registry says these repos were never content-tagged, so the missing hash
-        tag is not evidence of staleness — report it, don't abort the release.
+        tag is not evidence of staleness - report it, don't abort the release.
         """
         self._setup(
             monkeypatch,
@@ -712,7 +712,7 @@ class TestStaleCommand:
     def test_hash_tagged_repo_missing_current_tag_blocks(self, monkeypatch, capsys):
         """The case the gate exists for: `push` tagged this repo once, then it fell behind.
 
-        The old verdict-only heuristic missed it — an image whose *current* hash tag is
+        The old verdict-only heuristic missed it - an image whose *current* hash tag is
         absent contributes no proof that tagging is in use, so a lone straggler looked
         exactly like a repo that was never tagged. Reading the tag list settles it.
         """
@@ -759,7 +759,7 @@ class TestStaleCommand:
         assert payload["outdated"] == 1
 
     def test_local_stale_does_not_block(self, monkeypatch, capsys):
-        """A stale local pull is a `docker pull` away — not a release problem."""
+        """A stale local pull is a `docker pull` away - not a release problem."""
         self._setup(
             monkeypatch,
             ["m"],
@@ -809,7 +809,7 @@ class TestStaleCommand:
         """-v has to justify the verdict, not just widen the list.
 
         Which tags the registry actually serves, and which committed directory produced
-        the content tag they were compared against — otherwise a reader has to take the
+        the content tag they were compared against - otherwise a reader has to take the
         classification on faith.
         """
         self._setup(
@@ -826,7 +826,7 @@ class TestStaleCommand:
     def test_unreadable_tag_list_renders_without_crashing(self, monkeypatch, capsys):
         self._setup(monkeypatch, ["lagging"], probe=self._latest_only, tags=lambda repo: None)
         dev.cmd_stale(SimpleNamespace(json=False, verbose=True, local=False))
-        assert "registry tags: —" in capsys.readouterr().out
+        assert "registry tags: (none)" in capsys.readouterr().out
 
     def test_worst_status_sorts_first(self, monkeypatch, capsys):
         def probe(ref):
@@ -1067,7 +1067,7 @@ class TestWaitHealthy:
                     args=cmd, returncode=0, stdout="svc-no-health\n", stderr=""
                 )
             if "inspect" in cmd:
-                # Returns "none" — no healthcheck defined
+                # Returns "none" - no healthcheck defined
                 return subprocess.CompletedProcess(
                     args=cmd, returncode=0, stdout="none\n", stderr=""
                 )
@@ -1689,7 +1689,7 @@ class TestUpProto:
 
     def test_up_proto_group_wins_over_service_name(self, mock_run):
         """When an arg matches a group, the group is used even if it also happens
-        to be a service key — group resolution takes precedence."""
+        to be a service key - group resolution takes precedence."""
         config = {
             "services": {
                 # A service literally named "hl7" that is itself in group "hl7",

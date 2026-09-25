@@ -27,10 +27,10 @@ def _service_annotation(service_name: str) -> str:
     token = spec.aliases[0] if spec.aliases else spec.name
     risk = {
         "read": "read",
-        "write": "write — needs --confirm",
-        "control": "CONTROL/disruptive — needs --confirm",
+        "write": "write - needs --confirm",
+        "control": "CONTROL/disruptive - needs --confirm",
     }.get(spec.risk, spec.risk)
-    return f"  → --call {token}  ({risk})"
+    return f"  -> --call {token}  ({risk})"
 
 
 class ObjectsMixin:
@@ -249,7 +249,7 @@ class ObjectsMixin:
                                 service_names = SERVICE_NAMES
                                 # BACnet bitString: data[0] is the unused-bits count,
                                 # never content. data[1:] is already b"" for a
-                                # content-less payload — decoding data itself would
+                                # content-less payload - decoding data itself would
                                 # read the count byte as service bits.
                                 for i, byte in enumerate(data[1:]):
                                     for bit in range(8):
@@ -509,7 +509,7 @@ class ObjectsMixin:
             self.objects[device_id][type_name] = instances
 
         # ===================================================================
-        # Step 3: Walk each object — read key properties
+        # Step 3: Walk each object - read key properties
         # ===================================================================
         self.logger.display("\n  Walking object properties...")
 
@@ -589,7 +589,7 @@ class ObjectsMixin:
                             )
                         )
 
-            # Handle structuredView objects — read subordinateList
+            # Handle structuredView objects - read subordinateList
             if obj_type == 29:  # structuredView
                 resp = await _read_prop(obj_id, "subordinateList")
                 if resp:

@@ -2209,7 +2209,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
 
         Uses --scan-mode quick because RTU framing register scans are slow
         (CRC + inter-frame timing). Discovery/identification works reliably.
-        Asserts the RTU-specific Server ID is returned — this data is only
+        Asserts the RTU-specific Server ID is returned - this data is only
         readable with correct RTU framing (TCP framing yields no Server ID).
         """
         result = cli_runner.run(
@@ -3539,7 +3539,7 @@ def _dummy_tcp_server():
 
     Safety: binds only to 127.0.0.1 on an ephemeral port. It exists purely to
     provide a "TCP connects but is not a Modbus device" target for the
-    connection-1 false-positive regression below — it never touches a real
+    connection-1 false-positive regression below - it never touches a real
     device or external network. Accepted sockets are held open and silent so
     that Modbus reads time out rather than getting a valid PDU.
     """
@@ -3590,7 +3590,7 @@ class TestModbusP1FalsePositiveRegression:
     exception code in 1..11).
 
     Safety: these tests target only a local in-process dummy TCP server bound to
-    127.0.0.1 and a closed local port — never a real device or external network.
+    127.0.0.1 and a closed local port - never a real device or external network.
     """
 
     def _read_result_payload(self, out_dir, result):

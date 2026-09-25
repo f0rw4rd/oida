@@ -833,7 +833,7 @@ class SMTPFuzzer(BaseFuzzer):
         )
 
         # ==================== TIERED REQUEST ORDERING ====================
-        # Optimized ordering: baseline → simple → complex
+        # Optimized ordering: baseline -> simple -> complex
 
         # TIER 1: BASELINE - Verify SMTP service responds
         if self.is_request_enabled("SMTP_Baseline"):
@@ -1124,7 +1124,7 @@ class SMTPFuzzer(BaseFuzzer):
         Create simple SMTP auth state machine without TLS
 
         State Machine V2: Pass context for response data propagation.
-        Auth is deferred — transition happens during fuzz_all() when the
+        Auth is deferred - transition happens during fuzz_all() when the
         connection is open, not during session initialization.
         """
         from oida.fuzz.core.session.state_machine import create_auth_state_machine

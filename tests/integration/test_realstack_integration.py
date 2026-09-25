@@ -61,7 +61,7 @@ def _require_udp(port: int, name: str) -> None:
         try:
             s.recv(16)
         except socket.timeout:
-            pass  # no reply expected — reachability is what we gate on
+            pass  # no reply expected - reachability is what we gate on
     except ConnectionRefusedError:
         require_service(
             f"{name} real-stack mock not reachable on {MOCK_HOST}:{port}/udp (python services.py up)"
@@ -87,7 +87,7 @@ class TestAstmRealStack:
         text = _text(result)
         assert "enq/ack handshake successful" in text, f"no ASTM handshake: {text[:400]}"
         # The genuine python-astm framing must ACCEPT our records (the bug-class a
-        # sim can't exercise — real strict checksum/framing validation).
+        # sim can't exercise - real strict checksum/framing validation).
         assert "header record accepted" in text, f"real LIS rejected header: {text[:400]}"
 
     def test_hematology_endpoint_connects(self, cli_runner):
@@ -140,7 +140,7 @@ class TestFhirRealStack:
         result = cli_runner.run("fhir", f"http://{MOCK_HOST}:8091/fhir", timeout=40)
         text = _text(result)
         assert "hapi fhir" in text, f"not a HAPI server: {text[:400]}"
-        # R5 advertises a 5.x fhirVersion — must differ from the R4 config.
+        # R5 advertises a 5.x fhirVersion - must differ from the R4 config.
         assert "4.0.1" not in text, f"R5 endpoint reported R4 version: {text[:400]}"
 
 
@@ -169,7 +169,7 @@ class TestBacnetRealStack:
         assert "bacnet stack at sourceforge" in text, f"vendor not read: {text[:500]}"
 
     def test_vav_distinct_device(self, cli_runner):
-        """A second profile (instance 33003 / VAV-Box-12) — confirms distinct configs."""
+        """A second profile (instance 33003 / VAV-Box-12) - confirms distinct configs."""
         _require_udp(47822, "bacnet-realstack-vav")
         result = cli_runner.run(
             "bacnet", MOCK_HOST, "--port", "47822", "--device-id", "33003", timeout=30
@@ -217,7 +217,7 @@ class TestBacnetRealStack:
         )
         text = _text(result)
         assert "errno 99" not in text, f"broadcast-bind bug regressed: {text[:500]}"
-        # config.ini content seeded by entrypoint.sh — only a working
+        # config.ini content seeded by entrypoint.sh - only a working
         # AtomicReadFile against the real file produces these bytes.
         assert "reinit_password_set" in text, (
             f"file content not read via AtomicReadFile: {text[:800]}"
@@ -284,7 +284,7 @@ class TestBacnetRealStack:
         assert "writefile" in text and "reinit" in text, f"catalog incomplete: {text[:400]}"
 
     # One entry per callable service. Each must DISPATCH and produce a *handled*
-    # result against the real stack — a device ack / value / Reject / Error is
+    # result against the real stack - a device ack / value / Reject / Error is
     # all fine; a CLI-side failure (arg-parse bug, missing handler, unhandled
     # exception in the request builder) is not. Targets are chosen to be
     # non-destructive to other tests: dcc uses `enable` (never mutes the device),
@@ -341,9 +341,9 @@ class TestBacnetRealStack:
         result = cli_runner.run(*args, timeout=40)
         text = _text(result)
         assert "[call]" in text, f"--call {token} never dispatched: {text[:600]}"
-        # OIDA must exit cleanly (0 ok / 1 finding) — not crash.
+        # OIDA must exit cleanly (0 ok / 1 finding) - not crash.
         assert result.returncode in (0, 1), f"--call {token} crashed (rc={result.returncode})"
-        # CLI-side bug markers from our own dispatcher/builders — none may appear.
+        # CLI-side bug markers from our own dispatcher/builders - none may appear.
         # (A device Reject/Error, or a bacpypes3-internal logged traceback while
         # decoding an odd device response, is NOT our bug and is allowed.)
         for bug in ("bad arguments for", "no handler implemented", "failed:"):
@@ -404,7 +404,7 @@ class TestBacnetRealStack:
         (run-all) cracks BOTH and reports two *different* credentials.
 
         The building profile sets DCC='filister' (stock default) and
-        reinit='OIDA-Reinit' (changed) — proving the two services are gated
+        reinit='OIDA-Reinit' (changed) - proving the two services are gated
         independently."""
         _require_udp(47821, "bacnet-realstack-building")
         result = cli_runner.run(

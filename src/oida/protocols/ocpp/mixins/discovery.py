@@ -1006,7 +1006,7 @@ class DiscoveryMixin:
         """
         ws_brute = getattr(self.args, "ws_brute", None)
 
-        # --ws-brute /some/file.txt  →  ws_brute == "/some/file.txt"
+        # --ws-brute /some/file.txt  ->  ws_brute == "/some/file.txt"
         if isinstance(ws_brute, str):
             self.logger.debug(f"Loading WS paths from user file: {ws_brute}")
             return self._read_wordlist_file(ws_brute)
@@ -1204,7 +1204,7 @@ class DiscoveryMixin:
         open_count = found_count - authed
 
         self.logger.display(
-            f"  Result: {found_count} endpoint(s) — {open_count} open, {authed} auth-required"
+            f"  Result: {found_count} endpoint(s) - {open_count} open, {authed} auth-required"
         )
 
         if found_endpoints:

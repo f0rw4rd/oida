@@ -1,5 +1,5 @@
 """
-Lightweight fuzz protocol metadata — no fuzzer class imports.
+Lightweight fuzz protocol metadata - no fuzzer class imports.
 
 Import this instead of the full protocols package when you only need
 PROTOCOL_CATEGORIES or PROTOCOL_TO_CATEGORY (e.g. for `oida fuzz list`).

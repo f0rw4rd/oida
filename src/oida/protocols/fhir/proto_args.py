@@ -470,7 +470,7 @@ Examples:
     # ============================================================================
     add_dangerous_options(fhir_parser, include_fuzz=False)
 
-    # NOTE: --bulk-export / --bulk-export-type removed for 1.0 — the handler
+    # NOTE: --bulk-export / --bulk-export-type removed for 1.0 - the handler
     # was a placeholder that printed "not implemented" and exited. Use the
     # FHIR $export operation directly via your HTTP client until a real
     # bulk-export implementation lands.

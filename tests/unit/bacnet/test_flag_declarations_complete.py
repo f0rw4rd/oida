@@ -77,7 +77,7 @@ class TestEveryConsumedFlagIsDeclared(unittest.TestCase):
         self.assertFalse(
             missing,
             "Bacnet mixins read these dests but proto_args doesn't declare "
-            f"them — they will silently default to None:\n  {sorted(missing)}",
+            f"them - they will silently default to None:\n  {sorted(missing)}",
         )
 
 

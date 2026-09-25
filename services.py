@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""OIDA service manager — manages mock ICS services for testing and development.
+"""OIDA service manager - manages mock ICS services for testing and development.
 
 Usage:
     python services.py up [core|cve|all|<group>|<service>]  # <group> starts core members (add --with-cve for CVE targets)
@@ -57,7 +57,7 @@ WAIT_HEALTHY_INTERVAL = 3
 PORT_CHECK_TIMEOUT = 2
 STARTUP_DELAY = 3
 
-# ANSI colours — disabled when piped or NO_COLOR is set (#8)
+# ANSI colours - disabled when piped or NO_COLOR is set (#8)
 BOLD = "\033[1m"
 DIM = "\033[2m"
 CYAN = "\033[36m"
@@ -235,7 +235,7 @@ def _content_tag(spec: dict) -> str:
     dockerfile name + build args.
 
     NB: an uncommitted working-tree change to a tracked file does NOT move the
-    tag, so ``push`` treats the image as unchanged and skips it — commit the
+    tag, so ``push`` treats the image as unchanged and skips it - commit the
     change first (see ``_context_is_dirty``, which warns about exactly this).
     Falls back to an on-disk digest only when the context isn't tracked in HEAD
     at all (a brand-new, never-committed directory).
@@ -277,7 +277,7 @@ def _dirty_contexts(contexts: list[str]) -> set[str]:
 
     One ``git status`` over the repo, matched by path prefix, instead of ~120
     per-context probes. Same semantics as ``_context_is_dirty`` (tracked files
-    only — untracked ones can't move a HEAD-based tag until committed).
+    only - untracked ones can't move a HEAD-based tag until committed).
     """
     res = _run(["git", "status", "--porcelain", "-uno"], check=False, capture=True)
     if res.returncode != 0:
@@ -306,19 +306,19 @@ PROBE_DENIED = "denied"
 def _registry_probe(ref: str) -> str:
     """Tri-state existence check for *ref* (``repo:tag``): present/absent/denied.
 
-    Uses ``docker manifest inspect`` — the reliable probe (``buildx imagetools
+    Uses ``docker manifest inspect`` - the reliable probe (``buildx imagetools
     inspect`` was observed to false-negative under registry load).
 
     The three states matter because a failed probe is NOT proof of absence.
     Registries answer an unreadable repository and a nonexistent one identically:
     ghcr returns 403 ``DENIED`` both for a private repo we aren't logged in to and
     for a name that was never pushed, so ``denied`` means "cannot tell". Only
-    ``manifest unknown`` — the repo is readable, that tag isn't there — is
+    ``manifest unknown`` - the repo is readable, that tag isn't there - is
     trustworthy evidence of absence.
     """
     # One retry on the ambiguous verdict: a wide concurrent sweep gets throttled,
     # and a throttled reply is indistinguishable from a permission denial. Observed
-    # live — an image that answers 200 on its own probed "denied" under 48-way
+    # live - an image that answers 200 on its own probed "denied" under 48-way
     # concurrency. Present/absent are definitive, so only `denied` is worth re-asking.
     for attempt in range(2):
         res = _run(["docker", "manifest", "inspect", ref], check=False, capture=True)
@@ -345,13 +345,13 @@ def _registry_digest(ref: str) -> str | None:
     """Canonical content digest of *ref* in the registry, or None on failure.
 
     ``imagetools inspect --raw`` emits the registry's exact manifest bytes, so
-    hashing them reproduces the digest the registry itself serves — verified equal
+    hashing them reproduces the digest the registry itself serves - verified equal
     to ghcr's ``Docker-Content-Digest`` header. That single value is comparable
     both between registry tags and against a pulled image's ``RepoDigests``, for a
     single-platform manifest and for the multi-platform index buildx actually
     pushes alike.
 
-    None means "could not read", NOT "absent" — establish presence with
+    None means "could not read", NOT "absent" - establish presence with
     ``_registry_probe`` first so a transient error is never read as unpublished.
     """
     # Bytes, not text: the digest must cover the registry's exact bytes, and
@@ -369,7 +369,7 @@ def _registry_digest(ref: str) -> str | None:
 def _local_ident(ref: str) -> str | None:
     """Digest of the locally-present image *ref*, or None if it isn't pulled.
 
-    Reads ``RepoDigests``, which records the digest the image was pulled by — the
+    Reads ``RepoDigests``, which records the digest the image was pulled by - the
     same value ``_registry_digest`` computes. Locally-*built* images have no
     RepoDigest at all (they were never pulled) and return None, indistinguishable
     from "not present", which is why the local check reports UNKNOWN rather than
@@ -425,14 +425,14 @@ def _bearer_token(challenge: str) -> str | None:
 def _registry_tags(repo: str) -> tuple[str, ...] | None:
     """Every tag published for image repo *repo* (``host/path``), or None if unknown.
 
-    Speaks the registry v2 API directly — ``GET /v2/<name>/tags/list`` — because the
+    Speaks the registry v2 API directly - ``GET /v2/<name>/tags/list`` - because the
     docker CLI has no tag-listing command, and the answer is what distinguishes "this
     image is behind" from "this image was never content-tagged at all". A repo holding
     any tag besides ``latest`` is proof that ``push`` published it, so a *missing*
     content tag there means the registry is genuinely behind the source; a repo with
     only ``latest`` proves the opposite and must not fail a release.
 
-    None means "could not ask" — a private repo, a registry with no tag catalogue, a
+    None means "could not ask" - a private repo, a registry with no tag catalogue, a
     network error. It is never evidence that a repo has no tags, so callers must treat
     it as unknown and fall back rather than reading it as absence.
     """
@@ -497,7 +497,7 @@ def check_port(port: int, label: str, *, udp: bool = False, host: str | None = N
                 try:
                     sock.recvfrom(1024)
                 except TimeoutError:
-                    # No rejection — port is likely open
+                    # No rejection - port is likely open
                     pass
             print(f"  {GREEN}[OK]{RST} {label} (UDP:{port})")
             return True
@@ -634,7 +634,7 @@ def _clear_conflicting_containers(config: dict, services: set[str] | None = None
     """Force-remove containers that would abort ``up`` with a name conflict.
 
     Mock services pin a fixed ``container_name`` (e.g. ``s7comm-snap7-server``).
-    That name is global to the Docker daemon — it is *not* scoped to the compose
+    That name is global to the Docker daemon - it is *not* scoped to the compose
     project. The pytest harness brings the same stack up under the ``oida-test``
     project while ``services.py`` uses ``mocks``; a stale container left behind by
     the other project (or a stray ``docker run``) owns the name and makes the
@@ -687,14 +687,14 @@ def _pull(
     Buildable services carry an ``image:`` of ``$OIDA_REGISTRY/oida-mock-*``,
     so ``pull`` grabs the published image when available. ``OIDA_REGISTRY`` is
     required (compose fails hard if unset); set it in a gitignored
-    ``docker/mocks/.env`` — see ``docker/mocks/.env.example``. Failures (offline,
-    image not yet published, third-party images) are expected — the subsequent
+    ``docker/mocks/.env`` - see ``docker/mocks/.env.example``. Failures (offline,
+    image not yet published, third-party images) are expected - the subsequent
     ``up`` builds whatever is still missing locally.
 
     Drift guard: image tags are the mutable ``:latest``, so a plain pull would
     overwrite a locally-built image with the published one. When a buildable
     mock's source has uncommitted git changes, we therefore exclude it from the
-    pull and rebuild it locally instead — so editing a mock and re-running
+    pull and rebuild it locally instead - so editing a mock and re-running
     ``up`` can never silently run the stale published image. (See the
     ads-twincat dynamic-NetId work for the bug this prevents.)
 
@@ -801,7 +801,7 @@ def cmd_up(args: argparse.Namespace) -> int:
         return 0 if ok else 1
 
     else:
-        # Treat as protocol group name — delegate to the data-driven group path
+        # Treat as protocol group name - delegate to the data-driven group path
         return _up_proto_impl(stack, quiet_pull=args.quiet_pull, with_cve=args.with_cve)
 
 
@@ -828,7 +828,7 @@ def cmd_status(args: argparse.Namespace) -> int:
 
     Groups containers by their ``oida.group`` label and prints per-group
     healthy/starting/issue counts, then lists every container that is
-    unhealthy or stopped so problems stand out — instead of dumping the raw
+    unhealthy or stopped so problems stand out - instead of dumping the raw
     wide ``docker compose ps`` table.
 
     To drill in: ``status <filter>`` narrows to containers whose name or group
@@ -981,13 +981,13 @@ def cmd_push(args: argparse.Namespace) -> int:
     Each image is tagged with a content hash of its build definition (see
     ``_content_tag``) plus a floating ``:latest``. Before building, push checks
     whether ``<image>:<hash>`` already exists in the registry and skips it if so
-    — so re-running with no source changes does nothing, and only edited mocks
+    - so re-running with no source changes does nothing, and only edited mocks
     rebuild. Services sharing a build context collapse to one image (built once).
     Pass ``--force`` to rebuild + re-push everything regardless of presence.
 
     Two warts are handled so it stays one command:
     - Targets whose build context is missing on disk (e.g. the never-committed
-      ``services/memcached/cve``) are skipped — a raw ``bake --push`` aborts the
+      ``services/memcached/cve``) are skipped - a raw ``bake --push`` aborts the
       whole graph on the first missing context.
     - Work is split into small sequential batches so buildkit isn't swamped by
       100+ concurrent compiles + remote pushes (which drops jobs and aborts).
@@ -1009,7 +1009,7 @@ def cmd_push(args: argparse.Namespace) -> int:
 
     # Bake targets carry the build defs (context/dockerfile/args). Group them by
     # image base and keep one representative per base (shared-context services
-    # build the same image — that's the de-dup).
+    # build the same image - that's the de-dup).
     bake_files = ["-f", COMPOSE_CORE, "-f", COMPOSE_CVE]
     res = _run(["docker", "buildx", "bake", *bake_files, "--print"], check=False, capture=True)
     if res.returncode != 0:
@@ -1060,8 +1060,8 @@ def cmd_push(args: argparse.Namespace) -> int:
 
     # A published content tag says nothing about where `:latest` points, and `:latest`
     # is what `up`/`pull` actually resolve. An image can be present and still serve an
-    # older `:latest` — a `--force` push of an earlier state, or a bake that retagged
-    # it — and because presence alone skips it, nothing here would ever repair it.
+    # older `:latest` - a `--force` push of an earlier state, or a bake that retagged
+    # it - and because presence alone skips it, nothing here would ever repair it.
     # `stale` reports that as LATEST-DRIFT; find it and fix it rather than only naming
     # it. (Under `--force` everything is rebuilt and both tags re-pushed, so the check
     # is pointless there.)
@@ -1134,7 +1134,7 @@ def cmd_push(args: argparse.Namespace) -> int:
         if drifted:
             print(f"{GREEN}[OK]{RST} Re-pointed {len(drifted)} `:latest` tag(s); nothing to build.")
         else:
-            print(f"{GREEN}[OK]{RST} Registry already up to date — nothing to build.")
+            print(f"{GREEN}[OK]{RST} Registry already up to date - nothing to build.")
         return 0
 
     names = sorted(to_build)
@@ -1213,7 +1213,7 @@ STALE_PROBE_ERROR = "PROBE-ERROR"
 STALE_LOCAL = "LOCAL-STALE"
 STALE_UNKNOWN = "LOCAL-UNKNOWN"
 STALE_UNTAGGED = "NO-HASH-TAGS"
-# Verdicts meaning "the registry does not serve the committed source" — these make
+# Verdicts meaning "the registry does not serve the committed source" - these make
 # `stale` exit non-zero and abort a release. UNPUBLISHED is appended conditionally
 # in `cmd_stale`: it only blocks where content-hash tags are actually in use, so a
 # publisher that pushes bare `:latest` can't wedge the gate permanently red.
@@ -1230,14 +1230,14 @@ _STALE_ORDER = (
     STALE_OK,
 )
 _STALE_HINT = {
-    STALE_MISSING: "never published — python services.py push",
+    STALE_MISSING: "never published - python services.py push",
     STALE_UNCOMMITTED: "commit the context, then: python services.py push",
     STALE_UNPUBLISHED: "python services.py push",
     STALE_DRIFT: "python services.py push --force",
-    STALE_PROBE_ERROR: "registry unreadable — check `docker login`, then retry",
+    STALE_PROBE_ERROR: "registry unreadable - check `docker login`, then retry",
     STALE_LOCAL: "docker pull <image>:latest (or: python services.py up)",
-    STALE_UNKNOWN: "built locally, never pulled — can't compare to the registry",
-    STALE_UNTAGGED: "only ever published as :latest — python services.py push",
+    STALE_UNKNOWN: "built locally, never pulled - can't compare to the registry",
+    STALE_UNTAGGED: "only ever published as :latest - python services.py push",
 }
 
 
@@ -1296,7 +1296,7 @@ def _stale_report(
             return STALE_UNKNOWN
         return STALE_OK if have == want else STALE_LOCAL
 
-    # Independent registry round-trips — threaded, as in `push` (a serial sweep of
+    # Independent registry round-trips - threaded, as in `push` (a serial sweep of
     # ~120 images costs minutes).
     verdicts: dict[str, str] = {}
     if probe:
@@ -1307,7 +1307,7 @@ def _stale_report(
     # means something: UNPUBLISHED/NO-HASH-TAGS already have it cached from `_classify`
     # (it is what told them apart), and `detail` wants it for the rest so a verdict can
     # be read back to the registry state that produced it. Repos that just proved
-    # unreadable are skipped — re-asking only fails again, one blocking call per image.
+    # unreadable are skipped - re-asking only fails again, one blocking call per image.
     detail_wanted = (STALE_OK, STALE_DRIFT, STALE_LOCAL, STALE_UNKNOWN)
     needs_tags = [
         b
@@ -1326,7 +1326,7 @@ def _stale_report(
         return None if found is None else any(t != "latest" for t in found)
 
     def _rel(path: str) -> str:
-        """Context shown relative to the repo — absolute if it points outside it."""
+        """Context shown relative to the repo - absolute if it points outside it."""
         try:
             return str(Path(path).relative_to(PROJECT_ROOT))
         except ValueError:
@@ -1359,32 +1359,32 @@ def cmd_stale(args: argparse.Namespace) -> int:
     image gets one verdict:
 
     - ``current``       ``<image>:<hash>`` is published and ``:latest`` points at it.
-    - ``MISSING``       no tag at all for this image — never published.
+    - ``MISSING``       no tag at all for this image - never published.
     - ``UNCOMMITTED``   the build context has uncommitted changes, so the
       HEAD-based content tag describes something other than the working tree and
       no image can match the source. Reported *instead of* ``current`` so an
       "up to date" summary never covers source that was never built.
     - ``UNPUBLISHED``   ``:latest`` exists and the repo *is* content-tagged, but not
-      with this source state's tag — the registry is genuinely behind the source.
+      with this source state's tag - the registry is genuinely behind the source.
     - ``NO-HASH-TAGS``  ``:latest`` exists and is the only tag the repo has ever
       held, so there is nothing to compare the source against. Reported, never
       blocking: absence of tagging is not evidence of staleness.
     - ``LATEST-DRIFT``  ``<image>:<hash>`` exists but ``:latest`` resolves
       elsewhere. Compose pins ``:latest``, so ``up`` would run the wrong image.
     - ``PROBE-ERROR``   the registry could not be read (commonly: private repo, no
-      ``docker login``). Never counted as outdated — "cannot verify" exits 2, so
+      ``docker login``). Never counted as outdated - "cannot verify" exits 2, so
       neither a flaky network nor a missing credential can fail a release.
     - ``LOCAL-STALE``   (``--local``) the image on this machine isn't the published
-      one. Not a release blocker — it's a ``docker pull`` away.
+      one. Not a release blocker - it's a ``docker pull`` away.
     - ``LOCAL-UNKNOWN`` (``--local``) the local image was built here, not pulled,
       so it has no RepoDigest to compare.
 
     The UNPUBLISHED/NO-HASH-TAGS split is decided per image by listing the repo's
     tags: one holding anything besides ``:latest`` was published by ``push``, so a
     missing content tag there is a real gap and blocks. That keeps images published
-    as bare ``:latest`` from wedging the gate red — the CI workflow that did that
+    as bare ``:latest`` from wedging the gate red - the CI workflow that did that
     (a raw ``buildx bake --push``) is gone, but the tags it left in the registry
-    are not — without hiding an image that ``push`` once tagged and has since
+    are not - without hiding an image that ``push`` once tagged and has since
     fallen behind, the case the gate exists for. Where the tag list can't be
     read the verdict stays UNPUBLISHED, and blocks only if hash tags are in use
     elsewhere in the sweep.
@@ -1411,7 +1411,7 @@ def cmd_stale(args: argparse.Namespace) -> int:
     # a tag besides `latest` was published by `push`, which is proof regardless of
     # whether that image is currently up to date. The verdict-based fallback behind it
     # only sees repos whose *current* hash tag resolved, so on its own it misses the
-    # case this gate exists for — an image tagged by a past `push` that has since
+    # case this gate exists for - an image tagged by a past `push` that has since
     # fallen behind reads exactly like one that was never tagged at all.
     hash_tagging_in_use = any(row["hash_tagged"] for row in rows) or any(
         counts.get(s) for s in (STALE_OK, STALE_DRIFT, STALE_LOCAL, STALE_UNKNOWN)
@@ -1462,7 +1462,7 @@ def cmd_stale(args: argparse.Namespace) -> int:
         # The evidence behind the verdict: which tags the registry actually serves,
         # and which committed directory produced the content tag it was compared to.
         # Without those, a verdict is an assertion the reader has to take on faith.
-        served = ", ".join(row["tags_seen"]) if row["tags_seen"] else "—"
+        served = ", ".join(row["tags_seen"]) if row["tags_seen"] else "(none)"
         print(f"{DIM}      registry tags: {served}{RST}")
         print(f"{DIM}      context:       {row['context']}{RST}")
         print(f"{DIM}      services:      {', '.join(row['services'])}{RST}")
@@ -1472,12 +1472,12 @@ def cmd_stale(args: argparse.Namespace) -> int:
     if counts.get(STALE_UNTAGGED):
         print(
             f"{YELLOW}[~~]{RST} {counts[STALE_UNTAGGED]} image(s) carry no content-hash "
-            f"tag at all, so they cannot be checked against the source — reported, not "
+            f"tag at all, so they cannot be checked against the source - reported, not "
             f"failed.\n"
             f"{DIM}     They were published as bare `:latest` by the retired CI bake "
             f"workflow, which bypassed the content-hash tagging in `services.py push`. "
             f"For these images this check can prove an image exists, not that it "
-            f"matches the source — `python services.py push` gives them a content tag.{RST}"
+            f"matches the source - `python services.py push` gives them a content tag.{RST}"
         )
 
     if blocking:
@@ -1490,7 +1490,7 @@ def cmd_stale(args: argparse.Namespace) -> int:
     if unverifiable:
         print(
             f"{YELLOW}[~~]{RST} {unverifiable} image(s) could not be read from "
-            f"{os.environ['OIDA_REGISTRY']} — unverified, not outdated. "
+            f"{os.environ['OIDA_REGISTRY']} - unverified, not outdated. "
             f"Check `docker login`."
         )
         return 2
@@ -1630,7 +1630,7 @@ def cmd_ports(args: argparse.Namespace) -> int:
         print()
         return 0
 
-    # Parse JSON — docker compose ps --format json outputs one JSON object per line
+    # Parse JSON - docker compose ps --format json outputs one JSON object per line
     containers = []
     for line in result.stdout.strip().split("\n"):
         line = line.strip()
@@ -1729,7 +1729,7 @@ def cmd_up_cve(args: argparse.Namespace) -> int:
 
 
 def _up_proto_impl(group: str, *, quiet_pull: bool = False, with_cve: bool = False) -> int:
-    """Start every service in an oida.group — core members by default.
+    """Start every service in an oida.group - core members by default.
 
     CVE members (services carrying an ``oida.cve`` label) are excluded unless
     *with_cve* is set: they are vulnerable-by-design targets that must be
@@ -1740,7 +1740,7 @@ def _up_proto_impl(group: str, *, quiet_pull: bool = False, with_cve: bool = Fal
     Reads config with the ``vuln-services`` umbrella profile active so CVE
     members of the group resolve (mirrors ``cmd_list``); the actual profiles to
     enable are then collected per-service from each resolved service's
-    ``profiles:`` field, so ``vuln-*`` and core profiles (goose-l2, …) get
+    ``profiles:`` field, so ``vuln-*`` and core profiles (goose-l2, ...) get
     picked up automatically.
     """
     compose_args = _all_args()
@@ -1780,7 +1780,7 @@ def _up_proto_impl(group: str, *, quiet_pull: bool = False, with_cve: bool = Fal
 
     print(f"{BLUE}=== Starting {banner} ==={RST}")
 
-    # (#1) Collect profiles required by resolved services — set-based dedup
+    # (#1) Collect profiles required by resolved services - set-based dedup
     seen_profiles: set[str] = set()
     profile_args: list[str] = []
     for svc in services:
@@ -1851,7 +1851,7 @@ def _wait_service_healthy(service: str, compose_args: list[str], *, timeout: int
         if health == "healthy":
             return True
         elif health == "none":
-            # No healthcheck defined — treat as OK
+            # No healthcheck defined - treat as OK
             return True
         elif health == "unhealthy":
             print(f"  {RED}[!!]{RST} {service} unhealthy")
@@ -1905,7 +1905,7 @@ def build_parser() -> argparse.ArgumentParser:
     """Build the argument parser with all subcommands."""
     parser = argparse.ArgumentParser(
         prog="services.py",
-        description="OIDA task runner — mock/docker service management",
+        description="OIDA task runner - mock/docker service management",
     )
     sub = parser.add_subparsers(dest="command", help="Available commands")
 
@@ -2009,7 +2009,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_cve = sub.add_parser("up-cve", help="Start specific CVE protocol group")
     p_cve.add_argument("proto", help="CVE protocol group (smtp, dns, mqtt, ...)")
 
-    # Generic proto command — alias of `up <group>`
+    # Generic proto command - alias of `up <group>`
     p_proto = sub.add_parser("up-proto", help="Start services by oida.group label")
     p_proto.add_argument("group", help="Protocol group name")
     p_proto.add_argument(

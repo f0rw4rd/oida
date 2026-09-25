@@ -690,7 +690,7 @@ class TestIec101Framing(unittest.TestCase):
 
     def test_parse_variable_frame_truncated_length_does_not_raise(self):
         """A declared length pointing past the end of the buffer must not raise
-        IndexError from `frame[4 + length]` — it should return an invalid,
+        IndexError from `frame[4 + length]` - it should return an invalid,
         non-crashing result instead (BUG 2 regression)."""
         scanner = make_scanner()
         # start=0x68, length=0x0a (10), length2=0x0a, start2=0x68, then only 2

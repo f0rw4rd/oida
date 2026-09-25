@@ -166,7 +166,7 @@ class JWTTransformer(BaseTransformer):
     - Session tokens
 
     Security Testing:
-    - Algorithm confusion attacks (RS256 → HS256)
+    - Algorithm confusion attacks (RS256 -> HS256)
     - None algorithm bypass (alg=none)
     - Claim injection (iss, sub, aud, exp tampering)
     - Signature stripping

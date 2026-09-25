@@ -4,7 +4,7 @@
 Unit tests for the EtherCAT/CoE NXC wrapper logic in cli_runner.py.
 
 These exercise the *display/formatting/parsing* logic of the ``ads`` NXC class
-wrappers — value formatting, spec parsing, slave-port resolution, scan-range
+wrappers - value formatting, spec parsing, slave-port resolution, scan-range
 parsing, and the row-building + result-recording in each ``_*_nxc`` method.
 
 The transport boundary here is the Layer-1 ``scanner`` (an ADSScanner with the
@@ -48,7 +48,7 @@ def _make_ads_instance(**overrides):
 
 
 # ---------------------------------------------------------------------------
-# _fmt_coe_value — pure formatting
+# _fmt_coe_value - pure formatting
 # ---------------------------------------------------------------------------
 
 
@@ -79,7 +79,7 @@ class TestFmtCoeValue(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# _parse_coe_spec — PORT:INDEX:SUB[:DATA]
+# _parse_coe_spec - PORT:INDEX:SUB[:DATA]
 # ---------------------------------------------------------------------------
 
 

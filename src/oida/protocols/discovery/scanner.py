@@ -1356,7 +1356,7 @@ class DiscoveryScanner(SerialScanner):
                 elif mac and mac in self.discovered_devices:
                     existing = self.discovered_devices[mac]
                     existing_key = mac
-                # Priority 3: IP→MAC correlation
+                # Priority 3: IP->MAC correlation
                 elif ip and ip in self._ip_to_mac:
                     existing_mac = self._ip_to_mac[ip]
                     if existing_mac in self.discovered_devices:
@@ -1869,7 +1869,7 @@ class DiscoveryScanner(SerialScanner):
                 if mac and mac in self.discovered_devices:
                     existing = self.discovered_devices[mac]
                     existing_key = mac
-                # Priority 2: IP→MAC correlation
+                # Priority 2: IP->MAC correlation
                 elif ip and ip in self._ip_to_mac:
                     existing_mac = self._ip_to_mac[ip]
                     if existing_mac in self.discovered_devices:
@@ -1955,7 +1955,7 @@ class DiscoveryScanner(SerialScanner):
                                 correlated += 1
                             break
 
-            # Build IP→MAC lookup from all MAC-keyed devices
+            # Build IP->MAC lookup from all MAC-keyed devices
             for key, device in self.discovered_devices.items():
                 if device.mac_address and not key.startswith("ip:"):
                     for ip in device.ip_addresses:
@@ -2596,7 +2596,7 @@ class discovery(SerialConnection):
 
         The base now returns a normalizing ArgsDict (hyphen/underscore spellings
         resolve to the same slot), so DiscoveryScanner's underscore reads and any
-        hyphenated reads both hit — no separate key-form preservation needed.
+        hyphenated reads both hit - no separate key-form preservation needed.
         """
         result = super()._convert_args_to_dict()
         # Interface fallback: --interface > target > self.interface

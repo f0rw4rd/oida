@@ -88,9 +88,9 @@ class SecurityMixin:
         not success.
 
         Caller contract change: a None response must be interpreted as
-        "inconclusive" — emit a debug log, do NOT record a security
+        "inconclusive" - emit a debug log, do NOT record a security
         finding. See bacnet/mixins/security.py and bacnet/mixins/network.py
-        callers — they now branch on three states (success / failure / no-reply).
+        callers - they now branch on three states (success / failure / no-reply).
         """
         if response is None:
             return False
@@ -102,13 +102,13 @@ class SecurityMixin:
     def _handle_security_assessment(self):
         """Full security assessment"""
         # The "assessment" calls _handle_test_write (writes back the value it
-        # just read — still a real BACnet WriteProperty), _handle_enumerate_writable
+        # just read - still a real BACnet WriteProperty), _handle_enumerate_writable
         # (writes to every discovered property), and ReinitializeDevice / OOS
         # probes. All are mutating; require --confirm.
         if not self.require_confirm(
             "--assess",
             detail="--assess issues real BACnet WriteProperty + ReinitializeDevice "
-            "probes (anonymous-write check, OOS check) — requires --confirm",
+            "probes (anonymous-write check, OOS check) - requires --confirm",
         ):
             return
         self.logger.display("\n[Security Assessment]")
@@ -148,7 +148,7 @@ class SecurityMixin:
     def _handle_test_write(self):
         """Test write access (non-destructive)
 
-        Despite the docstring this DOES issue a real BACnet WriteProperty —
+        Despite the docstring this DOES issue a real BACnet WriteProperty -
         it just writes the same value back. Many controllers reject same-
         value writes silently; some log the write. Gated on --confirm to
         prevent accidental SOE pollution.
@@ -158,7 +158,7 @@ class SecurityMixin:
         if not self.require_confirm(
             "--test-write",
             detail="--test-write issues real BACnet WriteProperty (writes current value back) "
-            "— requires --confirm",
+            "- requires --confirm",
         ):
             return
         for device_id, objects_by_type in self.objects.items():
@@ -197,7 +197,7 @@ class SecurityMixin:
         if not self.require_confirm(
             "--enumerate-writable",
             detail="--enumerate-writable issues a WriteProperty against every discovered "
-            "object (pollutes SOE / change-of-value log) — requires --confirm",
+            "object (pollutes SOE / change-of-value log) - requires --confirm",
         ):
             return
         writable_count = 0
@@ -376,7 +376,7 @@ class SecurityMixin:
             "Alerton",
             # Documented stack/library defaults. "filister" is the bacnet-stack
             # (bacserv / Steve Karg reference stack) default DCC + Reinitialize
-            # password — extremely common on demo gear and devices built on it.
+            # password - extremely common on demo gear and devices built on it.
             "filister",
             "Filister",
             "FILISTER",
@@ -921,21 +921,21 @@ class SecurityMixin:
                             if not self._is_success_response(relinquish_response, err_types):
                                 unrelinquished.append(priority)
                                 self.logger.warning(
-                                    f"    [!] Priority {priority:2d}: relinquish rejected — "
+                                    f"    [!] Priority {priority:2d}: relinquish rejected - "
                                     "priority slot left occupied"
                                 )
                         except (asyncio.TimeoutError, TimeoutError) as e:
                             unrelinquished.append(priority)
                             self.logger.debug(f"relinquish priority {priority} timed out: {e}")
                             self.logger.warning(
-                                f"    [!] Priority {priority:2d}: relinquish timed out — "
+                                f"    [!] Priority {priority:2d}: relinquish timed out - "
                                 "priority slot may be left occupied"
                             )
                         except Exception as e:
                             unrelinquished.append(priority)
                             self.logger.debug(f"relinquish priority {priority} failed: {e}")
                             self.logger.warning(
-                                f"    [!] Priority {priority:2d}: relinquish failed ({e}) — "
+                                f"    [!] Priority {priority:2d}: relinquish failed ({e}) - "
                                 "priority slot may be left occupied"
                             )
                     else:
@@ -973,7 +973,7 @@ class SecurityMixin:
             if unrelinquished:
                 self.logger.warning(
                     f"  [!] Could not relinquish {len(unrelinquished)} priority level(s): "
-                    f"{unrelinquished} — manually verify/clear on the device"
+                    f"{unrelinquished} - manually verify/clear on the device"
                 )
             else:
                 self.logger.display("  All writable priorities were relinquished (Null write-back)")
@@ -1059,7 +1059,7 @@ class SecurityMixin:
             try:
                 await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
             except (asyncio.TimeoutError, TimeoutError):
-                # Expected for an unconfirmed service — NOT evidence of anything.
+                # Expected for an unconfirmed service - NOT evidence of anything.
                 pass
         except Exception as e:
             self.logger.debug(f"Time sync test error: {e}")
@@ -1151,7 +1151,7 @@ class SecurityMixin:
 
             # Reset per object: oos_value must reflect THIS object's read. Without
             # this, an object whose read fails (error PDU / no reply) would inherit
-            # a prior object's stale value and — with --confirm — get that wrong
+            # a prior object's stale value and - with --confirm - get that wrong
             # value written to it (or UnboundLocalError on the first object).
             oos_value: object = "unknown"
 
@@ -1215,7 +1215,7 @@ class SecurityMixin:
 
                 response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
 
-                # A no-reply (None) is INDETERMINATE, not a successful write —
+                # A no-reply (None) is INDETERMINATE, not a successful write -
                 # route through the shared contract so a dropped/filtered packet
                 # does not become a false "outOfService is writable" finding.
                 if self._is_success_response(response, types):

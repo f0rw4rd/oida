@@ -120,7 +120,7 @@ class SubscriptionsMixin:
 
     async def _test_subscription_limits(self):
         """Test for subscription-based DoS vulnerabilities"""
-        # This is a DoS ramp against the live server — opens subscriptions
+        # This is a DoS ramp against the live server - opens subscriptions
         # until it hits the limit, then more until the server falls over.
         # Gated on --confirm.
         if refuse_without_confirm(

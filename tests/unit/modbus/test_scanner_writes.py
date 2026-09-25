@@ -84,7 +84,7 @@ def scanner(scanner_args):
 
 
 # =============================================================================
-# Test Safe Write (read -> write -> restore) — FC 6 path via mixin
+# Test Safe Write (read -> write -> restore) - FC 6 path via mixin
 # =============================================================================
 
 
@@ -165,7 +165,7 @@ class TestSafeWriteHolding:
 
 
 # =============================================================================
-# Test Write Multiple Registers (FC 16) — via mixin
+# Test Write Multiple Registers (FC 16) - via mixin
 # =============================================================================
 
 
@@ -215,7 +215,7 @@ class TestWriteMultipleRegisters:
 
 
 # =============================================================================
-# Test Write Multiple Coils (FC 15) — via mixin
+# Test Write Multiple Coils (FC 15) - via mixin
 # =============================================================================
 
 

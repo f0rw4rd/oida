@@ -143,7 +143,7 @@ def merge_config_with_args(
     booleans / ints / lists are honored.
 
     Unknown keys (no matching dest, no matching subcommand action) are
-    surfaced via a warning instead of being silently set — typos like
+    surfaced via a warning instead of being silently set - typos like
     `tiemout: 5` would otherwise create args.tiemout=5 that nothing reads.
     """
     # Walk the parser + every subparser so dests like 'unit_id' that
@@ -183,7 +183,7 @@ def merge_config_with_args(
         attr_name = key.replace("-", "_")
 
         if attr_name not in valid_dests:
-            logger.warning("Config key %r does not match any CLI argument — ignoring", key)
+            logger.warning("Config key %r does not match any CLI argument - ignoring", key)
             continue
 
         if not hasattr(args, attr_name):
@@ -193,7 +193,7 @@ def merge_config_with_args(
         # Apply config value when the operator left the flag at its
         # argparse default. Identity-or-equality avoids weird edge
         # cases with mutable defaults (default=[] would compare True
-        # for any empty list — fine here, the operator didn't set it).
+        # for any empty list - fine here, the operator didn't set it).
         current = getattr(args, attr_name)
         if current == defaults.get(attr_name):
             setattr(args, attr_name, value)
@@ -311,7 +311,7 @@ def _export_tables(
             written_files.append(f"{stem}.csv")
 
         if want_json:
-            # JSON (list of dicts) — use structured json_rows when available
+            # JSON (list of dicts) - use structured json_rows when available
             json_path = os.path.join(output_dir, f"{stem}.json")
             json_data = table.get("json_rows") or [dict(zip(headers, row)) for row in rows]
             with open(json_path, "w", encoding="utf-8") as f:
@@ -482,7 +482,7 @@ def gen_cli_args(argv=None):
     arguments dynamically.
 
     Args:
-        argv: The argument list this parser will be asked to parse — the
+        argv: The argument list this parser will be asked to parse - the
             caller's ``main(argv)`` view, defaulting to ``sys.argv``. The
             selective-registration fast path inspects THIS list (not the
             process argv) to decide which protocol subparser to fully
@@ -521,7 +521,7 @@ def gen_cli_args(argv=None):
 
         def format_help(self):
             """Render global options via argparse, then append the grouped,
-            colored protocol sections — keeping ``oida -h`` consistent with
+            colored protocol sections - keeping ``oida -h`` consistent with
             the no-arg screen and free of the giant subparser-choices blob.
             """
             if not self._is_main:
@@ -532,7 +532,7 @@ def gen_cli_args(argv=None):
             formatter.add_text(self.description)
 
             # Render every argument group EXCEPT the subparsers group (the flat
-            # protocol dump) — that is replaced by the grouped sections below.
+            # protocol dump) - that is replaced by the grouped sections below.
             for action_group in self._action_groups:
                 if any(
                     isinstance(a, argparse._SubParsersAction) for a in action_group._group_actions
@@ -844,12 +844,12 @@ def print_banner():
 _NON_PROTOCOL_SUBCOMMANDS = {"serial", "fuzz"}
 
 # Passive/active modules that read traffic or sweep a network rather than
-# scan one wire protocol — grouped with the tooling, not the scanners.
+# scan one wire protocol - grouped with the tooling, not the scanners.
 _CORE_TOOLING = {"discovery", "pcap"}
 
 # Display grouping for the no-arg usage screen, keyed on canonical names.
 # Anything registered but unlisted here falls into "Other protocols", so a
-# newly added scanner still shows up — it just lands in the catch-all until
+# newly added scanner still shows up - it just lands in the catch-all until
 # it's slotted into a section. (title, color, {canonical names})
 _PROTOCOL_CATEGORIES: List[Tuple[str, str, set]] = [
     (
@@ -940,7 +940,7 @@ def _format_protocol_sections(parser=None) -> Optional[str]:
         blocks.append(_section_str(title, color, rows, width))
 
     # Anything registered but not slotted into a category above (excluding
-    # the tooling subcommands handled separately) — keeps new protocols visible.
+    # the tooling subcommands handled separately) - keeps new protocols visible.
     other = [
         info
         for name, info in subcommands.items()
@@ -950,7 +950,7 @@ def _format_protocol_sections(parser=None) -> Optional[str]:
     ]
     blocks.append(_section_str("Other protocols", "white", other, width))
 
-    # Discovery / passive / fuzzing — not single-target wire scanners.
+    # Discovery / passive / fuzzing - not single-target wire scanners.
     tooling = [
         subcommands[n]
         for n in (*sorted(_CORE_TOOLING), *sorted(_NON_PROTOCOL_SUBCOMMANDS))
@@ -1068,7 +1068,7 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
     # Create progress logger for NXC-style output.
     # protocol_class.default_port is almost never set at class scope (Layer-2
     # protocols set self.default_port in __init__; Layer-1 uses
-    # get_default_port(), an instance method) — args.port already carries the
+    # get_default_port(), an instance method) - args.port already carries the
     # protocol's real default via add_network_options(..., default_port=N),
     # so prefer it and only fall back to the (usually absent) class attribute.
     default_port: int = (
@@ -1304,7 +1304,7 @@ def print_bug_report() -> None:
     else:
         lines.append("tshark:       not found")
 
-    # Protocol dependencies — derived directly from installed metadata
+    # Protocol dependencies - derived directly from installed metadata
     lines.append("")
     lines.append("Protocol Dependencies:")
 
@@ -1315,7 +1315,7 @@ def print_bug_report() -> None:
         # report stays readable.
         msg = str(e).strip().splitlines()[0] if str(e).strip() else ""
         if len(msg) > limit:
-            msg = msg[: limit - 1] + "…"
+            msg = msg[: limit - 1] + "..."
         return f"{type(e).__name__}: {msg}" if msg else type(e).__name__
 
     import re
@@ -1349,7 +1349,7 @@ def print_bug_report() -> None:
         extra_name = m.group(1)
         if extra_name in _SKIP_EXTRAS:
             continue
-        # Strip the PEP 508 URL form first ("pyshark @ git+https://…") so the
+        # Strip the PEP 508 URL form first ("pyshark @ git+https://...") so the
         # display/import name is the bare distribution, then version specifiers
         # and extras.
         pip_name = line.split(";")[0].split("@")[0]
@@ -1395,11 +1395,11 @@ def print_bug_report() -> None:
             except ImportError:
                 lines.append(f"  {display_name:<20s}{'--':<12s}({proto}) NOT INSTALLED")
             except Exception as e:
-                # Installed but failed to load — e.g. a native lib (adslib.so,
+                # Installed but failed to load - e.g. a native lib (adslib.so,
                 # libsnap7) missing from a frozen build, or a transitive ABI
                 # mismatch (numpy/pandas). A diagnostic probe must never crash
                 # on this; report it with the message and move on. The message
-                # is the whole point of the probe — a bare type name like
+                # is the whole point of the probe - a bare type name like
                 # "ValueError" hides the actual cause.
                 lines.append(
                     f"  {display_name:<20s}{'--':<12s}({proto}) UNAVAILABLE ({_fmt_exc(e)})"
@@ -1691,7 +1691,7 @@ def scan_target(protocol_class, args, target: str) -> ScanResult:
         # BaseScanner._normalize_args() handles dict-vs-attribute adaptation
         # internally, so we just pass a plain Namespace here. Deep-copy so
         # mutable attributes (lists/dicts/sets) are not shared across the
-        # concurrent per-target scans run by the ThreadPoolExecutor below —
+        # concurrent per-target scans run by the ThreadPoolExecutor below -
         # a shallow vars() copy aliased them, making an in-place mutation in
         # one target's scan a data race visible to every other target.
         target_args = copy.deepcopy(args)
@@ -1726,7 +1726,7 @@ def scan_target(protocol_class, args, target: str) -> ScanResult:
 
     except Exception as e:
         # Reached only for failures that escape the scanner's own error
-        # handling (e.g. constructor/get_results bugs) — normal scan
+        # handling (e.g. constructor/get_results bugs) - normal scan
         # failures are already caught and logged non-debug inside
         # BaseScanner.run_scan() / NetworkConnection's proto_flow wrapper.
         # Log visibly here too, so unexpected crashes aren't silently

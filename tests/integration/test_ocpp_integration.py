@@ -2143,7 +2143,7 @@ class TestOCPPSecurityFindings:
 
 
 # ---------------------------------------------------------------------------
-# Flag Coverage Extension — real-CLI tests added to raise scripts/flag_coverage.py
+# Flag Coverage Extension - real-CLI tests added to raise scripts/flag_coverage.py
 # credit for previously-unexercised flags. See module docstring conventions;
 # flag coverage matrix for the flags added below:
 #

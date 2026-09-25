@@ -31,7 +31,7 @@ def format_wordlist_source(path: Optional[str], default_label: str = "built-in d
 
     Use this helper for every user-facing message that mentions where a
     password / wordlist came from. Pass-through for in-process operations
-    (file opens, scanner internals) still uses the full path — only the
+    (file opens, scanner internals) still uses the full path - only the
     display label changes.
 
     Args:
@@ -144,7 +144,7 @@ def make_password_scanner(
 
             try:
                 if login_function(host, port, password):
-                    # RECOVERED credential — surface to operator (the feature).
+                    # RECOVERED credential - surface to operator (the feature).
                     log(f"[+] Password found: '{password}'", level="good")
                     _logger.info("Valid password found: %s:%d", host, port)
                     results["success"] = True
@@ -154,12 +154,12 @@ def make_password_scanner(
                     if not continue_on_success:
                         return results
                 else:
-                    # INPUT credential — never echo the candidate value back.
+                    # INPUT credential - never echo the candidate value back.
                     log("[-] Failed (candidate masked)", level="debug")
                     _logger.debug("Password attempt failed: %s:%d", host, port)
 
             except Exception as e:
-                # INPUT credential — exception text only; don't include candidate.
+                # INPUT credential - exception text only; don't include candidate.
                 log(f"Error testing candidate (masked): {e}", level="debug")
 
             if custom_rate > 0:

@@ -4,20 +4,20 @@ match Wireshark's dissectors.
 Both tables in ``src/oida/pcap/cipsafety.py`` disagreed with
 ``packet-cipsafety.c``:
 
-VALIDATOR_STATES — dissector ``cip_svalidator_state_vals``:
+VALIDATOR_STATES - dissector ``cip_svalidator_state_vals``:
     0="Unallocated", 1="Initializing", 2="Established", 3="Connection failed".
 oidx had 0="Idle" (wrong name, same idea) and fabricated 4="Faulted" which the
 dissector never emits; the fault-alert gate ``state_val in (3, 4)`` treated 4
 as reachable.
 
-SUPERVISOR_STATUS — dissector ``cip_ssupervisor_device_status_type_vals``:
+SUPERVISOR_STATUS - dissector ``cip_ssupervisor_device_status_type_vals``:
     0="Undefined", 1="Self-Testing", 2="Idle", 3="Self-Test Exception",
     4="Executing", 5="Abort", 6="Critical Fault", 7="Configuring",
     8="Waiting for TUNID" (plus 51/52 torque variants).
 oida was shifted by one from 5 on: 5="Exception" (actually "Abort"),
 6="Abort" (actually "Critical Fault"), 7="Waiting_for_TUNID" (actually
 "Configuring"), 8 missing.  A genuine "Critical Fault" (6) was displayed as
-merely "Abort" — a safety-relevant downgrade.
+merely "Abort" - a safety-relevant downgrade.
 """
 
 import pytest

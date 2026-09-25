@@ -15,7 +15,7 @@ References:
   TI): https://cdn.sma.de/fileadmin/content/www.developer.sma.de/docs/EMETER-Protokoll-TI-en-10.pdf
 
 Note: the discovery response confirms an SMA device + its IP (this is what the
-reference tools extract). Serial/model are NOT parsed here — the Energy Meter
+reference tools extract). Serial/model are NOT parsed here - the Energy Meter
 datagram carries a serial but its offset is parser-dependent across sources, so
 we do not guess it.
 """
@@ -42,7 +42,7 @@ class SMASpeedwireScanner:
 
     A single fixed 20-byte multicast datagram makes SMA Speedwire devices
     (inverters, Sunny Home Manager, Energy Meter) reply on the group. Replies
-    — and the energy meter's continuous announcements — carry the ``SMA\\0``
+    - and the energy meter's continuous announcements - carry the ``SMA\\0``
     magic, which is how we recognize an SMA device and its IP.
 
     Protocol (per FHEM SMA-Speedwire discover.py):
@@ -53,7 +53,7 @@ class SMASpeedwireScanner:
       More generally, any Speedwire datagram on this group starts with
       ``SMA\\0`` (0x534D4100).
 
-    OT-safety: safe — a single small read-only multicast probe, no resend, no
+    OT-safety: safe - a single small read-only multicast probe, no resend, no
     amplification surface.
     """
 

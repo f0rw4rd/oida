@@ -118,7 +118,7 @@ class TestWSDiscoveryProbe:
             assert b"urn:uuid:" in sent_data
 
     def test_single_probe_no_resend(self, wsdiscovery_scanner_class):
-        """Exactly one probe is sent — periodic resend was removed for OT safety.
+        """Exactly one probe is sent - periodic resend was removed for OT safety.
 
         scan() goes through create_udp_socket() + the rate-limited sendto()
         helper, both imported into the ssdp module namespace, so those are the

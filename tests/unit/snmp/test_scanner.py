@@ -245,7 +245,7 @@ class TestDefaultCommunities:
     """Test default community string list"""
 
     def test_default_communities_removed(self, snmp_constants):
-        """DEFAULT_COMMUNITIES was removed — communities are built-in to scanner."""
+        """DEFAULT_COMMUNITIES was removed - communities are built-in to scanner."""
         assert not hasattr(snmp_constants, "DEFAULT_COMMUNITIES")
 
 

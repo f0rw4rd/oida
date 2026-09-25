@@ -142,7 +142,7 @@ ICS_SCADA_TIERS = {
 
 # Exact ICS request counts. Updated 2026-06-02 after the §4.1 fuzzer
 # optimization workflow: dnp3/iec104/opcua gained new Request objects
-# (10→13, 12→13, 21→22); other §4.1 items modified primitives inside
+# (10->13, 12->13, 21->22); other §4.1 items modified primitives inside
 # existing Requests (Group expansions, fuzzable= flips, max_len caps,
 # annotation passes) so the *count* of registered Requests is unchanged.
 ICS_AUDIT_REQUEST_COUNTS = {
@@ -167,7 +167,7 @@ ICS_AUDIT_REQUEST_COUNTS = {
     "mqtt": 14,
     "coap": 20,
     # The following entries were removed (2026-06-03):
-    # fins, tase2, profinet_dcp, industrial_ethernet, hartip — no
+    # fins, tase2, profinet_dcp, industrial_ethernet, hartip - no
     # corresponding fuzzer source exists in src/oida/fuzz/protocols/;
     # the tests were unconditionally skipping. These are
     # "implement-or-delete"; deleted here, can be re-added once the

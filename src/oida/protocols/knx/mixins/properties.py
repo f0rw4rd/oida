@@ -1079,7 +1079,7 @@ class PropertiesMixin:
         Returns (obj_idx, prop_id) on success, or (None, None) on malformed
         input so the caller never falls back to a default object/property.
         Silently substituting a hardcoded default (object 0 / property 78)
-        would read from a real device the operator never asked to read —
+        would read from a real device the operator never asked to read -
         matches the rejecting-sentinel pattern used by ``_parse_group_write``.
         """
         try:

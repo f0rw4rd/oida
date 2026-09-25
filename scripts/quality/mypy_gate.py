@@ -2,18 +2,18 @@
 """Mypy bug-shaped errors, gated against a shrinking baseline.
 
 The project's mypy config in pyproject.toml is already strict, but it runs
-informationally — the tree currently has ~10k errors across 500+ files, so a
+informationally - the tree currently has ~10k errors across 500+ files, so a
 hard global gate is impossible without a rewrite. Most of that is noise:
 `attr-defined` (dynamic loader/connection pattern) and `no-untyped-def` (missing
 annotations) carry no runtime risk.
 
-This gate ignores that noise and enforces only the BUG-SHAPED codes — the
+This gate ignores that noise and enforces only the BUG-SHAPED codes - the
 None/union/arg-type footguns that cause real crashes (calling `.get()` on a
 `dict | str | None`, indexing something optional, passing `str | None` where a
 `str` is required, bad overrides, ...). Findings present in the baseline are
 allowed; anything NEW fails CI.
 
-The baseline is meant to SHRINK — clear bug-shaped errors when you touch a file
+The baseline is meant to SHRINK - clear bug-shaped errors when you touch a file
 (use `--report --code union-attr` to find them), then regenerate and commit the
 smaller file. It must never grow: fix the type error, don't baseline it.
 
@@ -127,7 +127,7 @@ def main() -> int:
                 "# mypy bug-shaped-error baseline (see scripts/quality/mypy_gate.py).\n"
                 "# Only the bug-shaped codes are gated; noise codes are ignored.\n"
                 "# This file should only ever get SHORTER. Fix the type error and\n"
-                "# regenerate — never add a new entry to silence the gate.\n"
+                "# regenerate - never add a new entry to silence the gate.\n"
             )
             for k in keys:
                 fh.write(k + "\n")
@@ -165,14 +165,14 @@ def main() -> int:
             print(f"  ... and {len(new) - 30} more", file=sys.stderr)
         print(
             "\nFix the type error (guard the None, narrow the union, correct the\n"
-            "argument type). Do NOT add it to the baseline — the baseline only shrinks.",
+            "argument type). Do NOT add it to the baseline - the baseline only shrinks.",
             file=sys.stderr,
         )
         return 1
 
     stale = len(known) - len({f.key() for f in findings})
     if stale > 0:
-        print(f"{stale} baseline entrie(s) now clean — regenerate with --write-baseline")
+        print(f"{stale} baseline entrie(s) now clean - regenerate with --write-baseline")
     print(f"OK: {len(findings)} bug-shaped findings, all baselined")
     return 0
 

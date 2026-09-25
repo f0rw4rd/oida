@@ -3,7 +3,7 @@
 ``_fuzz_node`` captured
 ``original = await read_value()`` (always bytes) and restored with the
 truthiness guard ``if original: await write_value(original)``. For a node
-whose value reads back as empty/None — encoded to ``b""`` — the guard was
+whose value reads back as empty/None - encoded to ``b""`` - the guard was
 falsy, so the restore was skipped and the node was left holding the last
 fuzz payload. The guard must be ``original is not None`` so empty-but-valid
 originals are written back.
@@ -46,7 +46,7 @@ class TestFuzzNodeRestoresEmptyOriginal(unittest.IsolatedAsyncioTestCase):
         harness = _FuzzHarness(node)
 
         # One deterministic, non-empty fuzz payload so the node ends the loop
-        # holding b"\xff\xff" — the restore must overwrite it back to b"".
+        # holding b"\xff\xff" - the restore must overwrite it back to b"".
         def _fake_fuzz(original, count=10, **kwargs):
             yield (b"\xff\xff", "payload")
 

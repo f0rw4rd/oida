@@ -356,7 +356,7 @@ class EIGRPPassiveListener(PySharkListenerBase):
             }
             hold_time = self._parse_int(self.get_field(eigrp, "par_holdtime", "15"), 15)
 
-        # Software version (SW Version TLV) — reuse the decoded release_version /
+        # Software version (SW Version TLV) - reuse the decoded release_version /
         # tlv_version above (there are no eigrp.sw_version.* fields).
         if release_version:
             software_version = f"IOS {release_version}, EIGRP {tlv_version}"

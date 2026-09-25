@@ -5,7 +5,7 @@ scanner with a maximal-feature scan against the target, then compute
 two coverage numbers:
 
 - **Wire coverage**: fraction of fields in ``ref/<proto>/tshark_fields.json``
-  that show up in the scanner's result tree. (Low bar — these are
+  that show up in the scanner's result tree. (Low bar - these are
   framing fields.)
 - **Semantic coverage**: fraction of ``EXPECTED_SURFACE[proto]`` keys
   actually populated by the scan.
@@ -14,7 +14,7 @@ Results are written to ``tests/coverage/results/scanner_<run-id>.json``
 for nightly trendline tracking.
 
 Tests are skipped when the target container isn't reachable. This file
-is **not** part of the PR test path — only the nightly coverage job
+is **not** part of the PR test path - only the nightly coverage job
 runs it.
 """
 
@@ -110,7 +110,7 @@ def test_modbus_coverage(coverage_results_dir):
     wire_fields = _load_tshark_fields("modbus")
     # Wire coverage for modbus is a low bar (only 7 MBAP fields). We
     # check it's reported, not asserted, since the scanner doesn't
-    # populate raw mbtcp.* fields directly — it parses them into
+    # populate raw mbtcp.* fields directly - it parses them into
     # semantic structures.
     wire_pct = 0.0  # see comment above; placeholder for parity with other protocols
 
@@ -262,7 +262,7 @@ def test_bacnet_coverage(coverage_results_dir):
     populated = flatten_surface(scanner.results.get("data", {}))
     if not populated:
         pytest.skip(
-            f"bacnet: no device discovered at {host}:{port} — the BACnet/IP WhoIs "
+            f"bacnet: no device discovered at {host}:{port} - the BACnet/IP WhoIs "
             "broadcast is UDP and its I-Am response is timing-sensitive (flaky under "
             "load). The scanner persists device_info when discovery succeeds."
         )
@@ -336,7 +336,7 @@ def _run_and_record(
     """Common helper: instantiate scanner, measure coverage, append record.
 
     If the scanner reports failure (``results["success"] is False``), the
-    test is skipped — typically the target is unreachable over UDP (we
+    test is skipped - typically the target is unreachable over UDP (we
     can't pre-probe UDP without a protocol-aware frame) or the container
     is up but the protocol service isn't ready yet.
     """
@@ -352,7 +352,7 @@ def _run_and_record(
     if not populated:
         pytest.skip(
             f"{protocol}: scanner reported success but extracted no fields from "
-            f"{target_name} at {host}:{port} — the mock didn't answer the protocol "
+            f"{target_name} at {host}:{port} - the mock didn't answer the protocol "
             f"probe (e.g. KNXnet/IP discovery needs multicast the mock doesn't serve)"
         )
     expected = expected_for(protocol)
@@ -599,7 +599,7 @@ def test_hart_coverage(coverage_results_dir):
     The hipserver returns full Read-Unique-Id (Command 0) device data over an
     unencrypted UDP session; the scanner reads it and closes the session
     cleanly. (The hipserver holds sessions for 600s, so a session-pool
-    exhaustion under heavy parallel load shows up as an empty result — handled
+    exhaustion under heavy parallel load shows up as an empty result - handled
     by the skip-on-no-data guard in _run_and_record. hart-pymock on 5090 is the
     fallback Python implementation.)
     """
@@ -704,9 +704,9 @@ def test_ethercat_coverage(coverage_results_dir):
 
 @pytest.mark.coverage
 def test_can_coverage(coverage_results_dir):
-    """CAN scanner coverage — needs a vcan interface, not a docker mock."""
+    """CAN scanner coverage - needs a vcan interface, not a docker mock."""
     ensure_protocol_dep("can")
-    # CAN doesn't have a docker mock — it needs a virtual CAN interface
+    # CAN doesn't have a docker mock - it needs a virtual CAN interface
     # on the host (`sudo modprobe vcan && sudo ip link add dev vcan0 type vcan`).
     # Skip when vcan0 isn't present.
     import subprocess
@@ -736,7 +736,7 @@ def test_can_coverage(coverage_results_dir):
 
 @pytest.mark.coverage
 def test_tase2_coverage(coverage_results_dir):
-    """TASE.2 (IEC 60870-6) scanner coverage — runs over MMS port 102."""
+    """TASE.2 (IEC 60870-6) scanner coverage - runs over MMS port 102."""
     ensure_protocol_dep("pyiec61850")
     host, port, target_name = container_target(
         ("mms-libiec61850", 102),
@@ -810,7 +810,7 @@ def test_ocpp_coverage(coverage_results_dir):
 @pytest.mark.coverage
 def test_astm_coverage(coverage_results_dir):
     """ASTM/E1394 scanner coverage against astm-mock (port 12000)."""
-    # ASTM scanner uses stdlib socket only — no optional dep gate needed.
+    # ASTM scanner uses stdlib socket only - no optional dep gate needed.
     host, port, target_name = container_target(
         ("astm-mock", 12000),
         ("astm-hematology", 12000),

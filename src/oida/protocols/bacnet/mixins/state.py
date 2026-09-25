@@ -21,7 +21,7 @@ class StateMixin:
             self._handle_enumerate_objects()
 
         # If enumeration didn't fill self.objects we're about to write an
-        # empty dump — say so explicitly. The bacpypes3 raw/remote path
+        # empty dump - say so explicitly. The bacpypes3 raw/remote path
         # was previously emitting `{"devices": {}}` with no warning,
         # leaving the operator thinking the dump worked.
         if not self.objects:
@@ -274,7 +274,7 @@ class StateMixin:
             self._handle_enumerate_objects()
 
         if not self.objects:
-            # Same shape as the --dump fix above — be explicit instead
+            # Same shape as the --dump fix above - be explicit instead
             # of silently producing an empty comparison.
             self.logger.warning(
                 "Diff skipped: no objects enumerated against the target. "

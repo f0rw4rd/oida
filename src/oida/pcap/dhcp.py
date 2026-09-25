@@ -304,7 +304,7 @@ class DHCPPassiveListener(PySharkListenerBase):
         # BOOTP / PXE / iPXE fields
         # Boot file name (BOOTP 'file' field, 128 bytes)
         boot_file = str(self.get_field(dhcp, "file", "") or "")
-        # Next server (BOOTP 'siaddr' — TFTP server for boot file)
+        # Next server (BOOTP 'siaddr' - TFTP server for boot file)
         next_server = str(self.get_field(dhcp, "ip_server", "") or "")
         if next_server == "0.0.0.0":
             next_server = ""
@@ -325,7 +325,7 @@ class DHCPPassiveListener(PySharkListenerBase):
         client_arch = str(self.get_field(dhcp, "option_client_system_architecture", "") or "")
         # Option 97: Client Machine Identifier (UUID)
         client_uuid = str(self.get_field(dhcp, "client_id_uuid", "") or "")
-        # BOOTP flag (dhcp.bootp — true when legacy BOOTP, no options)
+        # BOOTP flag (dhcp.bootp - true when legacy BOOTP, no options)
         is_bootp = self.get_field(dhcp, "bootp", None)
 
         # Option 43: Vendor-Specific Information

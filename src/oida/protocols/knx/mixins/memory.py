@@ -385,7 +385,7 @@ class MemoryMixin:
         Returns (start, length) on success, or (None, None) on malformed
         input so the caller never falls back to a default address. Silently
         substituting a hardcoded default (0x0100:256) would dump memory from
-        a real device the operator never asked to read — matches the
+        a real device the operator never asked to read - matches the
         rejecting-sentinel pattern used by ``_parse_group_write``.
         """
         try:

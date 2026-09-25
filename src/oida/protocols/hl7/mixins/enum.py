@@ -187,7 +187,7 @@ class EnumMixin:
                 elif segment.startswith("RXE|"):
                     # The RXE parser doesn't expose RXE-13, so extract it directly.
                     # fields[0] is the segment ID ("RXE"), so RXE-13 lives at
-                    # fields[13] — get_field()'s 1-based indexing expects
+                    # fields[13] - get_field()'s 1-based indexing expects
                     # fields[0] to already be field 1, so the equivalent
                     # get_field() call needs index 14, not 13 (index 13 would
                     # resolve to fields[12], i.e. RXE-12 / refills).

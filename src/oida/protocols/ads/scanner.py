@@ -369,7 +369,7 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
         info = {
             "name": symbol.name,
             "type": str(symbol.symbol_type),
-            # pyads AdsSymbol has no .size attribute — derive it from the
+            # pyads AdsSymbol has no .size attribute - derive it from the
             # ctypes plc_type. The old symbol.size raised AttributeError on
             # the first symbol and aborted the whole enumeration loop.
             "size": ctypes.sizeof(symbol.plc_type) if symbol.plc_type else None,
@@ -488,7 +488,7 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
         """Probe common AMS Net ID extensions to discover active endpoints.
 
         Uses the central ``_probe_netid()`` function which runs a tiered
-        check: read_device_info → CoE SDO probe.  This replaces the old
+        check: read_device_info -> CoE SDO probe.  This replaces the old
         M-area read fallback which produced false positives (the AMS
         router answers M-area reads for any port).
         """
@@ -789,7 +789,7 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
                     # (device_count + 1) * 2 ctypes allocation below.
                     if device_count > MAX_IO_DEVICES:
                         self.logger.warning(
-                            f"  Device reported {device_count} I/O devices — clamping "
+                            f"  Device reported {device_count} I/O devices - clamping "
                             f"enumeration to {MAX_IO_DEVICES} (implausible count, possible spoofing)"
                         )
                         device_count = MAX_IO_DEVICES
@@ -865,7 +865,7 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
         if not quiet:
             self.logger.display(f"UDP discovery on {target_ip}:{ADS_TRANSPORT['UDP']}...")
 
-        # TODO: Raw UDP broadcast for ADS discovery — pyads has no broadcast
+        # TODO: Raw UDP broadcast for ADS discovery - pyads has no broadcast
         # API, so this is intentional. Extract into a shared helper if more
         # protocols need UDP broadcast probes (see also EtherNet/IP, KNX).
         try:
@@ -930,7 +930,7 @@ class ADSScanner(EtherCATOpsMixin, NetworkScanner):
         -  14..16: hostname length (LE, NUL included)
         -  16..16+len: hostname + NUL
         -  20+len: Windows kernel version (3 LE DWORDs), then TwinCAT version
-        -  later: <HH> TLV blocks (tag/len LE) — fingerprint etc.
+        -  later: <HH> TLV blocks (tag/len LE) - fingerprint etc.
 
         The old implementation walked TLV tags from offset 0, misreading the
         NetID + port as tag=0xA840/len=0x6401 and losing every field.

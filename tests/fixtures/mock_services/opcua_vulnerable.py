@@ -200,7 +200,7 @@ async def eval_expression(parent, expression: str) -> str:
     logger.warning(f"[VULN] eval_expression called with: {expression}")
     try:
         # EXTREMELY VULNERABLE: Direct eval of user input
-        result = eval(expression)  # noqa: S307 — the vulnerability IS the eval; intentional in a vuln mock
+        result = eval(expression)  # noqa: S307 - the vulnerability IS the eval; intentional in a vuln mock
         return str(result)
     except Exception as e:
         return f"Error: {str(e)}"

@@ -1,7 +1,7 @@
 """
 Argument parser definition for EtherCAT protocol.
 
-Migrated to proto_args_factory in §3 sync — uses create_protocol_parser
+Migrated to proto_args_factory in §3 sync - uses create_protocol_parser
 + add_target_argument for the boilerplate. EtherCAT keeps its local
 `-F/--fuzz` (nargs='?' with choices), its `-y` short alias for
 `--confirm`, and its target=interface help override; the factory's

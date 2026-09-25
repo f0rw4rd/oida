@@ -51,7 +51,7 @@ def _agent_src() -> Path:
     # commonly cloned INSIDE the oida repo (.../pro/oida/oida-fuzzing-agent)
     # -- accepted there too (gitignored).
     candidates.append(here.parents[4] / "oida-fuzzing-agent")
-    # In-repo gitignored clone (e.g. .../pro/oida/oida-fuzzing-agent) — same
+    # In-repo gitignored clone (e.g. .../pro/oida/oida-fuzzing-agent) - same
     # layout the comment above describes for read-only parents, found from
     # the test file itself: parents[0]=fuzz, [1]=integration, [2]=tests,
     # [3]=repo root.

@@ -240,7 +240,7 @@ class VRRPPassiveListener(PySharkListenerBase):
         # Master, regardless of priority. The old `priority == 255` check
         # confused "IP address owner" (255) with "Master role" and
         # misclassified the typical Cisco/Keepalived default (priority=100
-        # master) as Backup. Priority 255 still means address-owner —
+        # master) as Backup. Priority 255 still means address-owner -
         # expose separately as `is_address_owner` for downstream use.
         is_master = True
         is_address_owner = priority == 255

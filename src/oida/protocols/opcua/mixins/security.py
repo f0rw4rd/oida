@@ -283,7 +283,7 @@ class SecurityMixin:
             # Create uniquely-named temp files for cert and key. A fixed
             # oida_client_{pid}.der/.pem name is reused by every concurrent
             # target scanned in this process (the CLI thread-pools multiple
-            # targets under one PID) — two targets racing the same path can
+            # targets under one PID) - two targets racing the same path can
             # clobber each other's cert mid-generation/read, and the file
             # was never unlinked, leaving a private key world-readable in
             # shared temp indefinitely. mkstemp() gives each call a unique
@@ -447,7 +447,7 @@ class SecurityMixin:
             except asyncio.TimeoutError:
                 # A timeout (firewall drop, packet loss, slow/overloaded server)
                 # says nothing about whether the server validated the client cert.
-                # Do NOT assert the server is clean — report inconclusive.
+                # Do NOT assert the server is clean - report inconclusive.
                 result["tested"] = False
                 result["status"] = "inconclusive"
                 result["error"] = "Connection timeout (could not determine)"
@@ -459,7 +459,7 @@ class SecurityMixin:
                 # Channel/cert-trust rejection: the server validated our untrusted
                 # application cert and refused the secure channel. This is the ONLY
                 # outcome that proves the server is not vulnerable. These are
-                # specific trust-decision codes — a bare "badcertificate" substring
+                # specific trust-decision codes - a bare "badcertificate" substring
                 # also matches format errors (BadCertificateUriInvalid /
                 # TimeInvalid) that say nothing about the trust list, so it is
                 # excluded; BadCertificateInvalid IS included because servers use
@@ -476,14 +476,14 @@ class SecurityMixin:
                 )
                 # Session-level auth failure: reaching ActivateSession means the
                 # secure channel was ALREADY established with our untrusted cert
-                # (create_session ran the server's cert validation and passed) —
+                # (create_session ran the server's cert validation and passed) -
                 # only the anonymous user identity was refused. This is evidence
                 # the app-cert trust check is weak, NOT a rejection. The old code
                 # lumped these codes into "rejected" (false negative); they now
                 # surface the channel acceptance and ask for creds to confirm.
                 #
                 # NOTE: the *user*-cert probe (_test_self_signed_user_cert_acceptance)
-                # deliberately treats these same codes as a clean rejection — there
+                # deliberately treats these same codes as a clean rejection - there
                 # the user cert IS the trust-checked identity, so a refusal is the
                 # correct-secure outcome. Do not "unify" the two lists.
                 session_reached = any(x in err for x in ["baduseraccessdenied", "badidentitytoken"])
@@ -498,10 +498,10 @@ class SecurityMixin:
                     result["error"] = str(e)[:100]
                     self.logger.warning(
                         "Secure channel established with untrusted client cert, but no "
-                        "anonymous session — rerun with -u/-P to confirm app-cert trust"
+                        "anonymous session - rerun with -u/-P to confirm app-cert trust"
                     )
                 else:
-                    # Unrelated/ambiguous error — cannot conclude either way.
+                    # Unrelated/ambiguous error - cannot conclude either way.
                     result["tested"] = False
                     result["status"] = "inconclusive"
                     result["error"] = str(e)[:100]
@@ -527,7 +527,7 @@ class SecurityMixin:
         the application / secure-channel certificate). Here we present a freshly
         generated self-signed certificate as a **user identity token**
         (``X509IdentityToken``). A server that activates a session with it does
-        not validate user certificates against a trust list — equivalent to
+        not validate user certificates against a trust list - equivalent to
         OpalOPC plugin 10016.
 
         Only meaningful on endpoints that advertise a ``Certificate`` user
@@ -537,7 +537,7 @@ class SecurityMixin:
         isolates the *user*-cert trust decision. The policy-endpoint fallback
         (when no None endpoint exists) opens a secure channel with an auto app
         cert first, so a server that rejects that *app* cert at the channel
-        layer would surface as a user-cert rejection — a known limitation of
+        layer would surface as a user-cert rejection - a known limitation of
         the fallback path; the None-policy path is unaffected.
         """
         import tempfile
@@ -595,7 +595,7 @@ class SecurityMixin:
             self.logger.display("Testing if server accepts untrusted self-signed user certs...")
 
             # Unique 0600 temp files per call (see _test_self_signed_cert_
-            # acceptance) — avoids the shared oida_user_{pid} race/CWE-377.
+            # acceptance) - avoids the shared oida_user_{pid} race/CWE-377.
             cert_fd, cert_name = tempfile.mkstemp(prefix="oida_user_", suffix=".der")
             key_fd, key_name = tempfile.mkstemp(prefix="oida_user_", suffix=".pem")
             os.close(cert_fd)
@@ -623,7 +623,7 @@ class SecurityMixin:
             )
 
             # Connect to the address we actually reached, not the endpoint's
-            # advertised EndpointUrl — servers often advertise their own
+            # advertised EndpointUrl - servers often advertise their own
             # hostname / 0.0.0.0 which is unroutable from the scanner. asyncua
             # selects the endpoint by security policy (set_security / None), not
             # by the URL path, so the reachable URL is both sufficient and safer.

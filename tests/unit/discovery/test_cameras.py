@@ -339,7 +339,7 @@ class TestDahuaParseResponse:
         assert data["Vendor"] == "General"
 
     def test_bare_json_without_dhip_header(self):
-        """Some firmware replies without the DHIP header — still parse it."""
+        """Some firmware replies without the DHIP header - still parse it."""
         from oida.protocols.discovery.cameras import DahuaDHDiscoverScanner
 
         scanner = DahuaDHDiscoverScanner(interface="eth0")

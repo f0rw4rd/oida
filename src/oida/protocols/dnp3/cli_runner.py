@@ -62,7 +62,7 @@ class dnp3(NetworkConnection):
 
         # Map CLI arg names to scanner parameter names. _convert_args_to_dict
         # returns an ArgsDict where hyphen and underscore spellings resolve to
-        # the same slot, so pure ``-``/``_`` differences need no entry here —
+        # the same slot, so pure ``-``/``_`` differences need no entry here -
         # only genuine renames (e.g. master-addr -> master-address) belong below.
         mapping = {
             "master-addr": "master-address",
@@ -118,10 +118,10 @@ class dnp3(NetworkConnection):
             return
 
         # DNP3 is plaintext by design. DNP3-SA (Secure Authentication) is
-        # effectively dead — SAv2/v5 saw almost no adoption and is deprecated;
+        # effectively dead - SAv2/v5 saw almost no adoption and is deprecated;
         # it only ever provided message authentication, never encryption.
         # Wrapping DNP3 in TLS (IEC 62351 / DNP3-over-TLS) is the recommended
-        # path. Only flag missing encryption when this scan is NOT over TLS —
+        # path. Only flag missing encryption when this scan is NOT over TLS -
         # otherwise a --tls session is falsely reported as plaintext.
         if not getattr(self.args, "tls", False):
             self.logger.security_finding(

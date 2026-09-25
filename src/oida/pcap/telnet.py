@@ -244,7 +244,7 @@ class TelnetPassiveListener(PySharkListenerBase):
                 info_parts.append(str(sopt))
             info = " ".join(info_parts)
         else:
-            # "Telnet Data" or any other — type is redundant with operation
+            # "Telnet Data" or any other - type is redundant with operation
             op_type = ""
             text = d.get("text", "")
             detail = text if text else ""

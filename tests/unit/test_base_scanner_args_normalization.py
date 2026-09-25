@@ -12,7 +12,7 @@ import unittest
 class TestBaseScannerArgsNormalization(unittest.TestCase):
     def test_normalize_wraps_plain_dict_for_key_normalization(self):
         """A plain dict is wrapped in ArgsDict so hyphen/underscore key spellings
-        agree — the Layer-1 dict path used to skip this, unlike the Namespace
+        agree - the Layer-1 dict path used to skip this, unlike the Namespace
         bridge, so a dashed read silently missed. Values are preserved; the
         result is still a dict."""
         from oida.utils.args_dict import ArgsDict

@@ -30,11 +30,11 @@ class RawFCMixin(_ScannerBase):
 
         # --raw-fc can send any function code including writes (5/6/15/16),
         # restart (FC 8), FC 23 (read-write multiple), and vendor codes
-        # 65-72 — all of which can modify PLC state.
+        # 65-72 - all of which can modify PLC state.
         if not self.require_confirm(
             "--raw-fc",
             detail="--raw-fc sends arbitrary function codes (incl. writes 5/6/15/16, "
-            "restart FC 8, vendor 65-72) — requires --confirm",
+            "restart FC 8, vendor 65-72) - requires --confirm",
         ):
             return
         payload_str = getattr(self.args, "payload", None)
@@ -151,7 +151,7 @@ class RawFCMixin(_ScannerBase):
 
             # Only a response that was actually received counts. send_custom_fc
             # sets success=True for both normal AND exception responses, and
-            # success=False on a failed/timed-out send — the previous `if result:`
+            # success=False on a failed/timed-out send - the previous `if result:`
             # was always truthy, so errored sends were mis-counted as supported.
             if result and result.get("success"):
                 if result.get("is_exception"):

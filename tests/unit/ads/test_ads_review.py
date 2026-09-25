@@ -13,7 +13,7 @@ response layout, cross-checked against two independent references:
   kernel version (3 LE DWORDs), the TwinCAT version, and later <HH> TLV blocks
   (e.g. tag 18 fingerprint = b'\\x12\\x00\\x41\\x00').
 
-The old parser walked <HH> TLV tags starting at byte 12 — i.e. it read the
+The old parser walked <HH> TLV tags starting at byte 12 - i.e. it read the
 device NetID + AMS port as its first "tag" (0xA840 / 0x6401) and swallowed the
 whole fixed header, extracting nothing on a real response. The existing unit
 test built its synthetic response as header + bare TLVs, i.e. it pinned the
@@ -39,7 +39,7 @@ def _build_realistic_identify_response(
 
     [0:4]   magic (LE)
     [4:8]   reserved
-    [8:12]  invoke/flags — byte 11 = 0x80 marks a response (pyads)
+    [8:12]  invoke/flags - byte 11 = 0x80 marks a response (pyads)
     [12:18] device AMS NetID (6 bytes)
     [18:20] device AMS port, LE (0x2710 = 10000 SystemService)
     [20:26] static block (6 bytes, content undocumented)
@@ -76,7 +76,7 @@ class TestUDPDiscoveryRealWireFormat(unittest.TestCase):
         scanner._parse_udp_response(resp[12:], device)
 
         # The device NetID sits at bytes 12-18 of the datagram (start of the
-        # slice) — it must come out as the netid, not be eaten as a fake TLV.
+        # slice) - it must come out as the netid, not be eaten as a fake TLV.
         self.assertEqual(device.get("netid"), "192.168.1.100.1.1")
 
     def test_parse_udp_response_recovers_hostname_from_fixed_header(self):

@@ -121,7 +121,7 @@ class FakeEnums:
 
 
 # ---------------------------------------------------------------------------
-# Host object that mixes in ConnectionMixin (construction only — no patching)
+# Host object that mixes in ConnectionMixin (construction only - no patching)
 # ---------------------------------------------------------------------------
 
 

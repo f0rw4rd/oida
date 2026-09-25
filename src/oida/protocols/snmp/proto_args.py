@@ -41,7 +41,7 @@ Authentication (-C):
   -u user  -a PROTOCOL  -A PASSPHRASE  -x PROTOCOL  -X PASSPHRASE  -l LEVEL
 
 SNMPv3 Brute-Force (-E, always requires --confirm):
-  -E                          discover users → brute auth → brute priv
+  -E                          discover users -> brute auth -> brute priv
   -E admin                    target single user
   -E admin -A admin123        test known credentials
   -E admin -A passwords.txt   brute with wordlist
@@ -98,7 +98,7 @@ Examples:
         choices=["auto", "1", "2c", "3"],
         default="auto",
         dest="snmp_version",
-        help="SNMP version (default: auto — probe v1/v2c/v3)",
+        help="SNMP version (default: auto - probe v1/v2c/v3)",
     )
     snmp_group.add_argument(
         "--test-write",
@@ -194,7 +194,7 @@ Examples:
         metavar="SECS",
         help="Delay between brute-force attempts in seconds (default: 0.2)",
     )
-    # Safety gate — required before any brute-force runs
+    # Safety gate - required before any brute-force runs
     snmp_parser.add_argument(
         "--confirm",
         action="store_true",
@@ -206,7 +206,7 @@ Examples:
         ),
     )
 
-    # SNMPv3 overrides — flag letters match Net-SNMP (snmpget/snmpwalk)
+    # SNMPv3 overrides - flag letters match Net-SNMP (snmpget/snmpwalk)
     v3_group = snmp_parser.add_argument_group("SNMPv3 Overrides (snmpget-compatible flags)")
     v3_group.add_argument(
         "-u",

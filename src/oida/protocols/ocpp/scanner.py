@@ -342,7 +342,7 @@ class OCPPScanner(NetworkScanner):
                 # Associate this per-probe loop with the connection it created,
                 # NOT with self._event_loop. Overwriting self._event_loop would
                 # clobber the main connection's loop, and disconnect()ing the
-                # probe would then close it — silently breaking the IdTag brute
+                # probe would then close it - silently breaking the IdTag brute
                 # pass (which runs afterwards on self.conn via self._event_loop)
                 # and leaking the original loop.
                 if not hasattr(self, "_probe_loops"):
@@ -713,7 +713,7 @@ class OCPPScanner(NetworkScanner):
                 elif (
                     isinstance(data, list) and len(data) >= 2 and data[0] == MessageType.CALLRESULT
                 ):
-                    # Heartbeat response or other CALLRESULT — ignore
+                    # Heartbeat response or other CALLRESULT - ignore
                     continue
 
         try:

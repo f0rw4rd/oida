@@ -111,7 +111,7 @@ def _run_cert_trust_scan(url: str) -> str:
     """Run the scanner's --test-cert-trust probe; return stdout.
 
     Anonymous access is rejected on these auth-enabled servers, so the main
-    auth phase fails after the pre-auth cert probe — we assert on the probe
+    auth phase fails after the pre-auth cert probe - we assert on the probe
     output (printed pre-auth) and do not require a zero return code.
     """
     result = subprocess.run(

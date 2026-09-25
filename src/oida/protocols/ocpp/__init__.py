@@ -102,7 +102,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
     ]
 
     # Flags that trigger active security probes (send commands)
-    # Ordered: least invasive → most invasive
+    # Ordered: least invasive -> most invasive
     _SECURITY_PROBE_FLAGS = [
         "test_config_write",
         "test_charging_profile",
@@ -286,7 +286,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
             self.logger.debug("Listen mode requested")
             self._enter_listen_mode()
 
-        # No specific operation flags → the basic info (version, boot,
+        # No specific operation flags -> the basic info (version, boot,
         # heartbeat) already displayed during connect is the default scan.
 
     def _dispatch_discovery(self):
@@ -333,7 +333,7 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         Requires --confirm since these send real commands to the target.
 
         Ordered from least invasive to most invasive:
-        config write → charging profile → remote start → reset → unlock → firmware
+        config write -> charging profile -> remote start -> reset -> unlock -> firmware
         """
         run_all = getattr(self.args, "security", False)
 
@@ -719,23 +719,23 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
                 code = err[1]
                 if code == 401:
                     self.logger.fail(
-                        f"{self._target_url} — HTTP 401 Unauthorized "
+                        f"{self._target_url} - HTTP 401 Unauthorized "
                         "(credentials required, use -u / -P)"
                     )
                 elif code == 403:
                     self.logger.fail(
-                        f"{self._target_url} — HTTP 403 Forbidden (invalid credentials)"
+                        f"{self._target_url} - HTTP 403 Forbidden (invalid credentials)"
                     )
                 else:
-                    self.logger.fail(f"{self._target_url} — HTTP {code}")
+                    self.logger.fail(f"{self._target_url} - HTTP {code}")
             elif isinstance(err, tuple) and err[0] == "REFUSED":
-                self.logger.fail(f"{self._target_url} — Connection refused")
+                self.logger.fail(f"{self._target_url} - Connection refused")
             elif isinstance(err, tuple) and err[0] == "TIMEOUT":
-                self.logger.fail(f"{self._target_url} — Connection timed out")
+                self.logger.fail(f"{self._target_url} - Connection timed out")
             elif isinstance(err, tuple) and err[0] == "DNS":
-                self.logger.fail(f"{self._target_url} — DNS resolution failed")
+                self.logger.fail(f"{self._target_url} - DNS resolution failed")
             elif isinstance(err, tuple) and err[0] == "OTHER":
-                self.logger.fail(f"{self._target_url} — {err[1]}")
+                self.logger.fail(f"{self._target_url} - {err[1]}")
             else:
                 self.logger.fail(f"Failed to connect to {self._target_url}")
 

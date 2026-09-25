@@ -889,7 +889,7 @@ class HostEnumerationMixin(_ScannerBase):
             pct = (used / size * 100) if size > 0 else 0
 
             # pysnmp prettyPrint yields the OID without a leading dot, but the
-            # HR_STORAGE_TYPES keys have one — normalize so the lookup hits
+            # HR_STORAGE_TYPES keys have one - normalize so the lookup hits
             # (otherwise RAM/FixedDisk/etc. never decode and show the raw OID).
             type_oid = data.get("type", "")
             type_key = "." + type_oid.lstrip(".") if type_oid else type_oid

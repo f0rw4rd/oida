@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""PoC for CVE-2019-16928 — Exim 4.92.1 heap buffer overflow in string_vformat.
+"""PoC for CVE-2019-16928 - Exim 4.92.1 heap buffer overflow in string_vformat.
 
 The bug lives in src/string.c string_vformat(): when formatting a very long
 EHLO domain into a gstring, the growth calculation underallocates and a heap
@@ -30,6 +30,7 @@ Usage:
     python3 poc_cve_2019_16928.py [host] [port] [length]
 Defaults: 127.0.0.1 18028 16000
 """
+
 import socket
 import sys
 
@@ -59,7 +60,9 @@ def run(host: str, port: int, length: int) -> None:
 
     print()
     print("[*] Now inspect the server for the sanitizer crash:")
-    print("      docker logs smtp-cve-2019-16928-real 2>&1 | grep -A30 -i 'AddressSanitizer\\|runtime error\\|string_vformat'")
+    print(
+        "      docker logs smtp-cve-2019-16928-real 2>&1 | grep -A30 -i 'AddressSanitizer\\|runtime error\\|string_vformat'"
+    )
     print("    Expect a heap-buffer-overflow / runtime error naming string_vformat (src/string.c).")
 
 

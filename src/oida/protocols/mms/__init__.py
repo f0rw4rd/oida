@@ -39,8 +39,8 @@ class _Lib:
     and MmsValue<->Python marshalling internally. Requires pyiec61850-ng
     >= 1.6.1.4, which fixed ``write_value`` (now FC-aware) and
     ``get_server_identity`` (earlier builds called a binding function that did
-    not exist). The one residual rough edge — ``read_value``'s lossy converter
-    returning a ``"<MmsValue type=N>"`` placeholder for complex/error types — is
+    not exist). The one residual rough edge - ``read_value``'s lossy converter
+    returning a ``"<MmsValue type=N>"`` placeholder for complex/error types - is
     smoothed over by ``MMSScanner._normalize_read``.
     """
 
@@ -259,7 +259,7 @@ class MMSScanner(NetworkScanner):
 
             self.logger.debug(f"Connected to IEC 61850 server at {host}:{port}")
             if tls_config is None:
-                # Confirmed MMS / IEC 61850 association over TCP — cleartext.
+                # Confirmed MMS / IEC 61850 association over TCP - cleartext.
                 self.logger.security_finding(
                     "No encryption",
                     detail="MMS / IEC 61850 transmitted in cleartext (no TLS)",
@@ -629,8 +629,8 @@ class MMSScanner(NetworkScanner):
             try:
                 # Measurements live under MX, status points under ST, and
                 # name-plate / description objects (NamPlt, PhyNam) under DC.
-                # Try them in that order so description objects — which return
-                # DATA_ACCESS_ERROR under MX/ST — are read from their real FC
+                # Try them in that order so description objects - which return
+                # DATA_ACCESS_ERROR under MX/ST - are read from their real FC
                 # instead of being dropped.
                 value = None
                 for fc in (_Lib.FC.MX, _Lib.FC.ST, _Lib.FC.DC):
@@ -720,7 +720,7 @@ class MMSScanner(NetworkScanner):
         # Objects only carry a value if a prior read pass ran (--read-values /
         # --variable). --test-write must work standalone, so read any missing
         # values on demand here (same FC cascade as _read_data_objects) before
-        # selecting writable candidates — otherwise it silently tests nothing.
+        # selecting writable candidates - otherwise it silently tests nothing.
         for do in data_objects:
             if do.get("value") is not None:
                 continue

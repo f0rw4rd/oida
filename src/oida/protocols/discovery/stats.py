@@ -317,7 +317,7 @@ class PassiveStatistics:
         # Maps normalized flow key to (server_ip, server_port, client_ip, client_port)
         self._tcp_streams: Dict[Tuple, Dict[str, Any]] = {}
 
-        # IP → MAC mapping (learned from packets)
+        # IP -> MAC mapping (learned from packets)
         self._ip_to_mac: Dict[str, str] = {}
 
         # Overall stats
@@ -351,7 +351,7 @@ class PassiveStatistics:
             pkt_len = _int(getattr(packet, "length", 0), 0)
             self.total_bytes += pkt_len
 
-            # Update timestamp — EK mode may return ISO 8601 strings
+            # Update timestamp - EK mode may return ISO 8601 strings
             now = datetime.now()
             if hasattr(packet, "sniff_timestamp"):
                 ts = _str(packet.sniff_timestamp, "")
@@ -656,7 +656,7 @@ class PassiveStatistics:
         if not src_ip or not dst_ip:
             return
 
-        # Learn IP → MAC mapping
+        # Learn IP -> MAC mapping
         if hasattr(packet, "eth"):
             src_mac = _str(getattr(packet.eth, "src", None)).lower()
             dst_mac = _str(getattr(packet.eth, "dst", None)).lower()
@@ -699,15 +699,15 @@ class PassiveStatistics:
                 src_is_server = _is_server_port(src_port, transport)
                 dst_is_server = _is_server_port(dst_port, transport)
                 if dst_is_server and not src_is_server:
-                    # Dst is server, src is client → client=src, server=dst
+                    # Dst is server, src is client -> client=src, server=dst
                     client_ip, client_port = src_ip, src_port
                     server_ip, server_port = dst_ip, dst_port
                 elif src_is_server and not dst_is_server:
-                    # Src is server, dst is client → client=dst, server=src
+                    # Src is server, dst is client -> client=dst, server=src
                     client_ip, client_port = dst_ip, dst_port
                     server_ip, server_port = src_ip, src_port
                 else:
-                    # Both or neither are servers — use first packet direction
+                    # Both or neither are servers - use first packet direction
                     client_ip, client_port = src_ip, src_port
                     server_ip, server_port = dst_ip, dst_port
                 self.ip_conversations[key] = Conversation(
@@ -1203,7 +1203,7 @@ class PassiveStatistics:
 
         # Compute display-only gap nodes for unaccounted packets.
         # E.g. TCP may have 40 packets but children (HTTP, TLS, ...) sum to 3.
-        # The remaining 37 are control/unclassified segments — show them explicitly.
+        # The remaining 37 are control/unclassified segments - show them explicitly.
         display_counts: Dict[str, ProtocolCount] = dict(self.protocol_counts)
 
         for parent_name in list(children.keys()):

@@ -317,6 +317,6 @@ def no_credential_leak(request, capsys, monkeypatch):
                         leaks.append(f"{source}: {line!r}")
     if leaks:
         pytest.fail(
-            "Credential leak detected — sentinel(s) appeared in captured "
+            "Credential leak detected - sentinel(s) appeared in captured "
             "log / stdout / stderr:\n  " + "\n  ".join(leaks[:20])
         )

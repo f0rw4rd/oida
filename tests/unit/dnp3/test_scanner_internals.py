@@ -13,8 +13,8 @@ that ``test_scanner.py`` (mostly init/validation) does not exercise:
 - ``discover`` orchestration dispatch
 
 Only the opendnp3 *master/manager* objects (the network-facing library) are
-mocked. The scanner's own logic — task waiting, IIN decoding, result strings,
-dispatch — runs for real, against the real opendnp3 enums/IINField where it
+mocked. The scanner's own logic - task waiting, IIN decoding, result strings,
+dispatch - runs for real, against the real opendnp3 enums/IINField where it
 helps.
 """
 

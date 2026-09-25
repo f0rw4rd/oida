@@ -10,7 +10,7 @@ Three layers are covered, matching where the feature lives:
     serial and interface targets.
 
 Nothing is mocked except the protocol class handed to scan_target, which is a
-plain recorder — the splitting logic under test runs unmodified.
+plain recorder - the splitting logic under test runs unmodified.
 """
 
 from argparse import Namespace

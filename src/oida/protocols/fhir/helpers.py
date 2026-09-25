@@ -148,5 +148,5 @@ def validate_credential_path(file_path: str) -> str:
         raise ValueError(f"Path traversal blocked: '{file_path}' contains '..'")
 
     # Realpath fully canonicalizes the path, so a post-resolve '..' check can
-    # never fire — the pre-normpath check above is the real traversal guard.
+    # never fire - the pre-normpath check above is the real traversal guard.
     return os.path.realpath(file_path)

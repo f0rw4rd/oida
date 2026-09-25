@@ -46,7 +46,7 @@ class TestCountWritableAttrs(unittest.TestCase):
     def test_old_bug_does_not_recur(self):
         """4 classes × len(class dict)=2 used to report 8 writable attrs."""
         write_test = {str(c): {"class_attributes": {}, "instances": {}} for c in range(4)}
-        # All four classes empty → zero writables. Old code returned 8.
+        # All four classes empty -> zero writables. Old code returned 8.
         self.assertEqual(_count_writable_attrs(write_test), 0)
 
     def test_handles_missing_keys_gracefully(self):
@@ -71,13 +71,13 @@ class TestAccessControlVerdict(unittest.TestCase):
         )
 
     def test_unknown_when_no_write_test_run(self):
-        """Old bug: len(write_test_results)==0 → access_control=True
+        """Old bug: len(write_test_results)==0 -> access_control=True
         on every scan that didn't use --write. Now None=unknown."""
         from oida.protocols.ethernetip.mixins.security_analysis import (
             _count_writable_attrs,
         )
 
-        # Simulate the verdict logic from analyse(): empty dict → None.
+        # Simulate the verdict logic from analyse(): empty dict -> None.
         write_test_results = {}
         if not write_test_results:
             verdict = None
@@ -102,7 +102,7 @@ class TestAccessControlVerdict(unittest.TestCase):
 
 class TestAttackCommandNoResponseIsInconclusive(unittest.TestCase):
     """No response / timeout on an attack payload must not be reported as
-    success — the caller must be told the outcome is unknown."""
+    success - the caller must be told the outcome is unknown."""
 
     def _make_mixin(self, sock):
         from unittest.mock import MagicMock

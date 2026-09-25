@@ -11,7 +11,7 @@ License: AGPL-3.0-or-later
 from typing import Dict
 from oida.utils.vendor_maps import ethercat_vendor_ids as vendor_ids
 
-# Canonical CoE definitions live in coe.py — re-export for backward compat
+# Canonical CoE definitions live in coe.py - re-export for backward compat
 from oida.protocols.ethercat.coe import get_al_state_name as get_slave_state_name  # noqa: F401
 
 # AL Status Codes (ETG.1000.6)
@@ -112,7 +112,7 @@ PORT_TYPES: Dict[int, str] = {
 }
 
 
-# ESC Register Map (address → name, size in bytes)
+# ESC Register Map (address -> name, size in bytes)
 # Matches registers from _dump_esc_registers() for ADS bridge access via ig=0xF300
 ESC_REGISTER_MAP: Dict[int, tuple] = {
     0x0000: ("Type", 1),

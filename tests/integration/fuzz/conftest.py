@@ -65,7 +65,7 @@ def run_fuzz_with_timeout(func, timeout_seconds=30):
 def run_fuzz_capture(fuzzer, timeout_seconds=60):
     """Run ``fuzzer.fuzz_all()`` and return the result dict **without** raising.
 
-    Unlike ``run_fuzz_with_timeout`` this never raises — the caller inspects
+    Unlike ``run_fuzz_with_timeout`` this never raises - the caller inspects
     the returned dict to decide what happened.  Used by crash-detection tests
     that need the thread reference for ``is_alive()`` checks.
 

@@ -134,7 +134,7 @@ def _netid_to_bytes(netid_str: str) -> bytes:
 
 
 class ADSMonitor:
-    """ADS health monitor — sends READ_STATE and promotes ADS error codes to crash events.
+    """ADS health monitor - sends READ_STATE and promotes ADS error codes to crash events.
 
     Lazy-loaded subclass of ProtocolMonitor so we don't pull boofuzz/monitors at
     module import time. Sends ADS READ_STATE (cmd 0x0004) and inspects the
@@ -393,7 +393,7 @@ class ADSFuzzer(BaseFuzzer):
                 "protocol",
                 requires_state="CONNECTED",
             ),
-            # ADS-Discovery (UDP/48899) — stateless router-discovery datagrams.
+            # ADS-Discovery (UDP/48899) - stateless router-discovery datagrams.
             # Run the ADS fuzzer against port 48899 to transport these over UDP.
             RequestInfo(
                 "ADS_Discovery_Malformed",
@@ -1580,7 +1580,7 @@ class ADSFuzzer(BaseFuzzer):
         # PHASE 5b: PORT ENUMERATION & BULK OPS (ref/ads/cve_patterns.json)
         # ============================================================
 
-        # ADS_Port_Enumeration — cycle Beckhoff logical AMS ports on the READ
+        # ADS_Port_Enumeration - cycle Beckhoff logical AMS ports on the READ
         # command. Per-port parsers differ (851 PLC vs. 350 SystemService etc.)
         # so this catches parser_oob bugs that only fire on specific ports.
         # ref/ads/cve_patterns.json#ads-port-enumeration
@@ -1639,7 +1639,7 @@ class ADSFuzzer(BaseFuzzer):
             ),
         )
 
-        # ADS_SumReadWrite — Beckhoff bulk-op. Wraps a SumUp ReadWrite over the
+        # ADS_SumReadWrite - Beckhoff bulk-op. Wraps a SumUp ReadWrite over the
         # READ_WRITE command with a fuzzable SubCommandCount field. Targets
         # parsers that trust the count and walk the sub-request array.
         # ref/ads/cve_patterns.json#ads-sumcommand
@@ -1927,7 +1927,7 @@ class ADSFuzzer(BaseFuzzer):
         )
 
         # ============================================================
-        # ADS-DISCOVERY (UDP/48899) — router-discovery datagram fuzzing
+        # ADS-DISCOVERY (UDP/48899) - router-discovery datagram fuzzing
         # These encode the Beckhoff ADS/AMS discovery format (magic cookie,
         # type, sender NetId+port, TLV-block count, TLV blocks). They are
         # stateless; run the fuzzer against port 48899 so _create_socket()
@@ -1938,7 +1938,7 @@ class ADSFuzzer(BaseFuzzer):
         _disc_magic = struct.pack("<I", ADSDiscovery.MAGIC)
         _disc_sender_port = struct.pack("<H", ADSDiscovery.ROUTER_PORT)
 
-        # D1. Malformed discovery datagram — bad magic cookie / truncated header.
+        # D1. Malformed discovery datagram - bad magic cookie / truncated header.
         # A short or mis-cookied datagram is the CVE-2019-5636 service-shutdown
         # class (malformed UDP packet kills the ADS Discovery Service).
         ads_discovery_malformed = Request(
@@ -1956,9 +1956,9 @@ class ADSFuzzer(BaseFuzzer):
                                 + source_netid
                                 + _disc_sender_port
                                 + struct.pack("<I", 0),
-                                # Magic only — request type + sender fields truncated
+                                # Magic only - request type + sender fields truncated
                                 _disc_magic,
-                                # Magic + type — sender NetId/port/count all cut
+                                # Magic + type - sender NetId/port/count all cut
                                 _disc_magic + struct.pack("<I", ADSDiscovery.REQUEST),
                                 # Magic + type + partial NetId (3 of 6 bytes)
                                 _disc_magic
@@ -1981,7 +1981,7 @@ class ADSFuzzer(BaseFuzzer):
             ),
         )
 
-        # D2. TLV length overflow — declared TLV length Word larger than the value
+        # D2. TLV length overflow - declared TLV length Word larger than the value
         # bytes present, plus oversized route-name values. CVE-2011-3486 OOB-read
         # class (crafted discovery request walks past the datagram end).
         ads_discovery_tlv_overflow = Request(
@@ -2021,7 +2021,7 @@ class ADSFuzzer(BaseFuzzer):
             ),
         )
 
-        # D3. TLV-block count lie — the count DWord disagrees with the single TLV
+        # D3. TLV-block count lie - the count DWord disagrees with the single TLV
         # block actually present (0, 0xFFFFFFFF, and counts > blocks present).
         ads_discovery_count_lie = Request(
             "ADS_Discovery_Count_Lie",

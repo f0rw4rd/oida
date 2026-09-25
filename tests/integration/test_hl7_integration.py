@@ -3133,7 +3133,7 @@ def _dummy_tcp_server():
 
     Safety: binds only to 127.0.0.1 on an ephemeral port. It provides a
     "TCP connects but is not an HL7 endpoint" target for the connection-1
-    false-positive regression below — it never touches a real device or external
+    false-positive regression below - it never touches a real device or external
     network. Accepted sockets are held open and silent so the MLLP query never
     receives an HL7 ACK.
     """
@@ -3182,7 +3182,7 @@ class TestHL7P1FalsePositiveRegression:
     valid HL7 message (an MSH segment) and gates success=False otherwise.
 
     Safety: targets only a local in-process dummy TCP server bound to 127.0.0.1
-    and a closed local port — never a real device or external network.
+    and a closed local port - never a real device or external network.
     """
 
     def _read_result_payload(self, out_dir, result):

@@ -36,7 +36,7 @@ class Crash:
 
     ``crash_hash`` is a stable short signature derived from
     ``(crash_info, stack_trace top frame)`` used by triage tooling to GROUP
-    duplicate crashes together. Set by the storage layer at write time —
+    duplicate crashes together. Set by the storage layer at write time -
     callers can leave it unset.
     """
 
@@ -116,7 +116,7 @@ class DatabaseInterface(ABC):
         Pass ``None`` to return everything (replay / forensic paths).
 
         Ordering: rows MUST be returned newest-first (``timestamp`` descending,
-        ties broken by preserving insertion order — i.e. a stable sort). All
+        ties broken by preserving insertion order - i.e. a stable sort). All
         backends must agree on this ordering: since ``limit`` truncates the
         result set, two backends that disagree on order would return disjoint
         subsets of the data on large (>``limit``) sessions.
@@ -158,8 +158,8 @@ class DatabaseInterface(ABC):
     def get_stats(self) -> Dict[str, Any]:
         """Get session statistics.
 
-        Every implementation MUST include at least this key set (callers —
-        e.g. ``TestCaseManager.list_test_cases()`` — read these without a
+        Every implementation MUST include at least this key set (callers -
+        e.g. ``TestCaseManager.list_test_cases()`` - read these without a
         ``.get()`` fallback, so a missing key raises ``KeyError``):
 
         - ``total_test_cases``: int
@@ -172,6 +172,6 @@ class DatabaseInterface(ABC):
         - ``db_size_mb``: float, database size in MB (0.0 if N/A)
 
         Implementations may return additional backend-specific keys, but
-        must never omit the ones above — see
+        must never omit the ones above - see
         ``tests/unit/fuzz/test_database_backend_parity.py``.
         """

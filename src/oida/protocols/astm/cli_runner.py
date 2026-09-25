@@ -26,7 +26,7 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
     # 12000 is the most common ASTM/LIS instrument port (Sysmex/Abbott default).
     # Other vendors use 5000 (Roche), 6000 (Beckman Coulter), 9100 (Siemens).
     # The previous default (1394) was a misread of the ASTM "E1394" standard
-    # name — IEEE-1394 is FireWire, not ASTM. Override with --port for the
+    # name - IEEE-1394 is FireWire, not ASTM. Override with --port for the
     # vendor-specific value when needed.
     default_port = 12000
 
@@ -48,7 +48,7 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
 
         # Create connection
         if not self.create_conn_obj():
-            # Closed/refused port is not an ASTM device — do not report success.
+            # Closed/refused port is not an ASTM device - do not report success.
             self.results["success"] = False
             self.results.setdefault("error", "Connection failed")
             return
@@ -74,7 +74,7 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
         if getattr(self.args, "send_patient", False):
             if self.require_confirm(
                 "--send-patient",
-                detail="--send-patient injects forged Patient demographics into the LIS — "
+                detail="--send-patient injects forged Patient demographics into the LIS - "
                 "requires --confirm",
             ):
                 self._send_patient_record()
@@ -159,7 +159,7 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
             self.results["data"]["tls_enabled"] = use_tls
             return True
 
-        except Exception as e:  # noqa: BLE001 — report any connect failure and move to the next host
+        except Exception as e:  # noqa: BLE001 - report any connect failure and move to the next host
             self.logger.debug("create conn obj failed: %s", e)
             if isinstance(e, TimeoutError):
                 self.logger.fail("Connection timed out")

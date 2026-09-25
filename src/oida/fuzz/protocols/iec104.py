@@ -273,7 +273,7 @@ class IEC104StateMachine:
         # Explicit transition table for the IEC 104 connection lifecycle.
         # `requires` only encodes the forward chain; without these rules the
         # legal reverse/teardown edges (STOPDT, disconnect) are not modelled, so
-        # can_transition() would reject them — e.g. the unforced
+        # can_transition() would reject them - e.g. the unforced
         # require_state("CONNECTED") that StatefulFuzzer issues from
         # DATA_TRANSFER. allow_invalid_transitions stays True (a fuzzer must be
         # able to send APDUs in any state), but the table keeps the model
@@ -735,7 +735,7 @@ def create_info_object_setpoint_float(ioa: int, value: float, ql: int, se: int):
 def create_info_object_bitstring_command(ioa: int, bitstring: int, se: int = 0):
     """Create bitstring command (C_BO_NA_1) information object.
 
-    The info element is BSI (32-bit binary state, 4 octets) only — C_BO carries
+    The info element is BSI (32-bit binary state, 4 octets) only - C_BO carries
     no qualifier octet, so the trailing byte was over-running the ASDU. ``se`` is
     accepted but ignored for call-site compatibility.
     """
@@ -1090,7 +1090,7 @@ class IEC104Fuzzer(StatefulFuzzer):
 
         # Transition the state machine to DATA_TRANSFER. The IEC104SocketConnection
         # performs the STARTDT_ACT / STARTDT_CON handshake before any boofuzz Request
-        # is sent — so by the time the fuzzer runs its sequence, the protocol is
+        # is sent - so by the time the fuzzer runs its sequence, the protocol is
         # already in DATA_TRANSFER. Without this transition, every Request tagged
         # ``requires_state="DATA_TRANSFER"`` would be incorrectly blocked.
         # (Audit finding B8, fixed 1.0.)
@@ -1181,7 +1181,7 @@ class IEC104Fuzzer(StatefulFuzzer):
         # explicit `--enable <group>` whitelist must also pull them in (otherwise the
         # advertised group can never be fuzzed in isolation). is_request_enabled() is
         # not enough: it returns True for everything on a default run, which would turn
-        # these opt-in groups on by default — so check explicit whitelist membership.
+        # these opt-in groups on by default - so check explicit whitelist membership.
         def _explicitly_enabled(group: str) -> bool:
             return self._enabled_requests is not None and group in self._enabled_requests
 

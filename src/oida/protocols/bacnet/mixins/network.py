@@ -147,7 +147,7 @@ class NetworkMixin:
             self.remote_networks = []
 
         # Probe for network-port objects (type 56). The port count is derived
-        # from the objects we actually find — bacpypes3 has no
+        # from the objects we actually find - bacpypes3 has no
         # 'numberOfNetworkPorts' PropertyIdentifier to read directly.
         self.logger.display("  Probing for network-port objects...")
         network_ports = []
@@ -408,11 +408,11 @@ class NetworkMixin:
                 response = await asyncio.wait_for(app.request(request), timeout=min(timeout, 3.0))
 
                 if response is None:
-                    # No reply on UDP is INDETERMINATE — could be silent accept,
+                    # No reply on UDP is INDETERMINATE - could be silent accept,
                     # could be a filter, could be packet loss. Don't emit a
                     # CRITICAL security_finding on absence of evidence.
                     self.logger.debug(
-                        "  Foreign device registration: no reply (inconclusive — "
+                        "  Foreign device registration: no reply (inconclusive - "
                         "target may have accepted silently or filtered the BVLL "
                         "Register-Foreign-Device PDU)"
                     )
@@ -449,7 +449,7 @@ class NetworkMixin:
                     # No reply on UDP is INDETERMINATE. Do not emit a
                     # security_finding on absence of evidence.
                     self.logger.debug(
-                        "  BBMD BDT write: no reply (inconclusive — could be "
+                        "  BBMD BDT write: no reply (inconclusive - could be "
                         "silent accept, filter, or packet loss)"
                     )
                 elif hasattr(response, "bvlciResultCode"):
@@ -701,7 +701,7 @@ class NetworkMixin:
             return
 
         self.logger.success(
-            f"    Found {len(mstp_ports)} MS/TP port(s) — proceeding with segment discovery"
+            f"    Found {len(mstp_ports)} MS/TP port(s) - proceeding with segment discovery"
         )
 
         # ══════════════════════════════════════════════════════════════════════
@@ -857,7 +857,7 @@ class NetworkMixin:
                                 f" maxAPDU={max_apdu})"
                             )
                     except asyncio.TimeoutError as e:
-                        # No device at this address — expected for most addresses
+                        # No device at this address - expected for most addresses
                         self.logger.debug(f"read bytes failed: {e}")
                         continue
                     except Exception as e:
@@ -892,7 +892,7 @@ class NetworkMixin:
             remote_device_id = dev_info.get("deviceId")
             if remote_device_id is None:
                 self.logger.display(
-                    f"    {net_num}:{mac_addr} — skipping enumeration (no device ID)"
+                    f"    {net_num}:{mac_addr} - skipping enumeration (no device ID)"
                 )
                 continue
 
@@ -968,7 +968,7 @@ class NetworkMixin:
                 self.logger.display(f"      maxApduLengthAccepted: {max_apdu}")
                 if max_apdu < 480:
                     self.logger.display(
-                        f"        Note: Small APDU limit ({max_apdu}) — "
+                        f"        Note: Small APDU limit ({max_apdu}) - "
                         f"typical for constrained MS/TP devices"
                     )
 
@@ -987,7 +987,7 @@ class NetworkMixin:
                 dev_info["segmentationSupported"] = seg_name
                 self.logger.display(f"      segmentationSupported: {seg_name}")
                 if seg_val == 3:
-                    self.logger.display("        Note: No segmentation — large reads will fail")
+                    self.logger.display("        Note: No segmentation - large reads will fail")
 
             # Read description
             description = await _read_string(
@@ -1079,7 +1079,7 @@ class NetworkMixin:
         # Check: MS/TP networks have no authentication
         if mstp_ports:
             security_findings.append(
-                "MS/TP segments have no built-in authentication — "
+                "MS/TP segments have no built-in authentication - "
                 "any device on the RS-485 bus can participate"
             )
 
@@ -1088,7 +1088,7 @@ class NetworkMixin:
             sp = port.get("slaveProxyEnable")
             if sp:
                 security_findings.append(
-                    f"Port {port['instance']} ({port['name']}): slaveProxyEnable=True — "
+                    f"Port {port['instance']} ({port['name']}): slaveProxyEnable=True - "
                     f"router proxies for slave devices, potential pivot point for "
                     f"IP-to-MS/TP attacks"
                 )
@@ -1105,7 +1105,7 @@ class NetworkMixin:
                     )
                 security_findings.append(
                     f"Port {port['instance']} ({port['name']}): maxMaster={mm} "
-                    f"but only {actual_devices} device(s) found — "
+                    f"but only {actual_devices} device(s) found - "
                     f"reducing maxMaster limits token-passing exposure"
                 )
 
@@ -1113,7 +1113,7 @@ class NetworkMixin:
         if all_mstp_devices:
             security_findings.append(
                 f"{len(all_mstp_devices)} MS/TP device(s) respond to Who-Is from "
-                f"remote (IP) network — no network-level isolation"
+                f"remote (IP) network - no network-level isolation"
             )
 
         # Check: Constrained devices (small APDU / no segmentation)
@@ -1123,13 +1123,13 @@ class NetworkMixin:
             if max_apdu is not None and max_apdu < 128:
                 security_findings.append(
                     f"Device {dev_info.get('deviceId', '?')} at {net_num}:{mac_addr}: "
-                    f"very small APDU limit ({max_apdu} bytes) — highly constrained, "
+                    f"very small APDU limit ({max_apdu} bytes) - highly constrained, "
                     f"may be vulnerable to oversized-PDU attacks"
                 )
             if seg and "no-segmentation" in str(seg):
                 dev_label = dev_info.get("objectName", f"device {dev_info.get('deviceId', '?')}")
                 security_findings.append(
-                    f"{dev_label} at {net_num}:{mac_addr}: no segmentation support — "
+                    f"{dev_label} at {net_num}:{mac_addr}: no segmentation support - "
                     f"cannot handle fragmented requests"
                 )
 

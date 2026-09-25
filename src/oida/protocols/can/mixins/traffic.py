@@ -74,7 +74,7 @@ class TrafficMixin:
 
             arb_id = msg.arbitration_id
 
-            # Apply ID filter if set — restrict the capture to matching IDs.
+            # Apply ID filter if set - restrict the capture to matching IDs.
             if self.id_filter and arb_id not in self.id_filter:
                 continue
 

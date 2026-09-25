@@ -96,8 +96,8 @@ class WriteTestMixin(_ScannerBase):
             if result is None:
                 return (False, -1, [])
 
-            # pycomm3's Tag exposes only tag/value/type/error — there is no
-            # service_status / extended_status field — so derive the CIP status
+            # pycomm3's Tag exposes only tag/value/type/error - there is no
+            # service_status / extended_status field - so derive the CIP status
             # from the error string. (The old getattr(result, "service_status")
             # was always None and getattr(..., "extended_status") always [].)
             error_str = str(getattr(result, "error", "") or "")
@@ -145,9 +145,9 @@ class WriteTestMixin(_ScannerBase):
         # Write-test with error interpretation. Requires --write AND --confirm
         # AND a non-empty value to write back. The write-test issues a LIVE CIP
         # Set_Attribute_Single (service 0x10) to the device, so it MUST be gated
-        # on --confirm here — this is the actual mutating call site, and the
+        # on --confirm here - this is the actual mutating call site, and the
         # scanner-level confirm check only guards the post-hoc summarizer.
-        # WITHOUT --write/--confirm we have no signal at all — return "R?" to
+        # WITHOUT --write/--confirm we have no signal at all - return "R?" to
         # surface that to the operator rather than the silent "?" which looked
         # like a real verdict.
         if self.test_write and getattr(self, "confirm", False) and value:
@@ -161,7 +161,7 @@ class WriteTestMixin(_ScannerBase):
                 return perm
             return "R?"
 
-        # No permission info available — be honest: we never tried to
+        # No permission info available - be honest: we never tried to
         # detect writability, don't pretend the attribute is read-only.
         return "R?"
 

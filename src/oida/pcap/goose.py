@@ -459,7 +459,7 @@ class GOOSEPassiveListener(PySharkListenerBase):
         test = d.get("test", False)
         test_str = "YES" if test else ""
 
-        # Values — show all, no truncation; use " | " to avoid CSV ambiguity
+        # Values - show all, no truncation; use " | " to avoid CSV ambiguity
         values = d.get("values", [])
         val_str = " | ".join(values) if isinstance(values, list) else ""
 

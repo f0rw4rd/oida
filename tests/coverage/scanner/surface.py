@@ -10,7 +10,7 @@ the candidate list for a protocol, run::
     grep -rhE 'self\\.results\\["data"\\]\\["[^"]+"\\]' src/oida/protocols/<proto>/
 
 and prune to keys that a fully-flagged scan would actually exercise. The
-goal is a *reasonable* surface — not "every key the code touches if
+goal is a *reasonable* surface - not "every key the code touches if
 every flag is set" (some are mutually exclusive).
 """
 

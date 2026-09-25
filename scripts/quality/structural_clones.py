@@ -187,7 +187,7 @@ def main() -> int:
             known = {c["id"] for c in json.load(open(args.baseline, encoding="utf-8"))["clusters"]}
         except (OSError, KeyError, ValueError):
             print(
-                f"baseline {args.baseline} unreadable — run with --json to create it",
+                f"baseline {args.baseline} unreadable - run with --json to create it",
                 file=sys.stderr,
             )
             return 2
@@ -196,7 +196,7 @@ def main() -> int:
             failed = True
             print(f"FAIL: {len(new)} new clone cluster(s) not in baseline:", file=sys.stderr)
             for r in new:
-                print(f"  [{r['id']}] {r['members']} copies — {r['sites'][0]}", file=sys.stderr)
+                print(f"  [{r['id']}] {r['members']} copies - {r['sites'][0]}", file=sys.stderr)
 
     if args.fail_over is not None and total > args.fail_over:
         failed = True

@@ -113,7 +113,7 @@ class EnipCommandsMixin(_ScannerBase):
 
         return result
 
-    # TODO: Raw socket ENIP command layer — consider wrapping with cpppo's
+    # TODO: Raw socket ENIP command layer - consider wrapping with cpppo's
     # client.connector or pycomm3's CIPDriver for session/connection management
     # instead of manual packet construction + bare socket send/recv.
     def _send_enip_command(

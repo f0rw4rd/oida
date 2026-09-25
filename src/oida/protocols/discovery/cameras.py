@@ -33,10 +33,10 @@ from typing import Any, Dict, Optional
 
 try:
     # Hikvision SADP ProbeMatch XML comes straight off the wire from untrusted
-    # devices — parse it with defusedxml to block XXE / XML-bomb attacks (same
+    # devices - parse it with defusedxml to block XXE / XML-bomb attacks (same
     # policy as ssdp.py). defusedxml.ElementTree re-exports ParseError.
     from defusedxml import ElementTree
-except ImportError as _cam_xml_err:  # pragma: no cover — release-checked dep
+except ImportError as _cam_xml_err:  # pragma: no cover - release-checked dep
     raise ImportError(
         "Camera SADP parsing requires defusedxml to protect against XXE / XML-bomb "
         "attacks on untrusted device responses. Install with: pip install oida-ics[discovery]"
@@ -72,7 +72,7 @@ class HikvisionSADPScanner:
         BootTime, Activated, PasswordResetAbility, ...
 
     OT-safety: the discovery exchange is read-only. NOTE: SADP is a documented
-    UDP reflection/amplification vector (~8:1) — we send a single multicast
+    UDP reflection/amplification vector (~8:1) - we send a single multicast
     probe (no resend) and never spoof the source.
     """
 
@@ -246,7 +246,7 @@ class DahuaDHDiscoverScanner:
                                     "DhcpEnable"}, ...}}}
 
     OT-safety: read-only. NOTE: UDP 37810 is a documented reflection/
-    amplification vector — single multicast probe, no resend, no source spoof.
+    amplification vector - single multicast probe, no resend, no source spoof.
     """
 
     MULTICAST_ADDR = "239.255.255.251"

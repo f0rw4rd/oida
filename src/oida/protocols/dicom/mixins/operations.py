@@ -262,7 +262,7 @@ class OperationsMixin(_ScannerBase):
         try:
             # Use StudyRoot C-GET (event handler was bound at association time).
             # This retrieve is keyed by Study/Series UID with no PatientID, and
-            # many StudyRoot-only PACS reject PatientRoot outright — mirrors the
+            # many StudyRoot-only PACS reject PatientRoot outright - mirrors the
             # model selection cfind.py uses for STUDY/SERIES queries.
             responses = self.assoc.send_c_get(
                 ds,
@@ -302,7 +302,7 @@ class OperationsMixin(_ScannerBase):
         if not self.require_confirm(
             "--store",
             detail="--store performs C-STORE upload (writes DICOM files into the PACS) "
-            "— requires --confirm",
+            "- requires --confirm",
         ):
             return
         if not self.assoc or not self.assoc.is_established:
@@ -383,7 +383,7 @@ class OperationsMixin(_ScannerBase):
         if not self.require_confirm(
             "--move",
             detail="--move issues C-MOVE to --dest-aet (PHI exfiltration primitive) "
-            "— requires --confirm",
+            "- requires --confirm",
         ):
             return
         if not self.assoc or not self.assoc.is_established:

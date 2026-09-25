@@ -67,7 +67,7 @@ class FuzzMixin(_ScannerBase):
         """Fuzz registers with various payloads."""
         # Default to "0-10" when -r/--scan-range isn't given: argparse always
         # sets the attribute (None when absent), so getattr's default never
-        # applies — same pattern as writes.py's test-write handler.
+        # applies - same pattern as writes.py's test-write handler.
         scan_range = getattr(self.args, "scan_range", None) or "0-10"
         decode_type = getattr(self.args, "decode", None)
 

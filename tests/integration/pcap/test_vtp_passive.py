@@ -11,8 +11,8 @@ class TestVTPPassiveEK:
     """VTP-specific tests using tranalyzer_vtp.pcap.
 
     Pcap contents (13 frames, 2 switches):
-      - 00:22:be:82:71:09 — VTP server, domain "CautionThisIsSparta", rev 5→6
-      - 00:11:93:1e:52:97 — VTP client, same domain
+      - 00:22:be:82:71:09 - VTP server, domain "CautionThisIsSparta", rev 5->6
+      - 00:11:93:1e:52:97 - VTP client, same domain
       - Message types: Summary (0x01), Subset (0x02), Advertisement Request (0x03)
       - Subset ads contain 7 VLANs: default(1), Fnord(23), ThisIsSparta(42),
         fddi-default(1002), trcrf-default(1003), fddinet-default(1004),

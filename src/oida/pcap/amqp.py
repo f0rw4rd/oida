@@ -443,7 +443,7 @@ class AMQPPassiveListener(PySharkListenerBase):
         ``b'...'`` repr in EK mode. The raw SASL PLAIN payload is the binary
         form ``\\x00authcid\\x00passwd`` (authzid is usually empty), so we
         convert the rendering to raw bytes and split on the NUL separators
-        directly — never base64-decode it.
+        directly - never base64-decode it.
         """
         if not response:
             return "", ""

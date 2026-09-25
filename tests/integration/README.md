@@ -42,12 +42,12 @@ pytest tests/integration/pcap      # PCAP listener integration tests
 
 ## Test Categories
 
-### 🔌 Connectivity Tests
+### Connectivity Tests
 - Verify all mock services are responsive
 - Test basic TCP/UDP connectivity
 - Validate Docker container health
 
-### 🛠️ Protocol Scanner Tests
+### Protocol Scanner Tests
 - **Modbus TCP**: Device info, registers, coils discovery
 - **OPC UA**: Server info, namespaces, nodes discovery  
 - **IEC 104**: Data points, interrogation, ASDU handling
@@ -55,12 +55,12 @@ pytest tests/integration/pcap      # PCAP listener integration tests
 - **MMS/IEC 61850**: Logical devices, nodes, data objects
 - **EtherNet/IP**: Identity, classes, attributes discovery
 
-### ⚡ Concurrency Tests
+### Concurrency Tests
 - Multiple simultaneous connections
 - Rapid successive connections
 - Service stability under load
 
-### 🚀 Performance Tests
+### Performance Tests
 - Response time measurements
 - Throughput testing
 - Resource usage validation
@@ -161,13 +161,13 @@ OIDA Mock Services Integration Tests
 ==========================================
 
 Testing MODBUS scanner...
-  ✅ MODBUS test passed
+  [OK] MODBUS test passed
 
 Testing OPC UA scanner...
-  ✅ OPC UA test passed
+  [OK] OPC UA test passed
 
 Testing IEC 104 scanner...
-  ✅ IEC 104 test passed
+  [OK] IEC 104 test passed
 
 ...
 
@@ -371,7 +371,7 @@ test-newprotocol:
 
 ## Security Considerations
 
-⚠️ **Test Environment Only**: These tests use mock services without authentication or encryption. Never run against production systems.
+**Test Environment Only**: These tests use mock services without authentication or encryption. Never run against production systems.
 
 - All mock services accept anonymous connections
 - No data validation or sanitization

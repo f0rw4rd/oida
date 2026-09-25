@@ -6,9 +6,9 @@ removing ~84% of irrelevant test cases (XSS, command injection, etc.) while keep
 payloads useful for finding protocol implementation bugs.
 
 Reduction summary:
-- Fuzz library: 109 → 27 payloads (75% reduction)
-- Long strings: 1,680 → 480 combinations (71% reduction)
-- Total per field: ~1,789 → ~507 test cases (72% reduction)
+- Fuzz library: 109 -> 27 payloads (75% reduction)
+- Long strings: 1,680 -> 480 combinations (71% reduction)
+- Total per field: ~1,789 -> ~507 test cases (72% reduction)
 """
 
 import logging
@@ -283,7 +283,7 @@ def get_reduction_stats():
     _log.display(f"  Total per field: {red_total}")
 
     _log.display(
-        f"\nReduction: {orig_total} → {red_total} ({100 - red_total * 100 // orig_total}% reduction)"
+        f"\nReduction: {orig_total} -> {red_total} ({100 - red_total * 100 // orig_total}% reduction)"
     )
     _log.display(f"Speed improvement: ~{orig_total // red_total}x faster\n")
 

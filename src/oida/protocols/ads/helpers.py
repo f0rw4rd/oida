@@ -90,7 +90,7 @@ def _read_coe_sdo(conn, index, subindex):
     ig = 0xF302
     offset = encode_sdo_offset(index, subindex)
 
-    # 1-byte probe — if the object doesn't exist this throws
+    # 1-byte probe - if the object doesn't exist this throws
     try:
         _read_raw(conn, ig, offset, 1)
     except Exception as e:
@@ -191,12 +191,12 @@ def _read_write_raw(conn, index_group, index_offset, read_size, write_data):
 
 
 def _is_ads_timeout(err_str):
-    """ADS error 1861 or generic timeout — endpoint didn't respond."""
+    """ADS error 1861 or generic timeout - endpoint didn't respond."""
     return "1861" in err_str or "timeout" in err_str.lower()
 
 
 def _is_ads_conn_broken(err_str):
-    """Broken TCP connection — AMS router dropped us."""
+    """Broken TCP connection - AMS router dropped us."""
     return (
         "(-1)" in err_str
         or "reset" in err_str.lower()
@@ -206,12 +206,12 @@ def _is_ads_conn_broken(err_str):
 
 
 def _is_ads_port_not_found(err_str):
-    """ADS error 24 = 'Invalid AMS port' — router confirms no service."""
+    """ADS error 24 = 'Invalid AMS port' - router confirms no service."""
     return "(24)" in err_str or "invalid ams port" in err_str.lower()
 
 
 def _is_ads_real_error(err_str):
-    """Non-timeout, non-broken ADS error — endpoint exists and answered."""
+    """Non-timeout, non-broken ADS error - endpoint exists and answered."""
     return not _is_ads_timeout(err_str) and not _is_ads_conn_broken(err_str)
 
 
@@ -240,9 +240,9 @@ def _probe_netid(pyads, netid, port, timeout_ms=ADS_TIMEOUT_MS, master_fallback=
     """Probe a single AMS Net ID to determine if it is active.
 
     Runs a tiered probe:
-      1. ``read_device_info()`` on *port* — works on PLC runtimes
-      2. CoE SDO read (ig=0xF302) on *port* — works on EtherCAT slave ports
-      3. EtherCAT master read (ig=0x0006 on port 0xFFFF) — works on
+      1. ``read_device_info()`` on *port* - works on PLC runtimes
+      2. CoE SDO read (ig=0xF302) on *port* - works on EtherCAT slave ports
+      3. EtherCAT master read (ig=0x0006 on port 0xFFFF) - works on
          EtherCAT subsystems (only when *master_fallback* is True)
 
     Set *master_fallback=False* for per-port service scanning (otherwise
@@ -252,11 +252,11 @@ def _probe_netid(pyads, netid, port, timeout_ms=ADS_TIMEOUT_MS, master_fallback=
         ``{"active": bool, "type": str, "detail": str}``
 
     ``type`` is one of:
-        ``"plc"``      — PLC runtime (read_device_info succeeded)
-        ``"ethercat"`` — EtherCAT subsystem (CoE SDO or master responded)
-        ``"ads"``      — generic ADS service (non-timeout ADS error)
-        ``"none"``     — not reachable (timeout / error 24)
-        ``"broken"``   — TCP connection lost
+        ``"plc"``      - PLC runtime (read_device_info succeeded)
+        ``"ethercat"`` - EtherCAT subsystem (CoE SDO or master responded)
+        ``"ads"``      - generic ADS service (non-timeout ADS error)
+        ``"none"``     - not reachable (timeout / error 24)
+        ``"broken"``   - TCP connection lost
 
     The caller must handle ``"broken"`` by stopping further probes.
     """
@@ -283,7 +283,7 @@ def _probe_netid(pyads, netid, port, timeout_ms=ADS_TIMEOUT_MS, master_fallback=
                 result.update(type="broken", detail="connection lost")
                 return result
             if _is_ads_real_error(err):
-                # Got a real ADS error (not timeout) — endpoint exists but
+                # Got a real ADS error (not timeout) - endpoint exists but
                 # doesn't support device_info.  Fall through to tier 2.
                 pass
 
@@ -299,7 +299,7 @@ def _probe_netid(pyads, netid, port, timeout_ms=ADS_TIMEOUT_MS, master_fallback=
                 return result
             if _is_ads_port_not_found(err):
                 # Error 24 = no service on this port.  But the Net ID might
-                # still host an EtherCAT master — fall through to tier 3.
+                # still host an EtherCAT master - fall through to tier 3.
                 pass
             elif _is_ads_real_error(err):
                 result.update(active=True, type="ads", detail=str(e))
@@ -398,7 +398,7 @@ def _capture_pyads_stderr(logger=None):
                 logger.debug("pyads: %s", line)
 
 
-# Backward compat alias — callers that used COE_SDO_OFFSET directly
+# Backward compat alias - callers that used COE_SDO_OFFSET directly
 COE_SDO_OFFSET = COE_SDO_OFFSETS
 
 # Common memory areas for testing (loaded lazily to avoid import at module load)

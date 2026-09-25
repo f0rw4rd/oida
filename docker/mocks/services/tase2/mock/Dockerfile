@@ -59,7 +59,7 @@ RUN mkdir -p /build/python_bindings && \
 
 # Verify SWIG bindings are properly linked
 RUN ldconfig && \
-    python3 -c "import sys; sys.path.insert(0, '/build/python_bindings'); import iec61850; print('✓ libiec61850 SWIG bindings OK')"
+    python3 -c "import sys; sys.path.insert(0, '/build/python_bindings'); import iec61850; print('[OK] libiec61850 SWIG bindings OK')"
 
 # Runtime image
 FROM python:3.11-slim-bookworm

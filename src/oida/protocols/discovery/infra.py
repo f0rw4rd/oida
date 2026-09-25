@@ -1412,7 +1412,7 @@ class IPMIScanner:
         enterprise(4 BE) + OEM(4) + supported-entities(1) + interactions(1)
         + reserved(6). Entities bit7 (0x80) = IPMI supported, bit0 = ASFv1.
 
-    OT-safety: safe — a single read-only capability ping, no auth touched.
+    OT-safety: safe - a single read-only capability ping, no auth touched.
 
     References:
     - https://www.dmtf.org/sites/default/files/standards/documents/DSP0136.pdf
@@ -1563,7 +1563,7 @@ class SLPScanner:
     - Replies: SrvRply(2) = error(2)+url-count(2)+URL entries; SAAdvert(11)
         and DAAdvert(8) carry the agent's own URL.
 
-    OT-safety: caution — SLP is a known amplification vector (CVE-2023-29552);
+    OT-safety: caution - SLP is a known amplification vector (CVE-2023-29552);
     we send a single multicast SrvRqst and never spoof the source.
 
     References:

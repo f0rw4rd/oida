@@ -3,23 +3,23 @@
 The defensive-tool contract for OIDA distinguishes two credential
 flavours, only one of which is a leak:
 
-- **INPUT credentials** — the operator passed `--password`,
+- **INPUT credentials** - the operator passed `--password`,
   `--credentials`, `--psk`, etc. These are the operator's secrets;
   they must NEVER appear in any log line, screen output, or JSON
   audit log. They're identified statically as f-string interpolations
   of `args.<X>` / `self.args.<X>` / `getattr(self.args, "<X>", ...)`
   where `<X>` is a credential-shaped name.
 
-- **RECOVERED credentials** — a successful brute-force, default-creds
+- **RECOVERED credentials** - a successful brute-force, default-creds
   match, or PCAP capture surfaces a third party's credential. The
-  whole point of the scanner is to show these to the operator —
+  whole point of the scanner is to show these to the operator -
   hiding them would defeat the tool. They're typically interpolated
   as a local variable (`{found_password}`, `{test_password}`, etc.)
   and emitted via `.security_finding(...)` / `.success(...)`.
 
 This contract flags only the INPUT class. The companion runtime
 fixture (``tests/conftest.py::no_credential_leak``) seeds sentinel
-values into the env vars and asserts none escape to logs — that
+values into the env vars and asserts none escape to logs - that
 catches RECOVERED-credential leaks if (and only if) the operator's
 input happened to BE the same string the scanner recovered.
 
@@ -49,7 +49,7 @@ _USER_FACING_METHODS = {
     "success",
     # NOTE: .security_finding is intentionally EXCLUDED. It is the
     # dedicated channel for showing recovered credentials, default-cred
-    # matches, and other findings the operator must see — hiding them
+    # matches, and other findings the operator must see - hiding them
     # there would defeat the tool.
 }
 
@@ -76,7 +76,7 @@ def _is_input_credential(expr_text: str) -> bool:
 
     Matches `args.password`, `self.args.password`, `getattr(args, "password")`,
     `getattr(self.args, "password", default)`. Does NOT match bare local
-    names like `test_password` / `found_password` / `recovered` — those
+    names like `test_password` / `found_password` / `recovered` - those
     are recovered credentials (the finding itself).
     """
     txt = expr_text.lower()
@@ -139,7 +139,7 @@ def _load_snapshot() -> set[tuple[str, int]]:
 
 
 def test_credential_log_leak_snapshot_drift():
-    """Snapshot lock — flag both regressions and unacknowledged fixes."""
+    """Snapshot lock - flag both regressions and unacknowledged fixes."""
     current = _collect_credential_log_sites()
     snapshot = _load_snapshot()
 
@@ -149,14 +149,14 @@ def test_credential_log_leak_snapshot_drift():
     msg = []
     if added:
         msg.append(
-            "NEW credential-log-leak sites detected — either fix them, or "
+            "NEW credential-log-leak sites detected - either fix them, or "
             "add them to credential_log_leak_snapshot.txt with a comment "
             "explaining why (and a tracking issue):"
         )
         msg.extend(f"  + {rel}:{ln}" for rel, ln in sorted(added))
     if removed:
         msg.append(
-            "\nSnapshot entries no longer present in the AST scan — "
+            "\nSnapshot entries no longer present in the AST scan - "
             "if you fixed these, REMOVE them from "
             "credential_log_leak_snapshot.txt:"
         )
@@ -170,12 +170,12 @@ def test_predicate_self_check():
 
     If 0 real sites exist (today: clean state), the test above passes
     trivially. This guards against the predicate quietly regressing to
-    a no-op — a synthetic ``logger.info(f"pw={self.args.password}")``
+    a no-op - a synthetic ``logger.info(f"pw={self.args.password}")``
     must still be flagged.
     """
     synthetic = safe_parse(
         'logger.info(f"pw={self.args.password}")\n'
-        'logger.success(f"recovered={found_password}")\n'  # NOT a leak — local
+        'logger.success(f"recovered={found_password}")\n'  # NOT a leak - local
     )
     leaks = []
     for node in ast.walk(synthetic):
@@ -187,5 +187,5 @@ def test_predicate_self_check():
     assert leaks == [1], (
         f"Predicate self-check failed: expected line 1 flagged "
         f"(self.args.password), got {leaks}. Line 2 (local `found_password`) "
-        f"must NOT be flagged — that's the recovered-credential feature."
+        f"must NOT be flagged - that's the recovered-credential feature."
     )

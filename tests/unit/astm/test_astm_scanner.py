@@ -110,7 +110,7 @@ class _AppAcceptingSocket:
 
     Record/enum operations only raise their HIGH/CRITICAL findings when the LIS
     returns an application-level acknowledgement (server-initiated ENQ followed
-    by an STX-framed record) — a bare frame ACK is link-level only. This stub
+    by an STX-framed record) - a bare frame ACK is link-level only. This stub
     ACKs the ENQ/header/record/terminator frames, then, once EOT has been sent,
     answers _read_application_ack's probe with ENQ + an STX record so the
     "accepted" path under test is exercised. See test_application_ack.py for the

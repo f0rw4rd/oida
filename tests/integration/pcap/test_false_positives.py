@@ -2,7 +2,7 @@
 
 Feeds alien pcaps (from unrelated protocol families) into listeners and
 asserts zero interactions.  Catches greedy listeners that accidentally
-match all traffic — e.g. when REQUIRED_LAYERS is blanked without adding
+match all traffic - e.g. when REQUIRED_LAYERS is blanked without adding
 a should_process_packet() guard.
 """
 
@@ -15,7 +15,7 @@ from tests.integration.pcap.conftest import _load_packets, _pcap_path, _skip_unl
 pytestmark = [pytest.mark.integration]
 
 # ---------------------------------------------------------------------------
-# Alien pcaps — one per protocol family (ICS, industrial, credential)
+# Alien pcaps - one per protocol family (ICS, industrial, credential)
 # ---------------------------------------------------------------------------
 _ALIEN_PCAPS = {
     "iec104": ("iec104/eset_industroyer2_sample2.pcap", "iec60870_104"),
@@ -23,7 +23,7 @@ _ALIEN_PCAPS = {
     "http": ("http/bruteshark_http_basic.pcap", "http"),
 }
 
-# Listeners under test — protocols that have had REQUIRED_LAYERS issues
+# Listeners under test - protocols that have had REQUIRED_LAYERS issues
 # or complex fallback paths.  (module, class, own_protocol_label)
 _LISTENERS = [
     # Original 6 with known fallback-path risk
@@ -33,7 +33,7 @@ _LISTENERS = [
     ("pjl", "PJLPassiveListener", "pjl"),
     ("ftp", "FTPPassiveListener", "ftp"),
     ("telnet", "TelnetPassiveListener", "telnet"),
-    # High-traffic OT/IT listeners — false positives here are highest-blast
+    # High-traffic OT/IT listeners - false positives here are highest-blast
     # because they'd contaminate real captures during a live engagement.
     ("modbus", "ModbusPassiveListener", "modbus"),
     ("dnp3", "DNP3PassiveListener", "dnp3"),

@@ -5,7 +5,7 @@ Unit tests for the EtherCAT-over-ADS bridge operations mixin (ethercat_ops.py).
 
 ethercat_ops.py is raw-L2/pysoem/pyads-backed and cannot be exercised over a
 real network in CI (the bridge interface cannot be opened). These tests instead
-drive the *pure logic* — datagram/offset construction, parsing of returned
+drive the *pure logic* - datagram/offset construction, parsing of returned
 buffers, CoE/SoE/FSoE/ESC/EEPROM decoding, error classification and formatting.
 
 The ONLY thing mocked is the transport boundary: the pyads ``Connection``
@@ -62,7 +62,7 @@ class FakeConn:
         # the matching read_write call (models e.g. "1804 = no more files").
         self.raise_map = raise_map or {}
         # exact_map entries are returned truncated to the requested size WITHOUT
-        # raising a short-read — models device endpoints (e.g. FILE_READ) that
+        # raising a short-read - models device endpoints (e.g. FILE_READ) that
         # return however many bytes are available up to the requested buffer.
         self.exact_map = exact_map or {}
         # error_code mimics a real pyads.ADSError (a non-RuntimeError exception),
@@ -163,7 +163,7 @@ def _make_mixin(read_map=None, rw_map=None, conn=None, error_code=None, timeout_
 
     pyads_mod = Mock()
     pyads_mod.Connection.return_value = fake
-    # _read_coe_string uses pyads.PLCTYPE_STRING — not exercised in these tests
+    # _read_coe_string uses pyads.PLCTYPE_STRING - not exercised in these tests
     pyads_mod.PLCTYPE_STRING = object()
     return obj, fake, pyads_mod
 
@@ -173,7 +173,7 @@ def _patch_pyads(pyads_mod):
 
 
 # ---------------------------------------------------------------------------
-# _scan_ethercat — master state, slave count, identity, AL state, CoE strings
+# _scan_ethercat - master state, slave count, identity, AL state, CoE strings
 # ---------------------------------------------------------------------------
 
 
@@ -252,7 +252,7 @@ class TestScanEtherCAT(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# _scan_coe_via_ads — CoE dictionary enumeration + subindex walking + access
+# _scan_coe_via_ads - CoE dictionary enumeration + subindex walking + access
 # ---------------------------------------------------------------------------
 
 
@@ -387,7 +387,7 @@ class TestScanCoEViaAds(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# _read_eeprom_word / _dump_eeprom_via_ads — SII header parsing
+# _read_eeprom_word / _dump_eeprom_via_ads - SII header parsing
 # ---------------------------------------------------------------------------
 
 
@@ -452,7 +452,7 @@ class TestEEPROM(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# _read_esc_registers_via_ads — ESC register decode + router zero-fill guard
+# _read_esc_registers_via_ads - ESC register decode + router zero-fill guard
 # ---------------------------------------------------------------------------
 
 
@@ -504,7 +504,7 @@ class TestESCRegisters(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# FoE — _foe_read_on_conn two-pass read + zero-fill, write, delete
+# FoE - _foe_read_on_conn two-pass read + zero-fill, write, delete
 # ---------------------------------------------------------------------------
 
 
@@ -618,7 +618,7 @@ class TestFoE(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# SoE — _soe_read_with_retry + _read_soe_idn_via_ads element decoding
+# SoE - _soe_read_with_retry + _read_soe_idn_via_ads element decoding
 # ---------------------------------------------------------------------------
 
 
@@ -670,7 +670,7 @@ class TestSoE(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# FSoE — _scan_fsoe_via_ads probe + object decoding
+# FSoE - _scan_fsoe_via_ads probe + object decoding
 # ---------------------------------------------------------------------------
 
 
@@ -742,7 +742,7 @@ class TestFSoE(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# FoE discovery wrappers — _foe_read_via_ads, _scan_foe_via_ads, _foe_list_via_ads
+# FoE discovery wrappers - _foe_read_via_ads, _scan_foe_via_ads, _foe_list_via_ads
 # ---------------------------------------------------------------------------
 
 
@@ -837,7 +837,7 @@ class TestFoEDiscovery(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# SoE scan — _scan_soe_via_ads IDN enumeration
+# SoE scan - _scan_soe_via_ads IDN enumeration
 # ---------------------------------------------------------------------------
 
 
@@ -881,7 +881,7 @@ class TestSoEScan(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# _list_files — TcFileFindData browse parsing
+# _list_files - TcFileFindData browse parsing
 # ---------------------------------------------------------------------------
 
 
@@ -950,7 +950,7 @@ class TestFileOps(unittest.TestCase):
         open_payload = struct.pack("<I", flags) + path.encode("utf-8") + b"\x00"
         rw_map = {(open_ig, 0, open_payload): struct.pack("<I", handle)}
         # FILE_READ returns however many bytes are available (a short file) up to
-        # the requested 64KB buffer, without a short-read error — use exact_map.
+        # the requested 64KB buffer, without a short-read error - use exact_map.
         exact_map = {(read_ig, handle): content}
         fake = FakeConn(rw_map=rw_map, exact_map=exact_map)
         obj, _f, pyads_mod = _make_mixin(conn=fake)
@@ -1047,7 +1047,7 @@ class TestFileOps(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# CoE fuzzing — _fuzz_coe_via_ads target discovery + restore
+# CoE fuzzing - _fuzz_coe_via_ads target discovery + restore
 # ---------------------------------------------------------------------------
 
 

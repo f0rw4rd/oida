@@ -268,7 +268,7 @@ class SNMPHealthMonitor(ProtocolMonitor):
     UDP SNMP liveness monitor.
 
     SNMP agents speak UDP/161, so a TCP connect (SocketHealthMonitor) always
-    fails against them — that would make preflight abort every real run, or, if
+    fails against them - that would make preflight abort every real run, or, if
     bypassed, flag every case as a false crash. This monitor instead sends a
     valid SNMP GET for sysDescr.0 (1.3.6.1.2.1.1.1.0) over UDP.
 
@@ -314,7 +314,7 @@ class SNMPHealthMonitor(ProtocolMonitor):
 
     def _build_get(self) -> bytes:
         """Build a minimal, valid SNMP GetRequest for sysDescr.0."""
-        # OID 1.3.6.1.2.1.1.1.0 — first two arcs (1.3) collapse to 0x2b.
+        # OID 1.3.6.1.2.1.1.1.0 - first two arcs (1.3) collapse to 0x2b.
         sysdescr = bytes([0x2B, 0x06, 0x01, 0x02, 0x01, 0x01, 0x01, 0x00])
         varbind = _ber_tlv(0x30, _ber_tlv(0x06, sysdescr) + _ber_tlv(0x05, b""))
         pdu = _ber_tlv(
@@ -338,7 +338,7 @@ class SNMPHealthMonitor(ProtocolMonitor):
             sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
             sock.settimeout(self.timeout)
             # connect() (not sendto) so the kernel delivers ICMP port-unreachable
-            # as ConnectionRefusedError on recv — an unconnected UDP socket
+            # as ConnectionRefusedError on recv - an unconnected UDP socket
             # silently drops that ICMP error, which would make a crashed agent
             # look merely unresponsive (timeout) and defeat crash detection.
             self.logger.debug(f"Sending SNMP GET(sysDescr.0) to {self.host}:{self.port}/udp")
@@ -592,7 +592,7 @@ class ValidCaseMonitor(ProtocolMonitor):
     requests, or whose responses have become corrupted.
 
     Unlike the per-protocol monitors (ModbusMonitor, IEC104Monitor, ...), this works
-    for *any* TCP protocol — including ones with no dedicated monitor — because the
+    for *any* TCP protocol - including ones with no dedicated monitor - because the
     operator supplies the probe bytes.
 
     Verdict:

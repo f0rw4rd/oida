@@ -3,14 +3,14 @@ matches a dangerous-verb pattern is enforced by an explicit ``args.confirm``
 / ``self.confirm`` check somewhere in its protocol's code.
 
 Catches the **confirm-gate-missing** gap class: an earlier audit found
-22+ flags advertised as dangerous but never enforced —
+22+ flags advertised as dangerous but never enforced -
 DELETEs, writes, brute-force, master-reset, clock-write, fuzz, etc.
 The pattern is always the same: ``proto_args.py`` carries the warning
 in help text, the dispatcher / NXC connection / mixin forgets the
 guard, no test ever invokes the flag end-to-end.
 
 Single static-analysis test. No mocks, no proto_flow runs, no protocol
-deps needed. Snapshot-locked to the current state — any drift
+deps needed. Snapshot-locked to the current state - any drift
 (new dangerous flag without enforcement, or a fix not reflected in the
 snapshot) fails the test with an actionable diff.
 """
@@ -114,7 +114,7 @@ def _enforced_dests_per_protocol() -> dict[str, set[str]]:
         # proto_args.py declares the flags, so scanning its whole body would
         # self-credit every dest. The one exception is validate_args(): several
         # protocols (dnp3, ads) gate their dangerous ops centrally there, raising
-        # before the scan runs — and the failure message below explicitly names
+        # before the scan runs - and the failure message below explicitly names
         # validate_args() as a valid gate location. Scan that function only.
         proto_args_file = py.name == "proto_args.py"
         protocol = py.relative_to(SRC_ROOT / "protocols").parts[0]
@@ -183,7 +183,7 @@ def _load_snapshot() -> set[tuple[str, str]]:
 
 
 def test_confirm_gate_snapshot_drift():
-    """Snapshot lock — flag both regressions and unacknowledged fixes."""
+    """Snapshot lock - flag both regressions and unacknowledged fixes."""
     current = _compute_gate_gaps()
     snapshot = _load_snapshot()
 
@@ -193,7 +193,7 @@ def test_confirm_gate_snapshot_drift():
     msg = []
     if added:
         msg.append(
-            "NEW confirm-gate-missing flags — either wire the guard "
+            "NEW confirm-gate-missing flags - either wire the guard "
             "(`if not args.confirm: raise ConfigurationError(...)` or "
             "`validate_args()`), or add to confirm_gate_snapshot.txt with "
             "the tracking issue:"
@@ -201,7 +201,7 @@ def test_confirm_gate_snapshot_drift():
         msg.extend(f"  + {proto}:{dest}" for proto, dest in sorted(added))
     if removed:
         msg.append(
-            "\nSnapshot entries no longer detected — if you wired the guard, "
+            "\nSnapshot entries no longer detected - if you wired the guard, "
             "REMOVE them from confirm_gate_snapshot.txt:"
         )
         msg.extend(f"  - {proto}:{dest}" for proto, dest in sorted(removed))
@@ -212,17 +212,17 @@ def test_confirm_gate_snapshot_drift():
     # (an empty snapshot would make this test vacuous).
     assert current == snapshot
     assert len(snapshot) >= 10, (
-        f"confirm_gate_snapshot.txt only has {len(snapshot)} entries — "
+        f"confirm_gate_snapshot.txt only has {len(snapshot)} entries - "
         f"suspiciously small for a known-gap tracking file."
     )
 
 
 def test_at_least_one_dangerous_flag_was_found():
-    """Sanity: predicate must hit SOMETHING — every protocol has dangerous flags."""
+    """Sanity: predicate must hit SOMETHING - every protocol has dangerous flags."""
     dangerous = _collect_dangerous_flag_dests()
     total = sum(len(s) for s in dangerous.values())
     assert total >= 20, (
-        f"Only found {total} dangerous flag dests across all protocols — "
+        f"Only found {total} dangerous flag dests across all protocols - "
         f"predicate is probably too tight."
     )
 
@@ -255,7 +255,7 @@ def test_confirm_gate_idiom_is_the_only_reader():
                 rel = path.relative_to(SRC_ROOT.parent.parent)
                 offenders.append(f"  {rel}:{lineno}: {line.strip()}")
     assert not offenders, (
-        "Raw confirm reads found — replace with the canonical gate "
+        "Raw confirm reads found - replace with the canonical gate "
         '`self.require_confirm("--flag")` (hard gate) or '
         "`self._confirm_flag()` (soft read) from "
         "oida.utils.confirm_gate.ConfirmGateMixin:\n" + "\n".join(offenders)
@@ -268,6 +268,6 @@ def test_confirm_gate_idiom_is_the_only_reader():
         if p.name != "proto_args.py"
     )
     assert scanned_any_confirm_file, (
-        f"No protocol source file under {_PROTOCOLS_ROOT} mentions 'confirm' — "
+        f"No protocol source file under {_PROTOCOLS_ROOT} mentions 'confirm' - "
         f"the scan predicate is probably broken."
     )

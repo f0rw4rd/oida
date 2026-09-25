@@ -47,7 +47,7 @@ def _query_packet(qname, src_ip="192.168.1.57", src_mac="de:ad:be:ef:00:03"):
     from scapy.all import DNS, DNSQR, IP, UDP, Ether
 
     q = DNSQR(qname=qname, qtype="PTR")
-    # ancount must be explicitly 0 — None would raise inside _process_packet.
+    # ancount must be explicitly 0 - None would raise inside _process_packet.
     dns = DNS(qr=0, qdcount=1, ancount=0, qd=q)
     return Ether(src=src_mac) / IP(src=src_ip) / UDP(sport=MDNS_PORT, dport=MDNS_PORT) / dns
 

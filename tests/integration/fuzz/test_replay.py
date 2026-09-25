@@ -451,7 +451,7 @@ class TestReplayLightweightMode:
             if not test_case:
                 pytest.skip("All test cases have stored payloads (no regeneration test)")
 
-            # Regenerate payload twice — verify CRC32 is self-consistent across calls.
+            # Regenerate payload twice - verify CRC32 is self-consistent across calls.
             # Regenerated CRC32 is NOT required to equal test_case.crc32: the stored
             # CRC32 was captured via session.last_send during a sequential fuzzing run
             # while regeneration starts a fresh boofuzz session, so the state-machine
@@ -680,7 +680,7 @@ class TestReplayStoredPayload:
 
             fuzzer = fuzzer_class(config)
 
-            # Run fuzzer to trigger crash — BoofuzzFailure is expected when server
+            # Run fuzzer to trigger crash - BoofuzzFailure is expected when server
             # crashes intentionally (closes connection after 20 requests)
             try:
                 fuzzer.fuzz_all()

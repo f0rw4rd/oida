@@ -4,7 +4,7 @@ map to an actual asyncua class, not silently downgrade.
 The audit found that `--policy Basic128Rsa15` and `--policy Basic256`
 silently substituted Basic256Sha256 because `_configure_secure_channel`'s
 policy_map didn't include them. A defensive-security tool must NEVER
-swap the requested policy under the user's feet — testing weak legacy
+swap the requested policy under the user's feet - testing weak legacy
 policies is exactly what an operator might want to do.
 """
 
@@ -29,7 +29,7 @@ def _advertised_policies() -> list[str]:
     opcua_parser = proto_args(subparsers, [parent])
     if opcua_parser is None:
         # proto_args() returns the registered subparser; some implementations
-        # don't return — fall back to introspecting subparsers.choices.
+        # don't return - fall back to introspecting subparsers.choices.
         opcua_parser = subparsers.choices["opcua"]
     for action in opcua_parser._actions:
         if "--policy" in action.option_strings:
@@ -39,7 +39,7 @@ def _advertised_policies() -> list[str]:
 
 
 class TestSecurityPolicyMapping:
-    """Pin the policy-map → asyncua-class contract."""
+    """Pin the policy-map -> asyncua-class contract."""
 
     def test_all_advertised_policies_have_asyncua_class(self):
         """Every non-None CLI choice must exist in asyncua.crypto.security_policies."""
@@ -67,7 +67,7 @@ class TestSecurityPolicyMapping:
         for policy in _advertised_policies():
             assert f'"{policy}":' in src, (
                 f"--policy {policy} advertised by CLI but missing from "
-                f"_configure_secure_channel.policy_map — would silently downgrade"
+                f"_configure_secure_channel.policy_map - would silently downgrade"
             )
 
     def test_warning_emitted_for_unknown_policy(self):

@@ -26,7 +26,7 @@ class AuthenticationFailedError(Exception):
 
 
 # Monotonic source of connection identities. Never reused, unlike id(), whose
-# values CPython recycles as soon as the previous object is collected — a freed
+# values CPython recycles as soon as the previous object is collected - a freed
 # connection's id landing on a live one would make a brand-new, unauthenticated
 # connection compare equal to the previously authenticated one and silently skip
 # authentication.
@@ -220,7 +220,7 @@ class StatefulFuzzer(BaseFuzzer):
         - Auth-layer CommonStates tracked in ``self._current_state``
           (PRE_AUTH / AUTHENTICATED / CONNECTED). These may have no literal
           counterpart in a protocol state machine, so a successful auth is only
-          reflected here — the state machine cannot represent it.
+          reflected here - the state machine cannot represent it.
 
         Consulting the owning namespace keeps a single source of truth per
         state and prevents re-authenticating every test case when the state
@@ -749,7 +749,7 @@ class StatefulFuzzer(BaseFuzzer):
 
         # Get states in topological order (respects dependencies)
         # A cyclic requires-graph (HTTP's request/response loop, for example) is
-        # legal — `requires` lists ALTERNATIVE predecessors, so a loop does not
+        # legal - `requires` lists ALTERNATIVE predecessors, so a loop does not
         # make states unreachable. Fall back to breadth-first reachability order
         # instead of abandoning the whole check.
         try:

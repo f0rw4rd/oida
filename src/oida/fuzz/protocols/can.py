@@ -124,7 +124,7 @@ class CANFuzzer(BaseFuzzer):
     def _define_protocol(self) -> None:
         """Define socketcand + J1939 TP requests, each gated 1:1."""
 
-        # 1. BASELINE — valid socketcand open + rawmode handshake.
+        # 1. BASELINE - valid socketcand open + rawmode handshake.
         baseline = Request(
             "CAN_Baseline",
             children=(
@@ -138,7 +138,7 @@ class CANFuzzer(BaseFuzzer):
             ),
         )
 
-        # 2. OVERFLOW — oversized bus name in < open <bus> > (CVE-2026-37538).
+        # 2. OVERFLOW - oversized bus name in < open <bus> > (CVE-2026-37538).
         # The bus name is the variable field; SmartString's boundary/oversize
         # mutations sweep past the fixed stack buffer. Default renders 256 'A'.
         busname_overflow = Request(
@@ -161,7 +161,7 @@ class CANFuzzer(BaseFuzzer):
             ),
         )
 
-        # 3. MALFORMED — broken socketcand framing.
+        # 3. MALFORMED - broken socketcand framing.
         malformed_command = Request(
             "CAN_SocketCAND_Malformed_Command",
             children=(
@@ -180,7 +180,7 @@ class CANFuzzer(BaseFuzzer):
             ),
         )
 
-        # 4. MALFORMED — TP.DT sequence-number underflow (CVE-2026-37534).
+        # 4. MALFORMED - TP.DT sequence-number underflow (CVE-2026-37534).
         # First declare an 8-packet, 56-byte BAM via TP.CM, then ship a single
         # TP.DT whose sequence byte lies about its position in the sequence.
         # seq 0x00 (< 1) and seq > num-packets both underflow the copy offset.
@@ -212,7 +212,7 @@ class CANFuzzer(BaseFuzzer):
             ),
         )
 
-        # 5. BOUNDARY — TP.CM total-size Word / num-packets lie.
+        # 5. BOUNDARY - TP.CM total-size Word / num-packets lie.
         # A TP.CM whose declared size/packet count does not match the single
         # TP.DT frame that follows.
         tpcm_size_lie = Request(
@@ -243,7 +243,7 @@ class CANFuzzer(BaseFuzzer):
             ),
         )
 
-        # 6. BOUNDARY — CAN identifier over 11-bit / 29-bit edges.
+        # 6. BOUNDARY - CAN identifier over 11-bit / 29-bit edges.
         can_id_boundary = Request(
             "CAN_ID_Boundary",
             children=(
@@ -266,7 +266,7 @@ class CANFuzzer(BaseFuzzer):
             ),
         )
 
-        # 7. BOUNDARY — DLC vs actual data-byte count.
+        # 7. BOUNDARY - DLC vs actual data-byte count.
         can_dlc_boundary = Request(
             "CAN_DLC_Boundary",
             children=(

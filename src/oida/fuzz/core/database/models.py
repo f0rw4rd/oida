@@ -68,7 +68,7 @@ class TestCase(Base):
     result: Mapped[str] = mapped_column(String, nullable=False)
     # CRC32 is unsigned 32-bit. SQLite stores INTEGER as 8-byte signed, so
     # BigInteger here is just an explicit contract that the high bit is
-    # safe — never hits a Python int → SQL int overflow.
+    # safe - never hits a Python int -> SQL int overflow.
     crc32: Mapped[int] = mapped_column(BigInteger, nullable=False)
 
     # Target identification - tracks which target/protocol each test case belongs to
@@ -118,7 +118,7 @@ class Crash(Base):
 
     ``crash_hash`` is a stable signature derived from the crash class + top
     stack frame, intended for grouping duplicate crashes at triage time. Two
-    crashes with the same hash are *likely* the same underlying defect — but
+    crashes with the same hash are *likely* the same underlying defect - but
     payloads may differ. Use ``crash_hash`` for ``GROUP BY`` queries, not for
     proving identity.
     """
@@ -146,7 +146,7 @@ class Crash(Base):
 
         The signature uses the first ~120 chars of ``crash_info`` plus the
         top frame of ``stack_trace`` (everything up to the first newline).
-        Returns the first 16 hex chars of the BLAKE2b digest — enough to
+        Returns the first 16 hex chars of the BLAKE2b digest - enough to
         keep collisions rare across a single fuzz session without bloating
         the index.
         """
@@ -385,7 +385,7 @@ def create_database_engine(database_path: str, echo: bool = False):
         is_memory = database_path == ":memory:"
         cursor = dbapi_connection.cursor()
         try:
-            # WAL is incompatible with :memory: — it requires a file.
+            # WAL is incompatible with :memory: - it requires a file.
             if not is_memory:
                 cursor.execute("PRAGMA journal_mode=WAL")
             cursor.execute("PRAGMA synchronous=NORMAL")

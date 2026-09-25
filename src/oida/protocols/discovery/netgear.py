@@ -2,7 +2,7 @@
 Network-equipment active discovery scanners.
 
 Broadcast probes for vendor network gear (APs, routers, switches) that ride
-their own discovery ports — common on smaller OT/IT networks.
+their own discovery ports - common on smaller OT/IT networks.
 
 Contains:
 - UbiquitiScanner: Ubiquiti device discovery (UDP 10001, broadcast)
@@ -52,7 +52,7 @@ class UbiquitiScanner:
         0x0b hostname, 0x0c model(short), 0x0d ESSID, 0x14 model(v1),
         0x15 model(v2), 0x16 version.
 
-    OT-safety: caution — active probe and a known reflection vector; we send a
+    OT-safety: caution - active probe and a known reflection vector; we send a
     single probe per broadcast address and never spoof the source.
     """
 
@@ -196,7 +196,7 @@ class MNDPScanner:
         10 Uptime, 11 Software-ID(str), 12 Board(str), 15 IPv6(16),
         16 Interface(str), 17 IPv4(4).
 
-    OT-safety: safe — listening is passive; the solicitation is a single empty
+    OT-safety: safe - listening is passive; the solicitation is a single empty
     broadcast datagram.
     """
 

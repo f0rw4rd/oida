@@ -395,7 +395,7 @@ class PresentationCPType:
         normal_params.extend(encode_ber_context_tag(4, context_defs, True))
 
         # User-data: fully-encoded-data [APPLICATION 1] IMPLICIT SEQUENCE OF PDV-list
-        # No context tag — fully-encoded-data tag (0x61) appears directly
+        # No context tag - fully-encoded-data tag (0x61) appears directly
         pdv_list = encode_ber_sequence(
             encode_ber_integer(1)  # presentation-context-identifier = 1 (ACSE)
             + encode_ber_context_tag(0, user_data, True)  # single-ASN1-type [0]
@@ -403,7 +403,7 @@ class PresentationCPType:
         fully_encoded = bytes([0x61]) + encode_ber_length(len(pdv_list)) + pdv_list
         normal_params.extend(fully_encoded)
 
-        # [2] IMPLICIT SEQUENCE — tag a2 directly wraps content (no inner SEQUENCE)
+        # [2] IMPLICIT SEQUENCE - tag a2 directly wraps content (no inner SEQUENCE)
         normal_mode = encode_ber_context_tag(2, bytes(normal_params), True)
 
         # CP-type is a SET (tag 0x31)
@@ -479,7 +479,7 @@ class ACSEAssociateRequest:
         )
         # EXTERNAL tag: 0x28 = CONSTRUCTED (0x20) | UNIVERSAL 8
         external = bytes([0x28]) + encode_ber_length(len(external_content)) + external_content
-        # [30] IMPLICIT replaces SEQUENCE OF — content is directly the EXTERNAL item
+        # [30] IMPLICIT replaces SEQUENCE OF - content is directly the EXTERNAL item
         components.extend(encode_ber_context_tag(30, external, True))
 
         # AARQ is APPLICATION 0 CONSTRUCTED = 0x60

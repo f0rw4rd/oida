@@ -100,7 +100,7 @@ class CredentialsMixin:
                     progress.failed += 1
                     self.logger.debug(f"Tested {username}:{password} -> auth rejected ({e})")
                 elif is_connection_error(e):
-                    # Never reached authentication — the credential was NOT tested.
+                    # Never reached authentication - the credential was NOT tested.
                     connection_errors += 1
                     consecutive_connection_errors += 1
                     self.logger.debug(f"NOT tested {username}:{password} -> connection error: {e}")
@@ -108,7 +108,7 @@ class CredentialsMixin:
                         progress.update(pos=index)
                         self.logger.fail(
                             f"Server unreachable after {consecutive_connection_errors} "
-                            f"consecutive connection failures — aborting brute force. "
+                            f"consecutive connection failures - aborting brute force. "
                             f"{tested} of {len(credentials)} credentials were actually tested "
                             f"({len(credentials) - index} never attempted)."
                         )
@@ -135,7 +135,7 @@ class CredentialsMixin:
         if connection_errors and not aborted:
             self.logger.warning(
                 f"{connection_errors} credential(s) were skipped because the server "
-                f"could not be reached — they were NOT tested."
+                f"could not be reached - they were NOT tested."
             )
 
         self.results["data"]["brute_force"] = {
@@ -268,12 +268,12 @@ class CredentialsMixin:
 
                 # Test write access - find variable nodes and try safe write.
                 # The write-back issues a real Write service call against a
-                # live variable — gate it on --confirm like every other write
+                # live variable - gate it on --confirm like every other write
                 # path. Without --confirm, skip the write column gracefully.
                 if not self._confirm_flag():
                     self.logger.display(
                         "  Writable nodes: skipped (write-back probe writes to "
-                        "live variables) — requires --confirm"
+                        "live variables) - requires --confirm"
                     )
                 else:
                     for node in test_nodes:

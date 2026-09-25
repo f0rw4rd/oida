@@ -46,7 +46,7 @@ class TestExtraThreadLocal(unittest.TestCase):
         t2.join(10)
 
         self.assertEqual(errors, [], f"worker raised: {errors}")
-        # Each thread must read back exactly its own values — no torn/crossed prefix.
+        # Each thread must read back exactly its own values - no torn/crossed prefix.
         self.assertEqual(results["a"]["host"], "192.168.1.10")
         self.assertEqual(results["a"]["port"], 5020)
         self.assertEqual(results["a"]["hostname"], "deviceA")

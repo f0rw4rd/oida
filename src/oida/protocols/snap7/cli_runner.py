@@ -609,7 +609,7 @@ class s7(NetworkConnection):
     def _action_monitor(self):
         """Handle --monitor action"""
         # --monitor is a store_true trigger (shared monitor-options factory), so
-        # self.args.monitor is a bool — the areas to watch come from
+        # self.args.monitor is a bool - the areas to watch come from
         # --monitor-areas (default I,Q,M), NOT from the --monitor flag itself.
         areas = getattr(self.args, "monitor_areas", None) or "I,Q,M"
         # --interval / --duration come from the shared add_monitor_options()

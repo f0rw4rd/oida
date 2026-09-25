@@ -43,7 +43,7 @@ try:
     from pynetdicom import AE  # type: ignore  # noqa: F401
     from pynetdicom.sop_class import Verification  # type: ignore  # noqa: F401
     from pydicom.dataset import Dataset  # type: ignore  # noqa: F401
-except ImportError:  # pragma: no cover — optional dep
+except ImportError:  # pragma: no cover - optional dep
     AE = None  # type: ignore
     Verification = None  # type: ignore
     Dataset = None  # type: ignore

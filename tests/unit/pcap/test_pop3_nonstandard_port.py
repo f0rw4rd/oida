@@ -5,7 +5,7 @@ gated the entire interaction record on `dst_port in (110, 995)` /
 `src_port in (110, 995)` with no else branch, so a POP3 session on any
 non-standard port (stunnel wrappers, lab setups, containers mapping
 1100/8110, etc.) matched the `pop` display filter but fell through both
-branches — no interaction recorded, no debug log.
+branches - no interaction recorded, no debug log.
 
 These tests drive process_packet() with lightweight fake packets (no pyshark
 / tshark needed) and assert that POP3 on a non-standard port is still

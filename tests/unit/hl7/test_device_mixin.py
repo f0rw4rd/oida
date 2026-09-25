@@ -1,4 +1,4 @@
-"""Unit tests for the HL7 DeviceMixin (mixins/device.py) — IHE PCD messages.
+"""Unit tests for the HL7 DeviceMixin (mixins/device.py) - IHE PCD messages.
 
 PCD-01 (device observation), PCD-03 (infusion order) and PCD alarm are all
 write/dangerous operations gated behind --confirm. We assert:

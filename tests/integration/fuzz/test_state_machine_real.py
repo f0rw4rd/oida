@@ -89,7 +89,7 @@ def _get_inner_state_machine(fuzzer):
 
 
 # ============================================================================
-# MMS: CONNECTED → COTP_ESTABLISHED → MMS_ASSOCIATED
+# MMS: CONNECTED -> COTP_ESTABLISHED -> MMS_ASSOCIATED
 # Docker: mms-libiec61850 on port 102
 # ============================================================================
 
@@ -167,7 +167,7 @@ class TestMMSReal:
 
 
 # ============================================================================
-# ADS: CONNECTED → ADS_VALIDATED
+# ADS: CONNECTED -> ADS_VALIDATED
 # Docker: ads-mock on port 48898
 # ============================================================================
 
@@ -234,12 +234,12 @@ class TestADSReal:
         final_id = seq_mgr.get("invoke_id")
         # ADS uses DynamicDWord with lambda, so invoke_id increments per request
         assert final_id > initial_id, (
-            f"invoke_id should increment during fuzz_all(): {initial_id} → {final_id}"
+            f"invoke_id should increment during fuzz_all(): {initial_id} -> {final_id}"
         )
 
 
 # ============================================================================
-# EtherNet/IP: CONNECTED → SESSION_REGISTERED
+# EtherNet/IP: CONNECTED -> SESSION_REGISTERED
 # Docker: ethernetip-mock (oida-mock) on port 44818
 # ============================================================================
 
@@ -296,7 +296,7 @@ class TestEtherNetIPReal:
 
 
 # ============================================================================
-# OPC UA: CONNECTED → HELLO_COMPLETE → SECURE_CHANNEL → SESSION_ACTIVE
+# OPC UA: CONNECTED -> HELLO_COMPLETE -> SECURE_CHANNEL -> SESSION_ACTIVE
 # Docker: opcua-insecure on port 4842 (anonymous, no security)
 # ============================================================================
 
@@ -389,13 +389,13 @@ class TestOPCUAReal:
         final_seq = seq_mgr.get("sequence_number")
         final_req = seq_mgr.get("request_id")
         assert final_seq > initial_seq, (
-            f"sequence_number should increment: {initial_seq} → {final_seq}"
+            f"sequence_number should increment: {initial_seq} -> {final_seq}"
         )
-        assert final_req > initial_req, f"request_id should increment: {initial_req} → {final_req}"
+        assert final_req > initial_req, f"request_id should increment: {initial_req} -> {final_req}"
 
 
 # ============================================================================
-# IEC 104: DISCONNECTED → CONNECTED → DATA_TRANSFER
+# IEC 104: DISCONNECTED -> CONNECTED -> DATA_TRANSFER
 # Docker: iec104-lib60870 on port 2404
 # ============================================================================
 
@@ -406,11 +406,11 @@ class TestOPCUAReal:
 class TestIEC104Real:
     """Verify IEC 104 state machine and sequence configuration.
 
-    Note: IEC 104 state transitions (DISCONNECTED→CONNECTED→DATA_TRANSFER) are NOT
+    Note: IEC 104 state transitions (DISCONNECTED->CONNECTED->DATA_TRANSFER) are NOT
     triggered automatically during fuzz_all(). The STARTDT handshake is handled by
     IEC104SocketConnection at the TCP layer, but the IEC104StateMachine wrapper
     is not called back. These tests verify the state machine is created, configured
-    with correct sequences, and accessible — not that transitions occur.
+    with correct sequences, and accessible - not that transitions occur.
     """
 
     def _make_fuzzer(self, tmp_path):
@@ -474,7 +474,7 @@ class TestIEC104Real:
 
 
 # ============================================================================
-# MQTT: DISCONNECTED → CONNECTED → CONNECT_SENT → CONNACK_RECEIVED → READY
+# MQTT: DISCONNECTED -> CONNECTED -> CONNECT_SENT -> CONNACK_RECEIVED -> READY
 # Docker: mqtt-auth on port 1884 (admin:admin)
 # ============================================================================
 
@@ -539,7 +539,7 @@ class TestMQTTReal:
         Fuzz the PUBLISH request directly rather than via fuzz_all(): the early
         malformed/length requests make the broker RST the connection, which trips
         boofuzz's per-request crash-threshold long before fuzz_all() reaches the
-        late PUBLISH/SUBSCRIBE phases — so full traversal never renders a
+        late PUBLISH/SUBSCRIBE phases - so full traversal never renders a
         packet_id field. Targeting PUBLISH deterministically exercises the
         DynamicWord('packet_id') -> _next_packet_id() mechanism.
         """
@@ -560,7 +560,7 @@ class TestMQTTReal:
 
         final_id = seq_mgr.get("packet_id")
         assert final_id > initial_id, (
-            f"packet_id should increment when fuzzing PUBLISH: {initial_id} → {final_id}"
+            f"packet_id should increment when fuzzing PUBLISH: {initial_id} -> {final_id}"
         )
 
     def test_mqtt_transition_log_has_timestamps(self, tmp_path):
@@ -636,7 +636,7 @@ class TestTCPStructural:
 
 
 # ============================================================================
-# VNC: CONNECTED → VERSION_EXCHANGED → SECURITY_NEGOTIATED → AUTHENTICATED
+# VNC: CONNECTED -> VERSION_EXCHANGED -> SECURITY_NEGOTIATED -> AUTHENTICATED
 # Docker: vnc-mock on port 5900 (x11vnc, no auth/security type NONE)
 # ============================================================================
 
@@ -646,7 +646,7 @@ class TestTCPStructural:
 class TestVNCReal:
     """Verify VNC state machine reaches AUTHENTICATED against vnc-mock.
 
-    VNC auth is deferred — transitions happen during fuzz_all() via
+    VNC auth is deferred - transitions happen during fuzz_all() via
     _ensure_authenticated(), not during __init__.
     """
 
@@ -707,7 +707,7 @@ class TestVNCReal:
 
 
 # ============================================================================
-# FTP: CONNECTED → AUTHENTICATED
+# FTP: CONNECTED -> AUTHENTICATED
 # Docker: ftp-mock on port 2121 (vsftpd, user ftpuser:password)
 # ============================================================================
 
@@ -717,7 +717,7 @@ class TestVNCReal:
 class TestFTPReal:
     """Verify FTP state machine reaches AUTHENTICATED against ftp-mock.
 
-    FTP non-TLS auth is deferred — transitions happen during fuzz_all()
+    FTP non-TLS auth is deferred - transitions happen during fuzz_all()
     via the StatefulFuzzer authenticator callback.
     """
 
@@ -780,7 +780,7 @@ class TestFTPReal:
 
 
 # ============================================================================
-# SMTP: CONNECTED → AUTHENTICATED
+# SMTP: CONNECTED -> AUTHENTICATED
 # Docker: smtp-mock on port 2530 (Postfix, AUTH LOGIN testuser:password)
 # ============================================================================
 
@@ -790,7 +790,7 @@ class TestFTPReal:
 class TestSMTPReal:
     """Verify SMTP state machine reaches AUTHENTICATED against smtp-mock.
 
-    SMTP auth is deferred — transitions happen during fuzz_all() when the
+    SMTP auth is deferred - transitions happen during fuzz_all() when the
     connection is open, not during __init__.
     """
 
@@ -846,7 +846,7 @@ class TestSMTPReal:
 class TestHTTPReal:
     """Verify HTTP state machine structure against real http-mock.
 
-    HTTP state machine is structural (cyclic) — no real transitions during
+    HTTP state machine is structural (cyclic) - no real transitions during
     fuzz. Tests verify the graph structure, not runtime state traversal.
     """
 

@@ -459,7 +459,7 @@ class TestNTLMHashesSummaryPairing:
         assert summary["gap"]["hashcat_format"] == ""
 
         # The crux: each crackable cred must carry ITS OWN hashcat line, derived
-        # from its own NT response — not one shifted in from a neighbour.
+        # from its own NT response - not one shifted in from a neighbour.
         for h in listener.hashes:
             if h.hash_type == "NTLMv1":
                 assert summary[h.username]["hashcat_format"] == h.hashcat_format

@@ -43,7 +43,7 @@ class SecurityMixin(_ScannerBase):
             # Determine overall protection level.
             #
             # IMPORTANT: an all-zero S7Protection struct (every field == 0)
-            # is NOT a valid "no protection" verdict — python-snap7's
+            # is NOT a valid "no protection" verdict - python-snap7's
             # get_protection() commonly returns a zeroed struct on
             # S7-1200/1500 firmware that does not expose this SZL, or when
             # the read fails silently. Reporting level=1 / "Full access"
@@ -373,7 +373,7 @@ class SecurityMixin(_ScannerBase):
 
         # protection_level == 0 == indeterminate (see _check_protection_level
         # comment). Do NOT emit a finding when the CPU didn't expose the
-        # SZL — we can't tell the difference between "no protection" and
+        # SZL - we can't tell the difference between "no protection" and
         # "we couldn't read it".
         if protection_level == 1:
             analysis["concerns"].append("No protection - Full read/write access")

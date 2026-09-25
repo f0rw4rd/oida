@@ -31,7 +31,7 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-# U-frame types — tshark applies mask 0xfc and right-shifts by 2,
+# U-frame types - tshark applies mask 0xfc and right-shifts by 2,
 # so values are half the raw wire-format bit positions.
 UTYPE_STARTDT_ACT = 0x01
 UTYPE_STARTDT_CON = 0x02
@@ -168,7 +168,7 @@ class IEC104PassiveListener(IecAsduValueMixin, PySharkListenerBase):
         # Get frame type from iec60870_104.type field
         # 0x00 = I-format, 0x01 = S-format, 0x03 = U-format
         # Multi-APDU TCP segments in EK mode have _fields_dict as a list of
-        # dicts — PyShark's EkLayer can't parse them, so we read type directly
+        # dicts - PyShark's EkLayer can't parse them, so we read type directly
         # from the dicts.
         frame_type = self.get_field(iec104_layer, "type", None)
 
@@ -778,7 +778,7 @@ class IEC104PassiveListener(IecAsduValueMixin, PySharkListenerBase):
             if cot_raw:
                 cot_name = COT_NAMES.get(cot_raw, str(cot_raw))
 
-        # Format Value column — use " | " to avoid CSV column ambiguity
+        # Format Value column - use " | " to avoid CSV column ambiguity
         values = d.get("values", [])
         if isinstance(values, list) and values:
             val_str = " | ".join(values)

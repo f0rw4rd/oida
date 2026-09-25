@@ -6,7 +6,7 @@ installed) gives false confidence. So by default a missing service/dependency
 is a **hard failure**.
 
 Set ``OIDA_SKIP_MISSING_SERVICES=1`` in the environment to turn these back into
-skips — useful for running a subset locally without the full mock + dependency
+skips - useful for running a subset locally without the full mock + dependency
 matrix. CI and ``scripts/run-all-tests.sh`` intentionally leave it unset.
 
 This is a plain module (not a fixture) so it can be used at import time, e.g. as
@@ -70,5 +70,5 @@ def require_port(host: str, port: int, name: str, timeout: int = 3) -> None:
             return
     except (OSError, socket.timeout):
         require_service(
-            f"{name} not reachable at {host}:{port} — run `python services.py up` first"
+            f"{name} not reachable at {host}:{port} - run `python services.py up` first"
         )

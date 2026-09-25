@@ -17,7 +17,7 @@ Usage:
 import sys
 
 # =============================================================================
-# Data trees — each maps OID string -> (type, value)
+# Data trees - each maps OID string -> (type, value)
 # =============================================================================
 
 # Windows LanManager MIB (PEN 77)
@@ -26,38 +26,38 @@ import sys
 # svSvcName/InstalledState/OperatingState: .1.3.6.1.4.1.77.1.2.3.1.{1,2,3}.<index>
 # domPrimaryDomain: .1.3.6.1.4.1.77.1.4.1.0
 LANMANAGER_DATA = {
-    # svUserName table — Windows user accounts
+    # svUserName table - Windows user accounts
     ".1.3.6.1.4.1.77.1.2.25.1.1.1": ("string", "Administrator"),
     ".1.3.6.1.4.1.77.1.2.25.1.1.2": ("string", "Guest"),
     ".1.3.6.1.4.1.77.1.2.25.1.1.3": ("string", "OPCuser"),
     ".1.3.6.1.4.1.77.1.2.25.1.1.4": ("string", "SCADAadmin"),
     ".1.3.6.1.4.1.77.1.2.25.1.1.5": ("string", "HistorianSvc"),
-    # svSvcName table — Windows service names
+    # svSvcName table - Windows service names
     ".1.3.6.1.4.1.77.1.2.3.1.1.1": ("string", "OPCServer"),
     ".1.3.6.1.4.1.77.1.2.3.1.1.2": ("string", "ModbusTCP"),
     ".1.3.6.1.4.1.77.1.2.3.1.1.3": ("string", "Historian"),
     ".1.3.6.1.4.1.77.1.2.3.1.1.4": ("string", "WinDefend"),
-    # svSvcInstalledState — 1=installed for all
+    # svSvcInstalledState - 1=installed for all
     ".1.3.6.1.4.1.77.1.2.3.1.2.1": ("integer", "1"),
     ".1.3.6.1.4.1.77.1.2.3.1.2.2": ("integer", "1"),
     ".1.3.6.1.4.1.77.1.2.3.1.2.3": ("integer", "1"),
     ".1.3.6.1.4.1.77.1.2.3.1.2.4": ("integer", "1"),
-    # svSvcOperatingState — 1=active, 2=paused
+    # svSvcOperatingState - 1=active, 2=paused
     ".1.3.6.1.4.1.77.1.2.3.1.3.1": ("integer", "1"),
     ".1.3.6.1.4.1.77.1.2.3.1.3.2": ("integer", "1"),
     ".1.3.6.1.4.1.77.1.2.3.1.3.3": ("integer", "1"),
     ".1.3.6.1.4.1.77.1.2.3.1.3.4": ("integer", "2"),
-    # svShareName table — share names
+    # svShareName table - share names
     ".1.3.6.1.4.1.77.1.2.27.1.1.1": ("string", "C$"),
     ".1.3.6.1.4.1.77.1.2.27.1.1.2": ("string", "ADMIN$"),
     ".1.3.6.1.4.1.77.1.2.27.1.1.3": ("string", "IPC$"),
     ".1.3.6.1.4.1.77.1.2.27.1.1.4": ("string", "SCADAData"),
-    # svSharePath table — share paths
+    # svSharePath table - share paths
     ".1.3.6.1.4.1.77.1.2.27.1.2.1": ("string", "C:\\"),
     ".1.3.6.1.4.1.77.1.2.27.1.2.2": ("string", "C:\\Windows"),
     ".1.3.6.1.4.1.77.1.2.27.1.2.3": ("string", ""),
     ".1.3.6.1.4.1.77.1.2.27.1.2.4": ("string", "D:\\SCADAData"),
-    # svShareComment table — share descriptions
+    # svShareComment table - share descriptions
     ".1.3.6.1.4.1.77.1.2.27.1.3.1": ("string", "Default share"),
     ".1.3.6.1.4.1.77.1.2.27.1.3.2": ("string", "Remote Admin"),
     ".1.3.6.1.4.1.77.1.2.27.1.3.3": ("string", "Remote IPC"),
@@ -66,7 +66,7 @@ LANMANAGER_DATA = {
     ".1.3.6.1.4.1.77.1.4.1.0": ("string", "ICS-PLANT.LOCAL"),
 }
 
-# H3C credential tables — old PEN 2011 (Huawei/H3C legacy)
+# H3C credential tables - old PEN 2011 (Huawei/H3C legacy)
 # h3cUserName/Password/Level/State: .1.3.6.1.4.1.2011.10.2.12.1.1.1.{1,2,4,5}.<index>
 H3C_DATA = {
     # h3cUserName
@@ -77,17 +77,17 @@ H3C_DATA = {
     ".1.3.6.1.4.1.2011.10.2.12.1.1.1.2.1": ("string", "admin123"),
     ".1.3.6.1.4.1.2011.10.2.12.1.1.1.2.2": ("string", "monitor1"),
     ".1.3.6.1.4.1.2011.10.2.12.1.1.1.2.3": ("string", "oper@tor"),
-    # h3cUserLevel — 3=admin, 1=monitor, 2=operator
+    # h3cUserLevel - 3=admin, 1=monitor, 2=operator
     ".1.3.6.1.4.1.2011.10.2.12.1.1.1.4.1": ("integer", "3"),
     ".1.3.6.1.4.1.2011.10.2.12.1.1.1.4.2": ("integer", "1"),
     ".1.3.6.1.4.1.2011.10.2.12.1.1.1.4.3": ("integer", "2"),
-    # h3cUserState — 1=active, 2=blocked (P2 addition)
+    # h3cUserState - 1=active, 2=blocked (P2 addition)
     ".1.3.6.1.4.1.2011.10.2.12.1.1.1.5.1": ("integer", "1"),
     ".1.3.6.1.4.1.2011.10.2.12.1.1.1.5.2": ("integer", "1"),
     ".1.3.6.1.4.1.2011.10.2.12.1.1.1.5.3": ("integer", "2"),
 }
 
-# H3C credential tables — new PEN 25506 (H3C post-split)
+# H3C credential tables - new PEN 25506 (H3C post-split)
 # hh3cUserName/Password/Level/State: .1.3.6.1.4.1.25506.2.12.1.1.1.{1,2,4,5}.<index>
 H3C_NEW_DATA = {
     # hh3cUserName
@@ -102,13 +102,13 @@ H3C_NEW_DATA = {
     ".1.3.6.1.4.1.25506.2.12.1.1.1.4.1": ("integer", "3"),
     ".1.3.6.1.4.1.25506.2.12.1.1.1.4.2": ("integer", "1"),
     ".1.3.6.1.4.1.25506.2.12.1.1.1.4.3": ("integer", "2"),
-    # hh3cUserState — 1=active, 2=blocked (P2 addition)
+    # hh3cUserState - 1=active, 2=blocked (P2 addition)
     ".1.3.6.1.4.1.25506.2.12.1.1.1.5.1": ("integer", "1"),
     ".1.3.6.1.4.1.25506.2.12.1.1.1.5.2": ("integer", "1"),
     ".1.3.6.1.4.1.25506.2.12.1.1.1.5.3": ("integer", "2"),
 }
 
-# Brocade ADX admin users — PEN 1991 (P2 addition)
+# Brocade ADX admin users - PEN 1991 (P2 addition)
 # brocadeAdxAdminUser/Password: .1.3.6.1.4.1.1991.1.1.2.9.2.1.{1,2}.<index>
 BROCADE_DATA = {
     # brocadeAdxAdminUser
@@ -119,24 +119,24 @@ BROCADE_DATA = {
     ".1.3.6.1.4.1.1991.1.1.2.9.2.1.2.2": ("string", "$1$def$readonlyhash"),
 }
 
-# Bridge MIB — dot1dTpFdb table (MAC forwarding database)
+# Bridge MIB - dot1dTpFdb table (MAC forwarding database)
 # dot1dTpFdbAddress/Port/Status: .1.3.6.1.2.1.17.4.3.1.{1,2,3}.<index>
 # Index is the MAC address encoded as dotted decimal of each octet
 BRIDGE_DATA = {
-    # dot1dTpFdbAddress — MAC addresses as printable strings
+    # dot1dTpFdbAddress - MAC addresses as printable strings
     # Scanner extracts MACs from the OID suffix, not the value, so format doesn't matter
     ".1.3.6.1.2.1.17.4.3.1.1.0.26.43.60.77.1": ("string", "00:1a:2b:3c:4d:01"),
     ".1.3.6.1.2.1.17.4.3.1.1.0.26.43.60.77.2": ("string", "00:1a:2b:3c:4d:02"),
     ".1.3.6.1.2.1.17.4.3.1.1.0.222.173.190.239.1": ("string", "00:de:ad:be:ef:01"),
     ".1.3.6.1.2.1.17.4.3.1.1.0.222.173.190.239.2": ("string", "00:de:ad:be:ef:02"),
     ".1.3.6.1.2.1.17.4.3.1.1.170.187.204.221.238.255": ("string", "aa:bb:cc:dd:ee:ff"),
-    # dot1dTpFdbPort — bridge port number
+    # dot1dTpFdbPort - bridge port number
     ".1.3.6.1.2.1.17.4.3.1.2.0.26.43.60.77.1": ("integer", "1"),
     ".1.3.6.1.2.1.17.4.3.1.2.0.26.43.60.77.2": ("integer", "1"),
     ".1.3.6.1.2.1.17.4.3.1.2.0.222.173.190.239.1": ("integer", "2"),
     ".1.3.6.1.2.1.17.4.3.1.2.0.222.173.190.239.2": ("integer", "3"),
     ".1.3.6.1.2.1.17.4.3.1.2.170.187.204.221.238.255": ("integer", "4"),
-    # dot1dTpFdbStatus — 3=learned, 5=self
+    # dot1dTpFdbStatus - 3=learned, 5=self
     ".1.3.6.1.2.1.17.4.3.1.3.0.26.43.60.77.1": ("integer", "3"),
     ".1.3.6.1.2.1.17.4.3.1.3.0.26.43.60.77.2": ("integer", "3"),
     ".1.3.6.1.2.1.17.4.3.1.3.0.222.173.190.239.1": ("integer", "3"),

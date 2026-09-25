@@ -143,7 +143,7 @@ Examples:
         help="Originator address (0-255) to identify this client in device logs",
     )
     # File Transfer capability detection (Type IDs 120-127). c104 exposes no
-    # high-level file-transfer API, so only capability detection is supported —
+    # high-level file-transfer API, so only capability detection is supported -
     # not the actual F_* ASDU download/upload/delete/log exchange.
     file_group = iec104_parser.add_argument_group("File Transfer")
     file_group.add_argument(
@@ -171,7 +171,7 @@ Examples:
         "-K",
         "--clock-read",
         action="store_true",
-        help="Report device clock via C_CS_NA_1 (Type 103) — this OVERWRITES the "
+        help="Report device clock via C_CS_NA_1 (Type 103) - this OVERWRITES the "
         "outstation's clock as a side effect, requires --confirm",
     )
 
@@ -241,7 +241,7 @@ Examples:
     write_group.add_argument(
         "--reset-process",
         action="store_true",
-        help="[experimental] Send C_RP_NA_1 (Type 105) reset process command — requires --confirm",
+        help="[experimental] Send C_RP_NA_1 (Type 105) reset process command - requires --confirm",
     )
     write_group.add_argument(
         "--param-normalized",
@@ -270,7 +270,7 @@ Examples:
 
     # Output Options (--full-width, --json-log, -o/-f/-v/-d) are injected into
     # every protocol subparser via the shared std_parser parent (cli.py), so
-    # iec104 must not re-declare them — and especially not --full-width's -W
+    # iec104 must not re-declare them - and especially not --full-width's -W
     # short alias, which iec104 reuses for --write-single.
 
     # Listen Mode (--listen, --listen-time, --listen-output, --listen-filter)
@@ -283,7 +283,7 @@ Examples:
 
     # Fuzzing & dangerous operations (--confirm, --fuzz, --fuzz-iterations)
     # IEC 104 fuzzes a single --fuzz-ioa, so --fuzz-max-targets (a multi-target
-    # cap) does not apply — omit it instead of advertising an unused flag.
+    # cap) does not apply - omit it instead of advertising an unused flag.
     fuzz_group = add_dangerous_options(
         iec104_parser, include_fuzz=True, fuzz_default_iterations=20, include_max_targets=False
     )
@@ -291,7 +291,7 @@ Examples:
         "--test-commands",
         action="store_true",
         help="Test control-command acceptance at --test-command-ioa "
-        "(C_SC/C_DC) — requires --confirm",
+        "(C_SC/C_DC) - requires --confirm",
     )
     fuzz_group.add_argument(
         "--test-command-ioa",

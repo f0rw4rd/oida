@@ -228,7 +228,7 @@ class EtherCATScanner(
                 )
 
             # If boot state requested, transition to Bootstrap (for FoE firmware ops).
-            # Bootstrap state lets the master flash slave firmware — strictly a
+            # Bootstrap state lets the master flash slave firmware - strictly a
             # write/state-change operation, so gate it behind --confirm.
             if self.boot_state:
                 if not self.confirm:
@@ -252,8 +252,8 @@ class EtherCATScanner(
                 config_map_ok = True
                 self.logger.debug(f"config_map() complete, expected_wkc={master.expected_wkc}")
             except pysoem.ConfigMapError as e:
-                # config_map() failed — PDO mapping errors during Object Dictionary reads
-                # Log details but continue — master is still usable in PRE-OP for SDO/mailbox
+                # config_map() failed - PDO mapping errors during Object Dictionary reads
+                # Log details but continue - master is still usable in PRE-OP for SDO/mailbox
                 err_types = {}
                 for err in e.error_list:
                     key = f"{type(err).__name__}: {err}"
@@ -496,7 +496,7 @@ class EtherCATScanner(
                 # shadowed the outer 'e' and Python 3's except-variable
                 # scoping deleted it after the inner suite, so line 488
                 # raised UnboundLocalError when the inner close failed
-                # — losing the original cleanup error completely. Rename
+                # - losing the original cleanup error completely. Rename
                 # the inner variable.
                 try:
                     connection.close()

@@ -609,7 +609,7 @@ class TestCheckSecurity:
         findings = scanner._check_security(MagicMock(), resources, confirm=True)
 
         assert "unauthenticated_writes" not in findings
-        # Only the security-object read should have run — no PUT probe.
+        # Only the security-object read should have run - no PUT probe.
         assert mock_run.call_count == 1
 
     @patch("oida.protocols.coap.scanner.run_async")

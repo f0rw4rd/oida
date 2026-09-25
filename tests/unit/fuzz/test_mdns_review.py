@@ -55,7 +55,7 @@ def test_header_counts_not_all_zero_with_body(request_name):
 
     assert not (qd == an == ns == ar == 0 and body_len > 0), (
         f"{request_name}: header declares 0/0/0/0 records but a "
-        f"{body_len}-byte body follows — a compliant parser ignores it all"
+        f"{body_len}-byte body follows - a compliant parser ignores it all"
     )
 
 

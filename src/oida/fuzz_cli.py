@@ -717,7 +717,7 @@ def handle_replay_command(args):
 
     set_context("FUZZ-REPLAY", session, 0)
 
-    # Import database. The fuzzer writes via SQLAlchemyDatabase (ORM) — use
+    # Import database. The fuzzer writes via SQLAlchemyDatabase (ORM) - use
     # the same backend for reads so we never see schema drift. SQLiteDatabase
     # (raw SQL) is kept for backward compatibility but no longer the default.
     from oida.fuzz.core.database.orm import SQLAlchemyDatabase
@@ -1553,7 +1553,7 @@ def run_fuzzing(args, protocol, target):
                 f"Optional import SQLAlchemyDatabase not available: {e}"
             )  # SQLAlchemy not installed, no resume support
         except Exception as e:
-            fuzz_logger.warning(f"Could not resume from {db_path}: {e} — starting from beginning")
+            fuzz_logger.warning(f"Could not resume from {db_path}: {e} - starting from beginning")
     fuzz_logger.debug(f"Database initialized: {db_path}")
 
     # Log special modes

@@ -190,7 +190,7 @@ def parse_targets(target_spec: str, _visited_files: Optional[set] = None) -> Lis
             targets.extend(parse_cidr(target_spec))
         else:
             # host:port/path with a numeric path (e.g. "10.0.0.1:8080/2") or any
-            # other non-CIDR string containing "/" — treat as a single target
+            # other non-CIDR string containing "/" - treat as a single target
             # instead of raising out of parse_cidr.
             targets.append(target_spec)
     # Check if it's an IPv6 range [addr1]-[addr2]
@@ -203,7 +203,7 @@ def parse_targets(target_spec: str, _visited_files: Optional[set] = None) -> Lis
         except ValueError as e:
             # is_ip_range only validates the first half, so a mixed spec like
             # "192.168.1.1-scan" reaches here. It is a hostname-looking token,
-            # not a crash-worthy input — degrade to a single target. A
+            # not a crash-worthy input - degrade to a single target. A
             # well-formed but reversed range stays an operator error.
             if "is greater than end IP" in str(e):
                 raise
@@ -223,8 +223,8 @@ def _is_cidr_like(target_spec: str) -> bool:
     """Return True when *target_spec* plausibly denotes a CIDR network.
 
     Distinguishes ``10.0.0.0/24`` / ``2001:db8::/64`` (real CIDR, hand to
-    parse_cidr) from strings that merely contain a slash — ``host:8080/2``,
-    ``host/path`` — which must be treated as a single target rather than
+    parse_cidr) from strings that merely contain a slash - ``host:8080/2``,
+    ``host/path`` - which must be treated as a single target rather than
     raising out of parse_cidr.
     """
     if "/" not in target_spec:

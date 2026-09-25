@@ -10,7 +10,7 @@ Mock profiles:
   - iec104-custom-types (port 2405): Python mock with vendor-specific
     Type IDs 200, 201, 210, 220 on IOAs 1000-1019
   - iec104-conpot (port 2409): Conpot honeypot, ASDU address 7720
-  - iec104-tls (port 19998): TLS-enabled lib60870 (c104 TLS broken — xfail)
+  - iec104-tls (port 19998): TLS-enabled lib60870 (c104 TLS broken - xfail)
 
 Uses structured JSON log assertions for precise validation.
 """
@@ -29,7 +29,7 @@ pytestmark = pytest.mark.xdist_group("iec104_service")
 
 
 # ---------------------------------------------------------------------------
-# Constants — known mock data (ground truth from iec104_server.c)
+# Constants - known mock data (ground truth from iec104_server.c)
 # ---------------------------------------------------------------------------
 
 IEC104_PORT = MOCK_PORTS.get("iec104", 2404)
@@ -553,7 +553,7 @@ class TestIEC104Integration:
         security_events = [e for e in result.scan_log.events if e.get("event_type") == "security"]
         assert len(security_events) >= 1, f"Expected security events, got: {security_events}"
         # The 'Anonymous access allowed' finding must carry the exact mock point
-        # count (120) AND the 'without authentication' wording — the scanner's
+        # count (120) AND the 'without authentication' wording - the scanner's
         # documented detail string. Locate it among the security events.
         anon = [
             e
@@ -591,7 +591,7 @@ class TestIEC104Integration:
         if result.success and result.scan_log is not None and len(result.scan_log) > 0:
             findings = _get_security_findings(result.scan_log)
             if "Writable access" in findings:
-                # Good — finding was emitted as expected
+                # Good - finding was emitted as expected
                 pass
 
     # ========================================================================
@@ -889,7 +889,7 @@ class TestIEC104Integration:
             timeout=15,
         )
         assert result.returncode in [0, 1], f"Listen with output unexpected rc={result.returncode}"
-        # Listen mode must at least connect to the mock — verify via the log.
+        # Listen mode must at least connect to the mock - verify via the log.
         _assert_log_has_events(result)
         text = _combined_text(result, result.scan_log)
         assert "connect" in text or "listen" in text, (
@@ -897,7 +897,7 @@ class TestIEC104Integration:
         )
         # Output file creation is best-effort (depends on whether spontaneous
         # data was captured during the 3s window). If it was written, it must
-        # be valid JSONL — non-empty and parseable, not just "exists".
+        # be valid JSONL - non-empty and parseable, not just "exists".
         if result.success and output_file.exists() and output_file.stat().st_size > 0:
             import json
 
@@ -1690,7 +1690,7 @@ class TestIEC104Integration:
         )
 
     # -----------------------------------------------------------------
-    # P1 — false-positive identification regression guard (FIXED).
+    # P1 - false-positive identification regression guard (FIXED).
     #
     # src/oida/connection.py's NetworkConnection.run() defaults
     # results["success"] = True whenever proto_flow() returns without
@@ -1703,7 +1703,7 @@ class TestIEC104Integration:
     #
     # FIX (Option A, localized): the scanner now records _apdu_received
     # the moment the peer sends ANY valid APDU (I/U/S-frame, start byte
-    # 0x68 — e.g. STARTDT_CON / TESTFR_CON / data). cli_runner.py's
+    # 0x68 - e.g. STARTDT_CON / TESTFR_CON / data). cli_runner.py's
     # _execute_scan() gates success=False unless _apdu_received is True.
     # The tests below now assert the corrected behavior against a
     # wrong-protocol port (a live Modbus mock), a silent socket, and a
@@ -1741,7 +1741,7 @@ class TestIEC104Integration:
         port) must report success=False: TCP connect succeeds but the
         IEC 104 application layer never sends an APDU, so the
         _apdu_received gate keeps success=False instead of claiming a
-        false-positive identification. [Category C, P1 — regression guard]
+        false-positive identification. [Category C, P1 - regression guard]
         """
         modbus_port = MOCK_PORTS.get("modbus", 502)
         if not check_port_open(target, modbus_port):
@@ -1808,7 +1808,7 @@ class TestIEC104Integration:
 
         The c104 C extension intermittently segfaults parsing garbage bytes
         (~10% of runs; faulthandler pins it to scanner.py connect(), i.e.
-        the native parser thread, not our code — see upstream
+        the native parser thread, not our code - see upstream
         iec104-python#76, a null-deref in _c104*.so with no fix). A segv
         kills the oida subprocess (rc=-11, banner-only output, no JSON), so
         the first attempt can fail spuriously; reruns absorb it.
@@ -1842,7 +1842,7 @@ class TestIEC104Integration:
     def test_blackhole_host_timeout_honored(self, cli_runner, target, tmp_path):
         """Test a blackhole host (nothing responds at the TCP level) times
         out near the requested --timeout budget and correctly reports
-        success: false — this path raises an exception during connect,
+        success: false - this path raises an exception during connect,
         so it is NOT affected by the P1 false-positive bug [Category C, P1b]
         """
         outdir = tmp_path / "blackhole"
@@ -1948,11 +1948,11 @@ class TestIEC104Integration:
         assert "traceback" not in text
         assert "invalid" in text or "usage" in text
 
-    # NOT COVERED (no test exists — do not add skipped placeholders):
+    # NOT COVERED (no test exists - do not add skipped placeholders):
     #   - --tls-ca: needs a CA-backed TLS endpoint, which this mock fleet
     #     does not provide.
 
-    # NOTE: --fuzz-max-targets was removed from the IEC 104 CLI — it is a
+    # NOTE: --fuzz-max-targets was removed from the IEC 104 CLI - it is a
     # multi-target cap that never applied to IEC 104's single --fuzz-ioa fuzzer
     # (it was an unused factory default, now gated off via include_max_targets).
 
@@ -2024,7 +2024,7 @@ class TestIEC104CustomTypes:
             f"Expected the custom-type probe to run, got: {text[:500]}"
         )
         # Either it discovered vendor types (128-255) or it explicitly reported
-        # none — a vacuous run that does neither is a regression.
+        # none - a vacuous run that does neither is a regression.
         assert "discovered custom type id" in text or "no custom type ids detected" in text, (
             f"Expected a definite custom-type verdict, got: {text[:500]}"
         )
@@ -2035,7 +2035,7 @@ class TestIEC104CustomTypes:
 
         The c104-based probe may not detect custom types on the Python mock
         (protocol-level incompatibility). Assert conditionally.
-        Note: IEC 104 TCP mode does not emit 'No authentication' — only
+        Note: IEC 104 TCP mode does not emit 'No authentication' - only
         'Anonymous access allowed' (>100 pts), 'Insecure configuration'
         (custom types), and 'Writable access' (file transfer).
         """
@@ -2222,7 +2222,7 @@ class TestIEC104Conpot:
             f"got {_count_discovered_ioas(result.scan_log)}"
         )
         # The honeypot template exposes single-point, double-point, scaled and
-        # short-float measured types — verify the type-ID mix was decoded.
+        # short-float measured types - verify the type-ID mix was decoded.
         for type_name in ("m_sp_na_1", "m_dp_na_1", "m_me_nb_1", "m_me_nc_1"):
             assert type_name in text, (
                 f"Expected Conpot type {type_name.upper()} in decoded output, got: {text[:500]}"
@@ -2312,7 +2312,7 @@ class TestIEC104Conpot:
                 ), f"Unexpected finding: {f}"
 
     def test_conpot_default_asdu(self, cli_runner, target, port):
-        """Test scan with default ASDU address (1, not 7720) — may fail/timeout [Category C]"""
+        """Test scan with default ASDU address (1, not 7720) - may fail/timeout [Category C]"""
         result = cli_runner.run(
             "iec104",
             target,
@@ -2447,7 +2447,7 @@ class TestIEC104TLS:
             tls_sock.close()
 
     # ========================================================================
-    # TLS Scans (c104-dependent — xfail until iec104-python#64 is fixed)
+    # TLS Scans (c104-dependent - xfail until iec104-python#64 is fixed)
     # ========================================================================
 
     @_C104_TLS_XFAIL

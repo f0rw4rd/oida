@@ -344,7 +344,7 @@ class TestIPMICipherZeroEKMode:
         """EK mode renders an unestablished session id as decimal '0'.
 
         Open Session / RAKP setup carries authtype=None(0) + session id 0
-        *before* a session exists — this must NOT be flagged cipher-zero.
+        *before* a session exists - this must NOT be flagged cipher-zero.
         """
         listener = _make_listener()
         pkt = _FakePacket(

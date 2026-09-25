@@ -59,7 +59,7 @@ def _normalize_opcua_url(target: str, default_port: int = 4840) -> str:
     # treated EVERY bracketed form as "no port" and appended :4840 even
     # when one was already there, producing `[::1]:4840:4840`.
     if target.startswith("["):
-        # Bracketed IPv6 — port iff a ':' appears AFTER the closing ']'
+        # Bracketed IPv6 - port iff a ':' appears AFTER the closing ']'
         close = target.find("]")
         has_port = close != -1 and ":" in target[close + 1 :].split("/", 1)[0]
         if has_port:
@@ -84,12 +84,12 @@ def _parse_opcua_url(url: str) -> tuple:
     # Remove scheme
     remainder = url[len(OPCUA_SCHEME) :]
 
-    # Bracketed IPv6 — split path AFTER the closing ']' so the colons
+    # Bracketed IPv6 - split path AFTER the closing ']' so the colons
     # inside the address don't break path or port detection.
     if remainder.startswith("["):
         close = remainder.find("]")
         if close == -1:
-            # Malformed — return what we can.
+            # Malformed - return what we can.
             return remainder, 4840, ""
         ipv6_host = remainder[: close + 1]
         tail = remainder[close + 1 :]

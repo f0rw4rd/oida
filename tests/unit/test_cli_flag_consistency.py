@@ -7,13 +7,13 @@ downstream, or whether a `self.args.get("...")` / `getattr(args, "...")` read
 matches a real dest. That drift is exactly how --rtu-over-tcp,
 --ascii-over-tcp, and --max-registers ended up silently dead in
 modbus/scanner.py (dashed dict keys read against an underscored argparse
-Namespace) — this test is the regression guard for that class of bug.
+Namespace) - this test is the regression guard for that class of bug.
 
 This is a heuristic, not a type-checker: it instantiates the real parser for
 the dest side, and AST-scans `src/oida/` for three read shapes
 (`args.X` / `self.args.X`, `getattr(args_like, "X", ...)`,
 `args_like.get("X")`) for the usage side. False positives happen when a
-totally unrelated variable is also named `args`/`ns`/`namespace` — add those
+totally unrelated variable is also named `args`/`ns`/`namespace` - add those
 to the whitelists below with a comment, don't loosen the scan.
 """
 
@@ -388,9 +388,9 @@ def test_extraction_is_not_vacuous(all_dests, usage_sites):
     """Anti-vacuity guard: the scan should find a substantial number of dests
     and usage sites, so a broken extraction can't silently pass by matching
     nothing on both sides."""
-    assert len(all_dests) >= 1000, f"Only found {len(all_dests)} dests — parser build likely broken"
+    assert len(all_dests) >= 1000, f"Only found {len(all_dests)} dests - parser build likely broken"
     used_names = {name for name, _, _ in usage_sites}
     assert len(used_names) >= 300, (
-        f"Only found {len(used_names)} used names — AST scan likely broken"
+        f"Only found {len(used_names)} used names - AST scan likely broken"
     )
     assert {"verbose", "output"} <= used_names

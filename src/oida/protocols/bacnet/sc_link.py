@@ -5,10 +5,10 @@ bacpypes3 0.0.106 ships an SC *transport* (websocket client + a BVLC-SC codec)
 but NO connect handshake and NO bridge to the Application/NSAP. This module
 supplies both, so the existing BACnet application mixins ride over SC unchanged:
 
-  * SCConnection.open()  — opens the direct-connect (or hub) websocket with a
+  * SCConnection.open()  - opens the direct-connect (or hub) websocket with a
     caller-supplied TLS context, runs the BVLC-SC Connect-Request/Connect-Accept
     handshake, and returns the negotiated peer VMAC.
-  * SCLinkLayer        — a Server[PDU] bound under app.nsap that wraps outbound
+  * SCLinkLayer        - a Server[PDU] bound under app.nsap that wraps outbound
     NPDUs in BVLC-SC EncapsulatedNPDU frames and unwraps inbound ones.
 
 Verified end-to-end (TLS 1.3 mutual-auth ReadProperty) against bacnet-stack

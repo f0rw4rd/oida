@@ -170,7 +170,7 @@ def generate():
     print("  Client certificate written")
 
     # ------------------------------------------------------------------
-    # Bogus self-signed cert (NOT from shared CA — for invalid cert tests)
+    # Bogus self-signed cert (NOT from shared CA - for invalid cert tests)
     # ------------------------------------------------------------------
     bogus_key = rsa.generate_private_key(public_exponent=65537, key_size=2048)
     bogus_name = x509.Name(

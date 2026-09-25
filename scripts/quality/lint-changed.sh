@@ -2,8 +2,8 @@
 # Strict lint for CHANGED files only.
 #
 # The blocking `select` in pyproject.toml is the set that is already at zero
-# across the tree. This script applies the *stricter* set — the rules that
-# still have thousands of pre-existing violations — to changed files only, so
+# across the tree. This script applies the *stricter* set - the rules that
+# still have thousands of pre-existing violations - to changed files only, so
 # new code meets the standard while old code is paid down in waves.
 #
 # Usage:
@@ -32,7 +32,7 @@ if ! ruff check --no-cache --select "$STRICT" "${FILES[@]}"; then
 These rules are enforced on changed files only. Fix them here rather than
 widening an except or adding a noqa: a blind `except Exception` around a
 security check is how crashed security checks once shipped reported as
-"clean" — a false negative, the worst output a security tool can give.
+"clean" - a false negative, the worst output a security tool can give.
 EOF
     exit 1
 fi

@@ -1053,8 +1053,8 @@ class NetBIOSPassiveListener:
         suffix_desc = self.SUFFIX_TYPES.get(suffix, f"Unknown (0x{suffix:02X})")
 
         # The NBNS answer record (ADDR_ENTRY.NB_ADDRESS) can advertise an IP
-        # that differs from the packet source — e.g. a WINS server answering on
-        # behalf of another host — so track both.
+        # that differs from the packet source - e.g. a WINS server answering on
+        # behalf of another host - so track both.
         ip_addresses = [src_ip]
         if ip_from_response and ip_from_response not in ip_addresses:
             ip_addresses.append(ip_from_response)

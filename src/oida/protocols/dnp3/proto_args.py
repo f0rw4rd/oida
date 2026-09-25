@@ -559,7 +559,7 @@ def validate_args(args) -> None:
     if getattr(args, "write_deadband", None):
         control_ops.append("--write-deadband")
     if getattr(args, "time_sync", False):
-        # Type 50 time-sync writes the outstation clock — same blast
+        # Type 50 time-sync writes the outstation clock - same blast
         # radius as the other control ops; was missing from this list.
         control_ops.append("--time-sync")
     # Freeze operations
@@ -601,7 +601,7 @@ def validate_args(args) -> None:
         )
 
     # All control ops also require --confirm. Help text on every dangerous flag
-    # already says "(requires --confirm)" — enforce it here so users can't drive
+    # already says "(requires --confirm)" - enforce it here so users can't drive
     # a live outstation by accident.
     if control_ops and not getattr(args, "confirm", False):
         ops_str = ", ".join(control_ops)
@@ -679,7 +679,7 @@ def validate_args(args) -> None:
                 protocol="DNP3",
             )
 
-    # Validate TLS requires both cert and key — refuse to silently fall back to
+    # Validate TLS requires both cert and key - refuse to silently fall back to
     # cleartext TCP (the channel builder only uses TLS when both are present).
     if getattr(args, "tls", False):
         if not getattr(args, "tls_cert", None) or not getattr(args, "tls_key", None):

@@ -229,7 +229,7 @@ class TestSchemeResolutionConsistency(unittest.TestCase):
 
     def test_bare_hostname_default_is_https_not_cleartext(self):
         """With parser defaults, a bare-hostname target resolves to https,
-        matching default_port 443 — no silent cleartext downgrade."""
+        matching default_port 443 - no silent cleartext downgrade."""
         args = self._parse()
         scanner = _create_scanner("fhir.example.com", tls=args.tls, port=443)
         url = scanner._get_base_url()
@@ -642,7 +642,7 @@ class TestProtoFlow(unittest.TestCase):
         # enum_all processing happens after is_fhirclient_available, so we
         # need fhirclient available but stop at create_conn_obj.
         # NetworkConnection copies args (copy.copy) so default-port resolution
-        # doesn't mutate the caller's shared Namespace — the enum_all expansion
+        # doesn't mutate the caller's shared Namespace - the enum_all expansion
         # therefore lands on scanner.args, not the original `args` object.
         with (
             patch("oida.protocols.fhir.cli_runner.is_fhirclient_available", return_value=True),

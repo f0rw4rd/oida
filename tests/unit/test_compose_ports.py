@@ -2,7 +2,7 @@
 
 This test parses the compose YAML files and cross-references every published
 host port against the MOCK_PORTS dict in integration/conftest.py.  It catches
-drift *without* Docker running — pure file-level consistency check.
+drift *without* Docker running - pure file-level consistency check.
 """
 
 import re

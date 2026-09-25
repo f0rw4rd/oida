@@ -333,7 +333,7 @@ class EtherCATOpsMixin:
             slave_conn.open()
 
             try:
-                # Open for write — returns 4-byte handle
+                # Open for write - returns 4-byte handle
                 handle_data = _read_write_raw(
                     slave_conn,
                     ADS_IDX_GRP["ECAT_FOE_OPEN_W"],
@@ -349,7 +349,7 @@ class EtherCATOpsMixin:
                 handle = struct.unpack("<I", handle_data[:4])[0]
                 self.logger.debug(f"  FoE write handle: {handle}")
 
-                # Close immediately — truncate / delete
+                # Close immediately - truncate / delete
                 try:
                     _read_write_raw(
                         slave_conn,
@@ -375,13 +375,13 @@ class EtherCATOpsMixin:
             result["error"] = str(e)
 
             if err_code == 24:
-                result["hint"] = "Invalid AMS port — not a real slave"
+                result["hint"] = "Invalid AMS port - not a real slave"
             elif err_code == 1793:
                 result["hint"] = "FoE not supported on this slave"
             elif err_code == 1796:
-                result["hint"] = "Access denied — slave may require Bootstrap state"
+                result["hint"] = "Access denied - slave may require Bootstrap state"
             elif err_code == 1823:
-                result["hint"] = "Request aborted — file may not exist or FoE proxied by router"
+                result["hint"] = "Request aborted - file may not exist or FoE proxied by router"
             else:
                 result["hint"] = err_name or "Unknown error"
 
@@ -411,7 +411,7 @@ class EtherCATOpsMixin:
 
             try:
                 # Task data is organized by task index at offset.
-                # Try reading task 0..7 — typical TwinCAT has 1-4 tasks.
+                # Try reading task 0..7 - typical TwinCAT has 1-4 tasks.
                 # Each task entry: cycle_time(4) + priority(4) + ...
                 # The exact struct layout depends on TwinCAT version.
                 # We probe with increasing offsets until we get an error.
@@ -465,7 +465,7 @@ class EtherCATOpsMixin:
                     except Exception as e:
                         err_code = _extract_ads_error_code(str(e))
                         if err_code in (0x0702, 0x0703, 0x0701):
-                            # Invalid group/offset/service — no more tasks
+                            # Invalid group/offset/service - no more tasks
                             break
                         self.logger.debug(f"  Task {task_idx}: {e}")
                         break
@@ -743,7 +743,7 @@ class EtherCATOpsMixin:
                         raw_state = struct.unpack("<H", state_data)[0]
                         state_name = get_al_state_name(raw_state)
                         result["master_state"] = state_name
-                        self.logger.debug(f"Master AL state raw=0x{raw_state:04X} → {state_name}")
+                        self.logger.debug(f"Master AL state raw=0x{raw_state:04X} -> {state_name}")
                         self.logger.display(f"  EtherCAT Master State: {state_name}")
                 except Exception as e:
                     self.logger.debug(f"Master state read failed: {e}")
@@ -773,7 +773,7 @@ class EtherCATOpsMixin:
                 # clamp to MAX_SLAVE_PORTS to avoid a self-inflicted scanner DoS.
                 if slave_count > MAX_SLAVE_PORTS:
                     self.logger.warning(
-                        f"  Device reported {slave_count} slaves — clamping scan to "
+                        f"  Device reported {slave_count} slaves - clamping scan to "
                         f"{MAX_SLAVE_PORTS} (implausible count, possible spoofing)"
                     )
                     slave_count = MAX_SLAVE_PORTS
@@ -836,7 +836,7 @@ class EtherCATOpsMixin:
                             state_name = get_al_state_name(raw_state)
                             slave_info["al_state"] = state_name
                             self.logger.debug(
-                                f"Slave {port} AL state: raw=0x{raw_state:04X} → {state_name}"
+                                f"Slave {port} AL state: raw=0x{raw_state:04X} -> {state_name}"
                             )
                     except Exception as e:
                         self.logger.debug(f"Slave {port} state read failed: {e}")
@@ -901,7 +901,7 @@ class EtherCATOpsMixin:
 
         return result
 
-    # Delegates to shared coe.py — kept as a static method for backward compat
+    # Delegates to shared coe.py - kept as a static method for backward compat
     _parse_coe_ranges = staticmethod(parse_coe_ranges)
 
     def _scan_coe_via_ads(self, slave_ports, test_access=False, scan_ranges=None):
@@ -1058,7 +1058,7 @@ class EtherCATOpsMixin:
                         data = _read_coe_sdo(slave_conn, idx, 0)
 
                         if data is None:
-                            # Object not readable — test write-only if access mode
+                            # Object not readable - test write-only if access mode
                             if test_access:
                                 wo_ok, _ = _write_coe_sdo(slave_conn, idx, 0, b"\x00")
                                 if wo_ok:
@@ -1121,10 +1121,10 @@ class EtherCATOpsMixin:
                             sub1_data = _read_coe_sdo(slave_conn, idx, 1)
                             if sub1_data is not None:
                                 max_sub = (
-                                    32  # unknown count — scan up to 32, rely on consecutive_fail
+                                    32  # unknown count - scan up to 32, rely on consecutive_fail
                                 )
                                 self.logger.debug(
-                                    f"  0x{idx:04X}: sub0 not a count, but sub1 exists — probing up to 32"
+                                    f"  0x{idx:04X}: sub0 not a count, but sub1 exists - probing up to 32"
                                 )
                         if max_sub > 0:
                             self.logger.debug(
@@ -1306,7 +1306,7 @@ class EtherCATOpsMixin:
 
                 eeprom_progress.finish()
 
-                # Parse SII header — full parse (>=128B) or fallback (>=32B)
+                # Parse SII header - full parse (>=128B) or fallback (>=32B)
                 header = {}
                 raw_bytes = bytes(raw_data)
                 if len(raw_bytes) >= 128:
@@ -1396,7 +1396,7 @@ class EtherCATOpsMixin:
                         self.logger.display(f"    Port {port}: timeout")
                         results[port] = {"error": "timeout"}
                         continue
-                    # Other errors (e.g., error 24) — not supported
+                    # Other errors (e.g., error 24) - not supported
                     self.logger.display(f"    Port {port}: {e}")
                     results[port] = {"error": str(e)}
                     continue
@@ -1536,7 +1536,7 @@ class EtherCATOpsMixin:
                     ):
                         first_chunk_zero = True
                         self.logger.debug(
-                            f"  FoE '{filename}': first chunk all zeros — router zero-fill"
+                            f"  FoE '{filename}': first chunk all zeros - router zero-fill"
                         )
                         break
                     total_size += len(chunk)
@@ -1590,11 +1590,11 @@ class EtherCATOpsMixin:
             self.logger.debug(f"  FoE '{filename}': error code={code}, {err_str}")
             hint = ""
             if code == 1796:
-                hint = "access denied — needs Bootstrap state"
+                hint = "access denied - needs Bootstrap state"
             elif code == 1793:
                 hint = "service not supported"
             elif code == 1823:
-                hint = "request aborted — needs Bootstrap or router proxy"
+                hint = "request aborted - needs Bootstrap or router proxy"
             elif _is_ads_timeout(err_str):
                 hint = "timeout"
             return {"success": False, "error": _extract_ads_error(err_str), "hint": hint}
@@ -1609,8 +1609,8 @@ class EtherCATOpsMixin:
         """Read a file from an EtherCAT slave via FoE handle-based protocol.
 
         Uses TwinCAT's handle-based FoE ADS abstraction (ig=0xF401-0xF404):
-          1. Open:  ReadWrite(ig=0xF401, offset=0, write=filename) → 4-byte handle
-          2. Read:  ReadWrite(ig=0xF404, offset=handle) → file data
+          1. Open:  ReadWrite(ig=0xF401, offset=0, write=filename) -> 4-byte handle
+          2. Read:  ReadWrite(ig=0xF404, offset=handle) -> file data
           3. Close: ReadWrite(ig=0xF403, offset=handle)
 
         Args:
@@ -1638,11 +1638,11 @@ class EtherCATOpsMixin:
             code = _extract_ads_error_code(err_str)
             hint = ""
             if code == 1796:
-                hint = "access denied — slave needs Bootstrap state for FoE"
+                hint = "access denied - slave needs Bootstrap state for FoE"
             elif code == 1793:
-                hint = "service not supported — slave may not implement FoE"
+                hint = "service not supported - slave may not implement FoE"
             elif _is_ads_timeout(err_str):
-                hint = "timeout — slave may not support FoE or needs Bootstrap mode"
+                hint = "timeout - slave may not support FoE or needs Bootstrap mode"
             self.logger.debug(
                 f"FoE read failed on port {port}: {e}" + (f" ({hint})" if hint else "")
             )
@@ -1690,7 +1690,7 @@ class EtherCATOpsMixin:
                     handle_data = _read_write_raw(
                         slave_conn, ADS_IDX_GRP["ECAT_FOE_OPEN_R"], 0, 4, probe_name
                     )
-                    # Open succeeded — try a test read
+                    # Open succeeded - try a test read
                     port_result["supported"] = True
                     if handle_data and len(handle_data) >= 4:
                         handle = struct.unpack("<I", handle_data[:4])[0]
@@ -1704,11 +1704,11 @@ class EtherCATOpsMixin:
                             read_code = _extract_ads_error_code(str(read_e))
                             if read_code == 1823:
                                 port_result["state_hint"] = (
-                                    "open accepted, reads abort (1823) — "
+                                    "open accepted, reads abort (1823) - "
                                     "needs Bootstrap or AMS router proxy"
                                 )
                             elif read_code == 1796:
-                                port_result["state_hint"] = "access denied — needs Bootstrap state"
+                                port_result["state_hint"] = "access denied - needs Bootstrap state"
                             else:
                                 port_result["state_hint"] = (
                                     f"open OK, read error: {_extract_ads_error(str(read_e))}"
@@ -1733,9 +1733,9 @@ class EtherCATOpsMixin:
                         continue
                     elif code == 1796:
                         port_result["supported"] = True
-                        port_result["state_hint"] = "access denied — needs Bootstrap state"
+                        port_result["state_hint"] = "access denied - needs Bootstrap state"
                         self.logger.display(
-                            f"    Port {port}: FoE supported (access denied — needs Bootstrap)"
+                            f"    Port {port}: FoE supported (access denied - needs Bootstrap)"
                         )
                         results[port] = port_result
                         continue
@@ -1749,7 +1749,7 @@ class EtherCATOpsMixin:
                         port_result["state_hint"] = f"error: {_extract_ads_error(err_str)}"
 
                 # Scan all filenames if FoE is supported (even if probe read
-                # failed with 1823 — device may be selective about which files
+                # failed with 1823 - device may be selective about which files
                 # are accessible, as seen with device-specific files like systrace).
                 if port_result["supported"]:
                     slave_conn.set_timeout(max(self.ads_timeout_ms, 5000))
@@ -1784,7 +1784,7 @@ class EtherCATOpsMixin:
                             readable_count += 1
                         else:
                             self.logger.debug(
-                                f"  FoE port {port}: '{fname}' — {read_result.get('error', 'failed')}"
+                                f"  FoE port {port}: '{fname}' - {read_result.get('error', 'failed')}"
                             )
 
                     if readable_count:
@@ -1860,15 +1860,15 @@ class EtherCATOpsMixin:
                         self.logger.debug(f"  FoE saved: {filepath}")
                     result["files"].append(file_entry)
                 elif read_result.get("error") == "zero-fill":
-                    self.logger.debug(f"  FoE list port {port}: '{fname}' — zero-fill (skip)")
-                    continue  # Router proxy — skip
+                    self.logger.debug(f"  FoE list port {port}: '{fname}' - zero-fill (skip)")
+                    continue  # Router proxy - skip
                 else:
                     # Classify error
                     hint = read_result.get("hint", "")
                     err = read_result.get("error", "")
                     code = _extract_ads_error_code(err)
                     self.logger.debug(
-                        f"  FoE list port {port}: '{fname}' — error code={code}, {err}"
+                        f"  FoE list port {port}: '{fname}' - error code={code}, {err}"
                     )
                     if code == 24:
                         result["error"] = "Invalid AMS port"
@@ -1952,7 +1952,7 @@ class EtherCATOpsMixin:
                         slave_conn, ADS_IDX_GRP["ECAT_FOE_WRITE_DATA"], handle, 4, chunk
                     )
                 except RuntimeError as e:
-                    # A short-read on the ack ("N were read") is benign — the device
+                    # A short-read on the ack ("N were read") is benign - the device
                     # may return fewer than the requested 4 bytes. Any other
                     # RuntimeError is a genuine write rejection: abort and fail.
                     if not re.search(r"were\s+read", str(e)):
@@ -1986,11 +1986,11 @@ class EtherCATOpsMixin:
             code = _extract_ads_error_code(err_str)
             hint = ""
             if code == 1796:
-                hint = "access denied — slave needs Bootstrap state for FoE write"
+                hint = "access denied - slave needs Bootstrap state for FoE write"
             elif code == 1793:
-                hint = "service not supported — slave may not implement FoE"
+                hint = "service not supported - slave may not implement FoE"
             elif _is_ads_timeout(err_str):
-                hint = "timeout — slave may not support FoE or needs Bootstrap mode"
+                hint = "timeout - slave may not support FoE or needs Bootstrap mode"
             self.logger.debug(
                 f"FoE write failed on port {port}: {e}" + (f" ({hint})" if hint else "")
             )
@@ -2085,7 +2085,7 @@ class EtherCATOpsMixin:
                         # IDN not supported on this slave
                         continue
 
-                    # Read element 2 (Name) — optional
+                    # Read element 2 (Name) - optional
                     offset_name = encode_soe_offset(idn, element=2)
                     name_data = self._soe_read_with_retry(slave_conn, offset_name)
                     if name_data is not None:
@@ -2232,7 +2232,7 @@ class EtherCATOpsMixin:
                             ):
                                 # Likely router zero-fill for larger buffers
                                 self.logger.debug(
-                                    f"  FSoE port {port}: 0x{idx:04X}:{sub} — zero-fill ({read_sz}B), skip"
+                                    f"  FSoE port {port}: 0x{idx:04X}:{sub} - zero-fill ({read_sz}B), skip"
                                 )
                                 continue
 
@@ -2241,7 +2241,7 @@ class EtherCATOpsMixin:
                             port_result["objects"].append(obj_entry)
 
                         except RuntimeError as short_e:
-                            # Short-read — re-read with actual size
+                            # Short-read - re-read with actual size
                             m = re.search(r"(\d+)\s+were\s+read", str(short_e))
                             if m:
                                 actual = int(m.group(1))
@@ -2262,19 +2262,19 @@ class EtherCATOpsMixin:
                             code = _extract_ads_error_code(str(e))
                             if code in (24, 1793, 1823):
                                 self.logger.debug(
-                                    f"  FSoE port {port}: 0x{idx:04X}:{sub} — "
+                                    f"  FSoE port {port}: 0x{idx:04X}:{sub} - "
                                     f"not supported (error {code})"
                                 )
                                 continue
                             elif code == 1796:
                                 self.logger.debug(
-                                    f"  FSoE port {port}: 0x{idx:04X}:{sub} — access denied"
+                                    f"  FSoE port {port}: 0x{idx:04X}:{sub} - access denied"
                                 )
                                 obj_entry["error"] = "access denied"
                                 port_result["objects"].append(obj_entry)
                             else:
                                 self.logger.debug(
-                                    f"  FSoE port {port}: 0x{idx:04X}:{sub} — error: {e}"
+                                    f"  FSoE port {port}: 0x{idx:04X}:{sub} - error: {e}"
                                 )
 
                     self.logger.display(f"    Read {len(port_result['objects'])} FSoE object(s)")
@@ -2330,10 +2330,10 @@ class EtherCATOpsMixin:
                 if data is not None:
                     entry = {"name": elem_name, "data_hex": data.hex(), "size": len(data)}
                     if elem_id == 2:
-                        # Name element — decode as string
+                        # Name element - decode as string
                         entry["text"] = data.rstrip(b"\x00").decode("utf-8", errors="replace")
                     elif elem_id == 4:
-                        # Unit element — decode as string
+                        # Unit element - decode as string
                         entry["text"] = data.rstrip(b"\x00").decode("utf-8", errors="replace")
                     elif len(data) <= 4:
                         entry["value"] = int.from_bytes(data, "little")
@@ -2397,7 +2397,7 @@ class EtherCATOpsMixin:
         pyads = _get_pyads()
         results = {}
 
-        # Discover objects — skip access test when force-writing (just scan for readable objects)
+        # Discover objects - skip access test when force-writing (just scan for readable objects)
         if force_write:
             coe_scan = self._scan_coe_via_ads(
                 slave_ports, test_access=False, scan_ranges=scan_ranges

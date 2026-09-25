@@ -355,7 +355,7 @@ Examples:
 
     # Fuzzing (--confirm, --fuzz, --fuzz-iterations)
     # DICOM fuzzes the single association it opens, so --fuzz-max-targets (a
-    # multi-target cap) is never read — omit it instead of advertising an unused flag.
+    # multi-target cap) is never read - omit it instead of advertising an unused flag.
     add_dangerous_options(
         dicom_parser, include_fuzz=True, fuzz_default_iterations=10, include_max_targets=False
     )

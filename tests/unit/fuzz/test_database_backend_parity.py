@@ -2,12 +2,12 @@
 
 Verifies two previously-reproduced bugs stay fixed:
 
-1. ``get_stats()`` must return the same key set from both backends —
+1. ``get_stats()`` must return the same key set from both backends -
    ``TestCaseManager.list_test_cases()`` reads ``stats['errors']``, which
    only ``MockDatabase`` used to provide, causing the real (SQLAlchemy)
    backend to silently return ``[]`` via a swallowed ``KeyError``.
 2. ``get_test_cases()`` ordering must match between backends (both
-   newest-first) — otherwise, once a session exceeds the default
+   newest-first) - otherwise, once a session exceeds the default
    ``limit=10_000``, the two backends return disjoint halves of the data.
 """
 

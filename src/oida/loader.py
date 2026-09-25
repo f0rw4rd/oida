@@ -68,8 +68,8 @@ class ProtocolLoader:
         """
         self.protocols_dir = Path(protocols_dir)
         # In a frozen/compiled bundle (PyInstaller or Nuitka) the protocols
-        # directory does not exist on disk — discovery imports the known list
-        # by name instead — so the existence check only applies unfrozen.
+        # directory does not exist on disk - discovery imports the known list
+        # by name instead - so the existence check only applies unfrozen.
         if not _is_frozen() and not self.protocols_dir.exists():
             raise ValueError(f"Protocols directory not found: {protocols_dir}")
 
@@ -329,7 +329,7 @@ class ProtocolLoader:
 
         # Legacy-only fallback: a bare `*Scanner` (Layer-1 BaseScanner) module
         # with no exact-name Layer-2 wrapper. No registered protocol takes this
-        # path today — `*Scanner` classes are the internal implementation that
+        # path today - `*Scanner` classes are the internal implementation that
         # the Layer-2 entrypoint wraps, not a second dispatch entrypoint. Kept
         # for out-of-tree/legacy protocol modules.
         # Fallback: look for Scanner suffix (e.g. "modbus" -> "ModbusScanner")

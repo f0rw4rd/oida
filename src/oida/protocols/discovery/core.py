@@ -1175,7 +1175,7 @@ class DiscoveredDevice:
     slp_data: Optional[Dict[str, Any]] = None  # SLP service agents / advertised URLs
 
     # BruteShark-inspired passive discovery data
-    dns_passive_data: Optional[Dict[str, Any]] = None  # DNS hostname→IP mappings
+    dns_passive_data: Optional[Dict[str, Any]] = None  # DNS hostname->IP mappings
     smb_passive_data: Optional[Dict[str, Any]] = None  # SMB/NTLM Windows host discovery
     http_passive_data: Optional[Dict[str, Any]] = None  # HTTP server banners
     tls_passive_data: Optional[Dict[str, Any]] = None  # TLS certificate CN/SAN
@@ -1221,7 +1221,7 @@ class DiscoveredDevice:
 
     # Passive listener protocol data (pcap module). Every attr a listener
     # writes via _ensure_device(data_attr=...) or direct assignment MUST be
-    # declared here — merge_from() only copies declared fields, so an
+    # declared here - merge_from() only copies declared fields, so an
     # undeclared attr is silently dropped on device merge. Guarded by
     # tests/unit/protocols/test_device_schema_consistency.py.
     ads_passive_data: Optional[Dict[str, Any]] = None  # Beckhoff ADS/TwinCAT sessions
@@ -1361,7 +1361,7 @@ class DiscoveredDevice:
         self.last_seen = datetime.now().isoformat()
 
         # Merge protocol-specific data. Every declared Optional[Dict] payload
-        # field copies across when self's is empty — a fields() loop keeps
+        # field copies across when self's is empty - a fields() loop keeps
         # newly declared fields merging automatically instead of drifting
         # out of a hand-written chain (see
         # tests/unit/protocols/test_device_schema_consistency.py).
@@ -1376,7 +1376,7 @@ class DiscoveredDevice:
             setattr(self, f.name, other_val)
             updated.append(f.name)
 
-        # mdns_services: list payload with dedup on merge — in
+        # mdns_services: list payload with dedup on merge - in
         # continuous-capture mode the same device is merged repeatedly, so a
         # bare extend() grows this list without bound.
         if other.mdns_services:

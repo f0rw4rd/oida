@@ -722,12 +722,12 @@ class MQTTScanner(
                     if not self.args.get("confirm", False):
                         self.logger.fail(
                             "--brute / --default-creds runs credential brute-force "
-                            "(trips broker lockout / IDS) — requires --confirm"
+                            "(trips broker lockout / IDS) - requires --confirm"
                         )
                     else:
                         results["auth"]["brute_results"] = self._brute_force_credentials()
                 # An auth-required broker still gets a security analysis (No-TLS,
-                # etc.) — don't skip it just because we can't enumerate topics.
+                # etc.) - don't skip it just because we can't enumerate topics.
                 results["security_issues"] = self._analyze_security(results)
                 return results
 
@@ -749,7 +749,7 @@ class MQTTScanner(
                 if not self.args.get("confirm", False):
                     self.logger.fail(
                         "--brute / --default-creds runs credential brute-force "
-                        "(trips broker lockout / IDS) — requires --confirm"
+                        "(trips broker lockout / IDS) - requires --confirm"
                     )
                 else:
                     results["auth"]["brute_results"] = self._brute_force_credentials()

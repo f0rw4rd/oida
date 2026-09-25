@@ -10,7 +10,7 @@ on:
   # binaries to a GitHub-only pre-release without duplicating the build matrix.
   workflow_call:
   # No push-tag trigger: run by hand only (gh workflow run build-binaries.yml
-  # --ref vX.Y.Z), same reasoning as release.yml (879b902) — avoid an
+  # --ref vX.Y.Z), same reasoning as release.yml (879b902) - avoid an
   # unattended run against a tag before it's known-good.
 
 permissions:
@@ -67,7 +67,7 @@ jobs:
       # manylinux_2_34 cryptography wheel; the resulting binary then requires
       # glibc 2.34 on the target. Inside the manylinux_2_28 container pip
       # selects the manylinux_2_28 wheel instead, dropping the floor to ~2.28.
-      # The smoke test runs inside the same container — effectively testing on
+      # The smoke test runs inside the same container - effectively testing on
       # the minimum supported glibc, which is more meaningful than testing on
       # the 2.39 host runner.
       - name: Build and smoke-test (Linux, manylinux_2_28)
@@ -87,8 +87,8 @@ jobs:
               uv sync $EXTRAS --python 3.12 --frozen
               # pyinstaller ships in the `dev` dependency-group and is installed
               # (at its uv.lock-pinned version) by the sync above. Only the smoke
-              # harness — pytest/pytest-timeout, which sit in the `dev` extra that
-              # is not synced here — needs an ad-hoc install.
+              # harness - pytest/pytest-timeout, which sit in the `dev` extra that
+              # is not synced here - needs an ad-hoc install.
               uv pip install pytest pytest-timeout
               .venv/bin/pyinstaller oida.spec --clean --noconfirm
               .venv/bin/pytest tests/integration/test_binary_smoke.py -m binary -q
@@ -118,7 +118,7 @@ jobs:
           if [ "$(echo "$floor_ver" | cut -d. -f1)" != "2" ] \
             || [ "$floor_minor" -gt "$max_minor" ]; then
             echo "::error::Binary requires glibc ${floor_ver} but we promise ${MAX_SUPPORTED_GLIBC}. \
-          A dependency likely shipped only higher-tagged wheels — either pin a \
+          A dependency likely shipped only higher-tagged wheels - either pin a \
           lower version or raise MAX_SUPPORTED_GLIBC deliberately."
             exit 1
           fi
@@ -126,7 +126,7 @@ jobs:
       # ── Windows: run directly on the host runner ────────────────────────────
       - name: Sync runtime deps from lockfile
         if: runner.os == 'Windows'
-        # Runtime protocol extras only — the binary bundles exactly these, no
+        # Runtime protocol extras only - the binary bundles exactly these, no
         # dev/test tooling.
         run: uv sync ${{ matrix.extras }} --frozen
 
@@ -182,7 +182,7 @@ jobs:
 
       # ── Authenticode-sign the Windows .exe via SignPath (gated, no-op until
       #    enrolled) ───────────────────────────────────────────────────────────
-      # SignPath signs oida/oida.exe inside the zip (see signpath.xml — deep
+      # SignPath signs oida/oida.exe inside the zip (see signpath.xml - deep
       # signing) and returns the re-zipped, signed archive. Runs only when
       # SIGNPATH_API_TOKEN is set, so the build stays green before enrollment.
       - name: Upload unsigned archive for SignPath
@@ -226,7 +226,7 @@ jobs:
         # Sigstore-backed SLSA provenance: proves the archive came from this
         # repo's CI. Verify with: gh attestation verify <archive> --repo f0rw4rd/oida
         # Skipped on PRs (forked-PR id-tokens are restricted) and while the repo
-        # is private — GitHub Artifact Attestations require a public repo (or an
+        # is private - GitHub Artifact Attestations require a public repo (or an
         # org repo with Advanced Security). Auto-enables when made public.
         if: github.event_name != 'pull_request' && github.event.repository.private == false
         uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0

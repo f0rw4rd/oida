@@ -1,6 +1,6 @@
 ---
 name: Bug report
-about: Report a bug in OIDA (not in a target device — that goes to the vendor)
+about: Report a bug in OIDA (not in a target device - that goes to the vendor)
 title: "[bug] <one-line summary>"
 labels: bug
 assignees: ''
@@ -14,7 +14,7 @@ assignees: ''
 
 ```bash
 # Exact command + flags you ran
-oida <protocol> <target> --flag …
+oida <protocol> <target> --flag ...
 ```
 
 If the bug needs a specific input (pcap, wordlist, target response),

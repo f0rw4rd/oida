@@ -7,7 +7,7 @@ the monitor notices.
 
 The headline finding (asserted below, so it is locked in and any future change is
 deliberate): the default ``socket`` monitor probes with a bare TCP ``connect()`` and so
-only sees ``hard_down`` — it is blind to accept-then-close, hang, slow, and garbage
+only sees ``hard_down`` - it is blind to accept-then-close, hang, slow, and garbage
 responses. A send+expect probe (``ValidCaseMonitor``) sees all of them.
 
 Run with:  pytest tests/integration/fuzz/test_crash_detection_fidelity.py -m slow -v -s

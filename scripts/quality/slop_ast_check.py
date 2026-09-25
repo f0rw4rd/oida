@@ -2,8 +2,8 @@
 """Deterministic AST check for hallucinated imports and APIs in Python code.
 
 This is the *deterministic* half of AI-slop detection: it catches the "plausible
-but nonexistent" API — `pd.read_exel`, `from os import path_join`, `import reqeusts`
-— that an LLM emits and that `mypy`/`ruff`/`pyflakes` routinely miss (they check
+but nonexistent" API - `pd.read_exel`, `from os import path_join`, `import reqeusts`
+- that an LLM emits and that `mypy`/`ruff`/`pyflakes` routinely miss (they check
 undefined *local* names and types, not whether `pd.read_exel` is a real pandas
 attribute). Research (Khati et al., FORGE '26) reports this AST+introspection
 approach at ~100% precision, which matters: a deterministic pre-pass with almost
@@ -12,24 +12,24 @@ no false positives is worth more than another LLM opinion in front of a human.
 It flags two things, both by grounding against what is *actually installed* in the
 current interpreter (run it under the project venv):
 
-  1. HALLUCINATED_IMPORT — an imported top-level module/package that does not
+  1. HALLUCINATED_IMPORT - an imported top-level module/package that does not
      resolve via importlib.util.find_spec (typo'd dep, slopsquat, invented module).
-  2. HALLUCINATED_API   — `alias.attr` or `from pkg import name` where the module
+  2. HALLUCINATED_API   - `alias.attr` or `from pkg import name` where the module
      imports cleanly but the attribute/name genuinely does not exist on it.
 
 Precision guards (to keep the ~zero-false-positive property):
-  * Relative imports (`from . import x`) are skipped — project-local, not resolvable
+  * Relative imports (`from . import x`) are skipped - project-local, not resolvable
     in isolation.
   * An import alias that is ever *reassigned* or used as a function parameter in the
     file is skipped for attribute checks (it is shadowing a value, e.g. `df`, not the
     module). This is the main source of false positives, so we are strict about it.
-  * Only the first attribute hop is checked (`mod.attr`, not `mod.sub.deep`) — deeper
+  * Only the first attribute hop is checked (`mod.attr`, not `mod.sub.deep`) - deeper
     hops need submodule imports and risk noise.
-  * A module that raises on import is reported as UNCHECKED (not hallucinated) — we
+  * A module that raises on import is reported as UNCHECKED (not hallucinated) - we
     never guess when we cannot introspect.
 
 Exit code: 0 if no findings, 1 if any findings, 2 on usage/parse-fatal error.
-The finding exit code is advisory — slop-check treats this as diagnostic, not a gate.
+The finding exit code is advisory - slop-check treats this as diagnostic, not a gate.
 
 Usage:
     python scripts/quality/slop_ast_check.py <file.py> [more.py ...]
@@ -120,7 +120,7 @@ def _names_in_target(node: ast.AST) -> set[str]:
 
 
 # Attributes that legitimately exist only on another platform or only at runtime
-# under a bundler — absent when this checker introspects, but not hallucinations.
+# under a bundler - absent when this checker introspects, but not hallucinations.
 PLATFORM_CONDITIONAL_ATTRS = frozenset(
     {
         "_MEIPASS",  # PyInstaller frozen-bundle temp dir, injected at runtime
@@ -153,7 +153,7 @@ def _defensively_guarded_attrs(tree: ast.AST) -> set[int]:
     """id()s of Attribute nodes inside a try whose handler defensively catches.
 
     `ctypes.windll` under `try: ... except Exception:` is intentional platform
-    code, not a hallucination — so we never flag an attribute accessed in a
+    code, not a hallucination - so we never flag an attribute accessed in a
     defensively-guarded try body.
     """
     guarded: set[int] = set()
@@ -205,7 +205,7 @@ def check_file(path: str) -> list[Finding]:
     from_imports: list[tuple[str, str, str, int, int]] = []
 
     # Only a *top-level, unguarded* unresolved import is treated as a hallucination.
-    # A guarded/optional import (inside a function or try/except — OIDA's pattern for
+    # A guarded/optional import (inside a function or try/except - OIDA's pattern for
     # optional protocol deps) that isn't installed looks identical to a hallucination,
     # so we downgrade it to advisory (UNCHECKED) rather than false-positive on it.
     top_level_imports = {id(n) for n in tree.body if isinstance(n, (ast.Import, ast.ImportFrom))}
@@ -230,7 +230,7 @@ def check_file(path: str) -> list[Finding]:
                     node.col_offset,
                     "UNCHECKED",
                     mod,
-                    f"module '{mod}' not installed — guarded/optional import, not verified",
+                    f"module '{mod}' not installed - guarded/optional import, not verified",
                 )
             )
 
@@ -249,7 +249,7 @@ def check_file(path: str) -> list[Finding]:
                     _emit_unresolved(node, full)
         elif isinstance(node, ast.ImportFrom):
             if node.level and node.level > 0:
-                continue  # relative import — project-local, skip
+                continue  # relative import - project-local, skip
             mod = node.module or ""
             if not mod:
                 continue
@@ -265,7 +265,7 @@ def check_file(path: str) -> list[Finding]:
 
     rebound = _rebound_names(tree)
 
-    # Verify `from mod import name` — does `name` exist on `mod`?
+    # Verify `from mod import name` - does `name` exist on `mod`?
     introspect_cache: dict[str, object] = {}
     for mod, name, _bind, lineno, col in from_imports:
         if mod not in introspect_cache:
@@ -309,7 +309,7 @@ def check_file(path: str) -> list[Finding]:
         if alias not in checkable:
             continue
         if node.attr in PLATFORM_CONDITIONAL_ATTRS or id(node) in guarded_attrs:
-            continue  # platform/runtime-conditional or defensively guarded — not slop
+            continue  # platform/runtime-conditional or defensively guarded - not slop
         mod = checkable[alias]
         if mod not in introspect_cache:
             introspect_cache[mod] = _safe_import(mod)
@@ -354,7 +354,7 @@ def main(argv: list[str]) -> int:
         print(json.dumps([asdict(f) for f in all_findings], indent=2))
     else:
         if not all_findings:
-            print("slop-ast: clean — no hallucinated imports or APIs found")
+            print("slop-ast: clean - no hallucinated imports or APIs found")
         for f in all_findings:
             tag = {
                 "HALLUCINATED_IMPORT": "IMPORT",
@@ -362,7 +362,7 @@ def main(argv: list[str]) -> int:
                 "UNCHECKED": "skip ",
                 "PARSE_ERROR": "parse",
             }.get(f.kind, f.kind)
-            print(f"[{tag}] {f.file}:{f.line}:{f.col}  {f.symbol}  — {f.detail}")
+            print(f"[{tag}] {f.file}:{f.line}:{f.col}  {f.symbol}  - {f.detail}")
         if real:
             print(
                 f"\nslop-ast: {len(real)} hallucination finding(s) "

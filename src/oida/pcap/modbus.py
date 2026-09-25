@@ -314,7 +314,7 @@ class ModbusPassiveListener(PySharkListenerBase):
         # Verify Modbus protocol ID (should be 0). Pyshark's EK output can
         # misread this byte when tshark emits a "Cannot classify packet type"
         # warning (the recovery path shifts offsets), so non-zero prot_id is
-        # only a soft signal — log and proceed. The presence of a mbtcp layer
+        # only a soft signal - log and proceed. The presence of a mbtcp layer
         # plus a valid func_code in the modbus payload is the real evidence.
         if prot_id_str is not None:
             try:
@@ -322,7 +322,7 @@ class ModbusPassiveListener(PySharkListenerBase):
                 if prot_id != 0:
                     self.logger.debug(
                         f"non-zero mbtcp.prot_id={prot_id} from {src_ip} -> {dst_ip}; "
-                        "EK parser quirk on 'Cannot classify' frames — proceeding"
+                        "EK parser quirk on 'Cannot classify' frames - proceeding"
                     )
             except (ValueError, TypeError) as e:
                 self.logger.debug(f"Failed to get prot_id: {e}")
@@ -692,14 +692,14 @@ class ModbusPassiveListener(PySharkListenerBase):
             if raw is not None:
                 vals = self._parse_field_values(modbus_layer, "bitval", raw)
 
-        # Single-register write (FC 6) — value is in regval_uint16 already handled,
+        # Single-register write (FC 6) - value is in regval_uint16 already handled,
         # but also check modbus.regval16 as a fallback
         if not vals:
             raw = self.get_field(modbus_layer, "regval16")
             if raw is not None:
                 vals = self._parse_field_values(modbus_layer, "regval16", raw)
 
-        # Write Single Coil (FC 5) / Write Multiple Coils (FC 15) — tshark
+        # Write Single Coil (FC 5) / Write Multiple Coils (FC 15) - tshark
         # stores the raw coil bytes in modbus.data (hex string like "00:00"
         # or "ff:00") rather than regval/bitval.  Decode to ON/OFF.
         if not vals and function_code in (0x05, 0x0F):
@@ -713,8 +713,8 @@ class ModbusPassiveListener(PySharkListenerBase):
     def _parse_coil_data(raw: str, function_code: int, quantity: Optional[int] = None) -> List[str]:
         """Decode modbus.data hex bytes into coil ON/OFF values.
 
-        FC5 Write Single Coil: 2 bytes — ``FF00`` = ON, ``0000`` = OFF.
-        FC15 Write Multiple Coils: N bytes — each bit is one coil.
+        FC5 Write Single Coil: 2 bytes - ``FF00`` = ON, ``0000`` = OFF.
+        FC15 Write Multiple Coils: N bytes - each bit is one coil.
         """
         hex_str = str(raw).replace(":", "").replace(" ", "")
         if not hex_str:
@@ -867,7 +867,7 @@ class ModbusPassiveListener(PySharkListenerBase):
         elif addr != "":
             addr_str = str(addr)
         elif ix.direction == "response":
-            # Response with no correlated request — mark as unknown
+            # Response with no correlated request - mark as unknown
             addr_str = "?"
             qty = "?"
         else:

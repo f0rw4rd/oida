@@ -52,8 +52,8 @@ class FramingMixin:
     def _buf_recv(self, n: int) -> bytes:
         """Return exactly n bytes, preferring any already-buffered leftovers.
 
-        When the buffer is empty this issues a single ``recv(n)`` — identical
-        to the historical direct call — so link-level 1-byte ENQ/ACK/NAK reads
+        When the buffer is empty this issues a single ``recv(n)`` - identical
+        to the historical direct call - so link-level 1-byte ENQ/ACK/NAK reads
         behave exactly as before. Only bytes left over from a previous
         buffered read (e.g. the remainder after a frame boundary) are served
         without touching the socket, which is what stops those bytes from
@@ -206,7 +206,7 @@ class FramingMixin:
         """Check for an application-level acknowledgement after a transmission.
 
         A frame-level ACK (the single ACK byte _send_frame waits on) only
-        confirms data-link receipt + checksum per ASTM E1381 — a conformant
+        confirms data-link receipt + checksum per ASTM E1381 - a conformant
         receiver ACKs any well-formed frame *before* the LIS application has
         validated or persisted the record. To distinguish that link-level ACK
         from genuine application acceptance, we look for the receiver opening
@@ -214,7 +214,7 @@ class FramingMixin:
         such as a Comment/Manufacturer/status reply) after our EOT.
 
         Returns True only if the peer sends an ENQ and follows it with at
-        least one checksum-valid STX-framed record — i.e. an application-level
+        least one checksum-valid STX-framed record - i.e. an application-level
         response. A bare timeout (no server transmission) returns False. Any
         of the server's reply frames are drained and ACKed here (rather than
         left half-read) so they cannot leak into the next handshake's read.
@@ -234,7 +234,7 @@ class FramingMixin:
             if first != ENQ:
                 return False
 
-            # Server wants to transmit — ACK its ENQ and read its frame(s).
+            # Server wants to transmit - ACK its ENQ and read its frame(s).
             self.conn.sendall(ACK)
             frames = self._read_frames_until_eot(timeout=timeout)
             return len(frames) > 0
@@ -265,7 +265,7 @@ class FramingMixin:
         """Send one physical frame (ending in ETX or ETB), retrying on
         NAK/timeout up to _MAX_FRAME_RETRIES times per ASTM E1381.
 
-        Does not advance self.frame_number — the caller does that once the
+        Does not advance self.frame_number - the caller does that once the
         fragment is ACKed, so a retried frame always keeps the same number.
         """
         if not self.conn:

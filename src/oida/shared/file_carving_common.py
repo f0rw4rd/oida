@@ -290,7 +290,7 @@ class FileCarvingMixin:
     def get_files_summary(self) -> List[Dict[str, Any]]:
         """Get summary of all extracted files (without data).
 
-        ``saved`` reflects whether the bytes actually reached output_dir —
+        ``saved`` reflects whether the bytes actually reached output_dir -
         False means the file exists only in memory (e.g. the output directory
         was unwritable).
         """

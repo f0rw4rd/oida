@@ -189,7 +189,7 @@ class TestParsers:
 
     def test_parse_memory_range_invalid_returns_sentinel(self, host):
         # Malformed input must never fall back to a hardcoded default
-        # address — that would silently dump memory from a real device.
+        # address - that would silently dump memory from a real device.
         assert host._parse_memory_range("bad") == (None, None)
         assert host.logger.records["fail"]
 

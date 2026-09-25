@@ -87,7 +87,7 @@ class CustomCEMIHandler:
             intercepting._l_data_confirmation_event = original_handler._l_data_confirmation_event
 
             def _on_cemi(cemi):
-                """Capture L_DATA_IND — actual device responses."""
+                """Capture L_DATA_IND - actual device responses."""
                 if self.is_in_discovery and cemi.code == CEMIMessageCode.L_DATA_IND and cemi.data:
                     src_addr = str(cemi.data.src_addr)
                     if src_addr in pending_probes and src_addr not in found_devices:
@@ -163,7 +163,7 @@ class CustomCEMIHandler:
         except Exception as e:
             self.logger.fail(f"Error in fast bus discovery: {e}")
         finally:
-            # ALWAYS restore the original cEMI handler — previously the
+            # ALWAYS restore the original cEMI handler - previously the
             # restoration was inside the try block, so any exception
             # during the scan (interrupt, network error, parse error)
             # left xknx permanently hooked into our intercepting

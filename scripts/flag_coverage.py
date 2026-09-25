@@ -4,7 +4,7 @@
 Answers one question per module: *of the CLI flags this module exposes, how many
 are actually exercised by a test that spawns the real `oida` binary?*
 
-This is a coverage metric, not a gate — same spirit as `tests/coverage/`. Test
+This is a coverage metric, not a gate - same spirit as `tests/coverage/`. Test
 count is not the signal; flag coverage is.
 
 Usage:

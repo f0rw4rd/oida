@@ -1,13 +1,13 @@
 """Regression tests for the pcap-tail group GB fixes.
 
-1. hsr.py — unbounded per-node supervision timestamp list.
+1. hsr.py - unbounded per-node supervision timestamp list.
    ``_supervision_times`` was appended one timestamp per supervision frame,
    for every node, for the entire capture, and never read anywhere.  A long
    capture on a real HSR ring (supervision every ~2 ms per node) grows this
    dict without bound.  Replaced by a bounded ``HSRNode.last_supervision``
    scalar surfaced in ``hsr_passive_data``.
 
-2. hartip.py — ambiguous device-status abbreviations.
+2. hartip.py - ambiguous device-status abbreviations.
    ``_decode_device_status`` took only the first word of each flag
    description, so 0xd0 rendered as "Device | Configuration | More"
    ("Device Malfunction" -> "Device", "More Status Available" -> "More").

@@ -1799,7 +1799,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
     # ========================================================================
     # Brute-force wordlist flags. The mock never enforces authentication, so
     # the scanner's own baseline check short-circuits before per-credential
-    # OAuth2 requests run — --client-id/--client-secret/--scope/--auth-url/
+    # OAuth2 requests run - --client-id/--client-secret/--scope/--auth-url/
     # --token-url are parsed but that code path is unreachable here. The
     # wordlist files themselves ARE exercised (their line counts are echoed).
     # ========================================================================

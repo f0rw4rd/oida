@@ -2721,7 +2721,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
     # Skipped Tests (require hardware or unsupported features)
     # ========================================================================
 
-    # NOTE: --wordlist / --brute were removed from the OPC UA CLI — they were
+    # NOTE: --wordlist / --brute were removed from the OPC UA CLI - they were
     # never read by the scanner (brute-force is driven by --username FILE /
     # --password FILE, see test_security_finding_brute_force_valid_creds_advanced).
 
@@ -2807,7 +2807,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
 
     # ========================================================================
     # Long-form flag aliases (--dump-all, --security-mode, --security-policy,
-    # --scan-writable, --fuzz-mode) — proto_args.py exposes these as the long
+    # --scan-writable, --fuzz-mode) - proto_args.py exposes these as the long
     # forms of -D/--mode/--policy plus two flags with no short-flag test
     # coverage yet.
     # ========================================================================

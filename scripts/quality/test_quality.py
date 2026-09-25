@@ -38,7 +38,7 @@ def _collected_tests(tree: ast.AST):
     """Yield only functions pytest would actually collect.
 
     Module level, or one level inside a class. A `def test_worker(...)` nested
-    inside another function is a helper — commonly a thread body — and pytest
+    inside another function is a helper - commonly a thread body - and pytest
     never collects it. An earlier version walked the whole tree and counted
     those, which inflated the no-assert figure.
     """
@@ -128,7 +128,7 @@ def _mock_tainted_vars(fn: ast.AST, seeds: "set[str] | None" = None) -> set[str]
 
     Seeded by direct Mock()/MagicMock()/patch() construction plus any caller
     supplied seeds (mock fixture params). A value derived from a mock is still a
-    mock, so `result = mock_client.read(...)` taints `result` — that is the
+    mock, so `result = mock_client.read(...)` taints `result` - that is the
     shape of the modbus cluster, where the assertion reads back exactly what the
     mock was configured with.
     """
@@ -165,7 +165,7 @@ def _mock_tainted_vars(fn: ast.AST, seeds: "set[str] | None" = None) -> set[str]
 def mock_fixtures(trees: "list[ast.AST]") -> set[str]:
     """Names of @pytest.fixture functions that yield/return a unittest.mock object.
 
-    Needed to tell `mock_client` (a MagicMock fixture — real slop when asserted
+    Needed to tell `mock_client` (a MagicMock fixture - real slop when asserted
     on) from `mock_host` (this project's name for the Docker mock server's
     hostname, an ordinary string). Keying on the name alone gets this wrong 97%
     of the time in this repo.
@@ -192,7 +192,7 @@ def _mock_only(fn: ast.AST, package: str, mock_fixture_names: "set[str] | None" 
     """True if every assertion targets a unittest.mock object the test configured.
 
     Deliberately narrow. An earlier version keyed on the substring "mock", which
-    made it flag `mock_host` / `mock_service` / `mock_port` — this project's
+    made it flag `mock_host` / `mock_service` / `mock_port` - this project's
     names for the *Docker mock server*, which are ordinary strings. Those tests
     assert on real socket checks and are not slop. Only values constructed from
     Mock/MagicMock/patch count here.
@@ -283,7 +283,7 @@ def main() -> int:
         try:
             known = json.load(open(args.baseline, encoding="utf-8"))
         except (OSError, ValueError):
-            print(f"baseline {args.baseline} unreadable — create it with --json", file=sys.stderr)
+            print(f"baseline {args.baseline} unreadable - create it with --json", file=sys.stderr)
             return 2
         seen = {f"{k}:{i['where']}" for k, v in known.items() for i in v}
         new = [(k, i) for k, v in findings.items() for i in v if f"{k}:{i['where']}" not in seen]

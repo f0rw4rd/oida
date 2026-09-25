@@ -6,13 +6,13 @@ Each expected line is checked against the authoritative source:
   - John the Ripper HDAA_README (HTTP Digest, `hdaa`) and vncpcap2john (VNC).
 
 These pin the signature, separators, field order, and any prefix-stripping
-that the per-credential ``hashcat_format`` property must perform — the things
+that the per-credential ``hashcat_format`` property must perform - the things
 the format audit found wrong (PostgreSQL `:`-separated/no-signature, HTTP's
 fabricated `$digest-md5$`, VNC mislabeled as hashcat 5600).
 """
 
 
-# --- PostgreSQL CRAM (MD5) — hashcat mode 11100 ------------------------------
+# --- PostgreSQL CRAM (MD5) - hashcat mode 11100 ------------------------------
 # Canonical: $postgres$postgres*f0784ea5*2091bb7d4725d1ca85e8de6ec349baf6
 
 
@@ -49,7 +49,7 @@ def test_postgres_no_salt_yields_empty():
     assert h.hashcat_format == ""
 
 
-# --- HTTP Digest — John the Ripper `hdaa` ------------------------------------
+# --- HTTP Digest - John the Ripper `hdaa` ------------------------------------
 # Canonical (HDAA_README):
 # user:$response$679066476e67b5c7c4e88f04be567f8b$user$myrealm$GET$/$
 #   8c12bd8f728afe56d45a0ce846b70e5a$00000001$4b61913cec32e2c9$auth
@@ -93,7 +93,7 @@ def test_http_digest_missing_response_yields_empty():
     assert _http_cred(response="").hashcat_format == ""
 
 
-# --- VNC — John the Ripper `vnc` ---------------------------------------------
+# --- VNC - John the Ripper `vnc` ---------------------------------------------
 # vncpcap2john line body: $vnc$*<challenge>*<response>
 
 
@@ -123,7 +123,7 @@ def test_vnc_incomplete_pair_yields_empty():
     assert _vnc_cred(challenge="").hashcat_format == ""
 
 
-# --- SIP digest — hashcat mode 11400 (14-field layout) -----------------------
+# --- SIP digest - hashcat mode 11400 (14-field layout) -----------------------
 # Canonical (hashcat example_hashes 11400):
 # $sip$*192.168.100.100*192.168.100.121*username*asterisk*REGISTER*sip*
 #   192.168.100.121**2b01df0b***MD5*ad0520061ca07c120d7e8ce696a6df2d
@@ -179,7 +179,7 @@ def test_sip_missing_response_yields_empty():
     assert _sip_cred(response="").hashcat_format == ""
 
 
-# --- CRAM-MD5 — hashcat mode 10200 (SMTP/IMAP) -------------------------------
+# --- CRAM-MD5 - hashcat mode 10200 (SMTP/IMAP) -------------------------------
 # Canonical (hashcat example_hashes 10200), cracks to "hashcat":
 #   $cram_md5$PG5vLXJlcGx5QGhhc2hjYXQubmV0Pg==$dXNlciA0NGVhZmQyMmZlNzY2NzBmNmIyODc5MDgxYTdmNWY3MQ==
 CRAM_CHAL = "PG5vLXJlcGx5QGhhc2hjYXQubmV0Pg=="
@@ -220,7 +220,7 @@ def test_cram_md5_plaintext_yields_empty():
     assert c.hashcat_format == ""
 
 
-# --- iSCSI CHAP — hashcat mode 4800 ------------------------------------------
+# --- iSCSI CHAP - hashcat mode 4800 ------------------------------------------
 # Canonical (hashcat example_hashes 4800): hash:challenge:id
 
 
@@ -240,7 +240,7 @@ def test_iscsi_chap_4800_known_answer():
     )
 
 
-# --- VRRP / BFD — no cracking format exists; must NOT present a deliverable hash
+# --- VRRP / BFD - no cracking format exists; must NOT present a deliverable hash
 
 
 def test_vrrp_md5_is_not_a_crackable_hash():

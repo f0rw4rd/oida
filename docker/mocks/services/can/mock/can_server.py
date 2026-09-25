@@ -622,7 +622,7 @@ class UDSResponder:
         self._fc_event = fc_event
         # Monotonic generation tag for multi-frame exchanges. Because _fc_event
         # is shared, a Flow Control from a *new* exchange would otherwise also
-        # wake a streamer still parked from a previous one — making it dump
+        # wake a streamer still parked from a previous one - making it dump
         # stale Consecutive Frames onto the bus and corrupt the new read. Each
         # streamer captures the generation current when its First Frame was
         # sent and bails if a newer exchange has since superseded it.

@@ -16,7 +16,7 @@ depends on the cipher family:
 For each vector we reconstruct the raw wire enc-part (``hash_value``) from the
 canonical line using that layout, build a KerberosHash, and assert that
 ``hashcat_format`` regenerates the exact canonical line. This is a round-trip
-that pins the split rule, the separators ($ : * @) and the field order — the
+that pins the split rule, the separators ($ : * @) and the field order - the
 exact things that were previously wrong (no checksum split, AES emitted with
 the RC4 ``*spn*`` wrapper, etc.).
 """

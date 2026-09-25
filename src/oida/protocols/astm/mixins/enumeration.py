@@ -190,7 +190,7 @@ class EnumerationMixin:
         else:
             self.logger.display(
                 "Skipping write-capable probes (P/O/R) that inject records into "
-                "the LIS — pass --confirm to include them"
+                "the LIS - pass --confirm to include them"
             )
 
         for record_type, desc, test_func in record_types:

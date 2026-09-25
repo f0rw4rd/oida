@@ -59,12 +59,12 @@ for service in modbus opcua iec104 ads mms ethernetip; do
     if [ -f "/var/run/${service}.pid" ]; then
         pid=$(cat "/var/run/${service}.pid")
         if ps -p $pid > /dev/null 2>&1; then
-            echo "  ✓ ${service} (PID: ${pid})"
+            echo "  [OK] ${service} (PID: ${pid})"
         else
-            echo "  ✗ ${service} (failed to start)"
+            echo "  [FAIL] ${service} (failed to start)"
         fi
     else
-        echo "  ✗ ${service} (no PID file)"
+        echo "  [FAIL] ${service} (no PID file)"
     fi
 done
 

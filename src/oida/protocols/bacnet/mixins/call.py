@@ -1,4 +1,4 @@
-"""BACnet service invocation — the ``--call`` dispatcher.
+"""BACnet service invocation - the ``--call`` dispatcher.
 
 ``--services`` advertises each capability and its ``--call`` token; this mixin
 turns that token into an actual BACnet request. One dispatcher routes to a
@@ -72,7 +72,7 @@ class CallMixin:
             token = spec.aliases[0] if spec.aliases else spec.name
             self.logger.display(
                 f"  {token:<14} {risk_label.get(spec.risk, spec.risk):<10} "
-                f"{spec.name}  —  --call {token} {spec.usage}"
+                f"{spec.name}  -  --call {token} {spec.usage}"
             )
         self.logger.display("  (* = requires --confirm; CONTROL may reboot/mute the device)")
 
@@ -265,7 +265,7 @@ class CallMixin:
     async def _call_read_range(self, app, target_addr, device_id, timeout, argv):
         # This reads the object's logBuffer property (not a true ReadRangeRequest
         # with a range/count), so the catalog usage is intentionally objType:inst
-        # with no count — we don't advertise scoping we don't apply.
+        # with no count - we don't advertise scoping we don't apply.
         if not argv:
             raise ValueError("need objType:inst")
         parts = argv[0].split(":")
@@ -421,7 +421,7 @@ class CallMixin:
         size = path.stat().st_size
         if size > self._MAX_WRITE_FILE_BYTES:
             raise ValueError(
-                f"{local_path} is {size} bytes — too large for one AtomicWriteFile "
+                f"{local_path} is {size} bytes - too large for one AtomicWriteFile "
                 f"segment (max {self._MAX_WRITE_FILE_BYTES}); split it manually"
             )
         with path.open("rb") as f:
@@ -535,7 +535,7 @@ class CallMixin:
 
         spec = argv[0] if argv else "now"
         if spec == "now":
-            raise ValueError("explicit time required (YYYY-MM-DDTHH:MM:SS) — 'now' needs a clock")
+            raise ValueError("explicit time required (YYYY-MM-DDTHH:MM:SS) - 'now' needs a clock")
         d, t = spec.split("T")
         y, mo, da = (int(x) for x in d.split("-"))
         hh, mm, ss = (int(x) for x in t.split(":"))

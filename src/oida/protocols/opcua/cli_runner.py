@@ -98,7 +98,7 @@ class opcua(
         parsed_host, port, path = _parse_opcua_url(self._original_url)
 
         # Update args with parsed port. self.logger does not exist yet at this
-        # point — it's only created inside super().__init__ via proto_logger() —
+        # point - it's only created inside super().__init__ via proto_logger() -
         # so we cannot log a debug message here. Catch & ignore silently; if
         # args is a frozen-style Namespace the parent constructor will raise
         # a clearer error.
@@ -176,7 +176,7 @@ class opcua(
             # proto_args.py) to their asyncua classes. Previously the map only
             # covered Basic256Sha256 + the two Aes variants, so a user passing
             # `--policy Basic128Rsa15` or `--policy Basic256` silently got
-            # Basic256Sha256 instead — masking a deliberate test of the weaker
+            # Basic256Sha256 instead - masking a deliberate test of the weaker
             # legacy policies. A defensive-security tool must NOT swap the
             # requested policy under the user's feet.
             policy_map = {
@@ -469,7 +469,7 @@ class opcua(
 
             # Setup client and suppress logging. asyncua reads `timeout` only
             # from the constructor (no settable descriptor), so it must be
-            # passed here — assigning self._client.timeout afterwards was a
+            # passed here - assigning self._client.timeout afterwards was a
             # silent no-op that left the library 4s default in place.
             Client = _get_client_class()
             timeout = getattr(self.args, "timeout", 5)
@@ -530,7 +530,7 @@ class opcua(
             if needs_secure_channel and requested_policy == "None":
                 self.logger.warning(
                     f"--mode {requested_mode} requires a non-None security policy. "
-                    "Upgrading to Basic256Sha256 — pass --policy explicitly to "
+                    "Upgrading to Basic256Sha256 - pass --policy explicitly to "
                     "select a different policy."
                 )
                 requested_policy = "Basic256Sha256"

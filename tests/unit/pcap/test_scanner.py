@@ -331,7 +331,7 @@ class TestAssetsStatsCollection:
         _skip_unless_exists(arp_pcap)
         scanner = PcapScanner(str(arp_pcap), args={"assets": True})
         scanner.run_scan()
-        # Stats were collected — PassiveStatistics was used
+        # Stats were collected - PassiveStatistics was used
         assert hasattr(scanner, "stats")
 
 
@@ -406,7 +406,7 @@ class TestWriteAssetFiles:
                 discovered_by=["endpoint"],
             ),
         }
-        # Should not raise — silently skips without output dir
+        # Should not raise - silently skips without output dir
         scanner._write_asset_files(scanner.discovered_devices)
 
 

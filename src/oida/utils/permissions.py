@@ -82,9 +82,9 @@ def raw_socket_help_lines() -> list:
     lines.append(f"Or grant the capability:  sudo setcap cap_net_raw+eip {target}")
     if getattr(sys, "frozen", False):
         # onedir: setcap on the binary works. onefile: the bootloader re-execs an
-        # extracted temp copy, so the capability may not carry over — say so.
+        # extracted temp copy, so the capability may not carry over - say so.
         lines.append(
-            "  (single-file build? setcap may not persist through extraction — "
+            "  (single-file build? setcap may not persist through extraction - "
             "prefer sudo, or use the directory build)"
         )
     return lines

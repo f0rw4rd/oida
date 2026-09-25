@@ -88,7 +88,7 @@ class TestSMAParseResponse:
         assert device.sma_data["discovery_response"] is True
 
     def test_any_sma_magic_datagram_recognized(self):
-        """Energy-meter datagrams also start with SMA\\0 — recognize them too."""
+        """Energy-meter datagrams also start with SMA\\0 - recognize them too."""
         from oida.protocols.discovery.energy import SMASpeedwireScanner
 
         scanner = SMASpeedwireScanner(interface="eth0")

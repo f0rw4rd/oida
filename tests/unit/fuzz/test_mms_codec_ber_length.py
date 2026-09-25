@@ -60,7 +60,7 @@ def test_mms_read_request_large_varlist_is_well_formed():
     assert pdu[0] == 0xA0
 
     # Decode the outer BER length and assert it equals the actual number of
-    # content bytes — the invariant the old fixed-slice bug broke (the inner
+    # content bytes - the invariant the old fixed-slice bug broke (the inner
     # length would be off by the count of long-form length octets).
     length_octet = pdu[1]
     if length_octet < 0x80:

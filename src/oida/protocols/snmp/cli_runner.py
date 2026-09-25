@@ -5,7 +5,7 @@ Provides the NXC-style callable SNMP scanner class that wraps
 SNMPScanner to provide automatic execution on instantiation.
 
 Delegates scanning logic to SNMPScanner.run_scan() while following
-the standard NXC proto_flow → create_conn_obj → enum_host_info →
+the standard NXC proto_flow -> create_conn_obj -> enum_host_info ->
 print_host_info contract.
 """
 
@@ -34,7 +34,7 @@ class snmp(NetworkConnection):
         super().__init__(args, db, host)
 
     def proto_flow(self):
-        """Main SNMP scanning workflow — standard NXC method sequence."""
+        """Main SNMP scanning workflow - standard NXC method sequence."""
 
         if not self.create_conn_obj():
             return

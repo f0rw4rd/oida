@@ -87,7 +87,7 @@ class SlotScanMixin(_ScannerBase):
 
             # From here on we hold a live S7 session. S7-300/400 CPUs accept
             # very few concurrent connections, so it MUST be released on every
-            # exit path — including exceptions from the info-building block
+            # exit path - including exceptions from the info-building block
             # below (previously only the success path disconnected, leaking a
             # PLC connection slot per failed probe).
             try:

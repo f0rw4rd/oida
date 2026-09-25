@@ -626,7 +626,7 @@ class TestWsBruteForce(unittest.TestCase):
 
     def test_ws_brute_bare_host_port_8443_in_target_uses_ws(self):
         """A non-443 TLS-ish port (e.g. 8443) embedded in the target still
-        builds ws:// — TLS is keyed strictly on DEFAULT_WSS_PORT (443),
+        builds ws:// - TLS is keyed strictly on DEFAULT_WSS_PORT (443),
         matching the scanner __init__ behaviour."""
         with tempfile.NamedTemporaryFile(mode="w", suffix=".txt", delete=False) as f:
             f.write("/ocpp\n")

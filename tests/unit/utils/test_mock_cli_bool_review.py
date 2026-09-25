@@ -5,7 +5,7 @@
 
 Bug (core bug hunt): ``MockCLI._add_options_to_parser`` builds its
 ``BooleanOptionalAction`` with ``const = not default``. For a boolean whose
-default is True — exactly the shape of the safety option ``read-only`` — the
+default is True - exactly the shape of the safety option ``read-only`` - the
 bare flag's "no explicit value" constant is ``False``:
 
     python -m oida.protocols.modbus.scanner -r 10.0.0.1 --read-only

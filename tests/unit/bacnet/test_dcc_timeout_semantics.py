@@ -35,7 +35,7 @@ class TestIsSuccessResponseSemantics(unittest.TestCase):
         self.mixin.logger = MagicMock()
 
     def test_none_response_is_not_success(self):
-        """The bug fix: None means 'no reply' — INCONCLUSIVE, not success."""
+        """The bug fix: None means 'no reply' - INCONCLUSIVE, not success."""
         types = _stub_types()
         self.assertFalse(self.mixin._is_success_response(None, types))
 

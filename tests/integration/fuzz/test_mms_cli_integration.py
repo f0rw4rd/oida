@@ -104,7 +104,7 @@ def populated_session(temp_session, mms_host, mms_port):
         temp_session,
         "--seed",
         "12345",
-        # NOTE: do NOT pass --nolog here — it disables session-DB persistence,
+        # NOTE: do NOT pass --nolog here - it disables session-DB persistence,
         # so no <session>.db is written and the replay tests below all skip.
         "-e",
         "MMS_Baseline",
@@ -114,7 +114,7 @@ def populated_session(temp_session, mms_host, mms_port):
     # Session should be created
     db_path = f"{temp_session}.db"
     if not os.path.exists(db_path):
-        require_service("Failed to create test session — fuzzer may not have run (missing dep?)")
+        require_service("Failed to create test session - fuzzer may not have run (missing dep?)")
 
     return temp_session
 

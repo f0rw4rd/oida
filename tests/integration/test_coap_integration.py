@@ -533,7 +533,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
         # never fabricate a DTLS-available finding. Without the client
         # DTLSSocket backend the scanner short-circuits with "DTLS support is
         # unavailable" and exits 0 before reaching that path, so the contract is
-        # only meaningful when the backend is installed — its absence is a
+        # only meaningful when the backend is installed - its absence is a
         # failure, not a skip.
         if not _dtls_client_backend_available():
             pytest.fail(_DTLS_BACKEND_MISSING)
@@ -1698,7 +1698,7 @@ def _dtls_client_backend_available() -> bool:
     was removed from the 'coap' extra and is an optional manual install, so the
     scanner cleanly reports "DTLS support is unavailable" and exits 0 when it is
     missing. A DTLS test that drives a handshake cannot pass without it, so we
-    must gate on the client library — not just the server container.
+    must gate on the client library - not just the server container.
     """
     try:
         import DTLSSocket  # noqa: F401
@@ -1712,7 +1712,7 @@ def _dtls_client_backend_available() -> bool:
 # sdist-only C build (autotools + compiler), which is why it is not in the
 # 'coap' extra. DTLS tests treat its absence as a FAILURE, not a skip.
 _DTLS_BACKEND_MISSING = (
-    "DTLS client backend (DTLSSocket) not installed — the coap-dtls-server "
+    "DTLS client backend (DTLSSocket) not installed - the coap-dtls-server "
     "container IS the DTLS endpoint, but the aiocoap tinydtls/PSK transport is "
     "an optional C build. Install it with:\n"
     "  sudo apt-get install -y autoconf automake libtool pkg-config python3-dev\n"
@@ -1743,8 +1743,8 @@ def _dtls_container_healthy(container: str) -> bool:
 def _dtls_blocker() -> Optional[str]:
     """Return why PSK-DTLS interop can't run, or None if it can.
 
-    Distinguishes the two independent prerequisites — client backend vs. server
-    container — so the failure message names the real blocker instead of always
+    Distinguishes the two independent prerequisites - client backend vs. server
+    container - so the failure message names the real blocker instead of always
     blaming the container (which is usually up; the backend is what's missing).
 
     DTLS tests call ``pytest.fail()`` (not skip) on a non-None result: a missing
@@ -1965,7 +1965,7 @@ class TestCoAPDTLSPrerequisites:
     """
 
     def test_dtls_client_backend_installed(self):
-        """DTLSSocket must be importable — fail with install instructions if not."""
+        """DTLSSocket must be importable - fail with install instructions if not."""
         assert _dtls_client_backend_available(), _DTLS_BACKEND_MISSING
 
 

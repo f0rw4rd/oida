@@ -1,5 +1,5 @@
 # ============================================================================
-# Release Pipeline — oida
+# Release Pipeline - oida
 # ============================================================================
 #
 # Security hardening applied:
@@ -16,19 +16,19 @@
 # This builds the pure-Python sdist + wheel from the project root (src/ layout).
 # The standalone binaries are built separately by build-binaries.yml.
 #
-# Required GitHub configuration (one-time, in the web UI — no tokens):
+# Required GitHub configuration (one-time, in the web UI - no tokens):
 #   1. Create a 'pypi' environment with required reviewers
-#      (Settings → Environments → New environment → pypi → add reviewers).
+#      (Settings -> Environments -> New environment -> pypi -> add reviewers).
 #      This is what blocks auto-publish: dispatching the workflow pauses the
 #      publish job for manual approval.
 #   2. Configure the PyPI trusted publisher for project `oida-ics`
-#      (the PyPI distribution name — the GitHub repo is `oida`):
+#      (the PyPI distribution name - the GitHub repo is `oida`):
 #        - Owner:       f0rw4rd
 #        - Repository:  oida
 #        - Workflow:    release.yml
 #        - Environment: pypi
-#      (PyPI → your project / "pending publisher" → Add a new publisher.)
-#   3. No API token needed — OIDC trusted publishing only.
+#      (PyPI -> your project / "pending publisher" -> Add a new publisher.)
+#   3. No API token needed - OIDC trusted publishing only.
 #
 # To cut a release: bump __version__ in src/oida/__init__.py, commit, then
 #   git tag v1.0.0 && git push origin v1.0.0
@@ -46,10 +46,10 @@ on:
         default: "false"
         type: boolean
 
-# Deny all permissions by default — each job grants only what it needs
+# Deny all permissions by default - each job grants only what it needs
 permissions: {}
 
-# Only one release at a time — prevent parallel tag pushes from colliding
+# Only one release at a time - prevent parallel tag pushes from colliding
 concurrency:
   group: release-${{ github.ref }}
   cancel-in-progress: false  # Never cancel an in-flight release
@@ -77,13 +77,13 @@ jobs:
       contents: read
 
   # ── Build sdist + wheel ─────────────────────────────────────────
-  # This job has NO access to secrets — artifacts are built in isolation.
+  # This job has NO access to secrets - artifacts are built in isolation.
   build:
     name: Build
     needs: [quality]
     runs-on: ubuntu-latest
     permissions:
-      contents: read  # Checkout only — no secrets needed for building
+      contents: read  # Checkout only - no secrets needed for building
     outputs:
       sha256-sdist: ${{ steps.checksums.outputs.sdist }}
       sha256-wheel: ${{ steps.checksums.outputs.wheel }}
@@ -141,7 +141,7 @@ jobs:
   # ── Attestation ─────────────────────────────────────────────────
   # SLSA build provenance. GitHub Artifact Attestations require a public repo
   # (or an org repo with Advanced Security), so this is gated and simply skips
-  # while the repo is private — it auto-enables when made public. Decoupled from
+  # while the repo is private - it auto-enables when made public. Decoupled from
   # publish so it never blocks a release.
   attest:
     name: Attest provenance
@@ -164,8 +164,8 @@ jobs:
           subject-path: "dist/*"
 
   # ── Publish to PyPI ─────────────────────────────────────────────
-  # Uses OIDC trusted publishing — no long-lived secrets needed.
-  # No pip install here — avoids arbitrary code execution in the publish job.
+  # Uses OIDC trusted publishing - no long-lived secrets needed.
+  # No pip install here - avoids arbitrary code execution in the publish job.
   publish:
     name: Publish to PyPI
     needs: [build]
@@ -177,7 +177,7 @@ jobs:
       id-token: write   # Required for OIDC trusted publishing
       contents: read
     environment:
-      name: pypi  # Requires approval — configure reviewers in GitHub settings
+      name: pypi  # Requires approval - configure reviewers in GitHub settings
       url: https://pypi.org/project/oida-ics/
     steps:
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
@@ -196,11 +196,11 @@ jobs:
           echo "sdist: expected=$EXPECTED_SDIST actual=$ACTUAL_SDIST"
           echo "wheel: expected=$EXPECTED_WHEEL actual=$ACTUAL_WHEEL"
           if [ "$EXPECTED_SDIST" != "$ACTUAL_SDIST" ]; then
-            echo "::error::sdist checksum mismatch — artifact may have been tampered with"
+            echo "::error::sdist checksum mismatch - artifact may have been tampered with"
             exit 1
           fi
           if [ "$EXPECTED_WHEEL" != "$ACTUAL_WHEEL" ]; then
-            echo "::error::wheel checksum mismatch — artifact may have been tampered with"
+            echo "::error::wheel checksum mismatch - artifact may have been tampered with"
             exit 1
           fi
           echo "Checksums verified successfully"

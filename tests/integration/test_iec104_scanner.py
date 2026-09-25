@@ -591,7 +591,7 @@ class TestIEC104WriteOperations:
         assert "C_SC_NA_1" in (wr.get("type") or "")
 
     def test_write_single_off(self, require_mock):
-        """Write single 'off' to IOA 100 [Category B] — mock may reject off"""
+        """Write single 'off' to IOA 100 [Category B] - mock may reject off"""
         results = _run_scan(**{"write-single": "100:off", "confirm": True})
         wr = results.get("write_operation", {})
         assert wr.get("ioa") == 100

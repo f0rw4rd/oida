@@ -77,7 +77,7 @@ class TestOPCDAGreedyGuard:
 
     def test_plain_dcom_produces_nothing(self):
         listener = self._listener()
-        # IRemUnknown::RemQueryInterface — pure DCOM plumbing, not OPC DA.
+        # IRemUnknown::RemQueryInterface - pure DCOM plumbing, not OPC DA.
         dcom = _FakeLayer(iid=_IREMUNKNOWN_IID, opnum="3", ipid="aa-bb")
         pkt = _FakePacket(dcom, "10.0.0.5", "10.0.0.7", 50000, 49152)
         devices = listener.feed_packets(iter([pkt]))
@@ -88,7 +88,7 @@ class TestOPCDAGreedyGuard:
 
     def test_real_opcda_still_recorded(self):
         listener = self._listener()
-        # IOPCServer::AddGroup — genuine OPC DA request.
+        # IOPCServer::AddGroup - genuine OPC DA request.
         dcom = _FakeLayer(iid=_IOPCSERVER_IID, opnum="0", ipid="cc-dd")
         pkt = _FakePacket(dcom, "10.0.0.5", "10.0.0.7", 50000, 49152)
         devices = listener.feed_packets(iter([pkt]))
@@ -105,7 +105,7 @@ class TestOPCDAGreedyGuard:
         listener = self._listener()
         # First packet binds IPID -> IOPCSyncIO via the IID; recorded.
         bind = _FakeLayer(iid="39c13a52-011e-11d0-9675-0020afd8adb3", ipid="11-22")
-        # Follow-up carries only the IPID + opnum (no IID) — must resolve to
+        # Follow-up carries only the IPID + opnum (no IID) - must resolve to
         # IOPCSyncIO::Read via the mapping and still be recorded.
         followup = _FakeLayer(ipid="11-22", opnum="0")
         listener.feed_packets(

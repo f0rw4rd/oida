@@ -2,16 +2,16 @@
 
 Single canonical backend:
 
-- ``SQLAlchemyDatabase`` (orm.py) — production read/write path. All fuzzer
+- ``SQLAlchemyDatabase`` (orm.py) - production read/write path. All fuzzer
   components write through it. Defined as an :class:`DatabaseInterface`
   implementation backed by SQLAlchemy 2.x.
 
-- ``MockDatabase`` (mock.py) — in-memory stub for unit tests.
+- ``MockDatabase`` (mock.py) - in-memory stub for unit tests.
 
 The previous raw-SQL ``SQLiteDatabase`` was removed in 1.0 (it diverged in
 schema from the ORM and was no longer used by the runtime). For replay of
 legacy ``.db`` files from older OIDA versions, ``SQLAlchemyDatabase`` can
-read the same on-disk schema — call ``init_schema()`` once on open.
+read the same on-disk schema - call ``init_schema()`` once on open.
 """
 
 from oida.fuzz.core.database.interface import DatabaseInterface, TestCase, Crash, SessionMetadata

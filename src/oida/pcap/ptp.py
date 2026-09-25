@@ -493,8 +493,8 @@ class PTPPassiveListener(PySharkListenerBase):
                 # Alert exactly once per transition. _gm_history only grows when
                 # the GM actually changes (see the append guard), so its length is
                 # 1 + (number of transitions). Tracking how many transitions we've
-                # already alerted per domain fires once for every real change —
-                # including a flap back to a previous GM (A->B->A->B) — without the
+                # already alerted per domain fires once for every real change -
+                # including a flap back to a previous GM (A->B->A->B) - without the
                 # per-packet re-alert, and without suppressing a repeated A->B that
                 # a (domain,prev,new) set would wrongly collapse.
                 alerted = self._gm_change_alerted.get(domain, 1)

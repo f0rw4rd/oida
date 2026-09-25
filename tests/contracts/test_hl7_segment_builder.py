@@ -4,7 +4,7 @@ resolve to a real method on HL7SegmentBuilder.
 The class-of-bug: a mixin calls `self.segment_builder.build_xyz(...)` for a
 segment that never had a builder implemented. AttributeError gets caught by
 the outer try/except in the caller and the function silently falls back to
-generic test messages — caller thinks it sent BAR^P01 with full GT1/IN1/FT1
+generic test messages - caller thinks it sent BAR^P01 with full GT1/IN1/FT1
 segments, server actually got a stub.
 
 master_file.py + financial.py both shipped this way.
@@ -63,7 +63,7 @@ def test_every_segment_builder_call_resolves():
     called = _builder_call_sites()
     missing = {(f, m) for (f, m) in called if m not in defined}
     assert not missing, (
-        "HL7 mixins call segment_builder methods that don't exist — caller will "
+        "HL7 mixins call segment_builder methods that don't exist - caller will "
         "silently fall back to generic test messages. Either implement the method "
         "in segments.py:HL7SegmentBuilder or stop calling it.\n"
         + "\n".join(f"  {f} -> segment_builder.{m}()" for (f, m) in sorted(missing))

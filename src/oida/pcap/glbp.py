@@ -147,11 +147,11 @@ class GLBPPassiveListener(PySharkListenerBase):
         version = self._parse_int(self.get_field(glbp, "version", "0"), 0)
         group_id = self._parse_int(self.get_field(glbp, "group", "0"), 0)
 
-        # Owner ID (MAC address) — glbp.ownerid
+        # Owner ID (MAC address) - glbp.ownerid
         owner_mac = str(self.get_field(glbp, "ownerid", ""))
         device_mac = owner_mac if owner_mac else src_mac
 
-        # Hello TLV fields (Virtual Gateway) — glbp.hello.*
+        # Hello TLV fields (Virtual Gateway) - glbp.hello.*
         vg_state = self._parse_int(self.get_field(glbp, "hello_vgstate", "0"), 0)
         priority = self._parse_int(self.get_field(glbp, "hello_priority", "0"), 0)
         hello_interval = self._parse_int(self.get_field(glbp, "hello_helloint", "0"), 0)
@@ -162,13 +162,13 @@ class GLBPPassiveListener(PySharkListenerBase):
         if not virtual_ip:
             virtual_ip = str(self.get_field(glbp, "hello_virtualipv6", ""))
 
-        # Forwarder (Req/Resp) TLV fields (Virtual Forwarder) — glbp.reqresp.*
+        # Forwarder (Req/Resp) TLV fields (Virtual Forwarder) - glbp.reqresp.*
         forwarder_id = self._parse_int(self.get_field(glbp, "reqresp_forwarder", "0"), 0)
         vf_state = self._parse_int(self.get_field(glbp, "reqresp_vfstate", "0"), 0)
         weight = self._parse_int(self.get_field(glbp, "reqresp_weight", "0"), 0)
         virtual_mac = str(self.get_field(glbp, "reqresp_virtualmac", ""))
 
-        # Authentication TLV — glbp.auth.*
+        # Authentication TLV - glbp.auth.*
         auth_type = self._parse_int(self.get_field(glbp, "auth_authtype", "0"), 0)
         auth_password = str(self.get_field(glbp, "auth_plainpass", ""))
 
@@ -323,7 +323,7 @@ class GLBPPassiveListener(PySharkListenerBase):
                 {
                     "protocol": "GLBP",
                     "credential_type": credential_type,
-                    # GLBP auth has no separate user — the shared secret is the
+                    # GLBP auth has no separate user - the shared secret is the
                     # whole credential. Surface it in the Username column (the
                     # central cred table has no Password column) and also as
                     # password for the scanner's per-cred display loop.

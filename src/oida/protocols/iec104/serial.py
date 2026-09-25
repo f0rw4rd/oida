@@ -419,7 +419,7 @@ class IEC101Mixin:
         ca_off = 3  # type_id(1) + vsq(1) + cot(1)
         ioa_off = ca_off + IEC101_CA_OCTETS
         type_id = asdu[0]
-        _cot = _decode_cot_value(asdu[2])  # noqa: F841 — reserved for future multi-object parsing
+        _cot = _decode_cot_value(asdu[2])  # noqa: F841 - reserved for future multi-object parsing
         ca = int.from_bytes(asdu[ca_off : ca_off + IEC101_CA_OCTETS], "little")
         ioa = (
             int.from_bytes(asdu[ioa_off : ioa_off + IEC101_IOA_OCTETS], "little")

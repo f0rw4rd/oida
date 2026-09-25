@@ -6,7 +6,7 @@ A BACnet application-tagged BitString encodes as::
 
 The leading byte is a length/unused-bits prefix and is never bit content.
 ``_bacpypes3_enumerate_services`` / the object-types loop decoded with
-``data[1:] if len(data) > 1 else data`` — the ``else data`` branch iterates
+``data[1:] if len(data) > 1 else data`` - the ``else data`` branch iterates
 the PREFIX byte itself as content whenever the payload is a single byte
 (empty bit string), so a response with a nonzero unused-bits byte
 (e.g. ``b"\\x07"``) would report phantom supported services at indices 5-7.
@@ -91,7 +91,7 @@ class TestServicesBitStringPrefix(unittest.TestCase):
         for ln in stub.logger.lines:
             ln = ln.strip()
             if ln.startswith("- "):
-                found.append(ln[2:].split("\u2192")[0].strip())
+                found.append(ln[2:].split("->")[0].strip())
         return found
 
     def test_normal_two_octet_content(self):

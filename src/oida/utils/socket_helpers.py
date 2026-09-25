@@ -12,12 +12,12 @@ from typing import Optional, Any, Tuple
 def get_local_ip(target_host: str, fallback: str = "127.0.0.1") -> Tuple[str, Optional[Exception]]:
     """Detect the local IP that would be used to reach ``target_host``.
 
-    Uses the standard "UDP connect trick" — connecting a UDP socket does not
+    Uses the standard "UDP connect trick" - connecting a UDP socket does not
     send any packets, but populates the local-address tuple based on the
     routing table for the target. Avoids guessing or hard-coded fallbacks.
 
     The previous BACnet helper used ``socket.connect(("8.8.8.8", 80))`` to
-    detect the local IP — that breaks offline, leaks scan activity to Google,
+    detect the local IP - that breaks offline, leaks scan activity to Google,
     and may be inappropriate in air-gapped ICS environments. This helper
     routes against the actual target instead, so it works on disconnected
     lab networks.
@@ -53,7 +53,7 @@ def build_tls_context(
 
     Central function for all protocols to create TLS contexts. By default it
     does not validate certificates (ICS devices rarely have proper PKI), but a
-    caller-supplied CA via ``tls-ca`` enables proper server verification — as
+    caller-supplied CA via ``tls-ca`` enables proper server verification - as
     required for IEC 62351-style mTLS deployments. Supports an optional client
     certificate for mutual TLS.
 

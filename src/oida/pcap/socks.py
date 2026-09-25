@@ -232,7 +232,7 @@ class SOCKSPassiveListener(PySharkListenerBase):
         # Type 3: Client auth request (has username).
         # tshark maps the SOCKS4/4a USERID onto the same socks.username field
         # used by SOCKS5 auth. A SOCKS4 request also carries a `command`, while
-        # the SOCKS5 auth subnegotiation does not — so only treat `username` as
+        # the SOCKS5 auth subnegotiation does not - so only treat `username` as
         # an auth credential when no command is present. Otherwise a SOCKS4
         # CONNECT with a userid would be recorded as a bogus credential and
         # return here, dropping the actual CONNECT target (handled at Type 5).

@@ -101,10 +101,10 @@ MOCK_PORTS: Dict[str, int] = {
     "bacnet_realstack_rtu": 47820,
     "bacnet_realstack_building": 47821,
     "bacnet_realstack_vav": 47822,
-    # BACnet/SC (TCP — WSS/TLS direct-connect)
+    # BACnet/SC (TCP - WSS/TLS direct-connect)
     "bacnetsc_realstack_secure": 47830,
     "bacnetsc_realstack_weak": 47831,
-    # CoAP (UDP — uses check_udp_port_open via UDP_PROTOCOLS)
+    # CoAP (UDP - uses check_udp_port_open via UDP_PROTOCOLS)
     "coap": 5683,
     "coap_libcoap": 5685,
     "coap_dtls": 5684,
@@ -154,7 +154,7 @@ MOCK_PORTS: Dict[str, int] = {
 }
 
 # ---------------------------------------------------------------------------
-# Protocol marker → compose service names
+# Protocol marker -> compose service names
 # ---------------------------------------------------------------------------
 PROTOCOL_SERVICES: Dict[str, List[str]] = {
     "modbus": [
@@ -225,7 +225,7 @@ PROTOCOL_SERVICES: Dict[str, List[str]] = {
     "hl7": ["hl7-node-mock", "hl7-mock"],
     "fhir": [
         "fhir-mock",
-        # Real HAPI FHIR servers (Apache-2.0) — R4, R5, R4 strict-validation
+        # Real HAPI FHIR servers (Apache-2.0) - R4, R5, R4 strict-validation
         "fhir-hapi-r4",
         "fhir-hapi-r5",
         "fhir-hapi-r4-strict",
@@ -239,20 +239,20 @@ PROTOCOL_SERVICES: Dict[str, List[str]] = {
     "ethercat": ["ethercat-slave-veth"],
     # PROFINET's real mocks (profinet-siemens-et200sp / profinet-beckhoff-el6631)
     # are L2/raw-socket devices behind the "profinet" compose profile, so the
-    # default harness cannot start them — they are gated per-test by
+    # default harness cannot start them - they are gated per-test by
     # skip_unless_l2_docker(). There is no plain-startable "profinet-device"
     # service; listing one made `compose up` abort the whole L2 batch with
     # "no such service". Leave empty: profinet tests self-skip when the profiled
     # container isn't already running.
     "profinet": [],
     "goose": ["goose-l2-publisher"],
-    # CAN rides on UDP multicast (host networking) — no TCP port to probe.
+    # CAN rides on UDP multicast (host networking) - no TCP port to probe.
     # Treated like an L2 service: lifecycle via compose, health via docker inspect.
     "can": ["can-mock"],
 }
 
 # ---------------------------------------------------------------------------
-# Compose service → primary TCP port for health-check probing
+# Compose service -> primary TCP port for health-check probing
 # ---------------------------------------------------------------------------
 SERVICE_HEALTH_PORT: Dict[str, int] = {
     "modbus-mock": 502,
@@ -293,14 +293,14 @@ SERVICE_HEALTH_PORT: Dict[str, int] = {
     "hart-secondary": 5097,
     "hart-tertiary": 5099,
     "snmp-mock": 10161,
-    # snmp-switch: UDP-only (10162), skipped here — tests use _check_snmp_reachable()
+    # snmp-switch: UDP-only (10162), skipped here - tests use _check_snmp_reachable()
     "modbus-sunspec": 5502,
     "modbus-tls": 802,
     "modbus-rtu-tcp": 5030,
-    "coap-mock": 5683,  # UDP — uses check_udp_port_open()
-    "coap-libcoap": 5685,  # UDP — libcoap C server
-    "coap-dtls": 5683,  # UDP — libcoap DTLS (plain port; DTLS on 5684)
-    "coap-dtls-cert": 5686,  # UDP — libcoap DTLS cert (DTLS on 5686)
+    "coap-mock": 5683,  # UDP - uses check_udp_port_open()
+    "coap-libcoap": 5685,  # UDP - libcoap C server
+    "coap-dtls": 5683,  # UDP - libcoap DTLS (plain port; DTLS on 5684)
+    "coap-dtls-cert": 5686,  # UDP - libcoap DTLS cert (DTLS on 5686)
     "http2-nghttp2": 8281,
     "http2-python": 9080,
     "astm-mock": 1394,
@@ -357,7 +357,7 @@ def _l2_service_unavailable(msg: str) -> None:
 
     L2 services require special Docker profiles and host networking with
     CAP_NET_RAW. They still count as availability guards, so they fail by
-    default like every other one — set OIDA_SKIP_MISSING_SERVICES=1 to skip.
+    default like every other one - set OIDA_SKIP_MISSING_SERVICES=1 to skip.
     """
     require_service(msg)
 
@@ -402,7 +402,7 @@ def check_docker_daemon() -> Tuple[bool, Optional[str]]:
     """Probe once whether the Docker daemon is reachable. Cached per process.
 
     Returns (ok, error_message). When unreachable, error_message is the first
-    stderr line from ``docker info`` — typically the real cause (daemon down,
+    stderr line from ``docker info`` - typically the real cause (daemon down,
     permission denied on the socket, or CLI not installed) rather than the
     generic "service not started".
     """
@@ -433,13 +433,13 @@ def _unavailable_reason(name: str, port: int, transport: str = "port") -> str:
     """Build a skip/fail message, surfacing a dead Docker daemon as the real cause.
 
     When the daemon is unreachable, every mock is unstartable for the same
-    underlying reason — report that once, accurately, instead of a misleading
+    underlying reason - report that once, accurately, instead of a misleading
     "run: python services.py up" (which won't help if you can't reach Docker).
     """
     ok, err = check_docker_daemon()
     if not ok:
         return (
-            f"Docker daemon unreachable ({err}) — cannot start '{name}'. "
+            f"Docker daemon unreachable ({err}) - cannot start '{name}'. "
             f"Add your user to the 'docker' group, start the daemon, or pre-start "
             f"the mocks with: sudo python services.py up"
         )
@@ -475,10 +475,10 @@ def ensure_mock(protocol_name: str) -> None:
 
 
 # ---------------------------------------------------------------------------
-# Layer 2 (non-TCP) services — health checked via Docker inspect, not TCP
+# Layer 2 (non-TCP) services - health checked via Docker inspect, not TCP
 # ---------------------------------------------------------------------------
 
-# Services that use raw L2 sockets instead of TCP — no port to probe.
+# Services that use raw L2 sockets instead of TCP - no port to probe.
 # Health is determined by checking the container's Docker healthcheck status.
 L2_SERVICES: Set[str] = {
     "ethercat-slave-veth",
@@ -490,7 +490,7 @@ L2_SERVICES: Set[str] = {
     "can-mock",
 }
 
-# Compose service name → Docker container name, for the few services whose
+# Compose service name -> Docker container name, for the few services whose
 # container_name differs from the compose service key (needed by docker inspect
 # in check_l2_container_healthy). Services not listed here use the service name.
 L2_CONTAINER_NAME: Dict[str, str] = {
@@ -502,19 +502,19 @@ L2_CONTAINER_NAME: Dict[str, str] = {
     "profinet-device": "profinet-siemens-et200sp",
 }
 
-# Services that use UDP instead of TCP — use check_udp_port_open().
+# Services that use UDP instead of TCP - use check_udp_port_open().
 UDP_SERVICES: Set[str] = {
     "coap-mock",
     "coap-libcoap",
     "coap-dtls",
     "coap-dtls-cert",
-    # BACnet — port 47808/UDP, cannot be health-checked via TCP
+    # BACnet - port 47808/UDP, cannot be health-checked via TCP
     "bacnet-mock",
     "bacnet-conpot",
     "bacnet-realstack-rtu",
     "bacnet-realstack-building",
     "bacnet-realstack-vav",
-    # SNMP — port 161/UDP (mapped to 10161/10162/10164), cannot be health-checked via TCP
+    # SNMP - port 161/UDP (mapped to 10161/10162/10164), cannot be health-checked via TCP
     "snmp-mock",
     "snmp-switch",
     "snmp-v3only",
@@ -529,7 +529,7 @@ def check_l2_container_healthy(
 ) -> bool:
     """Check if an L2 mock container is running and healthy via docker inspect.
 
-    Works for any container that has a Docker HEALTHCHECK defined — EtherCAT,
+    Works for any container that has a Docker HEALTHCHECK defined - EtherCAT,
     PROFINET DCP, GOOSE, etc.
     """
     try:
@@ -565,7 +565,7 @@ def check_service_container_healthy(service: str) -> bool:
 
     This is the transport-agnostic pre-existing-service probe. It exists because
     the CoAP-style UDP ping in ``check_udp_port_open`` only elicits a reply from
-    CoAP servers — SNMP and BACnet mocks never answer it, so port-probing them
+    CoAP servers - SNMP and BACnet mocks never answer it, so port-probing them
     yields a false negative. A false negative makes the harness try to ``compose
     up`` a service whose fixed ``container_name`` is already taken, which aborts
     the whole batch with a name conflict. Checking container health instead
@@ -644,7 +644,7 @@ def check_raw_socket_capability() -> Tuple[bool, Optional[str]]:
         return True, None
     except (PermissionError, OSError):
         return False, (
-            "Raw socket access denied — run as root or with CAP_NET_RAW "
+            "Raw socket access denied - run as root or with CAP_NET_RAW "
             "(e.g. sudo pytest, or setcap cap_net_raw+ep on python)"
         )
 
@@ -669,9 +669,9 @@ def get_raw_socket_strategy() -> Tuple[Optional[str], Optional[str]]:
     """Determine how to obtain raw socket access for L2 protocol tests.
 
     Returns (strategy, error_message) where strategy is one of:
-      - "direct"  : current process has CAP_NET_RAW or is root — no sudo needed
-      - "sudo"    : passwordless sudo available — prefix commands with sudo
-      - None      : no raw socket access possible — skip tests
+      - "direct"  : current process has CAP_NET_RAW or is root - no sudo needed
+      - "sudo"    : passwordless sudo available - prefix commands with sudo
+      - None      : no raw socket access possible - skip tests
     """
     has_raw, _ = check_raw_socket_capability()
     if has_raw:
@@ -679,7 +679,7 @@ def get_raw_socket_strategy() -> Tuple[Optional[str], Optional[str]]:
     if check_sudo_available():
         return "sudo", None
     return None, (
-        "Raw socket access unavailable — need one of:\n"
+        "Raw socket access unavailable - need one of:\n"
         "  1. Run as root (sudo pytest)\n"
         "  2. Set CAP_NET_RAW on Python (sudo setcap cap_net_raw+ep $(which python))\n"
         "  3. Enable passwordless sudo for the current user"
@@ -733,7 +733,7 @@ def pytest_collection_finish(session):
         else:
             # TCP services: probe the configured health port, but fall back to
             # container-health so services with no SERVICE_HEALTH_PORT entry
-            # (e.g. knx-devices) are still recognised when already running —
+            # (e.g. knx-devices) are still recognised when already running -
             # otherwise the harness collides on their fixed container_name.
             port = SERVICE_HEALTH_PORT.get(svc)
             if (port and check_port_open(MOCK_HOST, port, timeout=1)) or (
@@ -746,7 +746,7 @@ def pytest_collection_finish(session):
         return
 
     # Fail fast: one quick daemon probe before the slow `compose up --build`.
-    # If Docker itself is unreachable, building/starting is doomed — skip it and
+    # If Docker itself is unreachable, building/starting is doomed - skip it and
     # let the per-test guards report the real reason (cached, so it's instant).
     ok, err = check_docker_daemon()
     if not ok:
@@ -844,7 +844,7 @@ def docker_compose_project_name():
 
 @pytest.fixture(scope="session")
 def docker_setup():
-    """Sentinel fixture — actual Docker startup happens in pytest_collection_finish.
+    """Sentinel fixture - actual Docker startup happens in pytest_collection_finish.
 
     This fixture exists so _start_mock and _check_required_containers can
     express an ordering dependency on it (ensuring they don't race with
@@ -860,7 +860,7 @@ def docker_cleanup():
     Restricted to services compose can name: profile-gated / nonexistent L2
     services (e.g. goose-l2-publisher, the stale profinet-device) are never
     started by the default harness, so issuing `compose stop` for them aborts
-    teardown with "no such service". Filter to the real, plain-startable set —
+    teardown with "no such service". Filter to the real, plain-startable set -
     the same constraint docker_setup applies on the way up.
     """
     to_stop = _needed_services - _preexisting_services
@@ -1025,7 +1025,7 @@ def l2_bridge_interface() -> Optional[str]:
 # Protocol-specific convenience fixtures that delegate to the generic helpers
 @pytest.fixture(scope="session")
 def ethercat_bridge_interface() -> Optional[str]:
-    """Alias for l2_bridge_interface — kept for backward compatibility."""
+    """Alias for l2_bridge_interface - kept for backward compatibility."""
     return get_docker_bridge_interface()
 
 
@@ -1048,7 +1048,7 @@ def goose_mock_available() -> bool:
 
 
 # ---------------------------------------------------------------------------
-# Pytest configuration — register custom markers
+# Pytest configuration - register custom markers
 # ---------------------------------------------------------------------------
 
 

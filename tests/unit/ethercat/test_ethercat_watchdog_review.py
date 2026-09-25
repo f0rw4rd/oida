@@ -39,7 +39,7 @@ def _register_bank_slave():
 
     def fprd(addr, size, *_a, **_k):
         # Divider register (0x0400) answers 0x1122, the process-data
-        # watchdog TIME register (0x0420) answers 0x0BEF — distinct values so
+        # watchdog TIME register (0x0420) answers 0x0BEF - distinct values so
         # a wrong register read cannot accidentally produce the right output.
         values = {
             0x0400: 0x1122,

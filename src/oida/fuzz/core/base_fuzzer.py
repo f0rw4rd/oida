@@ -112,7 +112,7 @@ class RequestInfo:
     # Whether mutated sends on this request normally produce a server reply.
     # False enables the no-reply fast path: the post-send recv skips the full
     # timeout wait (polls briefly instead). Only mark requests whose packets
-    # are answered only on success — the fast path still surfaces RSTs.
+    # are answered only on success - the fast path still surfaces RSTs.
     expects_response: bool = True
 
 
@@ -256,7 +256,7 @@ class BaseFuzzer(ABC):
         The filters below are deliberately scoped to records emitted by
         boofuzz's own loggers (``boofuzz.*`` / root-logger ``fuzzing:`` debug
         spam).  Earlier versions matched purely on message text/level and were
-        attached to *every* root-logger handler without ever being removed —
+        attached to *every* root-logger handler without ever being removed -
         which silently swallowed unrelated records (e.g. pytest's per-test
         LogCaptureHandler) for the rest of the process lifetime.
         """
@@ -554,7 +554,7 @@ class BaseFuzzer(ABC):
         """Arm auto-restart-and-resume on every monitor that supports it.
 
         The restart command is deduped at run time via the shared CrashTracker, so
-        arming all monitors is safe — exactly one restart fires per crash episode.
+        arming all monitors is safe - exactly one restart fires per crash episode.
         """
         if not self.config.restart_command:
             return
@@ -1535,13 +1535,13 @@ class BaseFuzzer(ABC):
         boofuzz's public ``fuzz()`` always walks depth 1, then 2, then 3, ... in
         order, so reaching depth N normally means grinding through (and, on a
         big ``index_start``, generating-then-discarding) the whole lower-depth
-        prefix — which scales ~O(depth1**2) and can cost minutes to hours for a
+        prefix - which scales ~O(depth1**2) and can cost minutes to hours for a
         real protocol. Driving ``_generate_n_mutations(depth=N)`` directly yields
         only depth-N cases, so the first packet goes out immediately with no seek.
 
         This composes with the rest of the loop: distribution filtering wraps
         ``_fuzz_current_case`` (downstream), and ``index_start`` / ``index_end``
-        are still honored by ``_main_fuzz_loop`` — reinterpreted as a position
+        are still honored by ``_main_fuzz_loop`` - reinterpreted as a position
         *within* the chosen depth.
         """
         session = self.session

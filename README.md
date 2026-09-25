@@ -12,7 +12,7 @@ it works air-gapped.
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-ffb000.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![PyPI](https://img.shields.io/pypi/v/oida-ics.svg)](https://pypi.org/project/oida-ics/)
 
-📖 **[Docs and live demo at getoida.dev](https://getoida.dev)**
+**[Docs and live demo at getoida.dev](https://getoida.dev)**
 
 </div>
 
@@ -44,8 +44,8 @@ oida opcua opc.tcp://10.0.0.5:4840    # OPC UA
 oida discovery eth0                   # find ICS devices on the wire
 ```
 
-Any target may carry a port — `10.0.0.5:5020`, `10.0.0.0/24:5020`,
-`[2001:db8::1]:5020`, or per line in a target file — which saves repeating
+Any target may carry a port - `10.0.0.5:5020`, `10.0.0.0/24:5020`,
+`[2001:db8::1]:5020`, or per line in a target file - which saves repeating
 `-p` and is the only way to scan hosts on different ports in one run. A port in
 the target wins over `-p/--port`.
 

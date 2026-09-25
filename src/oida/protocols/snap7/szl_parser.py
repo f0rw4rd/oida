@@ -140,7 +140,7 @@ class SZLParser:
             result["record_len"] = record_len
             result["partial_list_len"] = partial_list_len
 
-            # Guard against malformed SZL: see _parse_0x001c — record_len=0
+            # Guard against malformed SZL: see _parse_0x001c - record_len=0
             # would infinite-loop on the `offset += record_len` advance (DoS).
             if record_len < 3:
                 result["parsed"] = False

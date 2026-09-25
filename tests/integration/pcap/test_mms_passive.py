@@ -33,7 +33,7 @@ class TestMMSPassiveEK:
 
 
 class TestMMSInvokeID:
-    """mms.invokeID — request/response correlation identifier."""
+    """mms.invokeID - request/response correlation identifier."""
 
     def test_invoke_id_present_on_confirmed_services(self):
         """invokeID should appear on all confirmed request/response interactions."""
@@ -77,7 +77,7 @@ class TestMMSInvokeID:
 
 
 class TestMMSErrorFields:
-    """mms.errorClass and mms.failure — error classification fields."""
+    """mms.errorClass and mms.failure - error classification fields."""
 
     def test_error_class_extraction(self):
         """errorClass should be extracted from confirmed_ErrorPDU packets."""
@@ -129,7 +129,7 @@ class TestMMSErrorFields:
 
 
 class TestMMSUnconfirmedService:
-    """mms.unconfirmedService — unconfirmed service type classification."""
+    """mms.unconfirmedService - unconfirmed service type classification."""
 
     def test_unconfirmed_service_on_information_report(self):
         """InformationReport interactions should include unconfirmed_service code."""
@@ -153,7 +153,7 @@ class TestMMSUnconfirmedService:
 
 
 class TestACSEResultFields:
-    """acse.result and acse.result_source_diagnostic — AARE fields."""
+    """acse.result and acse.result_source_diagnostic - AARE fields."""
 
     def test_acse_result_on_aare(self):
         """AARE interactions should carry association result code."""
@@ -215,7 +215,7 @@ class TestACSEResultFields:
 
 
 class TestMMSDomainSpecific:
-    """mms.domainSpecific — domain-specific scope identifier."""
+    """mms.domainSpecific - domain-specific scope identifier."""
 
     def test_domain_specific_in_get_name_list(self):
         """getNameList requests should include domainSpecific scope."""
@@ -243,7 +243,7 @@ class TestMMSDomainSpecific:
 
 
 class TestMMSIdentifiers:
-    """mms.Identifier — identifier list in getNameList responses."""
+    """mms.Identifier - identifier list in getNameList responses."""
 
     def test_identifiers_in_get_name_list_response(self):
         """getNameList responses should include extracted identifier list."""
@@ -276,7 +276,7 @@ class TestMMSIdentifiers:
 
 
 class TestMMSServicesSupportedCalling:
-    """mms.servicesSupportedCalling — client capability bitmask."""
+    """mms.servicesSupportedCalling - client capability bitmask."""
 
     def test_services_supported_calling_in_initiate_request(self):
         """Initiate Request should include servicesSupportedCalling bitmask."""
@@ -328,7 +328,7 @@ class TestMMSServicesSupportedCalling:
 
 
 class TestMMSServicesSupportedCalled:
-    """mms.servicesSupportedCalled — server capability bitmask."""
+    """mms.servicesSupportedCalled - server capability bitmask."""
 
     def test_services_supported_called_in_initiate_response(self):
         """Initiate Response should include servicesSupportedCalled bitmask."""
@@ -382,7 +382,7 @@ class TestMMSServicesSupportedCalled:
 
 
 class TestMMSGetVariableAccessAttributes:
-    """mms.getVariableAccessAttributes — request type selector."""
+    """mms.getVariableAccessAttributes - request type selector."""
 
     def test_get_var_access_attr_extraction(self):
         """getVariableAccessAttributes request should include type selector."""
@@ -408,7 +408,7 @@ class TestMMSGetVariableAccessAttributes:
 
 
 class TestMMSGetNamedVariableListAttributes:
-    """mms.getNamedVariableListAttributes — request ObjectName selector."""
+    """mms.getNamedVariableListAttributes - request ObjectName selector."""
 
     def test_get_named_var_list_attr_extraction(self):
         """getNamedVariableListAttributes request should include selector."""
@@ -434,7 +434,7 @@ class TestMMSGetNamedVariableListAttributes:
 
 
 class TestMMSExtendedObjectClass:
-    """mms.extendedObjectClass — extended object class in getNameList."""
+    """mms.extendedObjectClass - extended object class in getNameList."""
 
     def test_extended_object_class_in_get_name_list(self):
         """getNameList requests should include extendedObjectClass."""
@@ -459,7 +459,7 @@ class TestMMSExtendedObjectClass:
 
 
 class TestACSEProtocolVersion:
-    """acse.aARQ_protocol_version / acse.aARE_protocol_version — ACSE version bitstring."""
+    """acse.aARQ_protocol_version / acse.aARE_protocol_version - ACSE version bitstring."""
 
     def test_aarq_protocol_version_extracted(self):
         """AARQ interactions should carry the calling-AE ACSE protocol version."""

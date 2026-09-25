@@ -75,7 +75,7 @@ def _well_formed_list_identity() -> bytes:
 
 
 # --------------------------------------------------------------------------
-# parse_list_identity  (parsers.py) — no try/except wrapper, must be self-safe
+# parse_list_identity  (parsers.py) - no try/except wrapper, must be self-safe
 # --------------------------------------------------------------------------
 
 
@@ -91,7 +91,7 @@ class TestParseListIdentity:
 
     @pytest.mark.parametrize("n", list(range(0, 40)))
     def test_truncated_at_every_prefix_never_raises(self, n):
-        """Feed every truncation of a valid frame — must return dict or None."""
+        """Feed every truncation of a valid frame - must return dict or None."""
         frame = _well_formed_list_identity()
         out = parse_list_identity(frame[:n])
         assert out is None or isinstance(out, dict)

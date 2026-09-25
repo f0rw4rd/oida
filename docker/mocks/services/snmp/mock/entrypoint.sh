@@ -1,22 +1,22 @@
 #!/bin/bash
-# OIDA SNMP Mock — entrypoint
+# OIDA SNMP Mock - entrypoint
 # Creates SNMPv3 users then starts snmpd in foreground.
 #
 # Profile selection via SNMP_PROFILE env var:
-#   linux   — ICS server with interfaces, TCP listeners, ARP, traps
-#   windows — Windows ICS workstation with LanManager MIB
-#   switch  — H3C managed switch with credential tables, MAC/FDB
-#   v3only  — Hardened gateway, SNMPv3 auth required, no v1/v2c
+#   linux   - ICS server with interfaces, TCP listeners, ARP, traps
+#   windows - Windows ICS workstation with LanManager MIB
+#   switch  - H3C managed switch with credential tables, MAC/FDB
+#   v3only  - Hardened gateway, SNMPv3 auth required, no v1/v2c
 #
 # User matrix (all profiles):
-#   initial   — noAuthNoPriv (no password)
-#   engineer  — authNoPriv, SHA, pass=engineer1
-#   readonly  — authNoPriv, MD5, pass=readonly1
-#   admin     — authPriv, SHA+AES128, auth=admin123, priv=admin123
-#   monitor   — authPriv, MD5+DES, auth=monitor1, priv=monitor1
-#   service   — authPriv, SHA+AES128, auth=service1, priv=service1
-#   operator  — authPriv, SHA-256+AES-256, auth=operator1, priv=operator1
-#   backup    — authPriv, SHA-512+AES-192, auth=backup12, priv=backup12
+#   initial   - noAuthNoPriv (no password)
+#   engineer  - authNoPriv, SHA, pass=engineer1
+#   readonly  - authNoPriv, MD5, pass=readonly1
+#   admin     - authPriv, SHA+AES128, auth=admin123, priv=admin123
+#   monitor   - authPriv, MD5+DES, auth=monitor1, priv=monitor1
+#   service   - authPriv, SHA+AES128, auth=service1, priv=service1
+#   operator  - authPriv, SHA-256+AES-256, auth=operator1, priv=operator1
+#   backup    - authPriv, SHA-512+AES-192, auth=backup12, priv=backup12
 #
 # NOTE: USM passphrases must be >= 8 characters (net-snmp minimum).
 
@@ -93,7 +93,7 @@ while True:
     ip neigh add 192.168.1.50 lladdr 00:de:ad:be:ef:01 dev eth0 nud permanent 2>/dev/null || true
 
     # Start dummy process with credentials in args (for --enum creds process scanning)
-    # hrSWRunParameters reads from /proc/<pid>/cmdline — net-snmp reports argv as parameters
+    # hrSWRunParameters reads from /proc/<pid>/cmdline - net-snmp reports argv as parameters
     python3 -c "import time; time.sleep(86400)" --host plc01 --password=S3cretICS &
     ;;
   switch)

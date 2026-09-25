@@ -42,10 +42,10 @@ docker-compose down
 
 Every buildable service carries an `image: ${OIDA_REGISTRY}/oida-mock-*:latest`
 tag in addition to its `build:` section, so the heavy compiled mocks
-(libiec61850, lib60870, dnp3-rs, OpENer, hipserver, …) can be **pulled**
+(libiec61850, lib60870, dnp3-rs, OpENer, hipserver, ...) can be **pulled**
 instead of compiled locally.
 
-`OIDA_REGISTRY` is **required** — compose/bake fail hard if it is unset (no
+`OIDA_REGISTRY` is **required** - compose/bake fail hard if it is unset (no
 default, so nothing pushes/pulls the wrong registry by accident). Set it once in
 a gitignored `.env`; the real URL never lands in git:
 
@@ -54,7 +54,7 @@ cp .env.example .env          # then edit OIDA_REGISTRY (host[:port]/namespace, 
 docker login <your-registry>  # if private
 ```
 
-**Publishing / keeping the registry in sync** — one command builds every
+**Publishing / keeping the registry in sync** - one command builds every
 buildable mock and pushes it:
 
 ```bash
@@ -80,10 +80,10 @@ python ../../services.py up --no-pull
 ```
 
 Images are (re)published by running `python ../../services.py push` from a host
-with docker + buildx — there is no CI publisher. `services.py stale` says which
+with docker + buildx - there is no CI publisher. `services.py stale` says which
 images are behind before you push; a release is gated on it (`scripts/release_check.sh`
 step 3). The CVE/vulnerable images are published
-too — they are deliberately-vulnerable **targets** for authorized testing, in
+too - they are deliberately-vulnerable **targets** for authorized testing, in
 the same spirit as [vulhub](https://github.com/vulhub/vulhub); see
 `VULNERABLE_SERVICES.md`.
 
@@ -251,7 +251,7 @@ Edit the individual server files to customize:
 
 ## Security Notes
 
-⚠️ **Important**: These are mock services for testing purposes only. They should never be used in production environments or exposed to untrusted networks.
+**Important**: These are mock services for testing purposes only. They should never be used in production environments or exposed to untrusted networks.
 
 - All services run with minimal authentication
 - Some protocols support write operations for testing

@@ -486,7 +486,7 @@ class SNMPv2cFuzzer(BaseFuzzer):
                                         Byte("MaxRepetitions", 10, fuzzable=True),
                                         # Empty VarBindings SEQUENCE (tag 0x30, length 0).
                                         # Encoded as a single Static rather than
-                                        # Block(children=()) — the latter triggers
+                                        # Block(children=()) - the latter triggers
                                         # Request.walk() recursion (WALK_MAX_DEPTH guard).
                                         Static("VarBindings", b"\x30\x00"),
                                     ),

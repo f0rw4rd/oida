@@ -375,7 +375,7 @@ def _run_e2e_test(case: dict) -> dict:
             f"keys seen: {[list(d.keys()) for d in result['devices'][:2]]}"
         )
 
-        # Check required fields inside the passive data — at least one
+        # Check required fields inside the passive data - at least one
         # device with data_key must have each field (server vs client
         # devices may use different key names)
         data_fields = case.get("data_fields", [])
@@ -401,16 +401,16 @@ def _run_e2e_test(case: dict) -> dict:
 #
 # Each dict defines a test case.  Required keys: id, module, cls, filter, pcap.
 # Optional:
-#   min_devices (default 1)      — expected device count
-#   min_interactions (default 1) — expected interaction count
-#   details                      — detail-dict keys that at least one
+#   min_devices (default 1)      - expected device count
+#   min_interactions (default 1) - expected interaction count
+#   details                      - detail-dict keys that at least one
 #                                  interaction must have with a truthy value.
 #                                  Proves the listener *actually parsed* fields.
-#   operations                   — substrings that should appear in at least
+#   operations                   - substrings that should appear in at least
 #                                  one interaction.operation field.
-#   data_key                     — passive data attribute to check on devices
+#   data_key                     - passive data attribute to check on devices
 #                                  (e.g. "modbus_passive_data")
-#   data_fields                  — keys that must exist in the passive data dict
+#   data_fields                  - keys that must exist in the passive data dict
 #
 # Setting min_devices/min_interactions to 0 means "just don't crash".
 # ---------------------------------------------------------------------------
@@ -1448,7 +1448,7 @@ _COVERAGE_DECODE_AS: dict[str, dict] = {
         "tcp.port==48010": "opcua"
     },
     "telnet/credslayer_telnet_hidden.pcap": {"tcp.port==1337": "telnet"},
-    # MQTT on non-standard ports — without decode_as tshark sees only TCP.
+    # MQTT on non-standard ports - without decode_as tshark sees only TCP.
     "mqtt/emreekin_mqtt_example.pcap": {"tcp.port==13600": "mqtt"},
     "mqtt/ndpi_coap_mqtt.pcap": {"tcp.port==17501": "mqtt"},
     # Modbus RTU encapsulated in TCP on the standard port: tshark defaults
@@ -1465,7 +1465,7 @@ _COVERAGE_DECODE_AS: dict[str, dict] = {
     # IRC with STARTTLS: the TLS handshake inside a plain-IRC capture on 6667.
     "tls/zeek_irc-starttls.pcap": {"tcp.port==6667": "tls"},
     # DNS inside an IP packet whose ip.proto field says 255 (reserved) instead
-    # of 17 — a fuzzed/mislabeled header; force the UDP dissector so the dns
+    # of 17 - a fuzzed/mislabeled header; force the UDP dissector so the dns
     # payload underneath is actually parsed.
     "dns/zeek_proto255.pcap": {"ip.proto==255": "udp"},
 }
@@ -1473,12 +1473,12 @@ _COVERAGE_DECODE_AS: dict[str, dict] = {
 
 def _build_coverage_all_pcaps() -> list[dict]:
     """Expand LISTENER_PCAP_CASES to cover ALL pcaps in each protocol's fixture dir."""
-    # Deduplicate: one entry per (module, cls, filter) → fixture subdirectory
+    # Deduplicate: one entry per (module, cls, filter) -> fixture subdirectory
     seen: dict[tuple, dict] = {}
     for case in LISTENER_PCAP_CASES:
         key = (case["module"], case["cls"], case["filter"])
         if key not in seen:
-            # Derive fixture subdir from pcap path (e.g. "iec104/foo.pcap" → "iec104")
+            # Derive fixture subdir from pcap path (e.g. "iec104/foo.pcap" -> "iec104")
             subdir = case["pcap"].split("/")[0]
             seen[key] = {
                 "module": case["module"],

@@ -82,8 +82,8 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
         self.discovered_devices: Dict[str, ProfinetDevice] = {}
         # P1 false-positive guard: opening a raw DCP socket or an RPC/UDP
         # socket does not prove a PROFINET device exists. Require real
-        # evidence — a DCP Identify reply, an established AR, or actual
-        # implicit I&M/diagnosis data — before reporting success.
+        # evidence - a DCP Identify reply, an established AR, or actual
+        # implicit I&M/diagnosis data - before reporting success.
         self._profinet_response_seen = False
         self._my_mac = None
         self._gsdml: Optional[GSDMLDevice] = None
@@ -505,7 +505,7 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
                 try:
                     # reset_to_factory(sock, src, target, mode=2, timeout_sec=5).
                     # The old (self.interface, mac) call raised TypeError
-                    # (missing target) — reuse the opened sock + src_mac.
+                    # (missing target) - reuse the opened sock + src_mac.
                     profinet_mod.reset_to_factory(sock, src_mac, mac, timeout_sec=int(self.timeout))
                     self.logger.success(f"Factory reset sent to {mac}")
                 except Exception as e:

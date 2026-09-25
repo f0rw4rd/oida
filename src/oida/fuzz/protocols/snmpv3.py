@@ -172,7 +172,7 @@ class SNMPv3Fuzzer(BaseFuzzer):
 
         SNMP is UDP/161; a TCP connect probe always fails against a real agent.
         Use the UDP SNMP liveness monitor. The probe itself is a lightweight
-        v2c GET(sysDescr.0) used only to confirm the agent process is alive —
+        v2c GET(sysDescr.0) used only to confirm the agent process is alive -
         a v3 agent still services UDP/161 and its ICMP behaviour is the same.
         """
         return [

@@ -14,7 +14,7 @@ from tests.service_gate import require_service
 
 
 # Empty: instantiation only builds the boofuzz request tree (no I/O), so it
-# never needs raw sockets / serial / root — those are only required to *send*.
+# never needs raw sockets / serial / root - those are only required to *send*.
 # The previous entries (icmp/icmpv6/ipv4/ipv6/ethernet/modbus_rtu) all
 # instantiate fine and now run for real; profinet_dcp/industrial_ethernet were
 # dead (not in PROTOCOL_FUZZERS). Genuinely missing optional deps are still

@@ -29,7 +29,7 @@ def uv_path():
 
 class TestUvLockfileInSync:
     def test_lock_check_passes(self, uv_path):
-        """`uv lock --check` must exit 0 — lockfile is in sync."""
+        """`uv lock --check` must exit 0 - lockfile is in sync."""
         # `uv lock --check` was added in uv 0.5.0; works in 0.11.x.
         # The `--frozen` alternative is more conservative (errors on any
         # lockfile change) but --check is the explicit drift test.
@@ -56,7 +56,7 @@ class TestLockfileShape(unittest.TestCase):
 
         self.assertTrue(
             pathlib.Path("uv.lock").exists(),
-            "uv.lock must be committed — it's the source of truth for CI installs",
+            "uv.lock must be committed - it's the source of truth for CI installs",
         )
 
     def test_lockfile_pins_oida(self):
@@ -82,7 +82,7 @@ class TestLockfileShape(unittest.TestCase):
         self.assertGreater(
             package_count,
             50,
-            f"uv.lock has only {package_count} packages — full env is ~300; "
+            f"uv.lock has only {package_count} packages - full env is ~300; "
             "lockfile is likely incomplete",
         )
 

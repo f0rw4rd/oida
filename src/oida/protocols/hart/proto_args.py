@@ -275,7 +275,7 @@ Examples:
 
     # Standard dangerous operations (--confirm, --fuzz, --fuzz-iterations)
     # HART fuzzes the command set of one connected device, so --fuzz-max-targets
-    # (a multi-target cap) is never read — omit it instead of advertising an unused flag.
+    # (a multi-target cap) is never read - omit it instead of advertising an unused flag.
     add_dangerous_options(
         hart_parser, include_fuzz=True, fuzz_default_iterations=20, include_max_targets=False
     )

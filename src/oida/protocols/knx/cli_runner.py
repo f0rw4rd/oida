@@ -3,7 +3,7 @@
 """KNX NXC-style callable class.
 
 ARCHITECTURE TODO: This class does NOT delegate to ``KNXScanner`` (the L1
-class in ``scanner.py``) — both implement parallel protocol logic.
+class in ``scanner.py``) - both implement parallel protocol logic.
 Refactor target: extract the protocol work into ``KNXScanner`` methods
 that take an xknx client param and reduce this class to a CLI dispatcher
 that owns one. Modbus is the reference for the facade pattern.
@@ -255,8 +255,8 @@ class knx(NetworkConnection):
         """Query one KNXnet/IP device for its self-description via xknx.
 
         Delegates to xknx's ``request_description()``, which sends a unicast
-        DESCRIPTION_REQUEST (0x0203) to the device's control endpoint and — for
-        KNXnet/IP Core v2+ devices — a follow-up SEARCH_REQUEST_EXTENDED. The
+        DESCRIPTION_REQUEST (0x0203) to the device's control endpoint and - for
+        KNXnet/IP Core v2+ devices - a follow-up SEARCH_REQUEST_EXTENDED. The
         returned ``GatewayDescriptor`` therefore carries the full capability
         picture (tunnelling-over-TCP, KNX-Secure support and requirement, and
         the tunnel-slot table), which the old hand-rolled parser could not see.

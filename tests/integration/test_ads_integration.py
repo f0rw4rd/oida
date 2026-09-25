@@ -2223,7 +2223,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
         log = result.scan_log
         _assert_log_event_structure(log)
 
-    # NOT COVERED (no test exists — do not add a skipped placeholder):
+    # NOT COVERED (no test exists - do not add a skipped placeholder):
     #   - --watch symbol monitoring: a blocking operation that only ends on Ctrl-C.
 
     def test_coe_range_standalone(self, cli_runner, target, port, docker_services):

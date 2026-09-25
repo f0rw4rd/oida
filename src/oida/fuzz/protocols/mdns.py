@@ -91,7 +91,7 @@ class MDNSFuzzer(BaseFuzzer):
         if config.target_port == 0:
             config.target_port = 5353
         super().__init__(config, connection_factory)
-        # max_recv_bytes lives on the boofuzz Target, not the Session — setting
+        # max_recv_bytes lives on the boofuzz Target, not the Session - setting
         # it on self.session was a dead write, leaving the 10000 default so the
         # 8192 cap for large mDNS responses never applied.
         if self.session.targets:
@@ -174,7 +174,7 @@ class MDNSFuzzer(BaseFuzzer):
         return Block(
             name,
             children=(
-                # NOTE: no Size prefix here — the QNAME block already begins with its
+                # NOTE: no Size prefix here - the QNAME block already begins with its
                 # own wire-format label-length byte (the Label_Type Group), and a
                 # duplicate outer length byte renders an invalid DNS name.
                 Block(
@@ -220,7 +220,7 @@ class MDNSFuzzer(BaseFuzzer):
         return Block(
             name,
             children=(
-                # NOTE: no Size prefix here — the NAME block already begins with its
+                # NOTE: no Size prefix here - the NAME block already begins with its
                 # own wire-format label-length byte (the Label_Type Group), and a
                 # duplicate outer length byte renders an invalid DNS name.
                 Block(
@@ -374,7 +374,7 @@ class MDNSFuzzer(BaseFuzzer):
                         Word("ID", 0xABCD, output_format="binary", endian=">"),
                         Word("Flags", 0x8400, output_format="binary", endian=">"),
                         # Section counts are now Word (fuzzable) so boofuzz
-                        # mutates them — section-count lies about actual record
+                        # mutates them - section-count lies about actual record
                         # count are a classic DNS parser bug class
                         # (RDLENGTH confusion); see ref/mdns/cves/README.md.
                         Word("QDCount", 1, output_format="binary", endian=">"),  # 1 question

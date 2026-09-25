@@ -65,7 +65,7 @@ def test_context_is_permissive_by_default():
 def test_context_pins_max_version_for_downgrade_probe():
     ctx = sc_tls.build_client_context(max_version=ssl.TLSVersion.TLSv1_2)
     assert ctx.maximum_version == ssl.TLSVersion.TLSv1_2
-    # Still permissive — no --insecure flag exists.
+    # Still permissive - no --insecure flag exists.
     assert ctx.verify_mode == ssl.CERT_NONE
 
 

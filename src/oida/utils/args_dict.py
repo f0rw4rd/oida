@@ -1,4 +1,4 @@
-"""Normalizing argument mapping — ``'unit-id'`` and ``'unit_id'`` are one key.
+"""Normalizing argument mapping - ``'unit-id'`` and ``'unit_id'`` are one key.
 
 Background
 ----------
@@ -6,7 +6,7 @@ argparse turns every ``--unit-id`` flag into a Namespace attribute spelled with
 an underscore (``unit_id``). A large amount of legacy scanner code, however,
 reads the *CLI* spelling with dashes (``args.get("unit-id")``). Historically
 ``connection._convert_args_to_dict`` reconciled the two by **dual-writing** every
-key twice — once underscore, once hyphen — which is the "store each thing twice"
+key twice - once underscore, once hyphen - which is the "store each thing twice"
 smell: it doubles the dict, and a writer that touches only one spelling leaves
 the two silently out of sync.
 
@@ -25,7 +25,7 @@ type has to stay a real ``dict``: ``connection._convert_args_to_dict`` and its
 feed are typed for ``dict``. A ``UserDict`` (a ``MutableMapping``, not a ``dict``)
 would break that contract. Subclassing ``dict`` is only fragile when you forget
 that its C-level ``get``/``update``/``__contains__``/``pop`` bypass an overridden
-``__getitem__`` — so we override each of them here rather than relying on that
+``__getitem__`` - so we override each of them here rather than relying on that
 delegation.
 
 Scope note
@@ -54,11 +54,11 @@ class ArgsDict(dict):
     argparse always materializes *every* declared flag as a Namespace attribute
     (``None`` when unset), so ``set(vars(namespace))`` is the complete declared
     arg surface. Passing that as ``known_keys`` lets this mapping tell a genuine
-    typo (``args.get("unti_id")`` — a key that was *never a flag*) apart from a
+    typo (``args.get("unti_id")`` - a key that was *never a flag*) apart from a
     legitimately-absent optional (``args.get("timeout")`` when ``timeout=None``,
     which was dropped on the way in but is still a declared key). Reads of keys
     that are neither present nor declared are recorded in
-    :attr:`undeclared_reads`; with ``strict=True`` they raise instead — off by
+    :attr:`undeclared_reads`; with ``strict=True`` they raise instead - off by
     default so production behavior is unchanged.
 
     .. warning::
@@ -109,7 +109,7 @@ class ArgsDict(dict):
         if self._strict:
             raise KeyError(
                 f"undeclared argument key {norm_key!r} "
-                f"(not among declared flags: {sorted(known)!r}) — likely a typo"
+                f"(not among declared flags: {sorted(known)!r}) - likely a typo"
             )
 
     @property
@@ -175,7 +175,7 @@ class ArgsDict(dict):
         return merged
 
     def __ror__(self, other: Mapping[Any, Any]) -> "ArgsDict":
-        # ``other | self`` — self is the ArgsDict; carry its config forward.
+        # ``other | self`` - self is the ArgsDict; carry its config forward.
         merged = ArgsDict(other, known_keys=self._known_keys, strict=self._strict)
         merged.update(self)
         return merged

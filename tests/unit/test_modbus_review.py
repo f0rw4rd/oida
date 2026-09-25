@@ -89,7 +89,7 @@ def test_validator_still_accepts_nonzero_scale(tmp_path):
 
 
 # =============================================================================
-# A7 — scaled integer writes crash with `int("50.0")` because encode_value
+# A7 - scaled integer writes crash with `int("50.0")` because encode_value
 # always repr()s the inverse-scaled float, but the integer encoders (encode
 # for u16/i16/u32/i32/u64/i64/bcd) do a bare int(value_str) that rejects any
 # string containing a decimal point.

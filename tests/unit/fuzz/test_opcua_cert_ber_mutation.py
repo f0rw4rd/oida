@@ -1,7 +1,7 @@
 """Offline coverage test for the OPC UA structured-BER certificate mutation node.
 
 The OPC UA fuzzer is otherwise a binary-encoding fuzzer, but the SenderCertificate
-carried in OpenSecureChannel is X.509 DER — a genuine ASN.1/BER parse surface. The
+carried in OpenSecureChannel is X.509 DER - a genuine ASN.1/BER parse surface. The
 ``OPCUA_CertBERMutation`` request drives the shared ``ASN1Builder`` BER mutators
 (previously dead code) against a valid DER SEQUENCE template:
 
@@ -13,7 +13,7 @@ carried in OpenSecureChannel is X.509 DER — a genuine ASN.1/BER parse surface.
 
 These tests build the session fully offline via MockConnectionFactory and assert the
 node is registered, wired into the boofuzz session graph, and produces real fuzzable
-mutations — no network I/O.
+mutations - no network I/O.
 """
 
 import pytest
@@ -92,7 +92,7 @@ def test_cert_ber_mutation_values_are_valid_der_derived():
     """The mutation set must actually exercise every wired ASN1Builder mutator.
 
     Rebuild the expected components independently and confirm the node's Group
-    contains the systematic length/tag/truncation/overflow/nested outputs — i.e.
+    contains the systematic length/tag/truncation/overflow/nested outputs - i.e.
     the previously-dead mutators are genuinely reachable now.
     """
     fuzzer = _make_fuzzer()

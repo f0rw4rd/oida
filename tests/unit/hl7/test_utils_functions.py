@@ -1,4 +1,4 @@
-"""Unit tests for oida.protocols.hl7.utils — the pure helper functions.
+"""Unit tests for oida.protocols.hl7.utils - the pure helper functions.
 
 These functions are transport/parse helpers shared by the scanner and the
 fuzzer: MLLP framing, ACK parsing, test-message construction and the

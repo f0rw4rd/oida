@@ -159,7 +159,7 @@ class ModbusMonitor(ProtocolMonitor):
                 probe_fc = 0x03  # _create_read_request() sends Read Holding Registers
 
                 # Liveness is distinct from content-drift: a well-framed reply to
-                # our probe — a normal read OR a legal Modbus exception (FC|0x80) —
+                # our probe - a normal read OR a legal Modbus exception (FC|0x80) -
                 # proves the target is still answering. Only route the *normal*
                 # reply through the baseline/drift comparison; an exception reply
                 # (e.g. IllegalFunction because a fuzz case corrupted state) is a
@@ -178,11 +178,11 @@ class ModbusMonitor(ProtocolMonitor):
                         self._set_probe_evidence("ok")
                     return ok
                 elif protocol_id == 0 and function_code == (probe_fc | 0x80):
-                    # Legal Modbus exception reply — target is alive.
-                    self.logger.debug(f"Modbus exception reply (FC={function_code:#04x}) — alive")
+                    # Legal Modbus exception reply - target is alive.
+                    self.logger.debug(f"Modbus exception reply (FC={function_code:#04x}) - alive")
                     if fuzz_data_logger:
                         fuzz_data_logger.log_info(
-                            f"ModbusMonitor: exception reply FC={function_code:#04x} — target alive"
+                            f"ModbusMonitor: exception reply FC={function_code:#04x} - target alive"
                         )
                     self._set_probe_evidence("ok")
                     return True
@@ -1088,7 +1088,7 @@ class BACnetMonitor(ProtocolMonitor):
     BACnet/IP liveness monitor (UDP 47808).
 
     BACnet/IP is connectionless UDP, so a TCP connect (SocketHealthMonitor) can
-    never succeed against a real device — using it for preflight makes the fuzzer
+    never succeed against a real device - using it for preflight makes the fuzzer
     abort every run with "Target unreachable", and a bare UDP ``connect`` proves
     nothing because the kernel returns immediately without a packet exchange. This
     monitor instead sends a real BACnet Who-Is and treats a BVLC reply (the I-Am)

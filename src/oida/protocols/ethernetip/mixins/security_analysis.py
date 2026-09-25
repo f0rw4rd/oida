@@ -186,7 +186,7 @@ class SecurityAnalysisMixin(_ScannerBase):
 
         # Writable attributes. The old code did
         # sum(len(attrs) for attrs in write_test_results.values()) which
-        # measured "number of keys in each class dict" (always 2 —
+        # measured "number of keys in each class dict" (always 2 -
         # 'class_attributes' + 'instances'), not "number of writable
         # attributes". So every scan reported `2 × num_classes` writables.
         if results.get("write_test_results"):

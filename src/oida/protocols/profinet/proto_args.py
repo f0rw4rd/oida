@@ -2,7 +2,7 @@
 
 Migrated to proto_args_factory in §3 sync. Profinet keeps its local
 ``--fuzz`` (nargs='?' choices=['basic','full']) and its custom target
-help (target = interface OR IP) — neither maps cleanly onto the factory
+help (target = interface OR IP) - neither maps cleanly onto the factory
 helpers, so we use the factory only for the parser-construction
 boilerplate.
 """

@@ -408,7 +408,7 @@ class OPCUAScanner(NetworkScanner):
             # Test anonymous access by actually establishing a credential-less
             # session and exercising the Read service. asyncua's set_user()
             # only configures the NEXT request and takes a single str arg, so
-            # the old `set_user(None)` raised TypeError and was swallowed — the
+            # the old `set_user(None)` raised TypeError and was swallowed - the
             # anonymous check never ran. A fresh Client with no user/password
             # and a real connect()+Read is the only honest probe.
             client_class = _get_client_class()
@@ -457,7 +457,7 @@ class OPCUAScanner(NetworkScanner):
 
         valid_count = 0
         # asyncua.Client.set_user() is a sync setter that only configures
-        # the credentials for the NEXT outgoing request — it does NOT
+        # the credentials for the NEXT outgoing request - it does NOT
         # validate them. Marking the credential "VALID" just because
         # set_user didn't raise produces false positives on every
         # invocation. To actually verify a credential we have to either
@@ -594,11 +594,11 @@ class OPCUAScanner(NetworkScanner):
             if "badattributeidinvalid" in error_str:
                 # Node doesn't support AccessLevel, fall back to write test.
                 # The fallback issues a real Write service call against a live
-                # variable — gate it on --confirm like every other write path.
+                # variable - gate it on --confirm like every other write path.
                 if not parse_bool(self.args.get("confirm", False)):
                     result["error"] = (
                         "AccessLevel unavailable; write-back probe skipped "
-                        "(writes to live variable) — requires --confirm"
+                        "(writes to live variable) - requires --confirm"
                     )
                     return result
                 try:

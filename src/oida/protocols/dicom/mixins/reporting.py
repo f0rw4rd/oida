@@ -116,7 +116,7 @@ class ReportingMixin(_ScannerBase):
         if impl_class_uid in DICOM_VENDOR_MAP:
             return DICOM_VENDOR_MAP[impl_class_uid]
 
-        # Try prefix matching (UIDs are hierarchical) — longest prefix first
+        # Try prefix matching (UIDs are hierarchical) - longest prefix first
         # so specific entries like "1.2.840.113619.6" beat "1.2.840.113619"
         for prefix in sorted(DICOM_VENDOR_MAP, key=len, reverse=True):
             if impl_class_uid.startswith(prefix):

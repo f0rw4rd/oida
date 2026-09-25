@@ -414,7 +414,7 @@ class PySharkListenerBase(ABC):
         """Extract (src_ip, dst_ip) from packet.
 
         Falls back to a raw ``_fields_dict`` lookup when pyshark's EK layer
-        access fails or returns None — happens on packets that encapsulate
+        access fails or returns None - happens on packets that encapsulate
         another IPv6 header (e.g. PIM Register, GRE-in-IPv6) where
         ``_fields_dict`` becomes a list instead of a single dict and
         ``EkLayer.__getattr__`` raises AttributeError mid-iteration.
@@ -498,7 +498,7 @@ class PySharkListenerBase(ABC):
         """Extract (src_mac, dst_mac) from packet, normalized to lowercase colon-separated.
 
         Falls back to ARCNET node IDs when no eth layer is present (BACnet/ARCNET
-        traffic encapsulates directly over the ARCNET datalink — each node has an
+        traffic encapsulates directly over the ARCNET datalink - each node has an
         8-bit address, formatted as "AR:NN" so callers can distinguish it from
         a real MAC).
         """

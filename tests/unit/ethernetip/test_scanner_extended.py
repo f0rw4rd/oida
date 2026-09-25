@@ -413,7 +413,7 @@ class TestDeterminePermission(unittest.TestCase):
     """Test _determine_permission."""
 
     def test_no_write_test(self):
-        """Without --write we have no signal — return R? rather than the
+        """Without --write we have no signal - return R? rather than the
         silent ? which used to render as 'read-only' in downstream reports."""
         scanner = make_scanner()
         conn = MagicMock()

@@ -3,27 +3,27 @@
 These three protocols share the same ASDU framing concepts. This module
 centralizes the pieces of logic that previously diverged per-file:
 
-1. ``parse_asdu_field()`` — ASDU type-ID / COT integer parse. tshark renders
+1. ``parse_asdu_field()`` - ASDU type-ID / COT integer parse. tshark renders
    these ``FT_UINT8`` fields in DECIMAL (a real ``0x`` prefix is still honored).
-   Single-sourcing the base here prevents per-listener drift — iec103 once
+   Single-sourcing the base here prevents per-listener drift - iec103 once
    parsed these with ``base=16``, turning decimal ``"20"`` into ``32`` and
    mislabeling every multi-digit command/COT.
 
-2. ``classify_rw()`` — the read/write/control/file/error classification ladder
+2. ``classify_rw()`` - the read/write/control/file/error classification ladder
    for IEC-101/104, which was previously copy-pasted identically in iec101 and
    twice in iec104.
 
 3. The IEC-101/104 ASDU type/COT lookup tables and the ``IecAsduValueMixin``
-   class — the per-IOA value/quality extraction methods, the ASDU-header
+   class - the per-IOA value/quality extraction methods, the ASDU-header
    parse core, the unified summary builder, and the link-frame interaction
    recorder. iec101 and iec104 share the exact same ASDU encoding (only the
-   transport framing — FT1.2 link layer vs. APCI/TCP — differs), and iec103's
+   transport framing - FT1.2 link layer vs. APCI/TCP - differs), and iec103's
    FT1.2 link-layer function-code maps and link-frame recording are identical
    to iec101's, so those live here too.
 
 iec103 (the protection profile) keeps its own direction-split type/COT maps,
-ASDU processing, and its own rw rules for monitor/control ASDUs — those are
-genuinely different semantics — but it shares ``parse_asdu_field()``, the
+ASDU processing, and its own rw rules for monitor/control ASDUs - those are
+genuinely different semantics - but it shares ``parse_asdu_field()``, the
 FT1.2 link function-code maps, and the link-frame recording helper so those
 pieces can no longer diverge.
 """
@@ -141,7 +141,7 @@ TYPE_IDS = {
     127: "F_SC_NB_1",  # Query log
 }
 
-# Control type IDs (commands — all types in the control direction)
+# Control type IDs (commands - all types in the control direction)
 CONTROL_TYPE_IDS = {
     45,
     46,
@@ -179,7 +179,7 @@ CONTROL_TYPE_IDS = {
     127,  # File transfer
 }
 
-# Write commands — types that actually modify process state
+# Write commands - types that actually modify process state
 _WRITE_TYPE_IDS = {
     45,
     46,
@@ -201,7 +201,7 @@ _WRITE_TYPE_IDS = {
     113,  # Parameter set commands
 }
 
-# Read/query commands — request data but don't modify state
+# Read/query commands - request data but don't modify state
 _READ_COMMAND_TYPE_IDS = {100, 101, 102}  # GI, CI, Read command
 
 # System/management commands
@@ -347,7 +347,7 @@ class IecAsduValueMixin:
     for the link-frame recording helper. Relies on ``self.get_field``,
     ``self.logger``, ``self._format_float``, ``self._parse_int``,
     ``self._record_interaction``, ``self.get_port_info``, and
-    ``self.get_stream_id`` — all provided by ``PySharkListenerBase``.
+    ``self.get_stream_id`` - all provided by ``PySharkListenerBase``.
     """
 
     def _get_multi_field_ints(self, layer, field_name: str) -> List[int]:

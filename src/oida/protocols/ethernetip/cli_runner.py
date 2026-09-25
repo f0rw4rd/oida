@@ -104,7 +104,7 @@ class ethernetip(NetworkConnection):
         info = self.results["data"].get("device_info", {})
         port = self.args.port
 
-        # The "Connected to EtherNet/IP device …" success banner was already
+        # The "Connected to EtherNet/IP device ..." success banner was already
         # emitted by create_conn_obj(); use display() here so the banner appears
         # exactly once per scan.
         if not info.get("success"):
@@ -159,7 +159,7 @@ class ethernetip(NetworkConnection):
         # NetworkConnection.run() defaults success=True and reports a
         # false-positive EtherNet/IP identification (connection-1).
         #
-        # NOTE: the scanner's identity dict is NOT a reliable signal on its own —
+        # NOTE: the scanner's identity dict is NOT a reliable signal on its own -
         # _discover_logix_features() always writes identity["name"]/["keyswitch"]
         # from the pycomm3 driver, so the dict is non-empty even against a silent
         # socket. The authoritative discriminator is a real ListIdentity reply:

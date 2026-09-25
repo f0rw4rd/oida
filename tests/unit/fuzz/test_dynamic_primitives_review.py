@@ -3,7 +3,7 @@ Regression tests for src/oida/fuzz/primitives/dynamic.py.
 
 Covers two verified bugs in SmartBytes():
 
-1. (HIGH) The radamsa branch dropped ``size``, ``padding`` and ``fuzzable`` —
+1. (HIGH) The radamsa branch dropped ``size``, ``padding`` and ``fuzzable`` -
    they are named parameters of SmartBytes itself so they never fell through
    into ``**kwargs`` on the radamsa path. A caller passing
    ``fuzzable=False, size=N`` (e.g. icmp.py freezing reserved/checksum

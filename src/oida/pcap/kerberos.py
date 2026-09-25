@@ -687,7 +687,7 @@ class KerberosPassiveListener(PySharkListenerBase):
             try:
                 if int(self._resolve_value(pt, 0)) == 2:
                     # padata_value is FT_BYTES: in EK mode (production) raw
-                    # getattr yields Python `bytes`, so convert to hex here —
+                    # getattr yields Python `bytes`, so convert to hex here -
                     # str(bytes) would give a b'...' repr that _parse_encrypted_
                     # data's bytes.fromhex() rejects, silently losing the hash.
                     # (Mirrors _cipher_occurrences' bytes handling.)
@@ -778,11 +778,11 @@ class KerberosPassiveListener(PySharkListenerBase):
             pos += length
 
             if tag == 0xA0 and len(content) >= 3:
-                # [0] etype — contains INTEGER (02 len val)
+                # [0] etype - contains INTEGER (02 len val)
                 if content[0] == 0x02:
                     etype = int.from_bytes(content[2 : 2 + content[1]], "big")
             elif tag == 0xA2 and len(content) >= 2:
-                # [2] cipher — contains OCTET STRING (04 len val)
+                # [2] cipher - contains OCTET STRING (04 len val)
                 if content[0] == 0x04:
                     clen = content[1]
                     offset = 2

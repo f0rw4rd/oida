@@ -59,7 +59,7 @@ def _run(bin_path, *args, timeout=30):
     """Run the binary and return CompletedProcess.
 
     On the GitHub Actions Windows runner, capture_output can hand back
-    stdout/stderr as ``None`` even when the binary printed output — verified on
+    stdout/stderr as ``None`` even when the binary printed output - verified on
     a real Windows box that ``oida.exe --help`` emits the full protocol list
     over a captured pipe, so this is a runner/harness quirk, not a binary bug.
     Coalesce ``None`` -> ``""`` so assertions are robust to it (and still fail
@@ -112,10 +112,10 @@ def _is_frozen_diag_traceback(stderr):
 def _resolve_binary(dist):
     """Return the first existing, executable oida binary under dist/, or None."""
     candidates = [
-        # onedir (COLLECT) layout — the shipped, non-invasive build.
+        # onedir (COLLECT) layout - the shipped, non-invasive build.
         dist / "oida" / "oida",
         dist / "oida" / "oida.exe",
-        # onefile layout — fallback if someone builds that way.
+        # onefile layout - fallback if someone builds that way.
         dist / "oida.exe",
         dist / "oida",
     ]
@@ -293,7 +293,7 @@ class TestBinarySmoke:
             data = json.loads(latest.read_text())
             assert isinstance(data, (dict, list)), f"JSON root is {type(data).__name__}"
         else:
-            # No JSON file — check stdout
+            # No JSON file - check stdout
             stdout = result.stdout.strip()
             if stdout.startswith(("{", "[")):
                 data = json.loads(stdout)

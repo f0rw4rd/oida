@@ -185,7 +185,7 @@ def mock_server(mock_module):
 
     Function-scoped (not module-scoped) so no bus traffic, ISO-TP Flow-Control
     state, or off-thread Consecutive Frame senders survive from one test into
-    the next — the udp_multicast bus is shared by every member of a group, so a
+    the next - the udp_multicast bus is shared by every member of a group, so a
     single long-lived mock made multi-frame reads cross-contaminate.
     """
     server = _MockServer(mock_module, _unique_channel())

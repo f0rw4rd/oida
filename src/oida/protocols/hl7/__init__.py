@@ -522,7 +522,7 @@ class hl7(
             self.results["data"]["connected"] = True
             self.results["data"]["tls_enabled"] = use_tls
             return True
-        except Exception as e:  # noqa: BLE001 — report any connect failure and move to the next host
+        except Exception as e:  # noqa: BLE001 - report any connect failure and move to the next host
             self.logger.debug(f"create conn obj failed: {e}")
             if isinstance(e, TimeoutError):
                 self.logger.fail("Connection timed out")
@@ -538,7 +538,7 @@ class hl7(
 
         Sends QBP^Q11 (Display-Based Response, read-only) rather than
         the legacy ADT^A01 admission write. ADT^A01 created a fake
-        patient admission on the target on every scan — every operator
+        patient admission on the target on every scan - every operator
         running ``oida hl7 <ip>`` was silently writing to the target's
         EMR / clinical interface. Use a read query for fingerprinting.
 

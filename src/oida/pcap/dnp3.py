@@ -213,7 +213,7 @@ _IIN1_LOCAL_CTRL = 0x20
 _IIN1_DEVICE_TROUBLE = 0x40
 _IIN1_DEVICE_RESTART = 0x80
 
-# IIN2 (second byte) — error-class bits
+# IIN2 (second byte) - error-class bits
 _IIN2_NO_FUNC_CODE = 0x01
 _IIN2_OBJECT_UNKNOWN = 0x02
 _IIN2_PARAM_ERROR = 0x04
@@ -1002,7 +1002,7 @@ class DNP3PassiveListener(PySharkListenerBase):
             if not vals:
                 vals = self._get_multi_values(dnp3, "al_anaout_double", "al.anaout.double")
 
-        # Double-bit binary (groups 3, 4) — must be checked before single-bit
+        # Double-bit binary (groups 3, 4) - must be checked before single-bit
         elif group in (3, 4):
             vals = self._get_multi_values(dnp3, "al_2bit", "al.2bit")
 

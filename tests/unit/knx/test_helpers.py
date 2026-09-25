@@ -39,7 +39,7 @@ def _snapshot_sys_modules():
 def _restore_sys_modules(snapshot):
     """Restore (or remove) sys.modules entries from a snapshot.
 
-    Critical to avoid leaking Mock-replaced modules into later test files —
+    Critical to avoid leaking Mock-replaced modules into later test files -
     leaving a MagicMock at sys.modules['oida.utils.ics_logger'] breaks any
     later isinstance(x, ICSLogger) check across the whole session.
     """

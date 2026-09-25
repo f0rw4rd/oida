@@ -494,7 +494,7 @@ class CommandMixin:
 
         Sends standard control commands (C_SC_NA_1 single, C_DC_NA_1 double) to a
         target IOA and reports whether the outstation activates them (ACT_CON).
-        An accepted command means an unauthenticated client can drive controls —
+        An accepted command means an unauthenticated client can drive controls -
         a real security finding. Confirm-gated: it transmits live commands.
         """
         from oida.protocols.iec104._deps import _get_c104

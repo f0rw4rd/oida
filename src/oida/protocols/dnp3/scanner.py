@@ -776,7 +776,7 @@ class DNP3Scanner(PollingMixin, ControlMixin, FileTransferMixin, NetworkScanner)
         settings.baud = self.baud
         settings.dataBits = self.data_bits
         # opendnp3's "None" parity member collides with the Python keyword, so
-        # it's only reachable via getattr — dnp3.Parity.None_ does not exist and
+        # it's only reachable via getattr - dnp3.Parity.None_ does not exist and
         # crashed every serial scan regardless of --parity.
         none_parity = getattr(dnp3.Parity, "None")
         parity_map = {"none": none_parity, "even": dnp3.Parity.Even, "odd": dnp3.Parity.Odd}

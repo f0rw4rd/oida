@@ -1,5 +1,5 @@
 #!/bin/sh
-# OIDA real-stack BACnet/SC mock — entrypoint
+# OIDA real-stack BACnet/SC mock - entrypoint
 #
 # Mints a self-signed PKI (CA + device operational cert + a CLIENT cert that
 # OIDA presents) and launches the genuine bacnet-stack "bacserv" demo built for
@@ -49,7 +49,7 @@ export BACNET_SC_OPERATIONAL_CERTIFICATE_FILE="certs/server_cert.pem"
 export BACNET_SC_OPERATIONAL_CERTIFICATE_PRIVATE_KEY_FILE="certs/server_key.pem"
 
 # --- BSC datalink: direct-connect accept mode ------------------------------
-# A node that ACCEPTS direct connections on the given port. No hub needed —
+# A node that ACCEPTS direct connections on the given port. No hub needed -
 # OIDA dials wss://host:PORT directly (subprotocol dc.bsc.bacnet.org).
 export BACNET_SC_DIRECT_CONNECT_BINDING="${BACNET_SC_DIRECT_PORT}"
 export BACNET_SC_DIRECT_CONNECT_INITIATE="n"

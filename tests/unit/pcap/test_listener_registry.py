@@ -113,7 +113,7 @@ class TestListListeners:
 
 
 # ---------------------------------------------------------------------------
-# resolve_listener_names() — no filters
+# resolve_listener_names() - no filters
 # ---------------------------------------------------------------------------
 
 
@@ -130,7 +130,7 @@ class TestResolveNoFilters:
 
 
 # ---------------------------------------------------------------------------
-# resolve_listener_names() — protocol filter
+# resolve_listener_names() - protocol filter
 # ---------------------------------------------------------------------------
 
 
@@ -171,7 +171,7 @@ class TestResolveByProtocol:
 
 
 # ---------------------------------------------------------------------------
-# resolve_listener_names() — category filter
+# resolve_listener_names() - category filter
 # ---------------------------------------------------------------------------
 
 
@@ -212,7 +212,7 @@ class TestResolveByCategory:
 
 
 # ---------------------------------------------------------------------------
-# resolve_listener_names() — quick preset
+# resolve_listener_names() - quick preset
 # ---------------------------------------------------------------------------
 
 
@@ -230,7 +230,7 @@ class TestResolveQuick:
 
 
 # ---------------------------------------------------------------------------
-# resolve_listener_names() — exclude
+# resolve_listener_names() - exclude
 # ---------------------------------------------------------------------------
 
 

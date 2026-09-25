@@ -1181,7 +1181,7 @@ class TestHL7TLSConnection(unittest.TestCase):
 
         The legacy assertion (mock_ctx.wrap_socket.called) is no longer
         valid because the SUT now goes through a shared helper that
-        builds its own ssl.SSLContext via build_tls_context — the
+        builds its own ssl.SSLContext via build_tls_context - the
         direct ssl.create_default_context patch never fires.
         """
 
@@ -1203,7 +1203,7 @@ class TestHL7TLSConnection(unittest.TestCase):
         """--tls-insecure forwards through the shared helper.
 
         Original test asserted SSLContext check_hostname=False /
-        verify_mode=CERT_NONE — those now live inside build_tls_context,
+        verify_mode=CERT_NONE - those now live inside build_tls_context,
         which has its own unit tests. Here we only verify the HL7
         scanner forwards the flag.
         """
@@ -1320,7 +1320,7 @@ class TestHL7DangerousOperations(unittest.TestCase):
 
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
     def test_adt_a01_requires_confirm(self):
-        """ADT^A01 (Admit Patient) IS a write — it creates a record.
+        """ADT^A01 (Admit Patient) IS a write - it creates a record.
 
         The earlier inverse test (`test_adt_a01_does_not_require_confirm`)
         codified a bug where ADT admission/discharge messages were treated
@@ -1343,7 +1343,7 @@ class TestHL7DangerousOperations(unittest.TestCase):
         self.assertGreaterEqual(
             len(confirm_fails),
             1,
-            "ADT^A01 is a write operation — must require --confirm",
+            "ADT^A01 is a write operation - must require --confirm",
         )
 
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)

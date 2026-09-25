@@ -18,7 +18,7 @@ from oida.utils.base_scanner import BaseScanner
 
 
 class _StubScanner(BaseScanner):
-    """Minimal concrete BaseScanner — satisfies the six abstract methods."""
+    """Minimal concrete BaseScanner - satisfies the six abstract methods."""
 
     def get_protocol_name(self) -> str:
         return "stub"
@@ -77,7 +77,7 @@ def test_report_helpers_still_append(scanner):
 
 def test_report_credential_retains_the_discovered_password(scanner):
     # Regression: the discovered password (the deliverable of an authorized
-    # scan) was silently dropped — only **kwargs reached the stored record.
+    # scan) was silently dropped - only **kwargs reached the stored record.
     scanner.report_credential("operator", "s3cr3t!", host="10.0.0.1", port=502)
 
     record = scanner.results["credentials"][0]["10.0.0.1:operator"]

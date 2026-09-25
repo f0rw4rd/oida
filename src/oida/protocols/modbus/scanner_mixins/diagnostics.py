@@ -88,7 +88,7 @@ class ScannerDiagnosticsMixin(_ScannerBase):
             if not self._args_get("confirm", False):
                 self.logger.fail(
                     "--diag clear runs subfunction 0x0A (Clear Counters and Diagnostic "
-                    "Register) which mutates device state — requires --confirm"
+                    "Register) which mutates device state - requires --confirm"
                 )
             else:
                 clear_result = self._diagnostic_clear_counters(client)
@@ -102,7 +102,7 @@ class ScannerDiagnosticsMixin(_ScannerBase):
             if not self._args_get("confirm", False):
                 self.logger.fail(
                     "--diag restart runs subfunction 0x01 (Restart Communications) "
-                    "which resets device state — requires --confirm"
+                    "which resets device state - requires --confirm"
                 )
             else:
                 restart_result = self._diagnostic_restart(client)

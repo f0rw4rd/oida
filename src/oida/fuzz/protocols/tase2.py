@@ -247,7 +247,7 @@ class TASE2Fuzzer(BaseFuzzer):
                         ),
                         # ICCP domainSpecific ItemId [1] VisibleString identifier.
                         # CREDENTIAL adds identifier-injection payloads (NULL truncation,
-                        # homoglyph, control chars) — the CVE-2014-2357 ICCP name-handling
+                        # homoglyph, control chars) - the CVE-2014-2357 ICCP name-handling
                         # decode class. Frame-safe: the enclosing declared_name_len is a
                         # separate (intentionally decoupled) Group and the TPKT/COTP prologue
                         # is Static, so a variable name length recomputes no enclosing length.

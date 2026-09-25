@@ -2,8 +2,8 @@
 
 The CLI dispatch (main) is driven for real with crafted argv. The only thing
 mocked is the scan execution boundary: oida.cli.scan_target (the per-target
-protocol-class call). Everything else — argparse, alias resolution, target
-parsing, special-subcommand routing, config merge, export — runs unmodified, so
+protocol-class call). Everything else - argparse, alias resolution, target
+parsing, special-subcommand routing, config merge, export - runs unmodified, so
 assertions verify routing and arg wiring rather than re-stating the source.
 """
 
@@ -368,7 +368,7 @@ class TestExecuteScans:
 class TestScanTarget:
     """scan_target uses a single dispatch model: every protocol class is a
     Layer-2 ``connection`` taking (args, db, host) and exposing get_results().
-    (The former Layer-1 ``issubclass(BaseScanner)`` branch was removed — no
+    (The former Layer-1 ``issubclass(BaseScanner)`` branch was removed - no
     protocol resolves to a bare BaseScanner at the dispatch seam.)
     """
 

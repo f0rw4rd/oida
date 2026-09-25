@@ -56,7 +56,7 @@ class connection(ConfirmGateMixin, ABC):
             host: Target host (IP address or hostname)
             autostart: When True (default, preserving CLI behavior), the scan
                 runs during construction via ``run()``. Pass ``autostart=False``
-                to build the object without scanning — the caller then invokes
+                to build the object without scanning - the caller then invokes
                 ``run()`` explicitly. This splits construction from execution so
                 the object is constructible (and testable) without side effects.
         """
@@ -97,7 +97,7 @@ class connection(ConfirmGateMixin, ABC):
         # index/mutate results["data"][...]; an inferred narrow value type would
         # make every such access an error. The documented *envelope* shape is
         # oida.utils.result_types.ScanResult, applied at the get_results()
-        # boundary via cast — this dict is the flexible backing store.
+        # boundary via cast - this dict is the flexible backing store.
         self.results: Dict[str, Any] = {
             "host": host,
             "ip": self.ip,
@@ -159,7 +159,7 @@ class connection(ConfirmGateMixin, ABC):
             except Exception as e:
                 self.logger.debug(f"cleanup failed: {e}")
             # Attach security findings to results for export. (A one-line
-            # console tally used to print here; suppressed for now — findings
+            # console tally used to print here; suppressed for now - findings
             # still print inline as they're discovered, and ride along in the
             # exported results.)
             findings = self.logger.to_list()
@@ -167,7 +167,7 @@ class connection(ConfirmGateMixin, ABC):
                 self.results["data"].setdefault("security_findings", []).extend(findings)
             # Surface arg-key typo suspects: keys the scanner read that were
             # neither present nor a declared flag (recorded by ArgsDict). Debug
-            # only — this is the consumer that makes the tracking observable.
+            # only - this is the consumer that makes the tracking observable.
             args_dict = getattr(self, "_args_dict", None)
             if isinstance(args_dict, ArgsDict):
                 undeclared = args_dict.undeclared_reads
@@ -201,7 +201,7 @@ class connection(ConfirmGateMixin, ABC):
         try:
             # gethostbyname is IPv4-only. Use getaddrinfo so IPv6
             # hostnames (and AAAA-only records) resolve correctly.
-            # Prefer the first result, whatever family it is — the
+            # Prefer the first result, whatever family it is - the
             # caller's downstream socket code is now also IPv6-aware.
             results = socket.getaddrinfo(host, None)
             if results:
@@ -210,7 +210,7 @@ class connection(ConfirmGateMixin, ABC):
         except (socket.gaierror, UnicodeError) as e:
             # If resolution fails, return original (might be IP already).
             # UnicodeError (UnicodeEncodeError) escapes getaddrinfo for
-            # hostnames IDNA encoding rejects — e.g. a 300-char label, or
+            # hostnames IDNA encoding rejects - e.g. a 300-char label, or
             # a stray Unicode byte on a target-file line. It is NOT a
             # gaierror subclass, and this method runs BEFORE the
             # centralized proto_flow() error handling in __init__, so
@@ -226,7 +226,7 @@ class connection(ConfirmGateMixin, ABC):
 
         Error handling, cleanup, and success/failure bookkeeping are handled
         by ``connection.__init__``.  Implementations should simply raise on
-        fatal errors — the base class will log, set results, and call
+        fatal errors - the base class will log, set results, and call
         ``cleanup()``.
 
         Typical implementation:
@@ -236,7 +236,7 @@ class connection(ConfirmGateMixin, ABC):
         4. Protocol-specific scanning actions
 
         Logger setup (``proto_logger()``) is called automatically by
-        ``connection.__init__`` before ``proto_flow()`` runs — child classes
+        ``connection.__init__`` before ``proto_flow()`` runs - child classes
         do not need to call it.
 
         Must be implemented by child class.
@@ -332,13 +332,13 @@ class connection(ConfirmGateMixin, ABC):
         """
         Convert argparse.Namespace to the dict format expected by scanners.
 
-        Returns an :class:`~oida.utils.args_dict.ArgsDict` — a normalizing dict
+        Returns an :class:`~oida.utils.args_dict.ArgsDict` - a normalizing dict
         where the hyphenated CLI spelling and the underscore argparse spelling
         of a key resolve to the same slot. Each key is therefore stored **once**
         (underscore form); scanners that read ``args.get("unit-id")`` still hit
         it. This replaces the old dual-write that stored every key twice.
 
-        ``known_keys`` is the complete declared arg surface — argparse
+        ``known_keys`` is the complete declared arg surface - argparse
         materializes every flag as a Namespace attribute (``None`` when unset),
         so ``vars(self.args)`` names every valid key even after the ``None``
         values are dropped below. That lets the ArgsDict distinguish a genuine
@@ -346,7 +346,7 @@ class connection(ConfirmGateMixin, ABC):
         opt-in via ``OIDA_STRICT_ARGS`` and behavior-preserving by default.
 
         .. warning::
-           ``OIDA_STRICT_ARGS`` is **experimental — do not enable it in CI yet.**
+           ``OIDA_STRICT_ARGS`` is **experimental - do not enable it in CI yet.**
            ``known_keys`` here is only the argparse dest surface; protocols that
            *synthesize* dict keys (e.g. dnp3's ``cli_runner``: ``read-class``,
            ``master-address``, ``control``) would trip false positives until
@@ -398,7 +398,7 @@ class NetworkConnection(connection):
         # invocation in the same process (CLI uses a process-wide
         # Namespace). Deep-copy so that mutable attributes (lists/dicts/sets,
         # e.g. scan_range) are not aliased across the two Layer-2 protocols a
-        # single process may run — a shallow copy left those shared and an
+        # single process may run - a shallow copy left those shared and an
         # in-place mutation bled into the next invocation.
         args = copy.deepcopy(args)
         if hasattr(self, "default_port") and not getattr(args, "port", None):

@@ -76,7 +76,7 @@ class HTTPCredential:
         ``user:$response$<response>$<user>$<realm>$<method>$<uri>$<nonce>$<nc>$<cnonce>$<qop>``
 
         NOTE: hashcat has NO HTTP-digest mode (mode 11400 is SIP, signature
-        ``$sip$``, NOT ``$digest-md5$`` — which is not a real format for any
+        ``$sip$``, NOT ``$digest-md5$`` - which is not a real format for any
         tool). HTTP Digest is cracked with ``john --format=hdaa``. Property name
         kept for the generic credential-export hook. Verified against John's
         HDAA_README example.

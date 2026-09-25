@@ -85,7 +85,7 @@ class VNCCredential:
         """John the Ripper `vnc` format line: ``$vnc$*<challenge>*<response>``.
 
         (Property name kept for the generic credential-export hook; this is a
-        John format, not a hashcat mode — hashcat has no VNC mode.)
+        John format, not a hashcat mode - hashcat has no VNC mode.)
         """
         # Both halves are required to crack; the listener already skips
         # challenge-less responses, but guard here too so an incomplete pair is

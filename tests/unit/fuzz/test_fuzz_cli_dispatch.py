@@ -2,7 +2,7 @@
 
 These tests drive the real argparse parser and the real handler functions.
 The only thing mocked away is the actual fuzz execution boundary
-(``FuzzerApplication.run_command``) — everything in ``run_fuzzing`` up to and
+(``FuzzerApplication.run_command``) - everything in ``run_fuzzing`` up to and
 including the args->config wiring runs for real, so the assertions verify
 routing and argument translation rather than re-stating the source.
 

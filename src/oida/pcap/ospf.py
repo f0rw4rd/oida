@@ -147,7 +147,7 @@ class OSPFPassiveListener(PySharkListenerBase):
         d = ix.details
         neighbors = d.get("neighbors", [])
         neighbor_str = ", ".join(neighbors)
-        # Auth type "None" means no authentication (type 0) — show as empty
+        # Auth type "None" means no authentication (type 0) - show as empty
         auth = d.get("auth_type_name", "")
         if auth == "None":
             auth = ""

@@ -462,6 +462,6 @@ class TestHARTScannerAdditionalStatus:
             scanner.disconnect()
 
 
-# TestHARTScannerIntegration removed — its scanner.connect()/read_device_info()/
+# TestHARTScannerIntegration removed - its scanner.connect()/read_device_info()/
 # read_all_variables() class-API checks are covered by test_hart_integration.py
 # against the FieldComm C hipserver (see note above).

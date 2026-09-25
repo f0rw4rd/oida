@@ -36,7 +36,7 @@ from oida.utils.lazy_import import lazy_import
 
 _aiocoap = lazy_import("aiocoap", "CoAP")
 # DTLSSocket is deliberately NOT a declared dependency of the `coap` extra
-# (dropped in 5c5b890 — it is painful to build and most CoAP scans never use
+# (dropped in 5c5b890 - it is painful to build and most CoAP scans never use
 # DTLS). aiocoap's tinydtls transport imports it at handshake time, so every
 # DTLS path (--dtls/--psk/--dtls-cert/--dtls-rpk) requires the operator to
 # install it manually. Probe via importlib rather than a lazy_import guard so
@@ -63,7 +63,7 @@ class coap(NetworkConnection):
         self.scanner: Any = None
         self._scan_results = None
         # Capture the user-supplied port (None when -p is omitted) BEFORE
-        # super().__init__() — NetworkConnection.__init__ clobbers args.port
+        # super().__init__() - NetworkConnection.__init__ clobbers args.port
         # with self.default_port (5683) whenever it is falsy, which would
         # otherwise make every DTLS `... or DEFAULT_DTLS_PORT` fallback dead.
         self._user_port = getattr(args, "port", None)
@@ -106,7 +106,7 @@ class coap(NetworkConnection):
         if dtls_requested and not _dtls_available():
             # DTLS was explicitly requested but the optional DTLSSocket backend
             # is not installed. Abort loudly rather than silently downgrading to
-            # a cleartext CoAP scan — a user asking for DTLS-PSK/cert auth must
+            # a cleartext CoAP scan - a user asking for DTLS-PSK/cert auth must
             # never have their credentials/probes shipped over plaintext UDP.
             self.logger.fail(
                 "DTLS support is unavailable: the DTLSSocket backend is not "
@@ -379,7 +379,7 @@ class coap(NetworkConnection):
                 lwm2m = self.scanner._fingerprint_lwm2m(self.conn)
                 self.results["data"]["lwm2m"] = lwm2m
 
-        # Method testing — safe-by-default. GET/FETCH always; write methods
+        # Method testing - safe-by-default. GET/FETCH always; write methods
         # (PUT/POST/DELETE/PATCH/IPATCH) require --confirm because DELETE on
         # a live actuator can wipe physical state.
         if getattr(self.args, "methods", False):
@@ -654,8 +654,8 @@ class coap(NetworkConnection):
                 path = "/" + path
 
             self.logger.debug("Probing path %d/%d: %s", idx, len(paths), path)
-            # Use the scheme established in create_conn_obj — coap:// vs
-            # coaps:// — so DTLS-negotiated sessions don't silently downgrade
+            # Use the scheme established in create_conn_obj - coap:// vs
+            # coaps:// - so DTLS-negotiated sessions don't silently downgrade
             # to cleartext UDP/5683 when the wordlist prober ships requests.
             uri = "%s://%s:%s%s" % (self.scanner._scheme, host, port, path)
             result = run_async(coap_request(self.conn, "GET", uri, timeout=self.scanner.timeout))
@@ -724,7 +724,7 @@ class coap(NetworkConnection):
     def _do_write(self, method: str, path: str, value: str):
         """Execute a write/read operation (PUT/POST/DELETE/FETCH/PATCH/IPATCH)."""
         host, port = self.scanner.get_target_info()
-        # Use the scheme established in create_conn_obj — coap:// vs coaps:// —
+        # Use the scheme established in create_conn_obj - coap:// vs coaps:// -
         # so writes against a DTLS-negotiated session don't ship the payload
         # in cleartext over UDP/5683.
         uri = "%s://%s:%s%s" % (self.scanner._scheme, host, port, path)

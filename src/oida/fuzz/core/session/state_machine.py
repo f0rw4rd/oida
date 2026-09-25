@@ -47,7 +47,7 @@ def _call_with_optional_context(func: Callable, context: Optional["StateContext"
         except (ValueError, TypeError):
             # Can't introspect (e.g., a built-in): we genuinely don't know the
             # arity, so best-effort try with context and fall back to no-arg.
-            # This is the ONLY place we swallow TypeError — when we can inspect
+            # This is the ONLY place we swallow TypeError - when we can inspect
             # the signature we dispatch to the exact form below and let any
             # TypeError raised *inside* the callback propagate.
             try:
@@ -128,7 +128,7 @@ class TransitionRule:
                 raise
 
     def __repr__(self):
-        return f"TransitionRule({self.from_state} → {self.to_state})"
+        return f"TransitionRule({self.from_state} -> {self.to_state})"
 
 
 class ProtocolState:
@@ -147,14 +147,14 @@ class ProtocolState:
 
     Note on hierarchy: ``parent``/``children`` and the ancestor helpers exist
     as scaffolding, but StateMachine.transition_to() does NOT yet implement
-    hierarchical (statechart) semantics — entering/exiting a child does not run
+    hierarchical (statechart) semantics - entering/exiting a child does not run
     its ancestors' on_enter/on_exit, and there is no least-common-ancestor
     handling. Setting ``parent=`` today only builds the tree for introspection;
     do not rely on superstate behavior being inherited until that is wired up.
 
     Note on ``requires``: it lists ALTERNATIVE valid predecessor states (OR, not
     AND). ``requires=["SYN_SENT", "SYN_RECEIVED"]`` means "this state may be
-    entered from SYN_SENT *or* from SYN_RECEIVED" — see the TCP and HTTP fuzzer
+    entered from SYN_SENT *or* from SYN_RECEIVED" - see the TCP and HTTP fuzzer
     state machines. AND semantics would be unsatisfiable: a machine occupies
     exactly one state at a time, so a multi-entry ``requires`` read as a
     conjunction would make the state permanently unreachable.
@@ -162,10 +162,10 @@ class ProtocolState:
     all implement the OR reading.
 
     Note on ``setup``: the callback signals failure ONLY by returning an explicit
-    ``False``. Returning ``None`` — the normal Python convention for "did the
-    work, nothing to report" — is success.
+    ``False``. Returning ``None`` - the normal Python convention for "did the
+    work, nothing to report" - is success.
 
-    Note on timeouts: ``timeout``/``timeout_callback`` are evaluated lazily —
+    Note on timeouts: ``timeout``/``timeout_callback`` are evaluated lazily -
     is_timed_out() is only checked at the start of the next transition_to().
     There is no background timer, so a timeout callback will not fire on its own
     if no further transition is attempted.
@@ -425,12 +425,12 @@ class StateMachine:
         """Check if transition is allowed.
 
         Resolution order:
-        1. Explicit TransitionRule for this from->to pair — use its condition
-        2. Target state ``requires`` field — check from_state membership.
+        1. Explicit TransitionRule for this from->to pair - use its condition
+        2. Target state ``requires`` field - check from_state membership.
            ``requires`` lists ALTERNATIVE predecessors (OR, never AND): the
            transition is legal when from_state is ANY one of them. AND would be
            unsatisfiable, since the machine only ever occupies one state at a
-           time — a multi-entry ``requires`` read as a conjunction would make
+           time - a multi-entry ``requires`` read as a conjunction would make
            the target permanently unreachable. Real machines depend on the OR
            reading (TCP: ESTABLISHED requires ["SYN_SENT", "SYN_RECEIVED"]).
            ``get_path_to_state()`` / ``get_reachability_order()`` use this same
@@ -494,7 +494,7 @@ class StateMachine:
             if not force and not self.allow_invalid_transitions:
                 if not self.can_transition(previous_state, state_name):
                     raise StateTransitionError(
-                        f"Invalid transition: {previous_state} → {state_name}. "
+                        f"Invalid transition: {previous_state} -> {state_name}. "
                         f"Use force=True to bypass validation."
                     )
 
@@ -505,11 +505,11 @@ class StateMachine:
                         rule.execute_action(self._context)
                     except Exception as e:
                         raise StateTransitionError(
-                            f"Transition action failed: {previous_state} → {state_name}: {e}"
+                            f"Transition action failed: {previous_state} -> {state_name}: {e}"
                         )
 
             _log.debug(
-                f"Attempting state transition: {previous_state} → {state_name}"
+                f"Attempting state transition: {previous_state} -> {state_name}"
                 + (" [FORCED]" if force else "")
             )
 
@@ -535,7 +535,7 @@ class StateMachine:
                 }
             )
 
-        _log.debug(f"State transition successful: {previous_state} → {state_name}")
+        _log.debug(f"State transition successful: {previous_state} -> {state_name}")
 
         return True
 
@@ -565,7 +565,7 @@ class StateMachine:
                     "forced": True,
                 }
             )
-        _log.debug(f"State set (no setup): {previous_state} → {state_name}")
+        _log.debug(f"State set (no setup): {previous_state} -> {state_name}")
 
     def validate_current_state(self) -> bool:
         """Validate that we're still in the current state."""
@@ -732,7 +732,7 @@ class StateMachine:
         NOTE on semantics: this treats EVERY ``requires`` entry as an edge, i.e.
         it answers "is the requires-graph acyclic, and what is a total order over
         it?". That is deliberately stricter than the OR reading ``requires`` has
-        for *transition legality* (see :meth:`can_transition`) — a machine with
+        for *transition legality* (see :meth:`can_transition`) - a machine with
         legitimate loops (HTTP request/response) is acyclic under neither and
         raises here by design. Callers that want a traversal order which
         tolerates loops should fall back to :meth:`get_reachability_order`.
@@ -782,7 +782,7 @@ class StateMachine:
         This is the OR-semantics counterpart to :meth:`get_topological_order`.
 
         ``get_topological_order()`` treats every ``requires`` entry as a
-        dependency edge and raises on cycles — useful for cycle *detection*,
+        dependency edge and raises on cycles - useful for cycle *detection*,
         but unusable for machines with legitimate request/response loops (HTTP)
         where ``requires`` lists alternative predecessors. This method walks the
         graph with the same legality check transitions use
@@ -841,7 +841,7 @@ class StateMachine:
             current, path = queue.popleft()
 
             # Get states we can transition to from current. Use can_transition()
-            # — the same legality check transition_to() enforces — so the path we
+            # - the same legality check transition_to() enforces - so the path we
             # return is guaranteed traversable. (For requires-only machines
             # can_transition falls back to the 'requires' field, preserving the
             # previous reachability semantics.)
@@ -873,7 +873,7 @@ def create_auth_state_machine(
     connected_validation: Optional[Callable[[], bool]] = None,
     context: Optional["StateContext"] = None,
 ) -> StateMachine:
-    """Create a simple two-state machine: CONNECTED → AUTHENTICATED.
+    """Create a simple two-state machine: CONNECTED -> AUTHENTICATED.
 
     State Machine V2: Now accepts optional StateContext for response data
     propagation between state transitions.

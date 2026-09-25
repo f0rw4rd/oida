@@ -385,7 +385,7 @@ def _extract_payload(packet) -> Optional[bytes]:
     Tries multiple PyShark fields to find raw data (data.data, tcp.payload,
     udp.payload). In EK mode (use_ek=True, the production pipeline) these
     FT_BYTES fields arrive as ``bytes``; in XML mode they are colon-separated
-    hex strings. Both are handled — previously ``str(raw)`` on EK ``bytes``
+    hex strings. Both are handled - previously ``str(raw)`` on EK ``bytes``
     produced a non-hex ``b'...'`` repr and every payload was silently dropped.
     """
     raw = None

@@ -571,7 +571,7 @@ class KNXPassiveListener(PySharkListenerBase):
         """Extract device information from SEARCH/DESCRIPTION responses."""
         info: Dict[str, Any] = self._gateway_info.get(gateway_ip, {})
 
-        # Friendly name (knxip.device.name → knxip_device_name in EK)
+        # Friendly name (knxip.device.name -> knxip_device_name in EK)
         name = self._get_kip_field(kip_layer, "device_name")
         if name:
             info["name"] = str(name)

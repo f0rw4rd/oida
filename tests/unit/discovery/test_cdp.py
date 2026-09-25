@@ -26,7 +26,7 @@ def build_cdp_packet(
     """Build a real scapy CDP packet (Ether / CDPv2_HDR / CDPMsg*).
 
     Impl uses scapy's native CDP layers via ``packet[CDPMsg...]`` lookups, so
-    the test fixtures must produce real scapy packets — not raw bytes.
+    the test fixtures must produce real scapy packets - not raw bytes.
     """
     from scapy.all import Ether
     from scapy.contrib.cdp import (

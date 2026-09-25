@@ -75,7 +75,7 @@ class HL7Monitor(ProtocolMonitor):
             sock.send(message)
 
             # Read response (with MLLP framing).
-            # Same OOM guard as hl7/utils.py:send_probe — a peer that
+            # Same OOM guard as hl7/utils.py:send_probe - a peer that
             # never sends MLLP_END can't drive us to OOM. Pin the
             # buffer at 16 MiB; fuzz targets that ignore framing
             # (the whole point of this monitor) hit this all the time.

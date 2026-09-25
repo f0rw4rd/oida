@@ -47,7 +47,7 @@ _logger_cache_lock = threading.Lock()
 # check and both add a LogHandler (which would double-print every message).
 _module_logger_lock = threading.Lock()
 
-# Global lock for all console output — prevents interleaved lines when
+# Global lock for all console output - prevents interleaved lines when
 # multiple ThreadPoolExecutor workers print concurrently.
 _print_lock = threading.Lock()
 

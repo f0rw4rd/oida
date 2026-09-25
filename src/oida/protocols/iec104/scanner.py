@@ -138,7 +138,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         self.t3 = args.get("t3")
         self.originator_address = args.get("originator")
 
-        # Write options — parse IOA[:VALUE] combined format
+        # Write options - parse IOA[:VALUE] combined format
         inline_value = None
         self.write_single_ioa, v = self._parse_write_arg(args.get("write-single"))
         inline_value = inline_value or v
@@ -828,10 +828,10 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
         # policy.
         if self.clock_read:
             if not self.args.get("confirm", False):
-                reason = "--clock-read issues a clock-sync write (C_CS_NA_1) — requires --confirm"
+                reason = "--clock-read issues a clock-sync write (C_CS_NA_1) - requires --confirm"
                 self.logger.fail(reason)
                 # Record it. This is one phase of a larger scan, so the scan's
-                # overall success still reflects the other phases — but a refusal
+                # overall success still reflects the other phases - but a refusal
                 # that leaves no trace in results is indistinguishable downstream
                 # from "we read the clock and found nothing".
                 results["clock"] = {"refused": reason}
@@ -1274,7 +1274,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
                 cot_str = f" COT={cot}" if cot else ""
                 self.logger.success(f"IOA {ioa}: {type_name}{val_str} (CA={requested_ca}{cot_str})")
             elif point and point.get("station_ca") != requested_ca:
-                # Spontaneous data from a different CA — not our read response
+                # Spontaneous data from a different CA - not our read response
                 if unknown_ca_error:
                     self.logger.fail(
                         f"IOA {ioa}: Read to CA={requested_ca} rejected (Unknown Common Address)"
@@ -1353,7 +1353,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
                 return {"success": False, "error": f"Clock sync failed (state: {state})"}
 
             # clock_sync(wait_for_response=True) blocks until actcon,
-            # but the raw callback may fire on a different thread — brief wait
+            # but the raw callback may fire on a different thread - brief wait
             time.sleep(0.1)
 
             with self._lock:
@@ -1475,7 +1475,7 @@ class IEC104Scanner(ListenMixin, CommandMixin, IEC101Mixin, NetworkScanner):
     def _report_file_transfer(self) -> Dict[str, Any]:
         """Report file-transfer capability based on type IDs (120-127) observed
         during interrogation. c104 has no high-level file-transfer API, so this
-        is detection only — no F_* ASDU exchange is performed."""
+        is detection only - no F_* ASDU exchange is performed."""
         self.logger.display("Checking file-transfer capability (Type IDs 120-127)...")
         result: Dict[str, Any] = {"supported": False, "type_ids_found": [], "files": []}
 

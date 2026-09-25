@@ -281,7 +281,7 @@ def resolve_local_ip(value: Optional[str]) -> Optional[str]:
 
     Raises ``ValueError`` for an IPv6 literal, an unknown interface, or an
     interface with no IPv4 address. KNXnet/IP is IPv4 UDP, so a NIC with no
-    IPv4 has no source address to bind — the caller must surface the error
+    IPv4 has no source address to bind - the caller must surface the error
     rather than silently fall back to the default-route interface (which would
     scan the wrong segment and appear to find nothing).
     """

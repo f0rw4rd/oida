@@ -3,20 +3,20 @@ BACnet/SC TLS context construction + automatic security posture checks.
 
 Two responsibilities:
 
-1. build_client_context(...) — builds the ssl.SSLContext OIDA uses to dial the
+1. build_client_context(...) - builds the ssl.SSLContext OIDA uses to dial the
    device/hub. PERMISSIVE BY DEFAULT (verify_mode=CERT_NONE, check_hostname=
    False): this is a pentest tool that must connect to whatever is there. The
    client cert/key, when supplied, are always loaded and PRESENTED so the device
    sees a mutual-auth attempt.
 
-2. audit_* helpers — run automatically on every SC connection (no flag) and
+2. audit_* helpers - run automatically on every SC connection (no flag) and
    emit findings via logger.security_finding(). They verify the device
    ENFORCES its security settings, not merely that a connection succeeded:
-     * TLS version (BACnet/SC mandates 1.3 — flag < 1.3)
+     * TLS version (BACnet/SC mandates 1.3 - flag < 1.3)
      * weak/deprecated cipher suites
      * server certificate hygiene (self-signed/untrusted, expiry, weak key,
        weak signature algorithm, SAN/hostname mismatch)
-     * MUTUAL-AUTH ENFORCEMENT — the most important check: re-dial with NO
+     * MUTUAL-AUTH ENFORCEMENT - the most important check: re-dial with NO
        client cert and with a ROGUE self-signed client cert; a device/hub that
        accepts either is critically misconfigured.
 """
@@ -40,7 +40,7 @@ def build_client_context(
     """Build a PERMISSIVE TLS client context for BACnet/SC.
 
     Server-cert verification is intentionally disabled (CERT_NONE,
-    check_hostname False) — no --insecure flag exists because permissive IS the
+    check_hostname False) - no --insecure flag exists because permissive IS the
     default for this tool. A supplied client cert/key is still loaded and
     presented for mutual-auth testing. min/max_version let the audit probes pin
     a TLS version (e.g. force 1.2 to test downgrade acceptance).
@@ -125,7 +125,7 @@ def audit_server_cert(cert_der: Optional[bytes], host: str, logger) -> None:
         logger.debug(f"BACnet/SC server certificate could not be parsed for audit: {e}")
         return
 
-    # Self-signed — SC expects a real PKI chain. A DN equality test
+    # Self-signed - SC expects a real PKI chain. A DN equality test
     # (issuer == subject) is only a heuristic: it false-positives on an
     # intermediate-signed cert that happens to reuse a name and false-negatives
     # on a self-issued cert with a cosmetically different issuer string. Verify
@@ -212,7 +212,7 @@ def audit_server_cert(cert_der: Optional[bytes], host: str, logger) -> None:
         if host and host not in names and host not in ips:
             logger.debug(
                 f"BACnet/SC server cert SAN does not list connected host '{host}' "
-                f"(DNS={names}, IP={ips}); informational — connecting permissively."
+                f"(DNS={names}, IP={ips}); informational - connecting permissively."
             )
     except x509.ExtensionNotFound:
         logger.security_finding(

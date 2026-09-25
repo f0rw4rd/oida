@@ -410,7 +410,7 @@ class LDAPPassiveListener(PySharkListenerBase):
                 stream_id=stream_id,
             )
         elif self._is_sasl_encrypted(fields):
-            # SASL/GSSAPI-encrypted LDAP message — content is opaque but the
+            # SASL/GSSAPI-encrypted LDAP message - content is opaque but the
             # presence and framing are valuable intelligence (active Kerberos
             # bind session).  No readable protocolOp, so native=None: the
             # known-server-port tier (canonical 389/3268/636/3269 plus any user
@@ -445,7 +445,7 @@ class LDAPPassiveListener(PySharkListenerBase):
             )
         else:
             # protocolOps we don't yet model (compareRequest, abandonRequest,
-            # searchResRef, intermediateResponse, …). Don't drop silently.
+            # searchResRef, intermediateResponse, ...). Don't drop silently.
             op = next(
                 (k for k in fields if k.startswith("ldap.") and k.endswith("_element")),
                 "unknown",
@@ -456,7 +456,7 @@ class LDAPPassiveListener(PySharkListenerBase):
         """SASL/GSSAPI-wrapped LDAP message (e.g. after a successful Kerberos bind).
 
         Tshark exposes ``ldap.sasl_buffer_length`` plus
-        ``ldap.gssapi_encrypted_payload`` but no ``ldap.protocolOp`` —
+        ``ldap.gssapi_encrypted_payload`` but no ``ldap.protocolOp`` -
         the actual LDAP message is inside the encrypted blob.
         """
         return "ldap.sasl_buffer_length" in fields or "ldap.gssapi_encrypted_payload" in fields

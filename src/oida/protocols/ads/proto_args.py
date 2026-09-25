@@ -36,7 +36,7 @@ def proto_args(parser, parents):
     # Target specification (positional)
     add_target_argument(ads_parser)
 
-    # Network options — port 48898 is the ADS TCP listener.
+    # Network options - port 48898 is the ADS TCP listener.
     add_network_options(
         ads_parser,
         default_port=48898,
@@ -483,7 +483,7 @@ def proto_args(parser, parents):
 # only, mirroring the dnp3 / ethercat bugs).  Map: argparse dest -> CLI form.
 _CONFIRM_REQUIRED_FLAGS = {
     # --scan-coe was here previously but it's purely a read of the CoE
-    # object dictionary — the help text says "Scan" and the code does
+    # object dictionary - the help text says "Scan" and the code does
     # SDO uploads only. Gating it as DANGEROUS contradicted that
     # contract and broke the recon workflow.
     "write_coe": "--write-coe",

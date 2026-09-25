@@ -128,7 +128,7 @@ class TestSERCOSSvcAttribution:
     def test_svc_no_target_addr_single_slave_credited(self):
         # Regression: the SVC channel lives in the MDT (slot-addressed), so
         # target_addr is usually None here. On a single-slave bus the attribution
-        # is unambiguous and must still be recorded — crediting nobody (an earlier
+        # is unambiguous and must still be recorded - crediting nobody (an earlier
         # over-correction) silently lost all SVC read/write counts.
         from oida.pcap.sercos import SERCOSPassiveListener
 

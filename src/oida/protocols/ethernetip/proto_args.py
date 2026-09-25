@@ -1,7 +1,7 @@
 """
 Argument parser definition for EtherNet/IP protocol.
 
-Migrated to proto_args_factory in §3 sync — common groups
+Migrated to proto_args_factory in §3 sync - common groups
 (create_protocol_parser, add_target_argument, add_network_options,
 add_dangerous_options) come from the shared factory; protocol-specific
 groups (Discovery, CIP, File Operations) stay local.
@@ -27,7 +27,7 @@ def proto_args(parser, parents):
 
     add_target_argument(enip_parser)
 
-    # Network Options — port 44818 is the EtherNet/IP TCP register.
+    # Network Options - port 44818 is the EtherNet/IP TCP register.
     add_network_options(enip_parser, default_port=44818)
     # EtherNet/IP Discovery Options
     enip_group = enip_parser.add_argument_group("EtherNet/IP Discovery")

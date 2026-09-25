@@ -84,7 +84,7 @@ class ads(NetworkConnection):
                 self.results["error"] = "Connection failed"
                 return
 
-            # Skip device-info probe for EtherCAT/CoE operations — they
+            # Skip device-info probe for EtherCAT/CoE operations - they
             # open their own connections to specific slave ports.
             _ecat_op = any(
                 [
@@ -127,7 +127,7 @@ class ads(NetworkConnection):
 
         Tries ``read_device_info()`` with a short timeout.  On failure
         (EtherCAT subsystems, non-PLC endpoints) the result is left
-        empty — the probe runs lazily in ``_execute_operations`` only
+        empty - the probe runs lazily in ``_execute_operations`` only
         when no explicit operation was requested.
         """
         if not self.conn:
@@ -367,14 +367,14 @@ class ads(NetworkConnection):
         if getattr(self.args, "fuzz", None):
             self._handle_fuzz()
 
-        # --test-write (requires --confirm — writes values back to device)
+        # --test-write (requires --confirm - writes values back to device)
         if getattr(self.args, "test_write", False):
             if self.require_confirm(
                 "--test-write", detail="--test-write requires --confirm (writes to device symbols)"
             ):
                 self._test_write_access()
 
-        # --watch (blocking — runs until Ctrl+C)
+        # --watch (blocking - runs until Ctrl+C)
         if getattr(self.args, "watch", None):
             self._watch_symbol_nxc(self.args.watch)
 
@@ -426,7 +426,7 @@ class ads(NetworkConnection):
                 getattr(self.args, "watch", None),
             ]
         ):
-            # No explicit operation requested — show enriched default summary
+            # No explicit operation requested - show enriched default summary
             self._default_summary()
 
     def _default_summary(self):
@@ -434,7 +434,7 @@ class ads(NetworkConnection):
         device_info = self.results["data"].get("device_info", {})
 
         if not device_info.get("name"):
-            # read_device_info failed — run full probe to classify endpoint
+            # read_device_info failed - run full probe to classify endpoint
             pyads = _get_pyads()
             probe = _probe_netid(
                 pyads,
@@ -450,7 +450,7 @@ class ads(NetworkConnection):
                 self.logger.fail(
                     f"No response from {self.scanner.ams_netid} on port "
                     f"{self.scanner._get_ads_port()} "
-                    f"— Net ID may not exist. Try -r to discover active Net IDs."
+                    f"- Net ID may not exist. Try -r to discover active Net IDs."
                 )
                 # read_device_info failed AND the probe found nothing alive: the
                 # local AMS port opened (self.conn is truthy) but no real ADS
@@ -660,7 +660,7 @@ class ads(NetworkConnection):
                     self.logger.debug("enumerate symbols failed: %s", e)
                     value_str = f"<error: {e}>"
 
-                # AdsSymbol has no .size — derive from the ctypes plc_type
+                # AdsSymbol has no .size - derive from the ctypes plc_type
                 # (sym.size raised AttributeError and aborted enumeration).
                 size = ctypes.sizeof(sym.plc_type) if sym.plc_type else 0
                 rows.append([sym.name, str(sym.symbol_type), size, value_str])
@@ -1115,7 +1115,7 @@ class ads(NetworkConnection):
                 # Get symbol info to determine PLCTYPE
                 info = conn.get_symbol(symbol_name)
 
-                # AdsSymbol has no .size — derive the notification length from
+                # AdsSymbol has no .size - derive the notification length from
                 # the ctypes plc_type. The old info.size raised AttributeError,
                 # so the device-notification path was dead and --watch always
                 # silently fell through to polling below.
@@ -1146,7 +1146,7 @@ class ads(NetworkConnection):
                 conn.close()
 
         except AttributeError:
-            # pyads version may not support get_symbol — fall back to polling
+            # pyads version may not support get_symbol - fall back to polling
             self.logger.display("  Notification API not available, falling back to polling...")
             try:
                 conn = pyads.Connection(self.scanner.ams_netid, ads_port)
@@ -1358,7 +1358,7 @@ class ads(NetworkConnection):
                     ]
                 )
 
-            title = f"CoE Dictionary — {slave_label} (port {port})"
+            title = f"CoE Dictionary - {slave_label} (port {port})"
             export_data(
                 rows,
                 headers,
@@ -1406,7 +1406,7 @@ class ads(NetworkConnection):
 
             slave_label = self._get_slave_label(port)
 
-            self.logger.display(f"CoE Access — {slave_label} (port {port}):")
+            self.logger.display(f"CoE Access - {slave_label} (port {port}):")
             headers = ["Index", "Sub", "Name", "Size", "Value", "Access", "Category"]
             rows = []
             for obj in objects:
@@ -1450,12 +1450,12 @@ class ads(NetworkConnection):
             header = dump.get("header", {})
 
             if not words:
-                self.logger.display(f"\nEEPROM — Port {port}: no data")
+                self.logger.display(f"\nEEPROM - Port {port}: no data")
                 continue
 
             slave_label = self._get_slave_label(port)
 
-            self.logger.display(f"EEPROM — {slave_label} (port {port}):")
+            self.logger.display(f"EEPROM - {slave_label} (port {port}):")
 
             # Show parsed header
             if header:
@@ -1508,7 +1508,7 @@ class ads(NetworkConnection):
 
         for port, port_data in esc_results.items():
             if "error" in port_data:
-                self.logger.display(f"ESC Registers — Port {port}: {port_data['error']}")
+                self.logger.display(f"ESC Registers - Port {port}: {port_data['error']}")
                 continue
 
             slave_label = self._get_slave_label(port)
@@ -1516,7 +1516,7 @@ class ads(NetworkConnection):
             if not regs:
                 continue
 
-            self.logger.display(f"ESC Registers — {slave_label} (port {port}):")
+            self.logger.display(f"ESC Registers - {slave_label} (port {port}):")
 
             # Show decoded summary
             if "al_state" in port_data:
@@ -1524,7 +1524,7 @@ class ads(NetworkConnection):
                 if port_data.get("al_error_flag"):
                     state_str += " (ERROR)"
                 if "al_status_code" in port_data:
-                    state_str += f" — {port_data['al_status_code']}"
+                    state_str += f" - {port_data['al_status_code']}"
                 self.logger.display(f"  AL State: {state_str}")
 
             if "sync_managers" in port_data:
@@ -1603,7 +1603,7 @@ class ads(NetworkConnection):
         else:
             msg = f"FoE read failed: {result.get('error', 'unknown')}"
             if result.get("hint"):
-                msg += f" — {result['hint']}"
+                msg += f" - {result['hint']}"
             self.logger.fail(msg)
 
     def _scan_foe_nxc(self):
@@ -1667,7 +1667,7 @@ class ads(NetworkConnection):
                     fmt,
                     output_dir,
                     f"ads_foe_files_port{port}",
-                    f"FoE Readable Files — {slave_label} (port {port})",
+                    f"FoE Readable Files - {slave_label} (port {port})",
                     logger=self.logger,
                 )
 
@@ -1731,7 +1731,7 @@ class ads(NetworkConnection):
             fmt,
             output_dir,
             f"ads_foe_list_port{port}",
-            f"FoE Files — {slave_label} (port {port})",
+            f"FoE Files - {slave_label} (port {port})",
             logger=self.logger,
         )
 
@@ -1784,7 +1784,7 @@ class ads(NetworkConnection):
         else:
             msg = f"FoE write failed: {result.get('error', 'unknown')}"
             if result.get("hint"):
-                msg += f" — {result['hint']}"
+                msg += f" - {result['hint']}"
             self.logger.fail(msg)
 
     def _scan_soe_nxc(self):
@@ -1802,7 +1802,7 @@ class ads(NetworkConnection):
 
         for port, port_idns in soe_results.items():
             if not port_idns:
-                self.logger.display(f"\nSoE IDNs — Port {port}: no IDNs found (not a servo drive?)")
+                self.logger.display(f"\nSoE IDNs - Port {port}: no IDNs found (not a servo drive?)")
                 continue
 
             slave_label = self._get_slave_label(port)
@@ -1832,7 +1832,7 @@ class ads(NetworkConnection):
                 fmt,
                 output_dir,
                 f"ads_soe_port{port}",
-                f"SoE IDNs — {slave_label} (port {port})",
+                f"SoE IDNs - {slave_label} (port {port})",
                 logger=self.logger,
             )
 
@@ -1897,7 +1897,7 @@ class ads(NetworkConnection):
                 fmt,
                 output_dir,
                 f"ads_fsoe_port{port}",
-                f"FSoE Objects — {slave_label} (port {port})",
+                f"FSoE Objects - {slave_label} (port {port})",
                 logger=self.logger,
             )
 
@@ -1935,7 +1935,7 @@ class ads(NetworkConnection):
         std_name = SOE_STANDARD_IDNS.get(idn, "")
         self.logger.display(
             f"SoE IDN {idn} (drive {drive}) on port {port}"
-            + (f" — {std_name}" if std_name else "")
+            + (f" - {std_name}" if std_name else "")
             + ":"
         )
 
@@ -2122,7 +2122,7 @@ class ads(NetworkConnection):
                 return
 
             name = get_coe_object_name(index, sub)
-            self.logger.display(f"CoE Read — port {port}, {name}:")
+            self.logger.display(f"CoE Read - port {port}, {name}:")
             self.logger.display(f"  Index:    0x{index:04X}:{sub}")
             self.logger.display(f"  Size:     {len(data)} bytes")
             self.logger.display(f"  Hex:      {data.hex()}")

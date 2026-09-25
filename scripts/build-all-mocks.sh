@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# build-all-mocks.sh — try to `docker build` every mock/CVE Dockerfile and
+# build-all-mocks.sh - try to `docker build` every mock/CVE Dockerfile and
 # report which ones are broken.
 #
 # Mock and CVE container builds rot over time independently of our own

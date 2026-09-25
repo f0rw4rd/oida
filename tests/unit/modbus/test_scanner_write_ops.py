@@ -107,7 +107,7 @@ class TestWriteRegisterSafe:
 
     def test_holding_failed_restore_reports_not_restored(self):
         # Regression: a restore write rejected by the device (exception response)
-        # must NOT report restored=True — the live register is left modified.
+        # must NOT report restored=True - the live register is left modified.
         s = make_scanner()
         client = MagicMock()
         client.read_holding_registers.return_value = _ok_reg([777])

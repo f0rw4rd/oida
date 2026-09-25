@@ -100,7 +100,7 @@ def test_each_new_request_is_disableable(name):
 
 def test_oscore_option_renders_overreading_flag_byte():
     """Default render carries an OSCORE option (delta 9) whose flag byte 0x1f
-    (n=7, k=1, h=1) claims lengths absent from the 1-byte value — the over-read."""
+    (n=7, k=1, h=1) claims lengths absent from the 1-byte value - the over-read."""
     rendered = _render(_build(_make_config()), "CoAP_OSCORE_Option_Malformed")
     # message-id 0x0009 then option 9 (0x9_) length 1 then flag 0x1f.
     assert b"\x00\x09\x91\x1f" in rendered

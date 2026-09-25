@@ -449,7 +449,7 @@ class TestIEC104RW:
         - System commands (clock sync, test): rw='control'
         - File transfer commands: rw='file'
 
-        It must never silently fall through to a default — every control
+        It must never silently fall through to a default - every control
         type produces one of these distinct labels, never empty or None.
         """
         listener, devices, result = _run_listener_test(

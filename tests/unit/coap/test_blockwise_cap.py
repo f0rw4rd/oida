@@ -51,7 +51,7 @@ class _FakeContext:
                 async def _co():
                     outer.calls += 1
                     block_num = outer.calls - 1
-                    # Always M=1 → never terminates naturally
+                    # Always M=1 -> never terminates naturally
                     return _FakeResponse(
                         outer.block_payload, more=True, block_number=block_num, szx=5
                     )
@@ -76,7 +76,7 @@ class TestBlockwisePayloadCap(unittest.TestCase):
         # Truncated to <= cap.
         self.assertLessEqual(len(payload), 5_000)
         # Old code (no cap) would have looped until the test framework
-        # timed out — calls > a few is fine; runaway means thousands.
+        # timed out - calls > a few is fine; runaway means thousands.
         self.assertLess(ctx.calls, 100)
 
 

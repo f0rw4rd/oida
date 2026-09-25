@@ -30,7 +30,7 @@ def _parse(*extra):
 class TestADSConfirmEnforcement:
     """One test per dangerous flag, both directions."""
 
-    # Each dangerous flag's payload — argparse rejects bare flags without
+    # Each dangerous flag's payload - argparse rejects bare flags without
     # required values.  Map each to a sensible placeholder.
     _PAYLOADS = {
         "--scan-coe": None,

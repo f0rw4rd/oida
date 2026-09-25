@@ -55,7 +55,7 @@ class TestCheckProtectionLevel(unittest.TestCase):
         self.conn = Mock()
 
     def test_all_zero_protection_is_indeterminate(self):
-        """All-zero S7Protection struct is INDETERMINATE — python-snap7 returns
+        """All-zero S7Protection struct is INDETERMINATE - python-snap7 returns
         a zeroed struct on CPUs that do not expose the SZL or when the read
         silently fails. Reporting level=1 / 'No protection' would be a false
         positive on modern S7-1200/1500 firmware."""

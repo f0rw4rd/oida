@@ -77,7 +77,7 @@ class bacnet(
         self.devices = {}  # Discovered devices {device_id: device_info}
         self.objects = {}  # Enumerated objects {device_id: [objects]}
         # P1 false-positive guard: BACnet/IP is UDP, so there is no TCP
-        # "connection" to prove liveness — a bare bind/send always "succeeds".
+        # "connection" to prove liveness - a bare bind/send always "succeeds".
         # Only a real BACnet peer answers (I-Am, ReadProperty, or a
         # network-layer reply). Set True wherever such a response is parsed.
         self._bacnet_response_seen = False
@@ -368,7 +368,7 @@ class bacnet(
         retries forever on failure, so a blindly chosen ``random.randint`` port
         that is already held (TIME_WAIT from a prior scan, a docker port-map, or
         another process bound there) makes the local endpoint silently spin in
-        the retry loop — the app never sends, every ReadProperty times out, and
+        the retry loop - the app never sends, every ReadProperty times out, and
         the scan reports "Could not read device properties" (surfaced in the
         wild as OSError [Errno 98] Address already in use).
 
@@ -397,7 +397,7 @@ class bacnet(
                 continue
             finally:
                 probe.close()
-        # Every candidate contended — let the OS assign an ephemeral port.
+        # Every candidate contended - let the OS assign an ephemeral port.
         self.logger.debug(
             "BACnet: no free local UDP port in 47810-48000 range; using ephemeral port"
         )
@@ -406,9 +406,9 @@ class bacnet(
     def _build_bacpypes3_app(self, NormalApplication, device, local_ip, mask, local_port):
         """Build a bacpypes3 NormalApplication, degrading to unicast on failure.
 
-        If standing up the requested (broadcast-capable) /24 application fails —
+        If standing up the requested (broadcast-capable) /24 application fails -
         e.g. the subnet-broadcast bind raises Errno 99 on a docker-bridge / NAT
-        net — fall back to a /32 unicast-only application rather than aborting
+        net - fall back to a /32 unicast-only application rather than aborting
         the scan. The fallback loses local broadcast discovery but keeps every
         unicast ReadProperty working.
         """
@@ -476,8 +476,8 @@ class bacnet(
         # Validate the target *before* standing up any transport. A target
         # that isn't a resolvable host/IP (e.g. a junk line from a malformed
         # target file) makes bacpypes3's Address() raise a bare ValueError.
-        # Doing this check up front — rather than after the UDP endpoints
-        # are already open — avoids tearing down (app.close()) a transport
+        # Doing this check up front - rather than after the UDP endpoints
+        # are already open - avoids tearing down (app.close()) a transport
         # whose async endpoint-creation callbacks are still in flight, which
         # otherwise makes asyncio's default exception handler dump
         # "Exception in callback ... CancelledError" noise to stderr. Raise
@@ -516,7 +516,7 @@ class bacnet(
         # Local-address mask selection.
         #
         # bacpypes3's IPv4 transport stands up a *separate broadcast endpoint*
-        # whenever the local address has a real broadcast domain — it does
+        # whenever the local address has a real broadcast domain - it does
         # sock.bind(<subnet-broadcast-addr>) (e.g. x.y.z.255). On a docker
         # bridge / NAT / multi-homed net that subnet-broadcast address is not
         # locally assignable, so the bind fails with
@@ -527,9 +527,9 @@ class bacnet(
         #
         # A targeted unicast ReadProperty needs no broadcast domain, so we give
         # it a /32 host mask: bacpypes3 sees addrBroadcastTuple == addrTuple and
-        # skips the broadcast endpoint entirely (no bind(<broadcast>) → no
+        # skips the broadcast endpoint entirely (no bind(<broadcast>) -> no
         # Errno 99). Unicast app.request() to a host:port pduDestination is
-        # unaffected — only the inbound broadcast listener is suppressed.
+        # unaffected - only the inbound broadcast listener is suppressed.
         #
         # The /24 broadcast path is preserved for operations that genuinely emit
         # a GlobalBroadcast / local-broadcast (Who-Is/Who-Has discovery, BBMD/
@@ -557,7 +557,7 @@ class bacnet(
         finally:
             app.close()
 
-        # Persist discovered devices into results["data"] before export — the
+        # Persist discovered devices into results["data"] before export - the
         # scan stores them in self.devices, but without this the JSON output
         # (and results["data"]) come back empty despite a successful scan.
         self._bacnet_response_gate()
@@ -725,7 +725,7 @@ class bacnet(
             if getattr(self.args, "check_life_safety", False):
                 await self._bacpypes3_check_life_safety(app, target_addr, device_id, timeout)
 
-            # COV subscriptions — SubscribeCOV creates subscription state on
+            # COV subscriptions - SubscribeCOV creates subscription state on
             # the device (matches --call cov's RISK_WRITE gating below).
             if getattr(self.args, "cov", False):
                 if self.require_confirm("--cov", detail="--cov requires --confirm flag"):
@@ -768,7 +768,7 @@ class bacnet(
             # The device may exist but reject/abort application-layer
             # ReadProperty (common for pure BBMDs/routers). Don't let that
             # silently swallow the BVLL / network-layer recon below, which
-            # does not depend on these properties — just warn and continue.
+            # does not depend on these properties - just warn and continue.
             # (When device_id is None we already warned about discovery.)
             self.logger.warning(
                 f"Could not read device {device_id} properties; "

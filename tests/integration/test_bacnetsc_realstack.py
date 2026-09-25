@@ -3,7 +3,7 @@ Integration tests wiring OIDA's bacnetsc scanner to the REAL bacnet-stack BSC
 (Secure Connect) mock stacks over WSS/TLS.
 
 Two postures (built from the same source, differing only in a compile-time
-patch — see docker/mocks/services/bacnetsc/mock/realstack/Dockerfile):
+patch - see docker/mocks/services/bacnetsc/mock/realstack/Dockerfile):
 
   bacnetsc-realstack-secure  TCP 47830  STRICT: mutual-auth required + TLS 1.3
   bacnetsc-realstack-weak    TCP 47831  stock: accepts anon/rogue + TLS 1.2
@@ -115,7 +115,7 @@ def test_secure_device_discovery_without_device_id(tmp_path):
     Regression guard for H2: the inherited discovery path issues a directed
     Who-Is, and SCLinkLayer routes that outbound NPDU to the negotiated peer
     VMAC over the SC tunnel. The mock answers with an I-Am, so the device is
-    discovered and its object-name read — proving --device-id is NOT required
+    discovered and its object-name read - proving --device-id is NOT required
     over SC (verified against bacnet-stack 1.4.4's BSC server).
     """
     _require(SECURE_PORT, SECURE_CONTAINER)

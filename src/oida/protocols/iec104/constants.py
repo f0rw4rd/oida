@@ -51,7 +51,7 @@ ASDU_IOA_OFFSET = 12
 ASDU_DATA_OFFSET = 15
 ASDU_HEADER_SIZE = 12  # APCI(6) + TI(1) + VSQ(1) + COT(2) + CA(2)
 IOA_SIZE = 3
-IFRAME_MASK = 0x01  # (data[2] & IFRAME_MASK) == 0 → I-frame
+IFRAME_MASK = 0x01  # (data[2] & IFRAME_MASK) == 0 -> I-frame
 
 # IEC 60870-5-101 (serial) Common Address / IOA octet widths.
 # NOTE: these widths are configurable per IEC 60870-5-101 (CA may be 1 or 2

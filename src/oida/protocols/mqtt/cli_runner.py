@@ -100,7 +100,7 @@ class mqtt(NetworkConnection):
             # If only doing version enum, we're done
             if not self._should_continue_after_version_enum():
                 # P1 false-positive guard: no version returned a CONNACK means
-                # nothing on the port speaks MQTT — do not report success.
+                # nothing on the port speaks MQTT - do not report success.
                 if not version_results.get("versions_supported"):
                     self.results["success"] = False
                     self.results.setdefault(
@@ -168,7 +168,7 @@ class mqtt(NetworkConnection):
                 self.logger.fail(f"Connection failed: {error_msg}")
                 self._connection_error = True
             else:
-                # Server responded but rejected auth — surface as info so the
+                # Server responded but rejected auth - surface as info so the
                 # auth result still shows, but don't emit a green success
                 # banner for a session we never actually opened.
                 self.logger.info(f"MQTT broker responded at {self.ip}:{self.args.port}")

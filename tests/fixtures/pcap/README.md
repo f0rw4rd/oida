@@ -218,7 +218,7 @@ or, for non-native protocols, kept as a raw fixture for a future parser.
 | `ieee1722/` | `oida_` generated (AVTP subtypes) | `ieee1722` (native, ethertype 0x22F0) | aaf/crf/cvf/iec61883 subtypes decode |
 | `modbus/oida_*` | `oida_` generated (UDP + RTU-over-TCP) | `mbudp` / `mbrtu` (native) | FC1/3/6/16 + exception; RTU unit-ids |
 
-**Not tshark-native (raw fixtures only — no pyshark drop-in until a raw parser
+**Not tshark-native (raw fixtures only - no pyshark drop-in until a raw parser
 or Wireshark plugin is added):**
 
 | Dir | Source | Why |

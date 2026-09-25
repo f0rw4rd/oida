@@ -46,7 +46,7 @@ class TestBacnetHostClassification(unittest.TestCase):
         self.assertTrue(_is_local("localhost"))
 
     def test_public_v4_routes_remote(self):
-        # Avoid 203.0.113.0/24 — TEST-NET-3 is marked private by ipaddress.
+        # Avoid 203.0.113.0/24 - TEST-NET-3 is marked private by ipaddress.
         for ip in ("8.8.8.8", "1.1.1.1", "9.9.9.9"):
             self.assertFalse(_is_local(ip), f"{ip} must be remote")
 

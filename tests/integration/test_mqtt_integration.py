@@ -275,7 +275,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
         assert result.returncode in [0, 1]
         text = _combined_text(result, result.scan_log)
         # The brute-force loop logs "Brute-force: testing N credentials" and
-        # "Brute-force complete: ..." — assert it actually ran, not just gated.
+        # "Brute-force complete: ..." - assert it actually ran, not just gated.
         assert "brute-force" in text and "complete" in text, (
             f"Expected brute-force to run to completion, got: {text[:500]}"
         )

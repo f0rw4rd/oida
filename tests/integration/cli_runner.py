@@ -212,7 +212,7 @@ class CLIRunner:
             )
 
         except subprocess.TimeoutExpired:
-            # Fallback — should not reach here with Popen-based flow above
+            # Fallback - should not reach here with Popen-based flow above
             if json_log_path and os.path.exists(json_log_path):
                 try:
                     from tests.integration.json_log_reader import ScanLog

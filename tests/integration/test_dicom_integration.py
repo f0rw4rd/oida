@@ -2136,7 +2136,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             assert "timestamp" in finding, f"Security finding {i} missing timestamp"
             assert "module" in finding, f"Security finding {i} missing module"
 
-    # NOTE: --fuzz-pdu / --fuzz-dimse tests were removed — those flags no longer
+    # NOTE: --fuzz-pdu / --fuzz-dimse tests were removed - those flags no longer
     # exist on the DICOM CLI (fuzzing is driven by --fuzz, see test_fuzz_*
     # C-FIND coverage above). They were never implemented as PDU/DIMSE modes.
 
@@ -2147,7 +2147,7 @@ def _dummy_tcp_server():
 
     Safety: binds only to 127.0.0.1 on an ephemeral port. It provides a
     "TCP connects but is not a DICOM SCP" target for the connection-1
-    false-positive regression below — it never touches a real device or external
+    false-positive regression below - it never touches a real device or external
     network. Accepted sockets are held open and silent so the A-ASSOCIATE never
     receives an A-ASSOCIATE-AC.
     """
@@ -2256,7 +2256,7 @@ class TestDICOMP1FalsePositiveRegression:
     association was not established.
 
     Safety: targets only a local in-process dummy TCP server bound to 127.0.0.1
-    and a closed local port — never a real device or external network.
+    and a closed local port - never a real device or external network.
     """
 
     def _read_result_payload(self, out_dir, result):

@@ -1092,7 +1092,7 @@ class TestDICOMCStoreHandler(unittest.TestCase):
         scanner = _make_dicom_instance(self.mock_args)
         scanner.logger = Mock()
 
-        # All three traversal-attempt UID combos in one sweep — sub-dirs path
+        # All three traversal-attempt UID combos in one sweep - sub-dirs path
         # walks both PatientID and StudyInstanceUID before filename, so each
         # is a separate attack surface.
         for patient, study, sop in [

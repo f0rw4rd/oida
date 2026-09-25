@@ -284,7 +284,7 @@ class DiscoveryMixin:
         use_nat = not self.args.get("no-nat", False)
         self.logger.debug(f"NAT mode: {use_nat}")
 
-        # TODO: Raw UDP KNXnet/IP tunnelling — xknx handles connection
+        # TODO: Raw UDP KNXnet/IP tunnelling - xknx handles connection
         # management natively. Replace manual socket + packet construction
         # with xknx.io.KNXIPInterface for tunnelling connections.
         sock = None
@@ -505,8 +505,8 @@ class DiscoveryMixin:
         Sends a broadcast ``A_DomainAddress_SerialNumber_Read`` (xknx
         ``DomainAddressSerialNumberRead``, available since xknx 3.17); the device
         with the matching 6-byte serial replies with its domain address. This is
-        how PL110 / RF devices are addressed — the domain address is their
-        medium-level network id — so it reaches the bus *behind* a KNX IP
+        how PL110 / RF devices are addressed - the domain address is their
+        medium-level network id - so it reaches the bus *behind* a KNX IP
         interface that our individual-address probes cannot.
         """
         self.logger.debug(f"Domain-address serial read: serial={serial_hex}")

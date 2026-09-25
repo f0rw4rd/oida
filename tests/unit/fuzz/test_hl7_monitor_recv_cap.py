@@ -14,7 +14,7 @@ from unittest.mock import MagicMock
 class _FakeFloodingSocket:
     """Mocks a socket that streams forever without sending MLLP_END.
 
-    Returns 64 KiB regardless of the recv(n) request — keeps the test
+    Returns 64 KiB regardless of the recv(n) request - keeps the test
     under 1s by reaching the 16 MiB cap in ~256 iterations instead
     of 16k, while still exercising the bound.
     """
@@ -37,7 +37,7 @@ class _FakeFloodingSocket:
     def recv(self, _n):
         self._bytes_sent += len(self._CHUNK)
         if self._bytes_sent > 50 * 1024 * 1024:
-            # If we ever stream 50 MiB, the cap is broken — give up
+            # If we ever stream 50 MiB, the cap is broken - give up
             # so the test fails cleanly instead of OOMing the runner.
             return b""
         return self._CHUNK
@@ -68,7 +68,7 @@ class TestHL7MonitorRecvCap(unittest.TestCase):
         self.assertLessEqual(
             len(response),
             16 * 1024 * 1024 + 128 * 1024,  # 16 MiB + room for two chunks
-            "Recv loop did not honor 16 MiB cap — OOM risk",
+            "Recv loop did not honor 16 MiB cap - OOM risk",
         )
         # Must not have streamed close to the 50 MiB safety belt either.
         self.assertLess(flood._bytes_sent, 30 * 1024 * 1024)

@@ -3,11 +3,11 @@
 OIDA's passive PCAP listeners (``src/oida/pcap/*.py``) read dissector fields via
 ``self.get_field(layer, "name")`` / ``get_field_any(layer, ...)``. ``get_field``
 swallows a miss and returns the default, so a *wrong* field name (one that no
-tshark dissector emits) silently extracts nothing — with no error, no log, and
+tshark dissector emits) silently extracts nothing - with no error, no log, and
 (for most listeners) no test that would notice. A real audit found ~24 listeners
 reading tokens that resolve to no field at all (cotp ``tsap_calling`` vs the real
 ``src-tsap``; tls ``handshake_ja3_hash`` vs ``tls.handshake.ja3``; glbp
-``hello_hellotime`` vs ``glbp.hello.helloint`` …).
+``hello_hellotime`` vs ``glbp.hello.helloint`` ...).
 
 This guard parses every listener statically, extracts the ``get_field`` /
 ``get_field_any`` tokens it reads, and validates them against the *installed*
@@ -15,21 +15,21 @@ This guard parses every listener statically, extracts the ``get_field`` /
 against OIDA's real ``get_field``):
 
     a dissector field ``proto.a.b-c`` is reachable at runtime as the token
-    ``a_b-c`` — proto prefix stripped, dots -> underscores, **hyphens preserved**.
+    ``a_b-c`` - proto prefix stripped, dots -> underscores, **hyphens preserved**.
 
 A token is accepted if it matches a reachable form of *any* dissector field
 (global union). This deliberately errs toward false-negatives over
 false-positives: a name that exists for some other protocol passes, but a name
 that exists nowhere (the proven silent-failure mode) is caught. Only the safe
-``get_field`` / ``get_field_any`` API is scanned — bare ``getattr`` reads are
+``get_field`` / ``get_field_any`` API is scanned - bare ``getattr`` reads are
 skipped, since they also fetch pyshark internals and listener-synthesized keys.
 
 A committed baseline (``listener_field_tokens_baseline.json``) records the tokens
 known-bad today so this lands green and only ratchets down: the test fails if a
 *new* unreachable token appears, or if a baselined token has since become valid
 (forcing its removal when a listener is fixed). Reasons:
-  - ``broken``    — wrong name; fix the listener, then drop the baseline entry.
-  - ``synthetic`` — a value the listener constructs, not a tshark field
+  - ``broken``    - wrong name; fix the listener, then drop the baseline entry.
+  - ``synthetic`` - a value the listener constructs, not a tshark field
                     (e.g. modbus ``regval16`` fallback). Permanent.
 
 Local-only: shelling out to ``tshark`` is slow and version-bound, so this skips
@@ -126,7 +126,7 @@ def _extract(path: Path) -> list[list[str]]:
 
     Each lookup is a list of candidate tokens; it is valid when ANY candidate
     resolves (get_field_any semantics; get_field has a single candidate). Bare
-    ``getattr`` reads are intentionally NOT scanned — they also fetch pyshark
+    ``getattr`` reads are intentionally NOT scanned - they also fetch pyshark
     internals (``_all_fields``) and listener-synthesized keys (``*_passive_data``).
     """
     tree = safe_parse(path.read_text())
@@ -177,7 +177,7 @@ def _nearest(token: str, reachable: set[str]) -> str:
 @pytest.fixture(scope="module")
 def _tshark():
     if not shutil.which("tshark"):
-        pytest.skip("tshark not installed — field-token guard is local-only")
+        pytest.skip("tshark not installed - field-token guard is local-only")
 
 
 @pytest.fixture(scope="module")
@@ -215,13 +215,13 @@ class TestListenerFieldTokens:
         msgs = []
         if new_bad:
             msgs.append(
-                "New unreachable field token(s) — the listener reads a field name "
+                "New unreachable field token(s) - the listener reads a field name "
                 "that no installed tshark dissector emits, so extraction is silently "
                 "empty. Use the correct EK token (dots->_, hyphens kept):\n" + "\n".join(new_bad)
             )
         if stale:
             msgs.append(
-                "Baselined token(s) now resolve — a listener was fixed. Remove these "
+                "Baselined token(s) now resolve - a listener was fixed. Remove these "
                 "from listener_field_tokens_baseline.json so the guard stays tight:\n"
                 + "\n".join(stale)
             )

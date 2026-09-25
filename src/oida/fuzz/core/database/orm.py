@@ -189,7 +189,7 @@ class SQLAlchemyDatabase(DatabaseInterface):
             base_stmt = sqlite_insert(TestCase)
             excluded = base_stmt.excluded
             # True when the incoming row would downgrade an already-recorded
-            # crash/fail/error to 'pass' — in that case keep the stored value.
+            # crash/fail/error to 'pass' - in that case keep the stored value.
             downgrade = and_(excluded.result == "pass", TestCase.result != "pass")
             stmt = base_stmt.on_conflict_do_update(
                 index_elements=["id"],

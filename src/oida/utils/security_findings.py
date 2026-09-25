@@ -465,7 +465,7 @@ def _extract_extensions(x509_cert) -> Dict[str, Any]:
                 result["ocsp_no_check"] = {"critical": critical, "value": True}
 
             else:
-                # Unknown / uncommon extension — store OID and raw type
+                # Unknown / uncommon extension - store OID and raw type
                 ext_name = oid._name if hasattr(oid, "_name") else oid.dotted_string
                 result[ext_name] = {
                     "critical": critical,

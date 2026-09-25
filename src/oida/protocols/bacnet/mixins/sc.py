@@ -3,7 +3,7 @@ BACnet/SC (Secure Connect) transport mixin.
 
 BACnet/SC is the modern secure datalink (TLS 1.3 + X.509 over WebSocket,
 ANSI/ASHRAE 135 Annex AB). It is NOT a separate protocol: the entire BACnet
-application layer (objects/properties/call/state/...) is reused unchanged — only
+application layer (objects/properties/call/state/...) is reused unchanged - only
 the transport, the target format (``wss://host:port``), and a handful of TLS/PKI
 CLI options differ.
 
@@ -12,7 +12,7 @@ engaged by ``--sc`` (see ``bacnet.__init__`` / ``bacnet.proto_flow``); without
 that flag none of these methods run and the classic BACnet/IP UDP path is used.
 
 Automatic TLS posture checks run on every SC connection (no flag): TLS version,
-cipher strength, server-certificate hygiene, and — most importantly —
+cipher strength, server-certificate hygiene, and - most importantly -
 MUTUAL-AUTH ENFORCEMENT (a device/hub that accepts a missing or rogue client
 certificate is critically misconfigured, since mutual X.509 auth is the whole
 point of BACnet/SC).
@@ -168,7 +168,7 @@ class SCMixin:
         # The mutual-auth / downgrade probes each open their OWN fresh SC
         # connection. They run BEFORE the persistent scan connection because
         # some SC servers (e.g. bacnet-stack's single-threaded libwebsockets
-        # backend) serve one connection at a time — a probe opened while the
+        # backend) serve one connection at a time - a probe opened while the
         # scan link is held would be reset, producing a false negative.
         if not getattr(self.args, "sc_no_tls_checks", False):
             try:
@@ -249,7 +249,7 @@ class SCMixin:
 
         Exception classification matters here: ``ssl.SSLError`` is a SUBCLASS of
         ``OSError``, so a TLS-layer rejection (the server sending a fatal alert
-        because we presented no/invalid client cert — exactly the secure-device
+        because we presented no/invalid client cert - exactly the secure-device
         case) must be caught BEFORE the OSError retry arm, otherwise an enforced
         control would burn 3×1s retries before (correctly, but slowly and with a
         misleading "inconclusive" log) concluding not-accepted. Only genuine
@@ -269,7 +269,7 @@ class SCMixin:
                 return True
             except (_ssl.SSLError, InvalidHandshake) as e:
                 # TLS alert / rejected WebSocket upgrade: the server REFUSED this
-                # credential/version. Definite rejection — not accepted, no retry.
+                # credential/version. Definite rejection - not accepted, no retry.
                 self.logger.debug(f"SC probe TLS-rejected: {type(e).__name__}: {e}")
                 return False
             except (ConnectionResetError, ConnectionAbortedError) as e:

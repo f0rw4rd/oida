@@ -34,7 +34,7 @@ class TestMMSProtoArgs:
         assert _parse("--port", "10102").port == 10102
 
     def test_default_timeout(self):
-        # add_network_options() default — verify there IS a timeout attr.
+        # add_network_options() default - verify there IS a timeout attr.
         assert hasattr(_parse(), "timeout")
 
     def test_read_values_flag(self):

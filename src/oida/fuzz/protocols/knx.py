@@ -61,7 +61,7 @@ class KNXFuzzer(BaseFuzzer):
 
     Exercises the KNXnet/IP header (length/version/service-type consistency),
     HPAI structure-length handling, CONNECT_REQUEST CRI parsing, and cEMI frame
-    truncation — the code paths behind CVE-2021-37740 and CVE-2019-6840.
+    truncation - the code paths behind CVE-2021-37740 and CVE-2019-6840.
     """
 
     # Liveness via ICMP echo: a length-lie DoS wedges the router, ping detects it.
@@ -134,7 +134,7 @@ class KNXFuzzer(BaseFuzzer):
         """Define KNXnet/IP request structures (strict 1:1 gating)."""
 
         # ================================================================
-        # 1. KNX_Baseline — valid SEARCH_REQUEST + well-formed HPAI
+        # 1. KNX_Baseline - valid SEARCH_REQUEST + well-formed HPAI
         # header(6) + HPAI(8) = 14 = 0x000E
         # ================================================================
         baseline = Request(
@@ -154,7 +154,7 @@ class KNXFuzzer(BaseFuzzer):
         )
 
         # ================================================================
-        # 2. KNX_TotalLength_Lie — SESSION_REQUEST (KNXnet/IP Secure) whose
+        # 2. KNX_TotalLength_Lie - SESSION_REQUEST (KNXnet/IP Secure) whose
         # header TotalLength disagrees with the real datagram length.
         # CVE-2021-37740 length-inconsistency DoS class.
         # Body: control-endpoint HPAI(8) + 32-byte DH client public value.
@@ -186,7 +186,7 @@ class KNXFuzzer(BaseFuzzer):
         )
 
         # ================================================================
-        # 3. KNX_HPAI_StructLen_Overflow — HPAI structure-length byte lies
+        # 3. KNX_HPAI_StructLen_Overflow - HPAI structure-length byte lies
         # about the 8-byte HPAI that follows.
         # ================================================================
         hpai_structlen = Request(
@@ -216,7 +216,7 @@ class KNXFuzzer(BaseFuzzer):
         )
 
         # ================================================================
-        # 4. KNX_ServiceType_Boundary — ServiceType word over valid +
+        # 4. KNX_ServiceType_Boundary - ServiceType word over valid +
         # reserved/invalid identifiers.
         # ================================================================
         servicetype_boundary = Request(
@@ -250,7 +250,7 @@ class KNXFuzzer(BaseFuzzer):
         )
 
         # ================================================================
-        # 5. KNX_Connect_CRI_Malformed — CONNECT_REQUEST with a malformed CRI.
+        # 5. KNX_Connect_CRI_Malformed - CONNECT_REQUEST with a malformed CRI.
         # Body: control HPAI(8) + data HPAI(8) + CRI.
         # CRI (tunnelling) = struct_len(0x04) + conn_type(0x04) +
         #                    KNX layer(0x02 LinkLayer) + reserved(0x00).
@@ -276,7 +276,7 @@ class KNXFuzzer(BaseFuzzer):
                         Byte("data_hpai_proto", 0x01),
                         Static("data_hpai_ip", b"\xc0\xa8\x00\x0a"),
                         Static("data_hpai_port", b"\x0e\x57"),
-                        # CRI — malformed structure length
+                        # CRI - malformed structure length
                         Group(
                             "cri_struct_len",
                             values=[
@@ -286,7 +286,7 @@ class KNXFuzzer(BaseFuzzer):
                             ],
                         ),
                         Byte("cri_conn_type", 0x04),  # TUNNEL_CONNECTION
-                        # KNX tunnel layer — invalid layer selectors
+                        # KNX tunnel layer - invalid layer selectors
                         Group(
                             "cri_tunnel_layer",
                             values=[
@@ -309,7 +309,7 @@ class KNXFuzzer(BaseFuzzer):
         )
 
         # ================================================================
-        # 6. KNX_cEMI_Truncated — TUNNELING_REQUEST carrying a cEMI frame that
+        # 6. KNX_cEMI_Truncated - TUNNELING_REQUEST carrying a cEMI frame that
         # ends right after the message-code byte (no additional-info /
         # control fields), so a naive cEMI parser reads past the datagram.
         # Connection header: struct_len(0x04) + channel + seq + reserved.
@@ -347,7 +347,7 @@ class KNXFuzzer(BaseFuzzer):
         )
 
         # ================================================================
-        # 7. KNX_HeaderLength_Boundary — HeaderLength byte must be 0x06;
+        # 7. KNX_HeaderLength_Boundary - HeaderLength byte must be 0x06;
         # sweep boundary values plus ProtocolVersion variations.
         # ================================================================
         headerlen_boundary = Request(

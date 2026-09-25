@@ -155,7 +155,7 @@ class ScapyRawConnection:
 
         The fuzzer's default TCP header carries chksum=0. Dissecting raw bytes
         with self.TCP(...) sets chksum to the literal 0 as an *explicit* field
-        value, and Scapy only recomputes checksum fields left as None — so a
+        value, and Scapy only recomputes checksum fields left as None - so a
         dissected 0 ships as 0x0000 on the wire. A zero TCP checksum is INVALID
         for IPv4/IPv6 TCP (unlike UDP-over-IPv4, where 0 legally means "no
         checksum"), so mainstream stacks silently drop the segment at TCP input
@@ -166,7 +166,7 @@ class ScapyRawConnection:
         NON-zero bogus checksum is a legitimate fuzz case and must ship as-is;
         setting it to None would let Scapy "correct" it and destroy the test.
         Treat chksum == 0 as "unfuzzed default, recompute"; preserve everything
-        else. UDP-over-IPv4's legal zero checksum is intentionally left alone —
+        else. UDP-over-IPv4's legal zero checksum is intentionally left alone -
         this path only handles TCP.
         """
         chksum = getattr(transport, "chksum", None)

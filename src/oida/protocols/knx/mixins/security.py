@@ -157,7 +157,7 @@ class SecurityMixin:
         Sends xknx's ``KeyWrite`` APCI (available since xknx 3.17) over a
         management connection and reads back the ``A_Key_Response``. The response
         carries the access level the key was set for, or ``0xFF`` (255) when the
-        device rejects the write — typically because the connection is not first
+        device rejects the write - typically because the connection is not first
         authorized at level 0 (``A_Authorize_Request``).
 
         ``key_arg`` is ``NEWKEY:LEVEL`` (hex key, decimal level); e.g.

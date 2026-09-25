@@ -348,7 +348,7 @@ class SERCOSPassiveListener(PySharkListenerBase):
         # Attribute SVC stats to the addressed slave, not an arbitrary one.
         # The SVC channel lives in the MDT, which is slot-addressed and usually
         # does not carry the AT sercosaddress, so target_addr is often None here.
-        # When it is unknown, fall back to the single known slave (unambiguous —
+        # When it is unknown, fall back to the single known slave (unambiguous -
         # the common single-slave bus, which the old first-slave code got right);
         # only skip attribution when multiple slaves make it genuinely ambiguous.
         target_slave: SERCOSSlave | None = None

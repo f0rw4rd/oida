@@ -3,7 +3,7 @@
 """
 CANopen-over-EtherCAT (CoE) Shared Data & Helpers
 
-Pure data module — no transport dependencies (no pysoem, no pyads).
+Pure data module - no transport dependencies (no pysoem, no pyads).
 Used by both the EtherCAT (pysoem) and ADS (pyads) scanners.
 
 License: AGPL-3.0-or-later
@@ -14,7 +14,7 @@ from typing import Dict, List, Tuple
 from oida.protocols.can.constants import CANOPEN_PDO_ENTRIES
 
 # ---------------------------------------------------------------------------
-# AL (Application Layer) States  — ETG.1000
+# AL (Application Layer) States  - ETG.1000
 # ---------------------------------------------------------------------------
 
 AL_STATES: Dict[int, str] = {
@@ -45,11 +45,11 @@ def get_al_state_name(state_code: int) -> str:
 
 
 # ---------------------------------------------------------------------------
-# CoE Object Dictionary Names  — CiA DS-301 / ETG.1000
+# CoE Object Dictionary Names  - CiA DS-301 / ETG.1000
 # ---------------------------------------------------------------------------
 
 COE_OBJECT_NAMES: Dict[int, str] = {
-    # ---- Communication Profile Area (0x1000-0x1FFF) — CiA DS-301 ----
+    # ---- Communication Profile Area (0x1000-0x1FFF) - CiA DS-301 ----
     0x1000: "Device Type",
     0x1001: "Error Register",
     0x1002: "Manufacturer Status Register",
@@ -86,9 +86,9 @@ COE_OBJECT_NAMES: Dict[int, str] = {
     0x1201: "SDO Server Parameter 2",
     0x1280: "SDO Client Parameter",
     0x1281: "SDO Client Parameter 2",
-    # RPDO/TPDO (shared with CAN — CiA DS-301)
+    # RPDO/TPDO (shared with CAN - CiA DS-301)
     **CANOPEN_PDO_ENTRIES,
-    # Sync Manager (0x1C00-0x1C3F) — ETG.1000
+    # Sync Manager (0x1C00-0x1C3F) - ETG.1000
     0x1C00: "SM Communication Type",
     0x1C10: "SM0 PDO Assignment",
     0x1C11: "SM1 PDO Assignment",
@@ -96,7 +96,7 @@ COE_OBJECT_NAMES: Dict[int, str] = {
     0x1C13: "SM3 PDO Assignment (TxPDO)",
     0x1C32: "SM2 Synchronization",
     0x1C33: "SM3 Synchronization",
-    # ---- Standardized Device Profile (0x6000-0x9FFF) — CiA 4xx ----
+    # ---- Standardized Device Profile (0x6000-0x9FFF) - CiA 4xx ----
     0x6000: "Digital Inputs",
     0x6010: "Analog Inputs",
     0x6020: "Analog Input Status",
@@ -105,7 +105,7 @@ COE_OBJECT_NAMES: Dict[int, str] = {
     0x7010: "Analog Outputs",
     0x7020: "Analog Output Status",
     0x8000: "Configuration",
-    # ---- System / Diagnosis (0xF000-0xFFFF) — ETG.1000 / ETG.5000 ----
+    # ---- System / Diagnosis (0xF000-0xFFFF) - ETG.1000 / ETG.5000 ----
     0xF000: "Modular Device Profile",
     0xF010: "Module Profile List",
     0xF020: "Detected Module List",
@@ -170,7 +170,7 @@ def get_coe_object_name(index: int, subindex: int = 0) -> str:
     if 0x1C00 <= index <= 0x1C3F:
         return f"SM 0x{index:04X}:{subindex}"
 
-    # FSoE parameter set mapping (0x1E00-0x1EFF) — ETG.5100
+    # FSoE parameter set mapping (0x1E00-0x1EFF) - ETG.5100
     if 0x1E00 <= index <= 0x1EFF:
         return f"FSoE Param Set {index - 0x1E00}"
 
@@ -178,7 +178,7 @@ def get_coe_object_name(index: int, subindex: int = 0) -> str:
     if 0x2000 <= index <= 0x5FFF:
         return f"Vendor 0x{index:04X}:{subindex}"
 
-    # --- Standardized Device Profile (0x6000-0x9FFF) — CiA 4xx ---
+    # --- Standardized Device Profile (0x6000-0x9FFF) - CiA 4xx ---
     if 0x6000 <= index <= 0x6FFF:
         return f"Input 0x{index:04X}:{subindex}"
     if 0x7000 <= index <= 0x7FFF:
@@ -200,7 +200,7 @@ def get_coe_object_name(index: int, subindex: int = 0) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Common SDO Objects — standard slave identification reads
+# Common SDO Objects - standard slave identification reads
 # ---------------------------------------------------------------------------
 
 COMMON_SDO_OBJECTS: List[Tuple[int, int, str]] = [
@@ -217,7 +217,7 @@ COMMON_SDO_OBJECTS: List[Tuple[int, int, str]] = [
 
 
 # ---------------------------------------------------------------------------
-# ADS transport helpers — SDO offset encoding
+# ADS transport helpers - SDO offset encoding
 # ---------------------------------------------------------------------------
 
 
@@ -296,7 +296,7 @@ def parse_coe_ranges(spec: str) -> List[Tuple[int, int, str, "list | None"]]:
             label = coe_category_for(start)
             ranges.append((start, end, label, None))
         elif ":" in part:
-            # Index:subindex — e.g. 0xFB00:1
+            # Index:subindex - e.g. 0xFB00:1
             idx_str, sub_str = part.split(":", 1)
             idx = int(idx_str, 0)
             sub = int(sub_str, 0)
@@ -330,7 +330,7 @@ COE_SCAN_RANGES: List[Tuple[int, int, str]] = [
     (0x1A00, 0x1C00, "TxPDO Mapping"),
     (0x1C00, 0x1C40, "Sync Manager"),
     (0x1E00, 0x1F00, "FSoE Parameters"),
-    # Manufacturer Specific — sample first 0x80 of each 0x1000 block
+    # Manufacturer Specific - sample first 0x80 of each 0x1000 block
     (0x2000, 0x2080, "Vendor Specific"),
     (0x3000, 0x3080, "Vendor Specific"),
     (0x4000, 0x4080, "Vendor Specific"),

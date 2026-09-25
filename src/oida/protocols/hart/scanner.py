@@ -341,7 +341,7 @@ class HARTScanner(DeviceInfoMixin, SecurityMixin, EnumerationMixin, FuzzMixin, N
 
             if device_info:
                 # read_device_info() never populates lock_state, so read it
-                # explicitly (Command 76) before the security analysis — otherwise
+                # explicitly (Command 76) before the security analysis - otherwise
                 # it stays at the LockState.UNKNOWN default and HART-SEC-003 is
                 # silently suppressed on every HART 6+ device.
                 device_info.lock_state = self.read_lock_state()

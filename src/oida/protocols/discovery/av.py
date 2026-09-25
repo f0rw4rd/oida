@@ -161,7 +161,7 @@ class ArtNetScanner:
         IPAddress@10 (4), Port@14 (0x1936), ShortName@26 (18, ASCIIZ),
         LongName@44 (64, ASCIIZ), Oem@20 (2), ESTAman@24 (2), MAC@201 (6).
 
-    OT-safety: safe — single read-only broadcast.
+    OT-safety: safe - single read-only broadcast.
     """
 
     PORT = 6454

@@ -4,12 +4,12 @@ host-resolution hardening.
 Regression guards for:
 
 * ``gen_cli_args()`` inspecting ``sys.argv`` instead of the ``argv`` actually
-  being parsed — protocol aliases (``s7``) and per-protocol flags were only
+  being parsed - protocol aliases (``s7``) and per-protocol flags were only
   registered on the FULL subparser, so a programmatic ``main(argv=[...])``
   call from a process whose own ``sys.argv`` names a different protocol (or
   no protocol at all) produced a stub-only parser and hard-failed on
   ``invalid choice`` / ``unrecognized arguments``.
-* ``connection._resolve_host()`` only catching ``socket.gaierror`` — a
+* ``connection._resolve_host()`` only catching ``socket.gaierror`` - a
   hostname rejected by IDNA encoding raises ``UnicodeEncodeError`` from
   ``getaddrinfo`` BEFORE the centralized ``proto_flow`` try/except, crashing
   the connection constructor instead of degrading to a logged failure.
@@ -57,7 +57,7 @@ class TestGenCliArgsUsesProvidedArgv:
 
     def test_main_with_explicit_argv_ignores_process_sys_argv(self, monkeypatch):
         """The originally reported repro: a wrapper process whose sys.argv
-        names 'modbus' calls main(['s7', ...]) — the s7 alias must resolve.
+        names 'modbus' calls main(['s7', ...]) - the s7 alias must resolve.
 
         The protocol's dispatch() is stubbed out so the test asserts PARSING
         only (pre-fix: SystemExit 2 / 'invalid choice'); no network is touched

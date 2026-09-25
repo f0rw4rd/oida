@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 # try/except.
 try:
     from hl7apy.core import Segment
-except ImportError as _hl7_err:  # pragma: no cover — release-checked dep
+except ImportError as _hl7_err:  # pragma: no cover - release-checked dep
     Segment = None  # type: ignore[assignment]
     logger.debug("hl7apy not installed; HL7 segment building disabled: %s", _hl7_err)
 
@@ -708,7 +708,7 @@ class HL7SegmentBuilder:
         dispensing_provider: str = "",
         lot_number: str = "",
         expiration_date: str = "",
-        # Caller-name aliases used by mixins/pharmacy.py — keep these
+        # Caller-name aliases used by mixins/pharmacy.py - keep these
         # accepting both spellings so the mixin's dispense_code= /
         # actual_amount= / actual_units= / refills_remaining= /
         # datetime_dispensed= calls don't TypeError into silent fallback.
@@ -855,7 +855,7 @@ class HL7SegmentBuilder:
             # RXG-2: Dispense Sub-ID Counter
             rxg.rxg_2 = dispense_sub_id
 
-            # RXG-3: Quantity/Timing (deprecated, often empty — but
+            # RXG-3: Quantity/Timing (deprecated, often empty - but
             # callers can override).
             rxg.rxg_3 = quantity_timing or ""
 
@@ -891,14 +891,14 @@ class HL7SegmentBuilder:
                 # RXG-18: Give Strength Units (CE type)
                 rxg.rxg_18 = give_strength_units
 
-            # RXG-10: Administration Notes (TX type — caller alias)
+            # RXG-10: Administration Notes (TX type - caller alias)
             if admin_notes:
                 try:
                     rxg.rxg_10 = admin_notes
                 except Exception as e:
                     logger.debug(f"HL7: RXG-10 not in schema, skipping notes: {e}")
 
-            # RXG-11: Substitution Status (ID type — N=No, G=Generic, T=Therapeutic)
+            # RXG-11: Substitution Status (ID type - N=No, G=Generic, T=Therapeutic)
             if substitution_status:
                 try:
                     rxg.rxg_11 = substitution_status
@@ -1093,7 +1093,7 @@ class HL7SegmentBuilder:
 
     # ------------------------------------------------------------------
     # Master File segments (MFI, MFE, STF, PRA, PRC)
-    # Called by mixins/master_file.py — without these, MFN^M01/M02/M04
+    # Called by mixins/master_file.py - without these, MFN^M01/M02/M04
     # silently fall back to generic test messages (CRITICAL).
     # ------------------------------------------------------------------
 
@@ -1171,7 +1171,7 @@ class HL7SegmentBuilder:
         Per HL7 v2.5 §15.4.1:
           PRA-1: Primary Key Value (practitioner ID)
           PRA-5: Practitioner Category
-          PRA-9: Specialty (CE type — code^description^coding-system)
+          PRA-9: Specialty (CE type - code^description^coding-system)
           PRA-10: Practitioner ID Numbers (institution affiliation)
         """
         try:
@@ -1237,7 +1237,7 @@ class HL7SegmentBuilder:
 
     # ------------------------------------------------------------------
     # Financial segments (GT1, IN1, FT1)
-    # Called by mixins/financial.py — without these, BAR^P01 / DFT^P03
+    # Called by mixins/financial.py - without these, BAR^P01 / DFT^P03
     # silently fall back to generic test messages (CRITICAL).
     # ------------------------------------------------------------------
 
@@ -1440,14 +1440,14 @@ class HL7SegmentParser:
                 yield child
             elif isinstance(child, Group):
                 yield from HL7SegmentParser._iter_segments(child)
-            # else: Field/Component/unknown — not a segment, skip
+            # else: Field/Component/unknown - not a segment, skip
 
     @staticmethod
     def parse_message(message: Any, extended: bool = False) -> dict:
         """Parse full HL7 message using hl7apy"""
         from hl7apy.parser import parse_message
 
-        # 'orders' was missing from this dict — response.py:_extract_order_status
+        # 'orders' was missing from this dict - response.py:_extract_order_status
         # read parsed["orders"] and crashed with KeyError, silently swallowed
         # by its outer try/except. Now we collect ORC + the most recent OBR
         # under "orders" so OSR^Q06 response handling actually surfaces
@@ -1501,7 +1501,7 @@ class HL7SegmentParser:
             elif seg_name == "ORC":
                 try:
                     orc = HL7SegmentParser.parse_orc(child)
-                except Exception:  # noqa: BLE001 — best-effort tolerant parse
+                except Exception:  # noqa: BLE001 - best-effort tolerant parse
                     orc = {}
                 current_order_base = dict(orc)
                 if current_patient:
@@ -1517,7 +1517,7 @@ class HL7SegmentParser:
                     obr = {}
                 if current_order_base:
                     if not order_has_obr:
-                        # First OBR after the ORC — fold its fields into the
+                        # First OBR after the ORC - fold its fields into the
                         # in-flight order dict so the order row carries
                         # OrderCode/OrderName/Priority/etc.
                         for k, v in obr.items():
@@ -1525,7 +1525,7 @@ class HL7SegmentParser:
                         order_has_obr = True
                     else:
                         # A second (or later) OBR under the same ORC is a
-                        # distinct order line — give it its own row instead
+                        # distinct order line - give it its own row instead
                         # of silently dropping it via setdefault no-ops.
                         new_order = dict(current_order_base)
                         for k, v in obr.items():
@@ -1711,8 +1711,8 @@ class HL7SegmentParser:
         """Parse MFI master file identification segment.
 
         MFI-1 is a CE (code^description^coding-system). Tests/operators
-        usually want just the code; expose both forms — `MasterFileID`
-        (code only) and `MasterFileIdentifier` (raw CE) — for backward
+        usually want just the code; expose both forms - `MasterFileID`
+        (code only) and `MasterFileIdentifier` (raw CE) - for backward
         compatibility.
         """
         from hl7apy.parser import parse_segment
@@ -1762,7 +1762,7 @@ class HL7SegmentParser:
         stf_1 = get(seg, "stf_1")
         return {
             "PrimaryKeyValue": stf_1,
-            "StaffID": stf_1,  # legacy alias — keep until master_file.py migrates
+            "StaffID": stf_1,  # legacy alias - keep until master_file.py migrates
             "StaffName": get(seg, "stf_3").replace("^", " "),
             "StaffType": get(seg, "stf_4"),
             "Department": get(seg, "stf_8"),
@@ -1780,12 +1780,12 @@ class HL7SegmentParser:
           PRA-1: Primary Key Value (practitioner ID)
           PRA-2: Practitioner Group
           PRA-3: Practitioner Category
-          PRA-5: Specialty (CE — but the test uses the simple "MD" form
+          PRA-5: Specialty (CE - but the test uses the simple "MD" form
                  and expects 'PractitionerCategory' to be the code)
           PRA-9: Effective Start Date
         Note: HL7 v2.5 PRA-3 is the Practitioner Category and PRA-5 is
         Specialty. Earlier oida code uses PRA-5 for category for
-        consistency with our test fixtures — preserved here.
+        consistency with our test fixtures - preserved here.
         """
         from hl7apy.parser import parse_segment
 

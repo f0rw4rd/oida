@@ -7,13 +7,13 @@ disagreement:
 
 - **both wrong, differently**: both mocks are simulations; scanner reads
   what each provides. No bug.
-- **python lies**: Python mock returns something Conpot doesn't —
+- **python lies**: Python mock returns something Conpot doesn't -
   Python mock has trained the scanner on fiction.
-- **python incomplete**: Conpot returns something Python mock doesn't —
+- **python incomplete**: Conpot returns something Python mock doesn't -
   integration tests under-test the scanner.
 
 Conpot is treated as the ground-truth proxy (it's also a simulation,
-but it tries to mimic real vendor behaviour — Siemens S7-1200, Schneider
+but it tries to mimic real vendor behaviour - Siemens S7-1200, Schneider
 Modicon, Triconex). The diff catches Python-mock invention, not
 absolute correctness.
 
@@ -40,7 +40,7 @@ import pytest
 # Conpot is treated as ground-truth proxy; Python mock is the unit-under-test.
 CONPOT_FIDELITY_CASES: list[tuple[str, str, int, str, int]] = [
     ("modbus", "modbus-conpot", 502, "modbus-mock", 502),
-    ("s7", "s7comm-snap7", 102, "s7comm-snap7", 102),  # no python mock yet — placeholder
+    ("s7", "s7comm-snap7", 102, "s7comm-snap7", 102),  # no python mock yet - placeholder
     ("iec104", "iec104-conpot", 2409, "iec104-lib60870", 2404),
     ("ethernetip", "ethernetip-conpot", 44823, "ethernetip-mock", 44818),
     ("bacnet", "bacnet-conpot", 47808, "bacnet-mock", 47808),

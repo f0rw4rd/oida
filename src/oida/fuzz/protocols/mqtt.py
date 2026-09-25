@@ -140,7 +140,7 @@ class MQTTFuzzer(StatefulFuzzer):
     # The MQTT state machine's connected/authenticated state is named "READY"
     # (not the generic CommonState.AUTHENTICATED). Requests without an explicit
     # requires_state default to it so the matcher recognises the already-
-    # established connection instead of re-sending a second CONNECT — which MQTT
+    # established connection instead of re-sending a second CONNECT - which MQTT
     # brokers reject (one CONNECT per connection), closing the socket.
     DEFAULT_REQUEST_STATE = "READY"
 
@@ -157,7 +157,7 @@ class MQTTFuzzer(StatefulFuzzer):
     # Mutated bytes may of course still elicit a reply (e.g. a corrupted QoS0
     # PUBLISH parsed as a SUBSCRIBE); the fast path still polls briefly for
     # queued data and surfaces RSTs, so a reply or crash signal is never
-    # lost — just not waited for.
+    # lost - just not waited for.
     _REPLY_TYPES = {0x1, 0x6, 0x8, 0xA, 0xC, 0xF}
 
     @classmethod
@@ -414,7 +414,7 @@ class MQTTFuzzer(StatefulFuzzer):
                 "protocol",
                 requires_state=CommonState.AUTHENTICATED,
             ),
-            # MQTT 5.0 reason code sweep — all 256 byte values
+            # MQTT 5.0 reason code sweep - all 256 byte values
             RequestInfo(
                 "MQTT_Reason_Code_Sweep",
                 "MQTT 5.0 reason code sweep (all 256 byte values)",
@@ -1156,13 +1156,13 @@ class MQTTFuzzer(StatefulFuzzer):
                 Block(
                     "sparkplug_publish",
                     children=(
-                        # Sparkplug B topic — spBv1.0/<group>/NDATA/<edge> (25 bytes)
+                        # Sparkplug B topic - spBv1.0/<group>/NDATA/<edge> (25 bytes)
                         Word("topic_length", 25, endian=">"),
                         Static(
                             name="sparkplug_topic",
                             default_value=b"spBv1.0/grp1/NDATA/node01",
                         ),
-                        # Protobuf payload — fuzz the inner framing
+                        # Protobuf payload - fuzz the inner framing
                         Group(
                             "Protobuf_Payload",
                             values=[
@@ -1186,13 +1186,13 @@ class MQTTFuzzer(StatefulFuzzer):
                                 b"\x12",
                                 # Recursive/nested Metric submessages (depth abuse)
                                 b"\x12\x10" + (b"\x12\x02\x08\x01" * 4),
-                                # Metric with datatype=0 (Unknown) — Tahu rejects
+                                # Metric with datatype=0 (Unknown) - Tahu rejects
                                 b"\x12\x06\x0a\x01x \x00",
                                 # Metric with very large alias (varint 64-bit max)
                                 b"\x12\x0b\x10\xff\xff\xff\xff\xff\xff\xff\xff\x7f",
-                                # All zeros — empty protobuf message
+                                # All zeros - empty protobuf message
                                 b"",
-                                # Single 0xFF byte — invalid tag
+                                # Single 0xFF byte - invalid tag
                                 b"\xff",
                             ],
                         ),
@@ -1215,7 +1215,7 @@ class MQTTFuzzer(StatefulFuzzer):
                 Static(name="disconnect_header", default_value=b"\xe0"),
                 # Remaining length = 2 (1 byte reason code + 1 byte property len)
                 Static(name="remaining_length", default_value=b"\x02"),
-                # Reason code sweep — all 256 values (0x00..0xFF)
+                # Reason code sweep - all 256 values (0x00..0xFF)
                 Group(
                     "Reason_Code",
                     values=[bytes([rc]) for rc in range(256)],
@@ -1354,11 +1354,11 @@ class MQTTFuzzer(StatefulFuzzer):
             self.session.connect(mqtt_disconnect)
             self.session.connect(mqtt_auth)
 
-        # Sparkplug B IIoT payload — fuzzed protobuf wrapped in PUBLISH
+        # Sparkplug B IIoT payload - fuzzed protobuf wrapped in PUBLISH
         if self.is_request_enabled("MQTT_Sparkplug_Payload"):
             self.session.connect(mqtt_sparkplug_payload)
 
-        # MQTT 5.0 reason code sweep — all 256 byte values
+        # MQTT 5.0 reason code sweep - all 256 byte values
         if self.is_request_enabled("MQTT_Reason_Code_Sweep"):
             self.session.connect(mqtt_reason_code_sweep)
 

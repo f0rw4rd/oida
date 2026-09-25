@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# run-all-tests.sh — run the whole test suite the safe way: in lanes.
+# run-all-tests.sh - run the whole test suite the safe way: in lanes.
 #
 # `pytest tests/` in one pass hangs (integration/coverage open real sockets to
 # the Docker mocks and fixtures aren't timed). This runs the lanes with the
@@ -38,7 +38,7 @@
 #   ./scripts/run-all-tests.sh unit --coverage         # unit coverage slice
 #
 # Strict mode (default): a missing mock, missing optional dependency, missing
-# native lib, or unhealthy container makes the depending test FAIL, not skip —
+# native lib, or unhealthy container makes the depending test FAIL, not skip -
 # so the suite can't go green while whole protocols are silently untested. To
 # run a subset locally without the full mock+dependency matrix, set
 # OIDA_SKIP_MISSING_SERVICES=1 to turn those failures back into skips. This
@@ -71,7 +71,7 @@ rc=0
 
 # Announce the availability-gate mode so a green/red run is unambiguous.
 if [[ -n "${OIDA_SKIP_MISSING_SERVICES:-}" ]]; then
-    echo -e "${YELLOW}OIDA_SKIP_MISSING_SERVICES set — missing mocks/deps will SKIP (non-strict).${NC}"
+    echo -e "${YELLOW}OIDA_SKIP_MISSING_SERVICES set - missing mocks/deps will SKIP (non-strict).${NC}"
 else
     echo -e "${BLUE}Strict mode: missing mocks/deps FAIL (set OIDA_SKIP_MISSING_SERVICES=1 to skip instead).${NC}"
 fi
@@ -90,14 +90,14 @@ SEL+=("${PASS[@]}"); CSEL+=("${PASS[@]}")
 COV_ARGS=()
 if [[ $COV -eq 1 ]]; then
     COV_ARGS=(--cov=oida --cov-append --cov-report=)
-    echo -e "${YELLOW}Coverage on — erasing prior data.${NC}"
+    echo -e "${YELLOW}Coverage on - erasing prior data.${NC}"
     uv run coverage erase
 fi
 
 # Integration-lane parallelism. Each integration test spawns a separate `oida`
 # subprocess (so one xdist worker occupies ~2 cores) and they all share the one
 # docker mock stack, so running a worker per core oversubscribes the machine and
-# starves the scans/mocks — timing-sensitive probes then miss their 30-60s
+# starves the scans/mocks - timing-sensitive probes then miss their 30-60s
 # timeouts and flake. Default to half the cores, clamped to [2, 4]; override with
 # OIDA_TEST_WORKERS=<n> (e.g. bump it on a dedicated box, drop it to 2 when other
 # worktrees are hammering the same mocks).
@@ -113,15 +113,15 @@ fi
 run_lane() { echo -e "\n${BLUE}== $1 ==${NC}"; shift; "$@" || rc=1; }
 
 need_mocks() {
-    echo -e "${YELLOW}Checking mocks (integration/coverage need them up)…${NC}"
+    echo -e "${YELLOW}Checking mocks (integration/coverage need them up)...${NC}"
     # Detect already-running mocks by container name, not by compose project:
     # the stack may have been started from another worktree (a different project
     # name), so `services.py status` here can miss it and then collide trying to
     # start a second stack on the same network pool.
     if docker ps --format '{{.Names}}' 2>/dev/null | grep -qE 'mock-server|hipserver|conpot'; then
-        echo -e "${GREEN}Mocks already running — using them.${NC}"; return 0
+        echo -e "${GREEN}Mocks already running - using them.${NC}"; return 0
     fi
-    echo -e "${YELLOW}No mocks detected — starting core group…${NC}"
+    echo -e "${YELLOW}No mocks detected - starting core group...${NC}"
     uv run python services.py up core || {
         echo -e "${RED}Could not start mocks; skipping mock-backed lanes.${NC}"; return 1; }
 }
@@ -160,7 +160,7 @@ if [[ $COV -eq 1 ]]; then
     uv run coverage report -m || rc=1
     uv run coverage json -o coverage.json >/dev/null 2>&1 \
         && echo -e "${YELLOW}Machine-readable total written to coverage.json${NC}"
-    [[ "$LANE" != "all" ]] && echo -e "${YELLOW}Note: '$LANE'-only run — this is a lane slice, not the project total.${NC}"
+    [[ "$LANE" != "all" ]] && echo -e "${YELLOW}Note: '$LANE'-only run - this is a lane slice, not the project total.${NC}"
 fi
 
 echo ""

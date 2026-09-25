@@ -128,7 +128,7 @@ class FINSScanner:
 
         header = struct.pack("BBBBBBBBBB", icf, rsv, gct, dna, da1, da2, sna, sa1, sa2, sid)
 
-        # FINS command: Controller Data Read (MRC=0x05, SRC=0x01 → 0x0501)
+        # FINS command: Controller Data Read (MRC=0x05, SRC=0x01 -> 0x0501)
         command = struct.pack(">H", FINS_CMD_CONTROLLER_DATA_READ)
 
         return header + command

@@ -73,7 +73,7 @@ def _scanner(args, conn=None):
 
 
 # ---------------------------------------------------------------------------
-# BUG 1 — wildcard query finding gated on acceptance
+# BUG 1 - wildcard query finding gated on acceptance
 # ---------------------------------------------------------------------------
 
 
@@ -96,7 +96,7 @@ class TestWildcardQueryFindingGatedOnAck(unittest.TestCase):
 
     def test_wildcard_finding_not_emitted_on_ar_reject(self):
         """A server that REJECTS the wildcard query (MSA|AR) must not be
-        reported as allowing wildcard patient enumeration — this is the
+        reported as allowing wildcard patient enumeration - this is the
         exact fabricated-finding bug: before the fix, `if response:` alone
         triggered the finding regardless of the ack code."""
         s = _scanner(_args(enum_patients=True))
@@ -107,7 +107,7 @@ class TestWildcardQueryFindingGatedOnAck(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# BUG 2 — -R/--receiving-app and --receiving-facility must reach MSH-5/6
+# BUG 2 - -R/--receiving-app and --receiving-facility must reach MSH-5/6
 # ---------------------------------------------------------------------------
 
 
@@ -133,7 +133,7 @@ class TestPopulateMshReceivingArgsOverride(unittest.TestCase):
     def test_empty_receiving_args_fall_back_to_contextual_default(self):
         """When the operator supplies nothing (argparse default ""), the
         mixin's contextual literal (e.g. 'PHARMACY', 'LAB') must still
-        apply — this must not regress to a hardcoded value ignoring both."""
+        apply - this must not regress to a hardcoded value ignoring both."""
         msg = self._msg()
         args = _args(receiving_app="", receiving_facility="")
         populate_msh(
@@ -168,7 +168,7 @@ class TestPopulateMshReceivingArgsOverride(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# BUG 3 — enhanced-mode "CA" acks must be treated as acceptance
+# BUG 3 - enhanced-mode "CA" acks must be treated as acceptance
 # ---------------------------------------------------------------------------
 
 
@@ -209,7 +209,7 @@ class TestEnhancedModeAckTreatedAsAccept(unittest.TestCase):
 
 
 # ---------------------------------------------------------------------------
-# BUG 4 — --department flag flows into STF-11
+# BUG 4 - --department flag flows into STF-11
 # ---------------------------------------------------------------------------
 
 

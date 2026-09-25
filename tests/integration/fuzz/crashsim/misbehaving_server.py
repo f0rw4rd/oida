@@ -3,7 +3,7 @@
 A single in-process server that starts healthy (accept -> echo first byte) and, on
 ``trigger(mode)``, switches into one steady crash-of-service state. This lets a test
 probe a monitor against each distinct *observable* failure mode and record whether the
-monitor notices — quantifying what the fuzzer's crash detection can and cannot see.
+monitor notices - quantifying what the fuzzer's crash detection can and cannot see.
 
 Modes (the observable state after ``trigger``):
 
@@ -63,7 +63,7 @@ class MisbehavingServer:
             # Stop accepting entirely: kill the listener. shutdown() BEFORE
             # close(): the accept-loop thread may be blocked inside accept()
             # on this socket, and an in-flight accept() keeps the kernel
-            # socket alive after close() — a probe connecting in that window
+            # socket alive after close() - a probe connecting in that window
             # completes the handshake against a supposedly-down server (seen
             # as a ~1/30 flake in test_recovery_stall_refused_vs_hung).
             # shutdown() makes the blocked accept() raise immediately.

@@ -490,7 +490,7 @@ class FTPFuzzer(StatefulFuzzer):
             log.warning(f"Capability detection failed ({e}), fuzzing all commands")
             self.supported_features = set(["*"])
         finally:
-            # Always release the probe socket — every early-return/exception
+            # Always release the probe socket - every early-return/exception
             # path previously had to remember to close it (and the except path
             # didn't), leaking the fd (ResourceWarning).
             if sock is not None:

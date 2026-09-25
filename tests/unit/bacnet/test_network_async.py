@@ -388,7 +388,7 @@ class TestDiscoverMstp(unittest.TestCase):
         iam.vendorID = 99
 
         def reqs():
-            # Phase 1, port 1 (MS/TP) — networkNumber 2000, maxMaster 1.
+            # Phase 1, port 1 (MS/TP) - networkNumber 2000, maxMaster 1.
             yield _str_tag_response("MSTP-A")  # objectName
             yield _uint_tag_response(2)  # networkType MS/TP
             yield _uint_tag_response(2000)  # networkNumber
@@ -453,7 +453,7 @@ class TestBbmdInjection(unittest.TestCase):
         mock_load.return_value = _net_types()
         scanner = _create_instance()
         app = AsyncMock()
-        # BDT read None; FD reg None; BDT write None — all inconclusive.
+        # BDT read None; FD reg None; BDT write None - all inconclusive.
         app.request = AsyncMock(return_value=None)
 
         asyncio.run(scanner._bacpypes3_test_bbmd_injection(app, Mock(), 2.0))

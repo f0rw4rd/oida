@@ -552,7 +552,7 @@ class HTTPFuzzer(BaseFuzzer):
             }
 
             # (methods & all_standard / & all_special were dead bare expressions
-            # here — only the webdav set is actually consumed below.)
+            # here - only the webdav set is actually consumed below.)
             detected_webdav = methods & all_webdav
 
             skipped_standard = all_standard - methods
@@ -2127,7 +2127,7 @@ class HTTPFuzzer(BaseFuzzer):
         )
 
         # Example 4: Transformer Chain - Gzip + Base64
-        # Demonstrates chaining: data → gzip → base64
+        # Demonstrates chaining: data -> gzip -> base64
         chain_request = Request(
             "TransformerChain_Example",
             children=(
@@ -2191,7 +2191,7 @@ class HTTPFuzzer(BaseFuzzer):
                     ),
                 ),
                 Static("Headers-End", "\r\n"),
-                # Chain: mutate → gzip compress → base64 encode
+                # Chain: mutate -> gzip compress -> base64 encode
                 Block(
                     "Body",
                     encoder=TransformerChain(
@@ -2525,7 +2525,7 @@ class HTTPFuzzer(BaseFuzzer):
         )
 
         # ==================== CONNECT REQUESTS (Ordered by Coverage Priority) ====================
-        # Order optimized for maximum coverage: baseline → common patterns → slow edge cases
+        # Order optimized for maximum coverage: baseline -> common patterns -> slow edge cases
         # Use --enable or --disable CLI flags to select specific requests
 
         # 0. BASELINE - Simple connectivity test (FASTEST - catches basic issues)

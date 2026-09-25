@@ -39,7 +39,7 @@ class FileExtractor:
             self.output_dir = os.path.join(os.path.dirname(pcap_file) or ".", f"{base}_extracted")
 
         if not self._tshark:
-            raise RuntimeError("tshark not found — install Wireshark/tshark")
+            raise RuntimeError("tshark not found - install Wireshark/tshark")
 
     def extract_all(self) -> List[Dict[str, Any]]:
         """Run extraction for each protocol, return list of extracted file dicts."""

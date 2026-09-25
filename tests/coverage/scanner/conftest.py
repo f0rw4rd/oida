@@ -1,11 +1,11 @@
 """Shared fixtures for axis-1 scanner field-coverage tests.
 
 Provides:
-- ``container_target(name, port, proto)`` — check whether a docker mock
+- ``container_target(name, port, proto)`` - check whether a docker mock
   container is reachable on the host; skips the test if not.
-- ``scanner_result(protocol, host, port, **opts)`` — instantiate the
+- ``scanner_result(protocol, host, port, **opts)`` - instantiate the
   Layer-2 NXC class against the target, return its ``results`` dict.
-- ``flatten_surface(data)`` — flatten nested dict into dot-notation key
+- ``flatten_surface(data)`` - flatten nested dict into dot-notation key
   set for set-difference comparison with expected surface.
 """
 
@@ -26,7 +26,7 @@ def _is_reachable(host: str, port: int, timeout: float = 1.0, udp: bool = False)
     For TCP, a successful 3-way handshake counts. For UDP we can't
     test reachability without a protocol-aware probe, so we fall back
     to "is the container even up?" by checking whether the docker
-    daemon reports a published port — handled by the caller via the
+    daemon reports a published port - handled by the caller via the
     ``OIDA_COVERAGE_HOST`` env var and the per-test scanner trying its
     own connection. Returns False for UDP only when no container at
     all is published on the host (no listening TCP control plane).
@@ -49,7 +49,7 @@ def _is_reachable(host: str, port: int, timeout: float = 1.0, udp: bool = False)
 def ensure_protocol_dep(*module_names: str) -> None:
     """Skip the test if any required Python dep is missing.
 
-    Many scanners (bacnet → bacpypes3, opcua → asyncua, ads → pyads) ship
+    Many scanners (bacnet -> bacpypes3, opcua -> asyncua, ads -> pyads) ship
     as optional extras. The coverage tests don't help if the dep isn't
     installed; skip rather than fail.
     """
@@ -101,7 +101,7 @@ def _flatten(data: Any, prefix: str = "") -> Iterable[str]:
     """Yield dot-notation key paths for non-empty leaves of a nested dict.
 
     Lists count as a leaf at their parent path; we don't recurse into
-    list elements — the goal is "which top-level capabilities were
+    list elements - the goal is "which top-level capabilities were
     exercised", not "how many objects came back".
     """
     if isinstance(data, dict):

@@ -123,7 +123,7 @@ def execute_command(parent, command: str):
 
 
 # ============================================================================
-# OPC UA FileType — a real readable file served via Open/Read/Close
+# OPC UA FileType - a real readable file served via Open/Read/Close
 # ============================================================================
 # Unlike the metadata-only "file" objects below, this node implements the
 # standard FileType methods so an OPC UA client (e.g. OIDA's --read-file) can
@@ -176,14 +176,14 @@ class CustomUserManager:
     - ``"reject"`` (default): reject every client user certificate. The server
       still *advertises* a Certificate user token (asyncua does so whenever a
       signing policy is enabled), so a scanner sees the token but no untrusted
-      cert is accepted — the securely-configured baseline.
+      cert is accepted - the securely-configured baseline.
     - ``"permissive"``: accept ANY user certificate whose signature verifies
       (asyncua proves key possession before calling us). This is the
-      *vulnerable* config — self-signed certs are trusted automatically,
+      *vulnerable* config - self-signed certs are trusted automatically,
       i.e. OpalOPC plugin 10016 / OIDA's self-signed-user-cert finding.
     - ``"trusted"``: accept ONLY a pre-registered trusted client certificate
       (compared by DER bytes). A self-signed/unknown cert is rejected, while
-      the legitimate operator cert authenticates — exercises both normal and
+      the legitimate operator cert authenticates - exercises both normal and
       fake client-cert auth against one target.
     """
 
@@ -485,7 +485,7 @@ async def create_opcua_namespace(server: Server):
     )
     await recipe_file.add_variable("ns=2;i=233", "OpenCount", 0, ua.VariantType.UInt16)
 
-    # Readable FileType node (ns=2;i=240) — implements Open/Read/Close so the
+    # Readable FileType node (ns=2;i=240) - implements Open/Read/Close so the
     # content can actually be transferred. Browse names are in namespace 0
     # ("0:Size", "0:Open", ...) to match the standard FileType the OIDA scanner
     # resolves via get_child("0:Open"). The nodeids stay in ns=2 to avoid
@@ -742,7 +742,7 @@ async def main():
     cert_mode = os.environ.get("OPCUA_USER_CERT_MODE", "reject").lower()
 
     # X509 user-cert modes require a signing policy (security) and the user
-    # manager (auth) to make the trust decision — force both on.
+    # manager (auth) to make the trust decision - force both on.
     if cert_mode in ("trusted", "permissive"):
         enable_security = True
         enable_auth = True

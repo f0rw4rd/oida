@@ -90,7 +90,7 @@ class OPCUAFuzzer(BaseFuzzer):
         "use_session": {
             "type": bool,
             "default": False,
-            "description": "Establish full session before fuzzing (HEL→OPN→Session)",
+            "description": "Establish full session before fuzzing (HEL->OPN->Session)",
         },
         "opcua_username": {
             "type": str,
@@ -365,7 +365,7 @@ class OPCUAFuzzer(BaseFuzzer):
     def _cert_ber_mutation_values(self) -> List[bytes]:
         """Build DER/BER-mutated SenderCertificate blobs for structured cert-parse fuzzing.
 
-        The OPC UA SenderCertificate (OpenSecureChannel) is an X.509 DER blob — the
+        The OPC UA SenderCertificate (OpenSecureChannel) is an X.509 DER blob - the
         one genuine ASN.1/BER surface in an otherwise binary protocol. Rather than
         hand-roll malformed bytes (OPCUA_MalformedCert / OPCUA_CertChainLoop do that
         for a garbage body), this drives the shared ``ASN1Builder`` mutators against a
@@ -379,20 +379,20 @@ class OPCUAFuzzer(BaseFuzzer):
         stays valid for every mutated blob.
         """
         asn1 = ASN1Builder()
-        seq_tag = ASN1Tag.SEQUENCE  # 0x30 — X.509 Certificate outer tag
+        seq_tag = ASN1Tag.SEQUENCE  # 0x30 - X.509 Certificate outer tag
         # Minimal but valid DER SEQUENCE { INTEGER, INTEGER } standing in for a cert.
         inner = asn1.build_integer(2) + asn1.build_integer(0x2A)
         cert_tlv = asn1.build_sequence(inner)  # tag + length + value
         cert_content = ber_content(cert_tlv)  # length-aware strip -> value octets
 
         values: List[bytes] = [cert_tlv]  # valid baseline (index 0)
-        # Malformed BER length encodings (7 forms) — prepend the SEQUENCE tag since
+        # Malformed BER length encodings (7 forms) - prepend the SEQUENCE tag since
         # fuzz_length_variants emits <length><content> without a tag.
         values += [bytes([seq_tag]) + v for v in asn1.fuzz_length_variants(cert_content)]
         # Malformed BER tags (invalid universal / long-form / multi-byte) over the
         # original length+value octets.
         values += asn1.fuzz_tag_variants(seq_tag, cert_tlv[1:])
-        # Length declares full size, content short — parser reads past end.
+        # Length declares full size, content short - parser reads past end.
         values.append(asn1.build_truncated(seq_tag, cert_content, truncate_by=1))
         values.append(asn1.build_truncated(seq_tag, cert_content, truncate_by=len(cert_content)))
         # Oversized content (buffer-overflow probe).
@@ -611,7 +611,7 @@ class OPCUAFuzzer(BaseFuzzer):
     # ========================================================================
 
     def _define_state_machine(self) -> None:
-        """OPC UA requires multi-stage connection setup: HEL→ACK→OPN→Session.
+        """OPC UA requires multi-stage connection setup: HEL->ACK->OPN->Session.
 
         Uses asyncua Client to perform the full handshake correctly, then
         extracts live protocol state (ChannelId, TokenId, AuthToken) for use
@@ -1022,7 +1022,7 @@ class OPCUAFuzzer(BaseFuzzer):
                         DWord("SenderCertificate_Length", 0xFFFFFFFF, endian="<", fuzzable=False),
                         # ReceiverCertificateThumbprint - null for Policy None
                         DWord("ReceiverThumbprint_Length", 0xFFFFFFFF, endian="<", fuzzable=False),
-                        # SequenceHeader — dynamic so each sent chunk carries a
+                        # SequenceHeader - dynamic so each sent chunk carries a
                         # unique, incrementing SequenceNumber/RequestId (per
                         # OPC UA spec); rendered via original_value() each case.
                         DynamicDWord(
@@ -3786,7 +3786,7 @@ class OPCUAFuzzer(BaseFuzzer):
                             OPCUAServiceIds.READ_REQUEST,
                             authenticated=True,
                         ),
-                        # ReadRequest body — MaxAge, TimestampsToReturn
+                        # ReadRequest body - MaxAge, TimestampsToReturn
                         QWord("MaxAge", 0, endian="<"),
                         DWord(
                             "TimestampsToReturn",
@@ -3795,7 +3795,7 @@ class OPCUAFuzzer(BaseFuzzer):
                         ),
                         # NodesToRead array (1 element)
                         DWord("NodesToRead_Length", 1, endian="<"),
-                        # Reserved / extended encoding bytes — should be
+                        # Reserved / extended encoding bytes - should be
                         # rejected; many stacks index a jump table without
                         # range-checking.
                         Group(
@@ -3833,7 +3833,7 @@ class OPCUAFuzzer(BaseFuzzer):
         # ============================================================
         # Malformed certificate body: OPCUA_CertChainLoop covers the
         # self-referencing-issuer path; this request goes after the other
-        # cert-parse failure modes — truncated DER, oversized cert length
+        # cert-parse failure modes - truncated DER, oversized cert length
         # mismatched against payload, wrong outer tag, embedded null
         # within the BIT STRING. Targets pyasn1 / cryptography errors
         # surfaced through asyncua's certificate validator.
@@ -3885,13 +3885,13 @@ class OPCUAFuzzer(BaseFuzzer):
                         Group(
                             "SenderCertificate_Length",
                             values=[
-                                # Declared 65535 bytes, supply 0 — read-past-end
+                                # Declared 65535 bytes, supply 0 - read-past-end
                                 bytes([0xFF, 0xFF, 0x00, 0x00]),
-                                # Declared INT_MAX — integer overflow path
+                                # Declared INT_MAX - integer overflow path
                                 bytes([0xFF, 0xFF, 0xFF, 0x7F]),
-                                # Declared -1 (UINT max) — null-cert sentinel ambiguity
+                                # Declared -1 (UINT max) - null-cert sentinel ambiguity
                                 bytes([0xFF, 0xFF, 0xFF, 0xFF]),
-                                # Declared 4 — supply garbage 4-byte DER prefix
+                                # Declared 4 - supply garbage 4-byte DER prefix
                                 bytes([0x04, 0x00, 0x00, 0x00]),
                             ],
                         ),
@@ -3904,12 +3904,12 @@ class OPCUAFuzzer(BaseFuzzer):
                                 bytes([0x30, 0x00]),  # empty SEQUENCE
                             ],
                         ),
-                        # ReceiverCertificateThumbprint — null sentinel
+                        # ReceiverCertificateThumbprint - null sentinel
                         DWord("ReceiverCertThumbprint_Length", 0xFFFFFFFF, endian="<"),
                         # SequenceHeader
                         DWord("SequenceNumber", self._next_sequence_number(), endian="<"),
                         DWord("RequestId", self._next_request_id(), endian="<"),
-                        # Body — minimal OpenSecureChannelRequest with
+                        # Body - minimal OpenSecureChannelRequest with
                         # default fuzz fields so the cert-parse failure
                         # is reached BEFORE the body processor.
                         Static("TypeId_Encoding", bytes([OPCUANodeIdTypes.FOUR_BYTE])),
@@ -3923,7 +3923,7 @@ class OPCUAFuzzer(BaseFuzzer):
         # ============================================================
         # Structured DER/BER mutation of the SenderCertificate. OPC UA is a
         # binary protocol, but the certificate carried in OpenSecureChannel is
-        # X.509 DER — a real ASN.1/BER parse surface. This drives the shared
+        # X.509 DER - a real ASN.1/BER parse surface. This drives the shared
         # ASN1Builder BER mutators (malformed length + tag, truncation, content
         # overflow, deep nesting) against a *valid* DER SEQUENCE template so the
         # certificate decoder is reached and exercised deeper than the hand-rolled
@@ -3973,7 +3973,7 @@ class OPCUAFuzzer(BaseFuzzer):
                                 ),
                             ),
                         ),
-                        # SenderCertificate ByteString — the DER blob is the attack.
+                        # SenderCertificate ByteString - the DER blob is the attack.
                         # Size auto-tracks the mutated blob length so the outer
                         # ByteString framing is always well-formed.
                         Size(
@@ -3993,7 +3993,7 @@ class OPCUAFuzzer(BaseFuzzer):
                                 ),
                             ),
                         ),
-                        # ReceiverCertificateThumbprint — null sentinel
+                        # ReceiverCertificateThumbprint - null sentinel
                         DWord("ReceiverThumbprint_Length", 0xFFFFFFFF, endian="<", fuzzable=False),
                         # SequenceHeader
                         DWord(
@@ -4039,7 +4039,7 @@ class OPCUAFuzzer(BaseFuzzer):
         # before CreateSession. The boofuzz session graph below explicitly
         # wires this Request to fire at state SECURE_CHANNEL (post-OPN,
         # pre-session) so the target receives a session-required service
-        # without a session — exposing state-machine assumptions.
+        # without a session - exposing state-machine assumptions.
         # ============================================================
         state_confusion_read = Request(
             "OPCUA_State_Confusion",
@@ -4103,7 +4103,7 @@ class OPCUAFuzzer(BaseFuzzer):
                         # AdditionalHeader null ExtensionObject
                         Static("AdditionalHeader_TypeId", bytes([OPCUANodeIdTypes.TWO_BYTE, 0])),
                         Byte("AdditionalHeader_Encoding", 0x00),
-                        # Minimal payload — empty arrays
+                        # Minimal payload - empty arrays
                         DWord("Empty_Array_1", 0xFFFFFFFF, endian="<"),
                         DWord("Empty_Array_2", 0xFFFFFFFF, endian="<"),
                     ),

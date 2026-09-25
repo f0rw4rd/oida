@@ -1,14 +1,14 @@
-# SteVe — real OCPP Central System (CSMS) mock for OIDA
+# SteVe - real OCPP Central System (CSMS) mock for OIDA
 
 This directory stands up **SteVe** (SteckdosenVerwaltung,
 <https://github.com/steve-community/steve>), a genuine open-source OCPP
 1.2/1.5/1.6 Central System Management System, as a multi-config integration
-target for OIDA's `ocpp` scanner. It replaces nothing — it runs **alongside**
+target for OIDA's `ocpp` scanner. It replaces nothing - it runs **alongside**
 the lightweight Python `ocpp-insecure` simulator in `../mock/` and gives the
 scanner a real OCPP server to talk to (real WebSocket handshake, real
 BootNotification/Heartbeat CALL/CALLRESULT framing, real web UI + SOAP/Web API).
 
-## License (GPL — built from source, not redistributed)
+## License (GPL - built from source, not redistributed)
 
 SteVe is licensed under the **GNU General Public License v3.0-or-later**.
 
@@ -29,10 +29,10 @@ To pin a different release, override the build arg:
 One shared **MariaDB** backend (`ocpp-steve-db`, image `mariadb:10.11.16`,
 matching upstream) plus **three SteVe app containers** that share a single
 built image and differ only by **runtime Spring property overrides**
-(`JAVA_OPTS=-D…`) and by which **database schema** they use. SteVe 3.x is a
+(`JAVA_OPTS=-D...`) and by which **database schema** they use. SteVe 3.x is a
 Spring Boot app, so every `application-*.properties` key (`db.*`, `http.port`,
-`https.enabled`, `auto.register.unknown.stations`, …) is overridable at runtime
-via Spring relaxed binding — one image, three behaviours, no rebuild.
+`https.enabled`, `auto.register.unknown.stations`, ...) is overridable at runtime
+via Spring relaxed binding - one image, three behaviours, no rebuild.
 
 Each app gets its own schema (`stevedb_open` / `stevedb_registered` /
 `stevedb_secure`, created by `initdb/01-schemas.sql`) so registered-chargebox
@@ -43,8 +43,8 @@ state does not bleed between configs.
 | Service | Host port | Scheme | DB schema | `auto.register.unknown.stations` | Meaning for the scanner |
 |---|---|---|---|---|---|
 | `ocpp-steve-open`       | 8180 | http  | `stevedb_open`       | **true**  | Open CSMS: accepts a WebSocket + BootNotification from **any** chargeBoxId. `oida ocpp` gets a clean CALLRESULT with no pre-registration. |
-| `ocpp-steve-registered` | 8181 | http  | `stevedb_registered` | **false** | Hardened CSMS: **rejects** unknown chargeBoxIds (closes the WebSocket) — only charge boxes pre-registered via the Web UI/API are accepted. Tests the scanner's "BootNotification from unknown CP rejected" path (`--check-unknown-cp`). |
-| `ocpp-steve-secure`     | 8543 | https | `stevedb_secure`     | **false** | Same reject-unknown policy but served over **HTTPS/WSS** (`wss://…`) with a self-signed keystore generated at container start. Tests TLS/`wss` handling. |
+| `ocpp-steve-registered` | 8181 | http  | `stevedb_registered` | **false** | Hardened CSMS: **rejects** unknown chargeBoxIds (closes the WebSocket) - only charge boxes pre-registered via the Web UI/API are accepted. Tests the scanner's "BootNotification from unknown CP rejected" path (`--check-unknown-cp`). |
+| `ocpp-steve-secure`     | 8543 | https | `stevedb_secure`     | **false** | Same reject-unknown policy but served over **HTTPS/WSS** (`wss://...`) with a self-signed keystore generated at container start. Tests TLS/`wss` handling. |
 
 All three share web-UI creds **admin / 1234** (SteVe docker defaults) and Web
 API key header **`STEVE-API-KEY: <empty>`** unless overridden.
@@ -70,7 +70,7 @@ oida ocpp 127.0.0.1 --port 8180 \
 oida ocpp 127.0.0.1 --port 8181 --check-unknown-cp \
     --ws-path /steve/websocket/CentralSystemService/CP_SCANNER_001
 
-# Secure config (wss) — self-signed cert, so use --tls-insecure and put the
+# Secure config (wss) - self-signed cert, so use --tls-insecure and put the
 # path IN the URL (a full wss:// target takes its path from the URL):
 oida ocpp wss://127.0.0.1:8543/steve/websocket/CentralSystemService/CP_SCANNER_001 \
     --tls-insecure
@@ -82,8 +82,8 @@ The `registered`/`secure` configs reject unknown chargeBoxIds by design (the
 WebSocket handshake returns HTTP 404). To make a chargeBoxId acceptable, add it
 as a charge point. Three ways:
 
-1. **Web UI** (simplest): log in to `/steve/manager` (admin / 1234) →
-   *Charge Points* → *Add* → set the chargeBoxId.
+1. **Web UI** (simplest): log in to `/steve/manager` (admin / 1234) ->
+   *Charge Points* -> *Add* -> set the chargeBoxId.
 
 2. **Direct DB insert** (scriptable, used by the verification below). SteVe
    creates the `charge_box` table on first boot, so insert after it is up:

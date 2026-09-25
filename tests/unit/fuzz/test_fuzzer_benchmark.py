@@ -1,16 +1,16 @@
 """
-Fuzzer Reach Benchmark — measures three dimensions of fuzzer quality:
+Fuzzer Reach Benchmark - measures three dimensions of fuzzer quality:
 
 1. **Breadth** (Spec Coverage): How many boofuzz Request nodes does each protocol build?
 2. **Depth** (Mutation Count): How many total test-case mutations are generated?
 3. **Completeness** (Field Coverage): What fraction of fields are fuzzable, and how
    diverse are the primitive types?
 
-All tests run offline using MockConnectionFactory — no network I/O required.
+All tests run offline using MockConnectionFactory - no network I/O required.
 
 Gaps filled vs. existing tests:
 - test_fuzzer_coverage.py checks get_request_definitions() counts (group-level)
-  → this checks actual session Request nodes (individual requests)
+  -> this checks actual session Request nodes (individual requests)
 - No existing test measures num_mutations() per Request node
 - No existing test walks the boofuzz primitive tree to count fuzzable fields
 - No existing test checks for "dead" requests (all-Static, zero fuzzable fields)
@@ -43,14 +43,14 @@ SKIP_PROTOCOLS = {
 }
 
 # Protocols with known structural issues (e.g. recursive walk). Empty: the old
-# {"snmpv2c"} entry was dead — snmpv2c is not a benchmarked protocol (the SNMP
+# {"snmpv2c"} entry was dead - snmpv2c is not a benchmarked protocol (the SNMP
 # fuzzers are snmpv1/snmpv3, both of which walk cleanly), so the xfail never
 # fired. Keep the guard hook in case a real recursive-walk protocol appears.
 WALK_XFAIL: set[str] = set()
 
 # ---------------------------------------------------------------------------
-# Baselines — regression anchors.  Update when new requests are added.
-# Format: protocol → (min_requests, min_mutations, min_fuzzable_fields)
+# Baselines - regression anchors.  Update when new requests are added.
+# Format: protocol -> (min_requests, min_mutations, min_fuzzable_fields)
 # ---------------------------------------------------------------------------
 BENCHMARKS = {
     # P0 Critical ICS
@@ -369,7 +369,7 @@ def test_no_dead_requests(protocol_name):
     metrics = _collect_metrics(session)
 
     dead = metrics["dead_non_baseline"]
-    # Allow up to 30% dead requests — some protocols use raw-byte
+    # Allow up to 30% dead requests - some protocols use raw-byte
     # requests where the entire PDU is Static (e.g., MMS ASN.1)
     max_dead = max(3, metrics["request_count"] * 3 // 10)
     assert len(dead) <= max_dead, (
@@ -387,7 +387,7 @@ def test_no_dead_requests(protocol_name):
 # This gate is a RATCHET: floors are seeded at each protocol's current
 # tagged ratio, so a change that drops a context tag fails here. Protocols
 # whose string fields are legitimately raw bytes (payload, numeric framing)
-# are simply not listed — the gate only guards protocols where a curated
+# are simply not listed - the gate only guards protocols where a curated
 # corpus is the right call. Raise a floor after tagging more fields; never
 # lower one without a documented reason.
 #
@@ -404,17 +404,17 @@ MIN_CONTEXT_RATIO = {
     # Big string-rich protocols tagged in WS2b: every string in a DNS
     # message is a name label, so dns defaults the whole module to
     # HOSTNAME (measured 1.00); dhcp tags its hostname/fqdn option fields.
-    "dns": 0.90,  # measured 1.00 — module-default HOSTNAME
-    "dhcp": 0.20,  # measured 0.23 — hostname/fqdn options -> HOSTNAME
-    "dhcpv6": 0.18,  # measured 0.20 — FQDN/domain-list -> HOSTNAME, interface/remote-id -> CREDENTIAL
-    "mdns": 0.55,  # measured 0.61 — QNAME label / service-name / SRV host -> HOSTNAME
-    "hl7": 0.35,  # measured 0.39 — MRN/routing/order identifier fields -> CREDENTIAL
-    "snmpv1": 0.60,  # measured 0.67 — community string -> CREDENTIAL
-    "snmpv3": 0.30,  # measured 0.35 — USM user name -> CREDENTIAL
-    "opcua": 0.55,  # measured 0.60 — EndpointUrl -> NETWORK_TARGET, server/product URIs -> HOSTNAME
-    "ethernetip": 0.18,  # measured 0.20 (default session) — CIP symbolic Tag_Name -> CREDENTIAL
+    "dns": 0.90,  # measured 1.00 - module-default HOSTNAME
+    "dhcp": 0.20,  # measured 0.23 - hostname/fqdn options -> HOSTNAME
+    "dhcpv6": 0.18,  # measured 0.20 - FQDN/domain-list -> HOSTNAME, interface/remote-id -> CREDENTIAL
+    "mdns": 0.55,  # measured 0.61 - QNAME label / service-name / SRV host -> HOSTNAME
+    "hl7": 0.35,  # measured 0.39 - MRN/routing/order identifier fields -> CREDENTIAL
+    "snmpv1": 0.60,  # measured 0.67 - community string -> CREDENTIAL
+    "snmpv3": 0.30,  # measured 0.35 - USM user name -> CREDENTIAL
+    "opcua": 0.55,  # measured 0.60 - EndpointUrl -> NETWORK_TARGET, server/product URIs -> HOSTNAME
+    "ethernetip": 0.18,  # measured 0.20 (default session) - CIP symbolic Tag_Name -> CREDENTIAL
     # Not gated by design: coap and http2 have zero taggable SmartString
-    # fields — their URI-Path / :path / :authority values are raw option
+    # fields - their URI-Path / :path / :authority values are raw option
     # bytes / HPACK-compressed Static, not SmartString, so there is nothing
     # to attach a context to without restructuring the packet. mdns A/AAAA
     # address RDATA (raw packed bytes) is a possible future IP_ADDRESS tag.
@@ -434,7 +434,7 @@ def test_context_tagged_string_ratio(protocol_name):
     floor = MIN_CONTEXT_RATIO[protocol_name]
     assert ratio >= floor, (
         f"{protocol_name}: {metrics['smart_tagged']}/{smart_total} SmartString fields "
-        f"context-tagged ({ratio:.0%}) < floor {floor:.0%} — a context= was dropped, "
+        f"context-tagged ({ratio:.0%}) < floor {floor:.0%} - a context= was dropped, "
         f"or new GENERIC string fields were added without a curated corpus"
     )
 

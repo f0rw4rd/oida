@@ -3,7 +3,7 @@
 """
 Servo-over-EtherCAT (SoE) Shared Data & Helpers
 
-Pure data module — no transport dependencies (no pysoem, no pyads).
+Pure data module - no transport dependencies (no pysoem, no pyads).
 Used by both the EtherCAT (pysoem) and ADS (pyads) scanners.
 
 License: AGPL-3.0-or-later
@@ -12,7 +12,7 @@ License: AGPL-3.0-or-later
 from typing import Dict
 
 # ---------------------------------------------------------------------------
-# SoE Element IDs — SERCOS III / ETG.1000
+# SoE Element IDs - SERCOS III / ETG.1000
 # ---------------------------------------------------------------------------
 
 SOE_ELEMENTS: Dict[int, str] = {
@@ -57,5 +57,5 @@ def encode_soe_offset(idn: int, element: int = 7, drive: int = 0) -> int:
     Offset: LOWORD=IDN, byte2=element_bitmask, byte3=drive.
     Element IDs 1-8 map to bitmask bits 0-7 (e.g., 7=Value -> 0x40, 8=Default -> 0x80).
     """
-    element_bitmask = 1 << (element - 1)  # element 7 (Value) → 0x40
+    element_bitmask = 1 << (element - 1)  # element 7 (Value) -> 0x40
     return (idn & 0xFFFF) | (element_bitmask << 16) | ((drive & 0xFF) << 24)

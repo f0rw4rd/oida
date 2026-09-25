@@ -52,6 +52,6 @@ def test_none_values_are_dropped():
 def test_no_key_stored_in_both_spellings():
     ns = argparse.Namespace(unit_id=1, read_class=2, max_depth=3)
     keys = list(_convert(ns).keys())
-    # No key appears with a hyphen — canonical underscore only, no duplicates.
+    # No key appears with a hyphen - canonical underscore only, no duplicates.
     assert all("-" not in k for k in keys)
     assert len(keys) == len(set(keys))

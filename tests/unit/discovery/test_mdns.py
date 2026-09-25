@@ -329,7 +329,7 @@ class TestMDNSServiceTypeCoverage:
     """Guard the OT-relevant service types browsed by the mDNS scanner.
 
     OPC UA discovery (FindServersOnNetwork / LDS-ME) rides mDNS via the
-    _opcua-tcp._tcp service type — confirm it stays in the browse list.
+    _opcua-tcp._tcp service type - confirm it stays in the browse list.
     """
 
     def test_opcua_and_ot_service_types_present(self):

@@ -177,7 +177,7 @@ class TestIEC104StateMachine:
 
     def test_reverse_and_teardown_edges_legal_under_enforce(self):
         """The STOPDT (DATA_TRANSFER->CONNECTED) and disconnect edges must be
-        permitted by can_transition() — i.e. modelled in the rule table — not
+        permitted by can_transition() - i.e. modelled in the rule table - not
         merely tolerated because allow_invalid_transitions is True. Regression
         for the missing IEC 104 transition table."""
         from oida.fuzz.protocols.iec104 import IEC104StateMachine

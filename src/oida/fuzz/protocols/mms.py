@@ -423,11 +423,11 @@ class MMSFuzzer(BaseFuzzer):
         """Establish MMS/OSI association on a temporary socket and build state machine.
 
         Performs the full two-step OSI handshake:
-        1. COTP Connection Request (CR) → Connection Confirm (CC)
-        2. MMS Initiate Request (via Session/Presentation/ACSE) → Initiate Response
+        1. COTP Connection Request (CR) -> Connection Confirm (CC)
+        2. MMS Initiate Request (via Session/Presentation/ACSE) -> Initiate Response
 
         Extracts negotiated parameters (max PDU size) from the server response
-        and defines states: CONNECTED → COTP_ESTABLISHED → MMS_ASSOCIATED.
+        and defines states: CONNECTED -> COTP_ESTABLISHED -> MMS_ASSOCIATED.
         """
         if not self.use_osi_stack:
             return
@@ -443,7 +443,7 @@ class MMSFuzzer(BaseFuzzer):
             sock.settimeout(10)
             sock.connect((target_ip, target_port))
 
-            # Step 1: COTP Connection Request → Connection Confirm
+            # Step 1: COTP Connection Request -> Connection Confirm
             builder = TPKTCOTPBuilder()
             cr_packet = builder.build_connection_request()
             sock.send(cr_packet)
@@ -463,7 +463,7 @@ class MMSFuzzer(BaseFuzzer):
             if not self.cotp_connection_established:
                 self.log.warning("[MMS] COTP handshake failed, skipping MMS association")
             else:
-                # Step 2: MMS Initiate Request → Initiate Response
+                # Step 2: MMS Initiate Request -> Initiate Response
                 mms_initiate = self._create_initiate_request()
                 full_packet = self.osi_stack.build_initiate_request(mms_initiate)
                 sock.send(full_packet)

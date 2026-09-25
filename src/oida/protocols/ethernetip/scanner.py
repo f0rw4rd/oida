@@ -465,7 +465,7 @@ class EtherNetIPScanner(
             return self._pycomm3_driver
 
         # Suppress pycomm3 internal ERROR logs (e.g., "get_plc_info failed").
-        # Stash the prior level so disconnect() can restore it — otherwise the
+        # Stash the prior level so disconnect() can restore it - otherwise the
         # entire host Python process is left with pycomm3 silenced.
         pycomm3_logger = logging.getLogger("pycomm3")
         self._pycomm3_log_level_prev = pycomm3_logger.level
@@ -620,7 +620,7 @@ class EtherNetIPScanner(
                 "device_ip": list_id_response.get("device_ip"),
             }
             # ListIdentity is a UDP discovery command defined by ODVA
-            # CIP Volume 2 to be unauthenticated — every EtherNet/IP device
+            # CIP Volume 2 to be unauthenticated - every EtherNet/IP device
             # MUST respond to it on port 44818. Treating that as a security
             # finding produced one bogus CRITICAL per scanned device.
 
@@ -836,17 +836,17 @@ class EtherNetIPScanner(
             if not getattr(self, "confirm", False):
                 self.logger.error(
                     "--write issues live Set_Attribute_Single writes to PLC "
-                    "attributes (may cause DoS) — requires --confirm"
+                    "attributes (may cause DoS) - requires --confirm"
                 )
             else:
                 results["write_test_results"] = self._test_write_access(results["attributes"])
 
         if self.fuzz and not self.read_only:
             # --fuzz writes random/edge-case values to writable attributes
-            # discovered by --write — destructive on a live device.
+            # discovered by --write - destructive on a live device.
             if not getattr(self, "confirm", False):
                 self.logger.error(
-                    "--fuzz writes mutating values to PLC attributes — requires --confirm"
+                    "--fuzz writes mutating values to PLC attributes - requires --confirm"
                 )
             elif results.get("write_test_results"):
                 results["fuzz_results"] = self._fuzz_attributes(
@@ -903,14 +903,14 @@ class EtherNetIPScanner(
                 results["attacks"]["crash_cpu"] = self._crash_cpu(host, port)
 
         if self.reset_ethernet:
-            # Ethernet/IP CIP service 0x05 (Reset) on the TCP/IP Object —
+            # Ethernet/IP CIP service 0x05 (Reset) on the TCP/IP Object -
             # at minimum drops the comms link, may factory-default. Same
             # destructive class as cpu_stop / crash_ethernet above; gate
             # consistently on --confirm.
             if not self.confirm:
                 self.logger.error("RESET ETHERNET requires --confirm flag")
                 self.logger.warning(
-                    "This will reset the device communications stack — use with extreme caution!"
+                    "This will reset the device communications stack - use with extreme caution!"
                 )
                 results["attacks"]["reset_ethernet"] = {"error": "Missing --confirm"}
             else:

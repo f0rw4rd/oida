@@ -56,7 +56,7 @@ class SecurityMixin:
             if "401" in error_str or "403" in error_str or "unauthorized" in error_str:
                 self.logger.success("  Anonymous access properly denied (401/403)")
             else:
-                # Not a clean auth rejection — the probe itself failed, so the
+                # Not a clean auth rejection - the probe itself failed, so the
                 # result is inconclusive, not "properly restricted".
                 auth_results["anonymous_access"] = "unknown"
                 self.logger.warning(f"  Anonymous access test inconclusive (probe error): {e}")
@@ -95,7 +95,7 @@ class SecurityMixin:
             if "401" in error_str or "403" in error_str or "unauthorized" in error_str:
                 self.logger.success("  Invalid token properly rejected (401/403)")
             else:
-                # Probe failed on something other than a clean auth rejection —
+                # Probe failed on something other than a clean auth rejection -
                 # inconclusive, not "properly rejected".
                 auth_results["invalid_token_rejected"] = "unknown"
                 self.logger.warning(f"  Invalid token test inconclusive (probe error): {e}")
@@ -160,7 +160,7 @@ class SecurityMixin:
         if not self.require_confirm(
             "--brute",
             detail="--brute / --default-creds runs OAuth2/Basic credential brute-force "
-            "(56+ token-endpoint requests per host) — requires --confirm",
+            "(56+ token-endpoint requests per host) - requires --confirm",
         ):
             return
         import requests
@@ -184,13 +184,13 @@ class SecurityMixin:
 
         # Baseline: if the endpoint serves data WITHOUT authentication, every
         # credential pair below would return 200 and be falsely reported as
-        # valid. Detect that first and skip the brute force — it's an
+        # valid. Detect that first and skip the brute force - it's an
         # anonymous-access finding, not a credentials finding.
         try:
             baseline = session.get(test_url, timeout=10)
             if baseline.status_code == 200:
                 self.logger.warning(
-                    "  Endpoint returns 200 without authentication — skipping brute force "
+                    "  Endpoint returns 200 without authentication - skipping brute force "
                     "(every credential would false-positive). This is anonymous access."
                 )
                 self.logger.security_finding(
@@ -360,7 +360,7 @@ class SecurityMixin:
                                 usernames.append(u)
                             if p not in passwords:
                                 passwords.append(p)
-                # Use basename only — full wordlist path can leak
+                # Use basename only - full wordlist path can leak
                 # engagement context (client name, operator filesystem).
                 from oida.utils.login_scanner import format_wordlist_source
 
@@ -391,7 +391,7 @@ class SecurityMixin:
         """Test OAuth2 resource owner password grant.
 
         Reuses the caller's brute-force session (single connection pool) instead
-        of building a fresh, never-closed requests.Session per credential pair —
+        of building a fresh, never-closed requests.Session per credential pair -
         which leaked one pooled session/socket set per attempt across a wordlist.
         Falls back to a throwaway session for standalone callers.
         """

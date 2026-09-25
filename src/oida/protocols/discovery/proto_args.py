@@ -1,7 +1,7 @@
 """
 Argument parser definition for unified network discovery protocol.
 
-Migrated to proto_args_factory in §3 sync — uses create_protocol_parser
+Migrated to proto_args_factory in §3 sync - uses create_protocol_parser
 for the boilerplate. Discovery has an optional `target` (nargs='?') so
 we can't use the standard add_target_argument helper.
 """
@@ -26,7 +26,7 @@ def proto_args(parser, parents):
         default=None,
         help=(
             "Network interface (Linux: eth0, enp0s3; "
-            r"Windows: 'Ethernet', 'Wi-Fi', or \Device\NPF_{GUID} — run Get-NetAdapter to list). "
+            r"Windows: 'Ethernet', 'Wi-Fi', or \Device\NPF_{GUID} - run Get-NetAdapter to list). "
             "Omit to auto-select."
         ),
     )

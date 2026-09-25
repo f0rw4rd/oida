@@ -8,10 +8,10 @@ All notable changes to OIDA are documented here. Format roughly follows
 
 ### Added
 
-- **`python services.py stale`** — read-only check for which mock images are
+- **`python services.py stale`** - read-only check for which mock images are
   outdated vs the registry, without building or pushing. `--local`, `-v`, `--json`.
   Exit codes: 0 current, 1 outdated, 2 could not verify.
-- **`scripts/release_check.sh` step 4** gates a release on it — fails on 1, skips
+- **`scripts/release_check.sh` step 4** gates a release on it - fails on 1, skips
   on 2. Runs before the integration tests, which now refuse to run when the mock
   images are outdated rather than certifying stale mocks. Steps 3-7 renumbered to
   4-8.
@@ -19,28 +19,28 @@ All notable changes to OIDA are documented here. Format roughly follows
   there is nothing to compare" from `UNPUBLISHED`, which now means "content-tagged,
   but not with this source". Decided per image by listing the repo's tags over the
   registry v2 API, so an image a past `push` tagged and that has since fallen behind
-  blocks a release even when every other image is untagged — previously it was
+  blocks a release even when every other image is untagged - previously it was
   indistinguishable from one that was never tagged, and the gate passed.
 
 ### Fixed
 
 - **`python services.py push` now repairs a stale `:latest`.** It skipped any image
-  whose content tag was published, which said nothing about where `:latest` — the tag
-  `up`/`pull` resolve — actually pointed, so a drifted tag was reported by `stale`
+  whose content tag was published, which said nothing about where `:latest` - the tag
+  `up`/`pull` resolve - actually pointed, so a drifted tag was reported by `stale`
   forever and only fixable with `--force`. Drift is now detected and the tag re-pointed
   with `buildx imagetools create`, copying the published manifest instead of rebuilding.
 - **`_registry_has` no longer treats an unreadable repository as an absent one.**
   ghcr answers a private repo and a nonexistent one identically (403 `DENIED`), so
-  probing is now tri-state and only `manifest unknown` proves absence — a missing
+  probing is now tri-state and only `manifest unknown` proves absence - a missing
   `docker login` can't fail a release.
 
-## 1.0.0 — 2026-09-23
+## 1.0.0 - 2026-09-23
 
 First stable release.
 
 ### Added
 
-- **`<host>:<port>` target shorthand, for every host-based protocol** — any
+- **`<host>:<port>` target shorthand, for every host-based protocol** - any
   target form may now carry a port (`10.0.0.5:5020`, `10.0.0.0/24:5020`,
   `192.168.1.1-254:5020`, `[2001:db8::1]:5020`, or per line in a target file),
   so `-p/--port` no longer has to be repeated, and hosts on different ports can
@@ -49,60 +49,60 @@ First stable release.
   pcap file paths, serial devices and interface targets (`can`, `goose`,
   `ethercat`, `discovery`, `profinet`) are left untouched. The splitter used by
   `oida fuzz` is now shared: `oida.targets.split_host_port()`.
-- **Fuzzer depth controls `--max-depth` / `--only-depth`** — cap a boofuzz run
+- **Fuzzer depth controls `--max-depth` / `--only-depth`** - cap a boofuzz run
   at depths 1..N, or fuzz only depth N so those cases go out from the first
   packet. Mutually exclusive. Replaces seek-by-test-case-index, which boofuzz
   cannot do without regenerating the whole lower-depth prefix.
-- **Six new passive PCAP listeners** — `selfm` (SEL Fast Message, flags Fast
+- **Six new passive PCAP listeners** - `selfm` (SEL Fast Message, flags Fast
   Operate breaker control), `egd` (GE EGD), `tte` (TTEthernet/AS6802), `rtps`
   (DDS participant discovery), `ieee1722` (AVTP/AVB) and `mqttsn`. Each ships a
   dissector-verified fixture under `tests/fixtures/pcap/<proto>/` plus a
   dedicated test file and PcapScanner end-to-end coverage.
-- **Modbus passive listener covers UDP and RTU** — `mbudp` and `mbrtu` join
+- **Modbus passive listener covers UDP and RTU** - `mbudp` and `mbrtu` join
   `mbtcp` on the same per-PDU path (each transport normalised to a synthetic
   header layer). `modbus_passive_data.protocol` reports `Modbus/TCP` | `/UDP` |
   `/RTU`.
-- **175 new tests** (13,250 → 13,425 passing): 28 pcap-listener test files,
-  false-positive coverage 6 → 16 protocols, `test_proto_args.py` for the six
+- **175 new tests** (13,250 -> 13,425 passing): 28 pcap-listener test files,
+  false-positive coverage 6 -> 16 protocols, `test_proto_args.py` for the six
   thinnest-tested protocols, and 23 ADS `--confirm` regression tests.
-- **§4.1 fuzzer optimizations — 26 items across 11 protocols**: DNP3 object
+- **§4.1 fuzzer optimizations - 26 items across 11 protocols**: DNP3 object
   sweep / IIN master / bad-CRC; ADS port enumeration, SumReadWrite, `ADSMonitor`;
   EtherNet/IP CIP class enumeration and Forward_Open RPI; IEC 104 reserved
   `TypeId` + `CommonAddress` sweep; MMS BER tag confusion; SNMPv3 Set/Trap/
   Inform/GetBulk + USM auth-param fuzzing; OPC UA `ExtensionObject TypeId`;
   HL7 MSH-12 sweep + Z-segment injection; MQTT Sparkplug B + reason codes;
   modbus ADU overflow capped at 4096.
-- **Wordlist path privacy** — `format_wordlist_source()` logs the basename only,
+- **Wordlist path privacy** - `format_wordlist_source()` logs the basename only,
   so engagement-sensitive paths stay out of screen output and JSON logs. Adopted
   by snap7, dicom, hart, and the snap7 brute-force mixin.
-- **ADS `--confirm` enforcement** — `validate_args()` refuses `--scan-coe`,
+- **ADS `--confirm` enforcement** - `validate_args()` refuses `--scan-coe`,
   `--write-coe`, `--add-route`, `--foe-write`, `--foe-delete`, `--write-symbol`,
   `--memory-write`, `--set-state`, `--fuzz`, `--fuzz-coe` without it. The help
   text already promised this; now it's a hard gate, matching dnp3 / ethercat.
-- **ADS listener `state_flags`** — per-bit decoding of the eight `ams.state_*`
+- **ADS listener `state_flags`** - per-bit decoding of the eight `ams.state_*`
   bits into `interaction.details["state_flags"]`.
-- **LDAP SASL/GSSAPI message recording** — Kerberos-bound sessions now emit
+- **LDAP SASL/GSSAPI message recording** - Kerberos-bound sessions now emit
   `SASL-Encrypted` interactions with `sasl_buffer_length` + `encryption`, instead
   of recording nothing.
-- **DECODE_AS scanner integration** — per-listener `tcp.port==X: dissector`
+- **DECODE_AS scanner integration** - per-listener `tcp.port==X: dissector`
   hints are now actually applied. `ajp`, `rmi` and `rsync` matched nothing
   before this.
-- **`get_local_ip()`** in `utils.socket_helpers` — replaces three copies of the
+- **`get_local_ip()`** in `utils.socket_helpers` - replaces three copies of the
   UDP-connect trick. BACnet no longer connects to `8.8.8.8` to find the local IP.
-- **`Crash.crash_hash`** + BLAKE2b signatures — fuzzer crash dedup at triage
+- **`Crash.crash_hash`** + BLAKE2b signatures - fuzzer crash dedup at triage
   time via `GROUP BY crash_hash`.
-- **CI matrix** — Python 3.10, 3.11 and 3.12 (was 3.12 only).
+- **CI matrix** - Python 3.10, 3.11 and 3.12 (was 3.12 only).
 - **Brotli, docker, defusedxml** added to `[dev]` so the matrix stops silently
   skipping.
 - **`oida snap7`** is the canonical Siemens S7 subcommand; `oida s7` is an alias.
-- **Community files for 1.0** — `SECURITY.md`, `CODE_OF_CONDUCT.md`,
+- **Community files for 1.0** - `SECURITY.md`, `CODE_OF_CONDUCT.md`,
   `.github/ISSUE_TEMPLATE/` and `.github/PULL_REQUEST_TEMPLATE.md`. Private
   disclosure goes through https://getoida.dev/contact.
-- **Real-coverage scaffolds** — `tests/coverage/fuzz/test_cve_replication.py`
+- **Real-coverage scaffolds** - `tests/coverage/fuzz/test_cve_replication.py`
   and `tests/coverage/fidelity/test_conpot_diff.py` (axes 2 and 3, see
   `tests/coverage/README.md`). Per-CVE driver and Conpot diff
   classification land post-1.0.
-- **`.github/workflows/coverage-nightly.yml`** — nightly run of all three
+- **`.github/workflows/coverage-nightly.yml`** - nightly run of all three
   coverage axes against the full mock stack; publishes JUnit + JSON artifacts
   and a dashboard to the `coverage-dashboard` orphan branch.
 
@@ -123,7 +123,7 @@ First stable release.
 - **Usage text advertises the `<host>:<port>` shorthand everywhere.** The
   module `--help` examples and the `oida` no-args banner now show a `host:port`
   target, and the six protocols that override `--port` help (ads, coap, dicom,
-  mms, mqtt, ocpp) append "a port in the target wins" like the default help —
+  mms, mqtt, ocpp) append "a port in the target wins" like the default help -
   previously only the shared target/port help mentioned the shorthand.
 - **OCPP wss:// default-port resolution uses the explicit-port signal.** A
   `wss://host/CP` target with no port now bumps to 443 based on whether `-p`
@@ -139,7 +139,7 @@ First stable release.
   uses its own per-target port regardless).
 - **Argument dicts stop storing every key twice.** `_convert_args_to_dict` used
   to dual-write each flag under both its underscore (`unit_id`) and hyphen
-  (`unit-id`) spelling so legacy scanners reading the CLI spelling would hit —
+  (`unit-id`) spelling so legacy scanners reading the CLI spelling would hit -
   doubling the dict and letting a single-spelling write desync the two. It now
   returns a normalizing `ArgsDict` (`oida.utils.args_dict`) that canonicalizes
   `-`↔`_` to one slot on every read/write; both spellings still resolve, so no
@@ -149,26 +149,26 @@ First stable release.
 - **`services.py` is fully data-driven from compose labels.** The hardcoded
   `PROTO_SPECS` table and the 14 `up-<proto>` subcommands are gone; metadata is
   read live from `oida.*` labels. `up <group>` now resolves members across
-  *both* compose files and auto-selects each member's `vuln-*`/profile —
+  *both* compose files and auto-selects each member's `vuln-*`/profile -
   previously CVE members were invisible and CVE-only groups unreachable. New
   `groups` command; docker pull progress shows by default (`--quiet-pull` to
   suppress). Use `up <group>` or `up-cve <proto>`.
 - **`NetworkConnection.__init__`** auto-calls `proto_logger()` before
   `proto_flow()`; the 26 redundant subclass calls were stripped.
-- **ASTM default port `1394` → `12000`.** The old default misread the ASTM
+- **ASTM default port `1394` -> `12000`.** The old default misread the ASTM
   "E1394" standard name (IEEE-1394 is FireWire). Vendors also use 5000/6000/9100
-  — override with `--port`.
-- **`oida` no-args banner** lists all 26 protocols (was 19 — missing CAN, CoAP,
+  - override with `--port`.
+- **`oida` no-args banner** lists all 26 protocols (was 19 - missing CAN, CoAP,
   FHIR, GOOSE, OCPP, PCAP, SNMP).
 - **No more doubled success banners** in `ethernetip`, `mqtt`, `mms`, `can`:
-  pycomm3 "Connected via …" downgraded to debug; MQTT only banners on real
+  pycomm3 "Connected via ..." downgraded to debug; MQTT only banners on real
   success (was also firing on auth failure); MMS and CAN drop repeated
   host/channel lines.
 - **iec104 CLI** no longer shadows the main parser's `--verbose`/`--debug`/
   `--output`/`--format`; keeps only `--full-width` and `--json-log`.
 - **`oida fuzz`** no longer redefines `-v/--verbose` as `store_true` against the
   main parser's `count`.
-- **`MANIFEST.in`** rewritten — referenced pre-rename `msf_ics/` paths, so
+- **`MANIFEST.in`** rewritten - referenced pre-rename `msf_ics/` paths, so
   sdists shipped with no data files.
 - **`package-data`** now includes `protocols/hart/data/*.json` and
   `protocols/opcua/data/*.txt`, which would not have shipped in wheels.
@@ -176,7 +176,7 @@ First stable release.
 ### Fixed
 
 - **Fuzzer: protocol custom monitors silently evicted CLI monitor extras.**
-  `BaseFuzzer.__init__` built the monitor set in two steps — `_setup_monitor()`
+  `BaseFuzzer.__init__` built the monitor set in two steps - `_setup_monitor()`
   assembled the protocol defaults plus the CLI-requested extras
   (`--script-monitor`, `--valid-case`, `--agent-monitor`), then, when the user
   hadn't passed `-M`/`--monitors`, a protocol's `setup_custom_monitors()` hook
@@ -189,18 +189,18 @@ First stable release.
 - **CI unit lane no longer dies on a missing `tshark`.**
   `tests/unit/fuzz/test_tshark_validation.py` runs fuzzer baseline payloads
   through real Wireshark dissectors, but it lived outside the `tests/unit/pcap`
-  path the workflows excluded — and `tests/service_gate.py` turns a missing
+  path the workflows excluded - and `tests/service_gate.py` turns a missing
   dependency into a hard failure, so the whole lane failed at collection on a
-  runner without tshark. It is now excluded from `ci.yml` → `test` and
-  `pr.yml` → `unit`, and runs in `ci.yml` → `pcap` alongside the other
+  runner without tshark. It is now excluded from `ci.yml` -> `test` and
+  `pr.yml` -> `unit`, and runs in `ci.yml` -> `pcap` alongside the other
   dissector tests, where tshark is installed and pinned.
 - **Twelve correctness bugs from the repo-wide bug-hunt** (each with a
   fail-before/pass-after regression test):
   - SMTP: CRAM-MD5 credentials were never harvested (client base64 line
-    carried no tshark tags, so the regex never saw it — now recovered from
+    carried no tshark tags, so the regex never saw it - now recovered from
     the raw payload).
   - X11: MIT-MAGIC-COOKIE-1 stored as U+FFFD mojibake (pyshark decodes
-    binary with `errors=replace`) — true bytes now carved from the payload.
+    binary with `errors=replace`) - true bytes now carved from the payload.
   - Telnet: failed-login credential dropped when the failure banner and
     next prompt coalesce into one TCP segment (common for real telnetd).
   - C12.22: passwords travel on SECURITY (0x51) but capture was gated to
@@ -221,7 +221,7 @@ First stable release.
     class as the two earlier wordlist fixes).
   - KNX: a truncated DIB raised into the catch-all and silently dropped a
     real device; bounds-checked now.
-- **`check-secrets` hook: password pattern bridged newlines** — a comment
+- **`check-secrets` hook: password pattern bridged newlines** - a comment
   mentioning `("password:")` matched an unrelated quoted string lines later,
   false-positiving on committed code. Match stays on one line now; the
   `SCREAMING_CASE = "snake_case"` enum idiom is exempt.
@@ -248,36 +248,36 @@ First stable release.
 - **Global `-v` no longer dropped before `serial`.** `serial list`/`detect`
   re-declared `-v` with a concrete default, clobbering `oida -v serial list`;
   they now use `argparse.SUPPRESS` like `fuzz`.
-- **DNP3 control ops actually require `--confirm`** — `--bo-direct`,
+- **DNP3 control ops actually require `--confirm`** - `--bo-direct`,
   `--cold-restart`, `--write-file`, `--stop-app`, `--freeze-immediate`,
   `--assign-class` and friends promised it in help text but never enforced it.
   3 regression tests.
-- **EtherCAT `--op-state` / `--boot-state` require `--confirm`** — they drive
+- **EtherCAT `--op-state` / `--boot-state` require `--confirm`** - they drive
   slaves into OPERATIONAL (energising outputs) or BOOTSTRAP (firmware flash).
   The rest of EtherCAT's writes were already gated.
-- **SSDP/UPnP `defusedxml` is a hard dependency** — the stdlib `xml.etree`
+- **SSDP/UPnP `defusedxml` is a hard dependency** - the stdlib `xml.etree`
   fallback was an XXE / XML-bomb surface on attacker-controlled device
   descriptions.
 - **SNMPv3 short passphrases are refused** with a clear error instead of being
   NUL-padded into a key that could never match the device (RFC 3414 §11.2
   mandates ≥8 octets); it surfaced as "no response".
-- **HL7 MLLP recv loops bounded at 16 MiB** — a peer that never sends
+- **HL7 MLLP recv loops bounded at 16 MiB** - a peer that never sends
   `MLLP_END` could OOM the scanner.
-- **EtherNet/IP restores the `pycomm3` logger level** — `connect()` set it to
+- **EtherNet/IP restores the `pycomm3` logger level** - `connect()` set it to
   CRITICAL permanently and the rest of the process inherited the silence.
 - **`NetworkConnection.__init__` no longer mutates the caller's Namespace** when
   applying `default_port`, so ports stop leaking between protocols in
   cross-protocol dispatch.
 - **`BaseScanner.export_results()`** was calling `export_data()` with the wrong
   signature entirely; it now serialises the result dict as JSON (csv/xml aren't
-  meaningful for heterogeneous Layer-1 results — a warning is emitted).
-- **`load_config_file`** no longer raises `NameError` when PyYAML is missing —
+  meaningful for heterogeneous Layer-1 results - a warning is emitted).
+- **`load_config_file`** no longer raises `NameError` when PyYAML is missing -
   the `except` clause referenced `yaml` unconditionally.
 - **iec104 listener direction** no longer hardcodes port 2404; on non-standard
   ports (the repo's own mocks use 2405/2409) controlling/controlled were
   flipped, pointing write alerts at the wrong side.
 - **modbus and mms listener direction** gain a "lower port wins" fallback when
-  neither side is on 502 / 102 — common for gateways, security devices and
+  neither side is on 502 / 102 - common for gateways, security devices and
   substations on 10102/10106/10108. Applied to the MBAP-only keepalive path too.
 - **BFD and RIP listeners** now pass `src_port`/`dst_port` to
   `_record_interaction()` (missed by commit `cf7c272a`).
@@ -287,27 +287,27 @@ First stable release.
   `--local-netid`, not `192.168.1.100` (a lab IP that collided with real
   devices).
 - **86 truncated debug strings** rewritten with real context (`f"Failed to get
-  s: {e}"` — `s` was the variable name — became `f"Failed to parse frame_type
+  s: {e}"` - `s` was the variable name - became `f"Failed to parse frame_type
   as int: {e}"` and so on).
-- **HART and HL7 optional imports are honest** — both modules now really load
+- **HART and HL7 optional imports are honest** - both modules now really load
   without their optional dep. HL7's `utils.py` had an unguarded
   `from hl7apy.core import Message`, so fuzzer paths importing utils hit a raw
   ImportError instead of the install hint.
-- **PIM listener handles Register messages** — encapsulated IPv6 headers made
+- **PIM listener handles Register messages** - encapsulated IPv6 headers made
   pyshark raise on nested-dict iteration; `get_ip_info` falls back to
   `_fields_dict`. Was 17/20 silent drops, now 20/20.
-- **BACnet over ARCNET** — `get_mac_info` synthesises `AR:NN` identifiers from
+- **BACnet over ARCNET** - `get_mac_info` synthesises `AR:NN` identifiers from
   8-bit node IDs when there's no eth layer. Was 0/564 interactions on
   `wireshark_bacnet_arcnet.cap`, now 564/564.
-- **Modbus listener tolerates misread `mbtcp.prot_id`** — pyshark's EK output
+- **Modbus listener tolerates misread `mbtcp.prot_id`** - pyshark's EK output
   mis-reads that byte on frames tshark can't classify, so the hard `!= 0` reject
   is now a soft signal. Was 12/17 dropped on `zeek_modbus_mixed_p502.pcap`, now
   17/17.
-- **Test-isolation pollution** — `tests/unit/knx/test_helpers.py` swapped
+- **Test-isolation pollution** - `tests/unit/knx/test_helpers.py` swapped
   `sys.modules['oida.utils.ics_logger']` for a `MagicMock` and never restored
   it, so every later `isinstance(x, ICSLogger)` raised `TypeError`. An autouse
   fixture now snapshots and restores the mutated entries.
-- **Fuzz DB performance** — bulk insert APIs collapse N fsyncs to 1; WAL +
+- **Fuzz DB performance** - bulk insert APIs collapse N fsyncs to 1; WAL +
   `synchronous=NORMAL` + 64 MB cache; `get_statistics()` down from 8 round-trips
   to one aggregate query; covering index on `(protocol, result, timestamp)`;
   `BigInteger` for unsigned CRC32; `crash_hash` surfaced in `get_crash()`;
@@ -316,33 +316,33 @@ First stable release.
 
 ### Removed
 
-- **Dead `SERIAL_PROTOCOLS` set** in `cli.py` — an empty set that gated a
+- **Dead `SERIAL_PROTOCOLS` set** in `cli.py` - an empty set that gated a
   serial-target branch, a `--list-ports` branch and an error message, all
   provably unreachable (serial devices go through the `oida serial`
   subcommand). Removed the set and its dead branches; `_resolve_targets` lost
   its unused `is_serial_protocol` parameter.
-- **`SQLiteDatabase`** (raw SQL backend) — `SQLAlchemyDatabase` is the single
+- **`SQLiteDatabase`** (raw SQL backend) - `SQLAlchemyDatabase` is the single
   canonical backend and `fuzz_cli.py` replay now uses it too; `MockDatabase`
   (moved to its own file) remains for tests. The two backends had drifting
   schemas.
-- **FHIR `--bulk-export`, `--bulk-export-type`** — the handler printed "not
+- **FHIR `--bulk-export`, `--bulk-export-type`** - the handler printed "not
   implemented" and exited. Use the FHIR `$export` operation directly until a
   real implementation lands.
-- **OPC UA fuzzer phantom `OPCUA_Query`** — advertised by `--list-requests`
+- **OPC UA fuzzer phantom `OPCUA_Query`** - advertised by `--list-requests`
   with no backing `Request` object.
-- **Repository slop** — ~76,000 lines / 275 files of AI scratch reports, stray
+- **Repository slop** - ~76,000 lines / 275 files of AI scratch reports, stray
   databases, dead modules, duplicate vendor maps, stale build scripts and a
   misformed root `.env`. Full list in commit `453a8f28`.
-- **Dead modules** — `port_aliases.py`, `modbus_device_db.py` (compat shim, no
+- **Dead modules** - `port_aliases.py`, `modbus_device_db.py` (compat shim, no
   callers), the never-raised `ICSPermissionError`, and the 615-line
   `knx_vendors` block in `utils/vendor_maps.py` (a stale HTML-encoded duplicate
   of `protocols/knx/data.py:VENDORS`).
-- **`requirements.in` / `requirements.txt`** — stale pip-compile outputs
+- **`requirements.in` / `requirements.txt`** - stale pip-compile outputs
   diverging from `pyproject.toml`.
-- **`setup.py`** — duplicate of `pyproject.toml` with stale pins.
-- **`justfile`** — superseded by `services.py` (commit `810367d4` added the
+- **`setup.py`** - duplicate of `pyproject.toml` with stale pins.
+- **`justfile`** - superseded by `services.py` (commit `810367d4` added the
   replacement but left the old file).
-- **`--format xml`** — it never matured past the "warns and falls back to
+- **`--format xml`** - it never matured past the "warns and falls back to
   JSON" state noted above; dropped entirely rather than shipped half-working.
   `--format` now accepts `json`, `csv`, `console`, or `all`.
 

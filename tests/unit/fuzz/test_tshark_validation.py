@@ -1,5 +1,5 @@
 """
-Tshark Dissector Validation — validates that baseline (non-mutated) fuzzer
+Tshark Dissector Validation - validates that baseline (non-mutated) fuzzer
 payloads are structurally correct by running them through Wireshark's protocol
 dissectors.
 
@@ -151,7 +151,7 @@ TSHARK_PROTOCOLS: Dict[str, dict] = {
         "transport": "tcp",
         "tshark_filter": "mms",
         "expected_layers": ["tpkt", "cotp"],
-        # MMS sits on COTP on TPKT — tshark may not decode down to MMS
+        # MMS sits on COTP on TPKT - tshark may not decode down to MMS
         # without a full association, but TPKT+COTP must be clean
         "decode_as": [],
     },
@@ -244,7 +244,7 @@ SKIP_INSTANTIATE = {
     "modbus_rtu",
 }
 
-# Protocols without a stock tshark dissector — skip them
+# Protocols without a stock tshark dissector - skip them
 NO_TSHARK_DISSECTOR = {
     "echo",
     "daytime",
@@ -263,7 +263,7 @@ TEXT_PROTOCOL_LENIENT = {"ftp", "smtp"}
 EXPERT_WARNING_OK = {"modbus", "opcua", "mms", "vnc"}
 
 # Protocols with known tshark dissector issues on specific builds.
-# (Empty: the DNP3 entry was removed once the real cause was found — the fuzzer
+# (Empty: the DNP3 entry was removed once the real cause was found - the fuzzer
 # emitted a data-link CRC that omitted the start bytes 0x0564, so Wireshark
 # rejected every frame as raw "data". Fixed in dnp3.py; the dissector decodes
 # the corrected frames fine, so this test now guards that the CRC stays valid.)
@@ -501,7 +501,7 @@ def test_tshark_dissector_validates_baseline(protocol_name, tmp_path, capsys):
     if not candidates:
         pytest.skip(f"{protocol_name}: no Request nodes found in session")
 
-    # 3. Test each candidate — at least ONE must pass
+    # 3. Test each candidate - at least ONE must pass
     results = []
     any_dissector_found = False
 
@@ -597,7 +597,7 @@ def test_tshark_dissector_validates_baseline(protocol_name, tmp_path, capsys):
 # ---------------------------------------------------------------------------
 
 # Request-name fragments that signal an INTENTIONALLY malformed / boundary /
-# attack payload — such requests are supposed to be rejected by a strict
+# attack payload - such requests are supposed to be rejected by a strict
 # dissector, so the all-requests validator skips them.
 _INTENTIONAL_MALFORMED_KEYWORDS = (
     "malform",
@@ -683,7 +683,7 @@ def _is_wellformed_request(protocol_name: str, req_name: str) -> bool:
 
 def _tshark_malformed(pcap_path: str, decode_as: List[str]) -> bool:
     """Run tshark over the FULL packet (no -J layer filter) and report whether
-    it flags a malformed packet — including expert-info malformed (e.g. iec104
+    it flags a malformed packet - including expert-info malformed (e.g. iec104
     'Invalid Apdulen') that the -J-filtered JSON in _run_tshark would hide."""
     cmd = [TSHARK_BIN, "-r", pcap_path, "-T", "json"]
     for da in decode_as:
@@ -703,7 +703,7 @@ def test_tshark_validates_all_wellformed_requests(protocol_name, tmp_path):
     """
     if protocol_name in _ALL_REQUESTS_RAW_EXCLUDE:
         pytest.skip(
-            f"{protocol_name}: L2/L3 framing fuzzer — requests carry arbitrary upper-layer "
+            f"{protocol_name}: L2/L3 framing fuzzer - requests carry arbitrary upper-layer "
             f"payloads / embedded packets below the layer it owns, so a no-malformed-anywhere "
             f"check doesn't apply (its baseline framing is still checked by the baseline test)"
         )
@@ -738,14 +738,14 @@ def test_tshark_validates_all_wellformed_requests(protocol_name, tmp_path):
 
     assert not malformed, (
         f"{protocol_name}: {len(malformed)} well-formed request(s) produce "
-        f"[Malformed Packet] in tshark — structural payload bugs: {malformed}"
+        f"[Malformed Packet] in tshark - structural payload bugs: {malformed}"
     )
 
 
 # ---------------------------------------------------------------------------
 # Render integrity: every request must serialize without raising.
 # A request that can't render is a fuzzer bug (e.g. a binary value handed to a
-# string primitive) — the fuzzer would crash trying to send it, so it must
+# string primitive) - the fuzzer would crash trying to send it, so it must
 # never be silently skipped.
 # ---------------------------------------------------------------------------
 
@@ -766,7 +766,7 @@ def test_all_requests_render_without_error(protocol_name):
 # ---------------------------------------------------------------------------
 # Bidirectional guard: requests on the intentional-malformed allowlist must
 # STAY malformed. If one becomes well-formed the attack/CVE payload has been
-# silently neutralized — remove it from _INTENTIONAL_MALFORMED (and validate it
+# silently neutralized - remove it from _INTENTIONAL_MALFORMED (and validate it
 # in the well-formed test instead).
 # ---------------------------------------------------------------------------
 
@@ -783,7 +783,7 @@ def test_intentional_malformed_stays_malformed(entry, tmp_path):
     _write_pcap(node.render(), cfg["port"], cfg["transport"], pcap_path)
     assert _tshark_malformed(pcap_path, cfg["decode_as"]), (
         f"{entry} is allowlisted as intentionally malformed but tshark now parses "
-        f"it cleanly — the attack/CVE payload was neutralized. Remove it from "
+        f"it cleanly - the attack/CVE payload was neutralized. Remove it from "
         f"_INTENTIONAL_MALFORMED and validate it via the well-formed test instead."
     )
 

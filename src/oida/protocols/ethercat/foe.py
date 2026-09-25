@@ -3,7 +3,7 @@
 """
 File-over-EtherCAT (FoE) Shared Data
 
-Pure data module — no transport dependencies (no pysoem, no pyads).
+Pure data module - no transport dependencies (no pysoem, no pyads).
 Used by both the EtherCAT (pysoem) and ADS (pyads) scanners.
 
 License: AGPL-3.0-or-later
@@ -12,7 +12,7 @@ License: AGPL-3.0-or-later
 from typing import List
 
 # ---------------------------------------------------------------------------
-# Common FoE filenames for probing — ETG.1000 / vendor-specific
+# Common FoE filenames for probing - ETG.1000 / vendor-specific
 # ---------------------------------------------------------------------------
 
 FOE_COMMON_FILENAMES: List[str] = [

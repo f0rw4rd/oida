@@ -103,7 +103,7 @@ def test_each_new_request_is_disableable(name):
 
 def test_property_length_lie_renders_max_varint_after_topic():
     """Default render carries the max property-length varint (0xff ff ff 7f)
-    directly after the topic — the coreMQTT OOB-read vector."""
+    directly after the topic - the coreMQTT OOB-read vector."""
     rendered = _render(_build(_make_config()), "MQTT_V5_Property_Length_Lie")
     # topic "test" immediately followed by the maximum 4-byte varint.
     assert b"\x00\x04test\xff\xff\xff\x7f" in rendered
@@ -111,6 +111,6 @@ def test_property_length_lie_renders_max_varint_after_topic():
 
 def test_property_malformed_renders_userprop_string_overread():
     """Default render carries a User-Property (0x26) whose name string-length
-    (0xffff) is far larger than the bytes present — the string over-read."""
+    (0xffff) is far larger than the bytes present - the string over-read."""
     rendered = _render(_build(_make_config()), "MQTT_V5_Property_Malformed")
     assert b"\x26\xff\xff" in rendered

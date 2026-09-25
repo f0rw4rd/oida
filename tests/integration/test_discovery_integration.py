@@ -27,7 +27,7 @@ Raw-socket gate: ``check_raw_socket_capability()`` in
 of every scan (passive AND active) and requires ``CAP_NET_RAW``/root. As a
 plain user every scan returns cleanly (returncode 0) but logs a
 ``protocol_error`` "Raw socket access required" and no real device data
-comes back — that is a legitimate, deterministic Category B assertion
+comes back - that is a legitimate, deterministic Category B assertion
 target. To exercise genuine scan data (device counts, pcap files,
 enrichment) this suite uses passwordless ``sudo`` (confirmed available in
 this environment) via ``cli_runner.run(..., use_sudo=True)``, always scoped

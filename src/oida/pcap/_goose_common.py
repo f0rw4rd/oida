@@ -5,10 +5,10 @@ GOOSE PDU and are decoded by the same tshark dissector fields. This module
 centralizes the two pieces of field-extraction logic that previously diverged
 per-file only in naming:
 
-1. ``collect_field_values()`` — pulls every instance of a PyShark field into a
+1. ``collect_field_values()`` - pulls every instance of a PyShark field into a
    values list, handling both EK mode (fields are Python lists) and XML mode
    (fields expose an ``.all_fields`` iterator).
-2. ``format_bool_display()`` — renders a GOOSE boolean field as ``"T"``/``"F"``.
+2. ``format_bool_display()`` - renders a GOOSE boolean field as ``"T"``/``"F"``.
 """
 
 from __future__ import annotations

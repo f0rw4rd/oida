@@ -214,8 +214,8 @@ class ControlMixin(_ScannerBase):
         generates an event.
 
         The opendnp3 binding's WriteDeadBands always emits Group 34 Variation 3
-        (float) on the wire — the C++ stack does not expose a per-variation
-        selector — so the deadband variation is fixed here.
+        (float) on the wire - the C++ stack does not expose a per-variation
+        selector - so the deadband variation is fixed here.
         """
         dnp3 = self._dnp3
 

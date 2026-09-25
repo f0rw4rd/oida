@@ -100,7 +100,7 @@ class AdvancedOpsMixin(_ScannerBase):
                     activate = sm_data[6]
 
                     # Decode SM type by position (SM0=mbx_out, SM1=mbx_in,
-                    # SM2=pdo_out, SM3=pdo_in) — positional heuristic per ETG.1000
+                    # SM2=pdo_out, SM3=pdo_in) - positional heuristic per ETG.1000
                     sm_types = {1: "mbx_out", 2: "mbx_in", 3: "pdo_out", 4: "pdo_in"}
                     sm_type = sm_types.get(sm + 1, f"type_{sm}")
 
@@ -187,8 +187,8 @@ class AdvancedOpsMixin(_ScannerBase):
 
             # Watchdog config
             # 0x0400 is the shared Watchdog Divider register (ET1100/ESC reg
-            # map; pysoem's ECT_REG_WD_DIV). 0x0420 is a different value — the
-            # Watchdog Time Process Data — and was previously misread here.
+            # map; pysoem's ECT_REG_WD_DIV). 0x0420 is a different value - the
+            # Watchdog Time Process Data - and was previously misread here.
             wd_div = read_reg(0x0400, 2)
             wd_value = _u16le(wd_div)
             if wd_value is not None:

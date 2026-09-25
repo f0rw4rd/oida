@@ -44,7 +44,7 @@ def registered_protocols(main_parser):
 # action type, and default=SUPPRESS so an absent flag after the subcommand does
 # not clobber a value parsed before it. A protocol re-adding one of these with a
 # different action type or a real default would reintroduce the old clobbering
-# bug — that is the regression these tests now guard against.
+# bug - that is the regression these tests now guard against.
 #
 # NOTE: Short flags like -o, -q, -t, -W are intentionally NOT mirrored, because
 # protocols legitimately reuse them for protocol-specific options (e.g. -o for
@@ -144,7 +144,7 @@ def test_consolidated_flags_mirrored_consistently(main_parser, proto):
         main_action = main_actions[flag]
         assert type(sub_action) is type(main_action), (
             f"{proto}: {flag} mirrored as {type(sub_action).__name__} but main parser "
-            f"uses {type(main_action).__name__} — action types must match"
+            f"uses {type(main_action).__name__} - action types must match"
         )
         assert sub_action.default is argparse.SUPPRESS, (
             f"{proto}: mirrored {flag} must default to argparse.SUPPRESS to avoid "
@@ -231,7 +231,7 @@ def _full_parser(monkeypatch, argv):
     """Build a parser with the invoked protocol FULLY registered.
 
     gen_cli_args() keys its parser-build mode off sys.argv (to keep startup
-    fast), so align sys.argv with the argv under test — otherwise the protocol
+    fast), so align sys.argv with the argv under test - otherwise the protocol
     is a lightweight stub that lacks its own flags. Skips if the protocol fell
     back to a stub anyway (optional dependency missing in this env).
     """
@@ -380,7 +380,7 @@ class TestRedactSensitiveArgs:
         from oida.cli import _redact_sensitive_args
 
         out = _redact_sensitive_args({"password": None, "host": "x"})
-        # None means user didn't supply the flag — keep as None for legibility
+        # None means user didn't supply the flag - keep as None for legibility
         assert out["password"] is None
         assert out["host"] == "x"
 

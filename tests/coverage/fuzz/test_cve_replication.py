@@ -9,8 +9,8 @@ target) rather than by *reach* (how many mutations they emit).
 Design:
 
 - **Case discovery is dynamic.** Cases are built at collection time from
-  the ``oida.*`` labels on ``docker/mocks/compose.cve.yml`` — the same
-  source of truth ``services.py`` uses — so the host port, CVE id, and
+  the ``oida.*`` labels on ``docker/mocks/compose.cve.yml`` - the same
+  source of truth ``services.py`` uses - so the host port, CVE id, and
   protocol never drift from the compose stack. There is no hand-kept
   container/port table to rot.
 
@@ -23,7 +23,7 @@ Design:
   ``VERIFIED_REPRODUCTIONS`` are asserted to crash. A pair earns its place
   there after a human confirms, with the mock up, that the fuzzer really
   reproduces the CVE in ``CASE_CAP`` cases. Everything else is recorded
-  without failing — an unproven pair is a data point, not a red build.
+  without failing - an unproven pair is a data point, not a red build.
 
 Marked ``cve_replication`` and ``slow`` so it stays out of the default
 unit/integration sweep. Run explicitly with::
@@ -50,12 +50,12 @@ import pytest
 COMPOSE_CVE = pathlib.Path(__file__).resolve().parents[3] / "docker" / "mocks" / "compose.cve.yml"
 
 # Default per-pair test-case budget. A bounded run: boofuzz stops at this
-# mutation index (there is no ``max_test_cases`` field — the cap is
+# mutation index (there is no ``max_test_cases`` field - the cap is
 # ``index_end``). Override for a deeper nightly sweep via the env var.
 CASE_CAP = int(os.environ.get("OIDA_CVE_CASE_CAP", "1500"))
 
 # oida.group values that don't map 1:1 onto a PROTOCOL_FUZZERS key.
-# (The SNMP mocks are one group; the fuzzer is versioned — v2c is the
+# (The SNMP mocks are one group; the fuzzer is versioned - v2c is the
 # most representative agent-side parser.)
 GROUP_TO_FUZZER = {
     "snmp": "snmpv2c",
@@ -88,20 +88,20 @@ UDP_FUZZERS = {
 # regression check, not a flakiness source.
 VERIFIED_REPRODUCTIONS: set[tuple[str, str]] = {
     # Verified 2026-08-01: the modbus fuzzer crashes the CVE-2024-10918
-    # mock (uModbus OOB read) within ~31 cases — 21 crash cases recorded
+    # mock (uModbus OOB read) within ~31 cases - 21 crash cases recorded
     # at a 40-case cap.
     ("modbus", "CVE-2024-10918"),
     # Verified 2026-08-01: the iec104 fuzzer crashes the lib60870 handleASDU
-    # null-deref mock (iec104-handleasdu-null, port 24042) — 1 crash recorded.
+    # null-deref mock (iec104-handleasdu-null, port 24042) - 1 crash recorded.
     ("iec104", "lib60870-handleASDU-nullderef"),
     # Verified 2026-08-01: the tftp fuzzer crashes atftpd CVE-2021-46671
-    # (options-parsing use-after-poison) — the crash fires during the TFTP
+    # (options-parsing use-after-poison) - the crash fires during the TFTP
     # read preflight probe (container exits with an ASan abort), caught by the
     # preflight-crash detection below.
     ("tftp", "CVE-2021-46671"),
     # Verified 2026-08-01: the dhcp fuzzer crashes dnsmasq CVE-2018-20679
     # (ASan DEADLYSIGNAL) during the DHCPDISCOVER preflight probe. Needed the
-    # container-liveness signal to detect — the UDP socket re-probe reads
+    # container-liveness signal to detect - the UDP socket re-probe reads
     # "still up" because docker-proxy holds the port after the mock dies.
     ("dhcp", "CVE-2018-20679"),
 }
@@ -201,9 +201,9 @@ def _udp_reachable(host: str, port: int, timeout: float = 1.0) -> bool:
     """Best-effort UDP liveness probe.
 
     A connected UDP socket to a *closed* local port surfaces the ICMP
-    port-unreachable as ``ConnectionRefusedError`` on the next recv — this
+    port-unreachable as ``ConnectionRefusedError`` on the next recv - this
     is reliable on localhost, which is where the mocks publish. A timeout
-    (no ICMP refusal) means "up but silent to a null probe" → treat as
+    (no ICMP refusal) means "up but silent to a null probe" -> treat as
     reachable so we still fuzz a live-but-quiet service. This keeps the
     offline sweep from running a full budget against a dead UDP port.
     """
@@ -222,7 +222,7 @@ def _udp_reachable(host: str, port: int, timeout: float = 1.0) -> bool:
     except ConnectionRefusedError:
         return False
     except OSError:
-        return True  # can't probe (e.g. no route) — let the fuzzer preflight decide
+        return True  # can't probe (e.g. no route) - let the fuzzer preflight decide
     finally:
         sock.close()
 
@@ -337,17 +337,17 @@ def _run_fuzzer_against(case: CVECase, host: str, db_stem: str) -> int:
     try:
         fuzzer.fuzz_all()  # non-interactive
     except ConnectionError as exc:
-        # Usually preflight (mock down) — but a hard crash mid-run can also
+        # Usually preflight (mock down) - but a hard crash mid-run can also
         # surface as a connection error. Read the DB before deciding.
         run_exc = exc
     except Exception as exc:  # noqa: BLE001
         # A fuzzer that crashes the target hard raises here ("target
-        # unresponsive after N recovery attempts") — the crash IS recorded
+        # unresponsive after N recovery attempts") - the crash IS recorded
         # in the DB, so this exception is a reproduction signal, not a bug.
         run_exc = exc
 
     # Read recorded crashes regardless of how fuzz_all() returned. A
-    # non-zero count means the fuzzer broke the target — return it even
+    # non-zero count means the fuzzer broke the target - return it even
     # when fuzz_all() raised, because the raise *is* the crash.
     crash_count = 0
     try:
@@ -360,7 +360,7 @@ def _run_fuzzer_against(case: CVECase, host: str, db_stem: str) -> int:
     if crash_count > 0:
         return crash_count
     if run_exc is not None:
-        raise run_exc  # no crash recorded → propagate for skip/error classification
+        raise run_exc  # no crash recorded -> propagate for skip/error classification
     return 0
 
 
@@ -369,7 +369,7 @@ def _run_fuzzer_against(case: CVECase, host: str, db_stem: str) -> int:
 # A bounded fuzz run legitimately outlives the repo's global 60s per-test
 # timeout (reconnect-per-case makes it ~1 case/sec against some mocks). The
 # global timeout would kill the run mid-flight BEFORE the scorecard record is
-# written — turning a real result into a silent "no record". Disable it here so
+# written - turning a real result into a silent "no record". Disable it here so
 # every pair always completes and records; the case budget (index_end) is the
 # real bound.
 @pytest.mark.timeout(0)
@@ -425,14 +425,14 @@ def test_fuzzer_triggers_cve(case: CVECase, tmp_path):
         # ``_run_fuzzer_against`` already returns a positive count for any crash
         # the fuzzer DB captured, so reaching here means fuzz_all() raised
         # WITHOUT a recorded crash. Two possibilities, disambiguated by the
-        # target's liveness — which the initial pre-probe confirmed was up:
-        #   * target now DOWN  → the fuzzer (often its very first preflight probe)
+        # target's liveness - which the initial pre-probe confirmed was up:
+        #   * target now DOWN  -> the fuzzer (often its very first preflight probe)
         #     crashed it before any case was DB-recorded. That IS a reproduction,
         #     not a skip. Observed: atftpd CVE-2021-46671, dnsmasq CVE-2018-20679
         #     both crash on the preflight probe.
-        #   * target still UP  → a flaky/over-strict preflight monitor or a real
-        #     harness error, not a target crash → skip honestly.
-        # Prefer container liveness (authoritative — a socket probe can't see a
+        #   * target still UP  -> a flaky/over-strict preflight monitor or a real
+        #     harness error, not a target crash -> skip honestly.
+        # Prefer container liveness (authoritative - a socket probe can't see a
         # crashed UDP mock behind docker-proxy, which keeps the host port bound);
         # fall back to the socket probe only when container state is unavailable.
         down = _container_down(case.container)
@@ -446,7 +446,7 @@ def test_fuzzer_triggers_cve(case: CVECase, tmp_path):
         else:
             if isinstance(exc, ConnectionError):
                 record["skipped"] = (
-                    f"preflight unreachable (target still up — monitor false-negative?): {exc}"
+                    f"preflight unreachable (target still up - monitor false-negative?): {exc}"
                 )
             else:
                 record["error"] = f"{type(exc).__name__}: {exc}"
@@ -458,6 +458,6 @@ def test_fuzzer_triggers_cve(case: CVECase, tmp_path):
     if (case.fuzzer, case.cve_id) in VERIFIED_REPRODUCTIONS:
         assert crash_count and crash_count >= 1, (
             f"{case.fuzzer} fuzzer did not trigger {case.cve_id} against "
-            f"{case.container} in {CASE_CAP} cases (this is a VERIFIED pair — "
+            f"{case.container} in {CASE_CAP} cases (this is a VERIFIED pair - "
             f"a regression, or the mock changed)"
         )

@@ -61,7 +61,7 @@ def strip(path: str, items, dry_run: bool) -> tuple[int, int]:
             None,
         )
         if node is None:
-            print(f"  !! {path}:{lineno} {name} not found at that line — skipped", file=sys.stderr)
+            print(f"  !! {path}:{lineno} {name} not found at that line - skipped", file=sys.stderr)
             continue
         start = node.lineno
         if node.decorator_list:

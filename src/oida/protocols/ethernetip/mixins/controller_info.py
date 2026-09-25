@@ -123,7 +123,7 @@ class ControllerInfoMixin(_ScannerBase):
                 plc_time_result = conn.get_plc_time()
                 if plc_time_result and not plc_time_result.error:
                     # pycomm3 returns .value as a dict: {'datetime', 'microseconds',
-                    # 'string'} — NOT a bare datetime. The old code called
+                    # 'string'} - NOT a bare datetime. The old code called
                     # .isoformat() on the dict, which raised AttributeError that the
                     # except below swallowed, so controller_time was always None.
                     value = plc_time_result.value
@@ -530,7 +530,7 @@ class ControllerInfoMixin(_ScannerBase):
             tags = conn.get_tag_list()
             tag_list = []
             for t in tags:
-                # pycomm3 get_tag_list() returns List[dict], not objects — the
+                # pycomm3 get_tag_list() returns List[dict], not objects - the
                 # old attribute access (t.tag_name) raised AttributeError on the
                 # first entry, swallowed below, so this always returned [].
                 tag_info = {

@@ -2,7 +2,7 @@
 
 Both the Layer-2 ``connection`` base (``oida.connection``) and the Layer-1
 ``BaseScanner`` base (``oida.utils.base_scanner``) mix this in, so *every*
-scanner — CLI-dispatched or used as a library — reaches for the same
+scanner - CLI-dispatched or used as a library - reaches for the same
 ``require_confirm()`` idiom before actuating a dangerous action.
 
 The framework adds ``--confirm`` and the per-protocol dangerous flags centrally
@@ -29,7 +29,7 @@ class ConfirmGateMixin:
         """Read the ``confirm`` flag regardless of how ``args`` is shaped.
 
         The CLI passes an argparse ``Namespace`` and Layer-1 scanners may hold
-        the dash-normalizing ``_ArgsBridge`` — both support attribute access, so
+        the dash-normalizing ``_ArgsBridge`` - both support attribute access, so
         that is the primary path. A plain ``dict`` (Layer-1 library usage) is
         read via ``.get``. Attribute access is tried first so an object that
         happens to expose a ``.get`` (e.g. a test ``MagicMock``) still reports
@@ -50,8 +50,8 @@ class ConfirmGateMixin:
             if not self.require_confirm("--write-value"):
                 return
 
-        When the default failure line is not specific enough — e.g. the action
-        needs to spell out exactly which writes it can emit — pass ``detail``
+        When the default failure line is not specific enough - e.g. the action
+        needs to spell out exactly which writes it can emit - pass ``detail``
         with the full message to log instead::
 
             if not self.require_confirm(

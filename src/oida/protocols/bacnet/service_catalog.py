@@ -1,4 +1,4 @@
-"""BACnet service catalog — single source of truth for service capabilities.
+"""BACnet service catalog - single source of truth for service capabilities.
 
 Maps every BACnetServicesSupported bit to:
   * its canonical name (used to decode ``protocolServicesSupported``),

@@ -11,7 +11,7 @@ A symbol counts as REFERENCED if it appears anywhere in src/ or tests/ as:
   * a load of a bare name            (foo)
   * an attribute access              (x.foo)
   * a keyword argument name          (f(foo=...))
-  * a string literal                 ("foo") — covers getattr()/registry lookup
+  * a string literal                 ("foo") - covers getattr()/registry lookup
   * a base class or decorator
 ...anywhere other than its own definition line.
 
@@ -114,9 +114,9 @@ def framework_owned(path: str) -> set:
     """Names a framework may call even though nothing in this repo does.
 
     Two shapes, both verified present in this tree:
-      * a decorated def — the decorator registers it (`@event.listens_for`
+      * a decorated def - the decorator registers it (`@event.listens_for`
         on `_set_sqlite_pragma`, SQLAlchemy calls it on connect);
-      * a method of a class whose base is external — `MasterApp(dnp3.IMasterApplication)`
+      * a method of a class whose base is external - `MasterApp(dnp3.IMasterApplication)`
         has pydnp3 call `OnOpen`/`OnClose`/`OnTaskStart`, and asyncua drives
         `EventHandler.event_notification`.
 
@@ -147,7 +147,7 @@ def framework_owned(path: str) -> set:
     for node in ast.walk(tree):
         if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)) and node.decorator_list:
             # staticmethod/classmethod/property/abstractmethod are language
-            # constructs, not registrations — they imply no external caller.
+            # constructs, not registrations - they imply no external caller.
             if any(
                 ast.unparse(d).split("(")[0].split(".")[-1] not in LANGUAGE_DECORATORS
                 for d in node.decorator_list
@@ -157,7 +157,7 @@ def framework_owned(path: str) -> set:
             external_base = False
             for base in node.bases:
                 if isinstance(base, ast.Attribute):
-                    # dotted: lib.Interface — external unless rooted in a project import
+                    # dotted: lib.Interface - external unless rooted in a project import
                     root = base
                     while isinstance(root, ast.Attribute):
                         root = root.value

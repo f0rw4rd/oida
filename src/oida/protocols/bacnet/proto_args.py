@@ -31,7 +31,7 @@ Examples:
   oida bacnet 192.168.1.100 -r AI:1:pv        # Read analogInput:1:presentValue
   oida bacnet 192.168.1.100 --monitor         # Live value monitoring
 
-  # BACnet/SC (Secure Connect) — TLS 1.3 + X.509 over wss://
+  # BACnet/SC (Secure Connect) - TLS 1.3 + X.509 over wss://
   oida bacnet --sc wss://10.0.0.5:47800 --ca ca.pem --cert c.pem --key k.key
   oida bacnet --sc wss://10.0.0.5:47800 --ca ca.pem --cert c.pem --key k.key -e
   oida bacnet --sc wss://hub:443 --hub-uri wss://hub:443 --ca ca.pem --cert c.pem --key k.key
@@ -110,7 +110,7 @@ def register_sc_flags(p):
         "--direct",
         action="store_true",
         dest="sc_direct",
-        help="Direct-connect topology (dc.bsc.bacnet.org) — default",
+        help="Direct-connect topology (dc.bsc.bacnet.org) - default",
     )
     topo.add_argument(
         "--hub-uri",
@@ -311,7 +311,7 @@ def register_bacnet_flags(p):
     p.add_argument("--read-range-count", type=int, default=50, help=SUPPRESS)
     # --output / --format are declared on the MAIN parser (cli.py); the
     # state.py mixin reads them via the shared Namespace. We don't
-    # re-declare them here — the test_no_duplicate_output_verbose_flags
+    # re-declare them here - the test_no_duplicate_output_verbose_flags
     # contract enforces single-source-of-truth.
     # --use-bac0: opt-in back-compat for the BAC0 broadcast path. The
     # default is now bacpypes3 for every target (the BAC0/bacpypes3 dispatch

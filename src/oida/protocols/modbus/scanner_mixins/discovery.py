@@ -167,7 +167,7 @@ class ScannerDiscoveryMixin(_ScannerBase):
             if func_code in MUTATING_FCS and not confirm:
                 self.logger.debug(
                     f"Skipping function code {func_code} during enumeration: it sends a "
-                    "mutating write payload — requires --confirm"
+                    "mutating write payload - requires --confirm"
                 )
                 continue
             try:

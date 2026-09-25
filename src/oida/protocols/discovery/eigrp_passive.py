@@ -164,7 +164,7 @@ class EIGRPPassiveListener(PassiveListenerBase):
             opcode = data[1]
             _checksum = struct.unpack("!H", data[2:4])[0]  # noqa: F841
             flags = struct.unpack("!I", data[4:8])[0]
-            # bytes 8:16 carry seq/ack (unused — EIGRP reliability is not tracked)
+            # bytes 8:16 carry seq/ack (unused - EIGRP reliability is not tracked)
             as_number = struct.unpack("!I", data[16:20])[0]
 
             # Parse flags

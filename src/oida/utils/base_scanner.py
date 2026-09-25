@@ -35,7 +35,7 @@ def _normalize_args(args: Any) -> Any:
     also providing ``.get()``, ``[]``, and ``in`` support.
     """
     # Plain dicts satisfy the dict interface but not the dash/underscore
-    # normalization scanners rely on — wrap so "unit-id" and "unit_id" agree.
+    # normalization scanners rely on - wrap so "unit-id" and "unit_id" agree.
     if isinstance(args, dict):
         return args if isinstance(args, ArgsDict) else ArgsDict(args)
 
@@ -52,7 +52,7 @@ def _normalize_args(args: Any) -> Any:
         turns "--read-only" into the Namespace attribute `read_only`
         (underscores). Without normalizing here, every dashed dict-style
         read silently misses and falls back to its default, regardless of
-        what the user passed — normalize once, here, rather than at every
+        what the user passed - normalize once, here, rather than at every
         call site.
         """
 
@@ -88,7 +88,7 @@ def _normalize_args(args: Any) -> Any:
 
 
 class BaseScanner(ConfirmGateMixin, ABC):
-    """Internal implementation base for the ``*Scanner`` classes — **not** a
+    """Internal implementation base for the ``*Scanner`` classes - **not** a
     protocol dispatch entrypoint.
 
     OIDA has a single dispatch model: the Layer-2 ``connection`` subclass
@@ -100,7 +100,7 @@ class BaseScanner(ConfirmGateMixin, ABC):
     Treat this family as reusable library building blocks: subclass it to
     implement the six abstract methods below, then expose the protocol through a
     ``connection`` subclass. Do **not** register a bare ``*Scanner`` as a
-    protocol's dispatched class — the loader's ``*Scanner`` name fallback is
+    protocol's dispatched class - the loader's ``*Scanner`` name fallback is
     legacy/out-of-tree only and no in-tree protocol resolves through it.
     """
 
@@ -111,7 +111,7 @@ class BaseScanner(ConfirmGateMixin, ABC):
 
         self.args = _normalize_args(args)
         # Layer-1 collection envelope. A plain dict with the four known
-        # collections pre-seeded — NOT a defaultdict: arbitrary-key
+        # collections pre-seeded - NOT a defaultdict: arbitrary-key
         # autovivification silently turned typo'd reads into empty lists and
         # masked bugs, and it left the store a different container type than the
         # Layer-2 `connection.results` dict, so `get_results() -> ScanResult`
@@ -124,7 +124,7 @@ class BaseScanner(ConfirmGateMixin, ABC):
             "credentials": [],
         }
         self.start_time = datetime.now()
-        # Use self.args (the bridge), NOT the raw 'args' parameter — when
+        # Use self.args (the bridge), NOT the raw 'args' parameter - when
         # the caller passes a bare argparse.Namespace it has no .get()
         # method and these lookups raised AttributeError on every CLI
         # invocation that hit BaseScanner directly.
@@ -284,7 +284,7 @@ class BaseScanner(ConfirmGateMixin, ABC):
         """Export scan results in requested format.
 
         Layer-1 scanners produce a heterogeneous results dict (per-key collections
-        of devices/findings/etc), not a flat 2D table — so CSV/XML over the whole
+        of devices/findings/etc), not a flat 2D table - so CSV/XML over the whole
         structure is not meaningful. We write JSON for any non-console format
         request and let the caller post-process from there.
         """
@@ -384,7 +384,7 @@ class NetworkScanner(BaseScanner):
     """Internal implementation base for network (TCP/UDP) ``*Scanner`` classes.
 
     Like :class:`BaseScanner`, this is a library building block wrapped by a
-    Layer-2 ``NetworkConnection`` subclass — not a dispatch entrypoint.
+    Layer-2 ``NetworkConnection`` subclass - not a dispatch entrypoint.
     """
 
     def __init__(self, args: Any):
@@ -396,7 +396,7 @@ class SerialScanner(BaseScanner):
     """Internal implementation base for serial/bus-based ``*Scanner`` classes.
 
     Like :class:`BaseScanner`, this is a library building block wrapped by a
-    Layer-2 ``SerialConnection`` subclass — not a dispatch entrypoint.
+    Layer-2 ``SerialConnection`` subclass - not a dispatch entrypoint.
     """
 
     def __init__(self, args: Any):

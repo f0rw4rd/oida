@@ -5,7 +5,7 @@ and assert the operation refuses (logger.fail called with a --confirm
 hint). With confirm=True the gate must pass through.
 
 This complements tests/contracts/test_confirm_gate.py which is a static
-snapshot — here we exercise actual call paths.
+snapshot - here we exercise actual call paths.
 """
 
 import unittest
@@ -49,7 +49,7 @@ def assert_refusal(case, stub, flag):
 
     1. ``logger.fail`` was called with a --confirm hint (the operator has to be told).
     2. ``results["success"]`` is False. A bare ``logger.fail(); return`` leaves the
-       base-class default in place and reports the refusal as a *successful scan* —
+       base-class default in place and reports the refusal as a *successful scan* -
        the bug fixed four separate times across modbus/bacnet/opcua/snap7.
     3. ``results["data"]["refused"]`` names the reason, so output formatters can
        distinguish "we refused" from "we tried and it failed".
@@ -250,13 +250,13 @@ class TestEtherCATBootStateGate(unittest.TestCase):
 
 
 class TestIec104WriteGate(unittest.TestCase):
-    """IEC 104 write ops refuse without --confirm — exercised on the real call path.
+    """IEC 104 write ops refuse without --confirm - exercised on the real call path.
 
     ``CommandMixin._write_value`` is the single funnel for every IEC 104 write
     (C_SC / C_DC / C_RC / C_SE family). It must refuse when ``confirm_dangerous``
     is False: report failure, set ``result['success'] = False`` with a
     ``--confirm`` reason, and touch neither the client nor the connection. The old
-    test only asserted a comment string was present in scanner.py — it stayed green
+    test only asserted a comment string was present in scanner.py - it stayed green
     even if the guard body were deleted.
     """
 
@@ -303,20 +303,20 @@ class TestIec104WriteGate(unittest.TestCase):
 
 
 class TestDnp3ControlGate(unittest.TestCase):
-    """DNP3 control ops refuse without --confirm — exercised on the real gate.
+    """DNP3 control ops refuse without --confirm - exercised on the real gate.
 
     DNP3 gates every mutating operation centrally in
     ``dnp3.proto_args.validate_args``, which ``dnp3.proto_flow`` calls before any
     wire I/O. A control op (here ``--time-sync``) without ``--confirm`` must raise
     ``ConfigurationError``; with ``--confirm`` validation must pass. The old test
     only asserted the strings ``time_sync``/``--time-sync`` appeared in the source,
-    which proves nothing about the gate — it would pass even if the raise were
+    which proves nothing about the gate - it would pass even if the raise were
     removed.
     """
 
     def _ns(self, **overrides):
         # validate_args reads its inputs with getattr(..., default); a bare
-        # namespace with only the attrs we care about is enough — every other
+        # namespace with only the attrs we care about is enough - every other
         # control op reads as its falsy default.
         from types import SimpleNamespace
 
@@ -340,7 +340,7 @@ class TestDnp3ControlGate(unittest.TestCase):
         result = validate_args(self._ns(time_sync=True, confirm=True))
         self.assertIsNone(result)
 
-        # Sanity: the same op WITHOUT --outstation-addr must still be rejected —
+        # Sanity: the same op WITHOUT --outstation-addr must still be rejected -
         # proves --confirm doesn't bypass the other control-op precondition too.
         from oida.utils.exceptions import ConfigurationError
 

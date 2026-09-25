@@ -260,7 +260,7 @@ _IMPORT_OVERRIDES: Dict[str, str] = {
 
 # Extras that are NOT protocol directories.
 #  * "serial": a shared transport dependency (pyserial) consumed by IEC-101/104
-#    serial, DNP3 serial and the serial discovery CLI — no protocols/serial/.
+#    serial, DNP3 serial and the serial discovery CLI - no protocols/serial/.
 #  * "bacnetsc": BACnet/SC is no longer a standalone protocol; it folded into
 #    the bacnet command as the `--sc` transport mode. The extra is retained as
 #    the install target for the SC-only deps (websockets, cryptography) but has
@@ -310,7 +310,7 @@ def _build_protocol_dependencies() -> Dict[str, Dict[str, Any]]:
         if extra_name not in result:
             continue
 
-        # Already filled the primary dep for this extra — skip secondary deps
+        # Already filled the primary dep for this extra - skip secondary deps
         if "module" in result[extra_name]:
             continue
 

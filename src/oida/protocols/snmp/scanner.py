@@ -54,10 +54,10 @@ def _validate_snmp_key(key: str, key_label: str, min_len: int = 8) -> str:
     """Validate an SNMPv3 auth/priv key meets the RFC 3414 minimum length.
 
     The previous implementation NUL-padded short keys so pysnmp would accept
-    them locally — but the localized key would never match the device's own
+    them locally - but the localized key would never match the device's own
     computed key (which can't see those NULs), causing every authenticated
     request to fail with a misleading "no response" diagnostic. RFC 3414
-    section 11.2 mandates passphrases of at least 8 octets — refuse early
+    section 11.2 mandates passphrases of at least 8 octets - refuse early
     with a clear error rather than silently padding to nonsense.
     """
     if key and len(key) < min_len:
