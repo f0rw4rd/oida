@@ -81,4 +81,45 @@ echo "  Direct-connect WSS port (TCP): ${BACNET_SC_DIRECT_PORT}"
 echo "  Certs:     ${CERTDIR}"
 echo "==========================================="
 
-exec bacserv "${BACNET_DEVICE_INSTANCE}" "${BACNET_DEVICE_NAME}"
+# --- watchdog ---------------------------------------------------------------
+# bacserv's libwebsockets service thread can exit silently under concurrent
+# client connections (observed at >= 4 simultaneous SC clients against
+# bacnet-stack 1.4.4): the process keeps running but the WSS accept socket is
+# gone, so the container stays up and `restart: unless-stopped` never fires -
+# the healthcheck just goes unhealthy forever. The watchdog runs bacserv as a
+# child, probes the listener every 5s, and kills + restarts it when the port
+# stops accepting or the process dies. The probe is the same bare TCP connect
+# the compose healthcheck already does; 5s keeps recovery well inside a single
+# test's connect timeout. Certs are staged above and persist in BACNET_FILE_DIR,
+# so a restart is cheap. Set BACNET_SC_WATCHDOG=0 to run bacserv directly as
+# PID 1 (previous behaviour).
+if [ "${BACNET_SC_WATCHDOG:-1}" = "0" ]; then
+    exec bacserv "${BACNET_DEVICE_INSTANCE}" "${BACNET_DEVICE_NAME}"
+fi
+
+PORT="${BACNET_SC_DIRECT_PORT}"
+PROBE_INTERVAL=5
+child=""
+
+term() {
+    [ -n "${child}" ] && kill "${child}" 2>/dev/null
+    exit 0
+}
+trap term TERM INT
+
+while :; do
+    bacserv "${BACNET_DEVICE_INSTANCE}" "${BACNET_DEVICE_NAME}" &
+    child=$!
+    # Supervise: exit the inner loop if the process dies or the listener dies.
+    while kill -0 "${child}" 2>/dev/null; do
+        sleep "${PROBE_INTERVAL}"
+        if ! nc -z -w 2 localhost "${PORT}"; then
+            echo "[watchdog] WSS listener on ${PORT} stopped accepting; restarting bacserv" >&2
+            break
+        fi
+    done
+    kill "${child}" 2>/dev/null
+    wait "${child}" 2>/dev/null
+    child=""
+    sleep 1
+done
