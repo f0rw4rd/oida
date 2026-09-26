@@ -273,25 +273,48 @@ elif $FULL; then
         # while a real bug fails again. What needed pass 2 is reported, not
         # swallowed: that count is the flakiness signal now that CI no longer
         # runs this suite.
-        if python -m pytest tests/integration/ -n 8 --dist loadgroup -q; then
+        PASS1_LOG=$(mktemp)
+        if python -m pytest tests/integration/ -n 8 --dist loadgroup -q 2>&1 | tee "$PASS1_LOG"; then
             echo -e "${GREEN}OK${RESET}"
             record "Integration tests" "pass"
             INTEG_STATUS=pass
+            rm -f "$PASS1_LOG"
         else
             echo -e "${YELLOW}Parallel pass had failures - re-running just those, serially${RESET}"
-            RERUN_LOG=$(mktemp)
-            if python -m pytest tests/integration/ --lf -v 2>&1 | tee "$RERUN_LOG"; then
-                INTEG_FLAKES=$(sed -n 's/.*rerun previous \([0-9]*\) failure.*/\1/p' "$RERUN_LOG" | tail -1)
-                INTEG_FLAKES=${INTEG_FLAKES:-0}
-                echo -e "${YELLOW}OK on serial re-run - $INTEG_FLAKES test(s) flaked under parallelism${RESET}"
-                record "Integration tests ($INTEG_FLAKES flaked, green serially)" "pass"
-                INTEG_STATUS=flaky-pass
-            else
-                echo -e "${RED}Integration tests failed twice - this is a bug, not a flake${RESET}"
+            # Select pass 1's failures EXPLICITLY, from its own log. Do not use
+            # --lf: that reads .pytest_cache/v/cache/lastfailed, which every
+            # other pytest invocation shares, so the set it re-runs is not the
+            # set that just failed. Worse, a failure line carries the
+            # xdist_group display suffix (`::test@group`), which is not part of
+            # the nodeid - pytest cannot collect it, and under `if` the
+            # collection error reads as a pass. That let a run report
+            # "green serially" while re-running only a subset of pass 1's
+            # failures. Strip the suffix and pass nodeids.
+            mapfile -t RERUN_IDS < <(
+                sed 's/\x1b\[[0-9;]*m//g' "$PASS1_LOG" \
+                    | sed -n 's/^FAILED \([^ ]*::[^ ]*\).*/\1/p' \
+                    | sed 's/@[^@]*$//' \
+                    | sort -u
+            )
+            rm -f "$PASS1_LOG"
+            if [[ ${#RERUN_IDS[@]} -eq 0 ]]; then
+                echo -e "${RED}Parallel pass failed but no FAILED nodeid could be parsed - this is a bug in this script, not a flake${RESET}"
                 record "Integration tests" "fail"
                 INTEG_STATUS=fail
+            else
+                RERUN_LOG=$(mktemp)
+                if python -m pytest "${RERUN_IDS[@]}" -v 2>&1 | tee "$RERUN_LOG"; then
+                    INTEG_FLAKES=${#RERUN_IDS[@]}
+                    echo -e "${YELLOW}OK on serial re-run - $INTEG_FLAKES test(s) flaked under parallelism${RESET}"
+                    record "Integration tests ($INTEG_FLAKES flaked, green serially)" "pass"
+                    INTEG_STATUS=flaky-pass
+                else
+                    echo -e "${RED}Integration tests failed twice - this is a bug, not a flake${RESET}"
+                    record "Integration tests" "fail"
+                    INTEG_STATUS=fail
+                fi
+                rm -f "$RERUN_LOG"
             fi
-            rm -f "$RERUN_LOG"
         fi
     else
         echo -e "${YELLOW}Skipped - mock services not running (start with: just up)${RESET}"
