@@ -358,9 +358,12 @@ class can(ISOTPMixin, SerialConnection):
             except StopIteration:
                 # An iterator-backed bus is exhausted -- no more frames to read.
                 break
-            except (ValueError, TypeError, OSError) as exc:
+            except Exception as exc:
                 # udp_multicast datagrams can coalesce under load, yielding
                 # msgpack decode failures; skip the corrupt packet and continue.
+                # python-can raises these as CanOperationError, which is not an
+                # OSError/ValueError - a narrow tuple here let one coalesced
+                # datagram abort the whole scan.
                 self.logger.debug(f"Ignoring malformed CAN response: {exc}")
                 continue
             if resp is None:
@@ -1124,7 +1127,14 @@ class can(ISOTPMixin, SerialConnection):
                 if duration and (time.time() - start_time) >= duration:
                     break
 
-                msg = self.conn.recv(timeout=1.0)
+                try:
+                    msg = self.conn.recv(timeout=1.0)
+                except Exception as exc:
+                    # udp_multicast datagrams can coalesce under load, yielding
+                    # msgpack decode failures; skip the corrupt packet and keep
+                    # monitoring rather than aborting the capture.
+                    self.logger.debug(f"Ignoring malformed CAN frame: {exc}")
+                    continue
                 if msg is None:
                     continue
 

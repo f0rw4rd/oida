@@ -280,9 +280,14 @@ class TrafficMixin:
             timeout: Maximum wait time
 
         Returns:
-            CANMessage or None if timeout
+            CANMessage or None if timeout, or if the packet failed to decode
         """
-        msg = bus.recv(timeout=timeout)
+        try:
+            msg = bus.recv(timeout=timeout)
+        except Exception:
+            # udp_multicast datagrams can coalesce under load, yielding
+            # msgpack decode failures; treat the corrupt packet as an empty read.
+            return None
         if msg is None:
             return None
 

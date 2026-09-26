@@ -1180,6 +1180,52 @@ class TestHandleOBD2:
         inst._handle_obd2()
         assert inst.results["data"]["obd2"] == {}
 
+    def test_obd2_tolerates_coalesced_datagram(self, monkeypatch):
+        """A coalesced udp_multicast datagram must not abort the OBD-II probe.
+
+        python-can's udp_multicast backend unpacks every datagram as exactly one
+        msgpack blob, so two datagrams coalescing in one socket read makes it
+        raise ``CanOperationError`` ("could not unpack received message"). That
+        is not an OSError/ValueError, so a narrow except tuple let it escape and
+        kill the whole scan. Guard: a failing recv is skipped and the scan still
+        reports the frames that did decode.
+        """
+        self._msg_cls(monkeypatch)
+        inst = _make_conn()
+
+        can_exc = pytest.importorskip("can.exceptions", reason="python-can not installed")
+
+        resp = SimpleNamespace(
+            arbitration_id=0x7E8,
+            data=bytes([0x06, 0x41, 0x00, 0x80, 0x00, 0x00, 0x00]),
+        )
+        # One good frame, then the coalescing failure, then None to end the loop.
+        inst.conn.recv.side_effect = [
+            resp,
+            can_exc.CanOperationError("could not unpack received message"),
+        ] + [None] * 50
+        inst.isotp_recv = MagicMock(return_value=None)
+
+        inst._handle_obd2()
+
+        # The handler returned normally and kept the frame it did decode.
+        obd2 = inst.results["data"]["obd2"]
+        assert "0x7E8" in obd2
+        assert any(p["pid"] == "0x01" for p in obd2["0x7E8"]["supported_pids"])
+        inst.logger.fail.assert_not_called()
+
+    def test_monitor_tolerates_coalesced_datagram(self):
+        """The continuous monitor must survive the same transport hiccup."""
+        can_exc = pytest.importorskip("can.exceptions", reason="python-can not installed")
+        inst = _make_conn(duration=999, on_change=False, log_file=None)
+        inst.conn.recv.side_effect = [
+            can_exc.CanOperationError("could not unpack received message"),
+            KeyboardInterrupt(),
+        ]
+        inst._handle_monitor()
+        msgs = [c.args[0] for c in inst.logger.display.call_args_list]
+        assert any("Monitor stopped" in m for m in msgs)
+
 
 # ---------------------------------------------------------------------------
 # Continuous monitor (blocking loop bounded by duration)
