@@ -2145,7 +2145,13 @@ services:
       - "1394:5000"     # ASTM E1394 (LIS2-A2)
     environment:
       - TZ=UTC
-      - ANALYZER_TYPE=CHEMISTRY
+      # The upstream image is template-driven (2026-09 rebuild): ANALYZER_TYPE
+      # is no longer read, and its built-in port map points at genexpert_astm,
+      # whose profileRef requires ANALYZER_BRIDGE_PROFILES_DIR - without this
+      # override the server exits "Cannot resolve template genexpert_astm"
+      # and the container crash-loops. horiba_micros60 / horiba_pentra60 are
+      # the only ASTM templates that load standalone (no profileRef).
+      - PORT_TEMPLATES={"5000":"horiba_micros60"}
       - RESPONSE_DELAY_MS=100
     restart: unless-stopped
     networks:
@@ -2169,7 +2175,9 @@ services:
       - "1395:5000"     # ASTM on alternate port
     environment:
       - TZ=UTC
-      - ANALYZER_TYPE=HEMATOLOGY
+      # See astm-mock above: template override instead of the removed
+      # ANALYZER_TYPE env. Different analyzer so the two mocks are distinct.
+      - PORT_TEMPLATES={"5000":"horiba_pentra60"}
       - RESPONSE_DELAY_MS=100
     restart: unless-stopped
     networks:
