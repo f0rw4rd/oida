@@ -75,6 +75,68 @@ ALL_REQUESTS = [
     "MMS_Session_Mgmt",
 ]
 
+# =============================================================================
+# Bounded live runs
+# =============================================================================
+
+# A single request at depth 1 is thousands of mutations - MMS_Baseline alone walks
+# 4244 cases at roughly 5/s against the mock, i.e. ~15 minutes - so an unbounded
+# run can only ever end by being killed, and a killed run has no completion
+# summary to assert against. Bound it on both axes: --only-depth 1 drops the
+# deeper permutations, and the distribution shard tests every 200th case (21 of
+# the 4244) while still walking the full case list, which exits 0 in ~7s.
+#
+# MMS_OSI_Layer is the exception: its depth-1 index space runs into the
+# millions (the walk passes case index 7,000,000 within ~70s and keeps going),
+# so the shard divisor cannot bound the walk itself - the walker renders every
+# index even when it sends almost none. For that request the smoke form below
+# asserts startup output on a run the subprocess budget kills.
+MMS_SHARD = ("--only-depth", "1", "--machine", "200,1")
+
+# Request -> measured walk time under MMS_SHARD (seconds, Sept 2026, mock MMS):
+# 13 of 13 requests complete <= 13s except MMS_OSI_Layer, which does not
+# complete at any shard divisor. Requests absent from this set were not
+# measured; treat them as completing and let the assert catch a surprise.
+SMOKE_ONLY_REQUESTS = {"MMS_OSI_Layer"}
+
+# Subprocess budget. Must stay below the pytest timeout (60s, timeout_func_only)
+# or pytest kills the test before any assertion runs - see
+# tests/contracts/test_fuzz_cli_timeouts.py.
+CLI_TIMEOUT = 30
+
+
+def run_bounded_mms_fuzz(
+    host,
+    port,
+    session,
+    *extra,
+    seed="12345",
+    nolog=True,
+    timeout=CLI_TIMEOUT,
+):
+    """Run 'oida fuzz mms' against the mock with a bounded, completing campaign.
+
+    Returns the FuzzCLIResult; callers assert on it (completion asserts are
+    the caller's job because SMOKE_ONLY_REQUESTS runs must skip them).
+    """
+    args = ["mms", host, "-p", str(port), "-s", session, "--seed", seed]
+    if nolog:
+        args.append("--nolog")
+    args.extend(MMS_SHARD)
+    args.extend(extra)
+    return run_fuzz_cli(*args, timeout=timeout)
+
+
+def assert_completed(result, requests=""):
+    """Assert a bounded run finished inside its budget, unless smoke-only.
+
+    MMS_OSI_Layer cannot finish (see above); its tests assert startup output
+    on the partial capture instead.
+    """
+    if any(r in requests for r in SMOKE_ONLY_REQUESTS):
+        return
+    assert not result.timed_out, "bounded run did not complete"
+
 
 # =============================================================================
 # Fixtures
@@ -94,21 +156,16 @@ def populated_session(temp_session, mms_host, mms_port):
     """Create a session with some test cases for replay testing."""
     require_docker_mock("mms")
 
-    # Run a quick fuzz to populate the session
-    run_fuzz_cli(
-        "mms",
+    # Run a quick fuzz to populate the session.
+    # NOTE: nolog=False here - --nolog disables session-DB persistence, so no
+    # <session>.db would be written and the replay tests below would all skip.
+    run_bounded_mms_fuzz(
         mms_host,
-        "-p",
-        str(mms_port),
-        "-s",
+        mms_port,
         temp_session,
-        "--seed",
-        "12345",
-        # NOTE: do NOT pass --nolog here - it disables session-DB persistence,
-        # so no <session>.db is written and the replay tests below all skip.
         "-e",
         "MMS_Baseline",
-        timeout=60,
+        nolog=False,
     )
 
     # Session should be created
@@ -242,21 +299,15 @@ class TestMMSCLIStateMachine:
         """Verify state machine initialization message appears in output."""
         require_docker_mock("mms")
 
-        result = run_fuzz_cli(
-            "mms",
+        result = run_bounded_mms_fuzz(
             mms_host,
-            "-p",
-            str(mms_port),
-            "-s",
+            mms_port,
             temp_session,
-            "--seed",
-            "12345",
-            "--nolog",
             "-v",  # Verbose to see state machine output
             "-e",
             "MMS_Baseline",
-            timeout=60,
         )
+        assert_completed(result, "MMS_Baseline")
 
         output = result.output
 
@@ -269,20 +320,14 @@ class TestMMSCLIStateMachine:
         require_docker_mock("mms")
 
         # Run baseline request (requires CONNECTED)
-        result = run_fuzz_cli(
-            "mms",
+        result = run_bounded_mms_fuzz(
             mms_host,
-            "-p",
-            str(mms_port),
-            "-s",
+            mms_port,
             temp_session,
-            "--seed",
-            "12345",
-            "--nolog",
             "-e",
             "MMS_Baseline",
-            timeout=60,
         )
+        assert_completed(result, "MMS_Baseline")
 
         output = result.output
 
@@ -296,20 +341,14 @@ class TestMMSCLIStateMachine:
         require_docker_mock("mms")
 
         # Run invoke ID request (requires COTP_ESTABLISHED)
-        result = run_fuzz_cli(
-            "mms",
+        result = run_bounded_mms_fuzz(
             mms_host,
-            "-p",
-            str(mms_port),
-            "-s",
+            mms_port,
             temp_session,
-            "--seed",
-            "12345",
-            "--nolog",
             "-e",
             "MMS_Invoke_ID",
-            timeout=60,
         )
+        assert_completed(result, "MMS_Invoke_ID")
 
         output = result.output
 
@@ -322,20 +361,14 @@ class TestMMSCLIStateMachine:
         require_docker_mock("mms")
 
         # Run read operations (requires MMS_ASSOCIATED)
-        result = run_fuzz_cli(
-            "mms",
+        result = run_bounded_mms_fuzz(
             mms_host,
-            "-p",
-            str(mms_port),
-            "-s",
+            mms_port,
             temp_session,
-            "--seed",
-            "12345",
-            "--nolog",
             "-e",
             "MMS_Read_Operations",
-            timeout=60,
         )
+        assert_completed(result, "MMS_Read_Operations")
 
         output = result.output
 
@@ -356,22 +389,15 @@ class TestMMSCLIFuzzing:
         """Basic MMS fuzzing against mock server."""
         require_docker_mock("mms")
 
-        result = run_fuzz_cli(
-            "mms",
+        result = run_bounded_mms_fuzz(
             mms_host,
-            "-p",
-            str(mms_port),
-            "-s",
+            mms_port,
             temp_session,
-            "--seed",
-            "12345",
-            "--nolog",
             "-e",
             "MMS_Baseline",  # Limit to quick request
-            timeout=60,
         )
+        assert_completed(result, "MMS_Baseline")
 
-        # Timeout is OK if fuzzer started
         assert "Fuzzer: MMSFuzzer" in result.output
         assert "Seed: 12345" in result.output or "0x3039" in result.output
 
@@ -380,20 +406,14 @@ class TestMMSCLIFuzzing:
         """Fuzz with --enable to select specific requests."""
         require_docker_mock("mms")
 
-        result = run_fuzz_cli(
-            "mms",
+        result = run_bounded_mms_fuzz(
             mms_host,
-            "-p",
-            str(mms_port),
-            "-s",
+            mms_port,
             temp_session,
-            "--seed",
-            "12345",
-            "--nolog",
             "-e",
             "MMS_Baseline,MMS_Buffer_Overflow",
-            timeout=60,
         )
+        assert_completed(result, "MMS_Baseline,MMS_Buffer_Overflow")
 
         output = result.output
 
@@ -405,22 +425,16 @@ class TestMMSCLIFuzzing:
         """Protocol options via -O are applied."""
         require_docker_mock("mms")
 
-        result = run_fuzz_cli(
-            "mms",
+        result = run_bounded_mms_fuzz(
             mms_host,
-            "-p",
-            str(mms_port),
-            "-s",
+            mms_port,
             temp_session,
-            "--seed",
-            "12345",
-            "--nolog",
             "-O",
             "domain_name=TEST01",
             "-e",
             "MMS_Baseline",
-            timeout=60,
         )
+        assert_completed(result, "MMS_Baseline")
 
         output = result.output
 
@@ -438,19 +452,15 @@ class TestMMSCLIFuzzing:
         if os.path.exists(db_path):
             os.remove(db_path)
 
-        run_fuzz_cli(
-            "mms",
+        result = run_bounded_mms_fuzz(
             mms_host,
-            "-p",
-            str(mms_port),
-            "-s",
+            mms_port,
             temp_session,
-            "--seed",
-            "12345",
             "-e",
             "MMS_Baseline",
-            timeout=60,
+            nolog=False,
         )
+        assert_completed(result, "MMS_Baseline")
 
         # Session DB should be created
         assert os.path.exists(db_path), "Session database was not created"
@@ -466,20 +476,15 @@ class TestMMSCLIFuzzing:
 
             # Run twice with same seed - verify both start with same seed
             for session in [session1, session2]:
-                result = run_fuzz_cli(
-                    "mms",
+                result = run_bounded_mms_fuzz(
                     mms_host,
-                    "-p",
-                    str(mms_port),
-                    "-s",
+                    mms_port,
                     session,
-                    "--seed",
-                    "99999",
-                    "--nolog",
                     "-e",
                     "MMS_Baseline",
-                    timeout=45,
+                    seed="99999",
                 )
+                assert_completed(result, "MMS_Baseline")
                 # Fuzzer should start with correct seed
                 assert "Seed: 99999" in result.output or "0x1869F" in result.output
 
@@ -602,22 +607,16 @@ class TestMMSCLIStateRequests:
         with tempfile.TemporaryDirectory() as tmpdir:
             session = os.path.join(tmpdir, f"test_{request_name}")
 
-            result = run_fuzz_cli(
-                "mms",
+            result = run_bounded_mms_fuzz(
                 mms_host,
-                "-p",
-                str(mms_port),
-                "-s",
+                mms_port,
                 session,
-                "--seed",
-                "12345",
-                "--nolog",
                 "-e",
                 request_name,
-                timeout=45,
             )
+            assert_completed(result, request_name)
 
-            # Verify fuzzer started with the request (timeout is OK)
+            # Verify the fuzzer started with the request
             assert "Fuzzer:" in result.output, f"Fuzzer failed to start for {request_name}"
             assert f"Enabled: {request_name}" in result.output or request_name in result.output
 
@@ -630,22 +629,16 @@ class TestMMSCLIStateRequests:
         with tempfile.TemporaryDirectory() as tmpdir:
             session = os.path.join(tmpdir, f"test_{request_name}")
 
-            result = run_fuzz_cli(
-                "mms",
+            result = run_bounded_mms_fuzz(
                 mms_host,
-                "-p",
-                str(mms_port),
-                "-s",
+                mms_port,
                 session,
-                "--seed",
-                "12345",
-                "--nolog",
                 "-e",
                 request_name,
-                timeout=45,
             )
+            assert_completed(result, request_name)
 
-            # Verify fuzzer started with the request (timeout is OK)
+            # Verify the fuzzer started with the request
             assert "Fuzzer:" in result.output, f"Fuzzer failed to start for {request_name}"
             assert f"Enabled: {request_name}" in result.output or request_name in result.output
 
@@ -658,22 +651,16 @@ class TestMMSCLIStateRequests:
         with tempfile.TemporaryDirectory() as tmpdir:
             session = os.path.join(tmpdir, f"test_{request_name}")
 
-            result = run_fuzz_cli(
-                "mms",
+            result = run_bounded_mms_fuzz(
                 mms_host,
-                "-p",
-                str(mms_port),
-                "-s",
+                mms_port,
                 session,
-                "--seed",
-                "12345",
-                "--nolog",
                 "-e",
                 request_name,
-                timeout=45,
             )
+            assert_completed(result, request_name)
 
-            # Verify fuzzer started with the request (timeout is OK)
+            # Verify the fuzzer started with the request
             assert "Fuzzer:" in result.output, f"Fuzzer failed to start for {request_name}"
             assert f"Enabled: {request_name}" in result.output or request_name in result.output
 
@@ -695,23 +682,17 @@ class TestMMSCLIStateReachability:
         with tempfile.TemporaryDirectory() as tmpdir:
             session = os.path.join(tmpdir, "state_test")
 
-            result = run_fuzz_cli(
-                "mms",
+            result = run_bounded_mms_fuzz(
                 mms_host,
-                "-p",
-                str(mms_port),
-                "-s",
+                mms_port,
                 session,
-                "--seed",
-                "12345",
-                "--nolog",
                 "-v",  # Verbose
                 "-e",
                 "MMS_Baseline",  # Limit to quick test
-                timeout=45,
             )
+            assert_completed(result, "MMS_Baseline")
 
-            # Verify fuzzer ran (timeout is OK)
+            # Verify the fuzzer ran
             assert "Fuzzer:" in result.output
 
             # The highest state should be MMS_ASSOCIATED when connected to mock
@@ -728,20 +709,14 @@ class TestMMSCLIStateReachability:
         with tempfile.TemporaryDirectory() as tmpdir:
             session = os.path.join(tmpdir, "multi_state_test")
 
-            result = run_fuzz_cli(
-                "mms",
+            result = run_bounded_mms_fuzz(
                 mms_host,
-                "-p",
-                str(mms_port),
-                "-s",
+                mms_port,
                 session,
-                "--seed",
-                "12345",
-                "--nolog",
                 "-e",
                 requests,
-                timeout=90,
             )
+            assert_completed(result, requests)
 
             output = result.output
 
