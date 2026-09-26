@@ -30,7 +30,16 @@ from tests.service_gate import require_port, require_service
 
 from tests.integration.conftest import MOCK_HOST
 
-pytestmark = [pytest.mark.integration, pytest.mark.bacnetsc]
+# xdist_group: the bacserv BSC listener dies under >= 4 concurrent client
+# runs (libwebsockets service thread exits silently; the process and container
+# keep running, so nothing restarts it). Pinning this module to one worker
+# keeps its tests serial against the shared weak/secure mocks - the same
+# convention as the other connection-capped mocks in this suite.
+pytestmark = [
+    pytest.mark.integration,
+    pytest.mark.bacnetsc,
+    pytest.mark.xdist_group("bacnetsc_realstack"),
+]
 
 SECURE_PORT = 47830
 WEAK_PORT = 47831
