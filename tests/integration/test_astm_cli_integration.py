@@ -281,10 +281,7 @@ class TestAstmCliIntegration(BaseProtocolIntegrationTest):
         result = cli_runner.run(
             "astm", target, "--port", str(port), "--enum-patients", json_log=True
         )
-        assert result.success, result.combined_output
-        errors = result.scan_log.get_errors()
-        assert any("confirm" in str(e).lower() for e in errors), errors
-        assert "Traceback" not in result.combined_output
+        cli_runner.assert_confirm_refused(result, "--enum-patients")
 
     # ------------------------------------------------------------------
     # Patient / order / result record writes (Category B/A + confirm gate)
@@ -317,10 +314,7 @@ class TestAstmCliIntegration(BaseProtocolIntegrationTest):
         result = cli_runner.run(
             "astm", target, "--port", str(port), "--send-patient", json_log=True
         )
-        assert result.success, result.combined_output
-        errors = result.scan_log.get_errors()
-        assert any("confirm" in str(e).lower() for e in errors), errors
-        assert "Traceback" not in result.combined_output
+        cli_runner.assert_confirm_refused(result, "--send-patient")
 
     def test_send_order_maximal_flags(self, cli_runner, target, port):
         """Maximal --send-order invocation: every compatible order flag at once.
@@ -370,10 +364,7 @@ class TestAstmCliIntegration(BaseProtocolIntegrationTest):
 
     def test_send_order_without_confirm_refused(self, cli_runner, target, port):
         result = cli_runner.run("astm", target, "--port", str(port), "--send-order", json_log=True)
-        assert result.success, result.combined_output
-        errors = result.scan_log.get_errors()
-        assert any("confirm" in str(e).lower() for e in errors), errors
-        assert "Traceback" not in result.combined_output
+        cli_runner.assert_confirm_refused(result, "--send-order")
 
     def test_send_result_maximal_flags(self, cli_runner, target, port):
         """Maximal --send-result invocation: every compatible result flag."""
@@ -441,10 +432,7 @@ class TestAstmCliIntegration(BaseProtocolIntegrationTest):
 
     def test_send_result_without_confirm_refused(self, cli_runner, target, port):
         result = cli_runner.run("astm", target, "--port", str(port), "--send-result", json_log=True)
-        assert result.success, result.combined_output
-        errors = result.scan_log.get_errors()
-        assert any("confirm" in str(e).lower() for e in errors), errors
-        assert "Traceback" not in result.combined_output
+        cli_runner.assert_confirm_refused(result, "--send-result")
 
     # ------------------------------------------------------------------
     # Handshake identity options + protocol version (Category B)
@@ -514,10 +502,7 @@ class TestAstmCliIntegration(BaseProtocolIntegrationTest):
 
     def test_fuzz_without_confirm_refused(self, cli_runner, target, port):
         result = cli_runner.run("astm", target, "--port", str(port), "--fuzz", json_log=True)
-        assert result.success, result.combined_output
-        errors = result.scan_log.get_errors()
-        assert any("confirm" in str(e).lower() for e in errors), errors
-        assert "Traceback" not in result.combined_output
+        cli_runner.assert_confirm_refused(result, "--fuzz")
 
     # ------------------------------------------------------------------
     # Hostile / invalid-server catalogue

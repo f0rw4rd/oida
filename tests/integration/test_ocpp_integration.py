@@ -2674,9 +2674,8 @@ class TestOCPPFlagCoverageSecurityProbesAndCharging:
         assert result.returncode in [0, 1], (
             f"Security probes without --confirm failed (rc={result.returncode}): {result.stderr}"
         )
-        output = result.combined_output.lower()
-        assert "require --confirm" in output
-        assert "traceback" not in output
+        cli_runner.assert_confirm_refused(result)
+        assert "--test-config-write" in result.combined_output.lower()
 
     def test_cli_security_probes_maximal_with_confirm(self, cli_runner, ws_url):
         """Test the same maximal probe flag set with --confirm actually runs. [Category A]
@@ -2758,9 +2757,7 @@ class TestOCPPFlagCoverageSecurityProbesAndCharging:
         assert result.returncode in [0, 1], (
             f"Charging flow without --confirm failed (rc={result.returncode}): {result.stderr}"
         )
-        output = result.combined_output.lower()
-        assert "require --confirm" in output
-        assert "traceback" not in output
+        cli_runner.assert_confirm_refused(result)
 
     def test_cli_charging_flow_with_confirm(self, cli_runner, ws_url):
         """Test charging-flow flags run with --confirm. [Category A]

@@ -773,8 +773,7 @@ class TestCANCliIntegration:
             timeout=15,
             json_log=True,
         )
-        assert without.returncode == 0
-        assert any("confirm" in e.get("message", "").lower() for e in without.scan_log.get_errors())
+        cli_runner.assert_confirm_refused(without, "--uds-reset")
 
         confirmed = cli_runner.run(
             "can",
@@ -813,8 +812,7 @@ class TestCANCliIntegration:
             timeout=15,
             json_log=True,
         )
-        assert without.returncode == 0
-        assert any("confirm" in e.get("message", "").lower() for e in without.scan_log.get_errors())
+        cli_runner.assert_confirm_refused(without, "--xcp-memory-read")
 
         confirmed = cli_runner.run(
             "can",
@@ -857,7 +855,7 @@ class TestCANCliIntegration:
             timeout=15,
             json_log=True,
         )
-        assert any("confirm" in e.get("message", "").lower() for e in without.scan_log.get_errors())
+        cli_runner.assert_confirm_refused(without, "--send-file")
 
         confirmed = cli_runner.run(
             "can",
@@ -897,7 +895,7 @@ class TestCANCliIntegration:
             timeout=15,
             json_log=True,
         )
-        assert any("confirm" in e.get("message", "").lower() for e in without.scan_log.get_errors())
+        cli_runner.assert_confirm_refused(without, "--replay")
 
         confirmed = cli_runner.run(
             "can",
