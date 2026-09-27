@@ -510,28 +510,9 @@ jobs:
       - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
         with:
           persist-credentials: false
-
-      - name: Download pip dist (wheel + sdist)
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
-        with:
-          name: dist
-          path: assets/
-
-      - name: Download standalone binaries
-        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
-        with:
-          pattern: oida-*-x86_64  # the per-OS artifacts uploaded by the binaries job
-          merge-multiple: true
-          path: assets/
-
-      - name: Generate combined checksums
-        run: |
-          cd assets
-          # Drop the per-binary .sha256 sidecars so SHA256SUMS.txt lists only
-          # the actual distributable files (wheel, sdist, binary archives).
-          rm -f *.sha256
-          sha256sum * > SHA256SUMS.txt
-          echo "── release assets ──"; ls -lh
+          # git-cliff below needs the full history and all tags to find the
+          # previous release; the default shallow checkout does not have them.
+          fetch-depth: 0
 
       - name: Compute release metadata
         id: meta
@@ -556,6 +537,65 @@ jobs:
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
           fi
 
+      # NOT path: assets/ - the repo tracks a branding dir of that name, and
+      # download-artifact merges into an existing directory, which is how the
+      # brand icons ended up checksummed into SHA256SUMS.txt and uploaded as
+      # release assets on v1.0.1. release-assets/ exists only in CI.
+      - name: Download pip dist (wheel + sdist)
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
+        with:
+          name: dist
+          path: release-assets/
+
+      - name: Download standalone binaries
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
+        with:
+          pattern: oida-*-x86_64  # the per-OS artifacts uploaded by the binaries job
+          merge-multiple: true
+          path: release-assets/
+
+      - name: Generate combined checksums
+        run: |
+          cd release-assets
+          # Drop the per-binary .sha256 sidecars so SHA256SUMS.txt lists only
+          # the actual distributable files (wheel, sdist, binary archives).
+          rm -f *.sha256
+          sha256sum * > SHA256SUMS.txt
+          echo "── release assets ──"; ls -lh
+
+      # Release notes: git-cliff section for exactly this tag's commits.
+      # generate_release_notes only lists labeled PRs, which never covers
+      # direct pushes to main - the normal flow here - so the notes section
+      # came up empty on v1.0.1. The generated-notes section is still
+      # appended (generate_release_notes: true) for its contributor list.
+      - name: Generate release notes from git history
+        id: notes
+        run: |
+          tag="${{ steps.meta.outputs.tag_name }}"
+          if git rev-parse -q --verify "refs/tags/${tag}" >/dev/null 2>&1; then
+            # Tag-push path: the tag exists; cover exactly its commits.
+            prev="$(git describe --tags --abbrev=0 "${tag}^" 2>/dev/null || true)"
+            range_end="$tag"
+          else
+            # CI-driven path: the tag does not exist yet - softprops creates
+            # it on this SHA after this step. Range = last reachable tag..HEAD.
+            prev="$(git describe --tags --abbrev=0 HEAD 2>/dev/null || true)"
+            range_end="HEAD"
+          fi
+          if [ -n "$prev" ]; then
+            range="${prev}..${range_end}"
+          else
+            # First tag ever: everything reachable.
+            range="$range_end"
+          fi
+          echo "range=$range" >> "$GITHUB_OUTPUT"
+          # --tag satisfies the version template on the CI-driven path where
+          # the tag object does not exist yet; --strip footer drops the
+          # "do not edit" comment meant for CHANGELOG.md.
+          uvx git-cliff==2.14.2 --tag "$tag" \
+            --strip footer "$range" > release-notes.md
+          cat release-notes.md
+
       - name: Create GitHub Release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b  # v3.0.1
         with:
@@ -567,17 +607,6 @@ jobs:
           tag_name: ${{ steps.meta.outputs.tag_name }}
           target_commitish: ${{ github.sha }}
           name: "oida ${{ steps.meta.outputs.version }}${{ steps.meta.outputs.suffix }}"
-          body: |
-            This release carries the pip artifacts (wheel + sdist) and the
-            standalone binaries (Linux / Windows x86_64).
-
-            Install the wheel directly:
-
-            ```
-            pip install oida_ics-*.whl
-            ```
-
-            ...or download a standalone binary archive (no Python required).
-            Verify downloads against `SHA256SUMS.txt`.
+          body_path: release-notes.md
           files: |
-            assets/*
+            release-assets/*
