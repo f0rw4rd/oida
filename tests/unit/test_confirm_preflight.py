@@ -50,6 +50,25 @@ class TestConfirmPreflight:
         assert rc == 1
         assert "--enum-v3 requires --confirm" in capsys.readouterr().err
 
+    def test_snmp_enum_v3_single_credential_not_refused(self, monkeypatch, capsys):
+        """-E USER -A pass is a targeted test, exempt like scanner.py's gate."""
+        # scan_target will fail the test if called with something unexpected;
+        # here we WANT it reached (or at least past the preflight), so stub it
+        # to a benign return instead of the never-called boom.
+        monkeypatch.setattr(cli, "scan_target", lambda *a: 0)
+        rc = cli.main(["snmp", "192.0.2.1", "-E", "admin", "-A", "admin123"])
+        err = capsys.readouterr().err
+        assert "--enum-v3 requires --confirm" not in err, err
+
+    def test_snmp_enum_v3_user_file_still_refused(self, monkeypatch, tmp_path, capsys):
+        """-E users.txt runs an active sweep over every listed user: gated."""
+        _stub_scan_never_called(monkeypatch)
+        users = tmp_path / "users.txt"
+        users.write_text("admin\nroot\n")
+        rc = cli.main(["snmp", "192.0.2.1", "-E", str(users), "-A", "admin123"])
+        assert rc == 1
+        assert "--enum-v3 requires --confirm" in capsys.readouterr().err
+
     def test_ethernetip_write_refused_without_confirm(self, monkeypatch, capsys):
         _stub_scan_never_called(monkeypatch)
         rc = cli.main(["ethernetip", "192.0.2.1", "--write"])
