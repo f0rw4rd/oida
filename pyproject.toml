@@ -9,7 +9,7 @@ build-backend = "setuptools.build_meta"
 # differs. Install with: pip install 'oida-ics[all]'
 name = "oida-ics"
 dynamic = ["version"]
-description = "OIDA - OT/ICS Discovery & Assessment"
+description = "OIDA - OT/ICS Dynamic Assessment Framework"
 readme = "README.md"
 license = {text = "AGPL-3.0-or-later"}
 authors = [
