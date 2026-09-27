@@ -186,7 +186,7 @@ Custom Function Codes:
         help=(
             "Write register(s) at ADDR. Use -d TYPE for typed encoding: "
             "-w 100=3.14 -d f32 writes float to regs 100-101. "
-            "Without -d, VALUE is raw integer. Requires --confirm"
+            "Without -d, VALUE is raw integer. (requires --confirm)"
         ),
     )
     write_group.add_argument(

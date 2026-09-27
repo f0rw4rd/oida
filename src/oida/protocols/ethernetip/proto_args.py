@@ -151,7 +151,7 @@ def proto_args(parser, parents):
     security_group.add_argument(
         "--write",
         action="store_true",
-        help="Test write access to attributes (use with caution)",
+        help="Test write access to attributes (requires --confirm)",
     )
     security_group.add_argument(
         "--dump-security",

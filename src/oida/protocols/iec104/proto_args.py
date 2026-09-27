@@ -182,37 +182,37 @@ Examples:
         "--write-single",
         type=str,
         metavar="IOA[:VALUE]",
-        help="Write single command to IOA (Type 45). Values: on/off/1/0",
+        help="Write single command to IOA (Type 45). Values: on/off/1/0 (requires --confirm)",
     )
     write_group.add_argument(
         "--write-double",
         type=str,
         metavar="IOA[:VALUE]",
-        help="Write double command to IOA (Type 46). Values: on/off/intermediate",
+        help="Write double command to IOA (Type 46). Values: on/off/intermediate (requires --confirm)",
     )
     write_group.add_argument(
         "--write-float",
         type=str,
         metavar="IOA[:VALUE]",
-        help="Write float setpoint to IOA (Type 50). Value: float",
+        help="Write float setpoint to IOA (Type 50). Value: float (requires --confirm)",
     )
     write_group.add_argument(
         "--write-scaled",
         type=str,
         metavar="IOA[:VALUE]",
-        help="Write scaled integer setpoint to IOA (Type 49). Value: int16",
+        help="Write scaled integer setpoint to IOA (Type 49). Value: int16 (requires --confirm)",
     )
     write_group.add_argument(
         "--write-normalized",
         type=str,
         metavar="IOA[:VALUE]",
-        help="Write normalized value to IOA (Type 48). Value: -1.0 to 1.0",
+        help="Write normalized value to IOA (Type 48). Value: -1.0 to 1.0 (requires --confirm)",
     )
     write_group.add_argument(
         "--write-step",
         type=str,
         metavar="IOA[:VALUE]",
-        help="Write step command to IOA (Type 47). Values: up/down",
+        help="Write step command to IOA (Type 47). Values: up/down (requires --confirm)",
     )
     write_group.add_argument(
         "-V",
@@ -230,7 +230,7 @@ Examples:
         "--write-type",
         type=int,
         metavar="TYPE_ID",
-        help="Write using custom type ID (e.g., 45, 50, or 128-255 for vendor types)",
+        help="Write using custom type ID (e.g., 45, 50, or 128-255 for vendor types) (requires --confirm)",
     )
     write_group.add_argument(
         "--write-ioa",
@@ -247,25 +247,25 @@ Examples:
         "--param-normalized",
         type=str,
         metavar="IOA[:VALUE]",
-        help="[experimental] Write normalized parameter (Type 110, P_ME_NA_1). Value: -1.0 to 1.0",
+        help="[experimental] Write normalized parameter (Type 110, P_ME_NA_1). Value: -1.0 to 1.0 (requires --confirm)",
     )
     write_group.add_argument(
         "--param-scaled",
         type=str,
         metavar="IOA[:VALUE]",
-        help="[experimental] Write scaled parameter (Type 111, P_ME_NB_1). Value: int16",
+        help="[experimental] Write scaled parameter (Type 111, P_ME_NB_1). Value: int16 (requires --confirm)",
     )
     write_group.add_argument(
         "--param-float",
         type=str,
         metavar="IOA[:VALUE]",
-        help="[experimental] Write float parameter (Type 112, P_ME_NC_1). Value: float",
+        help="[experimental] Write float parameter (Type 112, P_ME_NC_1). Value: float (requires --confirm)",
     )
     write_group.add_argument(
         "--param-activate",
         type=str,
         metavar="IOA[:VALUE]",
-        help="[experimental] Activate parameter set (Type 113, P_AC_NA_1). Value: 1=act, 2=deact, 3=both",
+        help="[experimental] Activate parameter set (Type 113, P_AC_NA_1). Value: 1=act, 2=deact, 3=both (requires --confirm)",
     )
 
     # Output Options (--full-width, --json-log, -o/-f/-v/-d) are injected into

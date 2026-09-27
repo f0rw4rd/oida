@@ -1006,6 +1006,57 @@ def _list_serial_ports(for_iec101: bool = False) -> int:
         return 1
 
 
+def _confirm_preflight(args, parser) -> bool:
+    """Refuse dangerous flags without --confirm BEFORE any connection opens.
+
+    The confirm_gate convention (oida.utils.confirm_gate) is that every gated
+    flag's help text promises "(requires --confirm)". This preflight trusts
+    that promise: it walks the ACTIVE subparser's registered actions, collects
+    flags whose help makes the promise and whose parsed value differs from the
+    action default (i.e. the user actually supplied them), and refuses the run
+    when no confirm-style flag is set. dnp3/ads additionally run their own
+    validate_args() at the top of proto_flow(); that stays - this is the
+    central net that also catches the protocols that only gate inside feature
+    methods, long after connect + enumeration (see issue #51).
+
+    Returns True when the run may proceed.
+    """
+    if getattr(args, "protocol", None) in (None, "serial", "fuzz"):
+        return True
+
+    subparser = getattr(parser, "_subparsers_action", None)
+    if subparser is None:
+        return True
+    sub = subparser.choices.get(args.protocol)
+    if sub is None:
+        return True
+
+    confirm_keys = {k for k in vars(args) if k.startswith("confirm")}
+    if any(getattr(args, k) for k in confirm_keys):
+        return True
+
+    triggered = []
+    for action in sub._actions:
+        help_text = (action.help or "").lower()
+        if "requires --confirm" not in help_text:
+            continue
+        # --confirm itself never carries the promise, but guard anyway.
+        if "confirm" in (action.dest or ""):
+            continue
+        value = getattr(args, action.dest, None)
+        if value is not None and value != action.default:
+            long_opts = [opt for opt in action.option_strings if opt.startswith("--")]
+            triggered.append(long_opts[0] if long_opts else action.option_strings[0])
+
+    if triggered:
+        logger.error(
+            f"{', '.join(triggered)} requires --confirm (dangerous operation); "
+            "re-run with --confirm. No traffic was sent to the target."
+        )
+        return False
+    return True
+
+
 def _resolve_targets(args, protocol_name: str) -> Optional[List[str]]:
     """
     Parse and resolve targets from arguments.
@@ -1544,6 +1595,12 @@ def _main(argv: Optional[List[str]] = None):
     # Setup logging and exports
     setup_logging(args)
     configure_from_args(args)
+
+    # Dangerous-flag preflight: refuse before any connection is opened (issue
+    # #51). Until now the gate only fired inside feature methods, after
+    # connect + enumeration had already touched the target.
+    if not _confirm_preflight(args, parser):
+        return 1
 
     logger.debug("CLI args: %s", _redact_sensitive_args(vars(args)))
 
