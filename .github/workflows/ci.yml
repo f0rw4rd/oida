@@ -236,11 +236,15 @@ jobs:
       # The job the `test` step's comment has been promising: tests/unit/pcap
       # and the fuzzer's baseline-payload dissector check assert on real tshark
       # dissector output, so they need a tshark whose version is known rather
-      # than whatever the runner image happens to ship.
+      # than whatever the runner image happens to ship. noble's archive only
+      # carries 4.2.x; the version pin makes that explicit instead of letting
+      # runner drift move it (4.2's different unknown-protocol filter wording
+      # already masked a release-gating failure once). Bump deliberately by
+      # editing this pin, e.g. via ppa:wireshark-dev/stable for 4.4+.
       - name: Install tshark
         run: |
           sudo DEBIAN_FRONTEND=noninteractive apt-get update
-          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y tshark
+          sudo DEBIAN_FRONTEND=noninteractive apt-get install -y "tshark=4.2.*"
           tshark --version | head -1
 
       - name: Dissector tests
