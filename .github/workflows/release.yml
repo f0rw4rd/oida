@@ -9,15 +9,15 @@
 #   dispatch from a v* tag -> legacy flow: the tag must already match
 #                     src/oida/__init__.py (checked at build start).
 #   tag input set   -> CI-driven tagging: dispatch from main with e.g. tag=1.0.1.
-#                     The tag job validates format + __version__ match + tag
-#                     freshness BEFORE anything builds; the tag itself is
-#                     created by the final github-release step only after every
-#                     job is green. A version mismatch can no longer burn a
-#                     30-minute pipeline.
+#                     The build job validates format + __version__ match BEFORE
+#                     anything builds; the tag itself is created by the final
+#                     github-release step only after every job is green. A
+#                     version mismatch fails in seconds, not after the pipeline.
+#   Anything else   -> the build job fails: a release needs a version.
+#
 #   dry_run=false   -> full release: PyPI publish + GitHub release with all
 #                      artifacts.
 #   dry_run=true    -> GitHub PRE-release with all artifacts, PyPI untouched.
-#                      Use on any ref to hand testers a real installable build.
 #
 # Security hardening applied:
 #   - Top-level permissions: {} (deny all by default)
@@ -144,8 +144,8 @@ jobs:
               exit 1
             fi
           else
-            echo "No tag input and not a tag ref - test-build mode, nothing to verify"
-            exit 0
+            echo "::error::No tag input and not a v* tag ref - a release needs a version (dispatch with tag=X.Y.Z, or from an existing v* tag)"
+            exit 1
           fi
           PKG_VERSION="$(python -c 'import pathlib,re; m=re.search(r"__version__\s*=\s*(\S+)", pathlib.Path("src/oida/__init__.py").read_text()); print(m.group(1).strip(chr(34)+chr(39)))')"
           if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
@@ -540,22 +540,17 @@ jobs:
           if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
             ver="${GITHUB_REF_NAME#v}"; suffix=""
             tag_name="${GITHUB_REF_NAME}"
-          elif [ -n "$WANTED" ]; then
+          else
             # CI-driven: create the tag on this commit. Reached only after the
             # whole pipeline is green - the tag's first act is to exist on a
             # releasable commit, so tag/version skew is structurally impossible.
             ver="$WANTED"; suffix=""
             tag_name="v${WANTED}"
-          else
-            ver="$(grep -m1 '__version__' src/oida/__init__.py | cut -d'"' -f2 || true)"
-            ver="${ver:-unknown}"
-            suffix=" (test)"
-            tag_name=""
           fi
           echo "version=$ver" >> "$GITHUB_OUTPUT"
           echo "suffix=$suffix" >> "$GITHUB_OUTPUT"
           echo "tag_name=$tag_name" >> "$GITHUB_OUTPUT"
-          if [ "${{ inputs.dry_run }}" = "true" ] || { [ -z "$tag_name" ]; }; then
+          if [ "${{ inputs.dry_run }}" = "true" ]; then
             echo "prerelease=true" >> "$GITHUB_OUTPUT"
           else
             echo "prerelease=false" >> "$GITHUB_OUTPUT"
@@ -566,9 +561,9 @@ jobs:
         with:
           prerelease: ${{ steps.meta.outputs.prerelease }}
           generate_release_notes: true
-          # Empty tag_name on test builds: softprops falls back to the current
-          # ref. On the CI-driven path it creates v<version> on target_commitish
-          # (this run's SHA) with its own contents:write permission.
+          # On the CI-driven path softprops creates v<version> on
+          # target_commitish (this run's SHA) with its own contents:write
+          # permission.
           tag_name: ${{ steps.meta.outputs.tag_name }}
           target_commitish: ${{ github.sha }}
           name: "oida ${{ steps.meta.outputs.version }}${{ steps.meta.outputs.suffix }}"
