@@ -646,19 +646,43 @@ jobs:
             --strip footer "$range" > release-notes.md
           cat release-notes.md
 
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b  # v3.0.1
+        with:
+          prerelease: ${{ steps.meta.outputs.prerelease }}
+          generate_release_notes: true
+          # On the CI-driven path softprops creates v<version> on
+          # target_commitish (this run's SHA) with its own contents:write
+          # permission.
+          tag_name: ${{ steps.meta.outputs.tag_name }}
+          target_commitish: ${{ github.sha }}
+          name: "oida ${{ steps.meta.outputs.version }}${{ steps.meta.outputs.suffix }}"
+          body_path: release-notes.md
+          files: |
+            release-assets/*
+
       # Keep the committed CHANGELOG.md in lockstep with releases: regenerate
-      # the full file (all tags) and push it straight to main. Runs here because
-      # this job already holds fetch-depth: 0 and contents: write, and the tag
-      # exists by now, so this release's section is complete. No-op unless the
-      # file actually changed; [skip ci] keeps the push from re-triggering CI.
+      # the full file (all tags) and push it straight to main. Runs AFTER the
+      # release is created so main never carries a changelog section for a
+      # release that failed to ship, and after tag creation so the section
+      # covers exactly this tag. This job already holds fetch-depth: 0 and
+      # contents: write. No-op unless the file actually changed; [skip ci]
+      # keeps the push from re-triggering CI.
       - name: Update CHANGELOG.md on main
-        if: inputs.dry_run != 'true'
+        # Boolean comparison (not != 'true'): GitHub coerces mixed-type
+        # comparisons to numbers, and 'true' becomes NaN, so != 'true' is
+        # always true and the step would run on dry runs too.
+        if: inputs.dry_run != true
         env:
           tag: ${{ steps.meta.outputs.tag_name }}
           token: ${{ github.token }}
           repo: ${{ github.repository }}
         run: |
-          uvx git-cliff==2.14.2 -o CHANGELOG.md
+          # Explicit --tag: on the CI-driven path the tag object was just
+          # created by softprops but may not be in this checkout's refs yet,
+          # and without it cliff auto-infers a version for untagged commits
+          # (e.g. labels this release v1.0.3 while releasing 1.0.2).
+          uvx git-cliff==2.14.2 --tag "$tag" -o CHANGELOG.md
           if git diff --quiet CHANGELOG.md; then
             echo "CHANGELOG.md already up to date"
             exit 0
@@ -675,18 +699,3 @@ jobs:
           git fetch "$remote" main
           git rebase FETCH_HEAD
           git push "$remote" HEAD:main
-
-      - name: Create GitHub Release
-        uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b  # v3.0.1
-        with:
-          prerelease: ${{ steps.meta.outputs.prerelease }}
-          generate_release_notes: true
-          # On the CI-driven path softprops creates v<version> on
-          # target_commitish (this run's SHA) with its own contents:write
-          # permission.
-          tag_name: ${{ steps.meta.outputs.tag_name }}
-          target_commitish: ${{ github.sha }}
-          name: "oida ${{ steps.meta.outputs.version }}${{ steps.meta.outputs.suffix }}"
-          body_path: release-notes.md
-          files: |
-            release-assets/*
