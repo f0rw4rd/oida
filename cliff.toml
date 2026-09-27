@@ -1,0 +1,52 @@
+# git-cliff config: conventional commits -> keepachangelog-style groups.
+# Regenerate CHANGELOG.md with: uvx git-cliff -o CHANGELOG.md
+# Pre-release commit hook and release notes both read this file.
+
+[changelog]
+header_markdown = """
+# Changelog
+
+All notable changes to OIDA. Generated from git history with
+[git-cliff](https://git-cliff.org); do not edit by hand.
+"""
+body = """
+## {{ version }} - {{ timestamp | date(format="%Y-%m-%d") }}
+{% for group, commits in commits | group_by(attribute="group") %}
+### {{ group }}
+{% for commit in commits %}
+- {{ commit.message | upper_first | trim }}{% if commit.remote.pr_number %} (#{{ commit.remote.pr_number }}){% endif %}
+{% endfor %}
+{% endfor %}
+"""
+footer = """
+<!-- git-cliff: generated file, do not edit -->
+"""
+trim = true
+
+[git]
+conventional_commits = true
+filter_unconventional = false
+split_commits = false
+protect_breaking_commits = true
+tag_pattern = "v[0-9].*"
+ignore_tags = "v0\\.9\\.9-rc.*|pre-main-sync-stash"
+topo_order = false
+sort_commits = "oldest"
+
+commit_parsers = [
+  { message = "^feat", group = "Added" },
+  { message = "^fix", group = "Fixed" },
+  { message = "^perf", group = "Changed" },
+  { message = "^refactor", group = "Changed" },
+  { message = "^docs", group = "Docs" },
+  { message = "^test", group = "Tests" },
+  { message = "^ci", group = "CI" },
+  { message = "^chore\\(release\\)|^chore: bump version", skip = true },
+  { message = "^chore", group = "Chore" },
+  { message = "^revert", group = "Reverted" },
+  { message = ".*", group = "Other" },
+]
+
+commit_pre_parsers = [
+  { pattern = " \\(#[0-9]+\\)", replace = "" },
+]
