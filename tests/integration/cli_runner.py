@@ -16,8 +16,14 @@ from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
 
 
-DEFAULT_CLI_TIMEOUT = 30
-SLOW_CLI_TIMEOUT = 60
+# Subprocess budget for one CLI invocation. 30s was enough for the scan work
+# itself (1-2s serially) but not for interpreter startup + imports under the
+# -n 8 integration lane: under CPU contention 8 workers routinely pushed past
+# 30s and produced "Command timed out after 30s" on a different protocol's
+# test each run. 45s is the pytest budget's ceiling minus a 15s reporting
+# margin (timeout = 60, timeout_func_only = true) - a subprocess can never
+# outlive the test that started it.
+DEFAULT_CLI_TIMEOUT = 45
 
 
 @dataclass

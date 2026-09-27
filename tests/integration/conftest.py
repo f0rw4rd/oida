@@ -340,7 +340,6 @@ SERVICE_HEALTH_PORT: Dict[str, int] = {
 
 # Timeout configurations
 SERVICE_STARTUP_TIMEOUT = 120
-DEFAULT_CLI_TIMEOUT = 30
 
 
 def _service_unavailable(msg: str) -> None:
