@@ -1006,6 +1006,38 @@ def _list_serial_ports(for_iec101: bool = False) -> int:
         return 1
 
 
+def _snmp_enum_v3_single_credential(args) -> bool:
+    """Whether -E is a targeted single-credential test, mirroring the scanner.
+
+    scanner.py's enum_v3 gate (the is_single_credential block) deliberately
+    lets `-E USER -A pass` through without --confirm: one user, one password
+    is a targeted credential test, not a brute-force. Bare `-E`, a user file
+    (`-E users.txt`) or a password wordlist stays gated. The preflight must
+    not be stricter than the gate it front-runs, so it applies the same test.
+    """
+    enum_v3 = getattr(args, "enum_v3", None)
+    if not enum_v3:
+        return False
+    auth_pass = getattr(args, "snmp_auth_pass", None)
+    if not auth_pass:
+        return False
+    from oida.utils.default_credentials import parse_credential_input
+
+    try:
+        _pw_list, _ = parse_credential_input(auth_pass)
+        _user_list, _user_is_file = parse_credential_input(enum_v3)
+    except Exception:
+        return False
+    return len(_pw_list) == 1 and not _user_is_file and len(_user_list) == 1
+
+
+def _confirm_exempt(args, action) -> bool:
+    """Conditional --confirm exemptions the preflight must honor."""
+    if action.dest == "enum_v3":
+        return _snmp_enum_v3_single_credential(args)
+    return False
+
+
 def _confirm_preflight(args, parser) -> bool:
     """Refuse dangerous flags without --confirm BEFORE any connection opens.
 
@@ -1044,9 +1076,13 @@ def _confirm_preflight(args, parser) -> bool:
         if "confirm" in (action.dest or ""):
             continue
         value = getattr(args, action.dest, None)
-        if value is not None and value != action.default:
-            long_opts = [opt for opt in action.option_strings if opt.startswith("--")]
-            triggered.append(long_opts[0] if long_opts else action.option_strings[0])
+        if value is None or value == action.default:
+            continue
+        # A conditional gate may exempt a specific combination from --confirm.
+        if _confirm_exempt(args, action):
+            continue
+        long_opts = [opt for opt in action.option_strings if opt.startswith("--")]
+        triggered.append(long_opts[0] if long_opts else action.option_strings[0])
 
     if triggered:
         logger.error(
