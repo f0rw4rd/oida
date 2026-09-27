@@ -155,7 +155,8 @@ jobs:
     needs: [quality, build]
     runs-on: ${{ matrix.os }}
     permissions:
-      id-token: write # Required for the attest-build-provenance step (skipped while private)
+      id-token: write       # Required for attestation signing
+      attestations: write   # Required to persist attestations
     # Expose whether SignPath is configured, so the Windows signing steps can be
     # gated without referencing secrets in `if:` directly. Stays "false" (steps
     # skipped, build green) until SIGNPATH_API_TOKEN is added.
