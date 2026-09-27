@@ -52,6 +52,10 @@ on:
   # Human-started only, same reasoning as the old build-binaries.yml (879b902):
   # no unattended run against a tag before it's known-good. A stolen/tokened
   # push to main cannot publish anything; the dispatcher's click is the gate.
+  # EXCEPTION: pushing a v* tag itself is the human act - tagging already
+  # demands an explicit local decision (and the tag/version agreement check in
+  # the build job's first step fails a mismatched tag in seconds), so the
+  # dispatch click added nothing but a manual step to forget.
   workflow_dispatch:
     inputs:
       tag:
@@ -64,6 +68,9 @@ on:
         required: false
         default: "false"
         type: boolean
+  push:
+    tags:
+      - "v*"
 
 # Deny all permissions by default - each job grants only what it needs
 permissions: {}
@@ -78,6 +85,43 @@ env:
   PYTHONDONTWRITEBYTECODE: "1"
 
 jobs:
+  # ── Fail-fast version guard ─────────────────────────────────────
+  # Runs before the multi-minute CI gate: a tag that disagrees with
+  # src/oida/__init__.py (the source of the dynamic wheel version) must kill
+  # the run in seconds, not after quality has burned its matrix (v1.0.2 nearly
+  # shipped 1.0.1 wheels this way - the check existed but only in `build`,
+  # behind `quality`).
+  version-guard:
+    name: Version guard
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6.0.2
+        with:
+          persist-credentials: false
+      - name: Verify tag/version agreement
+        run: |
+          # Same resolution rule the tag-input path uses: bare semver from a
+          # `tag` input, or GITHUB_REF on a v* tag push (now also a trigger).
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          elif [ -n "${{ inputs.tag }}" ]; then
+            TAG_VERSION="${{ inputs.tag }}"
+          else
+            echo "::error::No tag input and not a v* tag ref - a release needs a version (dispatch with tag=X.Y.Z, or push a v* tag)"
+            exit 1
+          fi
+          if ! echo "$TAG_VERSION" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+            echo "::error::Version ($TAG_VERSION) is not strict MAJOR.MINOR.PATCH (ref: $GITHUB_REF)"
+            exit 1
+          fi
+          PKG_VERSION="$(python -c 'import pathlib,re; m=re.search(r"__version__\s*=\s*(\S+)", pathlib.Path("src/oida/__init__.py").read_text()); print(m.group(1).strip(chr(34)+chr(39)))')"
+          if [ "$TAG_VERSION" != "$PKG_VERSION" ]; then
+            echo "::error::Tag version ($TAG_VERSION) does not match src/oida/__init__.py (__version__=$PKG_VERSION). Bump the version (or re-point the tag) and push again."
+            exit 1
+          fi
+          echo "tag/version agree: v$TAG_VERSION"
   # ── Gate: reuse CI workflow ─────────────────────────────────────
   quality:
     name: CI
@@ -99,7 +143,7 @@ jobs:
   # This job has NO access to secrets - artifacts are built in isolation.
   build:
     name: Build
-    needs: [quality]
+    needs: [version-guard, quality]
     runs-on: ubuntu-latest
     permissions:
       contents: read  # Checkout only - no secrets needed for building
