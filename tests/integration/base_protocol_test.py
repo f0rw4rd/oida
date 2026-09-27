@@ -191,8 +191,18 @@ class BaseProtocolIntegrationTest(ABC):
     # Concurrent Connection Tests
 
     @pytest.mark.slow
+    @pytest.mark.timeout(120)
     def test_concurrent_connections(self, cli_runner, target, port):
-        """Test multiple concurrent connections to same target"""
+        """Test multiple concurrent connections to same target
+
+        Three CLI subprocesses run in parallel, each with its own 45s budget,
+        so the test's wall clock is bounded by the slowest of three starts
+        rather than by one. On a saturated -n 8 lane that can approach the
+        default 60s per-test ceiling; the override gives it 120s so the
+        runner's own timeout reports the failure instead of pytest killing
+        the test mid-flight. Contention, not a scanner bug - the assertion
+        only needs one of the three to succeed.
+        """
         import concurrent.futures
 
         port_args = self._get_port_args(port)
