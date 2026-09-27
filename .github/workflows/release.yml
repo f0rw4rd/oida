@@ -1,47 +1,53 @@
 # ============================================================================
-# Release Pipeline - oida
+# Release - oida
 # ============================================================================
+#
+# One human-started workflow for every release artifact: the pure-Python
+# sdist + wheel (PyPI, on real releases), the standalone Linux/Windows
+# binaries (GitHub release, always), and the GitHub release itself.
+#
+#   dry_run=false  -> full release: PyPI publish + GitHub release with all
+#                     artifacts. Requires a v* tag (dispatch from the tag).
+#   dry_run=true   -> GitHub PRE-release with all artifacts, PyPI untouched.
+#                     Use on any ref to hand testers a real installable build.
 #
 # Security hardening applied:
 #   - Top-level permissions: {} (deny all by default)
 #   - All actions pinned to full commit SHA (prevents tag-force-push attacks)
+#   - manylinux build image pinned by digest (mutable :latest tags drift)
+#   - No curl-piped installers in the artifact build: uv is installed on the
+#     runner by setup-uv (SHA-pinned action, cached) and bind-mounted into the
+#     build container
 #   - OIDC trusted publishing for PyPI (no long-lived API tokens)
 #   - Build and publish are separate jobs (build has no secret access)
-#   - Publish job uses 'pypi' environment with approval protection
-#   - Artifact attestation for supply chain integrity (SLSA, when public)
+#   - Publish job uses 'pypi' environment (reviewer approval on plans that
+#     support it - NOT available free-private; the dispatch-only trigger is
+#     the real gate today)
 #   - Checksum verification between build and publish jobs
 #   - No pip install in publish job (avoids arbitrary code execution)
 #   - persist-credentials: false on all checkouts
 #
 # This builds the pure-Python sdist + wheel from the project root (src/ layout).
-# The standalone binaries are built separately by build-binaries.yml.
+# The standalone binaries are built in the same run (the former
+# build-binaries.yml matrix moved here; that workflow and test-release.yml
+# were folded into this one).
 #
 # Required GitHub configuration (one-time, in the web UI - no tokens):
-#   1. Create a 'pypi' environment with required reviewers
-#      (Settings -> Environments -> New environment -> pypi -> add reviewers).
-#      This is what blocks auto-publish: dispatching the workflow pauses the
-#      publish job for manual approval.
-#   2. Configure the PyPI trusted publisher for project `oida-ics`
-#      (the PyPI distribution name - the GitHub repo is `oida`):
-#        - Owner:       f0rw4rd
-#        - Repository:  oida
-#        - Workflow:    release.yml
-#        - Environment: pypi
-#      (PyPI -> your project / "pending publisher" -> Add a new publisher.)
-#   3. No API token needed - OIDC trusted publishing only.
-#
-# To cut a release: bump __version__ in src/oida/__init__.py, commit, then
-#   git tag v1.0.0 && git push origin v1.0.0
-# then run by hand: gh workflow run release.yml --ref v1.0.0
+#   Configure the PyPI trusted publisher for project `oida-ics`
+#   (pypi.org -> Manage -> Publishing): owner f0rw4rd, repo oida,
+#   workflow release.yml, environment pypi.
 # ============================================================================
 
-name: Release to PyPI
+name: Release
 
 on:
+  # Human-started only, same reasoning as the old build-binaries.yml (879b902):
+  # no unattended run against a tag before it's known-good. A stolen/tokened
+  # push to main cannot publish anything; the dispatcher's click is the gate.
   workflow_dispatch:
     inputs:
       dry_run:
-        description: "Dry run (build only, skip publish)"
+        description: "Dry run (GitHub pre-release only, skip PyPI)"
         required: false
         default: "false"
         type: boolean
@@ -63,7 +69,7 @@ jobs:
   quality:
     name: CI
     uses: ./.github/workflows/ci.yml
-    # The release gate runs everything push/PR skips EXCEPT the docker-mock
+    # The release gate runs everything PR CI skips EXCEPT the docker-mock
     # integration suite: that one runs locally via `scripts/release_check.sh
     # --full` before the tag is pushed (see its step 8 and the evidence file it
     # writes). Rationale: on a hosted runner the shared mock stack is contended,
@@ -92,14 +98,14 @@ jobs:
         with:
           persist-credentials: false
 
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
         with:
+          version: "0.11.18"
           python-version: "3.12"
 
-      - name: Install build tools
-        run: |
-          pip install --only-binary :all: build
-
+      # Build/twine via uvx at pinned versions instead of `pip install` latest:
+      # the artifact-producing job should not float its tooling (same discipline
+      # as ci.yml's "Sync dev tools from lockfile" comment).
       - name: Verify tag matches package version
         # oida's version is dynamic (setuptools attr = oida.__version__), so read
         # it straight from the source module rather than [project].version.
@@ -113,12 +119,10 @@ jobs:
           fi
 
       - name: Build sdist and wheel
-        run: python -m build
+        run: uvx --from build build==1.4.0
 
       - name: Verify distributions
-        run: |
-          pip install --only-binary :all: twine
-          twine check dist/*
+        run: uvx twine==7.1.0 check dist/*
 
       - name: Generate and export checksums
         id: checksums
@@ -138,11 +142,249 @@ jobs:
           if-no-files-found: error
           retention-days: 5
 
+  # ── Build standalone binaries ───────────────────────────────────
+  # The former build-binaries.yml matrix, verbatim except the two supply-chain
+  # hardenings noted inline. Produces oida-*-x86_64 artifacts consumed by the
+  # github-release job.
+  binaries:
+    name: Standalone ${{ matrix.label }}
+    needs: [quality]
+    runs-on: ${{ matrix.os }}
+    # Expose whether SignPath is configured, so the Windows signing steps can be
+    # gated without referencing secrets in `if:` directly. Stays "false" (steps
+    # skipped, build green) until SIGNPATH_API_TOKEN is added.
+    env:
+      HAS_SIGNPATH: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: ubuntu-latest
+            label: linux-x86_64
+            artifact: oida-linux-x86_64
+            ext: tar.gz
+            # `all` is the pyproject.toml meta-extra that pulls in every
+            # protocol + fuzz extra but NOT dev or docs.  Using it here means
+            # any new protocol extra added to pyproject.toml (and referenced
+            # by `all`) is automatically included in every release build.
+            extras: --extra all
+          - os: windows-latest
+            label: windows-x86_64
+            artifact: oida-windows-x86_64
+            ext: zip
+            # `all` works on Windows: platform-gated deps (pysoem/ethercat,
+            # DTLSSocket/coap, netifaces/discovery) are skipped automatically
+            # via sys_platform markers in pyproject.toml.
+            extras: --extra all
+
+    steps:
+      - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
+        with:
+          persist-credentials: false
+
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "0.11.18"
+          enable-cache: true
+          cache-dependency-glob: "uv.lock"
+          python-version: "3.12"
+
+      # ── Linux: build inside manylinux_2_28 so pip selects lower-tagged wheels ──
+      # Building on ubuntu-latest (glibc 2.39) causes pip to install the
+      # manylinux_2_34 cryptography wheel; the resulting binary then requires
+      # glibc 2.34 on the target. Inside the manylinux_2_28 container pip
+      # selects the manylinux_2_28 wheel instead, dropping the floor to ~2.28.
+      # The smoke test runs inside the same container - effectively testing on
+      # the minimum supported glibc, which is more meaningful than testing on
+      # the 2.39 host runner.
+      #
+      # The image is pinned BY DIGEST: :latest is mutable, and this container
+      # builds the artifact end users download. Re-resolve on a deliberate bump
+      # with: docker buildx imagetools inspect quay.io/pypa/manylinux_2_28_x86_64:latest
+      # uv is NOT fetched from the network inside the container (no
+      # curl|sh installer): setup-uv already installed a known uv on the
+      # runner; bind-mount it in read-only.
+      - name: Build and smoke-test (Linux, manylinux_2_28)
+        if: runner.os == 'Linux'
+        env:
+          EXTRAS: ${{ matrix.extras }}
+        run: |
+          docker run --rm \
+            -e EXTRAS \
+            -v "${{ github.workspace }}:/workspace" \
+            -v "$(uv which):/usr/local/bin/uv:ro" \
+            -w /workspace \
+            quay.io/pypa/manylinux_2_28_x86_64@sha256:407f771c51a2c3e83ebe5a7970b4289ead3a6db21d9b9c089168775cad11d328 \
+            bash -c '
+              export PATH="/usr/local/bin:$PATH"
+              chmod +x /usr/local/bin/uv
+              export UV_PYTHON_PREFERENCE=only-managed
+              uv sync $EXTRAS --python 3.12 --frozen
+              # pyinstaller ships in the `dev` dependency-group and is installed
+              # (at its uv.lock-pinned version) by the sync above. Only the smoke
+              # harness - pytest/pytest-timeout, which sit in the `dev` extra that
+              # is not synced here - needs an ad-hoc install.
+              uv pip install pytest pytest-timeout
+              .venv/bin/pyinstaller oida.spec --clean --noconfirm
+              .venv/bin/pytest tests/integration/test_binary_smoke.py -m binary -q
+              chown -R "$(stat -c "%u:%g" /workspace)" /workspace/dist
+            '
+
+      - name: Report and gate effective glibc floor
+        if: runner.os == 'Linux'
+        # Verify, not assert: the manylinux_2_28 container makes pip pick
+        # 2_28-honest wheels, but a future dependency that ships ONLY
+        # manylinux_2_34+ wheels (or an image-tag bump) would silently raise
+        # the binary's floor while the build stays green. Compare the measured
+        # symbol floor against the promised one and fail before shipping.
+        # Raise MAX_SUPPORTED_GLIBC only as a deliberate, documented decision.
+        env:
+          MAX_SUPPORTED_GLIBC: "2.28"
+        run: |
+          floor=$(find dist/oida -name "*.so" -o \( -name "oida" -type f \) \
+            | xargs -I{} objdump -p {} 2>/dev/null \
+            | grep -oP "GLIBC_\d+\.\d+(\.\d+)?" \
+            | sort -V | tail -1)
+          echo "Effective glibc floor: $floor"
+          echo "GLIBC_FLOOR=$floor" >> "$GITHUB_ENV"
+          floor_ver="${floor#GLIBC_}"
+          max_minor=$(echo "$MAX_SUPPORTED_GLIBC" | cut -d. -f2)
+          floor_minor=$(echo "$floor_ver" | cut -d. -f2)
+          if [ "$(echo "$floor_ver" | cut -d. -f1)" != "2" ] \
+            || [ "$floor_minor" -gt "$max_minor" ]; then
+            echo "::error::Binary requires glibc ${floor_ver} but we promise ${MAX_SUPPORTED_GLIBC}. \
+          A dependency likely shipped only higher-tagged wheels - either pin a \
+          lower version or raise MAX_SUPPORTED_GLIBC deliberately."
+            exit 1
+          fi
+
+      # ── Windows: run directly on the host runner ────────────────────────────
+      - name: Sync runtime deps from lockfile
+        if: runner.os == 'Windows'
+        # Runtime protocol extras only - the binary bundles exactly these, no
+        # dev/test tooling.
+        run: uv sync ${{ matrix.extras }} --frozen
+
+      - name: Install smoke-test harness
+        if: runner.os == 'Windows'
+        # pyinstaller is in the `dev` dependency-group, so the `uv sync` above
+        # already installed it at its uv.lock-pinned version. pytest/pytest-timeout
+        # (the smoke harness) live in the `dev` extra, which is NOT synced for the
+        # release env, so install just those ad-hoc. None of them are runtime deps
+        # and none are bundled into the binary (the spec excludes them).
+        run: uv pip install pytest pytest-timeout
+
+      - name: Build binary
+        if: runner.os == 'Windows'
+        run: uv run pyinstaller oida.spec --clean --noconfirm
+
+      - name: Smoke test the binary
+        if: runner.os == 'Windows'
+        # pyproject sets timeout_method = "signal" (SIGALRM/setitimer), which is
+        # Unix-only and makes pytest-timeout crash with an INTERNALERROR on
+        # Windows. Override to the cross-platform "thread" method for this run.
+        run: uv run pytest tests/integration/test_binary_smoke.py -m binary -q -o timeout_method=thread
+
+      - name: Determine archive name (with version)
+        # Tag builds (v1.2.3) use the tag; otherwise the packaged oida version
+        # plus a short commit suffix so dev artifacts are distinguishable.
+        # `shell: bash` so the same script runs on the Windows runner too.
+        # always(): still package + upload the built binary when the smoke test
+        # failed, so it can be pulled for debugging. The job itself stays red
+        # (the smoke step has no continue-on-error), so a smoke-failing binary
+        # never publishes via a real release.
+        if: always()
+        shell: bash
+        run: |
+          if [ "${{ github.ref_type }}" = "tag" ]; then
+            v="${{ github.ref_name }}"; v="${v#v}"; suffix=""
+          else
+            v="$(grep -m1 '__version__' src/oida/__init__.py | cut -d'"' -f2)"
+            suffix="-g${GITHUB_SHA::7}"
+          fi
+          echo "ARCHIVE=oida-${v}${suffix}-${{ matrix.label }}.${{ matrix.ext }}" >> "$GITHUB_ENV"
+          echo "archive -> oida-${v}${suffix}-${{ matrix.label }}.${{ matrix.ext }}"
+
+      - name: Package onedir folder (Linux)
+        if: always() && runner.os == 'Linux'
+        # Single named archive with a top-level oida/ dir.
+        run: tar -C dist -czf "$ARCHIVE" oida
+
+      - name: Package onedir folder (Windows)
+        if: always() && runner.os == 'Windows'
+        shell: pwsh
+        run: Compress-Archive -Path dist/oida -DestinationPath "$env:ARCHIVE"
+
+      # ── Authenticode-sign the Windows .exe via SignPath (gated, no-op until
+      #    enrolled) ───────────────────────────────────────────────────────────
+      # SignPath signs oida/oida.exe inside the zip (see signpath.xml - deep
+      # signing) and returns the re-zipped, signed archive. Runs only when
+      # SIGNPATH_API_TOKEN is set, so the build stays green before enrollment.
+      - name: Upload unsigned archive for SignPath
+        if: runner.os == 'Windows' && env.HAS_SIGNPATH == 'true'
+        id: unsigned
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: unsigned-${{ matrix.artifact }}
+          path: ${{ env.ARCHIVE }}
+          retention-days: 1
+
+      - name: Sign Windows .exe (SignPath)
+        if: runner.os == 'Windows' && env.HAS_SIGNPATH == 'true'
+        # Pinned to the v1 tag's commit (was a mutable @v1 - the only unpinned
+        # action in the repo). Re-resolve on bump: git ls-remote <repo> refs/tags/v1
+        uses: signpath/github-action-submit-signing-request@ced31329c0317e779dad2eec2a7c3bb46ea1343e  # v1
+        with:
+          connector-url: https://app.signpath.io
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: oida                       # TODO: your SignPath project slug
+          signing-policy-slug: release-signing      # TODO: your signing policy slug
+          artifact-configuration-slug: windows-zip  # TODO: slug of the uploaded signpath.xml
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+          skip-decompress: true                     # keep it a single .zip file
+
+      - name: Swap in the signed archive
+        if: runner.os == 'Windows' && env.HAS_SIGNPATH == 'true'
+        shell: bash
+        # skip-decompress keeps a single file in signed/; move it over the
+        # unsigned one so checksum/attestation/upload all cover the signed zip.
+        run: mv signed/* "$ARCHIVE"
+
+      # ── Integrity + provenance (after signing, so they cover the signed file) ─
+      - name: Generate SHA-256 checksum
+        if: always()
+        shell: bash
+        run: sha256sum "$ARCHIVE" > "$ARCHIVE.sha256"
+
+      - name: Attest build provenance
+        # Sigstore-backed SLSA provenance: proves the archive came from this
+        # repo's CI. Verify with: gh attestation verify <archive> --repo f0rw4rd/oida
+        # Skipped on PRs (forked-PR id-tokens are restricted) and while the repo
+        # is private - GitHub Artifact Attestations require a public repo (or an
+        # org repo with Advanced Security). Auto-enables when made public.
+        if: github.event_name != 'pull_request' && github.event.repository.private == false
+        uses: actions/attest-build-provenance@a2bbfa25375fe432b6a289bc6b6cd05ecd0c4c32  # v4.1.0
+        with:
+          subject-path: ${{ env.ARCHIVE }}
+
+      - name: Upload artifact
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
+        with:
+          name: ${{ matrix.artifact }}
+          path: |
+            ${{ env.ARCHIVE }}
+            ${{ env.ARCHIVE }}.sha256
+          retention-days: 14
+
   # ── Attestation ─────────────────────────────────────────────────
-  # SLSA build provenance. GitHub Artifact Attestations require a public repo
-  # (or an org repo with Advanced Security), so this is gated and simply skips
-  # while the repo is private - it auto-enables when made public. Decoupled from
-  # publish so it never blocks a release.
+  # SLSA build provenance for the pip artifacts. GitHub Artifact Attestations
+  # require a public repo (or an org repo with Advanced Security), so this is
+  # gated and simply skips while the repo is private - it auto-enables when
+  # made public. Decoupled from publish so it never blocks a release.
   attest:
     name: Attest provenance
     needs: [build]
@@ -169,6 +411,8 @@ jobs:
   publish:
     name: Publish to PyPI
     needs: [build]
+    # Only from a v* tag AND a non-dry-run dispatch. Dry runs and any-ref
+    # dispatches produce GitHub artifacts only.
     if: >-
       startsWith(github.ref, 'refs/tags/v')
       && !(github.event.inputs.dry_run == 'true')
@@ -177,7 +421,7 @@ jobs:
       id-token: write   # Required for OIDC trusted publishing
       contents: read
     environment:
-      name: pypi  # Requires approval - configure reviewers in GitHub settings
+      name: pypi  # Reviewer approval on plans that support it (not free-private)
       url: https://pypi.org/project/oida-ics/
     steps:
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
@@ -209,27 +453,77 @@ jobs:
         uses: pypa/gh-action-pypi-publish@cef221092ed1bacb1cc03d23a2d87d1d172e277b  # v1.14.0
 
   # ── GitHub Release ──────────────────────────────────────────────
+  # Carries EVERY release artifact: pip dist + standalone binaries, with a
+  # combined SHA256SUMS.txt. Full release on a v* tag; pre-release otherwise.
   github-release:
     name: GitHub Release
-    needs: [publish]
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: [build, binaries, publish]
+    if: always() && !failure() && !cancelled()
     runs-on: ubuntu-latest
     permissions:
       contents: write  # Required to create releases and upload assets
     steps:
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
+      - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
+        with:
+          persist-credentials: false
+
+      - name: Download pip dist (wheel + sdist)
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
         with:
           name: dist
-          path: dist/
+          path: assets/
 
-      - name: Generate checksums
+      - name: Download standalone binaries
+        uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
+        with:
+          pattern: oida-*-x86_64  # the per-OS artifacts uploaded by the binaries job
+          merge-multiple: true
+          path: assets/
+
+      - name: Generate combined checksums
         run: |
-          cd dist
+          cd assets
+          # Drop the per-binary .sha256 sidecars so SHA256SUMS.txt lists only
+          # the actual distributable files (wheel, sdist, binary archives).
+          rm -f *.sha256
           sha256sum * > SHA256SUMS.txt
+          echo "── release assets ──"; ls -lh
+
+      - name: Compute release metadata
+        id: meta
+        run: |
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            ver="${GITHUB_REF_NAME#v}"; suffix=""
+          else
+            ver="$(grep -m1 '__version__' src/oida/__init__.py | cut -d'"' -f2 || true)"
+            ver="${ver:-unknown}"
+            suffix=" (test)"
+          fi
+          echo "version=$ver" >> "$GITHUB_OUTPUT"
+          echo "suffix=$suffix" >> "$GITHUB_OUTPUT"
+          if [ "${{ inputs.dry_run }}" = "true" ] || [[ "$GITHUB_REF" != refs/tags/v* ]]; then
+            echo "prerelease=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "prerelease=false" >> "$GITHUB_OUTPUT"
+          fi
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b  # v3.0.1
         with:
+          prerelease: ${{ steps.meta.outputs.prerelease }}
           generate_release_notes: true
+          name: "oida ${{ steps.meta.outputs.version }}${{ steps.meta.outputs.suffix }}"
+          body: |
+            This release carries the pip artifacts (wheel + sdist) and the
+            standalone binaries (Linux / Windows x86_64).
+
+            Install the wheel directly:
+
+            ```
+            pip install oida_ics-*.whl
+            ```
+
+            ...or download a standalone binary archive (no Python required).
+            Verify downloads against `SHA256SUMS.txt`.
           files: |
-            dist/*
+            assets/*
