@@ -66,7 +66,7 @@ list and the per-protocol guides live at
 - **Contact:** [contact@getoida.dev](mailto:contact@getoida.dev)
 - **Contributing:** [CONTRIBUTING.md](CONTRIBUTING.md), [Code of Conduct](CODE_OF_CONDUCT.md)
 - **Security:** report it through [getoida.dev/contact](https://getoida.dev/contact); see [SECURITY.md](SECURITY.md) for what to include
-- **Support:** [via QuellSec](https://quellsec.dev/#support)
+- **Support:** [via QuellSec](https://quellsec.dev/#support) or [ko-fi.com/f0rw4rd](https://ko-fi.com/f0rw4rd)
 
 ## Legal
 
