@@ -301,7 +301,8 @@ Examples:
         help=(
             "SNMPv3 brute-force. Bare -E = discover users then brute auth/priv. "
             "-E USER = target single user. -E users.txt = load targets from file. "
-            "Combine with -A pass or -A wordlist.txt to supply passwords"
+            "Combine with -A pass or -A wordlist.txt to supply passwords "
+            "(requires --confirm)"
         ),
     )
     enum_group.add_argument(
@@ -309,6 +310,9 @@ Examples:
         action="store_true",
         default=False,
         dest="enum_users",
-        help="SNMPv3 user enumeration only (phase 1 of -E). Discovers valid usernames via noAuthNoPriv probes",
+        help=(
+            "SNMPv3 user enumeration only (phase 1 of -E). Discovers valid usernames "
+            "via noAuthNoPriv probes (requires --confirm)"
+        ),
     )
     return snmp_parser
