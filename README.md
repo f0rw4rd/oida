@@ -11,6 +11,7 @@ it works air-gapped.
 [![Python](https://img.shields.io/badge/python-3.10+-5cc8e8.svg)](https://www.python.org/downloads/)
 [![License: AGPL-3.0](https://img.shields.io/badge/license-AGPL--3.0-ffb000.svg)](https://www.gnu.org/licenses/agpl-3.0)
 [![PyPI](https://img.shields.io/pypi/v/oida-ics.svg)](https://pypi.org/project/oida-ics/)
+[![CLA](https://img.shields.io/badge/CLA-required-blue)](CONTRIBUTING.md)
 
 **[Docs and live demo at getoida.dev](https://getoida.dev)**
 
