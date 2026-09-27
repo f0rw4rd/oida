@@ -9,12 +9,12 @@
 # CI does not run it (release.yml passes run_integration: false), because a
 # timing flake on a contended hosted runner cost a 60-minute job plus the whole
 # publish pipeline. Here a flake costs a serial re-run of just the failures and
-# the maintainer decides. A run that reaches step 10 writes .release-evidence.json
+# the maintainer decides. A run that reaches step 11 writes .release-evidence.json
 # pinned to the commit; a run that skips it says so in the summary.
 #
 # Step 5 probes the container registry, so it needs Docker and network; without
 # either it reports SKIP rather than failing. It runs before the integration tests
-# deliberately - outdated mock images make step 10 refuse to run, because a pass
+# deliberately - outdated mock images make step 11 refuse to run, because a pass
 # against stale mocks would certify images this release doesn't ship.
 #
 # Exit codes: 0 = all gates passed, 1 = failure
@@ -134,7 +134,7 @@ step 5 "Mock images published (services.py stale)"
 # Runs BEFORE the integration tests on purpose: those tests are only meaningful
 # against mocks built from the committed source. If the registry is behind, a green
 # integration run is testing last month's mocks and proves nothing about this
-# release, so step 10 refuses to run rather than reporting a misleading pass.
+# release, so step 11 refuses to run rather than reporting a misleading pass.
 # Exit 1 = outdated (fail), 2 = could not verify - no Docker or an unreadable
 # registry - which is a skip, not a false failure.
 set +e
@@ -169,7 +169,18 @@ fi
 
 # ── Step 7: Core unit tests ──────────────────────────────────────────────
 
-step 7 "Unit tests (core)"
+step 7 "Contract tests (fast, fail-first)"
+# Static snapshot contracts gate CI (ci.yml test job) and run in seconds; run
+# them before the multi-minute unit suite so a stale snapshot (v1.0.2 died on
+# test_confirm_gate_snapshot_drift) fails the release before the unit suite starts.
+if python -m pytest tests/contracts/ -x -q --tb=short; then
+    echo -e "${GREEN}OK${RESET}"
+    record "Contract tests" "pass"
+else
+    echo -e "${RED}Contract tests failed${RESET}"
+    record "Contract tests" "fail"
+fi
+step 8 "Unit tests (core)"
 if python -m pytest tests/unit/ -x -q --tb=short; then
     echo -e "${GREEN}OK${RESET}"
     record "Unit tests" "pass"
@@ -180,7 +191,7 @@ fi
 
 # ── Step 8: Package build ────────────────────────────────────────────────
 
-step 8 "Package build (sdist + wheel)"
+step 9 "Package build (sdist + wheel)"
 DIST_DIR=$(mktemp -d)
     # Prefer uv build (fast, no extra dependency); fall back to python -m build
     # for environments where uv isn't installed but the build package is.
@@ -205,7 +216,7 @@ fi
 
 # ── Step 9: Wheel install + CLI smoke ────────────────────────────────────
 
-step 9 "Wheel install + CLI smoke test"
+step 10 "Wheel install + CLI smoke test"
 if [[ -n "${WHEEL:-}" ]]; then
     VENV_DIR=$(mktemp -d)
     # Prefer uv (10x faster venv create + install) when available; fall
@@ -245,14 +256,14 @@ if [[ -n "${WHEEL:-}" ]]; then
     deactivate
     rm -rf "$VENV_DIR"
 else
-    echo -e "${YELLOW}Skipped (no wheel from step 7)${RESET}"
+    echo -e "${YELLOW}Skipped (no wheel from step 9)${RESET}"
     record "Wheel install + CLI" "skip"
 fi
 rm -rf "$DIST_DIR"
 
 # ── Step 10: Integration tests (--full only) ──────────────────────────────
 
-step 10 "Integration tests (Docker mocks)"
+step 11 "Integration tests (Docker mocks)"
 INTEG_STATUS=skip
 INTEG_FLAKES=0
 if [[ "${STALE_RC:-0}" == "1" ]]; then
