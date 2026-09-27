@@ -56,7 +56,7 @@ class TestConfirmPreflight:
         # here we WANT it reached (or at least past the preflight), so stub it
         # to a benign return instead of the never-called boom.
         monkeypatch.setattr(cli, "scan_target", lambda *a: 0)
-        rc = cli.main(["snmp", "192.0.2.1", "-E", "admin", "-A", "admin123"])
+        cli.main(["snmp", "192.0.2.1", "-E", "admin", "-A", "admin123"])
         err = capsys.readouterr().err
         assert "--enum-v3 requires --confirm" not in err, err
 

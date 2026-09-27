@@ -2074,7 +2074,6 @@ class TestSNMPIntegration:
             format="json",
             json_log=True,
         )
-        messages = _all_messages(result.scan_log)
         cli_runner.assert_confirm_refused(result, "--set")
 
     @pytest.mark.security
@@ -2161,7 +2160,6 @@ class TestSNMPIntegration:
             format="json",
             json_log=True,
         )
-        messages = _all_messages(result.scan_log)
         cli_runner.assert_confirm_refused(result, "--walk-write")
 
     @pytest.mark.security
