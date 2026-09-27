@@ -119,10 +119,11 @@ jobs:
           fi
 
       - name: Build sdist and wheel
-        run: uvx --from build build==1.4.0
+        # `build`'s executable is pyproject-build, not build.
+        run: uvx --from build==1.6.1 pyproject-build
 
       - name: Verify distributions
-        run: uvx twine==7.1.0 check dist/*
+        run: uvx twine==7.0.0 check dist/*
 
       - name: Generate and export checksums
         id: checksums
@@ -148,7 +149,10 @@ jobs:
   # github-release job.
   binaries:
     name: Standalone ${{ matrix.label }}
-    needs: [quality]
+    # After build so a broken dist build fails the run before the binaries
+    # spend minutes on it; the binaries themselves don't consume build's
+    # artifacts (they sync from the lockfile directly).
+    needs: [quality, build]
     runs-on: ${{ matrix.os }}
     # Expose whether SignPath is configured, so the Windows signing steps can be
     # gated without referencing secrets in `if:` directly. Stays "false" (steps
@@ -209,15 +213,16 @@ jobs:
         env:
           EXTRAS: ${{ matrix.extras }}
         run: |
+          UV_BIN="$(command -v uv)"
+          [ -n "$UV_BIN" ] || { echo "::error::uv not found on runner PATH"; exit 1; }
           docker run --rm \
             -e EXTRAS \
             -v "${{ github.workspace }}:/workspace" \
-            -v "$(uv which):/usr/local/bin/uv:ro" \
+            -v "$UV_BIN:/usr/local/bin/uv:ro" \
             -w /workspace \
             quay.io/pypa/manylinux_2_28_x86_64@sha256:407f771c51a2c3e83ebe5a7970b4289ead3a6db21d9b9c089168775cad11d328 \
             bash -c '
               export PATH="/usr/local/bin:$PATH"
-              chmod +x /usr/local/bin/uv
               export UV_PYTHON_PREFERENCE=only-managed
               uv sync $EXTRAS --python 3.12 --frozen
               # pyinstaller ships in the `dev` dependency-group and is installed
