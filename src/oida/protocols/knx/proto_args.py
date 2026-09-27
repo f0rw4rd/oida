@@ -167,7 +167,7 @@ def proto_args(parser, parents):
         "--group-write",
         type=str,
         metavar="ADDR:VALUE",
-        help="Write value to group address (e.g., '1/0/1:01')",
+        help="Write value to group address (e.g., '1/0/1:01') (requires --confirm)",
     )
 
     device_group.add_argument(

@@ -417,14 +417,14 @@ Replay:
         "--send-file",
         type=str,
         metavar="FILE",
-        help="Send CAN frames from file (one ID#DATA per line)",
+        help="Send CAN frames from file (one ID#DATA per line) (requires --confirm)",
     )
 
     send_group.add_argument(
         "--replay",
         type=str,
         metavar="FILE",
-        help="Replay CAN traffic from candump/log file",
+        help="Replay CAN traffic from candump/log file (requires --confirm)",
     )
 
     send_group.add_argument(

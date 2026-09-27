@@ -254,6 +254,37 @@ class CLIRunner:
                 except OSError:
                     pass
 
+    def assert_confirm_refused(self, result: CLIResult, *flags: str) -> None:
+        """Assert the --confirm preflight refused this run before connecting.
+
+        The CLI's _confirm_preflight (issue #51) exits 1 with the refusal on
+        stderr before any connection opens, so the contract to assert is:
+        rc == 1, the refusal line naming the flags, and -- when a json log was
+        requested -- zero events (nothing ran, nothing touched the target).
+        """
+        assert result.returncode == 1, (
+            f"Expected rc=1 (pre-connect refusal), got {result.returncode}: "
+            f"{result.combined_output[:400]}"
+        )
+        output = result.combined_output.lower()
+        assert "requires --confirm" in output, (
+            f"Expected 'requires --confirm' refusal, got: {result.combined_output[:400]}"
+        )
+        assert "no traffic was sent to the target" in output, (
+            f"Expected 'No traffic was sent' in refusal, got: {result.combined_output[:400]}"
+        )
+        assert "traceback" not in output, result.combined_output[:400]
+        if flags:
+            for flag in flags:
+                assert flag.lower() in output, (
+                    f"Expected {flag} in refusal, got: {result.combined_output[:400]}"
+                )
+        if result.scan_log is not None:
+            assert len(result.scan_log) == 0, (
+                f"Preflight refusal must not log scan events, got "
+                f"{len(result.scan_log)}: {result.scan_log.events[:3]}"
+            )
+
     def run_help(self, protocol: Optional[str] = None) -> CLIResult:
         """Run help command for main CLI or specific protocol"""
         if protocol:

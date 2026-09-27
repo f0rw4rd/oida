@@ -1816,9 +1816,9 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
 
     @pytest.mark.fuzz
     def test_fuzz_without_confirm_is_rejected(self, cli_runner, target, port, docker_services):
-        """Test --fuzz without --confirm is rejected with message [Category A]
+        """Test --fuzz without --confirm is rejected pre-connect [Category A]
 
-        The fuzz mixin returns early (exit 0) but logs a fail message.
+        The CLI preflight (issue #51) refuses before any connection opens.
         """
         result = cli_runner.run(
             self.protocol_name,
@@ -1837,9 +1837,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.returncode == 0, f"Expected exit 0 (early return), got {result.returncode}"
-        output = _combined_text(result, result.scan_log)
-        assert "requires --confirm" in output, "Should warn that --confirm is required for fuzzing"
+        cli_runner.assert_confirm_refused(result, "--fuzz")
 
     @pytest.mark.fuzz
     def test_fuzz_without_confirm_produces_no_fuzz_data(
@@ -1863,10 +1861,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.returncode == 0
-        if result.json_output:
-            data = result.json_output.get("data", {})
-            assert "fuzz" not in data, "No fuzz data should be produced without --confirm"
+        cli_runner.assert_confirm_refused(result, "--fuzz")
 
     @pytest.mark.fuzz
     @pytest.mark.slow

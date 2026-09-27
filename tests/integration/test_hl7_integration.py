@@ -404,10 +404,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
         )
 
         # Process exits 0 but logs a --confirm warning; operation is NOT sent
-        assert result.success, f"ADT requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--send-adt")
 
     def test_send_adt_a01_admit(self, cli_runner, target, port):
         """Test ADT^A01 (Admission) with --confirm [Category A]"""
@@ -600,10 +597,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"ORU requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--send-oru")
 
     def test_send_oru_with_observation(self, cli_runner, target, port):
         """Test ORU^R01 with observation data [Category A]"""
@@ -653,10 +647,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"ORM requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--send-orm")
 
     def test_send_orm_with_order_data(self, cli_runner, target, port):
         """Test ORM^O01 with order details [Category A]"""
@@ -702,10 +693,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"SIU requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--send-siu")
 
     def test_send_siu(self, cli_runner, target, port):
         """Test SIU^S12 scheduling message [Category A]"""
@@ -743,10 +731,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"MDM requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--send-mdm")
 
     def test_send_mdm(self, cli_runner, target, port):
         """Test MDM^T02 document notification [Category B]"""
@@ -948,10 +933,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"RX requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--send-rx")
 
     def test_send_rx_with_drug_data(self, cli_runner, target, port):
         """Test RDE^O11 with full prescription data [Category A]"""
@@ -1027,10 +1009,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"RAS requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--send-ras")
 
     def test_send_ras(self, cli_runner, target, port):
         """Test RAS^O17 pharmacy administration [Category B]"""
@@ -1071,10 +1050,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"RGV requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--send-rgv")
 
     def test_send_rgv(self, cli_runner, target, port):
         """Test RGV^O15 pharmacy give [Category B]"""
@@ -1107,10 +1083,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"RDS requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--send-rds")
 
     def test_send_rds(self, cli_runner, target, port):
         """Test RDS^O13 pharmacy dispense [Category B]
@@ -1156,10 +1129,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"MFN requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--send-mfn")
 
     def test_send_mfn(self, cli_runner, target, port):
         """Test MFN^M01 master file notification [Category B]"""
@@ -1275,10 +1245,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"BAR requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--send-bar")
 
     def test_send_bar(self, cli_runner, target, port):
         """Test BAR^P01 add billing account [Category B]"""
@@ -1347,10 +1314,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"DFT requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--send-dft")
 
     def test_send_dft(self, cli_runner, target, port):
         """Test DFT^P03 financial transaction [Category B]
@@ -1401,10 +1365,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"PCD-01 requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--pcd-01")
 
     def test_pcd01_infusion_pump(self, cli_runner, target, port):
         """Test PCD-01 device observation for infusion pump [Category B]
@@ -1690,10 +1651,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        assert result.success, f"Custom message requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, f"Expected '--confirm' warning in log, got: {messages[:300]}"
+        cli_runner.assert_confirm_refused(result, "--message-type")
 
     # ========================================================================
     # Response Handling Tests
@@ -2803,14 +2761,8 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             timeout=45,
         )
 
-        # Fuzzing without --confirm logs a warning; process still exits 0
-        assert result.success, f"Fuzz requires-confirm should exit 0: {result.stderr}"
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        output = result.combined_output.lower()
-        assert "confirm" in messages or "confirm" in output, (
-            f"Expected --confirm warning for fuzz, got: {messages[:300]}"
-        )
+        # Fuzzing without --confirm is refused pre-connect (issue #51)
+        cli_runner.assert_confirm_refused(result, "--fuzz")
 
     @pytest.mark.fuzz
     @pytest.mark.slow

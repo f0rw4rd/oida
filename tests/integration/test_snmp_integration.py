@@ -1297,8 +1297,8 @@ class TestSNMPIntegration:
     def test_default_creds_brute_without_confirm(self, cli_runner, target, port):
         """Test --default-creds WITHOUT --confirm is rejected [Category C]
 
-        Safety gate: brute-force must not run without explicit --confirm.
-        The scan completes (rc=0) but logs a fail message and does NOT brute.
+        Safety gate: the CLI preflight refuses pre-connect (issue #51), so no
+        traffic reaches the target and the JSON log stays empty.
         """
         result = cli_runner.run(
             "snmp",
@@ -1312,13 +1312,7 @@ class TestSNMPIntegration:
             json_log=True,
             timeout=10,
         )
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "confirm" in messages, (
-            f"Expected '--confirm' rejection message, got: {messages[:300]}"
-        )
-        # Must NOT have run actual brute-force
-        assert "valid community" not in messages, "Brute should not run without --confirm"
+        cli_runner.assert_confirm_refused(result, "--default-creds")
 
     @pytest.mark.auth
     def test_brute_rate_flag_accepted(self, cli_runner, target, port):
@@ -1565,8 +1559,8 @@ class TestSNMPIntegration:
     def test_enum_v3_without_confirm_rejected(self, cli_runner, target, port):
         """Test -E without --confirm is rejected upfront [Category C]
 
-        -E/--enum-v3 now requires --confirm unconditionally (active probing).
-        The scanner logs a fail message and skips v3 enumeration.
+        -E/--enum-v3 without a single-credential exemption is refused by the
+        CLI preflight before any connection opens (issue #51).
         """
         result = cli_runner.run(
             "snmp",
@@ -1579,11 +1573,7 @@ class TestSNMPIntegration:
             json_log=True,
             timeout=15,
         )
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "requires --confirm" in messages, (
-            f"Expected 'requires --confirm' rejection, got: {messages[:300]}"
-        )
+        cli_runner.assert_confirm_refused(result, "--enum-v3")
 
     @pytest.mark.auth
     @pytest.mark.security
@@ -2084,10 +2074,7 @@ class TestSNMPIntegration:
             format="json",
             json_log=True,
         )
-        messages = _all_messages(result.scan_log)
-        assert "--set requires --confirm" in messages, (
-            f"Expected '--set requires --confirm' message, got: {messages[:500]}"
-        )
+        cli_runner.assert_confirm_refused(result, "--set")
 
     @pytest.mark.security
     def test_set_writes_syscontact(self, cli_runner, target, port):
@@ -2173,10 +2160,7 @@ class TestSNMPIntegration:
             format="json",
             json_log=True,
         )
-        messages = _all_messages(result.scan_log)
-        assert "--walk-write requires --confirm" in messages, (
-            f"Expected '--walk-write requires --confirm' message, got: {messages[:500]}"
-        )
+        cli_runner.assert_confirm_refused(result, "--walk-write")
 
     @pytest.mark.security
     def test_walk_write_sysgroup(self, cli_runner, target, port):
@@ -2214,12 +2198,14 @@ class TestSNMPIntegration:
         """Test -E admin -V 3 -A admin123 runs the targeted auth test, defers priv brute [Category C]
 
         A named user with a single provided auth password (`-E USER -A pass`) is a
-        TARGETED credential test, not a brute-force, so it is allowed through the
-        outer --confirm gate (see scanner.py `is_single_credential`). Phase 2 tests
-        that one auth password and, when the user needs priv, records the finding
-        and DEFERS the active priv brute-force behind --confirm ("add --confirm to
-        proceed"). The upfront "requires --confirm" rejection only applies to bare
-        `-E USER` (no password) -- see test_enum_v3_without_confirm_rejected.
+        TARGETED credential test, not a brute-force, so it is allowed through both
+        the CLI preflight (cli.py `_snmp_enum_v3_single_credential` mirrors the
+        scanner's exemption) and the outer --confirm gate in scanner.py. Phase 2
+        tests that one auth password and, when the user needs priv, records the
+        finding and DEFERS the active priv brute-force behind --confirm ("add
+        --confirm to proceed"). The upfront "requires --confirm" rejection only
+        applies to bare `-E USER` (no password) -- see
+        test_enum_v3_without_confirm_rejected.
         """
         result = cli_runner.run(
             "snmp",
@@ -4574,11 +4560,7 @@ class TestSNMPEnumUsers:
             json_log=True,
             timeout=10,
         )
-        _assert_log_has_events(result)
-        messages = _all_messages(result.scan_log)
-        assert "requires --confirm" in messages, (
-            f"Expected 'requires --confirm' rejection, got: {messages[:300]}"
-        )
+        cli_runner.assert_confirm_refused(result, "--enum-users")
 
     # ── Category A: Strict ──
 

@@ -1123,24 +1123,14 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
     def assert_write_not_performed(self, cli_runner, target, tmp_path, result_key, *cli_args):
         """Run a dangerous write WITHOUT --confirm and assert it never happened.
 
-        SCOPE -- read before trusting this as safety-gate coverage. Against the
-        Calimero mock, discover() bails out at its connection_ok check (the mock
-        never establishes a tunnel), so the write-handling code is never reached
-        and the result key is simply absent. That makes this test a smoke-level
-        guard, NOT proof that the --confirm gate works: it was mutation-checked
-        by replacing the gate body with a permissive {"success": True}, and it
-        stayed green. The real, mutation-verified coverage of the gate lives in
-        tests/unit/knx/test_scanner_discover.py::TestConfirmSafetyGates, which
-        drives discover() with a stub connection so the gate is actually
-        reachable.
-
-        What this test still buys: if the mock ever does start completing a
-        tunnel, a write reported as performed without --confirm fails here
-        rather than passing silently, which is what the old
-        `assert result.returncode != -1` form did.
+        The CLI preflight (issue #51) refuses gated write flags before any
+        connection opens, so the primary assertion is the pre-connect refusal
+        itself (rc=1, refusal naming the flag, no JSON output written). The
+        mutation-verified coverage of the scanner-level gate still lives in
+        tests/unit/knx/test_scanner_discover.py::TestConfirmSafetyGates; this
+        end-to-end form additionally proves the write flags are in the
+        preflight's net (help text carries the promise).
         """
-        import json
-
         result = cli_runner.run(
             self.protocol_name,
             target,
@@ -1152,27 +1142,9 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             expect_json=False,
             timeout=45,
         )
-        assert result.returncode != -1
-
-        json_path = tmp_path / "knx.json"
-        assert json_path.exists(), f"Expected {json_path} to be written"
-        payload = json.loads(json_path.read_text())
-        data = payload[-1] if isinstance(payload, list) else payload
-
-        entry = (data.get("data") or {}).get(result_key)
-        if entry is None:
-            entry = data.get(result_key)
-        if entry is None:
-            return  # gate short-circuited before producing a result: nothing was written
-
-        assert isinstance(entry, dict), f"Unexpected {result_key} payload: {entry!r}"
-        assert entry.get("success") is not True, (
-            f"{result_key} reported success WITHOUT --confirm -- the safety gate "
-            f"has regressed and a dangerous write was performed: {entry!r}"
-        )
-        assert entry.get("written") is not True, (
-            f"{result_key} reports written=True WITHOUT --confirm: {entry!r}"
-        )
+        gated_flag = cli_args[2] if len(cli_args) > 2 else None  # first flag after --port N
+        cli_runner.assert_confirm_refused(result, *([gated_flag] if gated_flag else []))
+        assert not (tmp_path / "knx.json").exists(), "Refused run must not write output files"
 
     @pytest.mark.containers("knx-calimero")
     def test_group_write_without_confirm(self, cli_runner, target, port, tmp_path):
