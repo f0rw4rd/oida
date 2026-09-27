@@ -78,12 +78,14 @@ fhir = ["fhirclient==4.4.0", "requests==2.34.2"]
 goose = ["pyiec61850-ng==1.6.1.10"]
 hart = ["hartip-py==0.3.0"]
 hl7 = ["hl7apy==1.3.5"]
-# Pinned to upstream main (2.2.2-dev): fixes the garbage-bytes SIGSEGV in the
-# native parser (iec104-python#76, ~9% of junk-impostor runs) - verified 40/40
-# clean against this commit vs a segv at run 11 on the 2.2.1 wheel. Every c104
-# API OIDA uses is unchanged. Swap back to a PyPI pin (`c104==2.2.2`) the day
-# it ships; the flaky(reruns=3) shim on the junk-bytes test can then be retired.
-iec104 = ["c104 @ git+https://github.com/Fraunhofer-FIT-DIEN/iec104-python@5c78d42d3969bbcb0411e06962938c00b465cdfb"]
+# MUST stay a PyPI pin: PyPI rejects uploads whose metadata carries direct
+# git+https dependencies (400 Bad Request, hit by the 1.0.0 release). 2.2.2
+# would fix the garbage-bytes SIGSEGV in the native parser (iec104-python#76,
+# ~9% of junk-impostor runs - segv at run 11 on the 2.2.1 wheel vs 40/40 clean
+# on 5c78d42d), but upstream hasn't published it. Until it does, iec104 users
+# should treat a hostile IEC 104 server as scanner-crashing (the junk-bytes
+# test carries flaky(reruns=3) as a shim for exactly this).
+iec104 = ["c104==2.2.1"]
 knx = ["xknx==3.20.0", "xknxproject==3.10.0"]
 mms = ["pyiec61850-ng==1.6.1.10"]
 modbus = ["pymodbus==3.15.0", "PyYAML==6.0.3"]
