@@ -37,10 +37,22 @@ DEFAULT_DECODE_AS_HINTS: Dict[str, str] = {
 
 def _extract_tshark_error(exc: Exception) -> str:
     """Extract the tshark error line from a TSharkCrashException message."""
-    for line in str(exc).splitlines():
-        if line.strip().startswith("Last error line:"):
-            return line.strip().removeprefix("Last error line:").strip()
-    return str(exc).splitlines()[0] if str(exc) else "Unknown error"
+    # tshark prints syntax errors as a caret pointer line ("^~~~~") under the
+    # message; the caret is often the LAST stderr line, so skipping pure-caret
+    # lines keeps the actual diagnostic instead of reporting "^~~~~~~~~~~".
+    lines = [
+        ln.strip()
+        for ln in str(exc).splitlines()
+        if ln.strip() and not set(ln.strip()) <= {"^", "~", "-"}
+    ]
+    for line in lines:
+        if line.startswith("Last error line:"):
+            return line.removeprefix("Last error line:").strip()
+    # Prefer an explicit tshark diagnostic over pyshark's generic wrapper text.
+    for line in lines:
+        if line.startswith("tshark:"):
+            return line
+    return lines[0] if lines else "Unknown error"
 
 
 class PcapScanner:
@@ -323,10 +335,18 @@ class PcapScanner:
         stderr = result.stderr or ""
         if result.returncode == 0 or "packet count is zero" in stderr:
             return display_filter
-        if "is not a valid protocol or protocol field" in stderr:
+        # Wireshark reworded the unknown-protocol diagnostic: 4.4 says
+        # "\"X\" is not a valid protocol or protocol field.", 4.2 and older
+        # said "\"X\" is neither a field nor a protocol name." (semcheck.c).
+        # Match both, or a pinned old tshark keeps the uncompilable filter and
+        # every pipeline attempt exits non-zero.
+        if (
+            "is not a valid protocol or protocol field" in stderr
+            or "is neither a field nor a protocol name" in stderr
+        ):
             import re
 
-            unknown = re.findall(r'"([^"]+)" is not a valid protocol', stderr)
+            unknown = re.findall(r'"([^"]+)"', stderr)
             self.logger.debug(
                 "display_filter names protocol(s) this tshark lacks (%s); "
                 "dropping the pre-filter and processing all packets",
