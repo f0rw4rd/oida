@@ -1,15 +1,17 @@
 name: CI
 
 on:
-  # CI runs automatically. It was previously manual-only, and the result was
-  # that it never ran at all: 628k LOC landed with no automated check, and the
-  # vulture gate sat red on committed code unnoticed.
-  push:
-    branches: [main]
+  # CI runs on pull requests only, not per commit on main. It was previously
+  # manual-only, and the result was that it never ran at all: 628k LOC landed
+  # with no automated check, and the vulture gate sat red on committed code
+  # unnoticed. A push trigger was added later; it cost a full CI run per merge
+  # for no coverage a green PR hadn't already given. Direct pushes to main
+  # are NOT checked by CI - cover them with branch protection if that starts
+  # to matter.
   pull_request:
-  # The heavy jobs are opt-in per job, so a push to main or a PR - even a
-  # README-only change - runs only lint + the fast unit/contract matrix
-  # (minutes). On push/PR the `inputs` context is empty (falsy), so both skip.
+  # The heavy jobs are opt-in per job, so a PR - even a README-only change -
+  # runs only lint + the fast unit/contract matrix (minutes). On PR the
+  # `inputs` context is empty (falsy), so both skip.
   #
   # The two are gated separately on purpose:
   #   run_pcap         - pinned-tshark dissector tests, ~5 min, deterministic.
@@ -214,7 +216,7 @@ jobs:
   pcap:
     name: Dissector tests (pinned tshark)
     # Runs on release (workflow_call passes run_pcap: true) and on manual
-    # dispatch. Skipped on push/PR, where the inputs context is empty.
+    # dispatch. Skipped on PRs, where the inputs context is empty.
     if: ${{ inputs.run_pcap }}
     runs-on: ubuntu-latest
     steps:
