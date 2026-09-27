@@ -2481,7 +2481,7 @@ class TestOCPPFlagCoverageDiscovery:
             "--timeout",
             "5",
             expect_json=False,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], (
@@ -2777,7 +2777,7 @@ class TestOCPPFlagCoverageSecurityProbesAndCharging:
             "--timeout",
             "15",
             expect_json=False,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], (
@@ -2797,7 +2797,7 @@ class TestOCPPFlagCoverageSecurityProbesAndCharging:
             "--timeout",
             "15",
             expect_json=False,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], (

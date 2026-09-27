@@ -224,7 +224,7 @@ class TestCANCliIntegration:
             str(tmp_path),
             "--format",
             "json",
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode == 0, result.combined_output
         data = _read_json(tmp_path)["data"]
@@ -303,7 +303,7 @@ class TestCANCliIntegration:
             str(tmp_path),
             "--format",
             "json",
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode == 0, result.combined_output
         scan = _read_json(tmp_path)["data"]["canopen_od_scan"]
@@ -360,7 +360,7 @@ class TestCANCliIntegration:
             str(tmp_path),
             "--format",
             "json",
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode == 0, result.combined_output
         stations = _read_json(tmp_path)["data"]["ccp_results"]
@@ -382,7 +382,7 @@ class TestCANCliIntegration:
             str(tmp_path),
             "--format",
             "json",
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode == 0, result.combined_output
         gateways = _read_json(tmp_path)["data"]["modbus_gateways"]
@@ -614,7 +614,7 @@ class TestCANCliIntegration:
             str(tmp_path),
             "--format",
             "json",
-            timeout=150,
+            timeout=185,
         )
         assert result.returncode == 0, result.combined_output
         slaves = {s["request_id"]: s for s in _read_json(tmp_path)["data"]["xcp_results"]}
@@ -645,7 +645,7 @@ class TestCANCliIntegration:
             str(tmp_path),
             "--format",
             "json",
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode == 0, result.combined_output
         assert "Traceback" not in result.combined_output
@@ -696,7 +696,7 @@ class TestCANCliIntegration:
             "--confirm",
             "--timeout",
             "8",
-            timeout=30,
+            timeout=45,
             json_log=True,
         )
         assert confirmed.returncode == 0, confirmed.combined_output
@@ -718,7 +718,7 @@ class TestCANCliIntegration:
             "2",
             "--timeout",
             "8",
-            timeout=30,
+            timeout=45,
             json_log=True,
         )
         assert result.returncode == 0, result.combined_output
@@ -752,7 +752,7 @@ class TestCANCliIntegration:
             "--confirm",
             "--timeout",
             "8",
-            timeout=30,
+            timeout=45,
             json_log=True,
         )
         assert confirmed.returncode == 0, confirmed.combined_output
@@ -790,7 +790,7 @@ class TestCANCliIntegration:
             "--confirm",
             "--timeout",
             "8",
-            timeout=30,
+            timeout=45,
             json_log=True,
         )
         assert confirmed.returncode == 0, confirmed.combined_output
@@ -834,7 +834,7 @@ class TestCANCliIntegration:
             "--confirm",
             "--timeout",
             "8",
-            timeout=30,
+            timeout=45,
             json_log=True,
         )
         assert confirmed.returncode == 0, confirmed.combined_output
@@ -935,7 +935,7 @@ class TestCANCliIntegration:
             "--confirm",
             "--timeout",
             "5",
-            timeout=30,
+            timeout=45,
             json_log=True,
         )
         assert result.returncode == 0, result.combined_output
@@ -958,7 +958,7 @@ class TestCANCliIntegration:
             str(tmp_path),
             "--format",
             "json",
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode == 0, result.combined_output
         _read_json(tmp_path)

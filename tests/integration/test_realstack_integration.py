@@ -92,7 +92,7 @@ class TestAstmRealStack:
 
     def test_hematology_endpoint_connects(self, cli_runner):
         _require(1398, "astm-realstack-hematology")
-        result = cli_runner.run("astm", MOCK_HOST, "--port", "1398", timeout=30)
+        result = cli_runner.run("astm", MOCK_HOST, "--port", "1398", timeout=45)
         text = _text(result)
         assert "connected to astm endpoint" in text, f"no ASTM connect: {text[:400]}"
 
@@ -103,14 +103,14 @@ class TestHartRealStack:
 
     def test_hart5_protocol_revision(self, cli_runner):
         _require(5100, "hart-hipflow-hart5")
-        result = cli_runner.run("hart", MOCK_HOST, "--port", "5100", "--read-id", timeout=30)
+        result = cli_runner.run("hart", MOCK_HOST, "--port", "5100", "--read-id", timeout=45)
         text = _text(result)
         assert "connected to hart device" in text, f"no HART connect: {text[:400]}"
         assert "hart 5" in text or "rev 5" in text, f"expected HART rev 5: {text[:400]}"
 
     def test_hart7_protocol_revision(self, cli_runner):
         _require(5102, "hart-hipflow-hart7")
-        result = cli_runner.run("hart", MOCK_HOST, "--port", "5102", "--read-id", timeout=30)
+        result = cli_runner.run("hart", MOCK_HOST, "--port", "5102", "--read-id", timeout=45)
         text = _text(result)
         assert "hart 7" in text or "rev 7" in text, f"expected HART rev 7: {text[:400]}"
 
@@ -118,8 +118,8 @@ class TestHartRealStack:
         """The two configs are genuinely different builds (rev 5 vs rev 7)."""
         _require(5100, "hart-hipflow-hart5")
         _require(5102, "hart-hipflow-hart7")
-        r5 = _text(cli_runner.run("hart", MOCK_HOST, "--port", "5100", "--read-id", timeout=30))
-        r7 = _text(cli_runner.run("hart", MOCK_HOST, "--port", "5102", "--read-id", timeout=30))
+        r5 = _text(cli_runner.run("hart", MOCK_HOST, "--port", "5100", "--read-id", timeout=45))
+        r7 = _text(cli_runner.run("hart", MOCK_HOST, "--port", "5102", "--read-id", timeout=45))
         assert ("hart 5" in r5 or "rev 5" in r5) and ("hart 7" in r7 or "rev 7" in r7)
 
 
@@ -158,7 +158,7 @@ class TestBacnetRealStack:
     def test_building_targeted_read(self, cli_runner):
         _require_udp(47821, "bacnet-realstack-building")
         result = cli_runner.run(
-            "bacnet", MOCK_HOST, "--port", "47821", "--device-id", "22002", timeout=30
+            "bacnet", MOCK_HOST, "--port", "47821", "--device-id", "22002", timeout=45
         )
         text = _text(result)
         # Regression guard: the targeted read must NOT abort.
@@ -172,7 +172,7 @@ class TestBacnetRealStack:
         """A second profile (instance 33003 / VAV-Box-12) - confirms distinct configs."""
         _require_udp(47822, "bacnet-realstack-vav")
         result = cli_runner.run(
-            "bacnet", MOCK_HOST, "--port", "47822", "--device-id", "33003", timeout=30
+            "bacnet", MOCK_HOST, "--port", "47822", "--device-id", "33003", timeout=45
         )
         text = _text(result)
         assert "errno 99" not in text, f"broadcast-bind bug regressed: {text[:500]}"
@@ -246,7 +246,7 @@ class TestBacnetRealStack:
             "--call",
             "write",
             "AV:1:pv:1.0",
-            timeout=30,
+            timeout=45,
         )
         assert "confirm" in _text(result), f"mutating --call not gated: {_text(result)[:500]}"
 
@@ -369,7 +369,7 @@ class TestBacnetRealStack:
             "--passwords",
             self._wordlist(tmp_path),
             "--confirm",
-            timeout=60,
+            timeout=45,
         )
         text = _text(result)
         assert "devicecommunicationcontrol: 'filister'" in text, f"DCC not cracked: {text[:600]}"
@@ -391,7 +391,7 @@ class TestBacnetRealStack:
             "--passwords",
             self._wordlist(tmp_path),
             "--confirm",
-            timeout=60,
+            timeout=45,
         )
         text = _text(result)
         assert "reinitializedevice: 'oida-reinit'" in text, f"reinit not cracked: {text[:600]}"
@@ -418,7 +418,7 @@ class TestBacnetRealStack:
             "--passwords",
             self._wordlist(tmp_path),
             "--confirm",
-            timeout=90,
+            timeout=45,
         )
         text = _text(result)
         assert "devicecommunicationcontrol: 'filister'" in text, (

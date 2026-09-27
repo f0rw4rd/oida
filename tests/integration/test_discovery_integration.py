@@ -572,7 +572,7 @@ class TestDiscoveryCliSudoActiveScans:
             "127.0.0.1/32",
             use_sudo=True,
             format="json",
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode == 0, result.combined_output
         _assert_no_traceback(result)

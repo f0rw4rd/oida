@@ -107,7 +107,7 @@ class BaseProtocolIntegrationTest(ABC):
     def test_basic_discovery(self, cli_runner, target, port):
         """Test basic protocol discovery against mock service"""
         args = [self.protocol_name, target] + self._get_port_args(port)
-        result = cli_runner.run(*args, format="json", timeout=30)
+        result = cli_runner.run(*args, format="json", timeout=45)
 
         self._assert_successful_discovery(result)
 
@@ -199,7 +199,7 @@ class BaseProtocolIntegrationTest(ABC):
 
         def run_scan():
             args = [self.protocol_name, target] + port_args
-            return cli_runner.run(*args, format="json", timeout=30)
+            return cli_runner.run(*args, format="json", timeout=45)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             futures = [executor.submit(run_scan) for _ in range(3)]

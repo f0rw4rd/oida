@@ -123,7 +123,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             target,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"FHIR connection failed: {result.stderr}"
@@ -152,7 +152,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--caps",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"CapabilityStatement request failed: {result.stderr}"
@@ -177,7 +177,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--search-patients",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Patient search failed: {result.stderr}"
@@ -202,7 +202,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "Doe",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -221,7 +221,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "male",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -240,7 +240,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "10",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -260,7 +260,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "50",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -282,7 +282,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "PT001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -303,7 +303,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--search-observations",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -322,7 +322,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "PT001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -341,7 +341,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "vital-signs",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -359,7 +359,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "OBS001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -380,7 +380,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--search-medications",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -399,7 +399,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "PT001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -417,7 +417,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "MED001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -438,7 +438,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--search-conditions",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -457,7 +457,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "PT001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -475,7 +475,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "CON001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -496,7 +496,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--search-encounters",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -515,7 +515,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "PT001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -533,7 +533,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "ENC001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -554,7 +554,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--search-procedures",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -571,7 +571,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--search-allergies",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -588,7 +588,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--search-immunizations",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -611,7 +611,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "10",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -641,7 +641,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             target,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Basic scan failed: {result.stderr}"
@@ -670,7 +670,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             target,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Basic scan failed: {result.stderr}"
@@ -699,7 +699,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--test-auth",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Auth test failed: {result.stderr}"
@@ -748,7 +748,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--test-auth",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Auth test failed: {result.stderr}"
@@ -797,7 +797,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             target,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Basic scan failed: {result.stderr}"
@@ -826,7 +826,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--test-auth",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Auth test failed: {result.stderr}"
@@ -866,7 +866,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--test-scope",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Scope test failed: {result.stderr}"
@@ -907,7 +907,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             target,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Basic scan failed: {result.stderr}"
@@ -954,7 +954,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--test-cross-patient",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -976,7 +976,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "PT001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -998,7 +998,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--test-auth",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Auth testing failed: {result.stderr}"
@@ -1016,7 +1016,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--search-patients",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1035,7 +1035,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--search-patients",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1058,7 +1058,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "count",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1077,7 +1077,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "id,name,birthDate",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1100,7 +1100,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--caps",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1121,7 +1121,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             target,
             "--search-patients",
             json_log=True,
-            timeout=30,
+            timeout=45,
             expect_json=False,
             output=str(export_dir),
             format="json",
@@ -1143,7 +1143,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--save-response",
             str(response_file),
             json_log=True,
-            timeout=30,
+            timeout=45,
             expect_json=False,
         )
 
@@ -1169,7 +1169,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "2024-12-31",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1192,7 +1192,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "8867-4",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1223,7 +1223,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             target,
             "--caps",
             json_log=True,
-            timeout=30,
+            timeout=45,
             verbose=True,
             format="json",
         )
@@ -1241,7 +1241,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             target,
             "--caps",
             json_log=True,
-            timeout=30,
+            timeout=45,
             debug=True,
             format="json",
         )
@@ -1290,7 +1290,7 @@ class TestFhirIntegration(BaseProtocolIntegrationTest):
             "--caps",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]

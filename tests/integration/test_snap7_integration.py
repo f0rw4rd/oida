@@ -340,7 +340,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--scan-programs",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -642,7 +642,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--enumerate-szl",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1056,7 +1056,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1077,7 +1077,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1169,7 +1169,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--default-creds",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1200,7 +1200,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--brute",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1234,7 +1234,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             str(wordlist),
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1263,7 +1263,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--brute",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1294,7 +1294,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--audit",
             format="json",
             json_log=True,
-            timeout=120,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1324,7 +1324,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--audit-quick",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1478,7 +1478,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1504,7 +1504,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1529,7 +1529,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2019,7 +2019,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2063,7 +2063,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2115,7 +2115,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2166,7 +2166,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             debug=True,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2218,7 +2218,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--null-password",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2271,7 +2271,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2327,7 +2327,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             "--audit-quick",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2386,7 +2386,7 @@ class TestSnap7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]

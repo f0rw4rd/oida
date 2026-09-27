@@ -1228,7 +1228,7 @@ class TestBACnetHostileServer(BaseProtocolIntegrationTest):
         responder = threading.Thread(target=_reply_garbage, daemon=True)
         responder.start()
         try:
-            result = CLIRunner(timeout=30).run(
+            result = CLIRunner(timeout=45).run(
                 self.protocol_name,
                 "127.0.0.1",
                 "--port",

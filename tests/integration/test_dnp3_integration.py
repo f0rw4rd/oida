@@ -130,7 +130,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
         tests; drop when the flake is root-caused.
         """
         args = [self.protocol_name, target] + self._get_port_args(port)
-        result = cli_runner.run(*args, format="json", timeout=30)
+        result = cli_runner.run(*args, format="json", timeout=45)
 
         self._assert_successful_discovery(result)
         # Real behavior check: the outstation address the scanner discovered
@@ -168,7 +168,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             str(BASIC_MASTER_ADDR),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Basic connectivity failed: {result.stderr}"
@@ -190,7 +190,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             str(BASIC_OUTSTATION_ADDR),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Discovery failed: {result.stderr}"
@@ -210,7 +210,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Default outstation addr is 1024, which matches the basic mock
@@ -230,7 +230,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             str(BASIC_OUTSTATION_ADDR),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Explicit master addr failed: {result.stderr}"
@@ -251,7 +251,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             str(BASIC_OUTSTATION_ADDR),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Integrity poll failed: {result.stderr}"
@@ -274,7 +274,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Class 0 poll failed: {result.stderr}"
@@ -293,7 +293,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -313,7 +313,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "all",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Class all poll failed: {result.stderr}"
@@ -338,7 +338,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             str(BASIC_OUTSTATION_ADDR),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Device attribute read failed: {result.stderr}"
@@ -368,7 +368,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "-a",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Dump attrs failed: {result.stderr}"
@@ -402,7 +402,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--skip-device-attrs",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Skip device attrs failed: {result.stderr}"
@@ -425,7 +425,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "30.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Variation read (30.0) failed: {result.stderr}"
@@ -446,7 +446,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Variation read (1.0) failed: {result.stderr}"
@@ -465,7 +465,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "20.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Variation read (20.0) failed: {result.stderr}"
@@ -516,7 +516,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             str(COMPLEX_OUTSTATION_ADDR),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Complex outstation scan failed: {result.stderr}"
@@ -544,7 +544,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "-a",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Complex attrs failed: {result.stderr}"
@@ -587,7 +587,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             str(ENHANCED_OUTSTATION_ADDR),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Enhanced outstation scan failed: {result.stderr}"
@@ -607,7 +607,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -633,7 +633,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -659,7 +659,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -686,7 +686,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -708,7 +708,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -730,7 +730,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -754,7 +754,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -774,7 +774,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "-d",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -800,7 +800,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "lan",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -821,7 +821,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "non-lan",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -842,7 +842,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "110:0-2",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -862,7 +862,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--security-stats",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Security stats may not be available on all outstations
@@ -883,7 +883,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--record-time",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -909,7 +909,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -936,7 +936,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -960,7 +960,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -990,7 +990,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1016,7 +1016,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1042,7 +1042,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1067,7 +1067,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1088,7 +1088,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1113,7 +1113,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Application control may not be supported by enhanced mock
@@ -1135,7 +1135,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1156,7 +1156,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1175,7 +1175,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Save config may not be available in the opendnp3 build
@@ -1201,7 +1201,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "/",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1229,7 +1229,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "/config.txt",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1252,7 +1252,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "/config.txt",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1276,7 +1276,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1301,7 +1301,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "2",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Address scan failed: {result.stderr}"
@@ -1325,7 +1325,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Narrow range scan failed: {result.stderr}"
@@ -1379,7 +1379,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "10",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Retry tuning failed: {result.stderr}"
@@ -1397,7 +1397,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--no-reconnect",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"No-reconnect scan failed: {result.stderr}"
@@ -1419,7 +1419,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "-n",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"No-ack mode failed: {result.stderr}"
@@ -1443,7 +1443,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1577,7 +1577,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "3",
             "--scan-timeout",
             "2",
-            timeout=30,
+            timeout=45,
             expect_json=False,
             json_log=True,
         )
@@ -1711,7 +1711,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             str(port),
             "-o",
             str(BASIC_OUTSTATION_ADDR),
-            timeout=30,
+            timeout=45,
             expect_json=False,
             json_log=True,
             verbose=True,
@@ -1729,7 +1729,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             str(port),
             "-o",
             str(BASIC_OUTSTATION_ADDR),
-            timeout=30,
+            timeout=45,
             expect_json=False,
             json_log=True,
             debug=True,
@@ -1748,7 +1748,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             str(BASIC_OUTSTATION_ADDR),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"JSON output test failed: {result.stderr}"
@@ -1772,7 +1772,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Scan timeout param failed: {result.stderr}"
@@ -1797,7 +1797,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Class assignment may not be supported by enhanced mock
@@ -1823,7 +1823,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Activate config may not be available in opendnp3 build
@@ -1850,7 +1850,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1874,7 +1874,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1899,7 +1899,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Init app may not be supported by enhanced mock
@@ -1950,7 +1950,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # File write may or may not be supported by filetransfer mock
@@ -1981,7 +1981,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             local_save_path,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2037,7 +2037,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "2",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"--scan-range failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -2057,7 +2057,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"--class-poll failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -2074,7 +2074,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--dump-attrs",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"--dump-attrs failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -2093,7 +2093,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--enumerate-points",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"--enumerate-points failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -2111,7 +2111,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "30.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"--read-variation failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -2128,7 +2128,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--delay-measure",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         if result.scan_log is not None and len(result.scan_log) > 0:
@@ -2146,7 +2146,7 @@ class TestDnp3Integration(BaseProtocolIntegrationTest):
             "--no-ack",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"--no-ack failed: {result.stderr}"
         _assert_log_has_events(result)

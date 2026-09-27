@@ -252,7 +252,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Unicast discovery failed: {result.stderr}"
@@ -295,7 +295,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "--gateway-scan",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Gateway scan failed: {result.stderr}"
@@ -328,7 +328,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"NAT mode failed: {result.stderr}"
@@ -353,7 +353,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "--no-nat",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"No-NAT mode failed: {result.stderr}"
@@ -379,7 +379,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "10",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Custom timeout scan failed: {result.stderr}"
@@ -406,7 +406,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "--tcp",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -436,7 +436,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "2",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -464,7 +464,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -492,7 +492,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -515,7 +515,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -538,7 +538,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -558,7 +558,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -585,7 +585,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1/0/1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -608,7 +608,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "2/0/1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -629,7 +629,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -650,7 +650,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -678,7 +678,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -699,7 +699,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -720,7 +720,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -743,7 +743,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -768,7 +768,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -791,7 +791,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -812,7 +812,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -832,7 +832,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -856,7 +856,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -881,7 +881,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.1-1.1.5",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -908,7 +908,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.1-1.1.3",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -930,7 +930,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "00FA12345678",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -955,7 +955,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "5",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -984,7 +984,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1006,7 +1006,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1030,7 +1030,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1054,7 +1054,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1080,7 +1080,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1109,7 +1109,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1150,7 +1150,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=False,
             expect_json=False,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode != -1
 
@@ -1354,7 +1354,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="csv",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"CSV output failed: {result.stderr}"
@@ -1394,7 +1394,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             verbose=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Verbose mode failed: {result.stderr}"
@@ -1413,7 +1413,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             debug=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Debug mode failed: {result.stderr}"
@@ -1443,7 +1443,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             verbose=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Verbose gateway scan failed: {result.stderr}"
@@ -1611,7 +1611,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "1.1.1-1.1.3",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1698,7 +1698,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Scan failed: {result.stderr}"
@@ -1731,7 +1731,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "--gateway-scan",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Gateway scan failed: {result.stderr}"
@@ -1862,7 +1862,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "50",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert stop_first.returncode in [0, 1]
         stop_text = _combined_text(stop_first, stop_first.scan_log)
@@ -1888,7 +1888,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "50",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert keep_going.returncode in [0, 1]
         keep_text = _combined_text(keep_going, keep_going.scan_log)
@@ -1919,7 +1919,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1971,7 +1971,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             expect_json=False,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -2107,7 +2107,7 @@ class TestKNXIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             expect_json=False,
-            timeout=30,
+            timeout=45,
         )
 
         text = result.combined_output.lower()

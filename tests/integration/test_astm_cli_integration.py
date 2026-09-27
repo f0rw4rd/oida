@@ -505,7 +505,7 @@ class TestAstmCliIntegration(BaseProtocolIntegrationTest):
             "Q",
             "--fuzz-frame",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
         assert result.success, result.combined_output
         messages = _all_messages(result)
@@ -574,7 +574,7 @@ class TestAstmCliIntegration(BaseProtocolIntegrationTest):
                 "--timeout",
                 "2",
                 json_log=True,
-                timeout=30,
+                timeout=45,
             )
             messages = _all_messages(result)
             assert "cobas_8000" not in messages
@@ -601,7 +601,7 @@ class TestAstmCliIntegration(BaseProtocolIntegrationTest):
             "--timeout",
             "3",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert "Traceback" not in result.combined_output
         messages = _all_messages(result)

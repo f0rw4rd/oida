@@ -559,7 +559,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "0-3",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -588,7 +588,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "0-10",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -616,7 +616,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "0-5",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -649,7 +649,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--security-analysis",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         assert result.returncode != -1, f"Security analysis timed out: {result.stderr}"
@@ -915,7 +915,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1088,7 +1088,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             str(wordlist),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1116,7 +1116,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "1234",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1145,7 +1145,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "1234",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1274,7 +1274,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1335,7 +1335,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "TEST01",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1397,7 +1397,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "TestDesc",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1459,7 +1459,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "TestMessage",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1518,7 +1518,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--reset-config-flag",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1576,7 +1576,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--self-test",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1635,7 +1635,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--master-reset",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1693,7 +1693,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--enumerate-device-specific",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1733,7 +1733,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=135,
         )
 
         assert result.returncode in [0, 1]
@@ -1761,7 +1761,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--probe-calibration",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1818,7 +1818,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--probe-write",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1905,7 +1905,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # --confirm alone without any write/fuzz flag should just do a normal scan
@@ -1936,7 +1936,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--fuzz",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1970,7 +1970,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1988,6 +1988,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             ]
         ), f"Expected fuzzing output: {text[:500]}"
 
+    @pytest.mark.timeout(90)
     @pytest.mark.security
     @pytest.mark.fuzz
     @pytest.mark.slow
@@ -2006,7 +2007,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=75,
         )
 
         assert result.returncode in [0, 1]
@@ -2150,7 +2151,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--full",
             format="json",
             json_log=True,
-            timeout=150,
+            timeout=165,
         )
 
         assert result.returncode in [0, 1]
@@ -2183,7 +2184,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "0102030405060708",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # v1-only server doesn't support TLS-PSK, should fail or fallback
@@ -2222,7 +2223,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "0-5",
             format="json",
             json_log=True,
-            timeout=120,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -2251,7 +2252,7 @@ class TestHARTIntegration(BaseProtocolIntegrationTest):
             "--security-analysis",
             format="json",
             json_log=True,
-            timeout=120,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -2613,7 +2614,7 @@ class TestHARTSecondaryIntegration:
             "0-3",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]

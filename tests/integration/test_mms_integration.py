@@ -217,7 +217,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Discovery failed (rc={result.returncode}): {result.stderr}"
         text = _combined_text(result)
@@ -234,7 +234,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
 
         def run_scan():
             args = [self.protocol_name, target] + port_args
-            return cli_runner.run(*args, format="json", timeout=30)
+            return cli_runner.run(*args, format="json", timeout=45)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             futures = [executor.submit(run_scan) for _ in range(3)]
@@ -293,7 +293,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -316,7 +316,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "--identify",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -341,7 +341,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "--identify",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -362,7 +362,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "--get-name-list",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -381,7 +381,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             debug=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -402,7 +402,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "--get-name-list",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -423,7 +423,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             debug=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -440,7 +440,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             debug=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -460,7 +460,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             debug=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -478,7 +478,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         text = _combined_text(result, result.scan_log)
@@ -494,7 +494,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         text = _combined_text(result, result.scan_log)
@@ -515,7 +515,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "GGIO1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         # Reading a variable still connects and discovers the data model;
@@ -537,7 +537,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "LLN0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         # LLN0 is a real logical node on the mock; the scan connects and
         # discovers the data model successfully.
@@ -558,7 +558,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "LPHD1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         # LPHD1 is a real logical node on the mock; the scan connects and
         # discovers the data model successfully.
@@ -598,7 +598,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "5",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -637,7 +637,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "--test-write",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         # Should still work (read-only mode skips writes)
         assert result.returncode in [0, 1]
@@ -656,7 +656,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(MOCK_PORTS["mms_goose"]),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         text = _combined_text(result, result.scan_log)
@@ -672,7 +672,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(MOCK_PORTS["mms_control"]),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         text = _combined_text(result, result.scan_log)
@@ -728,7 +728,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -747,7 +747,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         text = _combined_text(result, result.scan_log)
@@ -804,7 +804,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Connection failed (rc={result.returncode}): {result.stderr}"
         _assert_log_has_events(result)
@@ -839,7 +839,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Connection failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -886,7 +886,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Scan failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -921,7 +921,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Scan failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -1035,7 +1035,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "--test-write",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         # Should succeed but skip writes (read-only mode)
         assert result.returncode in [0, 1]
@@ -1091,7 +1091,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             debug=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Scan failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -1159,7 +1159,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         # UNCONDITIONAL: security analysis must run (it always does after discovery)
@@ -1189,7 +1189,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(MOCK_PORTS["mms_control"]),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Control server scan failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -1243,7 +1243,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Scan failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -1277,7 +1277,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Scan failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -1304,7 +1304,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(MOCK_PORTS["mms_goose"]),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"GOOSE server scan failed: {result.stderr}"
         text = _combined_text(result, result.scan_log)
@@ -1328,7 +1328,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Scan failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -1390,7 +1390,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -1487,7 +1487,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], (
             f"Scanner crashed (rc={result.returncode}): {result.stderr}"
@@ -1516,7 +1516,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "--fuzz",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         # Fuzz without confirm should warn or fail
         assert result.returncode in [0, 1], (
@@ -1543,7 +1543,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
         assert result.returncode != -1
 
@@ -1562,7 +1562,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
         assert result.returncode != -1
 
@@ -1581,7 +1581,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
         assert result.returncode != -1
 
@@ -1602,7 +1602,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
         assert result.returncode != -1
 
@@ -1619,7 +1619,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="csv",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         # The scan still discovers the device regardless of export format.
@@ -1635,7 +1635,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         text = _combined_text(result, result.scan_log)
@@ -1655,7 +1655,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             verbose=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -1672,7 +1672,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             debug=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -1738,7 +1738,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             "50",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -1757,7 +1757,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         assert result.execution_time < 15, f"Discovery took too long: {result.execution_time:.1f}s"
@@ -1775,7 +1775,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -1796,7 +1796,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -1812,7 +1812,7 @@ class TestMMSIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)

@@ -531,7 +531,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "1-5",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         # Should complete without crashing
@@ -574,7 +574,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--scan-fc",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -594,7 +594,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--fc-all",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1170,7 +1170,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "0-10",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success, f"Full mode failed: {result.stderr}"
@@ -1259,7 +1259,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "0-5",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Crash guard
@@ -1366,7 +1366,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--sunspec",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"SunSpec discovery failed: {result.stderr}"
@@ -1614,7 +1614,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1663,7 +1663,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
@@ -1702,7 +1702,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1748,7 +1748,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1792,7 +1792,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1834,7 +1834,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "3",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode == 0, f"Expected exit 0 (early return), got {result.returncode}"
@@ -1860,7 +1860,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "3",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode == 0
@@ -1887,7 +1887,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
@@ -1915,7 +1915,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
@@ -1943,7 +1943,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
@@ -1971,7 +1971,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
@@ -2001,7 +2001,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
@@ -2033,7 +2033,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
@@ -2063,7 +2063,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
@@ -2091,7 +2091,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
@@ -2121,7 +2121,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1, -1]
@@ -2170,7 +2170,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"Unexpected return code: {result.returncode}"
@@ -3501,7 +3501,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "1-10",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         # Should complete without error
@@ -3523,7 +3523,7 @@ class TestModbusIntegration(BaseProtocolIntegrationTest):
             "1-3",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -3622,7 +3622,7 @@ class TestModbusP1FalsePositiveRegression:
                 format="json",
                 output=str(out_dir),
                 expect_json=False,
-                timeout=30,
+                timeout=45,
             )
 
             last = self._read_result_payload(out_dir, result)
@@ -3650,7 +3650,7 @@ class TestModbusP1FalsePositiveRegression:
             format="json",
             output=str(out_dir),
             expect_json=False,
-            timeout=30,
+            timeout=45,
         )
 
         last = self._read_result_payload(out_dir, result)

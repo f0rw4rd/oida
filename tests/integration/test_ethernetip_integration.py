@@ -204,7 +204,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ListIdentity failed: {result.stderr}"
@@ -243,7 +243,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ListIdentity failed: {result.stderr}"
@@ -275,7 +275,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--list-services",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # cpppo mock may or may not support ListServices
@@ -304,7 +304,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--list-interfaces",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # cpppo mock may or may not support ListInterfaces
@@ -336,7 +336,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--enumerate-all",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -365,7 +365,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--enumerate-objects",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -393,7 +393,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--deep-scan",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -423,7 +423,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--full-scan",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -452,7 +452,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--show-udts",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -479,7 +479,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--full-enum",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -510,7 +510,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--dump-tags",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -541,7 +541,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             tag_dir,
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -717,7 +717,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--discover-routes",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -809,7 +809,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--enumerate-slot-objects",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -839,7 +839,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--read-slot-io",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1294,7 +1294,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "5",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1333,7 +1333,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--write",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1371,7 +1371,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--full-scan",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1414,7 +1414,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--dump-tags",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1606,7 +1606,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--write",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1668,7 +1668,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--download-files",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1698,7 +1698,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             file_dir,
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1726,7 +1726,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "1024",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1757,7 +1757,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--cpu-stop",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Should not crash but may error due to missing --confirm
@@ -1790,7 +1790,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--crash-ethernet",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1827,7 +1827,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--crash-cpu",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1860,7 +1860,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Mock won't actually stop, but the scanner should attempt the operation
@@ -1890,7 +1890,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--reset-ethernet",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1995,7 +1995,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             str(port),
             "--exploreclass",
             "0xFF",
-            timeout=30,
+            timeout=45,
             expect_json=False,
             json_log=True,
         )
@@ -2025,7 +2025,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             str(port),
             "--route-path",
             "invalid/path/format",
-            timeout=30,
+            timeout=45,
             expect_json=False,
             json_log=True,
         )
@@ -2109,7 +2109,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # --confirm alone without any attack flag should just do a normal scan
@@ -2136,7 +2136,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -2168,7 +2168,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--deep-scan",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2198,7 +2198,7 @@ class TestEtherNetIPIntegration(BaseProtocolIntegrationTest):
             "--enumerate-objects",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2356,7 +2356,7 @@ class TestEtherNetIPP1FalsePositiveRegression:
                 format="json",
                 output=str(out_dir),
                 expect_json=False,
-                timeout=30,
+                timeout=45,
             )
             last = self._read_result_payload(out_dir, result)
             assert last["success"] is False, (
@@ -2382,7 +2382,7 @@ class TestEtherNetIPP1FalsePositiveRegression:
             format="json",
             output=str(out_dir),
             expect_json=False,
-            timeout=30,
+            timeout=45,
         )
         last = self._read_result_payload(out_dir, result)
         assert last["success"] is False, (

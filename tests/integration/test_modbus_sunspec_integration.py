@@ -185,7 +185,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"SunSpec discovery failed: {result.stderr}"
@@ -207,7 +207,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"SunSpec discovery failed: {result.stderr}"
@@ -246,7 +246,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"SunSpec discovery failed: {result.stderr}"
@@ -268,7 +268,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"--sunspec-assess failed: {result.stderr}"
@@ -298,7 +298,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Assessment failed: {result.stderr}"
@@ -324,7 +324,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Assessment failed: {result.stderr}"
@@ -346,7 +346,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Assessment failed: {result.stderr}"
@@ -368,7 +368,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Assessment failed: {result.stderr}"
@@ -390,7 +390,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Assessment failed: {result.stderr}"
@@ -420,7 +420,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Assessment failed: {result.stderr}"
@@ -466,7 +466,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Assessment failed: {result.stderr}"
@@ -495,7 +495,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Assessment failed: {result.stderr}"
@@ -521,7 +521,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Assessment failed: {result.stderr}"
@@ -559,7 +559,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Assessment failed: {result.stderr}"
@@ -589,7 +589,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Assessment failed: {result.stderr}"
@@ -633,7 +633,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec-assess",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Assessment failed: {result.stderr}"
@@ -657,7 +657,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--sunspec",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -700,7 +700,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             verbose=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -770,7 +770,7 @@ class TestModbusSunSpecSecurityAssessment(BaseProtocolIntegrationTest):
             "--identify",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]

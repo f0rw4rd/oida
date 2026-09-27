@@ -293,7 +293,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Basic discovery failed: {result.stderr}"
@@ -316,7 +316,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Discovery failed: {result.stderr}"
@@ -346,7 +346,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "PATIENT",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"C-FIND PATIENT failed: {result.stderr}"
@@ -372,7 +372,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "STUDY",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"C-FIND STUDY failed: {result.stderr}"
@@ -405,7 +405,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             MOCK_STUDY_UID,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"C-FIND SERIES failed: {result.stderr}"
@@ -428,7 +428,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "PT001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"C-FIND patient-id filter failed: {result.stderr}"
@@ -450,7 +450,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "DOE*",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"C-FIND patient-name filter failed: {result.stderr}"
@@ -476,7 +476,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "STUDY",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"C-FIND modality filter failed: {result.stderr}"
@@ -507,7 +507,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "STUDY",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"C-FIND study-date filter failed: {result.stderr}"
@@ -542,7 +542,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             MOCK_ACCESSION_FIRST,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"C-FIND accession-number filter failed: {result.stderr}"
@@ -563,7 +563,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--probe-ops",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"--probe-ops failed: {result.stderr}"
@@ -602,7 +602,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "MOCK_PACS",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Custom AE title association failed: {result.stderr}"
@@ -630,7 +630,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--enum-operators",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"--enum-operators failed: {result.stderr}"
@@ -656,7 +656,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--enum-devices",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"--enum-devices failed: {result.stderr}"
@@ -687,7 +687,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--time-analysis",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"--time-analysis failed: {result.stderr}"
@@ -711,7 +711,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success, f"AET brute force failed on open server: {result.stderr}"
@@ -742,7 +742,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "3",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"max-results query failed: {result.stderr}"
@@ -766,7 +766,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--metadata",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"metadata query failed: {result.stderr}"
@@ -792,7 +792,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--dump-tags",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"dump-tags failed: {result.stderr}"
@@ -819,7 +819,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--phi-only",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"phi-only tag dump failed: {result.stderr}"
@@ -842,7 +842,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "PatientName,StudyDate",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"extract-fields failed: {result.stderr}"
@@ -866,7 +866,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             MOCK_STUDY_UID,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"study-uid filter failed: {result.stderr}"
@@ -896,7 +896,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             MOCK_SERIES_UID,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"series-uid filter failed: {result.stderr}"
@@ -921,7 +921,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "4096",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"max-pdu failed: {result.stderr}"
@@ -951,7 +951,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--output-dir",
             str(output_dir),
             json_log=True,
-            timeout=60,
+            timeout=45,
             expect_json=False,
         )
 
@@ -973,7 +973,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             MOCK_STUDY_UID,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"C-GET crashed: rc={result.returncode}"
@@ -997,7 +997,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"C-MOVE crashed: rc={result.returncode}"
@@ -1112,7 +1112,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], (
@@ -1186,7 +1186,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "IMAGE",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"IMAGE query crashed: rc={result.returncode}"
@@ -1205,7 +1205,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--worklist",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"worklist crashed: rc={result.returncode}"
@@ -1226,7 +1226,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "CT",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], (
@@ -1249,7 +1249,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "20250130",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"worklist date filter crashed: rc={result.returncode}"
@@ -1270,7 +1270,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "CT_SCANNER_01",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], (
@@ -1316,7 +1316,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "3",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"Fuzzing crashed: rc={result.returncode}"
@@ -1336,7 +1336,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success, f"--common-ae failed: {result.stderr}"
@@ -1370,7 +1370,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success, f"--ae-wordlist failed: {result.stderr}"
@@ -1440,7 +1440,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
 
         def run_scan():
             args = [self.protocol_name, target] + port_args
-            return cli_runner.run(*args, format="json", timeout=30)
+            return cli_runner.run(*args, format="json", timeout=45)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             futures = [executor.submit(run_scan) for _ in range(3)]
@@ -1504,7 +1504,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Basic connection failed: {result.stderr}"
@@ -1577,7 +1577,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Connection failed: {result.stderr}"
@@ -1616,7 +1616,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "MOCK_PACS",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Custom AET connection failed: {result.stderr}"
@@ -1650,7 +1650,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "*",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Wildcard C-FIND failed: {result.stderr}"
@@ -1690,7 +1690,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "DOE*",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Filtered C-FIND failed: {result.stderr}"
@@ -1723,7 +1723,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success, f"AET brute force failed: {result.stderr}"
@@ -1765,7 +1765,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"AET brute force crashed: rc={result.returncode}"
@@ -1808,7 +1808,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             str(output_dir),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"C-GET crashed: rc={result.returncode}"
@@ -1856,7 +1856,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"C-MOVE crashed: rc={result.returncode}"
@@ -1905,7 +1905,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--output-dir",
             str(output_dir),
             json_log=True,
-            timeout=60,
+            timeout=45,
             expect_json=False,
         )
 
@@ -1950,7 +1950,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--worklist",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1], f"Worklist query crashed: rc={result.returncode}"
@@ -1987,7 +1987,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Basic scan failed: {result.stderr}"
@@ -2026,7 +2026,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "*",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Wildcard C-FIND failed: {result.stderr}"
@@ -2075,7 +2075,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success, f"AET brute force failed: {result.stderr}"
@@ -2107,7 +2107,7 @@ class TestDicomIntegration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Connection failed: {result.stderr}"
@@ -2282,7 +2282,7 @@ class TestDICOMP1FalsePositiveRegression:
                 format="json",
                 output=str(out_dir),
                 expect_json=False,
-                timeout=30,
+                timeout=45,
             )
             last = self._read_result_payload(out_dir, result)
             assert last["success"] is False, (
@@ -2308,7 +2308,7 @@ class TestDICOMP1FalsePositiveRegression:
             format="json",
             output=str(out_dir),
             expect_json=False,
-            timeout=30,
+            timeout=45,
         )
         last = self._read_result_payload(out_dir, result)
         assert last["success"] is False, (

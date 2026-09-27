@@ -175,7 +175,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Basic MLLP connection failed: {result.stderr}"
@@ -198,7 +198,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Server identification failed: {result.stderr}"
@@ -222,7 +222,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ACK test failed: {result.stderr}"
@@ -242,7 +242,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Client identity test failed: {result.stderr}"
@@ -264,7 +264,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "2.3",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -282,7 +282,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "2.5",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"HL7 v2.5 failed: {result.stderr}"
@@ -299,7 +299,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "2.7",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -323,7 +323,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "MAIN_HOSPITAL",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Custom sending app failed: {result.stderr}"
@@ -346,7 +346,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "REMOTE_HOSPITAL",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Custom receiving app failed: {result.stderr}"
@@ -372,7 +372,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--probe-ops",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success, f"Probe operations failed: {result.stderr}"
@@ -400,7 +400,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "PT001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Process exits 0 but logs a --confirm warning; operation is NOT sent
@@ -424,7 +424,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ADT^A01 failed: {result.stderr}"
@@ -447,7 +447,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ADT^A02 failed: {result.stderr}"
@@ -468,7 +468,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ADT^A03 failed: {result.stderr}"
@@ -491,7 +491,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ADT^A08 failed: {result.stderr}"
@@ -518,7 +518,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ADT^A40 merge failed: {result.stderr}"
@@ -577,7 +577,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Full ADT failed: {result.stderr}"
@@ -597,7 +597,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--send-oru",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ORU requires-confirm should exit 0: {result.stderr}"
@@ -624,7 +624,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ORU^R01 failed: {result.stderr}"
@@ -650,7 +650,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "PT001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ORM requires-confirm should exit 0: {result.stderr}"
@@ -677,7 +677,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ORM^O01 failed: {result.stderr}"
@@ -699,7 +699,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "PT001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"SIU requires-confirm should exit 0: {result.stderr}"
@@ -720,7 +720,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"SIU^S12 failed: {result.stderr}"
@@ -740,7 +740,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--send-mdm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"MDM requires-confirm should exit 0: {result.stderr}"
@@ -759,7 +759,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -780,7 +780,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--send-qry",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"QRY^Q01 failed: {result.stderr}"
@@ -802,7 +802,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "PT001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"QRY with filter failed: {result.stderr}"
@@ -818,7 +818,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--query-obs",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -835,7 +835,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--query-rx",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -852,7 +852,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--query-orders",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -873,7 +873,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--query-whoami",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -890,7 +890,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--query-tabular",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -907,7 +907,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--query-imm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -924,7 +924,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--query-imm-forecast",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -945,7 +945,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--send-rx",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"RX requires-confirm should exit 0: {result.stderr}"
@@ -978,7 +978,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"RDE^O11 failed: {result.stderr}"
@@ -1007,7 +1007,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1024,7 +1024,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--send-ras",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"RAS requires-confirm should exit 0: {result.stderr}"
@@ -1051,7 +1051,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1068,7 +1068,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--send-rgv",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"RGV requires-confirm should exit 0: {result.stderr}"
@@ -1087,7 +1087,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1104,7 +1104,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--send-rds",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"RDS requires-confirm should exit 0: {result.stderr}"
@@ -1132,7 +1132,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1153,7 +1153,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--send-mfn",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"MFN requires-confirm should exit 0: {result.stderr}"
@@ -1174,7 +1174,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1206,7 +1206,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1234,7 +1234,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1251,7 +1251,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--query-mfn",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1272,7 +1272,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--send-bar",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"BAR requires-confirm should exit 0: {result.stderr}"
@@ -1297,7 +1297,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1329,7 +1329,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1344,7 +1344,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--send-dft",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"DFT requires-confirm should exit 0: {result.stderr}"
@@ -1377,7 +1377,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1398,7 +1398,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--pcd-01",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"PCD-01 requires-confirm should exit 0: {result.stderr}"
@@ -1436,7 +1436,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1456,7 +1456,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1474,7 +1474,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1494,7 +1494,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1514,7 +1514,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1534,7 +1534,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1557,7 +1557,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Provider enumeration failed: {result.stderr}"
@@ -1582,7 +1582,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"App enumeration failed: {result.stderr}"
@@ -1606,7 +1606,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Location enumeration failed: {result.stderr}"
@@ -1627,7 +1627,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--enum-patients",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Patient enumeration failed: {result.stderr}"
@@ -1669,7 +1669,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1687,7 +1687,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "ADT^A01",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Custom message requires-confirm should exit 0: {result.stderr}"
@@ -1713,7 +1713,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Response extraction failed: {result.stderr}"
@@ -1734,7 +1734,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1755,7 +1755,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1776,7 +1776,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ADT with --save-response failed: {result.stderr}"
@@ -1800,7 +1800,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Security scan failed: {result.stderr}"
@@ -1822,7 +1822,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Security test failed: {result.stderr}"
@@ -1867,7 +1867,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"AUTH finding test failed: {result.stderr}"
@@ -1891,7 +1891,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ACCESS finding test failed: {result.stderr}"
@@ -1914,7 +1914,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"CRYPTO finding test failed: {result.stderr}"
@@ -1941,7 +1941,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--tls-insecure",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"TLS connection failed: {result.stderr}"
@@ -1974,7 +1974,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ADT^A03 finding test failed: {result.stderr}"
@@ -2006,7 +2006,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ADT^A40 finding test failed: {result.stderr}"
@@ -2038,7 +2038,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"ORM finding test failed: {result.stderr}"
@@ -2071,7 +2071,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--enum-patients",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Wildcard query finding test failed: {result.stderr}"
@@ -2105,7 +2105,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"RDE finding test failed: {result.stderr}"
@@ -2135,7 +2135,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2163,7 +2163,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2190,7 +2190,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2221,7 +2221,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2253,7 +2253,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2282,7 +2282,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2313,7 +2313,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2348,7 +2348,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2385,7 +2385,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2416,7 +2416,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2445,7 +2445,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--send-qry",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"QRY finding test failed: {result.stderr}"
@@ -2471,7 +2471,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--query-obs",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2498,7 +2498,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--query-rx",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2525,7 +2525,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--query-orders",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2554,7 +2554,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--probe-ops",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success, f"Probe finding test failed: {result.stderr}"
@@ -2580,7 +2580,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--probe-ops",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success, f"Probe summary test failed: {result.stderr}"
@@ -2610,7 +2610,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "PT10001",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2638,7 +2638,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Combined findings test failed: {result.stderr}"
@@ -2672,7 +2672,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--enum-all",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success, f"Enum-all findings test failed: {result.stderr}"
@@ -2712,7 +2712,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--tls-insecure",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"TLS connection failed: {result.stderr}"
@@ -2735,7 +2735,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--tls-insecure",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"TLS cert test failed: {result.stderr}"
@@ -2780,7 +2780,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=120,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2800,7 +2800,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--fuzz",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Fuzzing without --confirm logs a warning; process still exits 0
@@ -2829,7 +2829,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=120,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2914,7 +2914,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             verbose=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Verbose mode failed: {result.stderr}"
@@ -2931,7 +2931,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             format="json",
             json_log=True,
             debug=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Debug mode failed: {result.stderr}"
@@ -2955,7 +2955,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2982,7 +2982,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -3000,7 +3000,7 @@ class TestHl7Integration(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"JSON output test failed: {result.stderr}"
@@ -3045,7 +3045,7 @@ class TestHl7PythonMock(BaseProtocolIntegrationTest):
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Python mock connection failed: {result.stderr}"
@@ -3063,7 +3063,7 @@ class TestHl7PythonMock(BaseProtocolIntegrationTest):
             "--probe-ops",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success, f"Python mock probe failed: {result.stderr}"
@@ -3084,7 +3084,7 @@ class TestHl7PythonMock(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Python mock ADT failed: {result.stderr}"
@@ -3100,7 +3100,7 @@ class TestHl7PythonMock(BaseProtocolIntegrationTest):
             "--send-qry",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Python mock QRY failed: {result.stderr}"
@@ -3118,7 +3118,7 @@ class TestHl7PythonMock(BaseProtocolIntegrationTest):
             "--tls-insecure",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Python mock TLS failed: {result.stderr}"
@@ -3208,7 +3208,7 @@ class TestHL7P1FalsePositiveRegression:
                 format="json",
                 output=str(out_dir),
                 expect_json=False,
-                timeout=30,
+                timeout=45,
             )
             last = self._read_result_payload(out_dir, result)
             assert last["success"] is False, (
@@ -3234,7 +3234,7 @@ class TestHL7P1FalsePositiveRegression:
             format="json",
             output=str(out_dir),
             expect_json=False,
-            timeout=30,
+            timeout=45,
         )
         last = self._read_result_payload(out_dir, result)
         assert last["success"] is False, (

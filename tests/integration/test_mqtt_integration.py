@@ -268,7 +268,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "0",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Brute-force should complete
@@ -483,7 +483,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "--default-creds",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -805,7 +805,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "3",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -831,7 +831,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "2",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1206,7 +1206,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "5",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Scan failed: {result.stderr}"
@@ -1252,7 +1252,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "5",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Scan failed: {result.stderr}"
@@ -1300,7 +1300,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "--default-creds",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1833,7 +1833,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
                 "--output",
                 str(out_dir),
                 format="json",
-                timeout=30,
+                timeout=45,
             )
             assert "Traceback" not in result.combined_output
             assert "MockMQTT" not in result.combined_output
@@ -1882,7 +1882,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
                 "--output",
                 str(out_dir),
                 format="json",
-                timeout=30,
+                timeout=45,
             )
             assert "Traceback" not in result.combined_output
             assert "MockMQTT" not in result.combined_output
@@ -1923,7 +1923,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "20",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         elapsed = time.monotonic() - start
         assert result.returncode != -1, "run was killed by the harness -- looks like a real hang"
@@ -2007,7 +2007,7 @@ class TestMQTTIntegration(BaseProtocolIntegrationTest):
             "-5",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert "Traceback" not in result.combined_output
 

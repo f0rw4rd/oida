@@ -413,7 +413,7 @@ class TestIEC104Integration:
             "5",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Full IOA range scan failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -439,7 +439,7 @@ class TestIEC104Integration:
             "--probe-files",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"--probe-files unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -466,7 +466,7 @@ class TestIEC104Integration:
             "5",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
         assert result.success, f"All-phases scan failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -489,7 +489,7 @@ class TestIEC104Integration:
             "--probe-files",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Probe files failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -506,7 +506,7 @@ class TestIEC104Integration:
             "--probe-custom-types",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Probe custom types unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -620,7 +620,7 @@ class TestIEC104Integration:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Write single unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -642,7 +642,7 @@ class TestIEC104Integration:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Write double unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -664,7 +664,7 @@ class TestIEC104Integration:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Write float unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -686,7 +686,7 @@ class TestIEC104Integration:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Write scaled unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -708,7 +708,7 @@ class TestIEC104Integration:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Write normalized unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -730,7 +730,7 @@ class TestIEC104Integration:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Write step unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -753,7 +753,7 @@ class TestIEC104Integration:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Select-execute unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -777,7 +777,7 @@ class TestIEC104Integration:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Write type custom unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -993,7 +993,7 @@ class TestIEC104Integration:
             "3",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
         assert result.returncode in [0, 1, 2], (
             f"Fuzz with confirm unexpected rc={result.returncode}"
@@ -1017,7 +1017,7 @@ class TestIEC104Integration:
             "2",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1, 2], f"Fuzz iterations unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -1039,7 +1039,7 @@ class TestIEC104Integration:
             "2",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1, 2], f"Fuzz IOA unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -1390,7 +1390,7 @@ class TestIEC104Integration:
             "2",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         summary = _get_scan_summary(result.scan_log)
         text = _combined_text(result, result.scan_log)
@@ -1441,7 +1441,7 @@ class TestIEC104Integration:
             "5",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode == 0, (
             f"Interrogation with custom originator/timers should succeed, "
@@ -1471,7 +1471,7 @@ class TestIEC104Integration:
             "1",
             format="json",
             json_log=True,
-            timeout=85,
+            timeout=75,
         )
         assert result.returncode == 0, (
             f"Group interrogation should succeed, got rc={result.returncode}: "
@@ -2002,7 +2002,7 @@ class TestIEC104CustomTypes:
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], (
             f"Connection to custom port unexpected rc={result.returncode}"
@@ -2022,7 +2022,7 @@ class TestIEC104CustomTypes:
             "--probe-custom-types",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Probe custom types failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -2055,7 +2055,7 @@ class TestIEC104CustomTypes:
             "--probe-custom-types",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Custom types scan unexpected rc={result.returncode}"
         if result.scan_log is not None and len(result.scan_log) > 0:
@@ -2082,7 +2082,7 @@ class TestIEC104CustomTypes:
             "--interrogate",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], (
             f"Custom type IOA range unexpected rc={result.returncode}"
@@ -2102,7 +2102,7 @@ class TestIEC104CustomTypes:
             "--interrogate",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], (
             f"Custom types interrogation unexpected rc={result.returncode}"
@@ -2121,7 +2121,7 @@ class TestIEC104CustomTypes:
             str(port),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], (
             f"Custom types discovery unexpected rc={result.returncode}"
@@ -2158,7 +2158,7 @@ class TestIEC104CustomTypes:
             "--probe-custom-types",
             verbose=True,
             expect_json=False,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], (
             f"Verbose custom types unexpected rc={result.returncode}"
@@ -2211,7 +2211,7 @@ class TestIEC104Conpot:
             "5",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], (
             f"Conpot interrogation unexpected rc={result.returncode}"
@@ -2248,7 +2248,7 @@ class TestIEC104Conpot:
             "--interrogate",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Conpot IOA range unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -2272,7 +2272,7 @@ class TestIEC104Conpot:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Conpot write single unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -2302,7 +2302,7 @@ class TestIEC104Conpot:
             "5",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Conpot scan unexpected rc={result.returncode}"
         # With 59 points the point-count findings stay silent, but the
@@ -2348,7 +2348,7 @@ class TestIEC104Conpot:
             str(CONPOT_ASDU_ADDRESS),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Conpot discovery unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -2367,7 +2367,7 @@ class TestIEC104Conpot:
             str(CONPOT_ASDU_ADDRESS),
             verbose=True,
             expect_json=False,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"Conpot verbose unexpected rc={result.returncode}"
         assert result.stdout or result.stderr, "No output with verbose flag against Conpot"
@@ -2469,7 +2469,7 @@ class TestIEC104TLS:
             "--tls",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"TLS basic scan failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -2488,7 +2488,7 @@ class TestIEC104TLS:
             "--interrogate",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"TLS interrogation failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -2516,7 +2516,7 @@ class TestIEC104TLS:
             str(client_key),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"TLS with client cert failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -2542,7 +2542,7 @@ class TestIEC104TLS:
             "--interrogate",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"TLS scan failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -2568,7 +2568,7 @@ class TestIEC104TLS:
             "--tls",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"TLS cert probe unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -2614,7 +2614,7 @@ class TestIEC104Fuzz:
             "5",
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
         assert result.returncode in [0, 1, 2], f"Fuzz full cycle unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -2635,7 +2635,7 @@ class TestIEC104Fuzz:
             "2",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1, 2], f"Fuzz IOA 500 unexpected rc={result.returncode}"
         text = _combined_text(result, result.scan_log)
@@ -2676,7 +2676,7 @@ class TestIEC104Fuzz:
             "2",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1, 2], (
             f"Fuzz JSON structure unexpected rc={result.returncode}"
@@ -2743,7 +2743,7 @@ class TestIEC104Fuzz:
             "2",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1, 2], f"Fuzz high IOA unexpected rc={result.returncode}"
 

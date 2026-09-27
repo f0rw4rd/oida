@@ -601,7 +601,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "--scan-ports",
             format="json",
             json_log=True,
-            timeout=120,
+            timeout=185,
         )
 
         # Allow timeout (-1) for slow port scans
@@ -621,7 +621,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "--scan-ports-extended",
             format="json",
             json_log=True,
-            timeout=120,
+            timeout=185,
         )
 
         # Allow timeout (-1) for slow port scans
@@ -903,7 +903,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1557,7 +1557,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "--target-desc",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Mock may not support; allow timeout
@@ -1575,7 +1575,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "--license-info",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Mock may not support; allow timeout
@@ -1593,7 +1593,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "--io-devices",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Mock may not support; allow timeout
@@ -1611,7 +1611,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "--task-info",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Mock may not support; allow timeout
@@ -1629,7 +1629,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "--list-files",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Mock may not support; allow timeout
@@ -1648,7 +1648,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "C:\\TwinCAT\\3.1\\Boot\\Plc\\Port_851.bootdata",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Mock may not support; allow timeout
@@ -1667,7 +1667,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "HKLM:SOFTWARE\\Beckhoff\\TwinCAT3",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Mock may not support; allow timeout
@@ -1685,7 +1685,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "--download-program",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Mock may not support; allow timeout
@@ -1936,7 +1936,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         # Should not crash; timeout (-1) is acceptable for unsupported operations
@@ -1960,7 +1960,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         # Should not crash; timeout (-1) is acceptable for unsupported operations
@@ -1985,7 +1985,7 @@ class TestADSIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Should not crash; timeout (-1) is acceptable for unsupported operations

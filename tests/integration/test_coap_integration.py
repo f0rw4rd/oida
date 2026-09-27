@@ -199,7 +199,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "--probe-paths",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -284,7 +284,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "--lwm2m-full",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -318,7 +318,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "--methods",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -354,7 +354,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "3",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -697,7 +697,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "--dtls",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -719,7 +719,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "0102030405060708",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -750,7 +750,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "0102030405060708",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -796,7 +796,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             str(rpk_file),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -861,7 +861,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -960,7 +960,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1019,7 +1019,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             '{"test": true}',
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1079,7 +1079,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "/actuator/relay",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1
@@ -1137,7 +1137,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "--methods",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1165,7 +1165,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "--probe-paths",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success, f"Full discovery failed: {result.stderr}"
@@ -1243,7 +1243,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             '{"fields": ["device_name"]}',
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1275,7 +1275,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1307,7 +1307,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1339,7 +1339,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "--probe-paths",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1358,7 +1358,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "--probe-paths",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1580,7 +1580,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "5683",
             "--timeout",
             "3",
-            timeout=30,
+            timeout=45,
             expect_json=False,
             json_log=True,
         )
@@ -1612,7 +1612,7 @@ class TestCoAPIntegration(BaseProtocolIntegrationTest):
             "not-a-valid-host-12345!!!",
             "--timeout",
             "3",
-            timeout=30,
+            timeout=45,
             expect_json=False,
             json_log=True,
         )
@@ -1843,7 +1843,7 @@ class TestCoAPLibcoapInterop:
             "--probe-paths",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.success
@@ -1910,7 +1910,7 @@ class TestCoAPLibcoapInterop:
             "3",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=105,
         )
 
         # Accept 0 (success), 1 (partial), or -1 (timeout killed)
@@ -2116,7 +2116,7 @@ class TestCoAPDTLSInterop:
             "3",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Wrong key -> handshake cannot complete -> scan fails (no DTLS fallback).
@@ -2233,7 +2233,7 @@ class TestCoAPDTLSCertInterop:
             str(cert_dir / "ca.pem"),
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]

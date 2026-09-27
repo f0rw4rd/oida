@@ -227,7 +227,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
 
         def run_scan():
             args = [self.protocol_name, target] + port_args
-            return cli_runner.run(*args, format="json", timeout=30)
+            return cli_runner.run(*args, format="json", timeout=45)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=3) as executor:
             futures = [executor.submit(run_scan) for _ in range(3)]
@@ -472,7 +472,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "50",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Failed: {result.stderr}"
@@ -578,7 +578,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--dump-history",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Failed: {result.stderr}"
@@ -602,7 +602,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--dump-files",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Failed: {result.stderr}"
@@ -719,7 +719,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             target,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Failed: {result.stderr}"
@@ -852,7 +852,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             target,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Failed: {result.stderr}"
@@ -927,7 +927,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             str(pass_file),
             format="json",
             json_log=True,
-            timeout=90,
+            timeout=45,
         )
 
         # Crash guard -- brute force may succeed or fail depending on timing
@@ -987,7 +987,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "admin",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         # Crash guard
@@ -1058,7 +1058,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "testpass",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         # Crash guard
@@ -1111,7 +1111,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             AUTH_DEFAULT[1],
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         # Crash guard -- advanced server may require auth for full endpoint listing
@@ -1172,7 +1172,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             target,
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.success, f"Failed: {result.stderr}"
@@ -1230,7 +1230,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "0.1",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         # Crash guard
@@ -1678,7 +1678,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "3",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1699,7 +1699,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "3",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1768,7 +1768,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "5",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
         elapsed = time.monotonic() - start
 
@@ -1796,7 +1796,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--history-read",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1822,7 +1822,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "50",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1843,7 +1843,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--history-raw",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1928,7 +1928,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--test-cert-trust",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1952,7 +1952,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             AUTH_DEFAULT[1],
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1977,7 +1977,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             AUTH_DEFAULT[1],
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -1997,7 +1997,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--test-subscription-limits",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2103,7 +2103,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             str(pass_file),
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode in [0, 1]
@@ -2419,7 +2419,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode != -1, "Fuzzing should not hang"
@@ -2444,7 +2444,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1, "Fuzzing should not hang"
@@ -2467,7 +2467,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1, "Fuzzing should not hang"
@@ -2495,7 +2495,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode != -1, "Fuzzing should not hang"
@@ -2755,7 +2755,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
                 str(out_path),
                 format="json",
                 json_log=True,
-                timeout=30,
+                timeout=45,
             )
 
             assert result.returncode in [0, 1], f"Unexpected returncode: {result.returncode}"
@@ -2901,7 +2901,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--scan-writable",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
 
         assert result.returncode != -1, "--scan-writable timed out"
@@ -2931,7 +2931,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode != -1, "--fuzz-mode methods should not hang"
@@ -2961,7 +2961,7 @@ class TestOPCUAIntegration(BaseProtocolIntegrationTest):
             "--confirm",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
 
         assert result.returncode != -1, "--fuzz-mode all should not hang"

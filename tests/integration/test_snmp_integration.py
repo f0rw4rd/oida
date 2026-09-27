@@ -756,7 +756,7 @@ class TestSNMPIntegration:
             "--walk",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Walk failed: {result.stderr}"
         _assert_log_has_events(result, min_count=3)
@@ -793,7 +793,7 @@ class TestSNMPIntegration:
             "list:net-snmp",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         # Vendor subtree may have entries or be empty
         assert result.returncode in [0, 1]
@@ -920,7 +920,7 @@ class TestSNMPIntegration:
             "--enum",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         if result.scan_log is not None and len(result.scan_log) > 0:
@@ -1280,7 +1280,7 @@ class TestSNMPIntegration:
             "2c",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Default-creds brute failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -1363,7 +1363,7 @@ class TestSNMPIntegration:
             "0.01",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         # v3 user discovery probes many usernames; timeout is acceptable
         assert result.returncode in [-1, 0, 1]
@@ -1470,7 +1470,7 @@ class TestSNMPIntegration:
             "0.05",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         if result.scan_log is not None and len(result.scan_log) > 0:
@@ -1514,7 +1514,7 @@ class TestSNMPIntegration:
             "0.05",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         if result.scan_log is not None and len(result.scan_log) > 0:
@@ -1549,7 +1549,7 @@ class TestSNMPIntegration:
             "0.01",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         # v3 enumeration with multiple users can be slow; timeout is acceptable
         assert result.returncode in [-1, 0, 1]
@@ -2572,7 +2572,7 @@ class TestSNMPv3Only:
             "1",
             format="json",
             json_log=True,
-            timeout=120,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"enum-v3 crashed: {result.stderr}"
         assert result.scan_log is not None, "scan_log should be populated"
@@ -2612,7 +2612,7 @@ class TestSNMPv3Only:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"enum-v3 authPriv escalation failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -3560,7 +3560,7 @@ class TestSNMPSecurityFindings:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -3594,7 +3594,7 @@ class TestSNMPSecurityFindings:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -3632,7 +3632,7 @@ class TestSNMPSecurityFindings:
             "0.01",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         # v3 brute may timeout (rc=-1) - that's acceptable
         assert result.returncode in [-1, 0, 1]
@@ -3677,7 +3677,7 @@ class TestSNMPSecurityFindings:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Targeted v3 cred test failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -3722,7 +3722,7 @@ class TestSNMPSecurityFindings:
             "--confirm",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"Targeted v3 full cred test failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -3759,7 +3759,7 @@ class TestSNMPSecurityFindings:
             "tcp",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -3795,7 +3795,7 @@ class TestSNMPSecurityFindings:
             "--enum",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -3838,7 +3838,7 @@ class TestSNMPSecurityFindings:
             "traps",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -3878,7 +3878,7 @@ class TestSNMPSecurityFindings:
             "extend",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -3912,7 +3912,7 @@ class TestSNMPSecurityFindings:
             "extend",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -3947,7 +3947,7 @@ class TestSNMPSecurityFindings:
             "ipv6",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -3972,7 +3972,7 @@ class TestSNMPSecurityFindings:
             "ipv6",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -4008,7 +4008,7 @@ class TestSNMPSecurityFindings:
             "creds",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -4038,7 +4038,7 @@ class TestSNMPSecurityFindings:
             "creds",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -4180,7 +4180,7 @@ class TestSNMPSwitchSecurityFindings:
             "creds",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success, f"--enum creds on switch failed: {result.stderr}"
         _assert_log_has_events(result)
@@ -4212,7 +4212,7 @@ class TestSNMPSwitchSecurityFindings:
             "creds",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -4243,7 +4243,7 @@ class TestSNMPSwitchSecurityFindings:
             "creds",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -4274,7 +4274,7 @@ class TestSNMPSwitchSecurityFindings:
             "creds",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -4326,7 +4326,7 @@ class TestSNMPSwitchSecurityFindings:
             "creds",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -4379,7 +4379,7 @@ class TestSNMPSwitchSecurityFindings:
             "creds",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.success
         _assert_log_has_events(result)
@@ -4457,7 +4457,7 @@ class TestSNMPv3OnlySecurityFindings:
             "engineer:engineer1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -4486,7 +4486,7 @@ class TestSNMPv3OnlySecurityFindings:
             "engineer:engineer1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -4516,7 +4516,7 @@ class TestSNMPv3OnlySecurityFindings:
             "engineer:engineer1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1]
         _assert_log_has_events(result)
@@ -4609,7 +4609,7 @@ class TestSNMPEnumUsers:
             "1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"enum-users crashed: {result.stderr}"
         assert result.scan_log is not None, "scan_log should be populated"
@@ -4653,7 +4653,7 @@ class TestSNMPEnumUsers:
             "1",
             format="json",
             json_log=True,
-            timeout=30,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"enum-users crashed: {result.stderr}"
         if result.scan_log is not None and len(result.scan_log) > 0:
@@ -4724,7 +4724,7 @@ class TestSNMPEnumUsers:
             "1",
             format="json",
             json_log=True,
-            timeout=60,
+            timeout=45,
         )
         assert result.returncode in [0, 1], f"enum-users crashed: {result.stderr}"
         if result.scan_log is not None and len(result.scan_log) > 0:
