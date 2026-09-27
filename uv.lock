@@ -2132,7 +2132,7 @@ requires-dist = [
     { name = "websockets", marker = "extra == 'ocpp'", specifier = "==16.0" },
     { name = "xknx", marker = "extra == 'knx'", specifier = "==3.20.0" },
     { name = "xknxproject", marker = "extra == 'knx'", specifier = "==3.10.0" },
-    { name = "yadnp3", marker = "extra == 'dnp3'", specifier = "==3.2.1.1" },
+    { name = "yadnp3", marker = "extra == 'dnp3'", specifier = "==3.2.1.2" },
     { name = "zeroconf", marker = "extra == 'discovery'", specifier = "==0.151.3" },
 ]
 provides-extras = ["ads", "bacnet", "bacnetsc", "can", "coap", "dicom", "discovery", "dnp3", "ethercat", "ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms", "modbus", "mqtt", "opcua", "pcap", "profinet", "snap7", "snmp", "tase2", "astm", "ocpp", "serial", "fuzz", "all", "dev", "docs"]
@@ -3512,18 +3512,20 @@ wheels = [
 
 [[package]]
 name = "yadnp3"
-version = "3.2.1.1"
+version = "3.2.1.2"
 source = { registry = "https://pypi.org/simple" }
-sdist = { url = "https://files.pythonhosted.org/packages/5d/b0/23b2fa51e250c2346ab6cb52d696a6817657b171ec7337db5d6ad2793821/yadnp3-3.2.1.1.tar.gz", hash = "sha256:07b3876b2c74e35652e19f7d41a5933445548dd06e0c4f5dfc3bab88b694558f", size = 63729, upload-time = "2026-02-14T10:47:31.439Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d3/b3/0abe70cfe70845efe6e484fdfb4d0f8984145f1c8154ccb29aebc9ff1245/yadnp3-3.2.1.2.tar.gz", hash = "sha256:36eb2a765f3f4048bb0e05c2d3cb8a049c93fb211f68816a77293410d9b73ecd", size = 63739, upload-time = "2026-09-25T05:32:20.146Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/47/4f/98899617c5f428927d71827889d1c774c1ccd1179503238fcea0a3284978/yadnp3-3.2.1.1-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:863c361fdcb1c19a2c8c895b2fe0d43ed2a4e2ba576afa817dc18d4cac6236db", size = 3002346, upload-time = "2026-02-14T10:47:14.153Z" },
-    { url = "https://files.pythonhosted.org/packages/60/3a/cd63f7ea06d21da3eb2a3c05b5c716344af2e2f54fbce8add62d35a821b0/yadnp3-3.2.1.1-cp310-cp310-win_amd64.whl", hash = "sha256:71dfb7425e138316152bec1c3e372ac9c6c1004754171be1e19e9e451f9740ac", size = 3611833, upload-time = "2026-02-14T10:47:18.445Z" },
-    { url = "https://files.pythonhosted.org/packages/55/2c/4703bb8c62704c8188215dd7065999f3d9cf668738a1dd2b2d3609ec3b9e/yadnp3-3.2.1.1-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:225f444ba69c74ea10e28647adf13e8c9c2da56d47b5b322deca9cc984a739d3", size = 3003938, upload-time = "2026-02-14T10:47:20.153Z" },
-    { url = "https://files.pythonhosted.org/packages/b9/78/6bd013f9ae8aed4cc672b8c9dfbc65bf8feb2fd1bfd6f01bbf994cd4870d/yadnp3-3.2.1.1-cp311-cp311-win_amd64.whl", hash = "sha256:e476e6734ee56b639455fbee2800b72367424c19350c4f0ec0c5253b8b6d9a85", size = 3613308, upload-time = "2026-02-14T10:47:21.46Z" },
-    { url = "https://files.pythonhosted.org/packages/2b/17/9da787a6f4056a6901b43e5c79efc899f7ae3042a6620288b51840187d0d/yadnp3-3.2.1.1-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:003138b8a2568cb035761cd45ffa642ad08b59088da8152a63b12e3c5ad60f2e", size = 3004324, upload-time = "2026-02-14T10:47:22.778Z" },
-    { url = "https://files.pythonhosted.org/packages/73/49/2f4e2a4c78b85a50746838a4264f0110796a91365af90d8c3ea12779830c/yadnp3-3.2.1.1-cp312-cp312-win_amd64.whl", hash = "sha256:5abe641748806a988279c95373c56b78d0355396982b63496dc63af2e746d21d", size = 3617590, upload-time = "2026-02-14T10:47:24.143Z" },
-    { url = "https://files.pythonhosted.org/packages/10/f8/48787bccdc45a84e523d21486f449e7d415334a1da15dd1a9b6d15a7a7b1/yadnp3-3.2.1.1-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:27a9e85a66efdf91684e68ea13fc4239c640b77343b3acbe67d95b1be901ee1e", size = 3004169, upload-time = "2026-02-14T10:47:25.393Z" },
-    { url = "https://files.pythonhosted.org/packages/1b/62/a2345f60f807ea7f0f5dc48750842773ffeac8e4d557000931d0c6ad6cd3/yadnp3-3.2.1.1-cp313-cp313-win_amd64.whl", hash = "sha256:071e4d94ef7d14ab919ce5813681999d3ef86d8feec51247954ded34f237af4c", size = 3617679, upload-time = "2026-02-14T10:47:27.188Z" },
+    { url = "https://files.pythonhosted.org/packages/1b/3b/392d5521068f027bf09c9627aa93245cd6ceb1f893e20991db6842d57d72/yadnp3-3.2.1.2-cp310-cp310-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:55b39588b882deb43be4722c40aebcd56db8b6001394da8a4e01946957da15ee", size = 3271854, upload-time = "2026-09-25T05:31:58.293Z" },
+    { url = "https://files.pythonhosted.org/packages/84/7d/ff57711075e80ce4d1e42c35b400281348a66d8bebd89c0ac66fee9a7cac/yadnp3-3.2.1.2-cp310-cp310-win_amd64.whl", hash = "sha256:43169be3721ef070e386ff48d1f2a2bc45fbd771e6af71084d0d209fdd40343e", size = 3840076, upload-time = "2026-09-25T05:32:00.091Z" },
+    { url = "https://files.pythonhosted.org/packages/48/7f/9ccbb16d6bea3a52b795aa21ac1f9efcf1d5d74bff174c6e097ee5ffafc2/yadnp3-3.2.1.2-cp311-cp311-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:7fa6d9377d4c8b9227dcaa66b253d6b62e457959710dd536f6c606646ef6e564", size = 3273181, upload-time = "2026-09-25T05:32:01.98Z" },
+    { url = "https://files.pythonhosted.org/packages/d1/6e/9cfbad4c378271ab1fdb2839065cba9eebfa14b423974315bb3231f3e9cb/yadnp3-3.2.1.2-cp311-cp311-win_amd64.whl", hash = "sha256:daa254ef9aaec411ee6c860a6caa28deb46cddf08b87bc9dcd87fcbaf11877cd", size = 3851690, upload-time = "2026-09-25T05:32:03.639Z" },
+    { url = "https://files.pythonhosted.org/packages/67/66/ab923d8ce75c42146f1f7993b62c4ceb5cbf54104704e80fd65a59cb0972/yadnp3-3.2.1.2-cp312-cp312-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:9af188de112e7bf1f0c74663255b74770f7de4b6e9114022b74a4f4c719e4985", size = 3289166, upload-time = "2026-09-25T05:32:05.585Z" },
+    { url = "https://files.pythonhosted.org/packages/13/0a/57ccef3a967b7766a4fd59fa024192cdc9565a4b88430999149bc77dd631/yadnp3-3.2.1.2-cp312-cp312-win_amd64.whl", hash = "sha256:f0edd87552a934def651aabd1ce280c84fe858a86758e3bd68948796d501c91b", size = 3843622, upload-time = "2026-09-25T05:32:07.568Z" },
+    { url = "https://files.pythonhosted.org/packages/cc/a7/757325bb696ae00d926557f48411bb75a221095976184a112bf5084bc2c9/yadnp3-3.2.1.2-cp313-cp313-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:87304bbabf00a60c1b025c74f0be1f5d57e8dbe0f88597a6215c367180d5e5ff", size = 3289028, upload-time = "2026-09-25T05:32:09.997Z" },
+    { url = "https://files.pythonhosted.org/packages/e0/74/90dedb187740b85ef1900c44b1b674b98a120544a58aa26b3e75185d4834/yadnp3-3.2.1.2-cp313-cp313-win_amd64.whl", hash = "sha256:40776276e0a0333606dd9f870fabb2d56ecac380a2234a42df460c9e2448b853", size = 3843833, upload-time = "2026-09-25T05:32:11.601Z" },
+    { url = "https://files.pythonhosted.org/packages/13/68/0bd8ee044fc015c1e753c1df69dc5ad4d05ad42fce7859ef9c60fbb8902e/yadnp3-3.2.1.2-cp314-cp314-manylinux_2_27_x86_64.manylinux_2_28_x86_64.whl", hash = "sha256:0237cb202d2183f30efdb4def691c0ccc4f0a653d6801946057be4e42d117930", size = 3288949, upload-time = "2026-09-25T05:32:13.552Z" },
+    { url = "https://files.pythonhosted.org/packages/e8/64/3c71de26e9a84c8bf089db08b3a01aaebc73b17d2748e069a49ca1519bdd/yadnp3-3.2.1.2-cp314-cp314-win_amd64.whl", hash = "sha256:e6691c8f27ded89424f0a62f71808453951cacb0668d053d3c4d0acdce3d9c9a", size = 3992021, upload-time = "2026-09-25T05:32:15.188Z" },
 ]
 
 [[package]]
