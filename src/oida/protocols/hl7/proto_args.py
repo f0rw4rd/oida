@@ -128,7 +128,7 @@ Examples:
     msg_group.add_argument(
         "--send-adt",
         action="store_true",
-        help="Send ADT (Admit/Discharge/Transfer) message",
+        help="Send ADT (Admit/Discharge/Transfer) message (requires --confirm)",
     )
 
     msg_group.add_argument(
@@ -158,13 +158,13 @@ Examples:
     msg_group.add_argument(
         "--send-orm",
         action="store_true",
-        help="Send ORM (Order) message",
+        help="Send ORM (Order) message (requires --confirm)",
     )
 
     msg_group.add_argument(
         "--send-oru",
         action="store_true",
-        help="Send ORU (Observation Result) message",
+        help="Send ORU (Observation Result) message (requires --confirm)",
     )
 
     msg_group.add_argument(
@@ -198,13 +198,13 @@ Examples:
     msg_group.add_argument(
         "--send-siu",
         action="store_true",
-        help="Send SIU (Scheduling) message",
+        help="Send SIU (Scheduling) message (requires --confirm)",
     )
 
     msg_group.add_argument(
         "--send-mdm",
         action="store_true",
-        help="Send MDM (Document Notification) message",
+        help="Send MDM (Document Notification) message (requires --confirm)",
     )
 
     msg_group.add_argument(
@@ -236,7 +236,7 @@ Examples:
         "--message-type",
         type=str,
         metavar="TYPE",
-        help="Send custom message type (e.g., 'RDE^O11', 'BAR^P01')",
+        help="Send custom message type (e.g., 'RDE^O11', 'BAR^P01') (requires --confirm)",
     )
 
     # MFN (Master File Notification) Operations
@@ -425,19 +425,19 @@ Examples:
     pcd_group.add_argument(
         "--pcd-01",
         action="store_true",
-        help="Send PCD-01 Device Observation (ORU^R01 with MDC codes)",
+        help="Send PCD-01 Device Observation (ORU^R01 with MDC codes) (requires --confirm)",
     )
 
     pcd_group.add_argument(
         "--pcd-03",
         action="store_true",
-        help="Send PCD-03 Infusion Order (RGV^O15 to pump)",
+        help="Send PCD-03 Infusion Order (RGV^O15 to pump) (requires --confirm)",
     )
 
     pcd_group.add_argument(
         "--pcd-alarm",
         action="store_true",
-        help="Send PCD-04/10 Device Alarm (ORU^R40/R42)",
+        help="Send PCD-04/10 Device Alarm (ORU^R40/R42) (requires --confirm)",
     )
 
     pcd_group.add_argument(
