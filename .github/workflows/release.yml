@@ -558,6 +558,12 @@ jobs:
           # previous release; the default shallow checkout does not have them.
           fetch-depth: 0
 
+      # Release notes run uvx git-cliff at a pinned version (same discipline
+      # as the build job) - uv is not preinstalled on the runner.
+      - uses: astral-sh/setup-uv@fac544c07dec837d0ccb6301d7b5580bf5edae39  # v8.2.0
+        with:
+          version: "0.11.18"
+
       - name: Compute release metadata
         id: meta
         run: |
@@ -639,6 +645,36 @@ jobs:
           uvx git-cliff==2.14.2 --tag "$tag" \
             --strip footer "$range" > release-notes.md
           cat release-notes.md
+
+      # Keep the committed CHANGELOG.md in lockstep with releases: regenerate
+      # the full file (all tags) and push it straight to main. Runs here because
+      # this job already holds fetch-depth: 0 and contents: write, and the tag
+      # exists by now, so this release's section is complete. No-op unless the
+      # file actually changed; [skip ci] keeps the push from re-triggering CI.
+      - name: Update CHANGELOG.md on main
+        if: inputs.dry_run != 'true'
+        env:
+          tag: ${{ steps.meta.outputs.tag_name }}
+          token: ${{ github.token }}
+          repo: ${{ github.repository }}
+        run: |
+          uvx git-cliff==2.14.2 -o CHANGELOG.md
+          if git diff --quiet CHANGELOG.md; then
+            echo "CHANGELOG.md already up to date"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "docs: update CHANGELOG.md for ${tag} [skip ci]"
+          # main may have moved past the tagged commit (e.g. hotfixes landed
+          # while the release pipeline ran); rebase onto it so the push is a
+          # fast-forward. Commits only on main since the tag will appear in
+          # the next release's regenerated section.
+          remote="https://x-access-token:${token}@github.com/${repo}.git"
+          git fetch "$remote" main
+          git rebase FETCH_HEAD
+          git push "$remote" HEAD:main
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@718ea10b132b3b2eba29c1007bb80653f286566b  # v3.0.1
