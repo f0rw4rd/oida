@@ -416,14 +416,27 @@ class TestProtoFlow(unittest.TestCase):
         mock_scanner_inst = Mock()
         mock_scanner_inst.connect.return_value = None
 
-        with patch(
-            "oida.protocols.iec104.cli_runner.IEC104Scanner",
-            return_value=mock_scanner_inst,
+        with (
+            patch(
+                "oida.protocols.iec104.cli_runner.IEC104Scanner",
+                return_value=mock_scanner_inst,
+            ),
+            # Patch where it lives: create_conn_obj imports it at call time
+            # from oida.utils.protocol_helpers. Unpatched, the probe does a
+            # real socket connect against the synthetic host - slow and
+            # environment-dependent.
+            patch(
+                "oida.utils.protocol_helpers.probe_connect_failure_cause",
+                return_value="refused",
+            ),
         ):
             obj.proto_flow()
 
         self.assertFalse(obj.results["success"])
-        self.assertEqual(obj.results["error"], "Connection failed")
+        # Canonical connect-failure contract (GH issue #59): error carries
+        # the shared "connect <cause>" vocabulary, not a bare "Connection
+        # failed".
+        self.assertEqual(obj.results["error"], "connect refused (TCP)")
         # enum_host_info should not be called since conn is None
         mock_scanner_inst.get_server_info.assert_not_called()
 

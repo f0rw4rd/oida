@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import asyncio
+import errno as errno_module
 import socket
 import time
 from typing import Dict, List, Any
@@ -83,6 +84,68 @@ def is_connection_error(exc: Exception) -> bool:
 def is_auth_rejection(exc: Exception) -> bool:
     """True if the exception looks like the server explicitly rejecting creds."""
     return any(marker in str(exc).lower() for marker in AUTH_REJECT_MARKERS)
+
+
+# --- Connect-failure classification (GH issue #59) -------------------------
+#
+# One condition (nothing listening on target:port) used to produce a different
+# message and a different JSON `error` per protocol. These helpers map the
+# underlying OSError (or its string form, for libraries that swallow the
+# exception) to a small cause vocabulary shared by every cli_runner:
+# refused / timeout / unreachable / tls / auth / unknown.
+
+
+def classify_connection_failure(exc: BaseException | None = None, message: str = "") -> str:
+    """Classify a connect failure into the shared cause vocabulary.
+
+    Accepts the raw exception (preferred - errno is exact) or a message
+    string (for libraries like pymodbus that return False and only leave
+    the exception's text behind). Returns one of:
+    ``refused`` / ``timeout`` / ``unreachable`` / ``tls`` / ``auth`` /
+    ``unknown``.
+    """
+    errno = getattr(exc, "errno", None)
+    text = message or (str(exc) if exc is not None else "")
+
+    if errno == errno_module.ECONNREFUSED:
+        return "refused"
+    if errno in (errno_module.ETIMEDOUT, errno_module.EHOSTDOWN):
+        return "timeout"
+    if errno in (errno_module.EHOSTUNREACH, errno_module.ENETUNREACH, errno_module.ENETDOWN):
+        return "unreachable"
+
+    lowered = text.lower()
+    if "refused" in lowered:
+        return "refused"
+    if "timed out" in lowered or "timeout" in lowered:
+        return "timeout"
+    if "unreachable" in lowered or "no route to host" in lowered:
+        return "unreachable"
+    if "ssl" in lowered or "certificate" in lowered or "handshake" in lowered:
+        return "tls"
+    if "access denied" in lowered or "unauthorized" in lowered or "authentication" in lowered:
+        return "auth"
+    if errno is not None:
+        # An errno outside the vocabulary above is still a transport-level
+        # failure; refused/timeout/unreachable cover the connect() set.
+        return "unknown"
+    return "unknown"
+
+
+def probe_connect_failure_cause(host: str, port: int, timeout: float = 2.0) -> str | None:
+    """One cheap TCP connect to classify why a target is unreachable.
+
+    For libraries that swallow the connect exception (pymodbus returns
+    False), a single raw-socket probe recovers the errno and maps it to
+    the cause vocabulary. Returns None when the probe itself succeeds
+    (something is listening now - the original failure was transient or
+    protocol-level, not transport-level).
+    """
+    try:
+        with socket.create_connection((host, port), timeout=timeout):
+            return None
+    except OSError as e:
+        return classify_connection_failure(e)
 
 
 class ProgressTracker:

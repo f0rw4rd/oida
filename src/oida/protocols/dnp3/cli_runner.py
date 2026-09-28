@@ -47,9 +47,10 @@ class dnp3(NetworkConnection):
         # Normal connection-based scanning
         self.create_conn_obj()
         if not self.conn:
-            self.logger.fail(f"Failed to connect to {self.host}")
+            # create_conn_obj() already recorded the canonical failure (single
+            # line + results["error"] with the ICSConnectionError's cause) via
+            # record_connect_failure(); only success bookkeeping remains.
             self.results["success"] = False
-            self.results["error"] = "Connection failed"
             return
 
         self.enum_host_info()
@@ -102,7 +103,29 @@ class dnp3(NetworkConnection):
                 break
             except ICSConnectionError as e:
                 if attempt >= max_attempts:
-                    raise
+                    # Canonical failure path (GH issue #59): one line, cause
+                    # vocabulary, results["error"] always stamped. The
+                    # opendnp3 stack folds every failure into its own
+                    # "within Ns" message, so when the text carries no cause
+                    # marker, probe the socket once for the real errno.
+                    from oida.utils.protocol_helpers import (
+                        classify_connection_failure,
+                        probe_connect_failure_cause,
+                    )
+
+                    cause = classify_connection_failure(e)
+                    transport = getattr(self.args, "transport", "tcp") or "tcp"
+                    if cause == "unknown" and transport != "serial":
+                        cause = (
+                            probe_connect_failure_cause(
+                                self.ip or self.host,
+                                port,
+                                timeout=float(getattr(self.args, "timeout", 2) or 2),
+                            )
+                            or cause
+                        )
+                    self.record_connect_failure(cause, exc=e)
+                    return
                 self.logger.debug(
                     f"DNP3 connect attempt {attempt}/{max_attempts} failed ({e}); retrying"
                 )
@@ -110,7 +133,9 @@ class dnp3(NetworkConnection):
         if self.conn:
             self.logger.success(f"Connected to DNP3 outstation at {self.host}:{port}")
         else:
-            self.logger.fail(f"Connection failed to {self.host}:{port}")
+            # connect() normally raises rather than returning None; if it
+            # ever does return None, still honor the error contract.
+            self.record_connect_failure("unknown")
 
     def enum_host_info(self):
         """Enumerate DNP3 device information"""
