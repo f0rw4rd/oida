@@ -123,6 +123,10 @@ class DNSPassiveListener(PySharkListenerBase):
         )
         # Track hostname to IP mappings globally
         self.hostname_mappings: Dict[str, List[str]] = {}
+        # Record types that contributed to each mapping (A / AAAA / PTR),
+        # parallel to hostname_mappings (GH issue #62: the table must show
+        # which type a mapping came from).
+        self.hostname_mapping_types: Dict[str, set] = {}
 
         # Track DNS servers and clients
         self.dns_servers: Dict[str, Dict] = {}
@@ -387,15 +391,16 @@ class DNSPassiveListener(PySharkListenerBase):
         """
         responses = []
         hostname_mappings: Dict[str, List[str]] = {}
+        mapping_types: Dict[str, set] = {}
 
         # Parse A records (IPv4)
-        self._parse_a_records(dns, responses, hostname_mappings)
+        self._parse_a_records(dns, responses, hostname_mappings, mapping_types)
 
         # Parse AAAA records (IPv6)
-        self._parse_aaaa_records(dns, responses, hostname_mappings)
+        self._parse_aaaa_records(dns, responses, hostname_mappings, mapping_types)
 
         # Parse PTR records (reverse DNS)
-        self._parse_ptr_records(dns, responses, hostname_mappings)
+        self._parse_ptr_records(dns, responses, hostname_mappings, mapping_types)
 
         # Parse CNAME records (aliases)
         self._parse_cname_records(dns, responses)
@@ -441,6 +446,8 @@ class DNSPassiveListener(PySharkListenerBase):
                 for ip in ips:
                     if ip not in self.hostname_mappings[hostname]:
                         self.hostname_mappings[hostname].append(ip)
+            for hostname, types in mapping_types.items():
+                self.hostname_mapping_types.setdefault(hostname, set()).update(types)
 
         # Track the DNS server
         if not is_valid_discovered_ip(server_ip):
@@ -496,19 +503,66 @@ class DNSPassiveListener(PySharkListenerBase):
         ttl = self.get_field(dns, "resp_ttl")
         return str(ttl) if ttl is not None else None
 
+    def _record_mapping(
+        self,
+        hostname_mappings: Dict[str, List[str]],
+        mapping_types: Dict[str, set],
+        rrname: str,
+        answer: str,
+        rtype: str,
+    ) -> None:
+        """File one (hostname, ip, type) mapping, deduped."""
+        hostname_mappings.setdefault(rrname, [])
+        if answer not in hostname_mappings[rrname]:
+            hostname_mappings[rrname].append(answer)
+        mapping_types.setdefault(rrname, set()).add(rtype)
+
+    @staticmethod
+    def _is_usable_hostname(name: str) -> bool:
+        """A mapping key must be a real hostname: non-empty and not pyshark's
+        <Root> repr for an empty name field."""
+        return bool(name) and name != "<Root>"
+
+    def _pairwise_records(
+        self,
+        dns,
+        name_field: str,
+        value_field: str,
+    ) -> List[tuple]:
+        """Yield (rrname, answer) pairs, one per answer record.
+
+        get_field() comma-joins multi-value fields, which fused N answer
+        records of one packet into single bogus keys (GH issue #62).
+        get_field_values() returns one element per record; pyshark repeats
+        the name field per answer so lengths align. When they do not
+        (missing names), fall back to the first name for all values.
+        <Root> (pyshark's empty-name repr) and empty names are dropped.
+        """
+        names = self.get_field_values(dns, name_field, default=[]) or []
+        values = self.get_field_values(dns, value_field, default=[]) or []
+        if not names or not values:
+            return []
+        pairs = []
+        first_name = self._clean_name(names[0])
+        for i, value in enumerate(values):
+            raw_name = names[i] if i < len(names) else names[0]
+            rrname = self._clean_name(raw_name)
+            if not self._is_usable_hostname(rrname):
+                rrname = first_name if self._is_usable_hostname(first_name) else ""
+            if not self._is_usable_hostname(rrname):
+                continue
+            pairs.append((rrname, value))
+        return pairs
+
     def _parse_a_records(
         self,
         dns,
         responses: List[Dict],
         hostname_mappings: Dict[str, List[str]],
+        mapping_types: Optional[Dict[str, set]] = None,
     ) -> None:
         """Parse A records (IPv4 addresses) from DNS response."""
-        resp_name = self.get_field(dns, "resp_name")
-        a_record = self.get_field(dns, "a")
-
-        if resp_name and a_record:
-            rrname = self._clean_name(str(resp_name))
-            answer = str(a_record)
+        for rrname, answer in self._pairwise_records(dns, "resp_name", "a"):
             rec: Dict[str, Any] = {
                 "query": rrname,
                 "type": "A",
@@ -518,10 +572,12 @@ class DNSPassiveListener(PySharkListenerBase):
             if ttl is not None:
                 rec["ttl"] = ttl
             responses.append(rec)
-            if rrname not in hostname_mappings:
-                hostname_mappings[rrname] = []
-            if answer not in hostname_mappings[rrname]:
-                hostname_mappings[rrname].append(answer)
+            if mapping_types is not None:
+                self._record_mapping(hostname_mappings, mapping_types, rrname, answer, "A")
+            else:
+                hostname_mappings.setdefault(rrname, [])
+                if answer not in hostname_mappings[rrname]:
+                    hostname_mappings[rrname].append(answer)
             self.logger.debug(f"DNS: A record {rrname} -> {answer}")
 
     def _parse_aaaa_records(
@@ -529,14 +585,10 @@ class DNSPassiveListener(PySharkListenerBase):
         dns,
         responses: List[Dict],
         hostname_mappings: Dict[str, List[str]],
+        mapping_types: Optional[Dict[str, set]] = None,
     ) -> None:
         """Parse AAAA records (IPv6 addresses) from DNS response."""
-        resp_name = self.get_field(dns, "resp_name")
-        aaaa_record = self.get_field(dns, "aaaa")
-
-        if resp_name and aaaa_record:
-            rrname = self._clean_name(str(resp_name))
-            answer = str(aaaa_record)
+        for rrname, answer in self._pairwise_records(dns, "resp_name", "aaaa"):
             rec: Dict[str, Any] = {
                 "query": rrname,
                 "type": "AAAA",
@@ -546,10 +598,12 @@ class DNSPassiveListener(PySharkListenerBase):
             if ttl is not None:
                 rec["ttl"] = ttl
             responses.append(rec)
-            if rrname not in hostname_mappings:
-                hostname_mappings[rrname] = []
-            if answer not in hostname_mappings[rrname]:
-                hostname_mappings[rrname].append(answer)
+            if mapping_types is not None:
+                self._record_mapping(hostname_mappings, mapping_types, rrname, answer, "AAAA")
+            else:
+                hostname_mappings.setdefault(rrname, [])
+                if answer not in hostname_mappings[rrname]:
+                    hostname_mappings[rrname].append(answer)
             self.logger.debug(f"DNS: AAAA record {rrname} -> {answer}")
 
     def _parse_ptr_records(
@@ -557,14 +611,19 @@ class DNSPassiveListener(PySharkListenerBase):
         dns,
         responses: List[Dict],
         hostname_mappings: Dict[str, List[str]],
+        mapping_types: Optional[Dict[str, set]] = None,
     ) -> None:
         """Parse PTR records (reverse DNS) from DNS response."""
-        ptr_record = self.get_field(dns, "ptr_domain_name")
+        ptr_names = self.get_field_values(dns, "ptr_domain_name", default=[]) or []
+        if not ptr_names:
+            return
         qry_name = self.get_field(dns, "qry_name")
-
-        if ptr_record:
-            rrname = self._clean_name(str(qry_name)) if qry_name else ""
-            answer = self._clean_name(str(ptr_record))
+        base_name = self._clean_name(str(qry_name)) if qry_name else ""
+        if not base_name:
+            return
+        for ptr in ptr_names:
+            answer = self._clean_name(ptr)
+            rrname = base_name
             rec: Dict[str, Any] = {
                 "query": rrname,
                 "type": "PTR",
@@ -576,10 +635,14 @@ class DNSPassiveListener(PySharkListenerBase):
             responses.append(rec)
             ip_from_ptr = self._ptr_to_ip(rrname)
             if ip_from_ptr and answer:
-                if answer not in hostname_mappings:
-                    hostname_mappings[answer] = []
-                if ip_from_ptr not in hostname_mappings[answer]:
-                    hostname_mappings[answer].append(ip_from_ptr)
+                if mapping_types is not None:
+                    self._record_mapping(
+                        hostname_mappings, mapping_types, answer, ip_from_ptr, "PTR"
+                    )
+                else:
+                    hostname_mappings.setdefault(answer, [])
+                    if ip_from_ptr not in hostname_mappings[answer]:
+                        hostname_mappings[answer].append(ip_from_ptr)
             self.logger.debug(f"DNS: PTR record {rrname} -> {answer}")
 
     def _parse_cname_records(
@@ -919,10 +982,12 @@ class DNSPassiveListener(PySharkListenerBase):
             for hostname in sorted(mappings.keys()):
                 ips = mappings[hostname]
                 ips_str = ", ".join(ips)
-                mapping_rows.append([hostname, ips_str])
+                types = self.hostname_mapping_types.get(hostname)
+                type_str = ", ".join(sorted(types)) if types else ""
+                mapping_rows.append([hostname, type_str, ips_str])
             tables.append(
                 {
-                    "headers": ["Hostname", "IP Addresses"],
+                    "headers": ["Hostname", "Type", "IP Addresses"],
                     "rows": mapping_rows,
                     "title": f"DNS Hostname Mappings ({len(mappings)})",
                 }
@@ -963,6 +1028,9 @@ class DNSPassiveListener(PySharkListenerBase):
         results: Dict[str, Any] = {
             "dns": {
                 "hostname_mappings": mappings,
+                "hostname_mapping_types": {
+                    host: sorted(types) for host, types in self.hostname_mapping_types.items()
+                },
                 "dns_servers": list(servers.keys()),
                 "dns_clients": list(clients.keys()),
                 "total_hostnames": len(mappings),

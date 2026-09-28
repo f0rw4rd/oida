@@ -186,3 +186,102 @@ class TestNoDNSTraffic:
         scanner = PcapScanner(str(pcap), args={"extract_dns": True})
         result = scanner.run_scan()
         assert isinstance(result, dict)
+
+
+# ---------------------------------------------------------------------------
+# Hostname-mapping quality (GH issue #62)
+# ---------------------------------------------------------------------------
+
+
+class TestHostnameMappingQuality:
+    """GH issue #62: multi-value pyshark fields fused N answer records into
+    single bogus keys, mapping types were absent, and <Root> could appear as
+    a hostname. These tests pin the fixed contract."""
+
+    @requires_pyshark
+    def test_no_mapping_key_is_comma_fused(self):
+        """No mapping key may contain a comma: pyshark comma-joins
+        multi-value fields, and the old code used the joined string as one
+        hostname key ("a.com,b.com" -> one bogus entry)."""
+        _skip_unless_exists(DNS_PCAP_WITH_DATA)
+        scanner = PcapScanner(str(DNS_PCAP_WITH_DATA))
+        result = scanner.run_scan()
+        mappings = result["dns"]["hostname_mappings"]
+        fused = [k for k in mappings if "," in k]
+        assert fused == [], f"comma-fused hostname keys: {fused}"
+
+    @requires_pyshark
+    def test_no_mapping_key_is_pyshark_root_repr(self):
+        """No mapping key may be '<Root>' (pyshark's repr for an empty name
+        field) or empty."""
+        _skip_unless_exists(DNS_PCAP_WITH_DATA)
+        scanner = PcapScanner(str(DNS_PCAP_WITH_DATA))
+        result = scanner.run_scan()
+        mappings = result["dns"]["hostname_mappings"]
+        bad = [k for k in mappings if not k or k == "<Root>"]
+        assert bad == [], f"unusable hostname keys: {bad}"
+
+    @requires_pyshark
+    def test_mapping_types_present_and_known(self):
+        """hostname_mapping_types maps each hostname to its record types;
+        every type is from the known set and each hostname with a mapping
+        has a type entry."""
+        _skip_unless_exists(DNS_PCAP_WITH_DATA)
+        scanner = PcapScanner(str(DNS_PCAP_WITH_DATA))
+        result = scanner.run_scan()
+        dns = result["dns"]
+        types = dns["hostname_mapping_types"]
+        known = {"A", "AAAA", "PTR"}
+        for hostname, rtypes in types.items():
+            assert hostname in dns["hostname_mappings"], hostname
+            assert set(rtypes) <= known, (hostname, rtypes)
+        assert len(types) == len(dns["hostname_mappings"])
+
+    @requires_pyshark
+    def test_ptr_mapping_carries_its_ip(self):
+        """A PTR record must map hostname -> resolved IP (e.g.
+        66-192-9-104.gen.twtelecom.net -> 66.192.9.104), not to the query
+        name."""
+        _skip_unless_exists(DNS_PCAP_WITH_DATA)
+        scanner = PcapScanner(str(DNS_PCAP_WITH_DATA))
+        result = scanner.run_scan()
+        mappings = result["dns"]["hostname_mappings"]
+        types = result["dns"]["hostname_mapping_types"]
+        ptr = {h for h, t in types.items() if "PTR" in t}
+        assert ptr, "fixture should contain at least one PTR mapping"
+        for hostname in ptr:
+            ips = mappings[hostname]
+            assert ips, hostname
+            # A PTR answer encodes the IP in its name (N-N-N-N.in-addr.arpa
+            # style); the mapped value must be that IP, not a domain.
+            assert all("." in ip and not ip.endswith(".arpa") for ip in ips), ips
+
+    @requires_pyshark
+    def test_multi_answer_packet_yields_all_records(self):
+        """The google.com MX-ish response in the fixture carries 6 A answers
+        in one packet; all 6 IPs must land in the mapping, not just the
+        first (the old code's get_field() scalar read kept only one)."""
+        _skip_unless_exists(DNS_PCAP_WITH_DATA)
+        scanner = PcapScanner(str(DNS_PCAP_WITH_DATA))
+        result = scanner.run_scan()
+        mappings = result["dns"]["hostname_mappings"]
+        google = mappings.get("google.com", [])
+        assert len(google) >= 4, f"expected several A answers, got {google}"
+        assert "216.239.37.26" in google, google
+
+    @requires_pyshark
+    def test_mappings_table_has_type_column(self):
+        """The harvest table must carry the Type column (Hostname, Type,
+        IP Addresses) and every row must have all three fields populated."""
+        _skip_unless_exists(DNS_PCAP_WITH_DATA)
+        scanner = PcapScanner(str(DNS_PCAP_WITH_DATA))
+        scanner.run_scan()
+        tables = scanner.results.get("tables", [])
+        mapping_tables = [t for t in tables if "Hostname" in t.get("headers", [])]
+        assert mapping_tables, "hostname-mappings table missing from harvest"
+        table = mapping_tables[0]
+        assert table["headers"] == ["Hostname", "Type", "IP Addresses"]
+        assert table["rows"]
+        for row in table["rows"]:
+            assert len(row) == 3, f"row must be [hostname, type, ips]: {row}"
+            assert row[1], f"Type cell empty for {row[0]}"
