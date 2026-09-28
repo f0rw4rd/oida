@@ -24,8 +24,10 @@ class iec104(NetworkConnection):
 
         self.create_conn_obj()
         if not self.conn:
+            # create_conn_obj() already recorded the canonical failure
+            # (single line + results["error"] with cause) via
+            # record_connect_failure(); only success bookkeeping remains.
             self.results["success"] = False
-            self.results["error"] = "Connection failed"
             return
 
         self.enum_host_info()
@@ -42,7 +44,20 @@ class iec104(NetworkConnection):
                 f"Connected via {transport} (station CA={self.scanner.common_address})"
             )
         else:
-            self.logger.fail(f"Connection refused ({transport})")
+            # c104's connect() returns None for *any* failure (timeout,
+            # refused, TLS) - the errno never survives it. A one-shot raw
+            # TCP probe recovers the cause so a filtered port stops being
+            # mislabeled "refused" (GH issue #59).
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            port = getattr(self.args, "port", self.default_port)
+            cause = (
+                probe_connect_failure_cause(
+                    self.ip, port, timeout=float(getattr(self.args, "timeout", 2) or 2)
+                )
+                or "unknown"
+            )
+            self.record_connect_failure(cause, detail=transport)
 
     def enum_host_info(self):
         """Enumerate IEC 104 device information"""

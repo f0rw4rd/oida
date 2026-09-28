@@ -906,6 +906,11 @@ class TestDiscoveryCliSudoActiveScans:
         unconditional raw-socket capability check (which applies to every
         scan mode, see module docstring) fails gracefully rather than
         crashing when neither sudo nor CAP_NET_RAW is available.
+
+        The gated scan is a failed scan, not a neutral one: rc is 1 and the
+        exported error names the missing capability. Before the #60 fix this
+        passed with rc 0 because get_results() hardcoded success=True for any
+        truthy results dict - the exact false-positive class that fix removes.
         """
         result = cli_runner.run(
             "discovery",
@@ -919,7 +924,7 @@ class TestDiscoveryCliSudoActiveScans:
             format="json",
             json_log=True,
         )
-        assert result.returncode == 0, result.combined_output
+        assert result.returncode == 1, result.combined_output
         _assert_no_traceback(result)
         _assert_log_has_events(result)
         text = _combined_text(result, result.scan_log)

@@ -359,6 +359,42 @@ class PySharkListenerBase(ABC):
             self.logger.debug(f"PyShark: layer value resolution failed: {e}")
             return default
 
+    def get_field_values(self, layer, field_name: str, default: Any = None) -> Any:
+        """Safely get a field from a PyShark layer as a LIST of strings.
+
+        Companion to get_field(): where get_field() comma-joins a
+        multi-value field into one scalar (fine for display, lossy for
+        record-by-record mapping - see the DNS hostname-mappings bug,
+        GH issue #62), this returns the split elements. A scalar value
+        comes back as a one-element list. Name fields whose elements
+        still contain commas (CNAME chains appear as one comma-joined
+        value per answer record in pyshark) are split on commas too, so
+        callers get one element per record.
+        """
+        try:
+            val = getattr(layer, field_name, default)
+            val = self._resolve_value(val, default)
+            if val is None or val is default:
+                return default
+            if isinstance(val, bytes):
+                return [val.hex(":")]
+            if isinstance(val, bool):
+                return [str(val)]
+            if isinstance(val, (int, float)):
+                return [str(val)]
+            if isinstance(val, list):
+                parts = []
+                for v in val:
+                    v = self._resolve_value(v, "")
+                    parts.append(v.hex(":") if isinstance(v, bytes) else str(v))
+                return parts
+            # Scalar string. pyshark multi-value scalars are comma-joined;
+            # split them so each record is its own element.
+            return [part for part in str(val).split(",") if part != ""]
+        except Exception as e:
+            self.logger.debug(f"PyShark: layer value resolution failed: {e}")
+            return default
+
     def get_field_any(self, layer, *field_names: str, default: Any = None) -> Any:
         """Return the first present field among several candidate names.
 

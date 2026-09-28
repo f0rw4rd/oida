@@ -265,6 +265,37 @@ class connection(ConfirmGateMixin, ABC):
         if port:
             self.logger.extra["port"] = port
 
+    def record_connect_failure(
+        self,
+        cause: str,
+        exc: BaseException | None = None,
+        detail: str = "",
+    ) -> None:
+        """Record a connect failure uniformly across protocols (GH issue #59).
+
+        Prints the single canonical failure line and stamps
+        ``results["success"]``/``results["error"]`` so the JSON contract
+        holds (error always present on connect failure, same vocabulary).
+        Protocol runners should call this exactly once per failed connect
+        instead of hand-rolling their own logger.fail + results stanzas.
+
+        Args:
+            cause: one of the classify_connection_failure() vocabulary:
+                refused / timeout / unreachable / tls / auth / unknown.
+            exc: the underlying exception, when available (message folded
+                into the error string).
+            detail: extra protocol-level context (e.g. the transport).
+        """
+        target = f"{self.host}:{self.results.get('port') or getattr(self, 'default_port', 0)}"
+        suffix = f" ({detail})" if detail else ""
+        if exc is not None and str(exc) and str(exc) != cause:
+            error = f"connect {cause}: {exc}{suffix}"
+        else:
+            error = f"connect {cause}{suffix}"
+        self.logger.fail(f"Connect failed: {cause} ({target})")
+        self.results["success"] = False
+        self.results["error"] = error
+
     @abstractmethod
     def create_conn_obj(self):
         """

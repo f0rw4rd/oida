@@ -162,6 +162,13 @@ class opcua(
             return True
         except Exception as e:
             self.logger.debug(f"Pre-auth endpoint discovery failed: {e}")
+            # Classify now (not at the caller) - the exception object is only
+            # available here; the shared record_connect_failure() stamps the
+            # JSON error the scan contract requires (GH issue #59).
+            from oida.utils.protocol_helpers import classify_connection_failure
+
+            self._connect_failure_cause = classify_connection_failure(e)
+            self._connect_failure_exc = e
             return False
 
     async def _configure_secure_channel(
@@ -510,7 +517,13 @@ class opcua(
                 self._client = None
                 self.results["success"] = pre_auth_ok
                 if not pre_auth_ok:
-                    self.logger.fail("Could not connect to OPC UA server")
+                    # The cause/exc were captured by _pre_auth_discovery (the
+                    # exception is gone by the time we get here).
+                    self.record_connect_failure(
+                        getattr(self, "_connect_failure_cause", "unknown"),
+                        exc=getattr(self, "_connect_failure_exc", None),
+                        detail=url,
+                    )
                 return
 
             # Recreate client for auth

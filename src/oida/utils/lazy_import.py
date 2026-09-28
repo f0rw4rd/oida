@@ -18,13 +18,31 @@ Usage:
 """
 
 from typing import Any, Optional, Dict
+import contextlib
 import functools
 import importlib
 import threading
+import warnings
 
 import logging
 
 logger = logging.getLogger(__name__)
+
+
+@contextlib.contextmanager
+def _suppress_import_warnings():
+    """Silence third-party warnings raised inside an import.
+
+    Optional-dependency import chains emit their own deprecation warnings
+    (scapy 2.7.0 triggers cryptography's FFDH CryptographyDeprecationWarning
+    through scapy.layers.tls). Users cannot act on those, and they break
+    stderr-parsing wrappers. CryptographyDeprecationWarning subclasses
+    UserWarning, not DeprecationWarning, so match on module, not category.
+    """
+    with warnings.catch_warnings():
+        warnings.filterwarnings("ignore", message=".*deprecated and support will be removed.*")
+        yield
+
 
 # The import package is "oida" (and so is the CLI command), but the published
 # distribution is "oida-ics" -- importlib.metadata keys off the latter. Asking
@@ -117,7 +135,14 @@ class LazyModule:
                 return self._module
 
             try:
-                module = importlib.import_module(self._module_name)
+                # Third-party import chains emit deprecation warnings at
+                # import time (e.g. scapy 2.7.0 pulls cryptography's FFDH
+                # deprecation via scapy.layers.tls). That is dependency
+                # noise, not something the user can act on, so it must not
+                # reach the terminal. Scoped to the import call: warning
+                # behaviour elsewhere is untouched.
+                with _suppress_import_warnings():
+                    module = importlib.import_module(self._module_name)
                 # Publish module BEFORE flipping _loaded so any other
                 # thread that observes _loaded=True always sees a
                 # populated _module.

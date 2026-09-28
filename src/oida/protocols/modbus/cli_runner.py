@@ -163,11 +163,30 @@ class modbus(
         self.create_conn_obj()
 
         if not self.conn:
-            self.logger.fail(f"Failed to connect to {self.ip}:{getattr(self.args, 'port', 502)}")
-            self.results["success"] = False
-            self.results["error"] = (
-                f"Connection failed to {self.ip}:{getattr(self.args, 'port', 502)}"
+            # pymodbus's connect() swallows the socket exception (returns
+            # False), so the errno is lost; a one-shot raw TCP probe recovers
+            # the cause for the shared vocabulary (GH issue #59). Serial and
+            # UDP transports have no TCP errno to recover - classify from
+            # whatever context exists.
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            transport = (
+                "serial"
+                if getattr(self.args, "serial_port", None)
+                else ("udp" if getattr(self.args, "udp", False) else "tcp")
             )
+            if transport == "tcp":
+                cause = (
+                    probe_connect_failure_cause(
+                        self.ip,
+                        getattr(self.args, "port", 502),
+                        timeout=float(getattr(self.args, "timeout", 2) or 2),
+                    )
+                    or "unknown"
+                )
+            else:
+                cause = "unknown"
+            self.record_connect_failure(cause, detail=transport if transport != "tcp" else "")
             return
 
         self.logger.debug("Connection established")
@@ -884,8 +903,9 @@ class modbus(
 
         if self.conn:
             self.logger.success(f"Connected via {transport}")
-        else:
-            self.logger.fail("Connection failed")
+        # No failure line here: proto_flow records the single canonical
+        # failure (cause + JSON error) once it sees conn is None - printing
+        # here too was the double-print (GH issue #59).
 
     def enum_host_info(self):
         """Enumerate Modbus device information"""
