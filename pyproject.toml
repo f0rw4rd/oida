@@ -96,7 +96,7 @@ opcua = ["asyncua==2.0.1"]
 # make PyPI reject the whole `oida` upload (direct-URL deps are not allowed).
 pcap = ["oida-pyshark==0.6.1.post1"]
 profinet = ["profinet-py==0.6.5"]
-snap7 = ["python-snap7==3.1.2"]
+snap7 = ["python-snap7==3.2.0"]
 snmp = ["pysnmp==7.1.29"]
 tase2 = ["pyiec61850-ng==1.6.1.10"]
 astm = []
