@@ -61,7 +61,13 @@ class TestDiscoveryCallable:
 
     def test_create_conn_obj(self, discovery_callable):
         """Test create_conn_obj method"""
-        with patch.object(discovery_callable, "__init__", return_value=None):
+        with (
+            patch.object(discovery_callable, "__init__", return_value=None),
+            patch(
+                "oida.protocols.discovery.scanner.check_raw_socket_capability",
+                return_value=(True, None),
+            ),
+        ):
             instance = discovery_callable.__new__(discovery_callable)
             instance.scanner = MagicMock()
             instance.scanner.connect.return_value = "eth0"
@@ -120,20 +126,26 @@ class TestDiscoveryCallable:
         with patch.object(discovery_callable, "__init__", return_value=None):
             instance = discovery_callable.__new__(discovery_callable)
             instance.interface = "eth0"
-            instance._scan_results = {"devices": [{"name": "test"}]}
+            instance._scan_error = None
+            instance._scan_results = {
+                "devices": [{"name": "test"}],
+                "scan_mode": ["passive"],
+            }
 
             results = instance.get_results()
 
             assert results["success"] is True
             assert results["protocol"] == "discovery"
             assert results["host"] == "eth0"
-            assert results["data"] == {"devices": [{"name": "test"}]}
+            assert results["data"]["devices"] == [{"name": "test"}]
+            assert results["data"]["scan_mode"] == ["passive"]
 
     def test_get_results_failure(self, discovery_callable):
         """Test get_results with no results"""
         with patch.object(discovery_callable, "__init__", return_value=None):
             instance = discovery_callable.__new__(discovery_callable)
             instance.interface = "eth0"
+            instance._scan_error = None
             instance._scan_results = None
 
             results = instance.get_results()

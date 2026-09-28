@@ -1036,17 +1036,25 @@ class TestDiscoveryNxcClass:
         d.protocol_name = "DISCOVERY"
         d.default_port = None
         d._scan_results = None
+        d._scan_error = None
         d.interface = "eth0"
         d.logger = MagicMock()
         d.args = self._make_args()
 
         fake_scanner = MagicMock()
         fake_scanner.connect.return_value = "eth0"
-        fake_scanner.discover.return_value = {"devices": [{"mac_address": "aa:bb:cc:dd:ee:ff"}]}
+        fake_scanner.discover.return_value = {
+            "devices": [{"mac_address": "aa:bb:cc:dd:ee:ff"}],
+            "scan_mode": ["passive"],
+        }
 
         with (
             patch.object(discovery, "_convert_args_to_dict", return_value={"interface": "eth0"}),
             patch("oida.protocols.discovery.scanner.DiscoveryScanner", return_value=fake_scanner),
+            patch(
+                "oida.protocols.discovery.scanner.check_raw_socket_capability",
+                return_value=(True, None),
+            ),
         ):
             d.proto_flow()
 
@@ -1079,7 +1087,11 @@ class TestDiscoveryNxcClass:
 
         d = discovery.__new__(discovery)
         d.interface = "eth0"
-        d._scan_results = {"devices": [{"mac_address": "x"}]}
+        d._scan_error = None
+        d._scan_results = {
+            "devices": [{"mac_address": "x"}],
+            "scan_mode": ["passive"],
+        }
         out = d.get_results()
         assert out["success"] is True
         assert out["protocol"] == "discovery"
@@ -1090,9 +1102,30 @@ class TestDiscoveryNxcClass:
 
         d = discovery.__new__(discovery)
         d.interface = "eth0"
+        d._scan_error = None
         d._scan_results = None
         out = d.get_results()
         assert out["success"] is False
+
+    def test_get_results_ran_nothing_is_failure(self):
+        from oida.protocols.discovery.scanner import discovery
+
+        # Early-return path from discover(): keys present, zero scan tasks.
+        # Must not export as success (GH issue #60).
+        d = discovery.__new__(discovery)
+        d.interface = "eth0"
+        d._scan_error = None
+        d._scan_results = {
+            "devices": [],
+            "protocols_used": [],
+            "scan_mode": [],
+            "statistics": {},
+            "security_analysis": {},
+            "error": "raw socket access denied (need root or CAP_NET_RAW)",
+        }
+        out = d.get_results()
+        assert out["success"] is False
+        assert "raw socket" in out["error"]
 
     def test_cleanup_calls_disconnect(self):
         from oida.protocols.discovery.scanner import discovery
@@ -1110,7 +1143,32 @@ class TestDiscoveryNxcClass:
         d.logger = MagicMock()
         d.scanner = MagicMock()
         d.scanner.connect.return_value = "eth0"
-        assert d.create_conn_obj() is True
+        with patch(
+            "oida.protocols.discovery.scanner.check_raw_socket_capability",
+            return_value=(True, None),
+        ):
+            assert d.create_conn_obj() is True
+
+    def test_create_conn_obj_denied_raw_socket(self):
+        from oida.protocols.discovery.scanner import discovery
+
+        # Capability preflight runs BEFORE the "[+] Listening" banner:
+        # denial must fail create_conn_obj without printing success.
+        d = discovery.__new__(discovery)
+        d.interface = "eth0"
+        d.logger = MagicMock()
+        d.scanner = MagicMock()
+        d.scanner.connect.return_value = "eth0"
+        with (
+            patch(
+                "oida.protocols.discovery.scanner.check_raw_socket_capability",
+                return_value=(False, "permission_error"),
+            ),
+            patch("oida.utils.permissions.raw_socket_help_lines", return_value=["hint"]),
+        ):
+            assert d.create_conn_obj() is False
+        d.logger.success.assert_not_called()
+        assert "raw socket" in d._scan_error
 
     def test_create_conn_obj_failure(self):
         from oida.protocols.discovery.scanner import discovery

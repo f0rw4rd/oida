@@ -255,6 +255,19 @@ class DiscoveryScanner(SerialScanner):
                 raise ValueError("Interface is required for discovery")
         super().__init__(args)
 
+        # Validate the interface name early, with the same message connect()
+        # prints. ConfigurationError (not ValueError): it is an operational
+        # failure, so the crash reporter must not fire for a typo, and
+        # _get_local_mac() below would otherwise raise a bare ValueError that
+        # escapes the constructor into the generic bug-report path.
+        if self.interface not in _netifaces.interfaces():
+            from oida.utils.exceptions import ConfigurationError
+
+            raise ConfigurationError(
+                f"Interface '{self.interface}' not found. "
+                f"Available: {', '.join(_netifaces.interfaces()[:8])}"
+            )
+
         self.timeout = int(args.get("timeout", 3))
 
         # Simplified scan modes
@@ -800,6 +813,7 @@ class DiscoveryScanner(SerialScanner):
         # Check if interface was validated
         if connection is None:
             self.logger.fail("No valid interface - cannot proceed")
+            results["error"] = "no valid interface"
             return results
 
         # Check raw socket capability at the start
@@ -811,8 +825,10 @@ class DiscoveryScanner(SerialScanner):
                 self.logger.fail("Raw socket access required")
                 for _line in raw_socket_help_lines():
                     self.logger.display(_line)
+                results["error"] = "raw socket access denied (need root or CAP_NET_RAW)"
             else:
                 self.logger.fail(raw_error)
+                results["error"] = f"raw socket unavailable: {raw_error}"
             return results
 
         if not self.passive_mode and not self.active_mode:
@@ -2576,6 +2592,7 @@ class discovery(SerialConnection):
         self.protocol_name = "DISCOVERY"
         self.default_port = None
         self._scan_results = None
+        self._scan_error = None
         super().__init__(args, db, host)
 
     def proto_flow(self):
@@ -2610,10 +2627,26 @@ class discovery(SerialConnection):
         return result
 
     def create_conn_obj(self) -> bool:
-        """Validate interface - returns False if not found"""
+        """Validate interface and raw-socket capability - returns False if
+        either is missing. Preflighting here (goose/ethercat/profinet
+        pattern) means the capability failure surfaces BEFORE the
+        "[+] Listening" banner instead of after it."""
         self.logger.info(f"Initializing interface {self.interface}")
         self._connection = self.scanner.connect()
         if self._connection is not None:
+            has_raw, raw_error = check_raw_socket_capability()
+            if not has_raw:
+                if raw_error == "permission_error":
+                    from oida.utils.permissions import raw_socket_help_lines
+
+                    self.logger.fail("Raw socket access required")
+                    for _line in raw_socket_help_lines():
+                        self.logger.display(_line)
+                    self._scan_error = "raw socket access denied (need root or CAP_NET_RAW)"
+                else:
+                    self.logger.fail(raw_error)
+                    self._scan_error = f"raw socket unavailable: {raw_error}"
+                return False
             self.logger.success(f"Listening on interface {self.interface}")
         else:
             self.logger.fail(f"Failed to initialize interface {self.interface}")
@@ -2632,6 +2665,7 @@ class discovery(SerialConnection):
         except Exception as e:
             self.logger.debug("execute scan failed: %s", e)
             self.logger.fail(f"Discovery error: {e}")
+            self._scan_error = str(e)
 
     def cleanup(self) -> None:
         """Cleanup scanner"""
@@ -2641,14 +2675,22 @@ class discovery(SerialConnection):
     def get_results(self) -> ScanResult:
         """Return scan results"""
         if self._scan_results:
+            # Success only when at least one scan task actually ran. The
+            # early-return paths in discover() (no valid interface, raw
+            # socket denial) return a results dict with keys but an empty
+            # scan_mode - a discovery that ran nothing must not export as
+            # success.
+            scan_ran = bool(self._scan_results.get("scan_mode"))
             return {
                 "host": self.interface,
                 "protocol": "discovery",
-                "success": True,
+                "success": scan_ran,
+                "error": self._scan_results.get("error") or self._scan_error,
                 "data": self._scan_results,
             }
         return {
             "host": self.interface,
             "protocol": "discovery",
             "success": False,
+            "error": self._scan_error,
         }

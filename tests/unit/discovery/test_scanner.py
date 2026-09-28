@@ -97,10 +97,12 @@ class TestDiscoveryScannerConnect:
             assert result == "eth0"
 
     def test_invalid_interface_raises_error(self, scanner_class):
-        """Test that invalid interface raises ValueError during initialization"""
+        """Invalid interface raises ConfigurationError (operational, not
+        crash-reportable) during initialization, with the not-found message"""
         import pytest
+        from oida.utils.exceptions import ConfigurationError
 
-        with pytest.raises(ValueError, match="not found"):
+        with pytest.raises(ConfigurationError, match="not found"):
             scanner_class({"target": "nonexistent_if"})
 
     def test_returns_interface_name(self, scanner_class):
