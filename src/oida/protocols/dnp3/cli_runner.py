@@ -115,7 +115,7 @@ class dnp3(NetworkConnection):
 
                     cause = classify_connection_failure(e)
                     transport = getattr(self.args, "transport", "tcp") or "tcp"
-                    if cause == "unknown" and transport != "serial":
+                    if cause == "unknown" and transport not in ("serial", "udp"):
                         cause = (
                             probe_connect_failure_cause(
                                 self.ip or self.host,

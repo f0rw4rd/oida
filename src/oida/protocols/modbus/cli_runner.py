@@ -165,18 +165,28 @@ class modbus(
         if not self.conn:
             # pymodbus's connect() swallows the socket exception (returns
             # False), so the errno is lost; a one-shot raw TCP probe recovers
-            # the cause for the shared vocabulary (GH issue #59).
+            # the cause for the shared vocabulary (GH issue #59). Serial and
+            # UDP transports have no TCP errno to recover - classify from
+            # whatever context exists.
             from oida.utils.protocol_helpers import probe_connect_failure_cause
 
-            cause = (
-                probe_connect_failure_cause(
-                    self.ip,
-                    getattr(self.args, "port", 502),
-                    timeout=float(getattr(self.args, "timeout", 2) or 2),
-                )
-                or "unknown"
+            transport = (
+                "serial"
+                if getattr(self.args, "serial_port", None)
+                else ("udp" if getattr(self.args, "udp", False) else "tcp")
             )
-            self.record_connect_failure(cause)
+            if transport == "tcp":
+                cause = (
+                    probe_connect_failure_cause(
+                        self.ip,
+                        getattr(self.args, "port", 502),
+                        timeout=float(getattr(self.args, "timeout", 2) or 2),
+                    )
+                    or "unknown"
+                )
+            else:
+                cause = "unknown"
+            self.record_connect_failure(cause, detail=transport if transport != "tcp" else "")
             return
 
         self.logger.debug("Connection established")

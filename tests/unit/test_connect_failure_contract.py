@@ -149,6 +149,8 @@ class TestProtocolConnectFailurePaths(unittest.TestCase):
         obj.args.port = 502
         obj.args.timeout = 2
         obj.args.list_maps = False  # Mock attr would be truthy and divert the flow
+        obj.args.serial_port = None  # ditto - would divert to the serial branch
+        obj.args.udp = False  # ditto - would skip the TCP cause probe
         obj.host = obj.ip = "127.0.0.1"
         obj.logger = Mock()
         obj.results = {"data": {}, "success": None, "port": 502}
