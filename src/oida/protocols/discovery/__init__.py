@@ -38,6 +38,16 @@ Usage:
     oida discovery eth0 --active --no-passive  # Active only
 """
 
+import warnings
+
+# scapy's import chain (scapy.layers.tls) emits cryptography's FFDH
+# CryptographyDeprecationWarning on every fresh interpreter with
+# cryptography >= 48. Dependency noise the user cannot act on; same
+# pattern as knx/__init__.py suppressing xknx warnings. Process-global
+# on purpose: scanner modules import scapy.all directly inside
+# functions, bypassing lazy_import's scoped filter.
+warnings.filterwarnings("ignore", message=".*deprecated and support will be removed.*")
+
 # Lazy import mapping: attribute name -> (module, name)
 # This defers all heavy imports until actually accessed
 _LAZY_IMPORTS = {
