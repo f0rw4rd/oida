@@ -257,17 +257,31 @@ class TestHostnameMappingQuality:
             assert all("." in ip and not ip.endswith(".arpa") for ip in ips), ips
 
     @requires_pyshark
-    def test_multi_answer_packet_yields_all_records(self):
-        """The google.com MX-ish response in the fixture carries 6 A answers
-        in one packet; all 6 IPs must land in the mapping, not just the
-        first (the old code's get_field() scalar read kept only one)."""
+    def test_glue_records_map_to_their_owner_not_the_query(self):
+        """Frame 2 of the fixture is an MX response for google.com whose 6 A
+        records are Additional-section GLUE for smtp1-6.google.com. The
+        mapping must attribute each glue IP to its own smtp*.google.com
+        owner - head-first name/value pairing misattributed all six to
+        google.com."""
         _skip_unless_exists(DNS_PCAP_WITH_DATA)
         scanner = PcapScanner(str(DNS_PCAP_WITH_DATA))
         result = scanner.run_scan()
         mappings = result["dns"]["hostname_mappings"]
-        google = mappings.get("google.com", [])
-        assert len(google) >= 4, f"expected several A answers, got {google}"
-        assert "216.239.37.26" in google, google
+        # None of the glue IPs may belong to google.com.
+        assert "google.com" not in mappings or not any(
+            ip.startswith("216.239.") or ip.startswith("64.233.") for ip in mappings["google.com"]
+        ), mappings.get("google.com")
+        # Each glue owner keeps exactly its own IP.
+        expected = {
+            "smtp1.google.com": "216.239.57.25",
+            "smtp2.google.com": "216.239.37.25",
+            "smtp3.google.com": "216.239.57.26",
+            "smtp4.google.com": "216.239.37.26",
+            "smtp5.google.com": "64.233.167.25",
+            "smtp6.google.com": "66.102.9.25",
+        }
+        for owner, ip in expected.items():
+            assert mappings.get(owner) == [ip], (owner, mappings.get(owner))
 
     @requires_pyshark
     def test_mappings_table_has_type_column(self):

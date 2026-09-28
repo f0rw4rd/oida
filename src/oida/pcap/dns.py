@@ -528,31 +528,51 @@ class DNSPassiveListener(PySharkListenerBase):
         dns,
         name_field: str,
         value_field: str,
+        type_id: str,
     ) -> List[tuple]:
         """Yield (rrname, answer) pairs, one per answer record.
 
         get_field() comma-joins multi-value fields, which fused N answer
         records of one packet into single bogus keys (GH issue #62).
-        get_field_values() returns one element per record; pyshark repeats
-        the name field per answer so lengths align. When they do not
-        (missing names), fall back to the first name for all values.
+        get_field_values() returns one element per record, but name and
+        value lists do NOT index-align across RR types: an MX response
+        carries 6 MX names (resp_type 15) plus 6 glue A records for the
+        mail exchangers (resp_type 1), so head-first pairing attributed
+        the exchangers' IPs to the queried name. Align by resp_type
+        instead: only names whose RR type matches the value field pair
+        with that field's values.
+
+        Fallbacks when resp_type is unavailable: positional pairing when
+        the counts match, the single name when there is exactly one, and
+        otherwise nothing - a guess would misattribute glue records
+        (names > values) or fabricate owners (values > names).
         <Root> (pyshark's empty-name repr) and empty names are dropped.
         """
         names = self.get_field_values(dns, name_field, default=[]) or []
         values = self.get_field_values(dns, value_field, default=[]) or []
-        if not names or not values:
+        types = self.get_field_values(dns, "resp_type", default=[]) or []
+        if not values:
             return []
-        pairs = []
-        first_name = self._clean_name(names[0])
-        for i, value in enumerate(values):
-            raw_name = names[i] if i < len(names) else names[0]
-            rrname = self._clean_name(raw_name)
-            if not self._is_usable_hostname(rrname):
-                rrname = first_name if self._is_usable_hostname(first_name) else ""
-            if not self._is_usable_hostname(rrname):
-                continue
-            pairs.append((rrname, value))
-        return pairs
+
+        def _clean_if_usable(raw: str) -> str:
+            cleaned = self._clean_name(raw)
+            return cleaned if self._is_usable_hostname(cleaned) else ""
+
+        if types and len(types) == len(names):
+            typed_names = [_clean_if_usable(n) for n, t in zip(names, types) if t == type_id]
+            typed_names = [n for n in typed_names if n]
+            return list(zip(typed_names, values))
+
+        usable = [n for n in (_clean_if_usable(x) for x in names) if n]
+        if len(usable) == len(values):
+            return list(zip(usable, values))
+        if len(usable) == 1:
+            return [(usable[0], v) for v in values]
+        self.logger.debug(
+            f"DNS: cannot align {name_field}/{value_field} "
+            f"({len(usable)} names vs {len(values)} values, no resp_type); skipping"
+        )
+        return []
 
     def _parse_a_records(
         self,
@@ -562,7 +582,7 @@ class DNSPassiveListener(PySharkListenerBase):
         mapping_types: Optional[Dict[str, set]] = None,
     ) -> None:
         """Parse A records (IPv4 addresses) from DNS response."""
-        for rrname, answer in self._pairwise_records(dns, "resp_name", "a"):
+        for rrname, answer in self._pairwise_records(dns, "resp_name", "a", "1"):
             rec: Dict[str, Any] = {
                 "query": rrname,
                 "type": "A",
@@ -588,7 +608,7 @@ class DNSPassiveListener(PySharkListenerBase):
         mapping_types: Optional[Dict[str, set]] = None,
     ) -> None:
         """Parse AAAA records (IPv6 addresses) from DNS response."""
-        for rrname, answer in self._pairwise_records(dns, "resp_name", "aaaa"):
+        for rrname, answer in self._pairwise_records(dns, "resp_name", "aaaa", "28"):
             rec: Dict[str, Any] = {
                 "query": rrname,
                 "type": "AAAA",
