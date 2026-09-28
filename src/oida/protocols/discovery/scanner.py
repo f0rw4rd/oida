@@ -2650,6 +2650,7 @@ class discovery(SerialConnection):
             self.logger.success(f"Listening on interface {self.interface}")
         else:
             self.logger.fail(f"Failed to initialize interface {self.interface}")
+            self._scan_error = f"failed to initialize interface {self.interface}"
         return self._connection is not None
 
     def enum_host_info(self) -> None:
