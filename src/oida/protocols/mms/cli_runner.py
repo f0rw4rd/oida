@@ -24,9 +24,10 @@ class mms(NetworkConnection):
         self.scanner = MMSScanner(args_dict)
         self.create_conn_obj()
         if not self.conn:
-            self.logger.fail(f"Failed to connect to {self.host}")
+            # create_conn_obj() already recorded the canonical failure
+            # (single line + results["error"] with cause) via
+            # record_connect_failure(); only success bookkeeping remains.
             self.results["success"] = False
-            self.results["error"] = "Connection failed"
             return
 
         self.enum_host_info()
@@ -40,7 +41,21 @@ class mms(NetworkConnection):
         if self.conn:
             self.logger.success(f"Connected to MMS device at {self.ip}:{self.args.port}")
         else:
-            self.logger.fail(f"Connection failed to {self.ip}:{self.args.port}")
+            # pyiec61850's connect() raises ConnectionFailedError but the
+            # scanner absorbs it and returns None, so the cause is lost; a
+            # one-shot raw TCP probe recovers it for the shared vocabulary
+            # (GH issue #59).
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            cause = (
+                probe_connect_failure_cause(
+                    self.ip,
+                    int(getattr(self.args, "port", 102) or 102),
+                    timeout=float(getattr(self.args, "timeout", 2) or 2),
+                )
+                or "unknown"
+            )
+            self.record_connect_failure(cause)
 
     def enum_host_info(self):
         """Enumerate MMS/IEC 61850 device information"""

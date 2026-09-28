@@ -186,9 +186,9 @@ class coap(NetworkConnection):
 
         # If DTLS was requested but didn't connect, hard fail
         if not self.conn and dtls_requested:
-            self.logger.fail("DTLS connection failed")
-            self.results["success"] = False
-            self.results["error"] = "DTLS connection failed"
+            # DTLS is UDP: the TCP probe rescue cannot recover a cause, so
+            # classify straight from the vocabulary (GH issue #59).
+            self.record_connect_failure("auth", detail="DTLS handshake failed")
             return
 
         # Plain CoAP connection (only when DTLS was not requested)
@@ -198,9 +198,9 @@ class coap(NetworkConnection):
             elapsed = _time.monotonic() - t0
             self.logger.debug("Plain CoAP connection took %.2fs", elapsed)
             if not self.conn:
-                self.logger.fail("Connection failed: CoAP endpoint not reachable")
-                self.results["success"] = False
-                self.results["error"] = "Connection failed"
+                # UDP transport: no TCP probe; a dead endpoint is "timeout"
+                # in the shared vocabulary (GH issue #59).
+                self.record_connect_failure("timeout", detail="no CoAP response")
                 return
 
         self.logger.debug("Starting resource enumeration")

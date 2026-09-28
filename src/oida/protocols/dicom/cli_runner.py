@@ -462,14 +462,20 @@ class dicom(
             return
 
         # Create connection
+        # Stamp the effective port before connecting: record_connect_failure()'s
+        # probe rescue targets results["port"], and DICOM's real port is the
+        # advertised TLS port (2762) or the de-facto PACS default (11112), not
+        # the generic per-protocol default.
+        use_tls = getattr(self.args, "tls", False)
+        self.results["port"] = getattr(self.args, "port", None) or (
+            2762 if use_tls else self.default_port
+        )
         if not self.create_conn_obj():
             # create_conn_obj() returns False when the A-ASSOCIATE was rejected,
             # aborted, or never answered (a bare TCP connect to a non-DICOM port
-            # opens the socket but never yields an A-ASSOCIATE-AC). Without this
-            # the base NetworkConnection.run() defaults success=True and reports
-            # a false-positive DICOM identification (connection-1).
-            self.results["success"] = False
-            self.results.setdefault("error", "No DICOM association (rejected or not a DICOM SCP)")
+            # opens the socket but never yields an A-ASSOCIATE-AC). The failure
+            # itself was already recorded by record_connect_failure() inside
+            # create_conn_obj (GH issue #59).
             return
 
         # Enumerate host info (C-ECHO)
@@ -742,15 +748,26 @@ class dicom(
 
                 return True
             else:
+                # TCP connected but the DICOM peer refused/aborted the
+                # association: report through the shared vocabulary (GH #59)
+                # with the A-ASSOCIATE outcome as context.
                 reject_info = self._get_reject_info()
-                self.logger.fail(f"Association rejected: {reject_info}")
                 self.results["data"]["connected"] = False
+                self.record_connect_failure(
+                    "refused",
+                    detail=f"association rejected ({reject_info})",
+                )
                 return False
 
         except Exception as e:
             self.logger.debug("create conn obj failed: %s", e)
-            self.logger.fail(f"Connection failed: {e}")
             self.results["data"]["connected"] = False
+            # pynetdicom raises for transport-level failures (timeout,
+            # unreachable, TLS handshake); classify from the exception and
+            # let record_connect_failure() rescue "unknown" with a probe.
+            from oida.utils.protocol_helpers import classify_connection_failure
+
+            self.record_connect_failure(classify_connection_failure(e), exc=e)
             return False
 
     def _get_reject_info(self) -> str:

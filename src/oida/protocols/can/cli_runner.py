@@ -87,6 +87,8 @@ class can(ISOTPMixin, SerialConnection):
         )
 
         # Create connection
+        # connect-failure: exempt (local socketcan bus - no network target,
+        # the vocabulary's refused/timeout/unreachable do not apply)
         self.create_conn_obj()
         if not self.conn:
             self.logger.fail(f"Failed to connect to CAN interface: {self.channel}")

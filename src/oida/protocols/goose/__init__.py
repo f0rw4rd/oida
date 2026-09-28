@@ -224,7 +224,9 @@ class GOOSEScanner(SerialScanner):
             connected = client.connect(host, port)
 
             if not connected:
-                self.logger.fail(f"MMSClient.connect returned False for {host}:{port}")
+                # Keep quiet here: the cli_runner prints the single canonical
+                # failure line via record_connect_failure() (GH issue #59).
+                self.logger.debug(f"MMSClient.connect returned False for {host}:{port}")
                 return None
 
             self.logger.success(f"Connected to IEC 61850 server at {host}:{port}")
@@ -236,7 +238,7 @@ class GOOSEScanner(SerialScanner):
             }
 
         except Exception as e:
-            self.logger.fail(f"Failed to create MMS connection: {e}")
+            self.logger.debug(f"Failed to create MMS connection: {e}")
             return None
 
     def disconnect(self, connection: Any) -> None:

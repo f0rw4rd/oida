@@ -280,10 +280,13 @@ class MMSScanner(NetworkScanner):
         except DependencyError:
             raise
         except _Lib.ConnectionFailedError as e:
-            self.logger.fail(f"Connection failed to {host}:{port}: {e}")
+            # Not logger.fail: the cli_runner records the single canonical
+            # failure line via record_connect_failure(); printing here too
+            # made every dead target log the failure twice.
+            self.logger.debug(f"pyiec61850 connect failed: {host}:{port}: {e}")
             return None
         except Exception as e:
-            self.logger.fail(f"Failed to create IEC 61850 connection: {e}")
+            self.logger.debug(f"Failed to create IEC 61850 connection: {e}")
             return None
 
     def disconnect(self, connection: Any) -> None:

@@ -110,10 +110,13 @@ class bacnet(
         reply) was parsed; otherwise mark the scan unsuccessful.
         """
         if not self._bacnet_response_seen:
-            self.results["success"] = False
-            self.results.setdefault(
-                "error",
-                "No BACnet response (no I-Am or device/network-layer reply)",
+            # BACnet/IP is connectionless UDP: there is no connect() stage to
+            # fail, so express the silent endpoint through the shared
+            # vocabulary instead (GH issue #59) - a dead UDP endpoint is a
+            # timeout. record_connect_failure() stamps the uniform
+            # "connect timeout (host:port)" error and success=False.
+            self.record_connect_failure(
+                "timeout", detail="no BACnet response (no I-Am / network-layer reply)"
             )
 
     def print_host_info(self):

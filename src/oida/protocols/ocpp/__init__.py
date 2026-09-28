@@ -250,15 +250,10 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
         self.create_conn_obj()
         if not self.conn:
             self.logger.debug("Connection failed, aborting proto_flow")
-            # P1 false-positive guard: a WebSocket handshake only completes
-            # against a real ws:// endpoint (101 Switching Protocols). A bare
-            # TCP connect to a silent/non-WS port never upgrades, so run() must
-            # not default success=True here.
-            self.results["success"] = False
-            self.results.setdefault(
-                "error",
-                "No OCPP response (WebSocket handshake failed / not an OCPP endpoint)",
-            )
+            # create_conn_obj() recorded the canonical failure via
+            # record_connect_failure() (line + error + success=False, GH #59);
+            # a handshake only completes against a real ws:// endpoint (101
+            # Switching Protocols), never a bare TCP connect.
             return
 
         # --- Post-connection: always run basic info ---
@@ -728,16 +723,25 @@ class ocpp(DiscoveryMixin, SecurityMixin, ChargingMixin, MessagesMixin, NetworkC
                     )
                 else:
                     self.logger.fail(f"{self._target_url} - HTTP {code}")
-            elif isinstance(err, tuple) and err[0] == "REFUSED":
-                self.logger.fail(f"{self._target_url} - Connection refused")
+                # The endpoint answered with HTTP: not a transport failure,
+                # but still a failed connect - stamp the JSON contract the
+                # same way record_connect_failure() does (GH issue #59).
+                self.results["success"] = False
+                self.results.setdefault("error", f"connect auth (HTTP {code})")
+                return
+            # Transport-level failures map onto the shared vocabulary
+            # (GH issue #59).
+            if isinstance(err, tuple) and err[0] == "REFUSED":
+                cause, detail = "refused", ""
             elif isinstance(err, tuple) and err[0] == "TIMEOUT":
-                self.logger.fail(f"{self._target_url} - Connection timed out")
+                cause, detail = "timeout", ""
             elif isinstance(err, tuple) and err[0] == "DNS":
-                self.logger.fail(f"{self._target_url} - DNS resolution failed")
+                cause, detail = "unreachable", "DNS resolution failed"
             elif isinstance(err, tuple) and err[0] == "OTHER":
-                self.logger.fail(f"{self._target_url} - {err[1]}")
+                cause, detail = "unknown", str(err[1])[:80]
             else:
-                self.logger.fail(f"Failed to connect to {self._target_url}")
+                cause, detail = "unknown", ""
+            self.record_connect_failure(cause, detail=detail)
 
     def enum_host_info(self):
         """Enumerate OCPP endpoint information."""

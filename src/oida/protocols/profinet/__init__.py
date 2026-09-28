@@ -241,7 +241,13 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
                 use_implicit = True
                 self.logger.success(f"RPC connection to {self.target_ip} (implicit mode)")
         except Exception as e:
-            self.logger.fail(f"RPC connection failed: {e}")
+            # RPCCon runs over UDP: no TCP probe, classify from the raised
+            # exception into the shared vocabulary (GH issue #59).
+            from oida.utils.protocol_helpers import classify_connection_failure
+
+            self.record_connect_failure(
+                classify_connection_failure(e), exc=e, detail="PROFINET RPC"
+            )
             self._show_rpc_hint()
             return
 

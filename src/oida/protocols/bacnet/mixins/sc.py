@@ -188,8 +188,12 @@ class SCMixin:
             # so the socket + reader task don't leak; close() is a no-op when the
             # websocket was never established.
             await sc_conn.close()
-            self.logger.fail(f"BACnet/SC connection failed: {e}")
-            self.results["success"] = False
+            # SC is wss:// TCP+TLS: classify from the raised exception into
+            # the shared vocabulary (GH issue #59). WSURLopener-style handshake
+            # failures (timeout / refused / tls) all land here.
+            from oida.utils.protocol_helpers import classify_connection_failure
+
+            self.record_connect_failure(classify_connection_failure(e), exc=e, detail="BACnet/SC")
             return
 
         cipher = sc_conn.peer_cipher()

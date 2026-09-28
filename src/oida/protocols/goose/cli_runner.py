@@ -34,11 +34,9 @@ class goose(SerialConnection):
                 # No MMS connection established -> nothing was enumerated.
                 # Without this, connection.py's run() would default
                 # results["success"] to True and fabricate a false positive.
+                # create_conn_obj() already recorded the canonical
+                # connect-failure line + cause (GH issue #59).
                 self.results["success"] = False
-                self.results.setdefault(
-                    "error",
-                    "No GOOSE/MMS response (connection failed / no GoCB enumerated)",
-                )
         elif rgoose:
             # R-GOOSE UDP mode - not yet supported
             self.logger.fail(
@@ -87,8 +85,24 @@ class goose(SerialConnection):
         if self.conn:
             conn_type = self.conn.get("type", "unknown")
             self.logger.success(f"GOOSE {conn_type} ready on {self.host}")
-        else:
-            self.logger.fail(f"Connection failed to {self.host}")
+        elif getattr(self.args, "mms_enum", None):
+            # MMS GoCB-enumeration mode is a real TCP path: recover the cause
+            # with a one-shot raw TCP probe for the shared vocabulary (GH #59).
+            # The probe targets --mms-enum (self.ip may be an interface name in
+            # this mode); passive GOOSE mode opens a layer-2 capture, not a
+            # socket, so it keeps the interface-specific error from
+            # proto_flow().
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            cause = (
+                probe_connect_failure_cause(
+                    getattr(self.args, "mms_enum", ""),
+                    int(getattr(self.args, "mms_port", 102) or 102),
+                    timeout=float(getattr(self.args, "timeout", 2) or 2),
+                )
+                or "unknown"
+            )
+            self.record_connect_failure(cause)
 
     def enum_host_info(self):
         """Enumerate GOOSE information."""

@@ -28,9 +28,9 @@ class tase2(NetworkConnection):
         self.scanner = TASE2Scanner(args_dict)
         self.create_conn_obj()
         if not self.conn:
-            self.logger.fail(f"Failed to connect to {self.host}")
+            # create_conn_obj() already recorded the canonical failure via
+            # record_connect_failure(); only success bookkeeping remains.
             self.results["success"] = False
-            self.results["error"] = "Connection failed"
             return
 
         self.enum_host_info()
@@ -59,7 +59,20 @@ class tase2(NetworkConnection):
                     detail="TASE.2 / ICCP without TLS (IEC 62351) -- cleartext",
                 )
         else:
-            self.logger.fail(f"Connection failed to {self.ip}:{self.args.port}")
+            # The scanner returns None for any failure, so the errno is lost;
+            # a one-shot raw TCP probe recovers the cause for the shared
+            # vocabulary (GH issue #59).
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            cause = (
+                probe_connect_failure_cause(
+                    self.ip,
+                    int(getattr(self.args, "port", 102) or 102),
+                    timeout=float(getattr(self.args, "timeout", 2) or 2),
+                )
+                or "unknown"
+            )
+            self.record_connect_failure(cause)
 
     def enum_host_info(self) -> None:
         """Enumerate TASE.2 server information."""

@@ -73,9 +73,10 @@ class knx(NetworkConnection):
             # Actions that require tunnel connection
             self.create_conn_obj()
             if not self.conn:
-                self.logger.fail("Connection failed: Tunnel connection could not be established")
-                self.results["success"] = False
-                self.results["error"] = "Connection failed"
+                # KNXnet/IP tunnels over UDP 3671: no TCP probe; a gateway
+                # that never answers the tunnel request is "timeout" in the
+                # shared vocabulary (GH issue #59).
+                self.record_connect_failure("timeout", detail="tunnel not established")
                 return
 
             self.enum_host_info()

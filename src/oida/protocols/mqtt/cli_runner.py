@@ -124,10 +124,9 @@ class mqtt(NetworkConnection):
         # was a network error or no MQTT-layer response (as opposed to a broker
         # that answered with a CONNACK, even an auth-refused one).
         if self._connection_error:
+            # create_conn_obj() already recorded the canonical failure via
+            # record_connect_failure() (error string + success=False).
             self.results["success"] = False
-            self.results.setdefault(
-                "error", "No MQTT response (connection failed / not an MQTT broker)"
-            )
             return
 
         # Check if both publish and listen are requested
@@ -165,8 +164,15 @@ class mqtt(NetworkConnection):
             if auth_result.startswith("error:"):
                 # Connection error (SSL, network, etc.)
                 error_msg = auth_result[7:]  # Remove "error: " prefix
-                self.logger.fail(f"Connection failed: {error_msg}")
+                # Report through the shared vocabulary (GH issue #59); the
+                # paho error string classifies into refused/timeout/tls/...
                 self._connection_error = True
+                from oida.utils.protocol_helpers import classify_connection_failure
+
+                self.record_connect_failure(
+                    classify_connection_failure(None, message=error_msg),
+                    detail=error_msg[:80],
+                )
             else:
                 # Server responded but rejected auth - surface as info so the
                 # auth result still shows, but don't emit a green success
@@ -177,8 +183,21 @@ class mqtt(NetworkConnection):
                 else:
                     self.logger.fail(f"Auth required ({auth_result})")
         else:
-            self.logger.fail("Connection failed (no response)")
+            # No CONNACK at all: the transport may be fine (bare TCP connect
+            # succeeds to a silent port) but nothing speaks MQTT. Probe to
+            # distinguish a transport-level cause from a plain non-MQTT port.
             self._connection_error = True
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            cause = (
+                probe_connect_failure_cause(
+                    self.ip,
+                    int(getattr(self.args, "port", 1883) or 1883),
+                    timeout=float(getattr(self.args, "timeout", 2) or 2),
+                )
+                or "unknown"
+            )
+            self.record_connect_failure(cause, detail="no MQTT CONNACK")
 
     def enum_host_info(self):
         """Enumerate MQTT broker information"""

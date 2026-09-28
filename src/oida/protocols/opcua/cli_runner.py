@@ -480,6 +480,9 @@ class opcua(
             # silent no-op that left the library 4s default in place.
             Client = _get_client_class()
             timeout = getattr(self.args, "timeout", 5)
+            # The [*] Connecting line every adopted protocol prints; opcua
+            # never had it, so its console output started at the failure line.
+            self.logger.info(f"Connecting to {self.ip}:{self.results.get('port') or 4840}")
             self._client = Client(url=url, timeout=timeout)
             _orig_levels = self._suppress_asyncua_logging()
 
@@ -518,7 +521,9 @@ class opcua(
                 self.results["success"] = pre_auth_ok
                 if not pre_auth_ok:
                     # The cause/exc were captured by _pre_auth_discovery (the
-                    # exception is gone by the time we get here).
+                    # exception is gone by the time we get here). The probe
+                    # fallback in record_connect_failure() rescues "unknown"
+                    # (asyncua can raise a bare TimeoutError with no errno).
                     self.record_connect_failure(
                         getattr(self, "_connect_failure_cause", "unknown"),
                         exc=getattr(self, "_connect_failure_exc", None),
