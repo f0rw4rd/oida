@@ -1079,8 +1079,10 @@ class TestDiscoveryNxcClass:
         ):
             d.proto_flow()
 
-        # discover() must not be called when create_conn_obj returns False
+        # create_conn_obj failure must (a) stop the scan and (b) export an
+        # error - not just leave results["error"] at None (GH issue #60).
         assert not fake_scanner.discover.called
+        assert d._scan_error == "failed to initialize interface eth0"
 
     def test_get_results_success(self):
         from oida.protocols.discovery.scanner import discovery
