@@ -294,9 +294,17 @@ def test_campaign_connection_timing_flags(tmp_path):
 
 
 def test_depth_alias_flag_accepted(tmp_path):
-    """--depth is the long-form alias of --only-depth; drive it explicitly."""
+    """--depth is the long-form alias of --only-depth; drive it explicitly.
+
+    Needs a real session: the crashes=0 summary only prints when session
+    logging is on (--nolog suppresses both "Session saved" and the final
+    "Total crashes" lines), and _baseline_args defaults to --nolog when no
+    session is passed.
+    """
     require_docker_mock("modbus")
-    result = run_fuzz_cli(*_baseline_args("--depth", "1"), timeout=25)
+    result = run_fuzz_cli(
+        *_baseline_args("--depth", "1", session=str(tmp_path / "sess_depth")), timeout=25
+    )
 
     assert "unrecognized arguments" not in result.output
     assert "crashes=0" in result.output or "Total crashes: 0" in result.output
@@ -454,19 +462,34 @@ def test_sleep_time_prints_configured_delay():
     assert "Sleep time: 0.02s" in slept.output
 
 
-def test_fire_forget_and_detect_drift_accepted():
-    """--fire-forget-fuzz and --detect-drift (implies adaptive-timeout) parse and run."""
+def test_fire_forget_and_detect_drift_accepted(tmp_path):
+    """--fire-forget-fuzz and --detect-drift (implies adaptive-timeout) parse and run.
+
+    Real session (not --nolog) so the crashes=0 summary prints; see
+    test_depth_alias_flag_accepted.
+    """
     require_docker_mock("modbus")
     result = run_fuzz_cli(
-        *_baseline_args("--only-depth", "1", "--fire-forget-fuzz", "--detect-drift"), timeout=25
+        *_baseline_args(
+            "--only-depth",
+            "1",
+            "--fire-forget-fuzz",
+            "--detect-drift",
+            session=str(tmp_path / "sess_ffd"),
+        ),
+        timeout=25,
     )
 
     assert "unrecognized arguments" not in result.output
     assert "crashes=0" in result.output or "Total crashes: 0" in result.output
 
 
-def test_script_monitor_and_restart_command_inert():
-    """--script-monitor / --restart-command / --restart-delay accept inert commands."""
+def test_script_monitor_and_restart_command_inert(tmp_path):
+    """--script-monitor / --restart-command / --restart-delay accept inert commands.
+
+    Real session (not --nolog) so the crashes=0 summary prints; see
+    test_depth_alias_flag_accepted.
+    """
     require_docker_mock("modbus")
     result = run_fuzz_cli(
         *_baseline_args(
@@ -478,6 +501,7 @@ def test_script_monitor_and_restart_command_inert():
             "/bin/true",
             "--restart-delay",
             "0.1",
+            session=str(tmp_path / "sess_script"),
         ),
         timeout=25,
     )
@@ -531,15 +555,19 @@ def test_valid_case_flags_accepted():
     assert "Traceback" not in result.output.split("Fuzzing terminated")[0]
 
 
-def test_machine_distribution_flag_accepted():
+def test_machine_distribution_flag_accepted(tmp_path):
     """--machine TOTAL,ID (distributed fuzzing shard selection) is accepted.
 
     IDs are 1-indexed (1..TOTAL) -- "1,1" is the only valid spec for a
     single-machine run. The CLI echoes the parsed shard back, which is a
-    stronger check than mere acceptance.
+    stronger check than mere acceptance. Real session (not --nolog) so the
+    crashes=0 summary prints; see test_depth_alias_flag_accepted.
     """
     require_docker_mock("modbus")
-    result = run_fuzz_cli(*_baseline_args("--only-depth", "1", "--machine", "1,1"), timeout=25)
+    result = run_fuzz_cli(
+        *_baseline_args("--only-depth", "1", "--machine", "1,1", session=str(tmp_path / "sess_m")),
+        timeout=25,
+    )
 
     assert "unrecognized arguments" not in result.output
     assert "Distribution: machine 1/1" in result.output
