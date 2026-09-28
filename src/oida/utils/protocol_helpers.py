@@ -107,6 +107,11 @@ def classify_connection_failure(exc: BaseException | None = None, message: str =
     errno = getattr(exc, "errno", None)
     text = message or (str(exc) if exc is not None else "")
 
+    # A bare TimeoutError (asyncua against a dead target) carries no errno
+    # and an empty message, but the type itself IS the timeout signal -
+    # without this check it classified as "unknown".
+    if isinstance(exc, TimeoutError):
+        return "timeout"
     if errno == errno_module.ECONNREFUSED:
         return "refused"
     if errno in (errno_module.ETIMEDOUT, errno_module.EHOSTDOWN):

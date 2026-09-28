@@ -286,6 +286,24 @@ class connection(ConfirmGateMixin, ABC):
                 into the error string).
             detail: extra protocol-level context (e.g. the transport).
         """
+        # "unknown" tells the operator nothing. When classification dead-ended
+        # (a library that swallows exceptions), one cheap raw TCP probe recovers
+        # the real cause - same fallback the modbus/iec104 runners already do.
+        if cause == "unknown":
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            try:
+                timeout = float(getattr(self.args, "timeout", 2) or 2)
+            except (TypeError, ValueError):
+                timeout = 2.0
+            probed = probe_connect_failure_cause(
+                self.ip,
+                self.results.get("port") or getattr(self, "default_port", 0),
+                timeout=timeout,
+            )
+            if probed:
+                cause = probed
+
         target = f"{self.host}:{self.results.get('port') or getattr(self, 'default_port', 0)}"
         suffix = f" ({detail})" if detail else ""
         if exc is not None and str(exc) and str(exc) != cause:
