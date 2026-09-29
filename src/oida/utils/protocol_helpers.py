@@ -95,7 +95,12 @@ def is_auth_rejection(exc: Exception) -> bool:
 # refused / timeout / unreachable / tls / auth / unknown.
 
 
-def classify_connection_failure(exc: BaseException | None = None, message: str = "") -> str:
+def classify_connection_failure(
+    exc: BaseException | None = None,
+    message: str = "",
+    elapsed: float | None = None,
+    timeout_budget: float | None = None,
+) -> str:
     """Classify a connect failure into the shared cause vocabulary.
 
     Accepts the raw exception (preferred - errno is exact) or a message
@@ -103,6 +108,14 @@ def classify_connection_failure(exc: BaseException | None = None, message: str =
     the exception's text behind). Returns one of:
     ``refused`` / ``timeout`` / ``unreachable`` / ``tls`` / ``auth`` /
     ``permission`` / ``unknown``.
+
+    ``elapsed`` / ``timeout_budget`` are optional wall-clock seconds the
+    connect call consumed and the budget it was given. They disambiguate
+    libraries that collapse refused and timeout into one message
+    (pyiec61850 says "connection-rejected" for both): a peer that actively
+    refuses fails within milliseconds, while a blackhole host consumes the
+    whole budget. When the message maps to ``refused`` but the call used
+    >=90% of its budget, the true cause is ``timeout``.
     """
     errno = getattr(exc, "errno", None)
     text = message or (str(exc) if exc is not None else "")
@@ -122,7 +135,22 @@ def classify_connection_failure(exc: BaseException | None = None, message: str =
         return "unreachable"
 
     lowered = text.lower()
-    if "refused" in lowered:
+    # "connection-rejected" (no errno): pyiec61850's ConnectionFailedError
+    # phrasing for a peer that actively refused the TCP connect. Match the
+    # phrase, not the bare word "rejected": "server rejected: access denied"
+    # is an auth rejection, not a transport refusal.
+    if "refused" in lowered or "connection-rejected" in lowered or "connection rejected" in lowered:
+        # pyiec61850 emits this same message for a blackhole (the connect
+        # waits out the full timeout, then reports rejection). elapsed is
+        # the only discriminator available: a real reject lands in
+        # milliseconds, a blackhole consumed the whole budget.
+        if (
+            elapsed is not None
+            and timeout_budget is not None
+            and timeout_budget > 0
+            and elapsed >= 0.9 * timeout_budget
+        ):
+            return "timeout"
         return "refused"
     if "timed out" in lowered or "timeout" in lowered:
         return "timeout"

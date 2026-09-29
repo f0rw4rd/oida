@@ -61,8 +61,44 @@ class TestClassifyConnectionFailure(unittest.TestCase):
         )
 
     def test_message_auth(self):
+        # "rejected" must match only pyiec61850's connection-rejected
+        # phrase, not the bare word - this message is an auth rejection.
         self.assertEqual(
             classify_connection_failure(message="server rejected: access denied"), "auth"
+        )
+
+    def test_rejected_message_elapsed_nearly_budget_is_timeout(self):
+        """pyiec61850 collapses refused and blackhole-timeout into the same
+        "connection-rejected" message; elapsed-vs-budget is the only
+        discriminator (a real reject lands in milliseconds, a blackhole
+        consumes the whole budget)."""
+        self.assertEqual(
+            classify_connection_failure(
+                message="Failed to connect to 10.255.255.1:102: connection-rejected",
+                elapsed=9.8,
+                timeout_budget=10.0,
+            ),
+            "timeout",
+        )
+
+    def test_rejected_message_elapsed_under_budget_is_refused(self):
+        self.assertEqual(
+            classify_connection_failure(
+                message="Failed to connect to 127.0.0.1:102: connection-rejected",
+                elapsed=0.4,
+                timeout_budget=10.0,
+            ),
+            "refused",
+        )
+
+    def test_rejected_message_without_elapsed_stays_refused(self):
+        """No timing info: keep the message's word (a library that reports
+        connection-rejected has usually hit an active refusal)."""
+        self.assertEqual(
+            classify_connection_failure(
+                message="Failed to connect to 127.00.0.1:102: connection-rejected"
+            ),
+            "refused",
         )
 
     def test_unknown_for_bare_text(self):
