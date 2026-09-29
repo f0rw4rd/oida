@@ -1221,18 +1221,18 @@ class TestHL7TLSConnection(unittest.TestCase):
         self.assertTrue(kwargs.get("use_tls"))
 
     @patch("oida.protocols.hl7.HL7APY_AVAILABLE", True)
-    @patch("socket.socket")
-    @patch("ssl.create_default_context")
-    def test_tls_connection_failure(self, mock_ssl_ctx, mock_socket_class):
-        """Test TLS connection failure handling"""
+    @patch("oida.utils.protocol_helpers.ConnectionHelper.create_tls_tcp_connection")
+    def test_tls_connection_failure(self, mock_create_tls):
+        """TLS handshake failure surfaces the canonical 'tls' cause (GH #59).
+
+        The old test patched ssl.create_default_context directly - the SUT
+        now connects through the shared ConnectionHelper, so the failure is
+        injected there instead. classify_connection_failure() maps a
+        certificate error to 'tls', no probe fallback needed.
+        """
         import ssl
 
-        mock_sock = MockSocket()
-        mock_socket_class.return_value = mock_sock
-
-        mock_ctx = Mock()
-        mock_ctx.wrap_socket.side_effect = ssl.SSLError("Certificate verify failed")
-        mock_ssl_ctx.return_value = mock_ctx
+        mock_create_tls.side_effect = ssl.SSLError("Certificate verify failed")
 
         scanner = _make_hl7_instance(self.mock_args, None, "192.168.1.100")
         scanner.logger = Mock()
@@ -1240,6 +1240,8 @@ class TestHL7TLSConnection(unittest.TestCase):
         result = scanner.create_conn_obj()
 
         self.assertFalse(result)
+        scanner.logger.fail.assert_called_with("Connect failed: tls (192.168.1.100:2575)")
+        self.assertTrue(scanner.results["error"].startswith("connect tls"))
 
 
 class TestHL7DangerousOperations(unittest.TestCase):

@@ -28,8 +28,16 @@ def make_runner(scan_results):
     c.conn = MagicMock()  # truthy: connect() succeeded at building the object
     c.scanner = MagicMock()
     c.scanner.discover = MagicMock(return_value=scan_results)
+    # record_connect_failure() (the GH #59 contract path the tunnel failure
+    # now routes through) reads args.timeout and the TCP-probe branch reads
+    # args.tcp/args.port; the real flow always has args set.
+    c.args = MagicMock(port=3671, tcp=False, timeout=2)
+    c.host = "127.0.0.1"
+    c.ip = "127.0.0.1"
+    c.default_port = 3671
     c.results = {
         "success": True,  # what NetworkConnection.run() defaults to
+        "port": 3671,
         "data": {"device_info": {"gateway_ip": "127.0.0.1", "gateway_port": 3671}},
     }
     return c
@@ -54,7 +62,11 @@ def test_failed_tunnel_is_not_success(scan_results):
 def test_failed_tunnel_surfaces_the_underlying_error():
     c = make_runner({"error": "Tunnel connection could not be established"})
     c._execute_scan()
-    assert c.results["error"] == "Tunnel connection could not be established"
+    # The tunnel failure routes through the GH #59 contract: error becomes
+    # "connect <cause> (...detail)" with the tunnel reason folded in, not
+    # the old bare scanner error string.
+    assert c.results["error"].startswith("connect timeout")
+    assert "Tunnel connection could not be established" in c.results["error"]
 
 
 def test_established_tunnel_is_still_success():

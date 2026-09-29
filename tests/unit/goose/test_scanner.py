@@ -448,7 +448,11 @@ class TestConnectMMS(unittest.TestCase):
         result = scanner._connect_mms("192.168.1.100", 102)
 
         self.assertIsNone(result)
-        scanner.logger.fail.assert_called()
+        # Layer-1 stays quiet on connect failure: the single canonical
+        # 'Connect failed: <cause>' line is printed by the cli_runner via
+        # record_connect_failure() (GH issue #59), not here.
+        scanner.logger.fail.assert_not_called()
+        scanner.logger.debug.assert_called()
 
     @patch("oida.protocols.goose._pyiec61850_mms")
     def test_mms_connect_exception(self, mock_mms):
@@ -459,7 +463,9 @@ class TestConnectMMS(unittest.TestCase):
         result = scanner._connect_mms("192.168.1.100", 102)
 
         self.assertIsNone(result)
-        scanner.logger.fail.assert_called()
+        # Same quiet-Layer-1 contract as connect-returning-False above.
+        scanner.logger.fail.assert_not_called()
+        scanner.logger.debug.assert_called()
 
     @patch("oida.protocols.goose._pyiec61850_mms")
     def test_mms_connect_custom_port(self, mock_mms):

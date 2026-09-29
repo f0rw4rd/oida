@@ -522,6 +522,7 @@ def _flow_nxc(args):
     h.protocol_name = "HART"
     h.default_port = 5094
     h.host = "10.0.0.5"
+    h.ip = "10.0.0.5"  # set by NetworkConnection.__init__; used by the probe path
     h.logger = get_logger(protocol="HART", host="10.0.0.5", port=5094, verbose=False)
     h.results = {"host": "10.0.0.5", "ip": "10.0.0.5", "data": {}, "success": None}
     h.conn = None
@@ -550,10 +551,23 @@ class TestProtoFlow:
         h._convert_args_to_dict = MagicMock(return_value={"rhost": "10.0.0.5"})
         scanner = MagicMock()
         scanner.connect.return_value = None  # connection fails
-        with patch.object(cli_runner, "HARTScanner", return_value=scanner):
+        with (
+            patch.object(cli_runner, "HARTScanner", return_value=scanner),
+            # Pin the probe result so the cause does not depend on this
+            # machine's route to 10.0.0.5 (fleet-level probing is covered
+            # by the integration test against loopback).
+            patch(
+                "oida.utils.protocol_helpers.probe_connect_failure_cause",
+                return_value="refused",
+            ),
+        ):
             h.proto_flow()
         assert h.results["success"] is False
-        assert h.results["error"] == "Connection failed"
+        # Hart-IP failure goes through the GH #59 contract: "connect <cause>"
+        # (a refused target, transport UDP noted in the error).
+        assert h.results["error"].startswith("connect ")
+        assert "refused" in h.results["error"]
+        assert "UDP" in h.results["error"]
 
     def test_proto_flow_full_mode_runs_enum_and_security(self):
         args = _full_args(scan_mode="full")

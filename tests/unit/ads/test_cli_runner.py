@@ -31,12 +31,14 @@ def _make_ads_instance(**overrides):
             obj.protocol_name = "ADS"
             obj.default_port = 48898
             obj.conn = None
-            obj.args = Mock()
+            # create_conn_obj()'s GH #59 probe reads args.port/args.timeout as
+            # numbers - a bare Mock() raises TypeError in int()/float().
+            obj.args = Mock(port=48898, timeout=2)
             obj.db = None
             obj.host = "192.168.1.100"
             obj.ip = "192.168.1.100"
             obj.logger = Mock()
-            obj.results = {"data": {}, "success": False}
+            obj.results = {"data": {}, "success": False, "port": 48898}
             obj.scanner = Mock()
 
             for key, val in overrides.items():
