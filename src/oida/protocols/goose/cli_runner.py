@@ -30,7 +30,15 @@ class goose(SerialConnection):
             # Stamp the effective port before connecting: default_port is 0
             # (passive GOOSE is layer-2, portless), so without this the MMS
             # probe and the target display both fall back to port 0 (GH #59).
-            self.results["port"] = int(getattr(self.args, "mms_port", 102) or 102)
+            # With --tls on and the MMS port left at the plaintext default,
+            # the scanner switches to tls_port - show the port actually
+            # dialed (GH #59 port-consistency).
+            effective_port = int(getattr(self.args, "mms_port", 102) or 102)
+            if getattr(self.args, "tls", False) and effective_port == 102:
+                from oida.utils.common_types import safe_int_conversion
+
+                effective_port = safe_int_conversion(getattr(self.args, "tls_port", None), 3782)
+            self.results["port"] = effective_port
             # Keep the per-line logger prefix in sync too - the banner and
             # failure line must show the MMS port, not the portless default
             # (GH #59 port-consistency).
@@ -93,10 +101,10 @@ class goose(SerialConnection):
         if getattr(self.args, "mms_enum", None):
             # MMS mode is a real TCP connect to the --mms-enum host on
             # --mms-port; show that target, matching the failure line below
-            # (GH #59 port-consistency).
+            # (GH #59 port-consistency). results["port"] already holds the
+            # effective port (proto_flow stamped it, including the TLS switch).
             mms_host = self.args.mms_enum
-            mms_port = getattr(self.args, "mms_port", 102)
-            self.logger.info(f"Connecting via MMS to {mms_host}:{mms_port}")
+            self.logger.info(f"Connecting via MMS to {mms_host}:{self.results['port']}")
         else:
             self.logger.info(f"Connecting to {self.host}")
         self.conn = self.scanner.connect()
@@ -110,12 +118,19 @@ class goose(SerialConnection):
             # this mode); passive GOOSE mode opens a layer-2 capture, not a
             # socket, so it keeps the interface-specific error from
             # proto_flow().
+            # A TLS config error (bad --tls-ca path etc.) never reached the
+            # socket: skip the probe and let the stored exception carry the
+            # reason, message included.
+            scanner_exc = getattr(self.scanner, "_last_connect_error", None)
+            if scanner_exc is not None:
+                self.record_connect_failure("unknown", exc=scanner_exc, detail="TLS config")
+                return
             from oida.utils.protocol_helpers import probe_connect_failure_cause
 
             cause = (
                 probe_connect_failure_cause(
                     getattr(self.args, "mms_enum", ""),
-                    int(getattr(self.args, "mms_port", 102) or 102),
+                    int(self.results["port"] or 102),
                     timeout=float(getattr(self.args, "timeout", 2) or 2),
                 )
                 or "unknown"

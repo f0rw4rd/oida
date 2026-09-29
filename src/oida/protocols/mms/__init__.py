@@ -284,9 +284,15 @@ class MMSScanner(NetworkScanner):
             # failure line via record_connect_failure(); printing here too
             # made every dead target log the failure twice.
             self.logger.debug(f"pyiec61850 connect failed: {host}:{port}: {e}")
+            self._last_connect_error = e
             return None
         except Exception as e:
+            # TLS config errors land here (bad --tls-ca path, unreadable pin,
+            # ...). The operator must see the offending path, so keep the
+            # exception for the runner's record_connect_failure(exc=...) -
+            # its message folds into results["error"] and the canonical line.
             self.logger.debug(f"Failed to create IEC 61850 connection: {e}")
+            self._last_connect_error = e
             return None
 
     def disconnect(self, connection: Any) -> None:

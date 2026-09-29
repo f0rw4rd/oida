@@ -36,21 +36,43 @@ class mms(NetworkConnection):
 
     def create_conn_obj(self):
         """Create MMS connection"""
-        self.logger.info(f"Connecting to {self.ip}:{self.args.port}")
+        # Effective port: with --tls on and the port left at the plaintext
+        # default, the scanner switches to tls_port (3782) - the banner, the
+        # probe and results["port"] must all show the port actually dialed,
+        # not the plaintext default (GH #59 port-consistency).
+        effective_port = int(getattr(self.args, "port", 102) or 102)
+        if getattr(self.args, "tls", False) and effective_port == self.default_port:
+            from oida.utils.common_types import safe_int_conversion
+
+            effective_port = safe_int_conversion(
+                getattr(self.args, "tls_port", None), self.default_port
+            )
+        self.results["port"] = effective_port
+        extra = getattr(getattr(self, "logger", None), "extra", None)
+        if extra is not None:
+            extra["port"] = effective_port
+
+        self.logger.info(f"Connecting to {self.ip}:{effective_port}")
         self.conn = self.scanner.connect()
         if self.conn:
-            self.logger.success(f"Connected to MMS device at {self.ip}:{self.args.port}")
+            self.logger.success(f"Connected to MMS device at {self.ip}:{effective_port}")
         else:
             # pyiec61850's connect() raises ConnectionFailedError but the
             # scanner absorbs it and returns None, so the cause is lost; a
             # one-shot raw TCP probe recovers it for the shared vocabulary
-            # (GH issue #59).
+            # (GH issue #59). A TLS config error (bad --tls-ca path etc.)
+            # never reached the socket: skip the probe and let the stored
+            # exception carry the reason, message included.
+            scanner_exc = getattr(self.scanner, "_last_connect_error", None)
+            if scanner_exc is not None and not isinstance(scanner_exc, _Lib.ConnectionFailedError):
+                self.record_connect_failure("unknown", exc=scanner_exc, detail="TLS config")
+                return
             from oida.utils.protocol_helpers import probe_connect_failure_cause
 
             cause = (
                 probe_connect_failure_cause(
                     self.ip,
-                    int(getattr(self.args, "port", 102) or 102),
+                    effective_port,
                     timeout=float(getattr(self.args, "timeout", 2) or 2),
                 )
                 or "unknown"

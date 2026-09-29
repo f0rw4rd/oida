@@ -238,7 +238,12 @@ class GOOSEScanner(SerialScanner):
             }
 
         except Exception as e:
+            # TLS config errors land here (bad --tls-ca path, unreadable
+            # pin). Keep the exception for the runner's
+            # record_connect_failure(exc=...) so the offending path is
+            # operator-visible; the scanner stays quiet per GH #59.
             self.logger.debug(f"Failed to create MMS connection: {e}")
+            self._last_connect_error = e
             return None
 
     def disconnect(self, connection: Any) -> None:
