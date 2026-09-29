@@ -43,7 +43,7 @@ class goose(SerialConnection):
             # failure line must show the MMS port, not the portless default
             # (GH #59 port-consistency).
             extra = getattr(getattr(self, "logger", None), "extra", None)
-            if extra is not None:
+            if isinstance(extra, dict):
                 extra["port"] = self.results["port"]
             self.create_conn_obj()
             if self.conn:
@@ -112,12 +112,37 @@ class goose(SerialConnection):
             conn_type = self.conn.get("type", "unknown")
             self.logger.success(f"GOOSE {conn_type} ready on {self.host}")
         elif getattr(self.args, "mms_enum", None):
-            # MMS GoCB-enumeration mode is a real TCP path: recover the cause
-            # with a one-shot raw TCP probe for the shared vocabulary (GH #59).
-            # The probe targets --mms-enum (self.ip may be an interface name in
-            # this mode); passive GOOSE mode opens a layer-2 capture, not a
-            # socket, so it keeps the interface-specific error from
-            # proto_flow().
+            # MMS GoCB-enumeration mode is a real TCP path (GH #59). The
+            # scanner stored the actual connect exception (_last_connect_exc,
+            # set by _connect_mms for ConnectionFailedError): classify from
+            # its message instead of a runner-side TCP probe - the probe
+            # would wait the full --timeout a SECOND time on top of the
+            # scanner's own wait, which doubles the wall time against an
+            # unroutable --mms-enum host (the 15s test budget existed for
+            # exactly that case). passive GOOSE mode opens a layer-2
+            # capture, not a socket, so it keeps the interface-specific
+            # error from proto_flow().
+            conn_exc = getattr(self.scanner, "_last_connect_exc", None)
+            if isinstance(conn_exc, BaseException):
+                from oida.utils.protocol_helpers import classify_connection_failure
+
+                self.record_connect_failure(
+                    classify_connection_failure(
+                        str(conn_exc),
+                        elapsed=getattr(self.scanner, "_connect_elapsed", None),
+                        # The MMS sub-connection runs on the fleet-wide 10s
+                        # budget set in _connect_mms (--timeout is the GOOSE
+                        # capture window, not a connect budget).
+                        timeout_budget=10.0,
+                    ),
+                    exc=conn_exc,
+                    # The connect-failure target is self.host (the capture
+                    # interface), but the TCP connect that failed targeted
+                    # the --mms-enum host: say so, or the line misreports
+                    # where the failure happened.
+                    detail=f"mms-enum {getattr(self.args, 'mms_enum', '')}",
+                )
+                return
             # A TLS config error (bad --tls-ca path etc.) never reached the
             # socket: skip the probe and let the stored exception carry the
             # reason, message included.
@@ -134,6 +159,8 @@ class goose(SerialConnection):
                 # canonical line prints only the cause (mms runner details).
                 self.logger.fail(f"  TLS: {scanner_exc}")
                 return
+            # connect returned False with no exception text (rare): fall
+            # back to the one-shot probe for the cause vocabulary.
             from oida.utils.protocol_helpers import probe_connect_failure_cause
 
             cause = (

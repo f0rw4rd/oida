@@ -144,6 +144,10 @@ class GOOSEScanner(SerialScanner):
         # Active GooseSubscriber for cleanup
         self._goose_subscriber = None
 
+        # Seconds the last MMS connect consumed (pyiec61850 collapses refused
+        # and timeout into one message; elapsed is the discriminator).
+        self._connect_elapsed: float | None = None
+
     def get_protocol_name(self) -> str:
         return "IEC 61850 GOOSE"
 
@@ -217,11 +221,23 @@ class GOOSEScanner(SerialScanner):
                 port = self.tls_port
 
             self.logger.debug(f"Connecting MMSClient to {host}:{port}")
+            # --timeout is the GOOSE *capture* budget, not a connect budget;
+            # cap the MMS sub-connection at a modest fixed 10s (the library
+            # default) so an unroutable --mms-enum host cannot hang the run
+            # for the full capture window.
+            mms_connect_timeout_ms = 10_000
             if tls_config is not None:
-                client = _pyiec61850_mms.MMSClient(tls=tls_config)
+                client = _pyiec61850_mms.MMSClient(timeout=mms_connect_timeout_ms, tls=tls_config)
             else:
-                client = _pyiec61850_mms.MMSClient()
-            connected = client.connect(host, port)
+                client = _pyiec61850_mms.MMSClient(timeout=mms_connect_timeout_ms)
+            _connect_started = time.monotonic()
+            try:
+                connected = client.connect(host, port)
+            finally:
+                # Set even when connect raises: pyiec61850 reports a blackhole
+                # (full-budget wait, then rejection) with the same message as an
+                # actively-refused connect - elapsed is the only discriminator.
+                self._connect_elapsed = time.monotonic() - _connect_started
 
             if not connected:
                 # Keep quiet here: the cli_runner prints the single canonical
@@ -238,10 +254,22 @@ class GOOSEScanner(SerialScanner):
             }
 
         except Exception as e:
-            # TLS config errors land here (bad --tls-ca path, unreadable
-            # pin). Keep the exception for the runner's
-            # record_connect_failure(exc=...) so the offending path is
-            # operator-visible; the scanner stays quiet per GH #59.
+            # Discriminate real connect failures (refused/timeout: keep the
+            # exception for the runner to classify from its message - the
+            # mms-enum path targets potentially unroutable hosts, and a
+            # runner-side TCP probe would wait the full --timeout a second
+            # time on top of the scanner's own wait) from TLS config errors
+            # (bad --tls-ca path, unreadable pin: keep the exception for the
+            # runner's record_connect_failure(exc=...) so the offending path
+            # is operator-visible; the scanner stays quiet per GH #59).
+            # The class is fetched defensively: unit tests patch this whole
+            # module with a MagicMock, and except/isinstance on a mock
+            # raises TypeError.
+            conn_failed_cls = getattr(_pyiec61850_mms, "ConnectionFailedError", None)
+            if isinstance(conn_failed_cls, type) and isinstance(e, conn_failed_cls):
+                self.logger.debug(f"MMSClient connect failed to {host}:{port}: {e}")
+                self._last_connect_exc = e
+                return None
             self.logger.debug(f"Failed to create MMS connection: {e}")
             self._last_connect_error = e
             return None
