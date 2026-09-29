@@ -37,7 +37,8 @@ class iec104(NetworkConnection):
     def create_conn_obj(self):
         """Create Iec104 connection"""
         transport = "TLS" if getattr(self.args, "tls", False) else "TCP"
-        self.logger.debug(f"Connecting via {transport}")
+        # The [*] Connecting line every adopted protocol prints (GH issue #59).
+        self.logger.info(f"Connecting via {transport} to {self.host}:{self.default_port}")
         self.conn = self.scanner.connect()
         if self.conn:
             self.logger.success(

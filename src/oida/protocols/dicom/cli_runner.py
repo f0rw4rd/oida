@@ -554,6 +554,24 @@ class dicom(
         transport = "TLS" if use_tls else "TCP"
         self.logger.info(f"Connecting via {transport}")
 
+        # pynetdicom logs its own transport errors ("Association request
+        # failed", "TCP Initialisation Error") on its module logger, which
+        # bypasses the NXC line format and duplicates what the canonical
+        # Connect failed: line below already reports (GH issue #59). Same
+        # treatment as snap7/pycomm3: demote to CRITICAL so the runner owns
+        # the single failure line.
+        import logging as _logging
+
+        _pynetdicom_logger = _logging.getLogger("pynetdicom")
+        _prev_level = _pynetdicom_logger.level
+        _pynetdicom_logger.setLevel(_logging.CRITICAL + 1)
+        try:
+            return self._dicom_create_association(use_tls, port, timeout, transport)
+        finally:
+            _pynetdicom_logger.setLevel(_prev_level)
+
+    def _dicom_create_association(self, use_tls: bool, port: int, timeout, transport: str) -> bool:
+        """Associate to the DICOM peer (called with pynetdicom's logger muted)."""
         try:
             # Get lazy-loaded classes
             AE = _get_ae()
@@ -748,15 +766,23 @@ class dicom(
 
                 return True
             else:
-                # TCP connected but the DICOM peer refused/aborted the
-                # association: report through the shared vocabulary (GH #59)
-                # with the A-ASSOCIATE outcome as context.
-                reject_info = self._get_reject_info()
+                # No association: either the peer actively rejected the
+                # A-ASSOCIATE, or the transport never completed (timeout to a
+                # silent host). is_rejected distinguishes them: an explicit
+                # reject is "refused"; transport silence falls back to a TCP
+                # probe for the real errno (GH issue #59).
                 self.results["data"]["connected"] = False
-                self.record_connect_failure(
-                    "refused",
-                    detail=f"association rejected ({reject_info})",
-                )
+                if getattr(self.assoc, "is_rejected", False):
+                    reject_info = self._get_reject_info()
+                    self.record_connect_failure(
+                        "refused",
+                        detail=f"association rejected ({reject_info})",
+                    )
+                else:
+                    from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+                    cause = probe_connect_failure_cause(self.ip, port, timeout=timeout) or "unknown"
+                    self.record_connect_failure(cause, detail="no association (transport)")
                 return False
 
         except Exception as e:

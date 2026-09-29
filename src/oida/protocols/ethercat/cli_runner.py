@@ -26,6 +26,21 @@ class ethercat(SerialConnection):
 
     def proto_flow(self) -> None:
         """Main Ethercat scanning workflow"""
+        # Connect banner first, so every failure path (capability denied,
+        # interface dead) reads like the rest of the fleet (GH issue #59).
+        self.logger.info(f"Connecting to {self.host}")
+        # EtherCAT needs a raw socket; without the capability there is no
+        # connect attempt at all, so report the real cause (permission) via
+        # the shared vocabulary instead of letting the scanner print a bare
+        # "permission_error" line and then a phantom "timeout" for a connect
+        # that never happened (GH issue #59).
+        from oida.utils.permissions import check_raw_socket_capability
+
+        has_cap, msg = check_raw_socket_capability()
+        if not has_cap:
+            self.record_connect_failure("permission", detail=msg or "raw socket required")
+            return
+
         args_dict = self._convert_args_to_dict()
         self.scanner = EtherCATScanner(args_dict)
 
@@ -49,17 +64,11 @@ class ethercat(SerialConnection):
         else:
             # The scanner returns None for any failure, so the errno is lost;
             # a one-shot raw TCP probe recovers the cause for the shared
-            # vocabulary (GH issue #59).
+            # vocabulary (GH issue #59). EtherCAT itself is layer-2: there
+            # is no port, so probe the host with no port preference.
             from oida.utils.protocol_helpers import probe_connect_failure_cause
 
-            cause = (
-                probe_connect_failure_cause(
-                    self.ip,
-                    int(getattr(self.args, "port", 44818) or 44818),
-                    timeout=float(getattr(self.args, "timeout", 2) or 2),
-                )
-                or "unknown"
-            )
+            cause = probe_connect_failure_cause(self.ip, 0, timeout=2) or "unknown"
             self.record_connect_failure(cause)
 
     def enum_host_info(self) -> None:
