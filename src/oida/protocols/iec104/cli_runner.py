@@ -58,7 +58,7 @@ class iec104(NetworkConnection):
                 )
                 or "unknown"
             )
-            self.record_connect_failure(cause, detail=transport)
+            self.record_connect_failure(cause, detail=transport, probed=True)
 
     def enum_host_info(self):
         """Enumerate IEC 104 device information"""

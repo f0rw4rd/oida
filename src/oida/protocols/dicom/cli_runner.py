@@ -782,7 +782,9 @@ class dicom(
                     from oida.utils.protocol_helpers import probe_connect_failure_cause
 
                     cause = probe_connect_failure_cause(self.ip, port, timeout=timeout) or "unknown"
-                    self.record_connect_failure(cause, detail="no association (transport)")
+                    self.record_connect_failure(
+                        cause, detail="no association (transport)", probed=True
+                    )
                 return False
 
         except Exception as e:

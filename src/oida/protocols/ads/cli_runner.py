@@ -133,7 +133,7 @@ class ads(NetworkConnection):
                 )
                 or "unknown"
             )
-            self.record_connect_failure(cause)
+            self.record_connect_failure(cause, probed=True)
 
     def enum_host_info(self):
         """Enumerate device information.

@@ -270,6 +270,7 @@ class connection(ConfirmGateMixin, ABC):
         cause: str,
         exc: BaseException | None = None,
         detail: str = "",
+        probed: bool = False,
     ) -> None:
         """Record a connect failure uniformly across protocols (GH issue #59).
 
@@ -290,7 +291,9 @@ class connection(ConfirmGateMixin, ABC):
         # "unknown" tells the operator nothing. When classification dead-ended
         # (a library that swallows exceptions), one cheap raw TCP probe recovers
         # the real cause - same fallback the modbus/iec104 runners already do.
-        if cause == "unknown":
+        # Callers that already ran probe_connect_failure_cause() themselves pass
+        # probed=True so the rescue does not connect a second time.
+        if cause == "unknown" and not probed:
             from oida.utils.protocol_helpers import probe_connect_failure_cause
 
             try:

@@ -197,7 +197,7 @@ class mqtt(NetworkConnection):
                 )
                 or "unknown"
             )
-            self.record_connect_failure(cause, detail="no MQTT CONNACK")
+            self.record_connect_failure(cause, detail="no MQTT CONNACK", probed=True)
 
     def enum_host_info(self):
         """Enumerate MQTT broker information"""

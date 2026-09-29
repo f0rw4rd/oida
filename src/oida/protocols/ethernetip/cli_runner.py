@@ -70,7 +70,7 @@ class ethernetip(NetworkConnection):
                 )
                 or "unknown"
             )
-            self.record_connect_failure(cause)
+            self.record_connect_failure(cause, probed=True)
 
     def enum_host_info(self):
         """Enumerate EtherNet/IP device information via ListIdentity"""

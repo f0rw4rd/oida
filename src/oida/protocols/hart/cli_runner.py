@@ -217,7 +217,7 @@ class hart(NetworkConnection):
                 )
             else:
                 cause = "unknown"
-            self.record_connect_failure(cause, detail=protocol.upper())
+            self.record_connect_failure(cause, detail=protocol.upper(), probed=(protocol == "tcp"))
 
     def enum_host_info(self):
         """Enumerate HART device information"""

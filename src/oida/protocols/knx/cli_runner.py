@@ -454,7 +454,7 @@ class knx(NetworkConnection):
                     probe_connect_failure_cause(self.ip, int(self.args.port or 3671), timeout=3)
                     or "timeout"
                 )
-                self.record_connect_failure(cause, exc=None, detail=tunnel_error[:80])
+                self.record_connect_failure(cause, exc=None, detail=tunnel_error[:80], probed=True)
             else:
                 self.record_connect_failure("timeout", detail=tunnel_error[:80])
 

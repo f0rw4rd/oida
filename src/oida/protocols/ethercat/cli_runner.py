@@ -69,7 +69,7 @@ class ethercat(SerialConnection):
             from oida.utils.protocol_helpers import probe_connect_failure_cause
 
             cause = probe_connect_failure_cause(self.ip, 0, timeout=2) or "unknown"
-            self.record_connect_failure(cause)
+            self.record_connect_failure(cause, probed=True)
 
     def enum_host_info(self) -> None:
         """Enumerate EtherCAT network information"""
