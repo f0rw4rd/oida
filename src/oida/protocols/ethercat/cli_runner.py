@@ -57,7 +57,6 @@ class ethercat(SerialConnection):
 
     def create_conn_obj(self) -> None:
         """Create Ethercat connection"""
-        self.logger.info(f"Connecting to {self.host}")
         self.conn = self.scanner.connect()
         if self.conn:
             self.logger.success(f"Connected to EtherCAT device at {self.host}")
