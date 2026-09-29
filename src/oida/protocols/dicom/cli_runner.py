@@ -383,7 +383,41 @@ class dicom(
         # C-GET state tracking
         self._cget_output_path = None
         self._cget_received_files = []
+        # Capture the user-supplied port (None when -p is omitted) BEFORE
+        # super().__init__() - NetworkConnection.__init__ stamps args.port
+        # with default_port whenever it is falsy, which would erase the
+        # "unset" sentinel the TLS default below branches on.
+        self._user_port = getattr(args, "port", None)
         super().__init__(args, db, host)
+        self._resolve_default_port()
+
+    def _resolve_default_port(self) -> None:
+        """Fill in the port the operator did NOT set.
+
+        --port defaults to None so an explicit `-p` (even `-p 11112 --tls`)
+        is always honored. When unset: TLS -> 2762, plaintext -> 11112.
+        Runs after super().__init__ (base stamping already replaced the
+        None sentinel with 11112), so the "unset" check branches on
+        _user_port - the pre-super capture - not args.port.
+        """
+        if getattr(self, "_user_port", None) is not None:
+            self.args.port = self._user_port
+        else:
+            use_tls = getattr(self.args, "tls", False)
+            self.args.port = 2762 if use_tls else self.default_port
+            self.logger.debug(
+                "--port unset: defaulting to %d (%s)",
+                self.args.port,
+                "DICOM TLS" if use_tls else "DICOM plaintext",
+            )
+        # Keep results["port"] and the logger prefix in sync with the
+        # resolved port: record_connect_failure() targets results["port"],
+        # and the per-line prefix reads the logger extra (GH issue #59).
+        if hasattr(self, "results") and self.results.get("port") != self.args.port:
+            self.results["port"] = self.args.port
+            extra = getattr(getattr(self, "logger", None), "extra", None)
+            if extra is not None:
+                extra["port"] = self.args.port
 
     def _handle_store_for_cget(self, event):
         """Handle incoming C-STORE sub-operations from C-GET"""
@@ -449,6 +483,10 @@ class dicom(
 
     def proto_flow(self):
         """Main DICOM scanning workflow"""
+        # Idempotent: __init__ already resolved; this re-run covers
+        # instances built without __init__ (tests) and keeps results/logger
+        # in sync after any arg mutation.
+        self._resolve_default_port()
 
         # Get calling AE Title
         self.calling_aet = getattr(self.args, "aet", "OIDA")
@@ -465,11 +503,11 @@ class dicom(
         # Stamp the effective port before connecting: record_connect_failure()'s
         # probe rescue targets results["port"], and DICOM's real port is the
         # advertised TLS port (2762) or the de-facto PACS default (11112), not
-        # the generic per-protocol default.
-        use_tls = getattr(self.args, "tls", False)
-        self.results["port"] = getattr(self.args, "port", None) or (
-            2762 if use_tls else self.default_port
-        )
+        # the generic per-protocol default. _resolve_default_port() (run from
+        # __init__ and re-run at the top of proto_flow for instances built
+        # without __init__) already stamped both args.port and results["port"].
+        if self.results.get("port") != self.args.port:
+            self.results["port"] = self.args.port
         if not self.create_conn_obj():
             # create_conn_obj() returns False when the A-ASSOCIATE was rejected,
             # aborted, or never answered (a bare TCP connect to a non-DICOM port
@@ -545,14 +583,15 @@ class dicom(
     def create_conn_obj(self) -> bool:
         """Establish DICOM association"""
         use_tls = getattr(self.args, "tls", False)
-        # Resolve the effective port: explicit -p wins; otherwise the advertised
-        # TLS port (2762) when --tls is set, else the de-facto PACS default
-        # (self.default_port = 11112). Previously a bare --tls connected to 104.
-        port = getattr(self.args, "port", None) or (2762 if use_tls else self.default_port)
+        # _resolve_default_port() already resolved the effective port into
+        # args.port (explicit -p wins; otherwise 2762 with --tls, else the
+        # de-facto PACS default 11112). Show it in the banner: the displayed
+        # target must match the port the association actually dials (GH #59).
         timeout = getattr(self.args, "timeout", 10)
+        port = self.args.port
 
         transport = "TLS" if use_tls else "TCP"
-        self.logger.info(f"Connecting via {transport}")
+        self.logger.info(f"Connecting via {transport} to {self.ip}:{self.args.port}")
 
         # pynetdicom logs its own transport errors ("Association request
         # failed", "TCP Initialisation Error") on its module logger, which
