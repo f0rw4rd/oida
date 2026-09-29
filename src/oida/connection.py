@@ -281,7 +281,8 @@ class connection(ConfirmGateMixin, ABC):
 
         Args:
             cause: one of the classify_connection_failure() vocabulary:
-                refused / timeout / unreachable / tls / auth / unknown.
+                refused / timeout / unreachable / tls / auth /
+                permission / unknown.
             exc: the underlying exception, when available (message folded
                 into the error string).
             detail: extra protocol-level context (e.g. the transport).
@@ -304,7 +305,10 @@ class connection(ConfirmGateMixin, ABC):
             if probed:
                 cause = probed
 
-        target = f"{self.host}:{self.results.get('port') or getattr(self, 'default_port', 0)}"
+        # Portless transports (raw-socket buses) have no port to show: print
+        # the bare host instead of a misleading "host:None" / "host:0".
+        port = self.results.get("port") or getattr(self, "default_port", 0) or 0
+        target = f"{self.host}:{port}" if port else str(self.host)
         suffix = f" ({detail})" if detail else ""
         if exc is not None and str(exc) and str(exc) != cause:
             error = f"connect {cause}: {exc}{suffix}"
