@@ -60,11 +60,14 @@ class mms(NetworkConnection):
             # pyiec61850's connect() raises ConnectionFailedError but the
             # scanner absorbs it and returns None, so the cause is lost; a
             # one-shot raw TCP probe recovers it for the shared vocabulary
-            # (GH issue #59). A TLS config error (bad --tls-ca path etc.)
-            # never reached the socket: skip the probe and let the stored
-            # exception carry the reason, message included.
+            # (GH issue #59). The scanner sets _last_connect_error ONLY on
+            # the broad-except path (TLS config errors, which never reached
+            # the socket) - a real ConnectionFailedError leaves it None, so
+            # the attribute's presence alone is the discriminator and no
+            # isinstance against the lazy-loaded lib is needed (which also
+            # breaks under unit-test mocks of _Lib).
             scanner_exc = getattr(self.scanner, "_last_connect_error", None)
-            if scanner_exc is not None and not isinstance(scanner_exc, _Lib.ConnectionFailedError):
+            if scanner_exc is not None:
                 self.record_connect_failure("unknown", exc=scanner_exc, detail="TLS config")
                 return
             from oida.utils.protocol_helpers import probe_connect_failure_cause

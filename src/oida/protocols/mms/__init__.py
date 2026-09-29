@@ -282,9 +282,10 @@ class MMSScanner(NetworkScanner):
         except _Lib.ConnectionFailedError as e:
             # Not logger.fail: the cli_runner records the single canonical
             # failure line via record_connect_failure(); printing here too
-            # made every dead target log the failure twice.
+            # made every dead target log the failure twice. Real connect
+            # failure - do NOT set _last_connect_error (that attribute means
+            # "the failure never reached the socket"; the runner probes).
             self.logger.debug(f"pyiec61850 connect failed: {host}:{port}: {e}")
-            self._last_connect_error = e
             return None
         except Exception as e:
             # TLS config errors land here (bad --tls-ca path, unreadable pin,
