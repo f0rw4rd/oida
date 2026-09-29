@@ -42,7 +42,7 @@ class mms(NetworkConnection):
         # not the plaintext default (GH #59 port-consistency).
         effective_port = int(getattr(self.args, "port", 102) or 102)
         if getattr(self.args, "tls", False) and effective_port == self.default_port:
-            from oida.utils.common_types import safe_int_conversion
+            from oida.utils.protocol_helpers import safe_int_conversion
 
             effective_port = safe_int_conversion(
                 getattr(self.args, "tls_port", None), self.default_port
@@ -66,9 +66,21 @@ class mms(NetworkConnection):
             # the attribute's presence alone is the discriminator and no
             # isinstance against the lazy-loaded lib is needed (which also
             # breaks under unit-test mocks of _Lib).
+            # isinstance against the builtin BaseException (not the lazy-loaded
+            # lib, which breaks under unit-test mocks of _Lib): a MagicMock
+            # scanner auto-creates every attribute, so a bare "is not None"
+            # would misroute plain connect failures into the TLS branch.
             scanner_exc = getattr(self.scanner, "_last_connect_error", None)
-            if scanner_exc is not None:
-                self.record_connect_failure("unknown", exc=scanner_exc, detail="TLS config")
+            if isinstance(scanner_exc, BaseException):
+                # probed=True: the config error never reached the socket, so
+                # the rescue probe would connect to a healthy port and
+                # rewrite the cause to "refused", hiding the real reason.
+                self.record_connect_failure("tls", exc=scanner_exc, probed=True)
+                # Actionable operator detail (the offending cert path): the
+                # canonical line prints only the cause, so surface the
+                # exception's message as a follow-up line. The exc branch is
+                # config-error-only, so dead targets never print this.
+                self.logger.fail(f"  TLS: {scanner_exc}")
                 return
             from oida.utils.protocol_helpers import probe_connect_failure_cause
 

@@ -35,7 +35,7 @@ class goose(SerialConnection):
             # dialed (GH #59 port-consistency).
             effective_port = int(getattr(self.args, "mms_port", 102) or 102)
             if getattr(self.args, "tls", False) and effective_port == 102:
-                from oida.utils.common_types import safe_int_conversion
+                from oida.utils.protocol_helpers import safe_int_conversion
 
                 effective_port = safe_int_conversion(getattr(self.args, "tls_port", None), 3782)
             self.results["port"] = effective_port
@@ -122,8 +122,17 @@ class goose(SerialConnection):
             # socket: skip the probe and let the stored exception carry the
             # reason, message included.
             scanner_exc = getattr(self.scanner, "_last_connect_error", None)
-            if scanner_exc is not None:
-                self.record_connect_failure("unknown", exc=scanner_exc, detail="TLS config")
+            # isinstance against BaseException: a MagicMock scanner
+            # auto-creates every attribute, so a bare "is not None" would
+            # misroute plain connect failures into the TLS branch.
+            if isinstance(scanner_exc, BaseException):
+                # probed=True: the config error never reached the socket, so
+                # the rescue probe would hit a healthy port and rewrite the
+                # cause, hiding the real reason (mms runner has the details).
+                self.record_connect_failure("tls", exc=scanner_exc, probed=True)
+                # Actionable operator detail (the offending cert path); the
+                # canonical line prints only the cause (mms runner details).
+                self.logger.fail(f"  TLS: {scanner_exc}")
                 return
             from oida.utils.protocol_helpers import probe_connect_failure_cause
 
