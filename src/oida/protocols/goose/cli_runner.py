@@ -31,6 +31,12 @@ class goose(SerialConnection):
             # (passive GOOSE is layer-2, portless), so without this the MMS
             # probe and the target display both fall back to port 0 (GH #59).
             self.results["port"] = int(getattr(self.args, "mms_port", 102) or 102)
+            # Keep the per-line logger prefix in sync too - the banner and
+            # failure line must show the MMS port, not the portless default
+            # (GH #59 port-consistency).
+            extra = getattr(getattr(self, "logger", None), "extra", None)
+            if extra is not None:
+                extra["port"] = self.results["port"]
             self.create_conn_obj()
             if self.conn:
                 self._execute_scan()
@@ -84,7 +90,15 @@ class goose(SerialConnection):
 
     def create_conn_obj(self):
         """Create GOOSE connection object."""
-        self.logger.info(f"Connecting to {self.host}")
+        if getattr(self.args, "mms_enum", None):
+            # MMS mode is a real TCP connect to the --mms-enum host on
+            # --mms-port; show that target, matching the failure line below
+            # (GH #59 port-consistency).
+            mms_host = self.args.mms_enum
+            mms_port = getattr(self.args, "mms_port", 102)
+            self.logger.info(f"Connecting via MMS to {mms_host}:{mms_port}")
+        else:
+            self.logger.info(f"Connecting to {self.host}")
         self.conn = self.scanner.connect()
         if self.conn:
             conn_type = self.conn.get("type", "unknown")
