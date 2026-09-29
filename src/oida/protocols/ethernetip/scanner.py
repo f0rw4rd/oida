@@ -477,10 +477,11 @@ class EtherNetIPScanner(
         try:
             LogixDriver = _get_logix_driver()
             # Skip automatic tag upload (slow) - we'll do it manually if needed.
-            # pycomm3 has no `slot=` kwarg; the CPU slot is encoded in the path
-            # as "<host>/<slot>" (default 0 = CPU in slot 0, plain host).
+            # pycomm3 has no `slot=` or `port=` kwarg (a port kwarg is silently
+            # ignored); both are encoded in the path as "<host>:<port>/<slot>"
+            # (default slot 0 = CPU in slot 0 = plain host, default port 44818).
             slot = self.target_slot if self.target_slot > 0 else None
-            target = f"{host}/{slot}" if slot else host
+            target = f"{host}:{port}/{slot}" if slot else f"{host}:{port}"
             if slot:
                 self.logger.debug(f"Using slot {slot} for connection (path {target})")
             driver = LogixDriver(target, init_tags=False, init_program_tags=False)
@@ -500,15 +501,16 @@ class EtherNetIPScanner(
         # Fall back to CIPDriver (generic EtherNet/IP)
         try:
             CIPDriver = _get_cip_driver()
-            driver = CIPDriver(host)
+            # Same "host:port" path form as above: a bare host silently
+            # reconnects to the default port (44818), not the target port.
+            driver = CIPDriver(f"{host}:{port}")
             driver.open()
             self._driver_type = "cip"
             self._pycomm3_driver = driver
-            self.logger.debug(f"Connected via pycomm3 CIPDriver to {host}")
+            self.logger.debug(f"Connected via pycomm3 CIPDriver to {host}:{port}")
             return driver
         except Exception as e:
             self.logger.debug("connect failed: %s", e)
-            self.logger.fail(f"Connection failed: {e}")
 
         return None
 
@@ -552,7 +554,8 @@ class EtherNetIPScanner(
         try:
             connection = self.connect()
             if not connection:
-                self.logger.fail(f"Connection failed to {host}:{port}")
+                # The canonical 'Connect failed: <cause>' line is emitted by the
+                # connection layer (GH issue #59); only set the error result.
                 return {"error": "connection_failed"}
 
             results = self.discover(connection)
