@@ -59,9 +59,29 @@ class tase2(NetworkConnection):
                     detail="TASE.2 / ICCP without TLS (IEC 62351) -- cleartext",
                 )
         else:
-            # The scanner returns None for any failure, so the errno is lost;
-            # a one-shot raw TCP probe recovers the cause for the shared
-            # vocabulary (GH issue #59).
+            # The scanner stored the connect exception (_last_connect_exc):
+            # pyiec61850's message carries the cause, so classify from it
+            # directly. A runner-side TCP probe would wait --timeout a SECOND
+            # time on top of the scanner's own connect wait, doubling the
+            # wall time against an unroutable host. Same _last_connect_error
+            # contract as mms/goose: that attribute means "never reached the
+            # socket" (TLS config errors); a real connect failure must not
+            # land there.
+            conn_exc = getattr(self.scanner, "_last_connect_exc", None)
+            if isinstance(conn_exc, BaseException):
+                from oida.utils.protocol_helpers import classify_connection_failure
+
+                self.record_connect_failure(
+                    classify_connection_failure(
+                        str(conn_exc),
+                        elapsed=getattr(self.scanner, "_connect_elapsed", None),
+                        timeout_budget=float(getattr(self.args, "timeout", 2) or 2),
+                    ),
+                    exc=conn_exc,
+                )
+                return
+            # connect() returned False with no exception (rare): fall back to
+            # the one-shot probe for the cause vocabulary.
             from oida.utils.protocol_helpers import probe_connect_failure_cause
 
             cause = (

@@ -6,6 +6,7 @@ TASE.2/ICCP Protocol Scanner
 Security scanner for TASE.2/ICCP protocol used in utility control center communications.
 """
 
+import time
 from typing import Any, Dict
 
 from oida.utils import NetworkScanner, parse_bool
@@ -155,6 +156,9 @@ class TASE2Scanner(
 
         # Internal state
         self.client = None
+        # Seconds the last connect() call consumed (pyiec61850 collapses
+        # refused and timeout into one message; elapsed is the discriminator).
+        self._connect_elapsed: float | None = None
         self.domains = []
         self.supported_features = {}
         self.tase2_version = None
@@ -181,19 +185,39 @@ class TASE2Scanner(
                 remote_ap_title=self.remote_ap_title if self.remote_ap_title else None,
             )
 
-            self.client.connect(host, port=port)
+            # Forward --timeout: pyiec61850's default is 10s (plus retry_count
+            # * retry_delay on top), so without this a --timeout 3 run against a
+            # blackhole host takes 10s+ in the scanner alone - and the CLI test
+            # budget that pins --timeout as a real budget fails. Milliseconds.
+            _connect_started = time.monotonic()
+            try:
+                self.client.connect(host, port=port, timeout=self.timeout * 1000)
+            finally:
+                # Set even when connect raises: pyiec61850 reports a blackhole
+                # (full-budget wait, then rejection) with the same message as an
+                # actively-refused connect - elapsed is the only discriminator.
+                self._connect_elapsed = time.monotonic() - _connect_started
 
             if self.client.is_connected:
                 self.logger.display(f"Connected to TASE.2 server at {host}:{port}")
                 return self.client
             else:
-                self.logger.fail(f"Failed to connect to {host}:{port}")
+                # Not logger.fail: the cli_runner records the single canonical
+                # failure line via record_connect_failure(); a fail here too
+                # logged every dead target's failure twice.
+                self.logger.debug(f"Failed to connect to {host}:{port}")
                 return None
 
         except DependencyError:
             raise
         except Exception as e:
-            self.logger.fail(f"TASE.2 connection failed: {e}")
+            # Not logger.fail (same single-line rule). Keep the exception for
+            # the runner: pyiec61850's message ("... connection-rejected",
+            # "... connection-timeout") classifies into the shared cause
+            # vocabulary without a second TCP connect that would wait
+            # --timeout all over again against an unroutable host.
+            self.logger.debug(f"TASE.2 connection failed: {e}")
+            self._last_connect_exc = e
             return None
 
     def disconnect(self, connection: Any) -> None:
