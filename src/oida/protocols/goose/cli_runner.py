@@ -128,7 +128,7 @@ class goose(SerialConnection):
 
                 self.record_connect_failure(
                     classify_connection_failure(
-                        str(conn_exc),
+                        conn_exc,
                         elapsed=getattr(self.scanner, "_connect_elapsed", None),
                         # The MMS sub-connection runs on the fleet-wide 10s
                         # budget set in _connect_mms (--timeout is the GOOSE

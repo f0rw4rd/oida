@@ -73,7 +73,7 @@ class tase2(NetworkConnection):
 
                 self.record_connect_failure(
                     classify_connection_failure(
-                        str(conn_exc),
+                        conn_exc,
                         elapsed=getattr(self.scanner, "_connect_elapsed", None),
                         timeout_budget=float(getattr(self.args, "timeout", 2) or 2),
                     ),
