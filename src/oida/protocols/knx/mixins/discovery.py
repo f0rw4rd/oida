@@ -104,7 +104,11 @@ class DiscoveryMixin:
 
             received_telegrams = []
 
-            async def telegram_received(telegram):
+            # xknx 3.20 TelegramQueue._run_telegram_received_cbs invokes the
+            # callback synchronously (callback.callback(telegram), never
+            # awaited), so an `async def` here returns a coroutine nobody
+            # runs - the capture body silently never executes.
+            def telegram_received(telegram):
                 if telegram.destination_address:
                     tg_info = {
                         "destination": str(telegram.destination_address),
