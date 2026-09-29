@@ -45,9 +45,9 @@ class hart(NetworkConnection):
         # Normal connection-based scanning
         self.create_conn_obj()
         if not self.conn:
-            self.logger.fail(f"Failed to connect to {self.host}")
+            # create_conn_obj() already recorded the canonical failure via
+            # record_connect_failure(); only success bookkeeping remains.
             self.results["success"] = False
-            self.results["error"] = "Connection failed"
             return
 
         # Basic device enumeration
@@ -200,7 +200,24 @@ class hart(NetworkConnection):
                 "cipher": getattr(self.scanner, "cipher_suite", None) if tls_active else "",
             }
         else:
-            self.logger.fail(f"Connection failed to {self.host}:{port}")
+            # The scanner returns None for any failure, so the errno is lost;
+            # a one-shot raw TCP probe recovers the cause for the shared
+            # vocabulary (GH issue #59). HART-IP defaults to UDP; the probe
+            # only answers on TCP (--tcp), so keep "unknown" for UDP.
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            if protocol == "tcp":
+                cause = (
+                    probe_connect_failure_cause(
+                        self.ip,
+                        int(port or self.default_port),
+                        timeout=float(getattr(self.args, "timeout", 2) or 2),
+                    )
+                    or "unknown"
+                )
+            else:
+                cause = "unknown"
+            self.record_connect_failure(cause, detail=protocol.upper(), probed=(protocol == "tcp"))
 
     def enum_host_info(self):
         """Enumerate HART device information"""

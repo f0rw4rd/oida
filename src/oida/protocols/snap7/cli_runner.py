@@ -37,9 +37,9 @@ class s7(NetworkConnection):
 
         self.create_conn_obj()
         if not self.conn:
-            self.logger.fail(f"Failed to connect to {self.host}")
+            # create_conn_obj() already recorded the canonical failure via
+            # record_connect_failure(); only success bookkeeping remains.
             self.results["success"] = False
-            self.results["error"] = "Connection failed"
             return
 
         # Check for action commands vs regular scan
@@ -91,7 +91,20 @@ class s7(NetworkConnection):
                     self.results["data"]["password_found"] = result.get("password")
                 self._store_action_result(result)
         else:
-            self.logger.fail(f"Connection failed to {self.ip}:{self.args.port}")
+            # The scanner returns None for any failure, so the errno is lost;
+            # a one-shot raw TCP probe recovers the cause for the shared
+            # vocabulary (GH issue #59).
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            cause = (
+                probe_connect_failure_cause(
+                    self.ip,
+                    int(getattr(self.args, "port", 102) or 102),
+                    timeout=float(getattr(self.args, "timeout", 2) or 2),
+                )
+                or "unknown"
+            )
+            self.record_connect_failure(cause, probed=True)
 
     def enum_host_info(self):
         """Enumerate Siemens S7 device information (NetworkConnection contract)."""

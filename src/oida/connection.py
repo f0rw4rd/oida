@@ -270,6 +270,7 @@ class connection(ConfirmGateMixin, ABC):
         cause: str,
         exc: BaseException | None = None,
         detail: str = "",
+        probed: bool = False,
     ) -> None:
         """Record a connect failure uniformly across protocols (GH issue #59).
 
@@ -281,12 +282,36 @@ class connection(ConfirmGateMixin, ABC):
 
         Args:
             cause: one of the classify_connection_failure() vocabulary:
-                refused / timeout / unreachable / tls / auth / unknown.
+                refused / timeout / unreachable / tls / auth /
+                permission / unknown.
             exc: the underlying exception, when available (message folded
                 into the error string).
             detail: extra protocol-level context (e.g. the transport).
         """
-        target = f"{self.host}:{self.results.get('port') or getattr(self, 'default_port', 0)}"
+        # "unknown" tells the operator nothing. When classification dead-ended
+        # (a library that swallows exceptions), one cheap raw TCP probe recovers
+        # the real cause - same fallback the modbus/iec104 runners already do.
+        # Callers that already ran probe_connect_failure_cause() themselves pass
+        # probed=True so the rescue does not connect a second time.
+        if cause == "unknown" and not probed:
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            try:
+                timeout = float(getattr(self.args, "timeout", 2) or 2)
+            except (TypeError, ValueError):
+                timeout = 2.0
+            probed = probe_connect_failure_cause(
+                self.ip,
+                self.results.get("port") or getattr(self, "default_port", 0) or 0,
+                timeout=timeout,
+            )
+            if probed:
+                cause = probed
+
+        # Portless transports (raw-socket buses) have no port to show: print
+        # the bare host instead of a misleading "host:None" / "host:0".
+        port = self.results.get("port") or getattr(self, "default_port", 0) or 0
+        target = f"{self.host}:{port}" if port else str(self.host)
         suffix = f" ({detail})" if detail else ""
         if exc is not None and str(exc) and str(exc) != cause:
             error = f"connect {cause}: {exc}{suffix}"

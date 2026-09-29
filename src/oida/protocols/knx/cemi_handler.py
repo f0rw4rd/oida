@@ -100,8 +100,10 @@ class CustomCEMIHandler:
             self.xknx.cemi_handler = intercepting
             self.logger.debug("Installed intercepting cEMI handler for L_DATA_IND interception")
 
-            # Register telegram callback for group traffic (parallel capture)
-            async def capture_telegram(telegram):
+            # Register telegram callback for group traffic (parallel capture).
+            # Sync def, not async: xknx 3.20 TelegramQueue invokes received
+            # callbacks without awaiting, so an async callback's body never runs.
+            def capture_telegram(telegram):
                 if telegram.destination_address:
                     src = str(telegram.source_address)
                     dst = str(telegram.destination_address)

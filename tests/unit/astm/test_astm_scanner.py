@@ -1020,7 +1020,14 @@ class TestProtoFlow:
         """Test proto_flow returns early on connection failure."""
         scanner = _instantiate_scanner(_make_args())
 
-        with patch.object(scanner, "create_conn_obj", return_value=False):
+        def _fail():
+            # The real create_conn_obj stamps the contract on failure (GH
+            # issue #59); reproduce that so proto_flow's early-return branch
+            # is tested as it runs in production.
+            scanner.record_connect_failure("refused")
+            return False
+
+        with patch.object(scanner, "create_conn_obj", side_effect=_fail):
             scanner.proto_flow()
 
         # Bails out before any data is populated and marks the scan failed.

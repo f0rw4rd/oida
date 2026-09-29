@@ -79,9 +79,9 @@ class ads(NetworkConnection):
             # Connect
             self.create_conn_obj()
             if not self.conn:
-                self.logger.fail(f"Failed to connect to {self.host}")
+                # create_conn_obj() already recorded the canonical failure
+                # via record_connect_failure(); only success bookkeeping remains.
                 self.results["success"] = False
-                self.results["error"] = "Connection failed"
                 return
 
             # Skip device-info probe for EtherCAT/CoE operations - they
@@ -115,12 +115,25 @@ class ads(NetworkConnection):
 
     def create_conn_obj(self):
         """Create ADS connection"""
-        self.logger.debug(f"Connecting to {self.ip}:{self.args.port}")
+        self.logger.info(f"Connecting to {self.ip}:{self.args.port}")
         self.conn = self.scanner.connect()
         if self.conn:
             self.logger.success("Connected to ADS device")
         else:
-            self.logger.fail(f"Connection failed to {self.ip}:{self.args.port}")
+            # pyads swallows the socket error (returns False), so the errno
+            # is lost; a one-shot raw TCP probe recovers the cause for the
+            # shared vocabulary (GH issue #59).
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            cause = (
+                probe_connect_failure_cause(
+                    self.ip,
+                    int(getattr(self.args, "port", 48898) or 48898),
+                    timeout=float(getattr(self.args, "timeout", 2) or 2),
+                )
+                or "unknown"
+            )
+            self.record_connect_failure(cause, probed=True)
 
     def enum_host_info(self):
         """Enumerate device information.

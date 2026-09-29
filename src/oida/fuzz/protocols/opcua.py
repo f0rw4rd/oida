@@ -634,8 +634,12 @@ class OPCUAFuzzer(BaseFuzzer):
                 client.set_password(self.opcua_password or "")
 
             await client.connect()
-            # Extract live protocol state from client internals
+            # Extract live protocol state from client internals. protocol is
+            # Optional until the handshake completes; raising here lands in the
+            # except below, which degrades to fuzzing with defaults.
             protocol = client.uaclient.protocol
+            if protocol is None:
+                raise RuntimeError("asyncua client has no live UASocketProtocol after connect")
             conn = protocol._connection
             self.secure_channel_id = conn.security_token.ChannelId
             self.token_id = conn.security_token.TokenId

@@ -1131,7 +1131,9 @@ class TestProtoFlow(unittest.TestCase):
             mod.Snap7Scanner = orig
 
         self.assertFalse(obj.results["success"])
-        self.assertEqual(obj.results["error"], "Connection failed")
+        # GH #59 contract: "connect <cause>" (cause recovered by the raw
+        # TCP probe, e.g. refused/unreachable for the unreachable test IP).
+        self.assertTrue(obj.results["error"].startswith("connect "))
 
     def test_flow_runs_scan_when_no_action(self):
         obj = self._build(port=102, confirm=False)

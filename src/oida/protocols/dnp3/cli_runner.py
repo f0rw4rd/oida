@@ -115,6 +115,7 @@ class dnp3(NetworkConnection):
 
                     cause = classify_connection_failure(e)
                     transport = getattr(self.args, "transport", "tcp") or "tcp"
+                    probed = False
                     if cause == "unknown" and transport not in ("serial", "udp"):
                         cause = (
                             probe_connect_failure_cause(
@@ -124,7 +125,8 @@ class dnp3(NetworkConnection):
                             )
                             or cause
                         )
-                    self.record_connect_failure(cause, exc=e)
+                        probed = True
+                    self.record_connect_failure(cause, exc=e, probed=probed)
                     return
                 self.logger.debug(
                     f"DNP3 connect attempt {attempt}/{max_attempts} failed ({e}); retrying"

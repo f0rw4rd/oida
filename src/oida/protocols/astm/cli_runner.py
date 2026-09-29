@@ -48,9 +48,9 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
 
         # Create connection
         if not self.create_conn_obj():
-            # Closed/refused port is not an ASTM device - do not report success.
-            self.results["success"] = False
-            self.results.setdefault("error", "Connection failed")
+            # Closed/refused port is not an ASTM device; the canonical line +
+            # error were already stamped by record_connect_failure() inside
+            # create_conn_obj (GH issue #59).
             return
 
         # Probe operations if requested (runs before other operations)
@@ -161,13 +161,12 @@ class astm(FramingMixin, RecordsMixin, EnumerationMixin, SecurityMixin, NetworkC
 
         except Exception as e:  # noqa: BLE001 - report any connect failure and move to the next host
             self.logger.debug("create conn obj failed: %s", e)
-            if isinstance(e, TimeoutError):
-                self.logger.fail("Connection timed out")
-            elif isinstance(e, ConnectionRefusedError):
-                self.logger.fail("Connection refused")
-            else:
-                self.logger.fail(f"Connection failed: {e}")
+            # Report through the shared vocabulary (GH issue #59) instead of
+            # the hand-rolled timeout/refused isinstance chain.
+            from oida.utils.protocol_helpers import classify_connection_failure
+
             self.results["data"]["connected"] = False
+            self.record_connect_failure(classify_connection_failure(e), exc=e)
             return False
 
     def enum_host_info(self):

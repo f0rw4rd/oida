@@ -446,10 +446,12 @@ class fhir(SearchMixin, SecurityMixin, CRUDMixin, NetworkConnection):
                 return False
 
             if "Connection refused" in error_str or "NewConnectionError" in error_str:
-                self.logger.fail(f"Connection refused: {self._get_base_url()}")
+                # Transport refused: report through the shared vocabulary
+                # (GH issue #59) instead of a FHIR-specific error string.
+                from oida.utils.protocol_helpers import classify_connection_failure
+
                 self.results["data"]["server_info"] = {"error": "Connection refused"}
-                self.results["error"] = "Connection refused"
-                self.results["success"] = False
+                self.record_connect_failure(classify_connection_failure(e), exc=e)
                 return False
 
             self.logger.warning(f"Failed to get CapabilityStatement: {e}")

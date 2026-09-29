@@ -211,12 +211,14 @@ class TestListenBusTraffic:
             return t
 
         # On the single duration=1 sleep, feed telegrams through the callback
-        # the listener registered, then return.
+        # the listener registered, then return. Called synchronously - xknx's
+        # TelegramQueue._run_telegram_received_cbs invokes callbacks without
+        # awaiting (TelegramCallbackType = Callable[[Telegram], None]).
         async def fake_sleep(_secs):
             cb = captured_cb["cb"]
-            await cb(tg("1.1.1", "1/2/3"))
-            await cb(tg("1.1.2", "1/2/3"))
-            await cb(tg("1.1.1", "4/5/6"))
+            cb(tg("1.1.1", "1/2/3"))
+            cb(tg("1.1.2", "1/2/3"))
+            cb(tg("1.1.1", "4/5/6"))
 
         monkeypatch.setattr("oida.protocols.knx.mixins.discovery.asyncio.sleep", fake_sleep)
 

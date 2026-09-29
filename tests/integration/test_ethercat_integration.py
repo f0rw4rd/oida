@@ -1594,7 +1594,11 @@ class TestEtherCATP1FalsePositiveRegression:
             f"reached ethercat. Got: {last}"
         )
         assert last["data"] == {}
-        assert last["error"] == "Connection failed"
+        # Unified connect-failure contract (GH #59): error is now the
+        # canonical "connect <cause>" vocabulary, not the pre-#59
+        # hand-rolled "Connection failed". Permission-denied on the raw
+        # socket maps to the "permission" cause.
+        assert last["error"] == "connect permission (permission_error)"
 
     def test_p1_nonexistent_interface_with_capability_reports_success_false(
         self, cli_runner, tmp_path

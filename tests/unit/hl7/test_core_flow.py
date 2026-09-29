@@ -172,7 +172,8 @@ class TestCreateConnObj(unittest.TestCase):
             ok = s.create_conn_obj()
         self.assertFalse(ok)
         self.assertFalse(s.results["data"]["connected"])
-        s.logger.fail.assert_called_with("Connection refused")
+        s.logger.fail.assert_called_with("Connect failed: refused (10.0.0.1:2575)")
+        self.assertTrue(s.results["error"].startswith("connect refused"))
 
     def test_timeout_returns_false(self):
         s = _scanner(_flow_args())
@@ -182,7 +183,8 @@ class TestCreateConnObj(unittest.TestCase):
         ):
             ok = s.create_conn_obj()
         self.assertFalse(ok)
-        s.logger.fail.assert_called_with("Connection timed out")
+        s.logger.fail.assert_called_with("Connect failed: timeout (10.0.0.1:2575)")
+        self.assertTrue(s.results["error"].startswith("connect timeout"))
 
     def test_generic_error_returns_false(self):
         s = _scanner(_flow_args())

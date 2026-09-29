@@ -95,18 +95,38 @@ def is_auth_rejection(exc: Exception) -> bool:
 # refused / timeout / unreachable / tls / auth / unknown.
 
 
-def classify_connection_failure(exc: BaseException | None = None, message: str = "") -> str:
+def classify_connection_failure(
+    exc: BaseException | None = None,
+    message: str = "",
+    elapsed: float | None = None,
+    timeout_budget: float | None = None,
+) -> str:
     """Classify a connect failure into the shared cause vocabulary.
 
     Accepts the raw exception (preferred - errno is exact) or a message
     string (for libraries like pymodbus that return False and only leave
     the exception's text behind). Returns one of:
     ``refused`` / ``timeout`` / ``unreachable`` / ``tls`` / ``auth`` /
-    ``unknown``.
+    ``permission`` / ``unknown``.
+
+    ``elapsed`` / ``timeout_budget`` are optional wall-clock seconds the
+    connect call consumed and the budget it was given. They disambiguate
+    libraries that collapse refused and timeout into one message
+    (pyiec61850 says "connection-rejected" for both): a peer that actively
+    refuses fails within milliseconds, while a blackhole host consumes the
+    whole budget. When the message maps to ``refused`` but the call used
+    >=90% of its budget, the true cause is ``timeout``.
     """
     errno = getattr(exc, "errno", None)
     text = message or (str(exc) if exc is not None else "")
 
+    # A bare TimeoutError (asyncua against a dead target) carries no errno
+    # and an empty message, but the type itself IS the timeout signal -
+    # without this check it classified as "unknown".
+    if isinstance(exc, TimeoutError):
+        return "timeout"
+    if isinstance(exc, PermissionError):
+        return "permission"
     if errno == errno_module.ECONNREFUSED:
         return "refused"
     if errno in (errno_module.ETIMEDOUT, errno_module.EHOSTDOWN):
@@ -115,7 +135,22 @@ def classify_connection_failure(exc: BaseException | None = None, message: str =
         return "unreachable"
 
     lowered = text.lower()
-    if "refused" in lowered:
+    # "connection-rejected" (no errno): pyiec61850's ConnectionFailedError
+    # phrasing for a peer that actively refused the TCP connect. Match the
+    # phrase, not the bare word "rejected": "server rejected: access denied"
+    # is an auth rejection, not a transport refusal.
+    if "refused" in lowered or "connection-rejected" in lowered or "connection rejected" in lowered:
+        # pyiec61850 emits this same message for a blackhole (the connect
+        # waits out the full timeout, then reports rejection). elapsed is
+        # the only discriminator available: a real reject lands in
+        # milliseconds, a blackhole consumed the whole budget.
+        if (
+            elapsed is not None
+            and timeout_budget is not None
+            and timeout_budget > 0
+            and elapsed >= 0.9 * timeout_budget
+        ):
+            return "timeout"
         return "refused"
     if "timed out" in lowered or "timeout" in lowered:
         return "timeout"
@@ -123,6 +158,8 @@ def classify_connection_failure(exc: BaseException | None = None, message: str =
         return "unreachable"
     if "ssl" in lowered or "certificate" in lowered or "handshake" in lowered:
         return "tls"
+    if "permission_error" in lowered or "not permitted" in lowered or "eacces" in lowered:
+        return "permission"
     if "access denied" in lowered or "unauthorized" in lowered or "authentication" in lowered:
         return "auth"
     if errno is not None:
@@ -144,8 +181,13 @@ def probe_connect_failure_cause(host: str, port: int, timeout: float = 2.0) -> s
     try:
         with socket.create_connection((host, port), timeout=timeout):
             return None
-    except OSError as e:
-        return classify_connection_failure(e)
+    except (OSError, OverflowError, ValueError) as e:
+        # OverflowError/ValueError: port 0 or a non-numeric host make
+        # create_connection() raise before any socket work; that is a
+        # caller bug, not a transport cause - report unknown.
+        if isinstance(e, OSError):
+            return classify_connection_failure(e)
+        return "unknown"
 
 
 class ProgressTracker:

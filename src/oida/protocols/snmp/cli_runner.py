@@ -35,7 +35,8 @@ class snmp(NetworkConnection):
 
     def proto_flow(self):
         """Main SNMP scanning workflow - standard NXC method sequence."""
-
+        # connect-failure: exempt (UDP request/response - no connect() stage
+        # to fail; a silent endpoint surfaces through enum_host_info's error)
         if not self.create_conn_obj():
             return
 

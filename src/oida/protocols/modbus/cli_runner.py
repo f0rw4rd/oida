@@ -186,7 +186,11 @@ class modbus(
                 )
             else:
                 cause = "unknown"
-            self.record_connect_failure(cause, detail=transport if transport != "tcp" else "")
+            self.record_connect_failure(
+                cause,
+                detail=transport if transport != "tcp" else "",
+                probed=(transport == "tcp"),
+            )
             return
 
         self.logger.debug("Connection established")

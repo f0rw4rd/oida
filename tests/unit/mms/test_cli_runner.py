@@ -47,12 +47,19 @@ class TestProtoFlow:
         scanner.connect.return_value = None
         with (
             patch("oida.protocols.mms.cli_runner.MMSScanner", return_value=scanner),
+            # The cause probe would dial a real socket; pin it like the
+            # connect-failure contract tests do.
+            patch(
+                "oida.utils.protocol_helpers.probe_connect_failure_cause",
+                return_value="refused",
+            ),
             patch.object(inst, "enum_host_info") as enum,
             patch.object(inst, "_execute_scan") as exec_scan,
         ):
             mms.proto_flow(inst)
         assert inst.results["success"] is False
-        assert inst.results["error"] == "Connection failed"
+        # Canonical contract error (GH #59), not the old generic string.
+        assert inst.results["error"].startswith("connect refused")
         enum.assert_not_called()
         exec_scan.assert_not_called()
 

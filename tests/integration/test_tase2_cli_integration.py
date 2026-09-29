@@ -254,7 +254,15 @@ def _assert_flag_wired_and_graceful(result):
     assert "traceback (most recent call last)" not in lower, f"scanner crashed: {text[:2000]}"
     assert result.returncode != -1, f"process hung/was killed by test timeout: {text[:500]}"
     assert any(
-        term in lower for term in ("connection failed", "failed to connect", "connection-rejected")
+        term in lower
+        # "connect failed" is the canonical GH #59 line ("Connect failed:
+        # <cause> (<target>)"); the older terms cover scanner-level messages.
+        for term in (
+            "connection failed",
+            "failed to connect",
+            "connection-rejected",
+            "connect failed",
+        )
     ), f"expected a graceful connection-failure message, got: {text[:800]}"
 
 

@@ -28,9 +28,9 @@ class tase2(NetworkConnection):
         self.scanner = TASE2Scanner(args_dict)
         self.create_conn_obj()
         if not self.conn:
-            self.logger.fail(f"Failed to connect to {self.host}")
+            # create_conn_obj() already recorded the canonical failure via
+            # record_connect_failure(); only success bookkeeping remains.
             self.results["success"] = False
-            self.results["error"] = "Connection failed"
             return
 
         self.enum_host_info()
@@ -59,7 +59,40 @@ class tase2(NetworkConnection):
                     detail="TASE.2 / ICCP without TLS (IEC 62351) -- cleartext",
                 )
         else:
-            self.logger.fail(f"Connection failed to {self.ip}:{self.args.port}")
+            # The scanner stored the connect exception (_last_connect_exc):
+            # pyiec61850's message carries the cause, so classify from it
+            # directly. A runner-side TCP probe would wait --timeout a SECOND
+            # time on top of the scanner's own connect wait, doubling the
+            # wall time against an unroutable host. Same _last_connect_error
+            # contract as mms/goose: that attribute means "never reached the
+            # socket" (TLS config errors); a real connect failure must not
+            # land there.
+            conn_exc = getattr(self.scanner, "_last_connect_exc", None)
+            if isinstance(conn_exc, BaseException):
+                from oida.utils.protocol_helpers import classify_connection_failure
+
+                self.record_connect_failure(
+                    classify_connection_failure(
+                        conn_exc,
+                        elapsed=getattr(self.scanner, "_connect_elapsed", None),
+                        timeout_budget=float(getattr(self.args, "timeout", 2) or 2),
+                    ),
+                    exc=conn_exc,
+                )
+                return
+            # connect() returned False with no exception (rare): fall back to
+            # the one-shot probe for the cause vocabulary.
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            cause = (
+                probe_connect_failure_cause(
+                    self.ip,
+                    int(getattr(self.args, "port", 102) or 102),
+                    timeout=float(getattr(self.args, "timeout", 2) or 2),
+                )
+                or "unknown"
+            )
+            self.record_connect_failure(cause, probed=True)
 
     def enum_host_info(self) -> None:
         """Enumerate TASE.2 server information."""

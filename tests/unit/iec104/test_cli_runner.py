@@ -529,27 +529,32 @@ class TestEdgeCases(unittest.TestCase):
         self.assertEqual(obj.scanner.disconnect.call_count, 2)
 
     def test_create_conn_obj_debug_log_tcp(self):
-        """create_conn_obj should log debug with transport type."""
+        """create_conn_obj should announce the transport with a visible banner.
+
+        The connect banner was promoted from debug to info (GH issue #59):
+        every protocol prints "Connecting via <transport> to host:port" at
+        default verbosity, not only under --debug.
+        """
         obj = _make_iec104_instance()
         obj.args.tls = False
         obj.scanner.connect.return_value = Mock()
 
         obj.create_conn_obj()
 
-        debug_calls = [str(c) for c in obj.logger.debug.call_args_list]
-        tcp_logged = any("TCP" in c for c in debug_calls)
+        info_calls = [str(c) for c in obj.logger.info.call_args_list]
+        tcp_logged = any("TCP" in c for c in info_calls)
         self.assertTrue(tcp_logged)
 
     def test_create_conn_obj_debug_log_tls(self):
-        """create_conn_obj should log debug with TLS transport."""
+        """create_conn_obj should announce TLS transport with a visible banner."""
         obj = _make_iec104_instance()
         obj.args.tls = True
         obj.scanner.connect.return_value = Mock()
 
         obj.create_conn_obj()
 
-        debug_calls = [str(c) for c in obj.logger.debug.call_args_list]
-        tls_logged = any("TLS" in c for c in debug_calls)
+        info_calls = [str(c) for c in obj.logger.info.call_args_list]
+        tls_logged = any("TLS" in c for c in info_calls)
         self.assertTrue(tls_logged)
 
 

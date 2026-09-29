@@ -239,9 +239,23 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
             except Exception as e:
                 self.logger.debug(f"AR establishment failed: {e}, falling back to implicit reads")
                 use_implicit = True
-                self.logger.success(f"RPC connection to {self.target_ip} (implicit mode)")
+                # A failed AR alone is not a connect failure (some devices only
+                # serve implicit reads), but it must not print a success line:
+                # the transport may be dead and the implicit reads will return
+                # nothing. Report the attempt neutrally; the response gate
+                # below decides success, and _read_im_data_implicit records
+                # the connect failure if the transport is dead.
+                self.logger.display(
+                    f"AR not established; trying implicit reads to {self.target_ip}"
+                )
         except Exception as e:
-            self.logger.fail(f"RPC connection failed: {e}")
+            # RPCCon runs over UDP: no TCP probe, classify from the raised
+            # exception into the shared vocabulary (GH issue #59).
+            from oida.utils.protocol_helpers import classify_connection_failure
+
+            self.record_connect_failure(
+                classify_connection_failure(e), exc=e, detail="PROFINET RPC"
+            )
             self._show_rpc_hint()
             return
 
@@ -271,10 +285,15 @@ class profinet(RPCMixin, EnumerationMixin, FuzzMixin, CyclicMixin, NetworkConnec
         # yet we still reached here. Require actual protocol evidence (a real
         # AR or implicit I&M/diagnosis data) before recording the device.
         if not self._profinet_response_seen:
-            self.logger.fail(
-                f"No PROFINET response from {self.target_ip} "
-                "(no AR, no I&M/diagnosis data) - not identified as a device"
+            # RPC-over-UDP got no evidence at all: the target never answered.
+            # That is the connect failure of this flow, expressed through the
+            # shared contract (UDP silence = timeout, GH issue #59). The
+            # distinguishing detail stays for the operator.
+            self.record_connect_failure(
+                "timeout",
+                detail="no AR, no I&M/diagnosis data - not identified as a device",
             )
+            self._show_rpc_hint()
             return
 
         self.logger.security_finding(

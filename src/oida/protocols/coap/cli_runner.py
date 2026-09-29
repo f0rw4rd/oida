@@ -151,6 +151,23 @@ class coap(NetworkConnection):
             self.results["error"] = f"DTLS certificate auth missing {missing}"
             return
 
+        # A DTLS handshake is about to run: retarget everything at the DTLS
+        # port (5684 default, explicit -p wins) BEFORE the attempts, so the
+        # Connecting banner, the per-line logger prefixes, results["port"]
+        # (record_connect_failure's target), and any later failure line all
+        # agree on the port the handshake actually dials (GH #59). Doing
+        # this only at the hard-fail site left the earlier attempt lines
+        # prefixed 5683 while the handshake ran on 5684.
+        if dtls_requested:
+            dtls_port = self._resolve_dtls_port()
+            self.port = dtls_port
+            self.args.port = dtls_port
+            self.results["port"] = dtls_port
+            extra = getattr(getattr(self, "logger", None), "extra", None)
+            if isinstance(extra, dict):
+                extra["port"] = dtls_port
+            self.logger.info(f"Connecting via DTLS to {self.ip}:{dtls_port}")
+
         if dtls_cert and dtls_key:
             self.logger.debug("DTLS certificate authentication requested")
             dtls_ok = self._try_dtls_cert(dtls_cert, dtls_key, dtls_ca)
@@ -184,11 +201,16 @@ class coap(NetworkConnection):
         if self.conn:
             self.logger.success("CoAPs (DTLS) server responding")
 
-        # If DTLS was requested but didn't connect, hard fail
+        # If DTLS was requested but didn't connect, hard fail. Stamp
+        # results["port"] first: the attempts (and any later failure line)
+        # target the DTLS port (5684 default), not the plaintext default -
+        # without the stamp the failure printed 5683 while the handshake
+        # ran on 5684 (goose mms_port bug class, GH #59).
         if not self.conn and dtls_requested:
-            self.logger.fail("DTLS connection failed")
-            self.results["success"] = False
-            self.results["error"] = "DTLS connection failed"
+            self.results["port"] = self._resolve_dtls_port()
+            # DTLS is UDP: the TCP probe rescue cannot recover a cause, so
+            # classify straight from the vocabulary (GH issue #59).
+            self.record_connect_failure("auth", detail="DTLS handshake failed")
             return
 
         # Plain CoAP connection (only when DTLS was not requested)
@@ -198,9 +220,9 @@ class coap(NetworkConnection):
             elapsed = _time.monotonic() - t0
             self.logger.debug("Plain CoAP connection took %.2fs", elapsed)
             if not self.conn:
-                self.logger.fail("Connection failed: CoAP endpoint not reachable")
-                self.results["success"] = False
-                self.results["error"] = "Connection failed"
+                # UDP transport: no TCP probe; a dead endpoint is "timeout"
+                # in the shared vocabulary (GH issue #59).
+                self.record_connect_failure("timeout", detail="no CoAP response")
                 return
 
         self.logger.debug("Starting resource enumeration")

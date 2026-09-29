@@ -1890,7 +1890,10 @@ class TestMMSP1Verdict:
             "MMS is expected to be CORRECT (not affected by the connection.py "
             f"default-success bug): closed port must report success=False. Got: {last}"
         )
-        assert last.get("error") == "Connection failed"
+        # Unified connect-failure contract (GH #59): error is now the
+        # canonical "connect <cause>" vocabulary, not the pre-#59
+        # hand-rolled "Connection failed".
+        assert last.get("error") == "connect refused"
 
     def test_p1_wrong_protocol_on_port_reports_success_false(self, cli_runner, tmp_path):
         """Pointing MMS at a live Modbus mock (wrong protocol on the port)

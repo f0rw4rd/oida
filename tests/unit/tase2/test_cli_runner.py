@@ -1056,7 +1056,8 @@ class TestProtoFlow(unittest.TestCase):
             self._unpatch()
 
         self.assertFalse(obj.results["success"])
-        self.assertEqual(obj.results["error"], "Connection failed")
+        # GH #59 contract: "connect <cause>" replaces the bare string.
+        self.assertTrue(obj.results["error"].startswith("connect "))
 
     def test_flow_runs_scan_when_no_action(self):
         obj = self._build()

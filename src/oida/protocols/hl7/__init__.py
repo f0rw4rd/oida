@@ -356,11 +356,9 @@ class hl7(
 
         # Create connection
         if not self.create_conn_obj():
-            # TCP connect failed outright (closed/filtered port). Without this
-            # the base NetworkConnection.run() defaults success=True and reports
-            # a false-positive HL7 identification (connection-1).
-            self.results["success"] = False
-            self.results.setdefault("error", "Connection failed")
+            # TCP connect failed outright (closed/filtered port); the canonical
+            # line + error were already stamped by record_connect_failure()
+            # inside create_conn_obj (GH issue #59).
             return
 
         # Probe operations if requested (runs before other operations)
@@ -524,13 +522,14 @@ class hl7(
             return True
         except Exception as e:  # noqa: BLE001 - report any connect failure and move to the next host
             self.logger.debug(f"create conn obj failed: {e}")
-            if isinstance(e, TimeoutError):
-                self.logger.fail("Connection timed out")
-            elif isinstance(e, ConnectionRefusedError):
-                self.logger.fail("Connection refused")
-            else:
-                self.logger.fail(f"Connection failed: {e}")
+            # Report through the shared vocabulary (GH issue #59): the
+            # timeout/refused isinstance chain is exactly what
+            # classify_connection_failure() encodes, including the TLS and
+            # unreachable cases the old chain reported as generic.
+            from oida.utils.protocol_helpers import classify_connection_failure
+
             self.results["data"]["connected"] = False
+            self.record_connect_failure(classify_connection_failure(e), exc=e)
             return False
 
     def enum_host_info(self):

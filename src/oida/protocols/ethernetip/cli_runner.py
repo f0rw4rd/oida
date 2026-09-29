@@ -41,9 +41,9 @@ class ethernetip(NetworkConnection):
 
         self.create_conn_obj()
         if not self.conn:
-            self.logger.fail(f"Failed to connect to {self.host}")
+            # create_conn_obj() already recorded the canonical failure via
+            # record_connect_failure(); only success bookkeeping remains.
             self.results["success"] = False
-            self.results["error"] = "Connection failed"
             return
 
         self.enum_host_info()
@@ -57,7 +57,20 @@ class ethernetip(NetworkConnection):
         if self.conn:
             self.logger.success(f"Connected to EtherNet/IP device at {self.ip}:{self.args.port}")
         else:
-            self.logger.fail(f"Connection failed to {self.ip}:{self.args.port}")
+            # The scanner returns None for any failure, so the errno is lost;
+            # a one-shot raw TCP probe recovers the cause for the shared
+            # vocabulary (GH issue #59).
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            cause = (
+                probe_connect_failure_cause(
+                    self.ip,
+                    int(getattr(self.args, "port", 44818) or 44818),
+                    timeout=float(getattr(self.args, "timeout", 2) or 2),
+                )
+                or "unknown"
+            )
+            self.record_connect_failure(cause, probed=True)
 
     def enum_host_info(self):
         """Enumerate EtherNet/IP device information via ListIdentity"""

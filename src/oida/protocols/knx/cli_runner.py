@@ -73,9 +73,10 @@ class knx(NetworkConnection):
             # Actions that require tunnel connection
             self.create_conn_obj()
             if not self.conn:
-                self.logger.fail("Connection failed: Tunnel connection could not be established")
-                self.results["success"] = False
-                self.results["error"] = "Connection failed"
+                # KNXnet/IP tunnels over UDP 3671: no TCP probe; a gateway
+                # that never answers the tunnel request is "timeout" in the
+                # shared vocabulary (GH issue #59).
+                self.record_connect_failure("timeout", detail="tunnel not established")
                 return
 
             self.enum_host_info()
@@ -235,7 +236,11 @@ class knx(NetworkConnection):
                     self._display_gateway_info_dict(gw_info)
                     self.results["data"]["gateway"] = gw_info
                 else:
-                    self.logger.fail(f"No KNX gateway found at {self.host}")
+                    # Unicast discovery is a targeted connect that got
+                    # silence: KNXnet/IP tunnels over UDP 3671, so no TCP
+                    # probe - silence is "timeout" in the shared vocabulary
+                    # (GH issue #59).
+                    self.record_connect_failure("timeout", detail="no DESCRIPTION_REQUEST response")
 
         asyncio.run(do_discovery())
 
@@ -246,6 +251,10 @@ class knx(NetworkConnection):
         # reported as a successfully identified KNX gateway (connection-1 bug).
         found = self.results["data"].get("gateway") or self.results["data"].get("gateways")
         if not found:
+            # Multicast silence (no gateway on the segment) is a discovery
+            # result, not a connect failure: mark unsuccessful without the
+            # canonical Connect failed: line. Unicast silence already routed
+            # through record_connect_failure above.
             self.results["success"] = False
             self.results["error"] = self.results.get("error") or "No KNX gateway found"
 
@@ -428,13 +437,26 @@ class knx(NetworkConnection):
         tunnel_ok = bool(scan_results) and not scan_results.get("error")
         self.results["data"].setdefault("device_info", {})["connected"] = tunnel_ok
         if not tunnel_ok:
-            self.results["success"] = False
-            self.results["error"] = (
+            # The tunnel never came up - this is the connect stage of the KNX
+            # flow (scanner.connect() only builds the XKNX object; the real
+            # connect is knx.start() inside discover()). Route through the
+            # shared contract: KNXnet/IP tunnels over UDP 3671, so silence is
+            # "timeout" (GH issue #59); TCP tunnelling can probe the errno.
+            tunnel_error = (
                 self.results.get("error")
                 or scan_results.get("error")
                 or "KNX tunnel could not be established"
             )
-            self.logger.fail(f"KNX scan failed: {self.results['error']}")
+            if getattr(self.args, "tcp", False):
+                from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+                cause = (
+                    probe_connect_failure_cause(self.ip, int(self.args.port or 3671), timeout=3)
+                    or "timeout"
+                )
+                self.record_connect_failure(cause, exc=None, detail=tunnel_error[:80], probed=True)
+            else:
+                self.record_connect_failure("timeout", detail=tunnel_error[:80])
 
     def cleanup(self):
         """Cleanup KNX connection."""

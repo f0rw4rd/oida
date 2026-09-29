@@ -24,9 +24,10 @@ class mms(NetworkConnection):
         self.scanner = MMSScanner(args_dict)
         self.create_conn_obj()
         if not self.conn:
-            self.logger.fail(f"Failed to connect to {self.host}")
+            # create_conn_obj() already recorded the canonical failure
+            # (single line + results["error"] with cause) via
+            # record_connect_failure(); only success bookkeeping remains.
             self.results["success"] = False
-            self.results["error"] = "Connection failed"
             return
 
         self.enum_host_info()
@@ -35,12 +36,62 @@ class mms(NetworkConnection):
 
     def create_conn_obj(self):
         """Create MMS connection"""
-        self.logger.info(f"Connecting to {self.ip}:{self.args.port}")
+        # Effective port: with --tls on and the port left at the plaintext
+        # default, the scanner switches to tls_port (3782) - the banner, the
+        # probe and results["port"] must all show the port actually dialed,
+        # not the plaintext default (GH #59 port-consistency).
+        effective_port = int(getattr(self.args, "port", 102) or 102)
+        if getattr(self.args, "tls", False) and effective_port == self.default_port:
+            from oida.utils.protocol_helpers import safe_int_conversion
+
+            effective_port = safe_int_conversion(
+                getattr(self.args, "tls_port", None), self.default_port
+            )
+        self.results["port"] = effective_port
+        extra = getattr(getattr(self, "logger", None), "extra", None)
+        if isinstance(extra, dict):
+            extra["port"] = effective_port
+
+        self.logger.info(f"Connecting to {self.ip}:{effective_port}")
         self.conn = self.scanner.connect()
         if self.conn:
-            self.logger.success(f"Connected to MMS device at {self.ip}:{self.args.port}")
+            self.logger.success(f"Connected to MMS device at {self.ip}:{effective_port}")
         else:
-            self.logger.fail(f"Connection failed to {self.ip}:{self.args.port}")
+            # pyiec61850's connect() raises ConnectionFailedError but the
+            # scanner absorbs it and returns None, so the cause is lost; a
+            # one-shot raw TCP probe recovers it for the shared vocabulary
+            # (GH issue #59). The scanner sets _last_connect_error ONLY on
+            # the broad-except path (TLS config errors, which never reached
+            # the socket) - a real ConnectionFailedError leaves it unset, so
+            # a real exception in the attribute is the discriminator.
+            # isinstance against the builtin BaseException (not the
+            # lazy-loaded lib, which breaks under unit-test mocks of _Lib):
+            # a MagicMock scanner auto-creates every attribute, so a bare
+            # "is not None" check would misroute plain connect failures
+            # into this branch.
+            scanner_exc = getattr(self.scanner, "_last_connect_error", None)
+            if isinstance(scanner_exc, BaseException):
+                # probed=True: the config error never reached the socket, so
+                # the rescue probe would connect to a healthy port and
+                # rewrite the cause to "refused", hiding the real reason.
+                self.record_connect_failure("tls", exc=scanner_exc, probed=True)
+                # Actionable operator detail (the offending cert path): the
+                # canonical line prints only the cause, so surface the
+                # exception's message as a follow-up line. The exc branch is
+                # config-error-only, so dead targets never print this.
+                self.logger.fail(f"  TLS: {scanner_exc}")
+                return
+            from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+            cause = (
+                probe_connect_failure_cause(
+                    self.ip,
+                    effective_port,
+                    timeout=float(getattr(self.args, "timeout", 2) or 2),
+                )
+                or "unknown"
+            )
+            self.record_connect_failure(cause, probed=True)
 
     def enum_host_info(self):
         """Enumerate MMS/IEC 61850 device information"""

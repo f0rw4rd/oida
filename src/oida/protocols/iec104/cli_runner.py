@@ -37,7 +37,12 @@ class iec104(NetworkConnection):
     def create_conn_obj(self):
         """Create Iec104 connection"""
         transport = "TLS" if getattr(self.args, "tls", False) else "TCP"
-        self.logger.debug(f"Connecting via {transport}")
+        # The [*] Connecting line every adopted protocol prints (GH issue #59).
+        # args.port, not default_port: base __init__ stamps the effective
+        # default, and an explicit -p must show in the banner (the probe
+        # below already used args.port; the banner disagreed with it).
+        port = getattr(self.args, "port", self.default_port)
+        self.logger.info(f"Connecting via {transport} to {self.host}:{port}")
         self.conn = self.scanner.connect()
         if self.conn:
             self.logger.success(
@@ -57,7 +62,7 @@ class iec104(NetworkConnection):
                 )
                 or "unknown"
             )
-            self.record_connect_failure(cause, detail=transport)
+            self.record_connect_failure(cause, detail=transport, probed=True)
 
     def enum_host_info(self):
         """Enumerate IEC 104 device information"""

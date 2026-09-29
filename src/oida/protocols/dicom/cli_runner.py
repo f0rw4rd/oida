@@ -383,7 +383,47 @@ class dicom(
         # C-GET state tracking
         self._cget_output_path = None
         self._cget_received_files = []
+        # Capture the user-supplied port (None when -p is omitted) BEFORE
+        # super().__init__() - NetworkConnection.__init__ stamps args.port
+        # with default_port whenever it is falsy, which would erase the
+        # "unset" sentinel the TLS default below branches on.
+        self._user_port = getattr(args, "port", None)
         super().__init__(args, db, host)
+        self._resolve_default_port()
+
+    def _resolve_default_port(self) -> None:
+        """Fill in the port the operator did NOT set.
+
+        --port defaults to None so an explicit `-p` (even `-p 11112 --tls`)
+        is always honored. When unset: TLS -> 2762, plaintext -> 11112.
+        Runs after super().__init__ (base stamping already replaced the
+        None sentinel with 11112), so the "unset" check branches on
+        _user_port - the pre-super capture - not args.port.
+        """
+        user_port = getattr(self, "_user_port", None)
+        if user_port is not None:
+            effective = int(user_port)
+        else:
+            use_tls = getattr(self.args, "tls", False)
+            effective = 2762 if use_tls else self.default_port
+            self.logger.debug(
+                "--port unset: defaulting to %d (%s)",
+                effective,
+                "DICOM TLS" if use_tls else "DICOM plaintext",
+            )
+        # getattr-write: base __init__ may hold a dict-backed args; the
+        # codebase idiom for arg writes on the union is setattr-style via
+        # vars() where needed, but ArgsDict/Namespace both accept plain
+        # attribute assignment in practice - keep the mypy-quiet form.
+        setattr(self.args, "port", effective)
+        # Keep results["port"] and the logger prefix in sync with the
+        # resolved port: record_connect_failure() targets results["port"],
+        # and the per-line prefix reads the logger extra (GH issue #59).
+        if hasattr(self, "results") and self.results.get("port") != effective:
+            self.results["port"] = effective
+            extra = getattr(getattr(self, "logger", None), "extra", None)
+            if isinstance(extra, dict):
+                extra["port"] = effective
 
     def _handle_store_for_cget(self, event):
         """Handle incoming C-STORE sub-operations from C-GET"""
@@ -449,6 +489,10 @@ class dicom(
 
     def proto_flow(self):
         """Main DICOM scanning workflow"""
+        # Idempotent: __init__ already resolved; this re-run covers
+        # instances built without __init__ (tests) and keeps results/logger
+        # in sync after any arg mutation.
+        self._resolve_default_port()
 
         # Get calling AE Title
         self.calling_aet = getattr(self.args, "aet", "OIDA")
@@ -462,14 +506,21 @@ class dicom(
             return
 
         # Create connection
+        # Stamp the effective port before connecting: record_connect_failure()'s
+        # probe rescue targets results["port"], and DICOM's real port is the
+        # advertised TLS port (2762) or the de-facto PACS default (11112), not
+        # the generic per-protocol default. _resolve_default_port() (run from
+        # __init__ and re-run at the top of proto_flow for instances built
+        # without __init__) already stamped both args.port and results["port"].
+        effective_port = getattr(self.args, "port", None) or getattr(self, "default_port", 0)
+        if self.results.get("port") != effective_port:
+            self.results["port"] = effective_port
         if not self.create_conn_obj():
             # create_conn_obj() returns False when the A-ASSOCIATE was rejected,
             # aborted, or never answered (a bare TCP connect to a non-DICOM port
-            # opens the socket but never yields an A-ASSOCIATE-AC). Without this
-            # the base NetworkConnection.run() defaults success=True and reports
-            # a false-positive DICOM identification (connection-1).
-            self.results["success"] = False
-            self.results.setdefault("error", "No DICOM association (rejected or not a DICOM SCP)")
+            # opens the socket but never yields an A-ASSOCIATE-AC). The failure
+            # itself was already recorded by record_connect_failure() inside
+            # create_conn_obj (GH issue #59).
             return
 
         # Enumerate host info (C-ECHO)
@@ -539,15 +590,34 @@ class dicom(
     def create_conn_obj(self) -> bool:
         """Establish DICOM association"""
         use_tls = getattr(self.args, "tls", False)
-        # Resolve the effective port: explicit -p wins; otherwise the advertised
-        # TLS port (2762) when --tls is set, else the de-facto PACS default
-        # (self.default_port = 11112). Previously a bare --tls connected to 104.
-        port = getattr(self.args, "port", None) or (2762 if use_tls else self.default_port)
+        # _resolve_default_port() already resolved the effective port into
+        # args.port (explicit -p wins; otherwise 2762 with --tls, else the
+        # de-facto PACS default 11112). Show it in the banner: the displayed
+        # target must match the port the association actually dials (GH #59).
         timeout = getattr(self.args, "timeout", 10)
+        port = int(getattr(self.args, "port", 0) or getattr(self, "default_port", 11112))
 
         transport = "TLS" if use_tls else "TCP"
-        self.logger.info(f"Connecting via {transport}")
+        self.logger.info(f"Connecting via {transport} to {self.ip}:{port}")
 
+        # pynetdicom logs its own transport errors ("Association request
+        # failed", "TCP Initialisation Error") on its module logger, which
+        # bypasses the NXC line format and duplicates what the canonical
+        # Connect failed: line below already reports (GH issue #59). Same
+        # treatment as snap7/pycomm3: demote to CRITICAL so the runner owns
+        # the single failure line.
+        import logging as _logging
+
+        _pynetdicom_logger = _logging.getLogger("pynetdicom")
+        _prev_level = _pynetdicom_logger.level
+        _pynetdicom_logger.setLevel(_logging.CRITICAL + 1)
+        try:
+            return self._dicom_create_association(use_tls, port, timeout, transport)
+        finally:
+            _pynetdicom_logger.setLevel(_prev_level)
+
+    def _dicom_create_association(self, use_tls: bool, port: int, timeout, transport: str) -> bool:
+        """Associate to the DICOM peer (called with pynetdicom's logger muted)."""
         try:
             # Get lazy-loaded classes
             AE = _get_ae()
@@ -742,15 +812,36 @@ class dicom(
 
                 return True
             else:
-                reject_info = self._get_reject_info()
-                self.logger.fail(f"Association rejected: {reject_info}")
+                # No association: either the peer actively rejected the
+                # A-ASSOCIATE, or the transport never completed (timeout to a
+                # silent host). is_rejected distinguishes them: an explicit
+                # reject is "refused"; transport silence falls back to a TCP
+                # probe for the real errno (GH issue #59).
                 self.results["data"]["connected"] = False
+                if getattr(self.assoc, "is_rejected", False):
+                    reject_info = self._get_reject_info()
+                    self.record_connect_failure(
+                        "refused",
+                        detail=f"association rejected ({reject_info})",
+                    )
+                else:
+                    from oida.utils.protocol_helpers import probe_connect_failure_cause
+
+                    cause = probe_connect_failure_cause(self.ip, port, timeout=timeout) or "unknown"
+                    self.record_connect_failure(
+                        cause, detail="no association (transport)", probed=True
+                    )
                 return False
 
         except Exception as e:
             self.logger.debug("create conn obj failed: %s", e)
-            self.logger.fail(f"Connection failed: {e}")
             self.results["data"]["connected"] = False
+            # pynetdicom raises for transport-level failures (timeout,
+            # unreachable, TLS handshake); classify from the exception and
+            # let record_connect_failure() rescue "unknown" with a probe.
+            from oida.utils.protocol_helpers import classify_connection_failure
+
+            self.record_connect_failure(classify_connection_failure(e), exc=e)
             return False
 
     def _get_reject_info(self) -> str:
