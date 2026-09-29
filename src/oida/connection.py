@@ -302,7 +302,7 @@ class connection(ConfirmGateMixin, ABC):
                 timeout = 2.0
             probed = probe_connect_failure_cause(
                 self.ip,
-                self.results.get("port") or getattr(self, "default_port", 0),
+                self.results.get("port") or getattr(self, "default_port", 0) or 0,
                 timeout=timeout,
             )
             if probed:

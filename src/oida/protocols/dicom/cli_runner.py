@@ -400,24 +400,30 @@ class dicom(
         None sentinel with 11112), so the "unset" check branches on
         _user_port - the pre-super capture - not args.port.
         """
-        if getattr(self, "_user_port", None) is not None:
-            self.args.port = self._user_port
+        user_port = getattr(self, "_user_port", None)
+        if user_port is not None:
+            effective = int(user_port)
         else:
             use_tls = getattr(self.args, "tls", False)
-            self.args.port = 2762 if use_tls else self.default_port
+            effective = 2762 if use_tls else self.default_port
             self.logger.debug(
                 "--port unset: defaulting to %d (%s)",
-                self.args.port,
+                effective,
                 "DICOM TLS" if use_tls else "DICOM plaintext",
             )
+        # getattr-write: base __init__ may hold a dict-backed args; the
+        # codebase idiom for arg writes on the union is setattr-style via
+        # vars() where needed, but ArgsDict/Namespace both accept plain
+        # attribute assignment in practice - keep the mypy-quiet form.
+        setattr(self.args, "port", effective)
         # Keep results["port"] and the logger prefix in sync with the
         # resolved port: record_connect_failure() targets results["port"],
         # and the per-line prefix reads the logger extra (GH issue #59).
-        if hasattr(self, "results") and self.results.get("port") != self.args.port:
-            self.results["port"] = self.args.port
+        if hasattr(self, "results") and self.results.get("port") != effective:
+            self.results["port"] = effective
             extra = getattr(getattr(self, "logger", None), "extra", None)
             if extra is not None:
-                extra["port"] = self.args.port
+                extra["port"] = effective
 
     def _handle_store_for_cget(self, event):
         """Handle incoming C-STORE sub-operations from C-GET"""
@@ -506,8 +512,9 @@ class dicom(
         # the generic per-protocol default. _resolve_default_port() (run from
         # __init__ and re-run at the top of proto_flow for instances built
         # without __init__) already stamped both args.port and results["port"].
-        if self.results.get("port") != self.args.port:
-            self.results["port"] = self.args.port
+        effective_port = getattr(self.args, "port", None) or getattr(self, "default_port", 0)
+        if self.results.get("port") != effective_port:
+            self.results["port"] = effective_port
         if not self.create_conn_obj():
             # create_conn_obj() returns False when the A-ASSOCIATE was rejected,
             # aborted, or never answered (a bare TCP connect to a non-DICOM port
@@ -588,10 +595,10 @@ class dicom(
         # de-facto PACS default 11112). Show it in the banner: the displayed
         # target must match the port the association actually dials (GH #59).
         timeout = getattr(self.args, "timeout", 10)
-        port = self.args.port
+        port = int(getattr(self.args, "port", 0) or getattr(self, "default_port", 11112))
 
         transport = "TLS" if use_tls else "TCP"
-        self.logger.info(f"Connecting via {transport} to {self.ip}:{self.args.port}")
+        self.logger.info(f"Connecting via {transport} to {self.ip}:{port}")
 
         # pynetdicom logs its own transport errors ("Association request
         # failed", "TCP Initialisation Error") on its module logger, which
