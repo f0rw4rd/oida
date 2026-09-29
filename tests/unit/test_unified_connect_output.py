@@ -354,6 +354,9 @@ class TestGooseMmsPortStamping(unittest.TestCase):
         obj.args = SimpleNamespace(mms_enum="127.0.0.1", mms_port=49467, timeout=2)
         obj.host = obj.ip = "127.0.0.1"
         obj.logger = Mock()
+        # The runner syncs logger.extra["port"] when it stamps the MMS port;
+        # a bare Mock's extra attr would be a Mock and reject item assignment.
+        obj.logger.extra = {"host": "127.0.0.1", "port": 0}
         obj.results = {"data": {}, "success": None, "port": None}
         obj.interface = "eth0"
 

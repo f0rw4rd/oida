@@ -1735,7 +1735,18 @@ def _main(argv: Optional[List[str]] = None):
         # --output without --format (or with the default console) implies the
         # user wants everything on disk, not a lone JSON file.
         fmt = args.format if args.format != "console" else "all"
-        default_port: int = (
+        # Effective port for the export logger's prefix: prefer the port the
+        # scan actually used (the runner resolves TLS/DTLS/alternate-mode
+        # defaults - mqtt --tls 8883, dicom --tls 2762, coap DTLS 5684 - on
+        # its deep-copied args, so the CLI-level args.port here is still
+        # None). Fall back to the requested/default port for multi-target
+        # runs and pre-scan exports.
+        scan_port = 0
+        if len(targets) == 1 and results:
+            row = results[0]
+            if isinstance(row, dict):
+                scan_port = row.get("port") or 0
+        default_port: int = scan_port or (
             getattr(args, "port", None) or getattr(protocol_class, "default_port", 0) or 0
         )
         # A fresh ICSLogger, not get_logger(): the cache key collides with the

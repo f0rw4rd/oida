@@ -29,6 +29,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import socket
 import subprocess
 import sys
@@ -43,6 +44,10 @@ SRC = str(Path(__file__).resolve().parents[3] / "src")
 HOST = "127.0.0.1"
 PORT = 45672
 TARGET = f"{HOST}:{PORT}"
+
+# Host:port token matcher for the per-line ``PROTO host:port`` prefixes and
+# banner targets in the effective-port consistency sweep below.
+_PREFIX_RE = re.compile(rf"\b{re.escape(HOST)}:(\d+)")
 
 # Protocols with no single-target connect stage (passive listeners, local
 # buses, request-response sweeps) - their runners are held to the
@@ -85,6 +90,31 @@ _PROTOCOL_OVERRIDES: dict[str, tuple[str, list[str], str]] = {
     # Plain HTTP, else the dead port looks like a TLS failure
     "fhir": (TARGET, ["--no-tls"], "refused"),
 }
+
+
+# Effective-port variants: modes whose REAL port differs from the protocol's
+# default_port. Each case runs against the same dead loopback endpoint, so the
+# run fails - but everything it prints (and exports) must agree on the port it
+# actually targeted. This is the fleet guard for the shipped bug class where a
+# banner/probe/failure-line/logger-prefix drifted from the port the connect
+# ran on (iec104 banner, coap DTLS, mqtt TLS; goose mms_port, dicom 2762).
+# Rows: (protocol, argv, expected_port). Target is the dead HOST:PORT embedded
+# in argv itself - these flags change the effective port, so --port/embedded
+# forms vary per case.
+_PORT_VARIANTS: list[tuple[str, list[str], int]] = [
+    # -p wins over everything: banner, failure line, prefixes all show it.
+    ("iec104", [HOST, "--port", str(PORT)], PORT),
+    # DTLS switches the default to 5684 when no -p is given.
+    ("coap", ["--dtls-rpk", "deadbeef", HOST], 5684),
+    # --tls switches the default to 8883 when no -p is given.
+    ("mqtt", [HOST, "--tls"], 8883),
+    # Explicit -p wins even over the TLS default (the pre-fix mqtt bug).
+    ("mqtt", [HOST, "--tls", "--port", "1883"], 1883),
+    # --tls switches the default to 2762 when no -p is given.
+    ("dicom", [HOST, "--tls"], 2762),
+    # --mms-enum carries its own port via --mms-port.
+    ("goose", ["--mms-enum", HOST, "--mms-port", str(PORT)], PORT),
+]
 
 
 def _live_protocols() -> list[str]:
@@ -177,6 +207,84 @@ class TestFleetConnectOutput(unittest.TestCase):
 
                 if rc == "0":
                     failures.append(f"{protocol}: exit code 0 on connect failure")
+        self.assertFalse("\n".join(failures), "\n".join(failures))
+
+    def test_fleet_effective_port_consistency(self):
+        """Alternate-port modes: every line and the export agree on the port.
+
+        For each variant: the Connecting banner, every ``PROTO host:port``
+        prefix, the Connect failed line, and the JSON export's ``port`` field
+        must all show the port the connect actually targeted. A runner that
+        stamps one of args.port / results["port"] / logger.extra["port"] but
+        not the others shows up here as a disagreement between its own lines.
+        """
+        failures = []
+        for protocol, argv, expected_port in _PORT_VARIANTS:
+            with self.subTest(protocol=protocol, port=expected_port):
+                # One CLI run feeds all assertions: --output/--format json
+                # does not suppress stdout, so the same process yields both
+                # the log lines (banner, prefixes, Connect failed) and the
+                # JSON export.
+                with tempfile.TemporaryDirectory() as out_dir:
+                    proc = subprocess.run(
+                        [
+                            sys.executable,
+                            "-m",
+                            "oida.cli",
+                            protocol,
+                            *argv,
+                            "--output",
+                            out_dir,
+                            "--format",
+                            "json",
+                        ],
+                        capture_output=True,
+                        text=True,
+                        timeout=90,
+                        cwd=Path(SRC).parent,
+                        env={**os.environ, "PYTHONPATH": SRC},
+                    )
+                    combined = proc.stdout + proc.stderr
+                    lines = combined.splitlines()
+                    want = f"{HOST}:{expected_port}"
+
+                    banner = [ln for ln in lines if "Connecting" in ln]
+                    if not banner:
+                        failures.append(f"{protocol}: no Connecting banner\n{combined}")
+                    elif want not in banner[0]:
+                        failures.append(
+                            f"{protocol}: banner {banner[0]!r} lacks {want}\n{combined}"
+                        )
+
+                    # Every prefixed line must carry the effective port. The
+                    # prefix is ``PROTO host:port`` - the port token after the
+                    # host must be the expected one, not a stale default.
+                    bad = [
+                        ln
+                        for ln in lines
+                        for m in [_PREFIX_RE.search(ln)]
+                        if m and int(m.group(1)) != expected_port
+                    ]
+                    # The invocation line ("oida <proto> host:port") legitimately
+                    # shows the embedded/default target, not the effective port.
+                    bad = [ln for ln in bad if not ln.lstrip().startswith("oida ")]
+                    if bad:
+                        failures.append(
+                            f"{protocol}: lines disagree on port {expected_port}:\n"
+                            + "\n".join(bad)
+                        )
+
+                    # JSON export must carry the same port.
+                    files = list(Path(out_dir).glob("*.json"))
+                    if not files:
+                        failures.append(f"{protocol}: no JSON export\n{proc.stdout}{proc.stderr}")
+                        continue
+                    data = json.loads(files[0].read_text())
+                    row = data[0] if isinstance(data, list) else data
+                    if row.get("port") != expected_port:
+                        failures.append(
+                            f"{protocol}: JSON port {row.get('port')!r} != {expected_port}"
+                        )
         self.assertFalse("\n".join(failures), "\n".join(failures))
 
     def test_fleet_connect_json_contract(self):
