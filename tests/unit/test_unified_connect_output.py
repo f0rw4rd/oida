@@ -361,16 +361,23 @@ class TestGooseMmsPortStamping(unittest.TestCase):
         obj.interface = "eth0"
 
         # create_conn_obj on failure records with the stamped port: patch the
-        # scanner so connect() returns None, and the probe so it would return
-        # None (alive port) - the recorded cause must be 'unknown' against
-        # 127.0.0.1:49467, never 'refused' against port 0.
-        obj.scanner = Mock()
-        obj.scanner.connect.return_value = None
+        # scanner CLASS (proto_flow constructs the real GOOSEScanner, so
+        # pre-assigning obj.scanner is discarded) so connect() returns None
+        # with no stored exception, and the probe so it returns None (alive
+        # port) - the recorded cause must be 'unknown' against
+        # 127.0.0.1:49467, never 'refused' against port 0. Patching the class
+        # also keeps this unit lane hermetic: the un-patched flow really
+        # dialed 127.0.0.1:49467.
+        scanner = Mock()
+        scanner.connect.return_value = None
 
-        with patch(
-            "oida.utils.protocol_helpers.probe_connect_failure_cause",
-            return_value=None,
-        ) as probe:
+        with (
+            patch("oida.protocols.goose.cli_runner.GOOSEScanner", return_value=scanner),
+            patch(
+                "oida.utils.protocol_helpers.probe_connect_failure_cause",
+                return_value=None,
+            ) as probe,
+        ):
             obj.proto_flow()
 
         # The outer probe hit the real MMS port...

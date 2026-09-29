@@ -422,7 +422,7 @@ class dicom(
         if hasattr(self, "results") and self.results.get("port") != effective:
             self.results["port"] = effective
             extra = getattr(getattr(self, "logger", None), "extra", None)
-            if extra is not None:
+            if isinstance(extra, dict):
                 extra["port"] = effective
 
     def _handle_store_for_cget(self, event):

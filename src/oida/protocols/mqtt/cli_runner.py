@@ -104,7 +104,7 @@ class mqtt(NetworkConnection):
         if hasattr(self, "results") and self.results.get("port") != self.args.port:
             self.results["port"] = self.args.port
             extra = getattr(getattr(self, "logger", None), "extra", None)
-            if extra is not None:
+            if isinstance(extra, dict):
                 extra["port"] = self.args.port
 
     def proto_flow(self):

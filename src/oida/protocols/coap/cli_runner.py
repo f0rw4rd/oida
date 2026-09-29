@@ -164,7 +164,7 @@ class coap(NetworkConnection):
             self.args.port = dtls_port
             self.results["port"] = dtls_port
             extra = getattr(getattr(self, "logger", None), "extra", None)
-            if extra is not None:
+            if isinstance(extra, dict):
                 extra["port"] = dtls_port
             self.logger.info(f"Connecting via DTLS to {self.ip}:{dtls_port}")
 

@@ -49,7 +49,7 @@ class mms(NetworkConnection):
             )
         self.results["port"] = effective_port
         extra = getattr(getattr(self, "logger", None), "extra", None)
-        if extra is not None:
+        if isinstance(extra, dict):
             extra["port"] = effective_port
 
         self.logger.info(f"Connecting to {self.ip}:{effective_port}")
@@ -62,14 +62,13 @@ class mms(NetworkConnection):
             # one-shot raw TCP probe recovers it for the shared vocabulary
             # (GH issue #59). The scanner sets _last_connect_error ONLY on
             # the broad-except path (TLS config errors, which never reached
-            # the socket) - a real ConnectionFailedError leaves it None, so
-            # the attribute's presence alone is the discriminator and no
-            # isinstance against the lazy-loaded lib is needed (which also
-            # breaks under unit-test mocks of _Lib).
-            # isinstance against the builtin BaseException (not the lazy-loaded
-            # lib, which breaks under unit-test mocks of _Lib): a MagicMock
-            # scanner auto-creates every attribute, so a bare "is not None"
-            # would misroute plain connect failures into the TLS branch.
+            # the socket) - a real ConnectionFailedError leaves it unset, so
+            # a real exception in the attribute is the discriminator.
+            # isinstance against the builtin BaseException (not the
+            # lazy-loaded lib, which breaks under unit-test mocks of _Lib):
+            # a MagicMock scanner auto-creates every attribute, so a bare
+            # "is not None" check would misroute plain connect failures
+            # into this branch.
             scanner_exc = getattr(self.scanner, "_last_connect_error", None)
             if isinstance(scanner_exc, BaseException):
                 # probed=True: the config error never reached the socket, so
