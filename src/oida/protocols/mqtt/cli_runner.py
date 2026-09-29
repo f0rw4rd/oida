@@ -24,9 +24,15 @@ class mqtt(NetworkConnection):
         self.conn = None
         self.scanner = None
         self._connection_error = False  # True if connection failed (not auth)
+        # Capture the user-supplied port (None when -p is omitted) BEFORE
+        # super().__init__() - NetworkConnection.__init__ stamps args.port
+        # with default_port whenever it is falsy, which would erase the
+        # "unset" sentinel the TLS default below branches on.
+        self._user_port = getattr(args, "port", None)
         # Auto-upgrade to MQTT 5.0 if properties are used
         self._auto_upgrade_mqtt_version(args)
         super().__init__(args, db, host)
+        self._resolve_default_port()
 
     def _has_v5_properties(self, args: Any) -> bool:
         """Check if any MQTT 5.0 properties are specified."""
@@ -75,16 +81,31 @@ class mqtt(NetworkConnection):
         plaintext -> 1883. Previously the default was 1883, so an explicit
         `-p 1883 --tls` was indistinguishable from the default and got silently
         forced to 8883.
+
+        Runs AFTER super().__init__ (from __init__): base stamping has already
+        replaced the None sentinel with 1883, so the "unset" check branches on
+        _user_port - the pre-super capture - not args.port. proto_flow also
+        re-runs this (idempotent) for instances built without __init__ in tests.
         """
-        if getattr(self.args, "port", None) is not None:
-            return
-        tls = getattr(self.args, "tls", False)
-        self.args.port = 8883 if tls else self.default_port
-        self.logger.debug(
-            "--port unset: defaulting to %d (%s)",
-            self.args.port,
-            "MQTT TLS" if tls else "MQTT plaintext",
-        )
+        if getattr(self, "_user_port", None) is not None:
+            self.args.port = self._user_port
+        else:
+            tls = getattr(self.args, "tls", False)
+            self.args.port = 8883 if tls else self.default_port
+            self.logger.debug(
+                "--port unset: defaulting to %d (%s)",
+                self.args.port,
+                "MQTT TLS" if tls else "MQTT plaintext",
+            )
+        # Keep results["port"] and the logger prefix in sync with the
+        # resolved port: record_connect_failure() targets results["port"],
+        # and the per-line prefix reads the logger extra. Both still showed
+        # 1883 while a TLS scan ran on 8883.
+        if hasattr(self, "results") and self.results.get("port") != self.args.port:
+            self.results["port"] = self.args.port
+            extra = getattr(getattr(self, "logger", None), "extra", None)
+            if extra is not None:
+                extra["port"] = self.args.port
 
     def proto_flow(self):
         """Execute MQTT scanning workflow"""
@@ -176,12 +197,17 @@ class mqtt(NetworkConnection):
             else:
                 # Server responded but rejected auth - surface as info so the
                 # auth result still shows, but don't emit a green success
-                # banner for a session we never actually opened.
+                # banner for a session we never actually opened. No CONNACK
+                # accept means no scan result: without this stamp run()'s
+                # None->True default reported auth-refused brokers as
+                # successful scans (GH issue #59 review).
                 self.logger.info(f"MQTT broker responded at {self.ip}:{self.args.port}")
                 if username:
                     self.logger.fail(f"Authentication failed ({username}:***)")
                 else:
                     self.logger.fail(f"Auth required ({auth_result})")
+                self.results["success"] = False
+                self.results.setdefault("error", f"connect auth ({auth_result})")
         else:
             # No CONNACK at all: the transport may be fine (bare TCP connect
             # succeeds to a silent port) but nothing speaks MQTT. Probe to
