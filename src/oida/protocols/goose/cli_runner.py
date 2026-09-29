@@ -27,6 +27,10 @@ class goose(SerialConnection):
         if mms_enum:
             # GoCB enumeration via MMS - no raw socket needed
             self.logger.display(f"Enumerating GoCBs on {mms_enum} via MMS...")
+            # Stamp the effective port before connecting: default_port is 0
+            # (passive GOOSE is layer-2, portless), so without this the MMS
+            # probe and the target display both fall back to port 0 (GH #59).
+            self.results["port"] = int(getattr(self.args, "mms_port", 102) or 102)
             self.create_conn_obj()
             if self.conn:
                 self._execute_scan()
@@ -102,7 +106,7 @@ class goose(SerialConnection):
                 )
                 or "unknown"
             )
-            self.record_connect_failure(cause)
+            self.record_connect_failure(cause, probed=True)
 
     def enum_host_info(self):
         """Enumerate GOOSE information."""

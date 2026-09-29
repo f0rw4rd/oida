@@ -264,6 +264,123 @@ class TestRecordConnectFailureUnknownFallback(unittest.TestCase):
         # The console line carries the rescued cause, not 'unknown'.
         self.assertIn("refused", obj.logger.fail.call_args[0][0])
 
+    def test_probed_true_skips_the_rescue_probe(self):
+        """A caller that already ran probe_connect_failure_cause() passes
+        probed=True so record_connect_failure() does not connect a second
+        time (the probe-then-'or unknown' runner pattern used to fire the
+        inner rescue against every alive-but-non-protocol port).
+        """
+        from oida.connection import NetworkConnection
+
+        class _Concrete(NetworkConnection):
+            def proto_flow(self):
+                pass
+
+            def create_conn_obj(self):
+                pass
+
+            def enum_host_info(self):
+                pass
+
+        obj = _Concrete.__new__(_Concrete)
+        obj.args = Mock()
+        obj.ip = obj.host = "127.0.0.1"
+        obj.protocol_name = "X"
+        obj.default_port = 102
+        obj.logger = Mock()
+        obj.results = {"data": {}, "success": None, "port": 102}
+
+        with patch(
+            "oida.utils.protocol_helpers.probe_connect_failure_cause",
+            return_value="refused",
+        ) as probe:
+            obj.record_connect_failure("unknown", probed=True)
+
+        self.assertEqual(probe.call_count, 0, "rescue probe must not fire")
+        # 'unknown' stands (the caller's own probe found an alive port).
+        self.assertTrue(obj.results["error"].startswith("connect unknown"))
+
+    def test_probed_false_still_rescues(self):
+        """The flag only opts out; the default path still probes."""
+        from oida.connection import NetworkConnection
+
+        class _Concrete(NetworkConnection):
+            def proto_flow(self):
+                pass
+
+            def create_conn_obj(self):
+                pass
+
+            def enum_host_info(self):
+                pass
+
+        obj = _Concrete.__new__(_Concrete)
+        obj.args = Mock()
+        obj.ip = obj.host = "127.0.0.1"
+        obj.protocol_name = "X"
+        obj.default_port = 102
+        obj.logger = Mock()
+        obj.results = {"data": {}, "success": None, "port": 102}
+
+        with patch(
+            "oida.utils.protocol_helpers.probe_connect_failure_cause",
+            return_value="refused",
+        ) as probe:
+            obj.record_connect_failure("unknown")
+
+        self.assertEqual(probe.call_count, 1)
+
+
+class TestGooseMmsPortStamping(unittest.TestCase):
+    """goose default_port is 0 (passive GOOSE is portless layer-2), so MMS
+    enumeration must stamp results["port"] with --mms-port before connecting.
+
+    Without the stamp, record_connect_failure()'s probe rescue targets
+    results["port"] = 0; connecting to port 0 returns ECONNREFUSED on Linux
+    and an OPEN, alive-but-non-MMS port was misreported as 'refused'
+    (verified live: 'goose --mms-enum 127.0.0.1 --mms-port <open port>'
+    printed 'Connect failed: refused (127.0.0.1)').
+    """
+
+    def test_mms_enum_branch_stamps_mms_port(self):
+        from types import SimpleNamespace
+
+        from unittest.mock import patch
+
+        from oida.protocols.goose.cli_runner import goose as GooseClass
+
+        obj = GooseClass.__new__(GooseClass)
+        obj.protocol_name = "IEC 61850 GOOSE"
+        obj.args = SimpleNamespace(mms_enum="127.0.0.1", mms_port=49467, timeout=2)
+        obj.host = obj.ip = "127.0.0.1"
+        obj.logger = Mock()
+        obj.results = {"data": {}, "success": None, "port": None}
+        obj.interface = "eth0"
+
+        # create_conn_obj on failure records with the stamped port: patch the
+        # scanner so connect() returns None, and the probe so it would return
+        # None (alive port) - the recorded cause must be 'unknown' against
+        # 127.0.0.1:49467, never 'refused' against port 0.
+        obj.scanner = Mock()
+        obj.scanner.connect.return_value = None
+
+        with patch(
+            "oida.utils.protocol_helpers.probe_connect_failure_cause",
+            return_value=None,
+        ) as probe:
+            obj.proto_flow()
+
+        # The outer probe hit the real MMS port...
+        probe.assert_called_once_with("127.0.0.1", 49467, timeout=2.0)
+        # ...and the recorded failure is honest about the alive port.
+        self.assertTrue(obj.results["error"].startswith("connect unknown"))
+        self.assertIn(
+            "(127.0.0.1:49467)",
+            obj.logger.fail.call_args[0][0],
+            f"line was {obj.logger.fail.call_args[0][0]!r}",
+        )
+        self.assertFalse(obj.results["success"])
+
 
 if __name__ == "__main__":
     unittest.main()
