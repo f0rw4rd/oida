@@ -184,8 +184,13 @@ class coap(NetworkConnection):
         if self.conn:
             self.logger.success("CoAPs (DTLS) server responding")
 
-        # If DTLS was requested but didn't connect, hard fail
+        # If DTLS was requested but didn't connect, hard fail. Stamp
+        # results["port"] first: the attempts (and any later failure line)
+        # target the DTLS port (5684 default), not the plaintext default -
+        # without the stamp the failure printed 5683 while the handshake
+        # ran on 5684 (goose mms_port bug class, GH #59).
         if not self.conn and dtls_requested:
+            self.results["port"] = self._resolve_dtls_port()
             # DTLS is UDP: the TCP probe rescue cannot recover a cause, so
             # classify straight from the vocabulary (GH issue #59).
             self.record_connect_failure("auth", detail="DTLS handshake failed")
