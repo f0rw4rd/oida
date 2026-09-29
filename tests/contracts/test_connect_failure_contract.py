@@ -105,6 +105,7 @@ class TestFleetWideConnectFailureContract(unittest.TestCase):
 
     def test_runner_source_parses(self):
         """The adoption check greps source; guard against unreadable files."""
+        broken = []
         for name in _protocol_names():
             if name in EXEMPT_PROTOCOLS:
                 continue
@@ -112,7 +113,8 @@ class TestFleetWideConnectFailureContract(unittest.TestCase):
             try:
                 ast.parse(source)
             except SyntaxError as e:
-                self.fail(f"{module_name}: does not parse: {e}")
+                broken.append(f"{module_name}: does not parse: {e}")
+        self.assertEqual(broken, [], "runner sources that do not parse")
 
 
 class TestAdoptedRunnersImportable(unittest.TestCase):
