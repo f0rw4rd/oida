@@ -61,14 +61,19 @@ bacnet = ["BAC0==2026.7.25", "PyYAML==6.0.3"]
 # the automatic certificate-hygiene checks.
 bacnetsc = ["BAC0==2026.7.25", "PyYAML==6.0.3", "websockets==16.0", "cryptography>=43.0.0"]
 can = ["python-can==4.6.1"]
-# DTLSSocket is the tinydtls C backend aiocoap needs for coaps:// (PSK). Without it
-# aiocoap silently has no DTLS client transport, so every DTLS scan path is untestable.
-# Ships sdist-only, so it is compiled at install time (needs a C toolchain) - no
-# Windows wheel and the sdist needs autotools, which windows-latest lacks. Same
-# marker pattern as ethercat's pysoem above: coap module lazy-imports both
-# aiocoap and DTLSSocket, so plain coap:// scanning still works on Windows,
-# only --dtls/coaps:// does not.
-coap = ["aiocoap==0.4.17", "cbor2==6.1.4", "DTLSSocket==0.2.3; sys_platform != 'win32'"]
+# DTLSSocket is the tinydtls C backend aiocoap needs for coaps:// (PSK).
+# NOT part of the coap extra and NOT in the `all` meta-extra: it ships
+# sdist-only and compiles tinydtls at install time, so `pip install
+# oida-ics[coap]` broke on any Linux box without a full autotools+C
+# toolchain (no wheels exist; the win32 marker from 89ba536e did not help
+# Linux users). The coap runner hard-gates --dtls on importability and
+# prints the exact manual-install command when it is missing
+# (src/oida/protocols/coap/cli_runner.py). Consumers that can afford the
+# compile opt in explicitly: `dev` (integration tests) and the Linux
+# standalone-binary build (release.yml passes --extra dtls).
+coap = ["aiocoap==0.4.17", "cbor2==6.1.4"]
+# Opt-in tinydtls compile for coaps:// (see the coap comment above).
+dtls = ["DTLSSocket==0.2.3; sys_platform != 'win32'"]
 dicom = ["pynetdicom==3.0.4", "pydicom==3.0.2"]
 discovery = ["zeroconf==0.151.3", "scapy==2.7.0", "psutil==7.2.2", "profinet-py==0.6.5", "defusedxml==0.7.1"]
 dnp3 = ["yadnp3==3.2.1.2"]
@@ -131,6 +136,7 @@ dev = [
     "docker>=7.1.0",          # tests/integration/common/test_mock_services_integration.py
     "defusedxml>=0.7.1",      # SSDP/UPnP - also in discovery extra; here for unit tests
     "msgpack>=1.1.0",         # python-can udp_multicast - gates tests/integration/test_can_mock_e2e.py
+    "DTLSSocket==0.2.3; sys_platform != 'win32'",  # coap DTLS interop tests; sdist-only C build, kept behind the `dtls` extra (see the coap comment above)
     "tomli>=2.0.0; python_version < '3.11'",  # tests/unit/test_dist_name_resolution.py - stdlib tomllib is 3.11+
 ]
 docs = [

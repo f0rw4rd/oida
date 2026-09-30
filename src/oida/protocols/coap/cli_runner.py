@@ -35,14 +35,16 @@ _COAP_CONNECTION_ERROR_MARKERS = tuple(
 from oida.utils.lazy_import import lazy_import
 
 _aiocoap = lazy_import("aiocoap", "CoAP")
-# DTLSSocket is deliberately NOT a declared dependency of the `coap` extra
-# (dropped in 5c5b890 - it is painful to build and most CoAP scans never use
-# DTLS). aiocoap's tinydtls transport imports it at handshake time, so every
-# DTLS path (--dtls/--psk/--dtls-cert/--dtls-rpk) requires the operator to
-# install it manually. Probe via importlib rather than a lazy_import guard so
-# the requested-but-unavailable case fails loudly with an explicit message
-# instead of silently falling back to a cleartext scan.
-_DTLS_PIP_HINT = "pip install 'DTLSSocket; sys_platform != \"win32\"'"
+# DTLSSocket lives behind the opt-in `dtls` extra (NOT in `coap` or `all` -
+# sdist-only C build; see the coap extra comment in pyproject.toml). aiocoap's
+# tinydtls transport imports it at handshake time, so every DTLS path
+# (--dtls/--psk/--dtls-cert/--dtls-rpk) needs it installed. Probe via
+# importlib rather than a lazy_import guard so the requested-but-unavailable
+# case fails loudly with an explicit message instead of silently falling back
+# to a cleartext scan.
+_DTLS_PIP_HINT = (
+    "pip install 'oida-ics[dtls]' (or: pip install 'DTLSSocket; sys_platform != \"win32\"')"
+)
 
 
 def _dtls_available() -> bool:
@@ -110,8 +112,8 @@ class coap(NetworkConnection):
             # never have their credentials/probes shipped over plaintext UDP.
             self.logger.fail(
                 "DTLS support is unavailable: the DTLSSocket backend is not "
-                "installed (it was removed from the 'coap' extra). Install it "
-                "manually with: %s",
+                "installed (it is an opt-in 'dtls' extra, not part of 'coap'). "
+                "Install it with: %s",
                 _DTLS_PIP_HINT,
             )
             self.results["success"] = False

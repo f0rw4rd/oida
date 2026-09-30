@@ -1886,7 +1886,6 @@ all = [
     { name = "crc" },
     { name = "cryptography" },
     { name = "defusedxml" },
-    { name = "dtlssocket", marker = "sys_platform != 'win32'" },
     { name = "fhirclient" },
     { name = "h2" },
     { name = "hartip-py" },
@@ -1933,13 +1932,13 @@ can = [
 coap = [
     { name = "aiocoap" },
     { name = "cbor2" },
-    { name = "dtlssocket", marker = "sys_platform != 'win32'" },
 ]
 dev = [
     { name = "bandit" },
     { name = "brotli" },
     { name = "defusedxml" },
     { name = "docker" },
+    { name = "dtlssocket", marker = "sys_platform != 'win32'" },
     { name = "flake8" },
     { name = "msgpack" },
     { name = "mypy" },
@@ -1974,6 +1973,9 @@ docs = [
     { name = "sphinx", version = "8.1.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.11'" },
     { name = "sphinx", version = "8.2.3", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version >= '3.11'" },
     { name = "sphinx-rtd-theme" },
+]
+dtls = [
+    { name = "dtlssocket", marker = "sys_platform != 'win32'" },
 ]
 ethercat = [
     { name = "pysoem", marker = "sys_platform != 'win32'" },
@@ -2073,7 +2075,8 @@ requires-dist = [
     { name = "defusedxml", marker = "extra == 'dev'", specifier = ">=0.7.1" },
     { name = "defusedxml", marker = "extra == 'discovery'", specifier = "==0.7.1" },
     { name = "docker", marker = "extra == 'dev'", specifier = ">=7.1.0" },
-    { name = "dtlssocket", marker = "sys_platform != 'win32' and extra == 'coap'", specifier = "==0.2.3" },
+    { name = "dtlssocket", marker = "sys_platform != 'win32' and extra == 'dev'", specifier = "==0.2.3" },
+    { name = "dtlssocket", marker = "sys_platform != 'win32' and extra == 'dtls'", specifier = "==0.2.3" },
     { name = "fhirclient", marker = "extra == 'fhir'", specifier = "==4.4.0" },
     { name = "flake8", marker = "extra == 'dev'", specifier = ">=7.3.0" },
     { name = "h2", marker = "extra == 'fuzz'", specifier = "==4.4.1" },
@@ -2135,7 +2138,7 @@ requires-dist = [
     { name = "yadnp3", marker = "extra == 'dnp3'", specifier = "==3.2.1.2" },
     { name = "zeroconf", marker = "extra == 'discovery'", specifier = "==0.151.3" },
 ]
-provides-extras = ["ads", "bacnet", "bacnetsc", "can", "coap", "dicom", "discovery", "dnp3", "ethercat", "ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms", "modbus", "mqtt", "opcua", "pcap", "profinet", "snap7", "snmp", "tase2", "astm", "ocpp", "serial", "fuzz", "all", "dev", "docs"]
+provides-extras = ["ads", "bacnet", "bacnetsc", "can", "coap", "dtls", "dicom", "discovery", "dnp3", "ethercat", "ethernetip", "fhir", "goose", "hart", "hl7", "iec104", "knx", "mms", "modbus", "mqtt", "opcua", "pcap", "profinet", "snap7", "snmp", "tase2", "astm", "ocpp", "serial", "fuzz", "all", "dev", "docs"]
 
 [package.metadata.requires-dev]
 dev = [{ name = "pyinstaller", specifier = ">=6.22.3" }]
