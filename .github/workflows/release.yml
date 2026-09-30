@@ -425,7 +425,7 @@ jobs:
         if: runner.os == 'Windows' && env.HAS_SIGNPATH == 'true'
         # Pinned to the v1 tag's commit (was a mutable @v1 - the only unpinned
         # action in the repo). Re-resolve on bump: git ls-remote <repo> refs/tags/v1
-        uses: signpath/github-action-submit-signing-request@ced31329c0317e779dad2eec2a7c3bb46ea1343e  # v1
+        uses: signpath/github-action-submit-signing-request@f6d04783b4569d051e0c80105fe66e82819d0092  # v3.0
         with:
           connector-url: https://app.signpath.io
           api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
