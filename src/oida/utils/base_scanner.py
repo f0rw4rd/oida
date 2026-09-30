@@ -258,7 +258,14 @@ class BaseScanner(ConfirmGateMixin, ABC):
             "timestamp": datetime.now().isoformat(),
             **kwargs,
         }
-        self.logger.warning(f"Vulnerability found: {vuln_name} on {host}")
+        # Include the description when given: several protocols report
+        # multiple concerns under one vuln_name (e.g. mms "iec61850_security"),
+        # and identical bare lines make those distinct findings unreadable.
+        description = kwargs.get("description", "")
+        line = f"Vulnerability found: {vuln_name} on {host}"
+        if description:
+            line += f" - {description}"
+        self.logger.warning(line)
         self.results["vulnerabilities"].append({f"{host}:{vuln_name}": info})
 
     def report_credential(self, username: str, password: str, **kwargs):
