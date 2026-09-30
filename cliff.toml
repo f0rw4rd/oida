@@ -1,6 +1,6 @@
 # git-cliff config: conventional commits -> keepachangelog-style groups.
-# Regenerate CHANGELOG.md with: uvx git-cliff -o CHANGELOG.md
-# Pre-release commit hook and release notes both read this file.
+# Release notes are generated from this (release.yml "Generate release notes
+# from git history"); there is no committed CHANGELOG.md.
 
 [changelog]
 header_markdown = """
