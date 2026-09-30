@@ -127,6 +127,14 @@ def classify_connection_failure(
         return "timeout"
     if isinstance(exc, PermissionError):
         return "permission"
+    # ConnectionRefusedError raised by a library's raw-socket path carries the
+    # real errno, but one constructed by a wrapper (or hand-built in a test)
+    # has errno=None and an arbitrary message ("nope" matches no marker), so
+    # it dead-ended at "unknown" and triggered the rescue probe - a real
+    # network connect from inside a unit test. The type itself is the signal,
+    # same reasoning as TimeoutError above.
+    if isinstance(exc, ConnectionRefusedError):
+        return "refused"
     if errno == errno_module.ECONNREFUSED:
         return "refused"
     if errno in (errno_module.ETIMEDOUT, errno_module.EHOSTDOWN):
