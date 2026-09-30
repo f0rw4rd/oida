@@ -290,7 +290,9 @@ _IMPORT_OVERRIDES: Dict[str, str] = {
 #    the bacnet command as the `--sc` transport mode. The extra is retained as
 #    the install target for the SC-only deps (websockets, cryptography) but has
 #    no protocols/bacnetsc/ package, so it must not be discovered as a command.
-_SKIP_EXTRAS = frozenset({"dev", "docs", "all", "fuzz", "serial", "bacnetsc"})
+#  * "dtls": opt-in tinydtls/DTLSSocket backend for coaps:// (coap extra
+#    keeps working without it); there is no protocols/dtls/ package.
+_SKIP_EXTRAS = frozenset({"dev", "docs", "all", "fuzz", "serial", "bacnetsc", "dtls"})
 
 
 def _resolve_dist_name() -> str:
