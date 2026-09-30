@@ -1181,6 +1181,11 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
     # line, a /24 shuffles every host's block and findings drown in noise.
     # Single-target runs stream live, exactly as before.
     sweep = len(targets) > 1
+    # In sweeps the connect stage (Connecting banner, Connect failed line)
+    # is noise: the summary counts dead hosts, the export records them, and
+    # a default sweep should show only hosts that produced real output.
+    # Keep the connect stage under -v/--debug.
+    keep_connect = bool(getattr(args, "verbose", 0)) or bool(getattr(args, "debug", False))
     # target -> its live capture object, registered by the worker before the
     # scan starts and popped by the consumer when the block is emitted. After
     # a Ctrl+C kills the as_completed loop, whatever remains here is the only
@@ -1199,15 +1204,15 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
             with captures_lock:
                 active_captures[t] = capture
             result = scan_target(protocol_class, args, t)
-            return result, capture.lines
+            return result, capture
 
     def _pop_capture(t: str):
         with captures_lock:
             return active_captures.pop(t, None)
 
-    def _emit(target: str, lines) -> None:
+    def _emit(target: str, capture) -> None:
         _pop_capture(target)
-        emit_buffered(lines)
+        emit_buffered(capture.filtered(keep_connect))
 
     interrupted = False
     with ThreadPoolExecutor(max_workers=args.threads) as executor:
@@ -1221,9 +1226,9 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
             for future in as_completed(future_to_target):
                 target = future_to_target[future]
                 try:
-                    result, lines = future.result()
+                    result, capture = future.result()
                     if sweep:
-                        _emit(target, lines)
+                        _emit(target, capture)
                     if result and result.get("success"):
                         successful += 1
                     else:
@@ -1236,7 +1241,7 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
                     # the error line as usual.
                     capture = _pop_capture(target) if sweep else None
                     if capture is not None:
-                        emit_buffered(capture.lines)
+                        emit_buffered(capture.filtered(keep_connect))
                     logger.error(f"Error scanning {target}: {e}")
                     failed += 1
 
@@ -1257,7 +1262,7 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
             leftovers = list(active_captures.items())
             active_captures.clear()
         for _, capture in leftovers:
-            emit_buffered(capture.lines)
+            emit_buffered(capture.filtered(keep_connect))
         raise KeyboardInterrupt
 
     # Clear progress line

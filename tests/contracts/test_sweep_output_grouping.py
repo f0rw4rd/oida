@@ -96,14 +96,35 @@ class TestSweepOutputGrouping(unittest.TestCase):
                     f"({idx[0]}..{idx[-1]})\noutput:\n{combined}",
                 )
 
-    def test_one_connect_failed_line_per_host(self):
-        combined = self._run_sweep("s7", ["--timeout", "3"])
-        fail_lines = [ln for ln in combined.splitlines() if "Connect failed:" in ln]
+    def test_connect_stage_verbose_gated(self):
+        # The connect stage (Connecting banner + Connect failed line) is
+        # dropped from sweep blocks by default: the summary counts dead
+        # hosts, the export records them, and a default sweep shows only
+        # hosts with real output. Both lines return under -v.
+        plain = self._run_sweep("s7", ["--timeout", "3"])
+        self.assertNotIn(
+            "Connecting to",
+            plain,
+            f"connect banner printed in sweep without -v\noutput:\n{plain}",
+        )
+        self.assertNotIn(
+            "Connect failed:",
+            plain,
+            f"'Connect failed:' printed in sweep without -v\noutput:\n{plain}",
+        )
+        verbose = self._run_sweep("s7", ["--timeout", "3", "-v"])
+        banners = [ln for ln in verbose.splitlines() if "Connecting to" in ln]
+        fail_lines = [ln for ln in verbose.splitlines() if "Connect failed:" in ln]
+        self.assertEqual(
+            len(banners),
+            len(SWEEP_TARGETS),
+            f"expected one banner per target under -v, got {len(banners)}\noutput:\n{verbose}",
+        )
         self.assertEqual(
             len(fail_lines),
             len(SWEEP_TARGETS),
-            f"expected one 'Connect failed:' line per target, got {len(fail_lines)}\n"
-            f"output:\n{combined}",
+            f"expected one 'Connect failed:' line per target under -v, got {len(fail_lines)}\n"
+            f"output:\n{verbose}",
         )
 
     def test_piped_progress_bounded(self):

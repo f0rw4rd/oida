@@ -223,7 +223,10 @@ class BaseScanner(ConfirmGateMixin, ABC):
             "timestamp": datetime.now().isoformat(),
             **kwargs,
         }
-        logger.info("Discovered host: %s (%s)", host, self.get_protocol_name())
+        # self.logger (host-prefixed ICSLogger), not the module logger: sweep
+        # blocks capture per-target output through it, so a host report that
+        # bypasses it lands outside the target's block.
+        self.logger.display(f"Discovered host: {host} ({self.get_protocol_name()})")
         self.results["hosts"].append({host: info})
 
     def report_service_info(self, host: str, **kwargs):
@@ -239,7 +242,7 @@ class BaseScanner(ConfirmGateMixin, ABC):
             **kwargs,
         }
         port = kwargs.get("port", 0)
-        logger.info("Discovered service: %s:%s (%s)", host, port, self.get_protocol_name())
+        self.logger.display(f"Discovered service: {host}:{port} ({self.get_protocol_name()})")
         self.results["services"].append({f"{host}:{port}": info})
 
     def report_vulnerability(self, host: str, vuln_name: str, **kwargs):
@@ -255,7 +258,7 @@ class BaseScanner(ConfirmGateMixin, ABC):
             "timestamp": datetime.now().isoformat(),
             **kwargs,
         }
-        logger.warning("Vulnerability found: %s on %s", vuln_name, host)
+        self.logger.warning(f"Vulnerability found: {vuln_name} on {host}")
         self.results["vulnerabilities"].append({f"{host}:{vuln_name}": info})
 
     def report_credential(self, username: str, password: str, **kwargs):
@@ -277,7 +280,7 @@ class BaseScanner(ConfirmGateMixin, ABC):
             **kwargs,
         }
         host = kwargs.get("host", "unknown")
-        logger.info("Credential found: %s@%s", username or "(no user)", host)
+        self.logger.success(f"Credential found: {username or '(no user)'}@{host}")
         self.results["credentials"].append({f"{host}:{username}": info})
 
     def export_results(self):

@@ -16,6 +16,7 @@ structured metadata (timestamp, level, event_type, module, message, data).
 import json as _json
 import logging
 import os
+import re
 import sys
 import threading
 import traceback
@@ -122,8 +123,29 @@ class _ConsoleCapture:
     container; capture install/uninstall lives in the context manager.
     """
 
+    # Connect-stage chatter dropped from sweep blocks unless verbose: the
+    # "Connecting to host:port" banner (restates the block prefix) and the
+    # canonical "Connect failed: cause (host:port)" line. A dead host in a
+    # sweep carries no information beyond its absence from the ok/fail
+    # counts and the export; failures with real diagnostics (scan errors,
+    # findings, enumeration) always stay.
+    _CONNECT_NOISE = (
+        re.compile(r"\[\*\].*Connecting to \S+:\d+\s*$"),
+        re.compile(r"\[-\].*Connect failed: \S+ \(\S+:\d+\)\s*$"),
+    )
+
     def __init__(self) -> None:
         self.lines: List[str] = []
+
+    def filtered(self, keep_connect_stage: bool) -> List[str]:
+        """Lines to emit, optionally without the connect-stage chatter.
+
+        Kept when verbose, where following the connect attempt of every
+        host in the sweep is the point of the extra output.
+        """
+        if keep_connect_stage:
+            return self.lines
+        return [ln for ln in self.lines if not any(rx.search(ln) for rx in self._CONNECT_NOISE)]
 
 
 @contextmanager
