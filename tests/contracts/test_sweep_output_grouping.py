@@ -16,6 +16,8 @@ mocks, no external network -- and asserts the observable sweep contract:
 2. Exactly one ``Connect failed:`` line per host (the unified contract
    survives the new buffering).
 3. Piped progress lines are bounded: ~10% steps, not one per target.
+4. An in-place TTY progress update never smears into the next block's first
+   line (the next print must clear the progress line first).
 
 Runs without docker and without the network, per the contracts rule.
 """
@@ -24,6 +26,7 @@ from __future__ import annotations
 
 import math
 import os
+import pty
 import re
 import socket
 import subprocess
@@ -137,6 +140,51 @@ class TestSweepOutputGrouping(unittest.TestCase):
             len(progress),
             bound,
             f"{len(progress)} progress lines exceeds bound {bound}\noutput:\n{combined}",
+        )
+
+    def test_tty_progress_does_not_smear_into_blocks(self):
+        # On a TTY, progress() writes in-place updates (end=""). The next
+        # printed line must first clear the pending progress line; otherwise
+        # the first line of every block glues onto the counters
+        # ("...11 failedIEC 61850 MMS 127.0.0.2:102 [!] ..."). Drive the CLI
+        # through a pty so isatty() is true, and assert no progress write is
+        # directly followed by block content without a newline or ANSI clear
+        # in between.
+        master, slave = pty.openpty()
+        try:
+            proc = subprocess.Popen(
+                [sys.executable, "-m", "oida.cli", "s7", ",".join(SWEEP_TARGETS), "--timeout", "3"],
+                stdout=slave,
+                stderr=subprocess.STDOUT,
+                text=True,
+                cwd=str(Path(SRC).parent),
+                env={**os.environ, "PYTHONPATH": SRC},
+            )
+        finally:
+            os.close(slave)
+        buf = b""
+        while True:
+            try:
+                chunk = os.read(master, 65536)
+            except OSError:
+                break
+            if not chunk:
+                break
+            buf += chunk
+        proc.wait(timeout=30)
+        data = buf.decode(errors="replace")
+
+        self.assertIn("Progress:", data, f"no progress line under pty\noutput:\n{data}")
+
+        # A smear is a progress write followed by block content with no
+        # newline and no ANSI clear between them. [^\\n\\x1b] stops at any
+        # escape (the \\x1b[2K of a legit clear or a color reset) and at
+        # line ends; block lines start with the protocol name.
+        smears = re.findall(r"Progress:[^\n\x1b]*[A-Za-z].*?:\d+\s+\[", data)
+        self.assertFalse(
+            smears,
+            f"progress line smeared into block content {len(smears)}x\n"
+            f"first: {smears[:1]}\noutput:\n{data}",
         )
 
 

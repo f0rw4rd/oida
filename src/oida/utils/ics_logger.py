@@ -608,6 +608,11 @@ class ICSLogger:
         # into subsequent log lines.  Only use \r on real TTYs.
         with _print_lock:
             if sys.stdout.isatty():
+                # An in-place update (end="") leaves the progress line on
+                # screen; track it so the next _print()/_clear_progress_line()
+                # erases it first instead of appending after the counters.
+                global _progress_active
+                _progress_active = end == ""
                 print(f"\033[2K\r{sigil} {msg}", end=end, flush=True)
             else:
                 # Piped/redirected output has no in-place updates, so one line
