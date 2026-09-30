@@ -19,7 +19,7 @@ import os
 # Suppress c104 buffered mode warning before any protocol imports
 os.environ.setdefault("PYTHONUNBUFFERED", "1")
 
-__version__ = "1.0.5"
+__version__ = "1.0.6"
 __author__ = "f0rw4rd"
 __email__ = "https://getoida.dev/contact"
 __license__ = "AGPL-3.0-or-later"
