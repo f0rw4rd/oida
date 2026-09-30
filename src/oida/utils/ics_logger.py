@@ -19,9 +19,10 @@ import os
 import sys
 import threading
 import traceback
+from contextlib import contextmanager
 from datetime import datetime, timezone
 from termcolor import colored
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Iterator, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -50,6 +51,12 @@ _module_logger_lock = threading.Lock()
 # Global lock for all console output - prevents interleaved lines when
 # multiple ThreadPoolExecutor workers print concurrently.
 _print_lock = threading.Lock()
+
+# Per-thread console capture for multi-target sweeps (see buffered_console()).
+# Each ThreadPoolExecutor worker runs exactly one scan_target at a time, so a
+# thread-local sink == a per-target sink; when a capture is installed,
+# ICSLogger._print appends to it instead of printing.
+_capture = threading.local()
 
 # =============================================================================
 # Structured JSON Log Support
@@ -105,6 +112,53 @@ def _clear_progress_line() -> None:
     """Clear the current line if progress is active (carriage return + clear)."""
     if _progress_active and sys.stdout.isatty():
         print("\r\033[K", end="", flush=True)
+
+
+class _ConsoleCapture:
+    """Per-target line sink installed by ``buffered_console()``.
+
+    Holds the formatted console lines one scan produced so they can be
+    emitted as a single contiguous block when the scan finishes. Plain
+    container; capture install/uninstall lives in the context manager.
+    """
+
+    def __init__(self) -> None:
+        self.lines: List[str] = []
+
+
+@contextmanager
+def buffered_console() -> Iterator[_ConsoleCapture]:
+    """Capture this thread's console output instead of printing it.
+
+    While active, ``ICSLogger._print`` appends to the yielded capture rather
+    than writing to stdout. Used by the CLI sweep executor so a multi-target
+    run prints each target's lines as one contiguous block instead of a
+    line-by-line shuffle across worker threads. Uninstalls on any exit
+    (including exceptions), so a crashed scan's partial lines are still
+    available to the caller.
+    """
+    capture = _ConsoleCapture()
+    previous = getattr(_capture, "sink", None)
+    _capture.sink = capture
+    try:
+        yield capture
+    finally:
+        _capture.sink = previous
+
+
+def emit_buffered(lines: List[str]) -> None:
+    """Print captured lines as one atomic block.
+
+    The whole block goes out under a single ``_print_lock`` hold (with the
+    progress line cleared first), so no other host's lines or a progress
+    counter can split it.
+    """
+    if not lines:
+        return
+    with _print_lock:
+        _clear_progress_line()
+        for line in lines:
+            print(line)
 
 
 def print_startup_banner() -> None:
@@ -357,7 +411,16 @@ class ICSLogger:
             return f"{proto:<8} {host_part} {msg}"
 
     def _print(self, msg: str) -> None:
-        """Print message, clearing progress line if active."""
+        """Print message, clearing progress line if active.
+
+        Under an active ``buffered_console()`` capture (multi-target sweep),
+        the line goes to that capture instead of stdout, so the target's whole
+        block can be emitted contiguously when its scan completes.
+        """
+        sink = getattr(_capture, "sink", None)
+        if sink is not None:
+            sink.lines.append(msg)
+            return
         with _print_lock:
             _clear_progress_line()
             print(msg)
@@ -525,7 +588,14 @@ class ICSLogger:
             if sys.stdout.isatty():
                 print(f"\033[2K\r{sigil} {msg}", end=end, flush=True)
             else:
-                print(f"{sigil} {msg}", end=end or "\n", flush=True)
+                # Piped/redirected output has no in-place updates, so one line
+                # per completion would bury the per-target blocks in hundreds
+                # of progress lines on a /24. Print only at ~10% boundaries;
+                # the final "Completed N targets" summary remains the
+                # authoritative bottom line. Small totals (< ~10 targets)
+                # naturally print every step, same as before.
+                if current == total or (current * 10) // total != ((current - 1) * 10) // total:
+                    print(f"{sigil} {msg}", end=end or "\n", flush=True)
 
     def security_finding(self, title: str, detail: str = "", category: str = "") -> None:
         """

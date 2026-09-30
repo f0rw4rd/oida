@@ -20,6 +20,7 @@ import sys
 import copy
 import argparse
 import logging
+import threading
 from pathlib import Path
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from typing import List, Optional, Any, Dict, Tuple
@@ -39,7 +40,7 @@ from oida.loader import ProtocolLoader
 from oida.targets import parse_targets, split_host_port
 from oida.serial_cli import serial_args, handle_serial_command
 from oida.fuzz_cli import fuzz_args, handle_fuzz_command
-from oida.utils.ics_logger import get_logger, ICSLogger
+from oida.utils.ics_logger import get_logger, ICSLogger, buffered_console, emit_buffered
 from oida.utils.export_utils import configure_from_args
 from oida.utils.result_types import ScanResult
 from oida.utils.ics_logger import get_module_logger
@@ -1175,30 +1176,89 @@ def _execute_scans(protocol_class, args, targets: List[str], protocol_name: str)
 
     _warn_on_port_conflict(args, targets, protocol_name, progress_logger)
 
+    # Multi-target sweeps buffer each target's console output and emit it as
+    # one contiguous block on completion; with N workers streaming line by
+    # line, a /24 shuffles every host's block and findings drown in noise.
+    # Single-target runs stream live, exactly as before.
+    sweep = len(targets) > 1
+    # target -> its live capture object, registered by the worker before the
+    # scan starts and popped by the consumer when the block is emitted. After
+    # a Ctrl+C kills the as_completed loop, whatever remains here is the only
+    # handle on blocks workers already produced.
+    active_captures: dict = {}
+    captures_lock = threading.Lock()
+
+    def _scan_with_capture(t: str):
+        if not sweep:
+            return scan_target(protocol_class, args, t), None
+        with buffered_console() as capture:
+            # Registered before the scan starts, unregistered only by the
+            # consumer (which owns the lifecycle): on emit, on worker
+            # exception, or in the Ctrl+C drain. A cancelled-not-started
+            # future never registers anything.
+            with captures_lock:
+                active_captures[t] = capture
+            result = scan_target(protocol_class, args, t)
+            return result, capture.lines
+
+    def _pop_capture(t: str):
+        with captures_lock:
+            return active_captures.pop(t, None)
+
+    def _emit(target: str, lines) -> None:
+        _pop_capture(target)
+        emit_buffered(lines)
+
+    interrupted = False
     with ThreadPoolExecutor(max_workers=args.threads) as executor:
         # Submit all scan tasks
         future_to_target = {
-            executor.submit(scan_target, protocol_class, args, target): target for target in targets
+            executor.submit(_scan_with_capture, target): target for target in targets
         }
 
         # Process completed scans
-        for future in as_completed(future_to_target):
-            target = future_to_target[future]
-            try:
-                result = future.result()
-                if result and result.get("success"):
-                    successful += 1
-                else:
+        try:
+            for future in as_completed(future_to_target):
+                target = future_to_target[future]
+                try:
+                    result, lines = future.result()
+                    if sweep:
+                        _emit(target, lines)
+                    if result and result.get("success"):
+                        successful += 1
+                    else:
+                        failed += 1
+                    results.append(result)
+                except Exception as e:
+                    # Worker-side exception: emit whatever the scan managed
+                    # to log before dying (the capture object survived in the
+                    # registry; the worker never returned its lines), then
+                    # the error line as usual.
+                    capture = _pop_capture(target) if sweep else None
+                    if capture is not None:
+                        emit_buffered(capture.lines)
+                    logger.error(f"Error scanning {target}: {e}")
                     failed += 1
-                results.append(result)
-            except Exception as e:
-                logger.error(f"Error scanning {target}: {e}")
-                failed += 1
 
-            # Progress indicator (NXC-style)
-            if not args.quiet and len(targets) > 1:
-                completed = successful + failed
-                progress_logger.progress(completed, len(targets), successful, failed)
+                # Progress indicator (NXC-style)
+                if not args.quiet and len(targets) > 1:
+                    completed = successful + failed
+                    progress_logger.progress(completed, len(targets), successful, failed)
+        except KeyboardInterrupt:
+            # Ctrl+C must not swallow findings workers already produced:
+            # drop queued-not-started futures, let in-flight ones finish
+            # (the with-exit waits for them regardless -- unchanged existing
+            # behavior), then drain every capture that still holds lines.
+            interrupted = True
+            executor.shutdown(wait=True, cancel_futures=True)
+
+    if interrupted:
+        with captures_lock:
+            leftovers = list(active_captures.items())
+            active_captures.clear()
+        for _, capture in leftovers:
+            emit_buffered(capture.lines)
+        raise KeyboardInterrupt
 
     # Clear progress line
     if not args.quiet and len(targets) > 1:
