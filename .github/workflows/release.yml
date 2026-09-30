@@ -253,15 +253,20 @@ jobs:
             # protocol + fuzz extra but NOT dev or docs.  Using it here means
             # any new protocol extra added to pyproject.toml (and referenced
             # by `all`) is automatically included in every release build.
-            extras: --extra all
+            # `dtls` is added explicitly (it is NOT in `all`): DTLSSocket is
+            # sdist-only and compiles tinydtls - the release build has the
+            # toolchain (~4min in manylinux), end-user pip installs do not.
+            # This is what keeps coaps:// in the Linux binary.
+            extras: --extra all --extra dtls
           - os: windows-latest
             label: windows-x86_64
             artifact: oida-windows-x86_64
             ext: zip
-            # `all` works on Windows: platform-gated deps (pysoem/ethercat,
+            # Same extras as Linux; `all` works on Windows and dtls is a
+            # no-op there: platform-gated deps (pysoem/ethercat,
             # DTLSSocket/coap, netifaces/discovery) are skipped automatically
             # via sys_platform markers in pyproject.toml.
-            extras: --extra all
+            extras: --extra all --extra dtls
 
     steps:
       - uses: actions/checkout@9f698171ed81b15d1823a05fc7211befd50c8ae0  # v6.0.3
