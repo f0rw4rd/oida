@@ -186,3 +186,6 @@ reference/
 
 # Local release gate evidence (scripts/release_check.sh --full)
 .release-evidence.json
+
+# Worktrees created inside the repo (parent dir may not be writable in the devcontainer)
+/.worktrees/
