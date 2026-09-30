@@ -62,15 +62,16 @@ bacnet = ["BAC0==2026.7.25", "PyYAML==6.0.3"]
 bacnetsc = ["BAC0==2026.7.25", "PyYAML==6.0.3", "websockets==16.0", "cryptography>=43.0.0"]
 can = ["python-can==4.6.1"]
 # DTLSSocket is the tinydtls C backend aiocoap needs for coaps:// (PSK).
-# NOT part of the coap extra and NOT in the `all` meta-extra: it ships
-# sdist-only and compiles tinydtls at install time, so `pip install
-# oida-ics[coap]` broke on any Linux box without a full autotools+C
-# toolchain (no wheels exist; the win32 marker from 89ba536e did not help
-# Linux users). The coap runner hard-gates --dtls on importability and
-# prints the exact manual-install command when it is missing
-# (src/oida/protocols/coap/cli_runner.py). Consumers that can afford the
-# compile opt in explicitly: `dev` (integration tests) and the Linux
-# standalone-binary build (release.yml passes --extra dtls).
+# NOT part of the coap extra: it ships sdist-only and compiles tinydtls at
+# install time, so `pip install oida-ics[coap]` broke on any Linux box
+# without a full autotools+C toolchain (no wheels exist; the win32 marker
+# from 89ba536e did not help Linux users). The coap runner hard-gates --dtls
+# on importability and prints the exact manual-install command when it is
+# missing (src/oida/protocols/coap/cli_runner.py). Consumers that can afford
+# the compile opt in explicitly: `dev` (integration tests) and the `all`
+# meta-extra below - which only the standalone-binary build and CI sync,
+# never a plain `pip install oida-ics[coap]` - so the win32 marker makes it
+# Linux/macOS-binaries-only and the toolchain-free pip install survives.
 coap = ["aiocoap==0.4.17", "cbor2==6.1.4"]
 # Opt-in tinydtls compile for coaps:// (see the coap comment above).
 dtls = ["DTLSSocket==0.2.3; sys_platform != 'win32'"]
@@ -114,6 +115,12 @@ all = [
     "oida-ics[ads,astm,bacnet,bacnetsc,can,coap,dicom,discovery,dnp3,ethercat]",
     "oida-ics[ethernetip,fhir,goose,hart,hl7,iec104,knx,mms]",
     "oida-ics[modbus,mqtt,ocpp,opcua,pcap,profinet,snap7,snmp,tase2,serial,fuzz]",
+    # `dtls` here (NOT in `coap`): DTLSSocket is sdist-only and compiles
+    # tinydtls. `all` is only synced by the standalone-binary build (which has
+    # the toolchain, manylinux ~4min) and CI - never by end-user pip installs,
+    # so the Linux binary keeps coaps:// while `pip install oida-ics[coap]`
+    # stays toolchain-free. Win32 marker keeps Windows installs clean.
+    "oida-ics[dtls]",
 ]
 dev = [
     "pytest>=9.0.3",
