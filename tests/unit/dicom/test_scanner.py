@@ -453,7 +453,18 @@ class TestDICOMConnectionLogic(unittest.TestCase):
             scanner.called_aet = "ANY"
             scanner.logger = Mock()
 
-            result = scanner.create_conn_obj()
+            # The bare Exception("Connection failed") classifies as
+            # "unknown", which makes record_connect_failure() run its live
+            # TCP rescue probe against 192.168.1.100:11112 - a real network
+            # connect from a unit test that hangs 30s (args.timeout) on a
+            # hosted runner and failed the v1.0.5 release (pytest-timeout
+            # 15s). Patch the probe out: this test asserts the exception
+            # path only, not the rescue behavior.
+            with patch(
+                "oida.utils.protocol_helpers.probe_connect_failure_cause",
+                return_value="unknown",
+            ):
+                result = scanner.create_conn_obj()
 
             self.assertFalse(result)
             self.assertFalse(scanner.results["data"]["connected"])
