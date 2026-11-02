@@ -47,7 +47,7 @@ requires-python = ">=3.10"
 # Bump deliberately: edit the version, re-run `uv lock`, then re-release.
 dependencies = [
     "tqdm==4.70.1",
-    "manuf2==2.0.2",
+    "manuf2==2.0.3",
     "pyserial==3.5",
     "termcolor==3.3.0",
 ]
