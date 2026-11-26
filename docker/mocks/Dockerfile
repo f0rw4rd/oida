@@ -4,7 +4,7 @@ LABEL maintainer="f0rw4rd"
 LABEL description="ICS Mock Services for Protocol Fuzzing"
 
 # Install system dependencies
-RUN apt-get update && apt-get install -y --no-install-recommends \
+RUN apt-get update -y && apt-get install -y --no-install-recommends \
     build-essential \
     libffi-dev \
     libssl-dev \
